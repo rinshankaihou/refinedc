@@ -1,0 +1,157 @@
+From refinedc.typing Require Export type.
+From refinedc.typing Require Import programs.
+Set Default Proof Using "Type".
+
+Section singleton_val.
+  Context `{!typeG Σ}.
+
+  Program Definition singleton_val (ly : layout) (v : val) : type := {|
+    ty_own β l := (⌜l `has_layout_loc` ly⌝ ∗ ⌜v `has_layout_val` ly⌝ ∗ l ↦[β] v)%I;
+  |}.
+  Next Obligation. iIntros (?????) "[$ [$ ?]]". by iApply heap_mapsto_own_state_share. Qed.
+
+  Global Program Instance movable_singleton_val ly v : Movable (singleton_val ly v) := {|
+    ty_layout := ly;
+    ty_own_val v' := (⌜v `has_layout_val` ly⌝ ∗ ⌜v' = v⌝)%I;
+  |}.
+  Next Obligation. by iIntros (ly v' l) "[%?]". Qed.
+  Next Obligation. by iIntros (ly v' v) "[% ->]". Qed.
+  Next Obligation. iIntros (ly v' l) "(%&%&?)". eauto with iFrame. Qed.
+  Next Obligation. iIntros (ly v' l v ?) "Hl [? ->]". by iFrame. Qed.
+
+  Lemma singleton_val_simplify v T ly p:
+    (⌜v = p⌝ -∗ ⌜v `has_layout_val` ly⌝ -∗ T) -∗
+    simplify_hyp (v ◁ᵥ  singleton_val ly p) T.
+  Proof. iIntros "HT [% ->]". by iApply "HT". Qed.
+  Global Instance singleton_val_simplify_inst v ly p :
+    SimplifyHypVal v (singleton_val ly p) (Some 0%N) :=
+    λ T, i2p (singleton_val_simplify v T ly p).
+
+  Lemma singleton_val_merge v l ly T:
+    (find_in_context (FindVal v) (λ ty:mtype, ⌜ty.(ty_layout) = ly⌝ ∗ (l ◁ₗ ty -∗ T))) -∗
+      simplify_hyp (l ◁ₗ singleton_val ly v) T.
+  Proof.
+    iDestruct 1 as (ty) "[Hv [<- HT]]".
+    iIntros "[% [% Hl]]". iApply "HT". by iApply (ty_ref with "[] Hl Hv").
+  Qed.
+  Global Instance singleton_val_merge_inst v l ly:
+    SimplifyHypPlace l Own (singleton_val ly v)%I (Some 50%N) :=
+    λ T, i2p (singleton_val_merge v l ly T).
+
+  Lemma type_read_move T l ty ly `{!Movable ty}:
+    (⌜ty.(ty_layout) = ly⌝ ∗ ∀ v, T v (singleton_val (ty.(ty_layout)) v) (t2mt ty)) -∗
+      typed_read_end l Own ty ly T.
+  Proof.
+    iIntros "[<- HT] Hl !#".
+    iDestruct (ty_aligned with "Hl") as %?.
+    iDestruct (ty_deref with "Hl") as (v) "[Hl Hv]".
+    iDestruct (ty_size_eq with "Hv") as %?.
+    iExists _, _, _, (t2mt _). iFrame. do 2 iSplit => //=.
+    iIntros "!# Hl". iSplitR "HT" => //.
+    by iFrame.
+  Qed.
+  Global Instance type_read_move_inst l ty ly `{!Movable ty} :
+    TypedReadEnd l Own ty ly | 50 :=
+    λ T, i2p (type_read_move T l ty ly).
+
+  (* TODO: this constraint on the layout is too strong, we only need
+  that the length is the same and the alignment is lower. Adapt when necessary. *)
+  Lemma type_write_own a ty `{!Movable ty} T l2 ty2 v `{!Movable ty2}:
+    ⌜ty2.(ty_layout) = ty.(ty_layout)⌝ ∗ (∀ v', v ◁ᵥ ty -∗ v' ◁ᵥ ty2 -∗ T (singleton_val ty.(ty_layout) v)) -∗
+    typed_write_end a v ty l2 Own ty2 T.
+  Proof.
+    iDestruct 1 as (Heq) "HT". iIntros "Hl".
+    iDestruct (ty_aligned with "Hl") as %?.
+    iDestruct (ty_deref with "Hl") as (v') "[Hl Hv']".
+    iDestruct (ty_size_eq with "Hv'") as %?.
+    iMod (fupd_intro_mask' _ (if a then ∅ else ⊤)) as "Hmask" => //. iModIntro.
+    iSplitL "Hl". by iExists _; iFrame; rewrite -Heq.
+    iIntros "!# Hl Hv". iMod "Hmask". iModIntro.
+    iDestruct (ty_size_eq with "Hv") as %?.
+    iExists _. iDestruct ("HT" with "Hv Hv'") as "$".
+    iFrame. iPureIntro. split => //. congruence.
+  Qed.
+  Global Instance type_write_own_inst a ty `{!Movable ty} l2 ty2 v `{!Movable ty2} :
+    TypedWriteEnd a v ty l2 Own ty2 | 50 :=
+    λ T, i2p (type_write_own a ty T l2 ty2 v).
+
+End singleton_val.
+
+Section singleton_place.
+  Context `{!typeG Σ}.
+
+  Program Definition singleton_place (l : loc) : type := {|
+    ty_own β l' := (⌜l = l'⌝)%I;
+  |}.
+  Next Obligation. by iIntros (????) "$". Qed.
+
+  Lemma singleton_place_simplify l β T p:
+    (⌜l = p⌝ -∗ T) -∗
+    simplify_hyp (l◁ₗ{β} singleton_place p) T.
+  Proof. iIntros "HT ->". by iApply "HT". Qed.
+  Global Instance singleton_place_simplify_inst l β p :
+    SimplifyHypPlace l β (singleton_place p)%I (Some 0%N) :=
+    λ T, i2p (singleton_place_simplify l β T p).
+
+  Lemma singleton_place_simplify_goal l β T p:
+    (T ⌜l = p⌝) -∗
+    simplify_goal (l◁ₗ{β} singleton_place p) T.
+  Proof. iIntros "HT". iExists _. iFrame. by iIntros "->". Qed.
+  Global Instance singleton_place_simplify_goal_inst l β p :
+    SimplifyGoalPlace l β (singleton_place p)%I (Some 0%N) :=
+    λ T, i2p (singleton_place_simplify_goal l β T p).
+
+
+  Lemma type_addr_of_singleton l β ty T:
+    T β ty (singleton_place l) -∗
+    typed_addr_of_end l β ty T.
+  Proof. iIntros "HT Hl !#". iExists _, _, _. iFrame "HT". by iFrame. Qed.
+  Global Instance type_addr_of_singleton_inst l β ty:
+    TypedAddrOfEnd l β ty :=
+    λ T, i2p (type_addr_of_singleton l β ty T).
+
+  Lemma typed_place_simpl P l ty1 β1 T n {SH:SimplifyHyp (l ◁ₗ{β1} ty1) (Some n)}:
+    (SH (find_in_context (FindLoc l) (λ '(β2, ty2),
+        typed_place P l β2 ty2 (λ l3 β3 ty3 typ R,
+           T l3 β3 ty3 (λ _, singleton_place l) (λ ty', l ◁ₗ{β2} typ ty' ∗ R ty' ))))).(i2p_P) -∗
+    typed_place P l β1 ty1 T.
+  Proof.
+    iIntros "SH" (Φ) "Hl HΦ".
+    iDestruct (i2p_proof with "SH Hl") as ([β2 ty2]) "[Hl HP]".
+    iApply ("HP" with "Hl").
+    iIntros (l3 β3 ty3 typ R) "Hl Hc HT".
+    iApply ("HΦ" with "Hl [Hc] HT").
+    iIntros (ty') "Hl3". by iMod ("Hc" with "Hl3") as "[$ $]".
+  Qed.
+  Global Instance typed_place_simpl_inst P l ty1 β1 n `{!SimplifyHyp (l ◁ₗ{β1} ty1) (Some n)}:
+    TypedPlace P l β1 ty1 | 1000 :=
+    λ T, i2p (typed_place_simpl P l ty1 β1 T n).
+
+  Lemma typed_read_end_simpl l β ty ly n T {SH:SimplifyHyp (l ◁ₗ{β} ty) (Some n)}:
+    (SH (find_in_context (FindLoc l) (λ '(β2, ty2),
+        typed_read_end l β2 ty2 ly (λ v ty' ty3, l ◁ₗ{β2} ty' -∗ T v (singleton_place l) ty3)))).(i2p_P) -∗
+    typed_read_end l β ty ly T.
+  Proof.
+    iIntros "SH Hl". iDestruct (i2p_proof with "SH Hl") as ([β2 ty2]) "[Hl HP]".
+    iMod ("HP" with "Hl") as (q v ty' ty3 ? ?) "(Hl & Hv & HP)". iIntros "!#".
+    iExists _, _, _, _. iFrame. do 2 iSplit => //. iIntros "!# Hl".
+    iMod ("HP" with "Hl") as "[Hl HT]". iModIntro. iSplitR; last by iApply "HT". done.
+  Qed.
+  Global Instance typed_read_end_simpl_inst l β ty ly n `{!SimplifyHyp (l ◁ₗ{β} ty) (Some n)}:
+    TypedReadEnd l β ty ly | 1000 :=
+    λ T, i2p (typed_read_end_simpl  l β ty ly n T).
+
+  Lemma typed_write_end_simpl b v ty1 `{!Movable ty1} l β ty2 n T {SH:SimplifyHyp (l ◁ₗ{β} ty2) (Some n)}:
+    (SH (find_in_context (FindLoc l) (λ '(β3, ty3),
+        typed_write_end b v ty1 l β3 ty3 (λ ty', l ◁ₗ{β3} ty' -∗ T (singleton_place l))))).(i2p_P) -∗
+    typed_write_end b v ty1 l β ty2 T.
+  Proof.
+    iIntros "SH Hl". iDestruct (i2p_proof with "SH Hl") as ([β3 ty3]) "[Hl HP]".
+    iMod ("HP" with "Hl") as "[$ HP]". iIntros "!# !# Hl Hv".
+    iMod ("HP" with "Hl Hv") as (ty') "[Hl HT]". iModIntro. iExists _. iSplitR; last by iApply "HT". done.
+  Qed.
+  Global Instance typed_write_end_simpl_inst b v ty1 `{!Movable ty1} l β ty2 n `{!SimplifyHyp (l ◁ₗ{β} ty2) (Some n)}:
+    TypedWriteEnd b v ty1 l β ty2 | 1000 :=
+    λ T, i2p (typed_write_end_simpl b v ty1 l β ty2 n T).
+
+End singleton_place.

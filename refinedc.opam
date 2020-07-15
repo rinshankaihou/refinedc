@@ -1,0 +1,21 @@
+opam-version: "2.0"
+name: "coq-refinedc"
+maintainer: "Michael Sammler <msammler@mpi-sws.org>"
+authors: "Michael Sammler"
+license: "BSD"
+homepage: "https://gitlab.mpi-sws.org/iris/refinedc"
+bug-reports: "https://gitlab.mpi-sws.org/iris/refinedc/issues"
+dev-repo: "git+https://gitlab.mpi-sws.org/iris/refinedc.git"
+
+synopsis: "RefinedC"
+description: """
+RefinedC: Framework for verifying low-level code using refinement types and ownership types.
+"""
+
+depends: [
+  "coq" { (>= "8.11.0" & < "8.12~") | (= "dev") }
+  "coq-iris" { (= "dev.2020-07-10.0.3998e1fd") | (= "dev") }
+]
+
+build: [make "-j%{jobs}%"]
+install: [make "install"]

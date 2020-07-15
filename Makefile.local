@@ -1,0 +1,34 @@
+# The .SILENT is necessary because EXTRA_COQFILES contains many files
+# and we don't want to print them. Also .PHONY is necessary since the
+# files are not dependencies of Makefile.coq.
+.SILENT: Makefile.coq
+.PHONY: Makefile.coq
+EXTRA_COQFILES := $(shell find theories -name "*.v" -and -not -name ".*")
+
+# Default target
+all:
+
+.PHONY: all_without_examples
+all_without_examples: theories/typing/typing.vo
+
+# Generation of examples using [ail_to_coq].
+
+%.generate: % phony
+	./scripts/rcgen $<
+	@touch $@
+
+ALL_EXAMPLES_GENERATE = $(wildcard theories/examples/*/*.generate)
+ALL_TUTORIAL_GENERATE = $(wildcard theories/examples/tutorial/*.generate)
+
+.PHONY: all_examples all_tutorial
+all_examples: $(ALL_EXAMPLES_GENERATE)
+all_tutorial: $(ALL_TUTORIAL_GENERATE)
+
+TUTORIAL_SRC = \
+	theories/examples/tutorial/t3_list.c \
+	theories/examples/tutorial/t4_alloc.c \
+	theories/examples/tutorial/t5_main.c \
+	theories/examples/spinlock/spinlock.c
+
+theories/examples/tutorial/tutorial: $(TUTORIAL_SRC)
+	clang -fdouble-square-bracket-attributes -Wno-unknown-attributes -g -O0 $^ -o $@

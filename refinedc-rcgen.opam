@@ -1,0 +1,33 @@
+opam-version: "2.0"
+synopsis: "The RefinedC frontend"
+description: """
+This tool translates annotated C code into a deep embedding of the Ceasium C
+semantics in Coq. Function specifications are checked againinst the RefiendC
+refinement type system, and Coq proofs are automatically generated.
+"""
+maintainer: ["Rodolphe Lepigre <lepigre@mpi-sws.org>"]
+authors: ["Rodolphe Lepigre" "Michael Sammler" "Kayvan Memarian"]
+license: "BSD"
+homepage: "https://plv.mpi-sws.org/refinedc"
+bug-reports: "https://gitlab.mpi-sws.org/iris/refinedc/-/issues"
+depends: [
+  "dune" {>= "2.0.0"}
+  "cerberus" {= "~dev"}
+  "cmdliner" {>= "1.0.4"}
+  "earley" {= "2.0.0"}
+]
+build: [
+  ["dune" "subst"] {pinned}
+  [make "prelude-src"]
+  ["dune"
+    "build"
+    "-p"
+    name
+    "-j"
+    jobs
+    "@install"
+    "@runtest" {with-test}
+    "@doc" {with-doc}
+  ]
+]
+dev-repo: "git+https://github.com/rems-project/cerberus-private.git"
