@@ -10,7 +10,7 @@ using our **Lithium** logic programming framework) takes over to prove the
 user-defined function specs (which can encode full functional correctness),
 leaving possible (pure) side-conditions to the user. To resolve such
 side-conditions, the user can either extend the RefinedC automation or
-discharge them directly using an interactive Coq proof. The RefiendC type
+discharge them directly using an interactive Coq proof. The RefinedC type
 system itself is also extensible to allow expert users to add support for
 specific programming idioms through new typing rules. Such additions must be
 proven sound against the RefinedC semantic model, which is encoded in the
