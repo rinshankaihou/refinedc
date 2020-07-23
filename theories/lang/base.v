@@ -473,10 +473,30 @@ Proof. move => [? ->]. by rewrite /keep_factor2 factor2'_pow. Qed.
 (*       rewrite Z.mul_comm -Z.pow_succ_r; last by lia. f_equal. lia. *)
 (* Qed. *)
 
+Lemma divide_mult_2 n1 n2 : divide 2 (n1 * n2) → divide 2 n1 ∨ divide 2 n2.
+  move => /Nat2Z_divide. rewrite Nat2Z.inj_mul. move => /(prime_mult _ prime_2).
+  move => [H|H]; [left | right]; apply Z2Nat_divide in H; try lia.
+  - rewrite Nat2Z.id in H. assert (Z.to_nat 2 = 2) as Heq by lia. by rewrite Heq in H.
+  - rewrite Nat2Z.id in H. assert (Z.to_nat 2 = 2) as Heq by lia. by rewrite Heq in H.
+Qed.
+
 Lemma is_power_of_two_mult n1 n2:
   (is_power_of_two (n1 * n2)) ↔ (is_power_of_two n1 ∧ is_power_of_two n2).
 Proof.
-Admitted.
+  rewrite /is_power_of_two. split.
+  - move => [m Hm]. move: n1 n2 Hm. elim: m.
+    + move => /= ?? /mult_is_one [->->]. split; by exists 0.
+    + move => n IH n1 n2 H. rewrite Nat.pow_succ_r' in H.
+      assert (divide 2 (n1 * n2)) as Hdiv. { exists (2 ^ n). lia. }
+      apply divide_mult_2 in Hdiv as [[k ->]|[k ->]].
+      * assert (k * n2 = 2 ^ n) as Hkn2 by lia.
+        apply IH in Hkn2 as [[m ->] Hn2]. split => //.
+        exists (S m). by rewrite mult_comm -Nat.pow_succ_r'.
+      * assert (n1 * k = 2 ^ n) as Hn1k by lia.
+        apply IH in Hn1k as [Hn1 [m ->]]. split => //.
+        exists (S m). by rewrite mult_comm -Nat.pow_succ_r'.
+  - move => [[m1 ->] [m2 ->]]. exists (m1 + m2). by rewrite Nat.pow_add_r.
+Qed.
 
 Lemma if_bool_decide_eq_branches {A} P `{!Decision P} (x : A) :
   (if bool_decide P then x else x) = x.
