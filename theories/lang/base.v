@@ -436,11 +436,16 @@ Proof. by rewrite /factor2 factor2'_pow. Qed.
 
 Lemma keep_factor2_min_eq n m:
   (n `min` keep_factor2 (m * n) n)%nat = n.
-Proof. Admitted.
+Proof.
+Admitted.
 
 Lemma keep_factor2_min_1 n:
   (1 `min` keep_factor2 n 1)%nat = 1%nat.
-Proof. Admitted.
+Proof.
+  rewrite /keep_factor2 /factor2'. destruct (N.of_nat n) => // /=.
+  apply Nat.min_l. generalize (Pos_factor2 p) => k. induction k as [|k IH].
+  done. rewrite Nat.pow_succ_r'. move: IH. generalize (2 ^ k) => j. lia.
+Qed.
 
 Lemma keep_factor2_twice n m:
   (keep_factor2 n (keep_factor2 n m)) = (keep_factor2 n m).
