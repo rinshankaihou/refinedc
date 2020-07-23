@@ -396,33 +396,39 @@ Lemma Zdivide_mult_l n1 n2 a :
 Proof. move => [? ->]. by apply Z.divide_mul_r, Z.divide_mul_l. Qed.
 
 Lemma Zdivide_nat_pow a b c:
-    ((b ≤ c)%nat → ((a ^ b)%nat | (a ^ c)%nat))%Z.
-  Proof.
-    move => ?. apply: (Zdivide_mult_l _ (a^(c - b))%nat).
-    by rewrite -Nat2Z.inj_mul -Nat.pow_add_r le_plus_minus_r.
-  Qed.
+  ((b ≤ c)%nat → ((a ^ b)%nat | (a ^ c)%nat))%Z.
+Proof.
+  move => ?. apply: (Zdivide_mult_l _ (a^(c - b))%nat).
+  by rewrite -Nat2Z.inj_mul -Nat.pow_add_r le_plus_minus_r.
+Qed.
 
-  Lemma Pos_factor2_divide p :
-    ((2 ^ Pos_factor2 p)%nat | Z.pos p)%Z.
-  Proof.
-    elim: p => //=. by move => *; apply Z.divide_1_l.
-    move => p IH. rewrite -plus_n_O Pos2Z.inj_xO Nat2Z.inj_add Z.add_diag. by apply Z.mul_divide_mono_l.
-  Qed.
+Lemma Pos_factor2_divide p :
+  ((2 ^ Pos_factor2 p)%nat | Z.pos p)%Z.
+Proof.
+  elim: p => //=. by move => *; apply Z.divide_1_l.
+  move => p IH. rewrite -plus_n_O Pos2Z.inj_xO Nat2Z.inj_add Z.add_diag. by apply Z.mul_divide_mono_l.
+Qed.
 
-  Lemma factor2_divide n x :
-    ((2 ^ factor2 n x)%nat | n)%Z.
-  Proof.
-    rewrite /factor2/factor2'. rewrite -(nat_N_Z n). case_match => /=; first by apply Z.divide_0_r.
-    apply Pos_factor2_divide.
-  Qed.
+Lemma factor2_divide n x :
+  ((2 ^ factor2 n x)%nat | n)%Z.
+Proof.
+  rewrite /factor2/factor2'. rewrite -(nat_N_Z n). case_match => /=; first by apply Z.divide_0_r.
+  apply Pos_factor2_divide.
+Qed.
 
 Lemma factor2'_pow n:
   factor2' (2^n)%nat = Some n.
 Proof.
-  rewrite/factor2'.
-  case_match. exfalso. elim: n Heqn0 => //. simpl in *. lia.
-  f_equal. zify.
-Admitted.
+  rewrite /factor2'. destruct (N.of_nat (2 ^ n)) eqn:H.
+  - exfalso. elim: n H => // /=. lia.
+  - f_equal. move: p H. induction n as [|n IH].
+    + move => p /= Hp. destruct p => //.
+    + move => p Hp. destruct p.
+      * exfalso. zify. rewrite Nat.pow_succ_r' in Hp. lia.
+      * rewrite /=. f_equal. apply IH.
+        zify. rewrite Nat.pow_succ_r' in Hp. lia.
+      * exfalso. zify. rewrite Nat.pow_succ_r' in Hp. lia.
+Qed.
 
 Lemma factor2_pow n x:
   factor2 (2^n)%nat x = n.
