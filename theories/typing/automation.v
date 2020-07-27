@@ -209,12 +209,12 @@ Ltac liRStep :=
 (Q) is part of the goal, because simpl seems to take exponential time
 in the number of blocks! *)
 (* TODO: don't use i... tactics here *)
-Tactic Notation "start_function" constr(name) "(" simple_intropattern(x) ")" :=
+Tactic Notation "start_function" constr(fnname) "(" simple_intropattern(x) ")" :=
   intros;
   repeat iIntros "#?";
   rewrite /typed_function;
   iIntros ( x );
-  iSplit; [iPureIntro; simpl; by [repeat constructor] || fail "in" name "argument types don't match layout of arguments" |];
+  iSplit; [iPureIntro; simpl; by [repeat constructor] || fail "in" fnname "argument types don't match layout of arguments" |];
   let lsa := fresh "lsa" in let lsv := fresh "lsv" in
   iIntros "!#" (lsa lsv); inv_vec lsv; inv_vec lsa.
 

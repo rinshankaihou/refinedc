@@ -53,9 +53,9 @@ Section globals.
     (∃ (Heq : A = ty.(gt_A)), l ◁ₗ{Shr} ty.(gt_type) (rew [λ x, x] Heq in x) -∗ T) -∗
     simplify_hyp (initialized name x) T.
   Proof.
-    unfold FastDone in *. iDestruct 1 as (?) "HT". iDestruct 1 as (l' ??? Heq) "Hl". simplify_eq. iApply "HT" => /=.
+    unfold FastDone in *. iDestruct 1 as (?) "HT". iDestruct 1 as (l' ??? Heq2) "Hl". simplify_eq. iApply "HT" => /=.
     (** HERE WE USE AXIOM K! *)
-    by rewrite (UIP_refl _ _ Heq).
+    by rewrite (UIP_refl _ _ Heq2).
   Qed.
   Global Instance simplify_initialized_hyp_inst A x name ty l `{!FastDone (global_locs !! name = Some l)} `{!FastDone (global_initialized_types !! name = Some ty)}:
     SimplifyHyp (initialized name x) (Some 0%N) :=

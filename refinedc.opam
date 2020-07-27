@@ -14,7 +14,7 @@ RefinedC: Framework for verifying low-level code using refinement types and owne
 
 depends: [
   "coq" { (>= "8.11.0" & < "8.12~") | (= "dev") }
-  "coq-iris" { (= "dev.2020-07-10.0.3998e1fd") | (= "dev") }
+  "coq-iris" { (= "dev.2020-07-24.0.9b804e35") | (= "dev") }
 ]
 
 build: [make "-j%{jobs}%"]

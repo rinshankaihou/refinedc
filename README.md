@@ -79,7 +79,7 @@ You can then install the dependencies:
 opam install --deps-only refinedc refinedc-rcgen
 ```
 
-**Note:** You can use `make update_deps` to install the right version of the
+**Note:** You can use `make update-deps` to install the right version of the
 dependencies if the requirements have changed. This should typically done if
 the version of Iris on which RefinedC relies has been updated.
 
