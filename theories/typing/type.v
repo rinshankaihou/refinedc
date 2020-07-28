@@ -87,11 +87,13 @@ Other problem with all the Fractional based approaches: you ahve to merge existe
 can come from e.g. refinements.
 
 The right lemma which you want to prove seems to be
-∀ q1 q2 x y, P q1 x -∗ P q2 y -∗ P q1 x ∗ P q2 y
+∀ q1 q2 x y, P q1 x -∗ P q2 y -∗ P q1 x ∗ P q2 x
 This should be provable for most types (e.g. optional assuming l◁ₗ{β} ty -∗ l◁ₗ{β} optty -∗ False)
 and it should commute with separating conjuction (necessary for e.g. struct )
 
 We will also probably need a meta like thing in heap lang to associate gnames with locations to ensure that things agree (e.g. gnames used in cancellable invariants lock).
+
+See also http://www0.cs.ucl.ac.uk/staff/J.Brotherston/CAV20/SL_hybrid_perms.pdf
  *)
 
 Definition shrN : namespace := nroot.@"shrN".

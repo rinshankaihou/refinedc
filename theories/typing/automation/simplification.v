@@ -9,6 +9,10 @@ Proof. split; rewrite -ly_align_log_ly_align_eq_iff; destruct ly1,ly2; naive_sol
 Global Instance simpl_layout_leq ly1 ly2 : SimplBoth (ly1 ⊑ ly2) (ly1.(ly_size) ≤ ly2.(ly_size) ∧ ly_align ly1 ≤ ly_align ly2)%nat.
 Proof. split; rewrite /ly_align -Nat.pow_le_mono_r_iff //; lia. Qed.
 
+Global Instance simpl_is_power_of_two_align ly :
+  SimplAnd (is_power_of_two (ly_align ly)) (λ T, T).
+Proof. split => ?; last naive_solver. split => //. by eexists _. Qed.
+
 (** * aligned_to *)
 Global Instance simpl_aligned_to_add1 l (n : nat) : SimplBoth ((l +ₗ n) `aligned_to` n) (l `aligned_to` n).
 Proof. rewrite -{1}(Z.mul_1_l n). apply aligned_to_add. Qed.

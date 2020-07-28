@@ -434,10 +434,38 @@ Lemma factor2_pow n x:
   factor2 (2^n)%nat x = n.
 Proof. by rewrite /factor2 factor2'_pow. Qed.
 
-Lemma keep_factor2_min_eq n m:
-  (n `min` keep_factor2 (m * n) n)%nat = n.
+Lemma keep_factor2_0 n:
+  keep_factor2 0 n = n.
+Proof. done. Qed.
+
+Lemma keep_factor2_mult n m o:
+  n ≠ 0 → m ≠ 0 →
+  keep_factor2 (m * n) o = keep_factor2 m o * keep_factor2 n o.
 Proof.
-Admitted.
+  rewrite /keep_factor2 /factor2' => ??. destruct n,m => //=.
+  rewrite -Nat.pow_add_r -Pos_factor2_mult. do 2 f_equal. lia.
+Qed.
+
+Lemma keep_factor2_neq_0 n x:
+  n ≠ 0 →
+  keep_factor2 n x ≠ 0.
+Proof. move => ?. destruct n => //. rewrite /keep_factor2 /=. by apply Nat.pow_nonzero. Qed.
+
+Lemma keep_factor2_is_power_of_two n x:
+  is_power_of_two n →
+  keep_factor2 n x = n.
+Proof. move => [? ->]. by rewrite /keep_factor2 factor2'_pow. Qed.
+
+Lemma keep_factor2_min_eq n m:
+  is_power_of_two n →
+  (n `min` keep_factor2 (m * n) n) = n.
+Proof.
+  move => ?. destruct (decide (m = 0)); first by subst; rewrite keep_factor2_0; lia.
+  destruct (decide (n = 0)); first lia.
+  rewrite keep_factor2_mult // (keep_factor2_is_power_of_two n) //.
+  have ?: keep_factor2 m n ≠ 0 by apply keep_factor2_neq_0.
+  destruct (keep_factor2 m n); lia.
+Qed.
 
 Lemma keep_factor2_min_1 n:
   (1 `min` keep_factor2 n 1)%nat = 1%nat.
@@ -450,11 +478,6 @@ Qed.
 Lemma keep_factor2_twice n m:
   (keep_factor2 n (keep_factor2 n m)) = (keep_factor2 n m).
 Proof. by destruct n. Qed.
-
-Lemma keep_factor2_is_power_of_two n x:
-  is_power_of_two n →
-  keep_factor2 n x = n.
-Proof. move => [? ->]. by rewrite /keep_factor2 factor2'_pow. Qed.
 
 (* Lemma mult_is_one_Z n m : 0 ≤ n → 0 ≤ m → n * m = 1 → n = 1 ∧ m = 1. *)
 (* Proof. *)
