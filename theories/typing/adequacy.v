@@ -51,46 +51,7 @@ Definition main_type `{!typeG Σ} (P : iProp Σ) :=
     fn(∀ () : (); P) → ∃ () : (), int i32; True.
 
 (** * The main adequacy lemma *)
-(* TODO: integrate this in the main Iris adequacy *)
-Theorem wp_strong_adequacy' Σ Λ `{!invPreG Σ} es σ1 n κs t2 σ2 φ :
-  length es ≠ 0 →
-  (∀ `{Hinv : !invG Σ},
-    ⊢ |={⊤}=> ∃
-         (s: stuckness)
-         (stateI : state Λ → list (observation Λ) → nat → iProp Σ)
-         (Φ fork_post : val Λ → iProp Σ),
-     let _ : irisG Λ Σ := IrisG _ _ Hinv stateI fork_post in
-       stateI σ1 κs (pred (length es)) ∗
-       ([∗ list] e∈es, WP e {{ Φ }}) ∗
-     (□ ∀ v, Φ v -∗ fork_post v) ∗
-       (⌜ ∀ e2, e2 ∈ t2 → not_stuck e2 σ2 ⌝ -∗
-         (* Under all these assumptions, and while opening all invariants, we
-         can conclude [φ] in the logic. After opening all required invariants,
-         one can use [fupd_intro_mask'] or [fupd_mask_weaken] to introduce the
-         fancy update. *)
-         |={⊤,∅}=> ⌜ φ ⌝)) →
-  nsteps n (es, σ1) κs (t2, σ2) →
-  (* Then we can conclude [φ] at the meta-level. *)
-  φ.
-Proof.
-  intros ? Hwp ?. destruct es => //.
-  eapply (step_fupdN_soundness' _ (S (S n)))=> Hinv. rewrite Nat_iter_S.
-  iMod Hwp as (s stateI Φ fork_post) "(Hσ & Hwp & #Hfork & Hφ)".
-  iApply step_fupd_intro; [done|]; iModIntro.
-  iApply step_fupdN_S_fupd. iApply (step_fupdN_wand with "[-Hφ]").
-  iDestruct "Hwp" as "[Hwp1 Hwp2]".
-  { iApply (@wptp_strong_adequacy _ _ (IrisG _ _ Hinv stateI fork_post) _ []
-              with "[Hσ] Hwp1 [Hwp2]"); eauto. by rewrite right_id_L.
-    iApply (big_sepL_impl with "Hwp2").
-    iIntros "!#" (???) "HWP". by iApply (wp_wand with "HWP").
-  }
-  iIntros "Hpost". iDestruct "Hpost" as (e2 t2' -> ?) "( ? & ? & ?)".
-  iApply fupd_plain_mask_empty.
-  iMod ("Hφ" with "[%]") => //; eauto.
-Qed.
-
 Lemma refinedc_adequacy Σ `{!typePreG Σ} (thread_mains : list loc) (fns : gmap loc function) (gs : gmap loc mbyte) n t2 σ2 κs:
-  length thread_mains ≠ 0 →
   (∀ {HtypeG : typeG Σ}, ∃ gl gt,
   let Hglobals : globalG Σ := {| global_locs := gl; global_initialized_types := gt; |} in
       ([∗ map] k↦qs∈gs, k ↦ [qs]) -∗ ([∗ map] k↦qs∈fns, fntbl_entry k qs) ={⊤}=∗
@@ -98,7 +59,7 @@ Lemma refinedc_adequacy Σ `{!typePreG Σ} (thread_mains : list loc) (fns : gmap
   nsteps (Λ := stmt_lang) n (initial_thread_state <$> thread_mains, initial_state fns gs ) κs (t2, σ2) →
   ∀ e2, e2 ∈ t2 → not_stuck e2 σ2.
 Proof.
-  move => ? Hwp. apply: wp_strong_adequacy'. by rewrite fmap_length. move => ?.
+  move => Hwp. apply: wp_strong_adequacy'. move => ?.
   set h := to_heap ((λ b, (RSt 0%nat, b)) <$> gs).
   iMod (own_alloc (Auth (Some (1%Qp, to_agree h)) h)) as (γh) "Hh" => //.
   { apply auth_valid_discrete => /=. split => //. exists h. eauto using to_heap_valid. }
@@ -130,22 +91,21 @@ Proof.
     by iApply "IH".
   }
 
-  iModIntro. iExists NotStuck, _, _, _.
-  iSplitL "Hh Hf". 2: iSplitL. 3: iSplit.
-  2: rewrite big_sepL_fmap; iApply (big_sepL_impl with "Hmains").
-  2: iIntros "!#" (? main ?); iDestruct 1 as (P) "[Hmain HP]".
-  2: iApply wp_to_typed_stmt => //.
-  - iFrame. iPureIntro => /=. clear. move => l Hl i. rewrite lookup_fmap fmap_None.
-    destruct (gs !! (l +ₗ i)) as [x|] eqn:? => //. exfalso. apply: Hl.
-    apply elem_of_list_to_set. apply elem_of_list_fmap. exists (l +ₗ i). split. by destruct l.
-    apply elem_of_list_fmap. eexists (_, x). split => //. apply elem_of_map_to_list. by destruct l.
-  - rewrite /= /initial_prog. iApply type_call. iApply type_val. iApply type_val_context.
+  iModIntro. iExists NotStuck, _, (replicate (length thread_mains) (λ _, True%I)), _.
+  iSplitL "Hh Hf"; last first. 1: iSplitL.
+  - rewrite big_sepL2_fmap_l. iApply big_sepL2_replicate_2. iApply (big_sepL_impl with "Hmains").
+    iIntros "!#" (? main ?); iDestruct 1 as (P) "[Hmain HP]".
+    iApply wp_to_typed_stmt => //.
+    rewrite /= /initial_prog. iApply type_call. iApply type_val. iApply type_val_context.
     iExists (t2mt (main @ function_ptr (main_type P))) => /=. iFrame => /=.
     iApply type_callable. iExists () => /=. iFrame. iIntros (v []) "Hv _" => /=.
     simpl_subst. iApply type_return. iApply type_val. iApply type_void.
     iIntros (_). by iExists ().
-  - done.
-  - iIntros (?). iMod (fupd_intro_mask' _ ∅) as "_" => //.
+  - iFrame. iIntros (?? _ ?) "_ _ _". iApply fupd_mask_weaken => //. iPureIntro. by eauto.
+  - iFrame. iPureIntro => /=. clear. move => l Hl i. rewrite lookup_fmap fmap_None.
+    destruct (gs !! (l +ₗ i)) as [x|] eqn:? => //. exfalso. apply: Hl.
+    apply elem_of_list_to_set. apply elem_of_list_fmap. exists (l +ₗ i). split. by destruct l.
+    apply elem_of_list_fmap. eexists (_, x). split => //. apply elem_of_map_to_list. by destruct l.
 Qed.
 
 (** * Helper functions for using the adequacy lemma *)
