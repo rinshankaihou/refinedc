@@ -655,7 +655,22 @@ and translate_call : type a. a call_place -> loc -> bool -> ail_expr
                   (Call_atomic_store(layout, e1, e2), List.concat [l1; l2])
             end
         | AilBatomic(AilBAload)                    ->
-            not_impl loc "call to builtin atomic (load)"
+            let (e1, e2) =
+              match es with
+              | [e1; e2] -> (e1, e2)
+              | _        -> assert false
+            in
+            let layout = ptr_layout_of e1 in
+            let (e1, l1) = translate_expr true None e1 in
+            let mo = memory_order_of_expr e2 in
+            if mo <> Cmm_csem.Seq_cst then
+              Panic.panic loc "Only the Seq_cst memory order is supported.";
+            begin
+              ignore (e1, l1, layout);
+              match place with
+              | In_Expr -> (Call_atomic_expr(Deref(true, layout, e1)), l1)
+              | In_Stmt -> not_impl loc "call to builtin atomic (load)"
+            end
         | AilBatomic(AilBAexchange)                ->
             not_impl loc "call to builtin atomic (exchange)"
         | AilBatomic(AilBAcompare_exchange_strong) ->
