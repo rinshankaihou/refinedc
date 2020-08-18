@@ -126,6 +126,15 @@ Section function.
       iApply fupd_wps.
       by iApply ("Hr" with "Hv HPr").
   Qed.
+
+
+  Lemma subsume_fnptr v l1 l2 (fnty1 fnty2 : A → fn_params) T:
+    ⌜l1 = l2⌝ ∗ ⌜fnty1 = fnty2⌝ ∗ T -∗
+    subsume (v ◁ᵥ l1 @ function_ptr fnty1) (v ◁ᵥ l2 @ function_ptr fnty2) T.
+  Proof. iIntros "(->&->&$) $". Qed.
+  Global Instance subsume_fnptr_inst v l1 l2 (fnty1 fnty2 : A → fn_params):
+    Subsume (v ◁ᵥ l1 @ function_ptr fnty1)%I (v ◁ᵥ l2 @ function_ptr fnty2)%I :=
+    λ T, i2p (subsume_fnptr v l1 l2 fnty1 fnty2 T).
 End function.
 
 Notation "'fn(∀' x ':' A ';' T1 ',' .. ',' TN ';' Pa ')' '→' '∃' y ':' B ',' rty ';' Pr" :=

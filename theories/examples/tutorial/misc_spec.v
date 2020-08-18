@@ -152,6 +152,21 @@ Section spec.
   Definition type_of_free :=
     fn(∀ (s, p, ly) : (gmultiset layout) * loc * layout; (p @ (&own (s @ (chunks_t)))), (&own (uninit (ly))), ((ly.(ly_size)) @ (int (size_t))); ⌜layout_of struct_chunk ⊑ ly⌝)
       → ∃ () : (), (void); (p ◁ₗ (({[ly]} ⊎ s) @ (chunks_t))).
+
+  (* Specifications for function [fork]. *)
+  Definition type_of_fork :=
+    fn(∀ (ty, P) : type * (iProp Σ); (function_ptr (fn(∀ () : (); &own ty; P) → ∃ () : (), void; True)), (&own (ty)); (P))
+      → ∃ () : (), (void); True.
+
+  (* Specifications for function [test_thread_safe_alloc_fork_fn]. *)
+  Definition type_of_test_thread_safe_alloc_fork_fn :=
+    fn(∀ () : (); (&own (tyexists (λ n : nat, n @ (int (size_t))))); (∃ lid : gname, initialized "lock" lid ∗ initialized "data" lid))
+      → ∃ () : (), (void); True.
+
+  (* Specifications for function [test_thread_safe_alloc]. *)
+  Definition type_of_test_thread_safe_alloc :=
+    fn(∀ lid : gname; (initialized "lock" lid) ∗ (initialized "data" lid) ∗ (global_with_type "param" Own (uninit size_t)))
+      → ∃ () : (), (void); True.
 End spec.
 
 Typeclasses Opaque alloc_data_rec.

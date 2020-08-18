@@ -120,6 +120,29 @@ Section code.
   Definition loc_122 : location_info := LocationInfo file_0 66 16 66 30.
   Definition loc_123 : location_info := LocationInfo file_0 62 18 62 22.
   Definition loc_124 : location_info := LocationInfo file_0 62 18 62 22.
+  Definition loc_129 : location_info := LocationInfo file_0 88 2 88 24.
+  Definition loc_130 : location_info := LocationInfo file_0 89 2 89 30.
+  Definition loc_131 : location_info := LocationInfo file_0 89 2 89 19.
+  Definition loc_132 : location_info := LocationInfo file_0 89 2 89 19.
+  Definition loc_133 : location_info := LocationInfo file_0 89 20 89 28.
+  Definition loc_134 : location_info := LocationInfo file_0 89 20 89 28.
+  Definition loc_135 : location_info := LocationInfo file_0 89 21 89 28.
+  Definition loc_136 : location_info := LocationInfo file_0 89 21 89 28.
+  Definition loc_137 : location_info := LocationInfo file_0 88 20 88 23.
+  Definition loc_138 : location_info := LocationInfo file_0 88 20 88 23.
+  Definition loc_143 : location_info := LocationInfo file_0 98 2 98 12.
+  Definition loc_144 : location_info := LocationInfo file_0 99 2 99 47.
+  Definition loc_145 : location_info := LocationInfo file_0 100 2 100 23.
+  Definition loc_146 : location_info := LocationInfo file_0 100 2 100 19.
+  Definition loc_147 : location_info := LocationInfo file_0 100 2 100 19.
+  Definition loc_148 : location_info := LocationInfo file_0 100 20 100 21.
+  Definition loc_149 : location_info := LocationInfo file_0 99 2 99 6.
+  Definition loc_150 : location_info := LocationInfo file_0 99 2 99 6.
+  Definition loc_151 : location_info := LocationInfo file_0 99 7 99 37.
+  Definition loc_152 : location_info := LocationInfo file_0 99 39 99 45.
+  Definition loc_153 : location_info := LocationInfo file_0 99 40 99 45.
+  Definition loc_154 : location_info := LocationInfo file_0 98 2 98 7.
+  Definition loc_155 : location_info := LocationInfo file_0 98 10 98 11.
 
   (* Definition of struct [atomic_flag]. *)
   Program Definition struct_atomic_flag := {|
@@ -292,6 +315,51 @@ Section code.
       <[ "continue7" :=
         locinfo: loc_67 ;
         Goto "#1"
+      ]> $∅
+    )%E
+  |}.
+
+  (* Definition of function [test_thread_safe_alloc_fork_fn]. *)
+  Definition impl_test_thread_safe_alloc_fork_fn (thread_safe_alloc : loc): function := {|
+    f_args := [
+      ("num", LPtr)
+    ];
+    f_local_vars := [
+      ("num_int", LPtr)
+    ];
+    f_init := "#0";
+    f_code := (
+      <[ "#0" :=
+        "num_int" <-{ LPtr }
+          LocInfoE loc_137 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_137 (use{LPtr} (LocInfoE loc_138 ("num"))))) ;
+        locinfo: loc_130 ;
+        "_" <- LocInfoE loc_132 (thread_safe_alloc) with
+          [ LocInfoE loc_133 (use{it_layout size_t} (LocInfoE loc_135 (!{LPtr} (LocInfoE loc_136 ("num_int"))))) ] ;
+        Return (VOID)
+      ]> $∅
+    )%E
+  |}.
+
+  (* Definition of function [test_thread_safe_alloc]. *)
+  Definition impl_test_thread_safe_alloc (param thread_safe_alloc fork test_thread_safe_alloc_fork_fn : loc): function := {|
+    f_args := [
+    ];
+    f_local_vars := [
+    ];
+    f_init := "#0";
+    f_code := (
+      <[ "#0" :=
+        locinfo: loc_143 ;
+        LocInfoE loc_154 (param) <-{ it_layout size_t }
+          LocInfoE loc_155 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_155 (i2v 5 i32))) ;
+        locinfo: loc_144 ;
+        "_" <- LocInfoE loc_150 (fork) with
+          [ LocInfoE loc_151 (test_thread_safe_alloc_fork_fn) ;
+          LocInfoE loc_152 (&(LocInfoE loc_153 (param))) ] ;
+        locinfo: loc_145 ;
+        "_" <- LocInfoE loc_147 (thread_safe_alloc) with
+          [ LocInfoE loc_148 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_148 (i2v 5 i32))) ] ;
+        Return (VOID)
       ]> $∅
     )%E
   |}.

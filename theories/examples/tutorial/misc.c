@@ -72,3 +72,30 @@ void free(chunks_t* list, void *data, size_t size) {
   entry->next = *cur;
   *cur = entry;
 }
+
+/** Testing the thread-safety of thread_safe alloc */
+
+// RefinedC does not have forking built-in at the moment, so we axiomatize it using the following [fork] function
+typedef void (*fork_fun)(void *);
+[[rc::parameters("ty : type", "P : {iProp Σ}")]]
+[[rc::args("function_ptr<{fn(∀ () : (); &own ty; P) → ∃ () : (), void; True}>", "&own<ty>")]]
+[[rc::requires("[P]")]]
+void fork(fork_fun fn, void *arg);
+
+[[rc::args("&own<∃ n : nat. n @ int<size_t>>")]]
+[[rc::requires("[∃ lid : gname, initialized \"lock\" lid ∗ initialized \"data\" lid]")]]
+void test_thread_safe_alloc_fork_fn(void *num) {
+  size_t *num_int = num;
+  thread_safe_alloc(*num_int);
+}
+
+size_t param;
+
+[[rc::parameters("lid : gname")]]
+[[rc::requires("[initialized \"lock\" lid]", "[initialized \"data\" lid]")]]
+[[rc::requires("[global_with_type \"param\" Own (uninit size_t)]")]]
+void test_thread_safe_alloc() {
+  param = 5;
+  fork(test_thread_safe_alloc_fork_fn, &param);
+  thread_safe_alloc(5);
+}
