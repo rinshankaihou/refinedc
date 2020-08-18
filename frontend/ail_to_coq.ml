@@ -125,7 +125,7 @@ let layout_of : bool -> c_type -> Coq_ast.layout = fun fa c_ty ->
     | Array(_,_) when fa  -> LPtr
     | Array(c_ty,None )   -> LPtr
     | Array(c_ty,Some(n)) -> LArray(layout_of c_ty, Z.to_string n)
-    | Function(_,_,_,_)   -> not_impl loc "layout_of (Function)"
+    | Function(_,_,_,_)   -> LPtr
     | Pointer(_,_)        -> LPtr
     | Atomic(c_ty)        -> layout_of c_ty
     | Struct(sym)         -> LStruct(sym_to_str sym, false)
@@ -567,7 +567,16 @@ let rec translate_expr : bool -> op_type option -> ail_expr -> expr * calls =
     | AilEarray_decay(e)           ->
         let (e, l) = translate_expr true None e in
         (locate (AddrOf(e)), l)
-    | AilEfunction_decay(e)        -> not_impl loc "expr function_decay"
+    | AilEfunction_decay(e)        ->
+        let res =
+          match e with
+          | AnnotatedExpression(_, _, _, AilEident(sym)) ->
+              let fun_id = sym_to_str sym in
+              Hashtbl.add used_functions fun_id ();
+              (locate (Var(Some(fun_id), true)), [])
+          | _                                            ->
+              not_impl loc "expr function_decay (not an ident)"
+        in res
   in
   match (goal_ty, res_ty) with
   | (None         , _           )
