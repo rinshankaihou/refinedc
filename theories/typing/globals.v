@@ -69,6 +69,29 @@ Section globals.
     SimplifyGoal (initialized name x) (Some 0%N) :=
     λ T, i2p (simplify_initialized_goal A x name l ty T).
 
+
+  (** Subsumption *)
+  Definition FindInitialized (name : string) (A : Type) :=
+  {| fic_A := A; fic_Prop x:= (initialized name x); |}.
+  Global Instance related_to_initialized name A (x : A) : RelatedTo (initialized name x) :=
+    {| rt_fic := FindInitialized name A |}.
+
+  Lemma find_in_context_initialized name A T:
+    (∃ x, initialized name x ∗ T x) -∗
+    find_in_context (FindInitialized name A) T.
+  Proof. iDestruct 1 as (x) "[Hinit HT]". iExists _. iFrame. Qed.
+  Global Instance find_in_context_initialized_inst name A :
+    FindInContext (FindInitialized name A) 0%nat :=
+    λ T, i2p (find_in_context_initialized name A T).
+
+  Lemma subsume_initialized name A (x1 x2 : A) T:
+    ⌜x1 = x2⌝ ∗ T -∗
+    subsume (initialized name x1) (initialized name x2) T.
+  Proof. iIntros "[-> $] $". Qed.
+  Global Instance subsume_initialized_inst name A (x1 x2 : A):
+    Subsume (initialized name x1) (initialized name x2) :=
+    λ T, i2p (subsume_initialized name A x1 x2 T).
+
 End globals.
 
 Typeclasses Opaque initialized global_with_type.
