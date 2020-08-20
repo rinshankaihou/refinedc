@@ -352,7 +352,7 @@ Section programs.
     typed_bin_op v1 (v1 ◁ᵥ b1 @ boolean it1) v2 (v2 ◁ᵥ n2 @ int it2) op (IntOp it3) (IntOp it4) T.
   Proof. iIntros "HT". iApply "HT". Qed.
   Global Instance type_binop_bool_int_inst it1 it2 it3 it4 v1 b1 v2 n2 op:
-    TypedBinOp v1 (v1 ◁ᵥ b1 @ boolean it1)%I v2 (v2 ◁ᵥ n2 @ int it2)%I op (IntOp it3) (IntOp it4) :=
+    TypedBinOpVal v1 (b1 @ boolean it1)%I v2 (n2 @ int it2)%I op (IntOp it3) (IntOp it4) :=
     λ T, i2p (type_binop_bool_int it1 it2 it3 it4 v1 b1 v2 n2 T op).
 
   Lemma type_binop_int_bool it1 it2 it3 it4 v1 b1 v2 n2 T op:
@@ -360,7 +360,7 @@ Section programs.
     typed_bin_op v1 (v1 ◁ᵥ n2 @ int it2) v2 (v2 ◁ᵥ b1 @ boolean it1) op (IntOp it3) (IntOp it4) T.
   Proof. iIntros "HT". iApply "HT". Qed.
   Global Instance type_binop_int_bool_inst it1 it2 it3 it4 v1 b1 v2 n2 op:
-    TypedBinOp v1 (v1 ◁ᵥ n2 @ int it2)%I v2 (v2 ◁ᵥ b1 @ boolean it1)%I op (IntOp it3) (IntOp it4) :=
+    TypedBinOpVal v1 (n2 @ int it2)%I v2 (b1 @ boolean it1)%I op (IntOp it3) (IntOp it4) :=
     λ T, i2p (type_binop_int_bool it1 it2 it3 it4 v1 b1 v2 n2 T op).
 
 End programs.
