@@ -160,8 +160,10 @@ let rec pp_expr : Coq_ast.expr pp = fun ff e ->
                 pp_op_type ty1 pp_op_type ty2 pp_expr e2
         end
     | Deref(atomic,lay,e)           ->
-        if atomic then panic_no_pos "Deref on atomics not supported.";
-        pp "!{%a} (%a)" (pp_layout false) lay pp_expr e
+        if atomic then
+          pp "!{%a, ScOrd} (%a)" (pp_layout false) lay pp_expr e
+        else
+          pp "!{%a} (%a)" (pp_layout false) lay pp_expr e
     | CAS(ty,e1,e2,e3)              ->
         pp "CAS@ (%a)@ (%a)@ (%a)@ (%a)" pp_op_type ty
           pp_expr e1 pp_expr e2 pp_expr e3
