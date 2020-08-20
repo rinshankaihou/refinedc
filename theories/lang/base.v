@@ -74,6 +74,15 @@ Existing Class TCOneIsSome.
 Global Existing Instance tc_one_is_some_left.
 Global Existing Instance tc_one_is_some_right.
 
+Inductive TCOneIsSome3 {A} : option A → option A → option A → Prop :=
+| tc_one_is_some3_left n1 o2 o3 : TCOneIsSome3 (Some n1) o2 o3
+| tc_one_is_some3_middle o1 n2 o3 : TCOneIsSome3 o1 (Some n2) o3
+| tc_one_is_some3_right o1 o2 n3 : TCOneIsSome3 o1 o2 (Some n3).
+Existing Class TCOneIsSome3.
+Global Existing Instance tc_one_is_some3_left.
+Global Existing Instance tc_one_is_some3_middle.
+Global Existing Instance tc_one_is_some3_right.
+
 Lemma take_elem_of {A} (x : A) n l:
   x ∈ take n l ↔ ∃ i, (i < n)%nat ∧ l !! i = Some x.
 Proof.

@@ -80,6 +80,7 @@ End bool.
 Section programs.
   Context `{!typeG Σ}.
 
+  (*** int *)
   Lemma type_val_int n it T:
     (⌜it_in_range it n⌝ ∗ T (t2mt (n @ (int it)))) -∗ typed_value (i2v n it) T.
   Proof. iDestruct 1 as ([v Hv]%val_of_int_is_some) "HT". iExists  _. iFrame. by rewrite /i2v Hv. Qed.
@@ -264,6 +265,7 @@ Section programs.
     TypedUnOpVal v (n @ int it1)%I (CastOp (IntOp it2)) (IntOp it1) :=
     λ T, i2p (type_cast_int n it1 it2 v T).
 
+  (*** bool *)
   Lemma type_val_bool b T:
     (T (t2mt (b @ boolean bool_it))) -∗ typed_value (val_of_bool b) T.
   Proof. iIntros "HT". iExists _. iFrame. by destruct b. Qed.
@@ -327,6 +329,7 @@ Section programs.
     TypedUnOpVal v (b @ boolean it1)%I (CastOp (IntOp it2)) (IntOp it1) :=
     λ T, i2p (type_cast_bool b it1 it2 v T).
 
+  (*** int <-> bool *)
   Lemma subsume_int_bool_place l β n b it T:
     ⌜n = Z_of_bool b⌝ ∗ T -∗
     subsume (l ◁ₗ{β} n @ int it) (l ◁ₗ{β} b @ boolean it) T.
@@ -342,6 +345,23 @@ Section programs.
   Global Instance subsume_int_bool_val_inst v n b it:
     SubsumeVal v (n @ int it) (b @ boolean it) :=
     λ T, i2p (subsume_int_bool_val v n b it T).
+
+
+  Lemma type_binop_bool_int it1 it2 it3 it4 v1 b1 v2 n2 T op:
+    typed_bin_op v1 (v1 ◁ᵥ (Z_of_bool b1) @ int it1) v2 (v2 ◁ᵥ n2 @ int it2) op (IntOp it3) (IntOp it4) T -∗
+    typed_bin_op v1 (v1 ◁ᵥ b1 @ boolean it1) v2 (v2 ◁ᵥ n2 @ int it2) op (IntOp it3) (IntOp it4) T.
+  Proof. iIntros "HT". iApply "HT". Qed.
+  Global Instance type_binop_bool_int_inst it1 it2 it3 it4 v1 b1 v2 n2 op:
+    TypedBinOp v1 (v1 ◁ᵥ b1 @ boolean it1)%I v2 (v2 ◁ᵥ n2 @ int it2)%I op (IntOp it3) (IntOp it4) :=
+    λ T, i2p (type_binop_bool_int it1 it2 it3 it4 v1 b1 v2 n2 T op).
+
+  Lemma type_binop_int_bool it1 it2 it3 it4 v1 b1 v2 n2 T op:
+    typed_bin_op v1 (v1 ◁ᵥ n2 @ int it2) v2 (v2 ◁ᵥ (Z_of_bool b1) @ int it1) op (IntOp it3) (IntOp it4) T -∗
+    typed_bin_op v1 (v1 ◁ᵥ n2 @ int it2) v2 (v2 ◁ᵥ b1 @ boolean it1) op (IntOp it3) (IntOp it4) T.
+  Proof. iIntros "HT". iApply "HT". Qed.
+  Global Instance type_binop_int_bool_inst it1 it2 it3 it4 v1 b1 v2 n2 op:
+    TypedBinOp v1 (v1 ◁ᵥ n2 @ int it2)%I v2 (v2 ◁ᵥ b1 @ boolean it1)%I op (IntOp it3) (IntOp it4) :=
+    λ T, i2p (type_binop_int_bool it1 it2 it3 it4 v1 b1 v2 n2 T op).
 
 End programs.
 Typeclasses Opaque int_inner_type boolean_inner_type.

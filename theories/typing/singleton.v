@@ -60,13 +60,13 @@ Section singleton_val.
     ⌜ty2.(ty_layout) = ty.(ty_layout)⌝ ∗ (∀ v', v ◁ᵥ ty -∗ v' ◁ᵥ ty2 -∗ T (singleton_val ty.(ty_layout) v)) -∗
     typed_write_end a v ty l2 Own ty2 T.
   Proof.
-    iDestruct 1 as (Heq) "HT". iIntros "Hl".
+    iDestruct 1 as (Heq) "HT". iIntros "Hl Hv".
     iDestruct (ty_aligned with "Hl") as %?.
     iDestruct (ty_deref with "Hl") as (v') "[Hl Hv']".
     iDestruct (ty_size_eq with "Hv'") as %?.
     iMod (fupd_intro_mask' _ (if a then ∅ else ⊤)) as "Hmask" => //. iModIntro.
     iSplitL "Hl". by iExists _; iFrame; rewrite -Heq.
-    iIntros "!# Hl Hv". iMod "Hmask". iModIntro.
+    iIntros "!# Hl". iMod "Hmask". iModIntro.
     iDestruct (ty_size_eq with "Hv") as %?.
     iExists _. iDestruct ("HT" with "Hv Hv'") as "$".
     iFrame. iPureIntro. split => //. congruence.
@@ -146,9 +146,9 @@ Section singleton_place.
         typed_write_end b v ty1 l β3 ty3 (λ ty', l ◁ₗ{β3} ty' -∗ T (singleton_place l))))).(i2p_P) -∗
     typed_write_end b v ty1 l β ty2 T.
   Proof.
-    iIntros "SH Hl". iDestruct (i2p_proof with "SH Hl") as ([β3 ty3]) "[Hl HP]".
-    iMod ("HP" with "Hl") as "[$ HP]". iIntros "!# !# Hl Hv".
-    iMod ("HP" with "Hl Hv") as (ty') "[Hl HT]". iModIntro. iExists _. iSplitR; last by iApply "HT". done.
+    iIntros "SH Hl Hv". iDestruct (i2p_proof with "SH Hl") as ([β3 ty3]) "[Hl HP]".
+    iMod ("HP" with "Hl Hv") as "[$ HP]". iIntros "!# !# Hl".
+    iMod ("HP" with "Hl") as (ty') "[Hl HT]". iModIntro. iExists _. iSplitR; last by iApply "HT". done.
   Qed.
   Global Instance typed_write_end_simpl_inst b v ty1 `{!Movable ty1} l β ty2 n `{!SimplifyHyp (l ◁ₗ{β} ty2) (Some n)}:
     TypedWriteEnd b v ty1 l β ty2 | 1000 :=

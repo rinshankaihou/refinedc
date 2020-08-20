@@ -122,15 +122,16 @@ Section judgements.
   Class TypedUnOpVal (v : val) (ty : type) `{!Movable ty} (o : un_op) (ot : op_type) : Type :=
     typed_un_op_val :> TypedUnOp v (v ◁ᵥ ty) o ot.
 
-  (* No corresponding typeclass as this should not be necessary often *)
   Definition typed_cas (ot : op_type) (v1 : val) (P1 : iProp Σ) (v2 : val) (P2 : iProp Σ) (v3 : val) (P3 : iProp Σ)  (T : val → mtype → iProp Σ) : iProp Σ :=
     (P1 -∗ P2 -∗ P3 -∗ typed_val_expr (CAS ot v1 v2 v3) T).
+  Class TypedCas (ot : op_type) (v1 : val) (P1 : iProp Σ) (v2 : val) (P2 : iProp Σ) (v3 : val) (P3 : iProp Σ) : Type :=
+    typed_cas_proof T : iProp_to_Prop (typed_cas ot v1 P1 v2 P2 v3 P3 T).
 
   (*** places *)
   Definition typed_write (atomic : bool) (e : expr) (v : val) (ty : type) `{!Movable ty} (T : iProp Σ) : iProp Σ :=
     let E := if atomic then ∅ else ⊤ in
     (∀ Φ,
-       (∀ (l : loc), (|={⊤, E}=> l↦|ty.(ty_layout)| ∗ ▷ (l ↦ v -∗ v ◁ᵥ ty ={E, ⊤}=∗ T)) -∗ Φ (val_of_loc l)) -∗
+       (∀ (l : loc), (v ◁ᵥ ty ={⊤, E}=∗ l↦|ty.(ty_layout)| ∗ ▷ (l ↦ v ={E, ⊤}=∗ T)) -∗ Φ (val_of_loc l)) -∗
        WP e {{ Φ }}).
 
   Definition typed_read (e : expr) (ly : layout) (T : val → mtype → iProp Σ) : iProp Σ :=
@@ -151,7 +152,7 @@ Section judgements.
 
   Definition typed_write_end (atomic : bool) (v1 : val) (ty1 : type) `{!Movable ty1} (l2 : loc) (β2 : own_state) (ty2 : type) (T : type → iProp Σ) : iProp Σ :=
     let E := if atomic then ∅ else ⊤ in
-    l2 ◁ₗ{β2} ty2 ={⊤, E}=∗ l2↦|ty1.(ty_layout)| ∗ ▷ (l2↦v1 -∗ v1 ◁ᵥ ty1 ={E, ⊤}=∗ ∃ ty3, l2 ◁ₗ{β2} ty3 ∗ T ty3).
+    l2 ◁ₗ{β2} ty2 -∗ v1 ◁ᵥ ty1 ={⊤, E}=∗ l2↦|ty1.(ty_layout)| ∗ ▷ (l2↦v1 ={E, ⊤}=∗ ∃ ty3, l2 ◁ₗ{β2} ty3 ∗ T ty3).
   Class TypedWriteEnd (atomic : bool) (v1 : val) (ty1 : type) `{!Movable ty1} (l2 : loc) (β2 : own_state) (ty2 : type) : Type :=
     typed_write_end_proof T : iProp_to_Prop (typed_write_end atomic v1 ty1 l2 β2 ty2 T).
 
@@ -537,6 +538,30 @@ Section typing.
     TypedUnOp v P op ot | 1000 :=
     λ T, i2p (typed_unop_simplify v P T n ot op).
 
+  Lemma typed_cas_simplify v1 P1 v2 P2 v3 P3 T ot o1 o2 o3 {SH1 : SimplifyHyp P1 o1} {SH2 : SimplifyHyp P2 o2} {SH3 : SimplifyHyp P3 o3}:
+    let G1 := (SH1 (find_in_context (FindValP v1) (λ P, typed_cas ot v1 P v2 P2 v3 P3 T))).(i2p_P) in
+    let G2 := (SH2 (find_in_context (FindValP v2) (λ P, typed_cas ot v1 P1 v2 P v3 P3 T))).(i2p_P) in
+    let G3 := (SH3 (find_in_context (FindValP v3) (λ P, typed_cas ot v1 P1 v2 P2 v3 P T))).(i2p_P) in
+    let min o1 o2 :=
+       match o1.1, o2.1 with
+     | Some n1, Some n2 => if (n2 ?= n1)%N is Lt then o2 else o1
+     | Some n1, _ => o1
+     | _, _ => o2
+       end in
+    let G := (min (o1, G1) (min (o2, G2) (o3, G3))).2 in
+    G -∗ typed_cas ot v1 P1 v2 P2 v3 P3 T.
+  Proof.
+    iIntros "Hs Hv1 Hv2 Hv3".
+    destruct o1 as [n1|], o2 as [n2|], o3 as [n3|] => //=; repeat case_match => /=.
+    all: try iDestruct (i2p_proof with "Hs Hv1") as (P) "[Hv Hsub]".
+    all: try iDestruct (i2p_proof with "Hs Hv2") as (P) "[Hv Hsub]".
+    all: try iDestruct (i2p_proof with "Hs Hv3") as (P) "[Hv Hsub]".
+    all: by simpl in *; iApply ("Hsub" with "[$] [$]").
+  Qed.
+  Global Instance typed_cas_simplify_inst v1 P1 v2 P2 v3 P3 ot o1 o2 o3 {SH1 : SimplifyHyp P1 o1} {SH2 : SimplifyHyp P2 o2} {SH3 : SimplifyHyp P3 o3} `{!TCOneIsSome3 o1 o2 o3} :
+    TypedCas ot v1 P1 v2 P2 v3 P3 | 1000 :=
+    λ T, i2p (typed_cas_simplify v1 P1 v2 P2 v3 P3 T ot o1 o2 o3).
+
   Lemma typed_annot_stmt_simplify A (a : A) l β ty T n {SH : SimplifyHyp (l ◁ₗ{β} ty) (Some n)}:
     (SH (find_in_context (FindLoc l) (λ '(β1, ty1),
        typed_annot_stmt a l β1 ty1 T))).(i2p_P) -∗
@@ -582,8 +607,8 @@ Section typing.
     wps_bind. iApply "He1". iIntros (l) "HT".
     iDestruct (ty_size_eq with "Hv") as %?.
     iApply wps_assign; rewrite ?val_to_of_loc //. destruct o; naive_solver.
-    iMod "HT" as "[$ HT]". destruct o; iIntros "!# !# Hl".
-    all: by iApply ("HT" with "Hl Hv").
+    iMod ("HT" with "Hv") as "[$ HT]". destruct o; iIntros "!# !# Hl".
+    all: by iApply ("HT" with "Hl").
   Qed.
 
   Lemma type_if {B} Q e s1 s2 fn ls (fr : B → _):
@@ -817,9 +842,9 @@ Section typing.
     iIntros (HT') "HT'". iIntros (Φ) "HΦ".
     iApply (HT' with "HT'"). iIntros (K l). iDestruct 1 as ([β1 ty1]) "[Hl HK]".
     iApply ("HK" with "Hl"). iIntros (l2 β2 ty2 typ R) "Hl' Hc He".
-    iApply "HΦ". iMod ("He" with "Hl'") as "[$ Hc2]". iModIntro.
-    iIntros "!# Hl Hv".
-    iMod ("Hc2" with "Hl Hv") as (ty3) "[Hl HT]".
+    iApply "HΦ". iIntros "Hv". iMod ("He" with "Hl' Hv") as "[$ Hc2]". iModIntro.
+    iIntros "!# Hl".
+    iMod ("Hc2" with "Hl") as (ty3) "[Hl HT]".
     iMod ("Hc" with "Hl") as "[? ?]". by iApply ("HT" with "[$]").
   Qed.
 
@@ -829,13 +854,13 @@ Section typing.
     ⌜ty2.(ty_layout) = ty.(ty_layout)⌝ ∗ (v ◁ᵥ ty -∗ T ty) -∗
     typed_write_end a v ty l2 Own ty2 T.
   Proof.
-    iDestruct 1 as (Heq) "HT". iIntros "Hl".
+    iDestruct 1 as (Heq) "HT". iIntros "Hl #Hv".
     iDestruct (ty_aligned with "Hl") as %?.
     iDestruct (ty_deref with "Hl") as (v') "[Hl Hv']".
     iDestruct (ty_size_eq with "Hv'") as %?.
     iMod (fupd_intro_mask' _ (if a then ∅ else ⊤)) as "Hmask" => //. iModIntro.
     iSplitL "Hl". by iExists _; iFrame; rewrite -Heq.
-    iIntros "!# Hl #Hv". iMod "Hmask". iModIntro.
+    iIntros "!# Hl". iMod "Hmask". iModIntro.
     iDestruct (ty_size_eq with "Hv") as %?.
     iExists _. iDestruct ("HT" with "Hv") as "$".
     iApply (ty_ref with "[] Hl Hv"). by rewrite -Heq.

@@ -48,6 +48,7 @@ Ltac convert_to_i2p_tac P ::=
   | typed_read_end ?l ?β ?ty ?ly ?T => uconstr:(((_ : TypedReadEnd _ _ _ _) _).(i2p_proof))
   | typed_write_end ?a ?v1 ?ty1 ?l2 ?β2 ?ty2 ?T => uconstr:(((_ : TypedWriteEnd _ _ _ _ _ _) _).(i2p_proof))
   | typed_addr_of_end ?l ?β ?ty ?T => uconstr:(((_ : TypedAddrOfEnd _ _ _) _).(i2p_proof))
+  | typed_cas ?ot ?v1 ?P1 ?v2 ?P2 ?v3 ?P3 ?T => uconstr:(((_ : TypedCas _ _ _ _ _ _ _) _).(i2p_proof))
   | typed_annot_expr ?n ?a ?v ?ty ?T => uconstr:(((_ : TypedAnnotExpr _ _ _ _) _) .(i2p_proof))
   | typed_annot_stmt ?a ?l ?β ?ty ?T => uconstr:(((_ : TypedAnnotStmt _ _ _ _) _).(i2p_proof))
   end.

@@ -24,39 +24,10 @@ Section type.
   Definition spinlock_token (γ : lock_id) (l : list string) : iProp Σ :=
     ∃ s : gset string, ⌜l ≡ₚ elements s⌝ ∗ own γ (● GSet s).
 
-  Program Definition spinlock (γ : lock_id) : type := {|
-    ty_own β l := (match β return _ with
-                  | Own => ∃ b, l ◁ₗ struct struct_spinlock [b @ boolean u8] ∗ if b then True else spinlock_token γ []
-                  | Shr => ⌜l at{struct_spinlock}ₗ "lock" `has_layout_loc` bool_it⌝ ∗
-                          l ◁ₗ{Shr} struct struct_spinlock [ singleton_place (l at{struct_spinlock}ₗ "lock")] ∗
-                          inv lockN (∃ b, l at{struct_spinlock}ₗ "lock" ↦ i2v (Z_of_bool b) u8 ∗
-                                            if b then True else spinlock_token γ [])
-                  end)%I
-  |}.
-  Next Obligation.
-    iIntros (γ l E HE) => /=. rewrite /ty_own/=. iDestruct 1 as (b) "[[$ [% [Hs _]]] Hown]".
-    iDestruct (ty_aligned with "Hs") as %?. iSplitR => //. iSplitR => //.
-    iApply inv_alloc. iIntros "!#". iExists b. iFrame.
-    (* TODO: don't unfold here *)
-    rewrite /boolean/boolean_inner_type/int_inner_type.
-    iDestruct "Hs" as (v Hv ?) "Hv" => /=. rewrite /GetMemberLoc/= /val_of_bool/i2v Hv. iFrame.
-  Qed.
+  Definition spinlock (γ : lock_id) : type :=
+    struct struct_spinlock [atomic_bool bool_it True (spinlock_token γ [])].
 
-  Global Program Instance movable_spinlock γ : Movable (spinlock γ) := {|
-    ty_layout := u8;
-    ty_own_val v := (∃ b, v ◁ᵥ struct struct_spinlock [b @ boolean u8] ∗ if b then True else spinlock_token γ [])%I;
-  |}.
-  Next Obligation. iIntros (γ l) "?". iPureIntro. by apply has_layout_loc_1. Qed.
-  Next Obligation. iIntros (γ v). iDestruct 1 as (b) "[Hs _]". by iDestruct (ty_size_eq with "Hs") as %?. Qed.
-  Next Obligation.
-    iIntros (γ l). iDestruct 1 as (b) "[Hs ?]". iDestruct (ty_deref with "Hs") as (v) "[? ?]".
-    eauto with iFrame.
-  Qed.
-  Next Obligation.
-    iIntros (γ l v ?) "Hl". iDestruct 1 as (b) "[Hs ?]". iDestruct (ty_ref with "[] Hl Hs") as "?" => //.
-    iExists _. iFrame.
-  Qed.
-
+  Global Program Instance movable_spinlock γ : Movable (spinlock γ) := ltac:(apply: movable_struct).
 
   Program Definition spinlocked_ex {A} (γ : lock_id) (n : string) (x : A) (ty : A → type) : type := {|
     ty_own β l := (match β return _ with
