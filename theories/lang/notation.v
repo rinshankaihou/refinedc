@@ -36,6 +36,10 @@ Notation "e1 /{ ot1 , ot2 } e2" := (BinOp DivOp ot1 ot2 e1%E e2%E)
   (at level 70, format "e1  /{ ot1 ,  ot2 }  e2") : expr_scope.
 Notation "e1 %{ ot1 , ot2 } e2" := (BinOp ModOp ot1 ot2 e1%E e2%E)
   (at level 70, format "e1  %{ ot1 ,  ot2 }  e2") : expr_scope.
+Notation "e1 <<{ ot1 , ot2 } e2" := (BinOp ShlOp ot1 ot2 e1%E e2%E)
+  (at level 70, format "e1  <<{ ot1 ,  ot2 }  e2") : expr_scope.
+Notation "e1 >>{ ot1 , ot2 } e2" := (BinOp ShrOp ot1 ot2 e1%E e2%E)
+  (at level 70, format "e1  >>{ ot1 ,  ot2 }  e2") : expr_scope.
 (* The offset must be evaluated first for the type system to work, thus the order is switched here. *)
 Notation "e1 'at_offset{' ly , ot1 , ot2 } e2" := (BinOp (PtrOffsetOp ly) ot2 ot1 e2%E e1%E)
   (at level 70, format "e1  at_offset{ ly ,  ot1 ,  ot2 }  e2") : expr_scope.

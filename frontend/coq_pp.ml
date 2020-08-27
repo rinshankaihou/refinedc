@@ -113,8 +113,8 @@ let pp_bin_op : Coq_ast.bin_op pp = fun ff op ->
   | AndOp       -> "..." (* TODO *)
   | OrOp        -> "..." (* TODO *)
   | XorOp       -> "..." (* TODO *)
-  | ShlOp       -> "..." (* TODO *)
-  | ShrOp       -> "..." (* TODO *)
+  | ShlOp       -> "<<"
+  | ShrOp       -> ">>"
   | EqOp        -> "="
   | NeOp        -> "!="
   | LtOp        -> "<"
