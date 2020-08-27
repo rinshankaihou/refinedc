@@ -51,9 +51,13 @@ Class RelatedTo {Σ} (pat : iProp Σ) : Type := {
 Arguments rt_fic {_ _} _.
 
 (** * [IntroPersistent] *)
-Class IntroPersistent {Σ} (P : iProp Σ) := {
-  ip_persistent :> Persistent P
+(** ** Definition *)
+Class IntroPersistent {Σ} (P P' : iProp Σ) := {
+  ip_persistent : P -∗ □ P'
 }.
+(** ** Instances *)
+Global Instance intro_persistent_intuit Σ (P : iProp Σ) : IntroPersistent (□ P) P.
+Proof. constructor. iIntros "$". Qed.
 
 (** * [accu] *)
 Definition accu {Σ} (f : iProp Σ → iProp Σ) : iProp Σ :=

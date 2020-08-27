@@ -668,7 +668,18 @@ and translate_call : type a. a call_place -> loc -> bool -> ail_expr
             begin
               ignore (e1, l1, layout);
               match place with
-              | In_Expr -> (Call_atomic_expr(Deref(true, layout, e1)), l1)
+              | In_Expr ->
+                 let e1 =
+                   match e1.elt with
+                   | AddrOf(e) -> e
+                   | _         -> forbidden loc "atomic load whose RHS is \
+                                                 not of the form [&e]"
+                 in
+                 let gen =
+                   if lval then Deref(true, layout, e1)
+                   else Use(true, layout, e1)
+                 in
+                 (Call_atomic_expr(gen), l1)
               | In_Stmt -> not_impl loc "call to builtin atomic (load)"
             end
         | AilBatomic(AilBAexchange)                ->

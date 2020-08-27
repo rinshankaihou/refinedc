@@ -40,6 +40,10 @@ Instance cas_atomic s ot (v1 v2 v3 : val) : Atomic s (CAS ot v1 v2 v3).
 Proof. solve_atomic. Qed.
 Instance skipe_atomic s (v : val) : Atomic s (SkipE v).
 Proof. solve_atomic. Qed.
+Instance deref_atomic s (l : loc) ly : Atomic s (Deref ScOrd ly l).
+Proof. solve_atomic. Qed.
+Instance use_atomic s (l : loc) ly : Atomic s (Use ScOrd ly l).
+Proof. rewrite /Use. solve_atomic. Qed.
 
 (*** Lifting of expressions *)
 
@@ -90,28 +94,37 @@ Proof.
   iIntros "!#" (v h). rewrite Hop. iIntros (?). subst. by iApply "HΦ".
 Qed.
 
-Lemma wp_deref v Φ vl l ly q E:
+Lemma wp_deref v Φ vl l ly q E o:
+  o = ScOrd ∨ o = Na1Ord →
   val_to_loc vl = Some l →
   l `has_layout_loc` ly →
   v `has_layout_val` ly →
-  l↦{q}v -∗ ▷ (l ↦{q} v -∗ Φ v) -∗ WP !{ly} (Val vl) @ E {{ Φ }}.
+  l↦{q}v -∗ ▷ (l ↦{q} v -∗ Φ v) -∗ WP !{ly, o} (Val vl) @ E {{ Φ }}.
 Proof.
-  iIntros (Hl Hll Hlv) "Hmt HΦ".
+  iIntros (Ho Hl Hll Hlv) "Hmt HΦ".
   iApply wp_lift_head_step; auto.
   iIntros ([h ub fn] ???) "(%&Hhctx&Hfctx)".
-  iMod (heap_read_na with "Hhctx Hmt") as "(% & Hσ & Hσclose)" => //.
-  iMod (fupd_intro_mask' _ ∅) as "Hclose"; first set_solver. iModIntro.
-  iSplit; first by eauto 7 using DerefS.
-  iIntros "!#" (e2 σ2 efs Hst). inv_expr_step. iMod "Hclose" as "$". iModIntro. unfold end_st, end_expr.
-  have <- : (v = v') by apply: heap_at_inj_val.
-  iFrame => /=. iSplit; first by eauto 7 using block_used_agree_heap_upd.
-  iApply wp_lift_atomic_head_step_no_fork; auto.
-  iIntros ([h2 fn2] ???) "(%&Hhctx&Hfctx)". iMod ("Hσclose" with "Hhctx") as (?) "(Hσ & Hv)".
-  iModIntro; iSplit; first by eauto 7 using DerefS.
-  iIntros "!#" (e2 σ2 efs Hst) "!#". inv_expr_step.
-  have <- : (v = v'0) by apply: heap_at_inj_val.
-  iFrame. iSplitR => //=. iSplit; first by eauto 7 using block_used_agree_heap_upd.
-  by iApply "HΦ".
+  destruct o; try by destruct Ho.
+  - iMod (fupd_intro_mask' _ ∅) as "Hclose"; first set_solver. iModIntro.
+    iDestruct (heap_mapsto_lookup_q (λ st, ∃ n, st = RSt n) with "Hhctx Hmt") as %Hat. naive_solver.
+    iSplit; first by eauto 7 using DerefS.
+    iIntros "!#" (e2 σ2 efs Hst). inv_expr_step. iMod "Hclose" as "$". iModIntro. unfold end_st, end_expr.
+    have <- : (v = v') by apply: heap_at_inj_val.
+    rewrite /heap_fmap/=. erewrite heap_upd_heap_at_id => //.
+    iFrame. iSplit => //. iApply @wp_value. by iApply "HΦ".
+  - iMod (heap_read_na with "Hhctx Hmt") as "(% & Hσ & Hσclose)" => //.
+    iMod (fupd_intro_mask' _ ∅) as "Hclose"; first set_solver. iModIntro.
+    iSplit; first by eauto 7 using DerefS.
+    iIntros "!#" (e2 σ2 efs Hst). inv_expr_step. iMod "Hclose" as "$". iModIntro. unfold end_st, end_expr.
+    have <- : (v = v') by apply: heap_at_inj_val.
+    iFrame => /=. iSplit; first by eauto 7 using block_used_agree_heap_upd.
+    iApply wp_lift_atomic_head_step_no_fork; auto.
+    iIntros ([h2 fn2] ???) "(%&Hhctx&Hfctx)". iMod ("Hσclose" with "Hhctx") as (?) "(Hσ & Hv)".
+    iModIntro; iSplit; first by eauto 7 using DerefS.
+    iIntros "!#" (e2 σ2 efs Hst) "!#". inv_expr_step.
+    have <- : (v = v'0) by apply: heap_at_inj_val.
+    iFrame. iSplitR => //=. iSplit; first by eauto 7 using block_used_agree_heap_upd.
+      by iApply "HΦ".
 Qed.
 
 Lemma wp_cas_fail vl1 vl2 vd vo ve z1 z2 Φ l1 l2 it q E:

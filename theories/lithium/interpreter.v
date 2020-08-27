@@ -83,6 +83,16 @@ Section coq_tactics.
     iIntros "HΔ".  iSplit => //. by iApply HΔ.
   Qed.
 
+  Lemma tac_do_intro_intuit_sep Δ (P Q : iProp Σ) :
+    envs_entails (envs_clear_spatial Δ) (P ∗ True) → envs_entails Δ Q → envs_entails Δ (□ P ∗ Q).
+  Proof.
+    rewrite envs_entails_eq => HP HQ. iIntros "Henv".
+    iSplit.
+    - iDestruct (envs_clear_spatial_sound with "Henv") as "[#Henv _]".
+      iModIntro. iDestruct (HP with "Henv") as "[$ _]".
+    - by iApply HQ.
+  Qed.
+
   (* TODO: have a generic super intros which does simplification along
   the awy in an efficient manner and which subsumes SimplifyHypPlace, SimplifyHypVal and SimplImpl*)
   Lemma tac_do_intro i (P : iProp Σ) T Δ o {SH:SimplifyHyp P o} :
@@ -104,20 +114,21 @@ Section coq_tactics.
     all: by iDestruct (HP with "Henv") as "$".
   Qed.
 
-  Lemma tac_do_intro_intuit i (P : iProp Σ) T Δ o `{!IntroPersistent P} {SH:SimplifyHyp P o} :
-    match o, envs_app true (Esnoc Enil i P) Δ with
+  Lemma tac_do_intro_intuit i (P P' : iProp Σ) T Δ o `{!IntroPersistent P P'} {SH:SimplifyHyp P o} :
+    match o, envs_app true (Esnoc Enil i P') Δ with
     | Some 0%N, _ => envs_entails Δ (SH T).(i2p_P)
     | _, None => False
     | _, Some Δ' => envs_entails Δ' T
     end →
     envs_entails Δ (P -∗ T).
   Proof.
-    rewrite envs_entails_eq => HP. iIntros "Henv #Hl".
+    rewrite envs_entails_eq => HP. iIntros "Henv HP".
     destruct o as [[|?] |]. {
-      iDestruct (HP with "Henv") as "HP".
-      iDestruct (i2p_proof with "HP Hl") as "$".
+      iDestruct (HP with "Henv") as "HSH".
+      iDestruct (i2p_proof with "HSH HP") as "$".
     }
     all: case_match => //.
+    all: iDestruct (ip_persistent with "HP") as "#HP'".
     all: rewrite envs_app_sound //=; simpl.
     all: iDestruct ("Henv" with "[$]") as "Henv".
     all: by iDestruct (HP with "Henv") as "$".
@@ -599,6 +610,8 @@ Ltac liSep :=
     | bi_exist _ => notypeclasses refine (tac_sep_exist_assoc _ _ _ _)
     | bi_emp => notypeclasses refine (tac_sep_emp _ _ _)
     | (⌜_⌝)%I => notypeclasses refine (tac_do_intro_pure_and _ _ _ _)
+    (* TODO: Is this really the right thing to do? *)
+    | (□ ?P)%I => notypeclasses refine (tac_do_intro_intuit_sep _ _ _ _ _)
     | match ?x with _ => _ end => fail "should not have match in sep"
     | ?P => first [
                convert_to_i2p P ltac:(fun converted =>
@@ -616,7 +629,7 @@ Ltac liWand :=
   let wand_intro :=
       let H := liFresh in
       first [
-          simple notypeclasses refine (tac_do_intro_intuit H _ _ _ _ _); [shelve | solve [refine _] | solve [refine _] | li_pm_reduce]
+          simple notypeclasses refine (tac_do_intro_intuit H _ _ _ _ _ _); [shelve | shelve | solve [refine _] | solve [refine _] | li_pm_reduce]
          | simple notypeclasses refine (tac_do_intro H _ _ _ _ _); [shelve | solve [refine _] | li_pm_reduce]
         ] in
   lazymatch goal with

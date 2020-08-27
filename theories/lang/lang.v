@@ -1078,6 +1078,16 @@ Proof.
   - by destruct l, l' => [[]].
 Qed.
 
+Lemma heap_upd_heap_at_id l v flk flk' h:
+  heap_at_go l v flk' h →
+  (∀ st, flk (Some st) = st) →
+  heap_upd l v flk h = h.
+Proof.
+  elim: v l => //= b v IH l [[lk[Hlk ?]]?] Hflk. rewrite IH //.
+  apply: partial_alter_self_alt'. by rewrite Hlk Hflk.
+Qed.
+
+
 Lemma heap_block_free_upd_list ls vs h l flk:
   heap_block_free h l → l.1 ∉ ls.*1 →
   heap_block_free (heap_upd_list ls vs flk h) l.

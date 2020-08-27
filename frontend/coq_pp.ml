@@ -170,8 +170,10 @@ let rec pp_expr : Coq_ast.expr pp = fun ff e ->
     | SkipE(e)                      ->
         pp "SkipE (%a)" pp_expr e
     | Use(atomic,lay,e)             ->
-        if atomic then panic_no_pos "Use on atomics not supported.";
-        pp "use{%a} (%a)" (pp_layout false) lay pp_expr e
+        if atomic then
+          pp "use{%a, ScOrd} (%a)" (pp_layout false) lay pp_expr e
+        else
+          pp "use{%a} (%a)" (pp_layout false) lay pp_expr e
     | AddrOf(e)                     ->
         pp "&(%a)" pp_expr e
     | GetMember(e,name,false,field) ->

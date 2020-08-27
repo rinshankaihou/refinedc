@@ -45,7 +45,7 @@ Ltac convert_to_i2p_tac P ::=
   | typed_if ?v ?ty ?s1 ?s2 ?fn ?ls ?fr ?Q => uconstr:(((_ : TypedIf _ _) _ _ _ _ _ _ _).(i2p_proof))
   | typed_switch ?v ?ty ?it ?m ?ss ?def ?fn ?ls ?fr ?Q => uconstr:(((_ : TypedSwitch _ _ _) _ _ _ _ _ _ _ _).(i2p_proof))
   | typed_assert ?v ?ty ?s ?fn ?ls ?fr ?Q => uconstr:(((_ : TypedAssert _ _) _ _ _ _ _ _).(i2p_proof))
-  | typed_read_end ?l ?β ?ty ?ly ?T => uconstr:(((_ : TypedReadEnd _ _ _ _) _).(i2p_proof))
+  | typed_read_end ?a ?l ?β ?ty ?ly ?T => uconstr:(((_ : TypedReadEnd _ _ _ _ _) _).(i2p_proof))
   | typed_write_end ?a ?v1 ?ty1 ?l2 ?β2 ?ty2 ?T => uconstr:(((_ : TypedWriteEnd _ _ _ _ _ _) _).(i2p_proof))
   | typed_addr_of_end ?l ?β ?ty ?T => uconstr:(((_ : TypedAddrOfEnd _ _ _) _).(i2p_proof))
   | typed_cas ?ot ?v1 ?P1 ?v2 ?P2 ?v3 ?P3 ?T => uconstr:(((_ : TypedCas _ _ _ _ _ _ _) _).(i2p_proof))
@@ -172,7 +172,7 @@ Ltac liRExpr :=
     lazymatch e' with
     | W.Val _ => notypeclasses refine (tac_fast_apply (type_val _ _) _)
     | W.Loc _ => notypeclasses refine (tac_fast_apply (type_val _ _) _)
-    | W.Use _ _ _ => notypeclasses refine (tac_fast_apply (type_use _ _ _) _)
+    | W.Use _ _ _ => notypeclasses refine (tac_fast_apply (type_use _ _ _ _) _)
     | W.AddrOf _ => notypeclasses refine (tac_fast_apply (type_addr_of _ _) _)
     | W.BinOp _ _ _ _ _ => notypeclasses refine (tac_fast_apply (type_bin_op _ _ _ _ _ _) _)
     | W.UnOp _ _ _ => notypeclasses refine (tac_fast_apply (type_un_op _ _ _ _) _)
@@ -187,7 +187,7 @@ Ltac liRExpr :=
 Ltac liRJudgement :=
   lazymatch goal with
     | |- envs_entails _ (typed_write _ _ _ _ _) => notypeclasses refine (tac_fast_apply (type_write _ _ _ _ _ _ _) _); [ solve [refine _ ] |]
-    | |- envs_entails _ (typed_read _ _ _) => notypeclasses refine (tac_fast_apply (type_read _ _ _ _ _) _); [ solve [refine _ ] |]
+    | |- envs_entails _ (typed_read _ _ _ _) => notypeclasses refine (tac_fast_apply (type_read _ _ _ _ _ _) _); [ solve [refine _ ] |]
     | |- envs_entails _ (typed_callable _ _ _) => notypeclasses refine (tac_fast_apply (type_callable _ _ _ _) _)
     | |- envs_entails _ (typed_addr_of _ _) => notypeclasses refine (tac_fast_apply (type_addr_of_place _ _ _ _) _); [solve [refine _] |]
   end.

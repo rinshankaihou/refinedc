@@ -61,6 +61,18 @@ Section programs.
     val_to_int (i2v (Z_of_bool b) it) it = Some (Z_of_bool b).
   Proof. apply val_to_of_int. apply val_of_int_bool. Qed.
 
+  Lemma type_read_atomic_bool l β it PT PF T:
+    (∀ b, destruct_hint (DHintDestruct bool b) tt ((if b then PT else PF) -∗ (if b then PT else PF) ∗ T (i2v (Z_of_bool b) it) (atomic_bool it PT PF) (t2mt (b @ boolean it)))) -∗
+    typed_read_end true l β (atomic_bool it PT PF) it T.
+  Proof.
+    iIntros "HT Hl". unfold destruct_hint.
+    destruct β.
+    - iDestruct "Hl" as (b) "[Hl Hif]".
+  Admitted.
+  Global Instance type_read_atomic_bool_inst l β it PT PF:
+    TypedReadEnd true l β (atomic_bool it PT PF) it | 10 :=
+    λ T, i2p (type_read_atomic_bool l β it PT PF T).
+
   Lemma type_write_atomic_bool l β it PT PF v ty `{!Movable ty} T:
     (∃ b, subsume (v ◁ᵥ ty) (v ◁ᵥ b @ boolean it) (⌜ty.(ty_layout) = it⌝ ∗ (if b then PT else PF) ∗ T (atomic_bool it PT PF))) -∗
     typed_write_end true v ty l β (atomic_bool it PT PF) T.

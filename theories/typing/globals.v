@@ -30,8 +30,8 @@ Section globals.
   Global Instance initialized_persistent A name (x : A) : Persistent (initialized name x).
   Proof. apply _. Qed.
 
-  Global Instance initialized_intro_persistent A name (x : A) : IntroPersistent (initialized name x).
-  Proof. constructor. apply _. Qed.
+  Global Instance initialized_intro_persistent A name (x : A) : IntroPersistent (initialized name x) (initialized name x).
+  Proof. constructor. iIntros "#$". Qed.
 
   Lemma simplify_global_with_type_hyp name β ty l T `{!FastDone (global_locs !! name = Some l)} :
     (l ◁ₗ{β} ty -∗ T) -∗

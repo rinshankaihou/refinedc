@@ -54,7 +54,7 @@ Section own.
   Proof.
     iIntros "HP" (Φ) "(%&Hm&Hl) HΦ" => /=.
     iApply @fupd_wp. iMod (heap_mapsto_own_state_to_mt with "Hm") as (q Hq) "Hm" => //.
-    iApply (wp_deref with "Hm") => //. by apply val_to_of_loc.
+    iApply (wp_deref with "Hm") => //; eauto using val_to_of_loc.
     iIntros "!# !# Hm". iExists _. iSplit => //.
     iApply ("HP" with "Hl"). iIntros (l' ty2 β2 typ R) "Hl' Htyp HT".
     iApply ("HΦ" with "Hl' [-HT] HT"). iIntros (ty') "Hl'".

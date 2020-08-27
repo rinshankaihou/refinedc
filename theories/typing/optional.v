@@ -356,14 +356,14 @@ Section optionalO.
     TypedBinOp v1 (v1 ◁ᵥ b @ optionalO ty optty)%I v2 (v2 ◁ᵥ optty) NeOp ot1 ot2 :=
     λ T, i2p (type_neq_optionalO A v1 v2 ty optty ot1 ot2 T b).
 
-  Lemma read_optionalO_case A l b (ty : A → type) optty ly (T : val → type → _):
-    destruct_hint (DHintDestruct _ b) DestructHintOptionalO (typed_read_end l Own (if b is Some x then ty x else optty) ly T) -∗
-      typed_read_end l Own (b @ optionalO ty optty) ly T.
+  Lemma read_optionalO_case A l b (ty : A → type) optty ly (T : val → type → _) a:
+    destruct_hint (DHintDestruct _ b) DestructHintOptionalO (typed_read_end a l Own (if b is Some x then ty x else optty) ly T) -∗
+      typed_read_end a l Own (b @ optionalO ty optty) ly T.
   Proof. by destruct b. Qed.
   (* This should be tried very late *)
-  Global Instance read_optionalO_case_inst A l b (ty : A → type) optty ly:
-    TypedReadEnd l Own (b @ optionalO ty optty) ly | 1001 :=
-    λ T, i2p (read_optionalO_case A l b ty optty ly T).
+  Global Instance read_optionalO_case_inst A l b (ty : A → type) optty ly a:
+    TypedReadEnd a l Own (b @ optionalO ty optty) ly | 1001 :=
+    λ T, i2p (read_optionalO_case A l b ty optty ly T a).
 
 
   Global Instance strip_guarded_optionalO A x E1 E2 (ty : A → type) ty' optty β `{!∀ y, StripGuarded β E1 E2 (ty y) (ty' y)}:
