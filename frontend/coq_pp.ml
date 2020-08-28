@@ -110,9 +110,9 @@ let pp_bin_op : Coq_ast.bin_op pp = fun ff op ->
   | MulOp       -> "×"
   | DivOp       -> "/"
   | ModOp       -> "%"
-  | AndOp       -> "..." (* TODO *)
-  | OrOp        -> "..." (* TODO *)
-  | XorOp       -> "..." (* TODO *)
+  | AndOp       -> "&"
+  | OrOp        -> "|"
+  | XorOp       -> "^"
   | ShlOp       -> "<<"
   | ShrOp       -> ">>"
   | EqOp        -> "="
@@ -121,8 +121,6 @@ let pp_bin_op : Coq_ast.bin_op pp = fun ff op ->
   | GtOp        -> ">"
   | LeOp        -> "≤"
   | GeOp        -> "≥"
-  | RoundDownOp -> "..." (* TODO *)
-  | RoundUpOp   -> "..." (* TODO *)
 
 let rec pp_expr : Coq_ast.expr pp = fun ff e ->
   let pp fmt = Format.fprintf ff fmt in

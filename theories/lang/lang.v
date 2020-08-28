@@ -133,7 +133,7 @@ Definition u64 : int_type := {| it_size := 3; it_signed := false; |}.
 (* see http://compcert.inria.fr/doc/html/compcert.cfrontend.Cop.html#binary_operation *)
 Inductive bin_op : Set :=
 | AddOp | SubOp | MulOp | DivOp | ModOp | AndOp | OrOp | XorOp | ShlOp
-| ShrOp | EqOp | NeOp | LtOp | GtOp | LeOp | GeOp | RoundDownOp | RoundUpOp
+| ShrOp | EqOp | NeOp | LtOp | GtOp | LeOp | GeOp
 (* Ptr is the second argument and pffset the first *)
 | PtrOffsetOp (ly : layout).
 
