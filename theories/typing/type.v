@@ -94,6 +94,24 @@ and it should commute with separating conjuction (necessary for e.g. struct )
 We will also probably need a meta like thing in heap lang to associate gnames with locations to ensure that things agree (e.g. gnames used in cancellable invariants lock).
 
 See also http://www0.cs.ucl.ac.uk/staff/J.Brotherston/CAV20/SL_hybrid_perms.pdf
+
+
+
+Insight: All approaches above are probably doomed.
+Notes:
+An additional parameter to shared references is necessary to ensure that you only try to merge related fractions (similar to lifetimes).
+
+This parameter can be used to fix existential quantifiers and the choice inside option. These won't be able to be changed when shared (but when owned).
+
+Owned to shared is a viewshift which creates the value of this parameter.
+
+Question: what should the type of this parameter be? The easiest would be if it is defined by the type but that would probably break fixpoints.
+Other option: gname
+Other option: Something more complicated like lifetime
+
+Maybe merging and splitting fractions will need a step
+We will need an additional parameter
+
  *)
 
 Definition shrN : namespace := nroot.@"shrN".
