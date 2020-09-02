@@ -54,21 +54,32 @@ Section programs.
     Subsume (l ◁ₗ n @ int it)%I (l ◁ₗ atomic_bool it PT PF) :=
     λ T, i2p (subsume_atomic_bool_own_int l n it PT PF T).
 
-  Lemma i2v_bool_length b it:
-    length (i2v (Z_of_bool b) it) = it_length it.
-  Proof. by have /val_of_int_length -> := val_of_int_bool b it. Qed.
-  Lemma i2v_bool_Some b it:
-    val_to_int (i2v (Z_of_bool b) it) it = Some (Z_of_bool b).
-  Proof. apply val_to_of_int. apply val_of_int_bool. Qed.
-
   Lemma type_read_atomic_bool l β it PT PF T:
-    (∀ b, destruct_hint (DHintDestruct bool b) tt ((if b then PT else PF) -∗ (if b then PT else PF) ∗ T (i2v (Z_of_bool b) it) (atomic_bool it PT PF) (t2mt (b @ boolean it)))) -∗
+    (∀ b v, destruct_hint (DHintDestruct bool b) tt ((if b then PT else PF) -∗ (if b then PT else PF) ∗ T v (atomic_bool it PT PF) (t2mt (b @ boolean it)))) -∗
     typed_read_end true l β (atomic_bool it PT PF) it T.
   Proof.
     iIntros "HT Hl". unfold destruct_hint.
     destruct β.
     - iDestruct "Hl" as (b) "[Hl Hif]".
-  Admitted.
+      iMod (fupd_intro_mask') as "Hclose". 2: iModIntro. done.
+      iDestruct (ty_aligned with "Hl") as %?.
+      iDestruct (ty_deref with "Hl") as (v) "[Hl #Hv]".
+      iDestruct (ty_size_eq with "Hv") as %?.
+      iExists _, _, _, (t2mt (b @ boolean it)). iFrame "∗Hv". do 2 iSplitR => //=.
+      iIntros "!# Hl". iMod "Hclose". iModIntro.
+      iDestruct ("HT" with "Hif") as "[Hif $]".
+      iExists b. iFrame.
+        by iApply (ty_ref with "[] Hl Hv").
+    - iDestruct "Hl" as (Hly) "#Hinv".
+      iInv "Hinv" as (b) "[>Hl Hif]" "Hclose".
+      iMod (fupd_intro_mask') as "Hclose2". 2: iModIntro. solve_ndisj.
+      iExists _, _, _, (t2mt (b @ boolean it)). iFrame.
+      rewrite /has_layout_val i2v_bool_length.
+      do 2 iSplitR => //=. iSplitR => //. { by rewrite /ty_own_val/= val_of_int_bool. }
+      iIntros "!# Hl". iDestruct ("HT" with "Hif") as "[Hif $]".
+      iMod "Hclose2" as "_". iMod ("Hclose" with "[-]"). { iExists _. by iFrame. }
+      iModIntro. by iSplitR.
+  Qed.
   Global Instance type_read_atomic_bool_inst l β it PT PF:
     TypedReadEnd true l β (atomic_bool it PT PF) it | 10 :=
     λ T, i2p (type_read_atomic_bool l β it PT PF T).

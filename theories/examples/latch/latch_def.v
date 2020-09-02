@@ -37,6 +37,16 @@ Section type.
     λ T, i2p (latch_subsume P1 P2 l T β).
 
   Definition LATCH_INIT := val_of_bool false.
+
+  Lemma latch_init l E P:
+    ↑shrN ⊆ E →
+    l `has_layout_loc` struct_latch →
+    l ↦ LATCH_INIT ={E}=∗ l ◁ₗ{Shr} latch P.
+  Proof.
+    iIntros (? ?) "Hl".
+    iApply ty_share => //. iApply (ty_ref with "[] Hl") => //.
+    rewrite /ty_own_val/=. repeat iSplit => //. rewrite /ty_own_val/=/ty_own_val/=. by iExists false.
+  Qed.
 End type.
 
 Typeclasses Opaque latch.

@@ -1,6 +1,7 @@
 From refinedc.typing Require Import typing.
 From refinedc.examples.tutorial Require Import t5_main_code.
 From refinedc.examples.spinlock Require Import spinlock_def.
+From refinedc.examples.latch Require Import latch_def.
 Set Default Proof Using "Type".
 
 (* Generated from [theories/examples/tutorial/t5_main.c]. *)
@@ -174,9 +175,24 @@ Section spec.
     fn(∀ () : (); (global_with_type "allocator_state" Own (uninit struct_alloc_state)))
       → ∃ () : (), (void); (alloc_initialized).
 
+  (* Specifications for function [latch_wait]. *)
+  Definition type_of_latch_wait :=
+    fn(∀ (p, beta, P) : loc * own_state * (iProp Σ); (p @ (&frac{beta} (latch (P)))); True)
+      → ∃ () : (), (void); (p ◁ₗ{beta} (latch (P))) ∗ (P).
+
+  (* Specifications for function [latch_release]. *)
+  Definition type_of_latch_release :=
+    fn(∀ (p, beta, P) : loc * own_state * (iProp Σ); (p @ (&frac{beta} (latch (P)))); (□ P))
+      → ∃ () : (), (void); (p ◁ₗ{beta} (latch (P))).
+
   (* Specifications for function [main]. *)
   Definition type_of_main :=
-    fn(∀ () : (); (global_with_type "allocator_state" Own (uninit struct_alloc_state)) ∗ (global_with_type "allocator_data" Own (uninit (mk_layout (Z.to_nat 10000) 3))))
+    fn(∀ () : (); (initialized "initialized" ()) ∗ (global_with_type "allocator_state" Own (uninit struct_alloc_state)) ∗ (global_with_type "allocator_data" Own (uninit (mk_layout (Z.to_nat 10000) 3))))
+      → ∃ () : (), (int (i32)); True.
+
+  (* Specifications for function [main2]. *)
+  Definition type_of_main2 :=
+    fn(∀ () : (); (initialized "initialized" ()))
       → ∃ () : (), (int (i32)); True.
 End spec.
 

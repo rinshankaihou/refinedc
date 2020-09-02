@@ -23,9 +23,16 @@ Section globals.
   Definition global_with_type (name : string) (β : own_state) (ty : type) : iProp Σ :=
     (∃ l, ⌜global_locs !! name = Some l⌝ ∗ l ◁ₗ{β} ty)%I.
 
-  Definition initialized {A} (name : string) (x : A) : iProp Σ :=
-    (∃ l ty, ⌜global_locs !! name = Some l⌝ ∗ ⌜global_initialized_types !! name = Some ty⌝ ∗
+  (* A version of initialized that does not depend on globalG. This is
+  a work-around to allow the type of one global to refer to another as
+  long as there are no cycles (see t_adequacy). The proper solution
+  would be to use higher-order ghost state instead of globalG. *)
+  Definition initialized_raw {A} (name : string) (x : A) (l' : option loc) (ty' : option global_type)  : iProp Σ :=
+    (∃ l ty, ⌜l' = Some l⌝ ∗ ⌜ty' = Some ty⌝ ∗
           ∃ Heq : A = ty.(gt_A), l ◁ₗ{Shr} ty.(gt_type) (rew [λ x, x] Heq in x))%I.
+
+  Definition initialized {A} (name : string) (x : A) : iProp Σ :=
+    initialized_raw name x (global_locs !! name) (global_initialized_types !! name).
 
   Global Instance initialized_persistent A name (x : A) : Persistent (initialized name x).
   Proof. apply _. Qed.
@@ -61,10 +68,17 @@ Section globals.
     SimplifyHyp (initialized name x) (Some 0%N) :=
     λ T, i2p (simplify_initialized_hyp A x name ty l T).
 
+  Lemma initialized_intro A ty name l (x : A) :
+    global_locs !! name = Some l →
+    global_initialized_types !! name = Some ty →
+    (∃ (Heq : A = ty.(gt_A)), l ◁ₗ{Shr} ty.(gt_type) (rew [λ x, x] Heq in x)) -∗
+    initialized name x.
+  Proof. iIntros (??) "Hl". iExists _, _. by iFrame. Qed.
+
   Lemma simplify_initialized_goal A (x : A) name l ty T `{!FastDone (global_locs !! name = Some l)} `{!FastDone (global_initialized_types !! name = Some ty)} :
     T ((∃ (Heq : A = ty.(gt_A)), l ◁ₗ{Shr} ty.(gt_type) (rew [λ x, x] Heq in x))) -∗
     simplify_goal (initialized name x) T.
-  Proof. unfold FastDone in *. iIntros "HT". iExists _. iFrame. iIntros "?". iExists _, _. by iFrame. Qed.
+  Proof. unfold FastDone in *. iIntros "HT". iExists _. iFrame. by iApply initialized_intro. Qed.
   Global Instance simplify_initialized_goal_inst A (x : A) name ty l `{!FastDone (global_locs !! name = Some l)}  `{!FastDone (global_initialized_types !! name = Some ty)}:
     SimplifyGoal (initialized name x) (Some 0%N) :=
     λ T, i2p (simplify_initialized_goal A x name l ty T).

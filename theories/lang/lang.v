@@ -379,6 +379,13 @@ Proof.
   split; destruct b => /=; lia.
 Qed.
 
+Lemma i2v_bool_length b it:
+  length (i2v (Z_of_bool b) it) = it_length it.
+Proof. by have /val_of_int_length -> := val_of_int_bool b it. Qed.
+Lemma i2v_bool_Some b it:
+  val_to_int (i2v (Z_of_bool b) it) it = Some (Z_of_bool b).
+Proof. apply val_to_of_int. apply val_of_int_bool. Qed.
+
 Arguments val_to_int : simpl never.
 Arguments val_of_int : simpl never.
 Arguments val_to_loc : simpl never.
