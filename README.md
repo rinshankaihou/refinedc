@@ -67,7 +67,7 @@ the terminal used for creating the switch.
 
 The first thing to do is to set up repositories:
 ```bash
-opam pin add -n -y cerberus git+https://github.com/rems-project/cerberus.git#5462d5bd84262f4248a6b9486151978c6dd9b362
+opam pin add -n -y cerberus git+https://github.com/rlepigre/cerberus.git#da87de09974dd4063c0b50fea7f23420374dd169
 opam repo add coq-released https://coq.inria.fr/opam/released
 opam repo add iris-dev https://gitlab.mpi-sws.org/iris/opam.git
 opam pin add -n -y refinedc .
