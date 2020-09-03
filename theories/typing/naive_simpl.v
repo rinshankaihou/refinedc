@@ -86,7 +86,7 @@ Ltac normalize3 :=
                     notypeclasses refine (tac_f_equal_fn _ _ _ _ _ _ _ _);
                     [normalize3|normalize3|
                      lazymatch goal with
-                     | |- ?A = ?B => convert_concl_no_check (Normalize A B)
+                     | |- ?A = ?B => change_no_check (Normalize A B)
                      end; solve [ refine _ ] ]) ||
                     exact: eq_refl
     | _ => exact: eq_refl
@@ -124,7 +124,7 @@ Ltac normalize4 :=
       go actx a;
          refine (eq_ind_r ctx _ _);[|
                                     lazymatch goal with
-         | |- ?A = ?B => convert_concl_no_check (Normalize A B)
+         | |- ?A = ?B => change_no_check (Normalize A B)
          end; solve [ refine _ ]
                                    ]
 
@@ -133,7 +133,7 @@ Ltac normalize4 :=
         (* notypeclasses refine (tac_f_equal_fn _ _ _ _ _ _ _ _); *)
         (* [normalize3|normalize3| *)
          (* lazymatch goal with *)
-         (* | |- ?A = ?B => convert_concl_no_check (Normalize A B) *)
+         (* | |- ?A = ?B => change_no_check (Normalize A B) *)
          (* end; solve [ refine _ ] ]) || *)
                                     (* exact: eq_refl *)
     | _ => idtac
@@ -183,7 +183,7 @@ Goal ∀ l i (x : Z),
   (* notypeclasses refine (tac_f_equal_fn _ _ _ _ _ _ _ _); *)
   (*                   [normalize3|normalize3| *)
   (*                    lazymatch goal with *)
-  (*                    | |- ?A = ?B => convert_concl_no_check (Normalize true A B) *)
+  (*                    | |- ?A = ?B => change_no_check (Normalize true A B) *)
   (*                    end; solve [ refine _ ] ]. *)
 
 
@@ -219,7 +219,7 @@ Goal ∀ l i (x : Z),
   (*                   notypeclasses refine (tac_f_equal_fn _ _ _ _ _ _ _ _); *)
   (*                   [normalize3|normalize3| *)
   (*                    lazymatch goal with *)
-  (*                    | |- ?A = ?B => convert_concl_no_check (Normalize A B) *)
+  (*                    | |- ?A = ?B => change_no_check (Normalize A B) *)
   (*                    end; solve [ refine _ ] ]). *)
   (*                   exact: eq_refl. *)
 
@@ -227,7 +227,7 @@ Goal ∀ l i (x : Z),
   (* notypeclasses refine (tac_f_equal_fn2 _ _ _ _ _ _ _ _ _); *)
   (*   [normalize3|normalize3| *)
   (*    lazymatch goal with *)
-  (*    | |- ?A = ?B => convert_concl_no_check (Normalize A B) *)
+  (*    | |- ?A = ?B => change_no_check (Normalize A B) *)
   (*    end; solve [ refine _ ] | ]. *)
 
 
@@ -235,7 +235,7 @@ Goal ∀ l i (x : Z),
   (* notypeclasses refine (tac_eq_replace _ _ _ _). *)
   (* notypeclasses refine (tac_f_equal_fn _ _ _ _ _ _ _ _). exact: eq_refl. exact: eq_refl. *)
   (* lazymatch goal with *)
-  (* | |- ?A = ?B => convert_concl_no_check (Normalize A B) *)
+  (* | |- ?A = ?B => change_no_check (Normalize A B) *)
   (* end. *)
 
 

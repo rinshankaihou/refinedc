@@ -277,7 +277,7 @@ Ltac solve_into_place_ctx :=
   match goal with
   | |- IntoPlaceCtx ?e ?T =>
       let e' := W.of_expr e in
-      convert_concl_no_check (IntoPlaceCtx (W.to_expr e') T);
+      change_no_check (IntoPlaceCtx (W.to_expr e') T);
       refine (find_place_ctx_correct _ _ _); rewrite/=/W.to_expr/=; done
   end.
 Hint Extern 0 (IntoPlaceCtx _ _) => solve_into_place_ctx : typeclass_instances.

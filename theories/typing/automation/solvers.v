@@ -119,8 +119,8 @@ Ltac compute_map_lookup :=
   solve [repeat lazymatch goal with
   | |- <[?x:=?s]> ?Q !! ?y = Some ?res =>
     lazymatch x with
-    | y => convert_concl_no_check (Some s = Some res); reflexivity
-    | _ => convert_concl_no_check (Q !! y = Some res)
+    | y => change_no_check (Some s = Some res); reflexivity
+    | _ => change_no_check (Q !! y = Some res)
     end
   end ].
 
@@ -130,20 +130,20 @@ Ltac enrich_context_base :=
     repeat match goal with
          | |- context C [ ?a `quot` ?b ] =>
            let G := context C[enrich_marker Z.quot a b] in
-           convert_concl_no_check G;
+           change_no_check G;
            try have ?:=Z.quot_lt a b ltac:(lia) ltac:(lia);
            try have ?:=Z.quot_pos a b ltac:(lia) ltac:(lia)
          | |- context C [ ?a `rem` ?b ] =>
            let G := context C[enrich_marker Z.rem a b] in
-           convert_concl_no_check G;
+           change_no_check G;
            try have ?:=Z.rem_bound_pos a b ltac:(lia) ltac:(lia)
          | |- context C [ ?a `mod` ?b ] =>
            let G := context C[enrich_marker Z.modulo a b] in
-           convert_concl_no_check G;
+           change_no_check G;
            try have ?:=Z.mod_bound_pos a b ltac:(lia) ltac:(lia)
          | |- context C [ length (filter ?P ?l) ] =>
            let G := context C[enrich_marker length (filter P l)] in
-           convert_concl_no_check G;
+           change_no_check G;
            pose proof (filter_length P l)
            end.
 

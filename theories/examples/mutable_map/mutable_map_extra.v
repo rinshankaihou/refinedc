@@ -289,6 +289,6 @@ Ltac enrich_context_tac ::=
   repeat match goal with
          | |- context C [ rotate_nat_add ?s ?o ?e ] =>
            let G := context C[enrich_marker rotate_nat_add s o e] in
-           convert_concl_no_check G;
+           change_no_check G;
            try have ?:=rotate_nat_add_lt s o e ltac:(lia)
          end.

@@ -255,7 +255,7 @@ Tactic Notation "liEnforceInvariant" :=
   end
   end in
     with_H ltac:(fun H =>
-                   convert_concl_no_check (envs_entails H P)
+                   change_no_check (envs_entails H P)
                 )
   end.
 Ltac liFresh :=
@@ -269,7 +269,7 @@ Ltac liFresh :=
       let H2 := fresh "IPM_INTERNAL" in
       pose (H2 := @Envs PROP p1 p2 c');
       change (envs PROP) with (@IPM_STATE PROP c') in H2;
-      convert_concl_no_check (@envs_entails PROP H2 Q);
+      change_no_check (@envs_entails PROP H2 Q);
       clear H; rename H2 into H
       end
   end in
@@ -550,7 +550,7 @@ Ltac record_destruct_hint hint info := idtac.
 Ltac liDestructHint :=
   lazymatch goal with
   | |- @envs_entails ?PROP ?Δ (destruct_hint ?hint ?info ?T) =>
-    convert_concl_no_check (@envs_entails PROP Δ T);
+    change_no_check (@envs_entails PROP Δ T);
     lazymatch hint with
     | DHintInfo =>
        record_destruct_hint hint info

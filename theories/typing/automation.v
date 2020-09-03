@@ -80,15 +80,15 @@ Ltac liRIntroduceLetInGoal :=
     let H := fresh "GOAL" in
     lazymatch P with
     | @bi_wand ?PROP ?Q ?T =>
-      pose H := (LET_ID T); convert_concl_no_check (@envs_entails PROP Δ (@bi_wand PROP Q H))
+      pose H := (LET_ID T); change_no_check (@envs_entails PROP Δ (@bi_wand PROP Q H))
     | @typed_val_expr ?Σ ?tG ?e ?T =>
-      pose (H := LET_ID T); convert_concl_no_check (@envs_entails PROP Δ (@typed_val_expr Σ tG e H))
+      pose (H := LET_ID T); change_no_check (@envs_entails PROP Δ (@typed_val_expr Σ tG e H))
     | @typed_write ?Σ ?tG ?b ?e ?v ?ty ?Mov ?T =>
-      pose (H := LET_ID T); convert_concl_no_check (@envs_entails PROP Δ (@typed_write Σ tG b e v ty Mov H))
+      pose (H := LET_ID T); change_no_check (@envs_entails PROP Δ (@typed_write Σ tG b e v ty Mov H))
     | @typed_place ?Σ ?tG ?P ?l1 ?β1 ?ty1 ?T =>
-      pose (H := LET_ID T); convert_concl_no_check (@envs_entails PROP Δ (@typed_place Σ tG P l1 β1 ty1 H))
+      pose (H := LET_ID T); change_no_check (@envs_entails PROP Δ (@typed_place Σ tG P l1 β1 ty1 H))
     | @typed_bin_op ?Σ ?tG ?v1 ?P1 ?v2 ?P2 ?op ?ot1 ?ot2 ?T =>
-      pose (H := LET_ID T); convert_concl_no_check (@envs_entails PROP Δ (@typed_bin_op Σ tG v1 P1 v2 P2 op ot1 ot2 H))
+      pose (H := LET_ID T); change_no_check (@envs_entails PROP Δ (@typed_bin_op Σ tG v1 P1 v2 P2 op ot1 ot2 H))
     end
   end.
 
@@ -112,7 +112,7 @@ Ltac liRStmt :=
     lazymatch s with
     | LocInfo ?info ?s2 =>
       update_loc_info (Some info);
-      convert_concl_no_check (envs_entails Δ (typed_stmt s2 fn ls fr Q))
+      change_no_check (envs_entails Δ (typed_stmt s2 fn ls fr Q))
     | _ => update_loc_info (None : option location_info)
     end
   end;
@@ -153,7 +153,7 @@ Ltac liRPopLocationInfo :=
   (* TODO: don't hardcode this for two arguments *)
   | |- envs_entails ?Δ (pop_location_info ?info ?T ?a1 ?a2) =>
     update_loc_info [info; info];
-    convert_concl_no_check (envs_entails Δ (T a1 a2))
+    change_no_check (envs_entails Δ (T a1 a2))
   end.
 
 Ltac liRExpr :=
@@ -162,7 +162,7 @@ Ltac liRExpr :=
     lazymatch e with
     | LocInfo ?info ?e2 =>
       update_loc_info [info];
-      convert_concl_no_check (envs_entails Δ (typed_val_expr e2 (pop_location_info info T)))
+      change_no_check (envs_entails Δ (typed_val_expr e2 (pop_location_info info T)))
     | _ => idtac
     end
   end;
@@ -242,7 +242,7 @@ Ltac split_blocks Pfull Ps :=
   let Q := fresh "Q" in
   lazymatch goal with
   | |- @envs_entails ?PROP ?Δ (@bi_wand _ ?P (@typed_stmt ?Σ ?tG ?B ?s ?fn ?ls ?fr ?Q')) =>
-    pose (Q := (Q')); convert_concl_no_check (@envs_entails PROP Δ (@bi_wand PROP P (@typed_stmt Σ tG B s fn ls fr Q)))
+    pose (Q := (Q')); change_no_check (@envs_entails PROP Δ (@bi_wand PROP P (@typed_stmt Σ tG B s fn ls fr Q)))
   end;
   let rec pose_Ps Ps :=
       lazymatch Ps with

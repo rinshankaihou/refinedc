@@ -114,6 +114,6 @@ Hint Extern 5 (Normalize _ (length (replicate _ _)) _) => class_apply normalize_
 Ltac normalize_tc :=
   first [
       lazymatch goal with
-      | |- ?a = ?b => convert_concl_no_check (NormalizeWalk true a b); solve [refine _]
+      | |- ?a = ?b => change_no_check (NormalizeWalk true a b); solve [refine _]
       end
     | exact: eq_refl].
