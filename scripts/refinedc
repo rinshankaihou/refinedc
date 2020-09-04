@@ -49,6 +49,8 @@ if [[ "${1##*.}" == "c" ]]; then
       TARGETS="${TARGETS} ${TARGET}o"
     done
 
+    make -B Makefile.coq
+
     # Forward the targets to Coq makefile direclty (wrong deps otherwise).
     call_make -f Makefile.coq $TARGETS
 else
