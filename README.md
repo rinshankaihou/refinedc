@@ -79,9 +79,10 @@ You can then install the dependencies:
 opam install --deps-only refinedc refinedc-rcgen
 ```
 
-**Note:** You can use `make update-deps` to install the right version of the
-dependencies if the requirements have changed. This should typically done if
-the version of Iris on which RefinedC relies has been updated.
+**Note:** You can use `opam update && make update-deps && make clean`
+to install the right version of the dependencies if the requirements
+have changed. This should typically done if the version of Iris on
+which RefinedC relies has been updated.
 
 ### Building
 
@@ -156,6 +157,4 @@ The structure of the development under `theories` is as follows:
   files corresponding to that function in the directory where the source file
   is placed.
 
-- How do I generate all the Coq files at once? The easyest solution is to run
-  the command `for f in $(find examples -name "*.c"); rcgen "$f"`. Files that
-  do not need updating are left untouched (and as is their timestamp).
+- `Compiled library refinedc.lang.base (in file .../theories/lang/base.vo) makes inconsistent assumptions over library stdpp.base`: This error can occur after updating the Iris dependency. Use `make clean` to resolve it.
