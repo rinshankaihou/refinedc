@@ -226,6 +226,13 @@ let rec op_type_opt loc Ctype.(Ctype(_, c_ty)) =
 let op_type_tc_opt : loc -> type_cat -> Coq_ast.op_type option = fun loc tc ->
   op_type_opt loc (c_type_of_type_cat tc)
 
+(* Getting return and argument types for a function. *)
+let rec get_function_type loc Ctype.(Ctype(_, c_ty)) =
+  match c_ty with
+  | Pointer(_,c_ty)          -> get_function_type loc c_ty
+  | Function(_,c_ty,c_tys,_) -> (snd c_ty, List.map (fun (_,x,_) -> x) c_tys)
+  | _                        -> panic loc "Not a function expression."
+
 let struct_data : ail_expr -> string * bool = fun e ->
   let AilSyntax.AnnotatedExpression(gtc,_,_,_) = e in
   let open GenTypes in
@@ -713,7 +720,22 @@ and translate_call : type a. a call_place -> loc -> bool -> ail_expr
         | AilBlinux(AilBLrmw)                      ->
             not_impl loc "call to linux builtin (rmw)"
       end
-  | _                     -> not_impl loc "expr complicated call"
+  | _                     ->
+      let (_, arg_tys) =
+        get_function_type (loc_of e) (c_type_of_type_cat (tc_of e))
+      in
+      let (e, l) = translate_expr false None e in
+      let (es, l) =
+        let fn i e =
+          let ty = List.nth arg_tys i in
+          match op_type_opt Location_ocaml.unknown ty with
+          | Some(OpInt(_)) as goal_ty -> translate_expr false goal_ty e
+          | _                         -> translate_expr false None e
+        in
+        let es_ls = List.mapi fn es in
+        (List.map fst es_ls, List.concat (l :: List.map snd es_ls))
+      in
+      (Call_simple(e, es), l)
 
 type bool_expr =
   | BE_leaf of ail_expr

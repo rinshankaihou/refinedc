@@ -80,7 +80,9 @@ typedef void (*fork_fun)(void *);
 [[rc::parameters("ty : type", "P : {iProp Σ}")]]
 [[rc::args("function_ptr<{fn(∀ () : (); &own ty; P) → ∃ () : (), void; True}>", "&own<ty>")]]
 [[rc::requires("[P]")]]
-void fork(fork_fun fn, void *arg);
+void fork(fork_fun fn, void *arg){
+  fn(arg); // Dummy implementation.
+}
 
 [[rc::args("&own<∃ n : nat. n @ int<size_t>>")]]
 [[rc::requires("[∃ lid : gname, initialized \"lock\" lid ∗ initialized \"data\" lid]")]]
