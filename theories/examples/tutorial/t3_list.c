@@ -84,7 +84,7 @@ list_t reverse (list_t p) {
 [[rc::args("p @ &own<l1 @ list_t>", "l2 @ list_t")]]
 [[rc::ensures("p @ &own<{l1 ++ l2} @ list_t>")]]
 void append(list_t *l1, list_t l2) {
-  list_t *end = &*l1;
+  list_t *end = l1;
   [[rc::exists("pl : loc", "l1_suffix : {list type}")]]
   [[rc::inv_vars("end : pl @ &own<l1_suffix @ list_t>")]]
   [[rc::inv_vars("l1 : p @ &own<wand<{pl ◁ₗ (l1_suffix ++ l2) @ list_t}, {l1 ++ l2} @ list_t>>")]]
@@ -101,7 +101,7 @@ void append(list_t *l1, list_t l2) {
 [[rc::ensures("p @ &own<{l `at_type` int size_t} @ list_t>", "{b ↔ n ∈ l}")]]
  [[rc::tactics("all: try set_unfold; refined_solver.")]]
 bool member (list_t *p, size_t k) {
-    list_t *prev = &*p;
+    list_t *prev = p;
     [[rc::exists("l1 : {list Z}", "pc : loc")]]
     [[rc::inv_vars("prev : pc @ &own<{l1 `at_type` int size_t} @ list_t>")]]
     [[rc::inv_vars("p : p @ &own<wand<{pc ◁ₗ (l1 `at_type` int size_t) @ list_t}, {l `at_type` int size_t} @ list_t>>")]]
