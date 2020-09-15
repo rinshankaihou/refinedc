@@ -121,7 +121,7 @@ Section spec.
   (* Specifications for function [member_rec]. *)
   Definition type_of_member_rec :=
     fn(∀ (p, s, k) : loc * (gset Z) * Z; (p @ (&own (s @ (tree_t)))), (k @ (int (size_t))); True)
-      → ∃ () : (), ((bool_decide (k ∈ s)) @ (boolean (bool_it))); True.
+      → ∃ () : (), ((bool_decide (k ∈ s)) @ (boolean (bool_it))); (p ◁ₗ (s @ (tree_t))).
 
   (* Specifications for function [member]. *)
   Definition type_of_member :=

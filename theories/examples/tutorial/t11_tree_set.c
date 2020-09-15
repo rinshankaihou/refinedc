@@ -68,6 +68,7 @@ void free_tree(tree_t* t){
 [[rc::parameters("p : loc", "s : {gset Z}", "k : Z")]]
 [[rc::args("p @ &own<s @ tree_t>", "k @ int<size_t>")]]
 [[rc::returns("{bool_decide (k ∈ s)} @ boolean<bool_it>")]]
+[[rc::ensures("p @ &own<s @ tree_t>")]]
  [[rc::tactics("all: try by set_unfold; naive_solver lia.")]]
 bool member_rec(tree_t* t, size_t k){
   if(*t == NULL) return false;
