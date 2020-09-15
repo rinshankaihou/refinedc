@@ -208,7 +208,7 @@ Section heap.
   Proof.
     rewrite heap_mapsto_mbyte_eq -own_op -auth_frag_op own_valid discrete_valid.
     eapply pure_elim; [done|]=> /auth_frag_valid /=.
-    rewrite singleton_op -pair_op singleton_valid=> -[? /agree_op_invL'->]; eauto.
+    rewrite singleton_op -pair_op singleton_valid=> -[? /to_agree_op_inv_L->]; eauto.
   Qed.
 
   Lemma heap_mapsto_agree l q1 q2 v1 v2 :
@@ -397,27 +397,6 @@ Section heap.
     iMod (heap_write_mbyte_vs with "Hh Hb") as "[Hh Hb]". by rewrite heap_upd_lookup_lt. iFrame.
     rewrite heap_mapsto_cons heap_mapsto_mbyte_eq. by iFrame.
   Qed.
-
-
-  (* Lemma heap_write v l h v' : *)
-  (*   length v = length v' → *)
-  (*   heap_ctx h -∗ l ↦ v' ==∗ heap_ctx (heap_upd l v h) ∗ l ↦ v. *)
-  (* Proof. *)
-  (*   elim: v v' l h. by move => [|??] //= ? l h; iIntros "$ $". *)
-  (*   move => b v IH [|b' v'] //= l h [?]. *)
-  (*   iIntros "Hctx Hl". *)
-  (*   iDestruct (heap_lookup {| ly_size := S (length v')|} with "Hctx Hl") as %[? _] => //. *)
-  (*   rewrite heap_mapsto_cons heap_mapsto_mbyte_eq. *)
-  (*   iDestruct "Hl" as "[Hb Hmt]". *)
-  (*   iMod (IH with "Hctx Hmt") as "[Hctx Hl]" => //. iRevert "Hb". iIntros "Hb". *)
-  (*   rewrite heap_mapsto_cons heap_mapsto_mbyte_eq. iFrame. *)
-  (*   iStopProof. *)
-  (*   rewrite -!own_op to_heap_insert. *)
-  (*   apply own_update, auth_update. *)
-  (*   eapply (singleton_local_update _ _ (1%Qp, to_agree b') _ (1%Qp, to_agree b)). *)
-  (*   - rewrite lookup_fmap heap_upd_lookup_lt //. by simplify_map_eq. *)
-  (*   - by apply exclusive_local_update. *)
-  (* Qed. *)
 
   Lemma heap_free_free l ly h :
     heap_ctx h -∗ l ↦|ly| ==∗ heap_ctx (heap_free l ly.(ly_size) h).
