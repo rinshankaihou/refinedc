@@ -554,8 +554,9 @@ and pp_type_expr_guard : unit pp option -> guard_mode -> type_expr pp =
             List.iter (fprintf ff ", %a" (pp_arg true guarded)) tyas;
             fprintf ff "))"; if not guarded then fprintf ff ")"
         | Guard_in_lem(s) when id = s ->
-            fprintf ff "tyexists (λ rfmt__, rfmt__ @@ ";
+            fprintf ff "tyexists (λ rfmt__, ";
             if not guarded then fprintf ff "guarded %a (" with_uid s;
+            fprintf ff "rfmt__ @@ ";
             default (); fprintf ff ")";
             if not guarded then fprintf ff ")"
         | _                           ->
