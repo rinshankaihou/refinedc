@@ -1,0 +1,5 @@
+/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/spinlock/proof_atomic_signal_fence.v
+/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/spinlock/proof_atomic_thread_fence.v
+/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/spinlock/proof_sl_init.v
+/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/spinlock/proof_sl_lock.v
+/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/spinlock/proof_sl_unlock.v

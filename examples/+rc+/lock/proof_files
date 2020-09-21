@@ -1,0 +1,11 @@
+/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/lock/proof_atomic_signal_fence.v
+/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/lock/proof_atomic_thread_fence.v
+/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/lock/proof_increment.v
+/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/lock/proof_init.v
+/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/lock/proof_read_locked.v
+/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/lock/proof_read_outside.v
+/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/lock/proof_sl_init.v
+/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/lock/proof_sl_lock.v
+/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/lock/proof_sl_unlock.v
+/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/lock/proof_write_locked.v
+/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/lock/proof_write_outside.v

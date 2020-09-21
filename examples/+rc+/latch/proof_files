@@ -1,0 +1,4 @@
+/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/latch/proof_atomic_signal_fence.v
+/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/latch/proof_atomic_thread_fence.v
+/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/latch/proof_latch_release.v
+/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/latch/proof_latch_wait.v

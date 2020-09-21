@@ -4,3 +4,16 @@
 # Cannot use non-canonical projections as it causes massive unification failures
 # (https://github.com/coq/coq/issues/6294).
 -arg -w -arg -redundant-canonical-projection
+-Q _build/default/examples/+rc+/spinlock refinedc.examples.examples.spinlock
+-Q _build/default/examples/+rc+/mpool_simpl refinedc.examples.mpool_simpl
+-Q _build/default/examples/+rc+/mpool refinedc.examples.mpool
+-Q _build/default/examples/+rc+/malloc1 refinedc.examples.malloc1
+-Q _build/default/examples/+rc+/mutable_map refinedc.examples.mutable_map
+-Q _build/default/examples/+rc+/latch refinedc.examples.latch
+-Q _build/default/examples/+rc+/simple_union refinedc.examples.simple_union
+-Q _build/default/examples/+rc+/queue refinedc.examples.queue
+-Q _build/default/examples/+rc+/reverse refinedc.examples.reverse
+-Q _build/default/examples/+rc+/btree refinedc.examples.btree
+-Q _build/default/examples/+rc+/lock refinedc.examples.lock
+-Q _build/default/examples/+rc+/flags refinedc.examples.flags
+-Q _build/default/examples/+rc+/shift refinedc.examples.shift
