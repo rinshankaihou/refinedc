@@ -22,6 +22,7 @@ depends: [
   "cerberus" {= "~dev"}
   "cmdliner" {>= "1.0.4"}
   "earley" {= "2.0.0"}
+  "toml" {= "5.0.0"}
 ]
 
 build: [

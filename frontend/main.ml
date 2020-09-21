@@ -1,15 +1,24 @@
 open Cmdliner
 open Extra
+open Panic.Simple
+open Project
 open Version
 
 (* Standard file and directory names. *)
 
-let rc_project_file   = "refinedc-project"
+let rc_project_file   = "rc-project.toml"
 let dune_project_file = "dune-project"
 let coq_project_file  = "_CoqProject"
 let rc_dir_name       = "+rc+"
 
 let default_coqdir base = ["refinedc"; "project"; base]
+
+(* RefinedC include directory (containing [refinedc.h]). *)
+let refinedc_include : string option =
+  try
+    let opam_prefix = Sys.getenv "OPAM_SWITCH_PREFIX" in
+    Some(Filename.concat opam_prefix "lib/refinedc/include")
+  with Not_found -> None
 
 (* The RefinedC tooling assumes a specific structure of the working directory.
    It is organized in a "RefinedC project", that can be set up with a provided
@@ -44,7 +53,7 @@ let default_coqdir base = ["refinedc"; "project"; base]
      │   │       ├── code.v
      │   │       └── spec.v
      │   └── socket.c
-     ├── refinedc-project
+     ├── rc-project.toml
      └── src
          ├── client
          │   ├── client.c
@@ -88,11 +97,11 @@ let default_coqdir base = ["refinedc"; "project"; base]
 type config =
   { cpp_config  : Cerb_wrapper.cpp_config
   ; no_locs     : bool
-  ; no_analysis : bool }
+  ; no_analysis : bool
+  ; no_build    : bool }
 
 (* Main entry point. *)
 let run : config -> string -> unit = fun cfg c_file ->
-  let panic = Panic.panic_no_pos in
   (* Set the printing flags. *)
   if cfg.no_locs then
     begin
@@ -124,23 +133,19 @@ let run : config -> string -> unit = fun cfg c_file ->
     try find_root_and_dir_path c_file_dir with Not_found ->
       panic "No RefinedC project can be located for file [%s]." c_file
   in
-  (* Read the Coq logical directory of the project root. *)
-  let root_coq_dir =
-    let rc_project_path = Filename.concat root_dir rc_project_file in
+  (* Read the project configuration from the project file. *)
+  let project_config =
+    let project_file = Filename.concat root_dir rc_project_file in
     try
-      if Sys.is_directory rc_project_path then
-        panic "Invalid project file [%s] (directory)." rc_project_path;
-      let lines = read_file rc_project_path in
-      let lines = List.filter (fun l -> l <> "" && l.[0] <> '#') lines in
-      match List.map String.trim lines with
-      | [l] -> String.split_on_char '.' l
-      | _   -> panic "Invalid project file [%s] (contents)." rc_project_path
+      if Sys.is_directory project_file then
+        panic "Invalid project file [%s] (directory)." project_file;
+      read_project_file project_file
     with Sys_error(_) ->
-      panic "Error while reading the project file [%s]." rc_project_path
+      panic "Error while reading the project file [%s]." project_file
   in
   (* Compute the base Coq logical path for the files. *)
-  let file_coq_dir = root_coq_dir @ c_file_dir_path in
-  let path = (String.concat "." file_coq_dir) ^ "." ^ c_file_name_no_ext in
+  let file_coq_dir = project_config.project_coq_root @ c_file_dir_path in
+  let path = String.concat "." file_coq_dir ^ "." ^ c_file_name_no_ext in
   (* Prepare the output folder if need be. *)
   let file_rc_dir = Filename.concat c_file_dir rc_dir_name in
   if not (Sys.file_exists file_rc_dir) then Unix.mkdir file_rc_dir 0o755;
@@ -171,12 +176,25 @@ let run : config -> string -> unit = fun cfg c_file ->
   let proof_of_file id = Filename.concat output_dir ("proof_" ^ id ^ ".v") in
   let proof_files_file = Filename.concat output_dir "proof_files" in
   let dune_file = Filename.concat output_dir "dune" in
+  (* Prepare the CPP configuration. *)
+  let cpp_config =
+    let cpp_include =
+      let cpp_include = cfg.cpp_config.cpp_include in
+      let cpp_include = cpp_include @ project_config.project_cpp_include in
+      match (refinedc_include, project_config.project_cpp_with_rc) with
+      | (_      , false) -> cpp_include
+      | (Some(d), true ) -> d :: cpp_include
+      | (None   , true ) ->
+          panic "Unable to locate the RefinedC include directory."
+    in
+    {cfg.cpp_config with cpp_include}
+  in
   (* Parse the comment annotations. *)
   let open Comment_annot in
-  let ca = parse_annots (Cerb_wrapper.cpp_lines cfg.cpp_config c_file) in
+  let ca = parse_annots (Cerb_wrapper.cpp_lines cpp_config c_file) in
   let ctxt = List.map (fun s -> "Context " ^ s) ca.ca_context in
   (* Do the translation to Ail, analyse, and generate our AST. *)
-  let ail_ast = Cerb_wrapper.c_file_to_ail cfg.cpp_config c_file in
+  let ail_ast = Cerb_wrapper.c_file_to_ail cpp_config c_file in
   if not cfg.no_analysis then Warn.warn_file ail_ast;
   let coq_ast = Ail_to_coq.translate c_file ail_ast in
   (* Generate the code file. *)
@@ -215,7 +233,8 @@ let run : config -> string -> unit = fun cfg c_file ->
   let theories =
     let imports = ca.ca_imports @ ca.ca_proof_imports @ ca.ca_code_imports in
     let imports = List.sort_uniq Stdlib.compare imports in
-    ignore imports; [] (* TODO some dependency analysis based on [imports]. *)
+    ignore imports; (* TODO some dependency analysis based on [imports]. *)
+    List.map (String.concat ".") project_config.project_theories
   in
   write_file dune_file [
     "; Generated by [refinedc], do not edit.";
@@ -225,11 +244,17 @@ let run : config -> string -> unit = fun cfg c_file ->
     Printf.sprintf " (theories %s))" (String.concat " " theories);
   ];
   (* Run Coq type-checking. *)
-  Sys.chdir output_dir;
-  match Sys.command "dune build --display=short" with
-  | 0           -> Format.printf "File [%s] successfully checked.\n%!" c_file
-  | i           -> panic "The call to [dune] returned with error code %i." i
-  | exception _ -> panic "The call to [dune] failed for some reason."
+  if not cfg.no_build then
+    begin
+      Sys.chdir output_dir;
+      match Sys.command "dune build --display=short" with
+      | 0           ->
+          Format.printf "File [%s] successfully checked.\n%!" c_file
+      | i           ->
+          panic "The call to [dune] returned with error code %i." i
+      | exception _ ->
+          panic "The call to [dune] failed for some reason."
+    end
 
 let cpp_I =
   let doc =
@@ -248,16 +273,7 @@ let cpp_nostdinc =
 
 let cpp_config =
   let build cpp_I cpp_nostdinc =
-    (* Automatically include the RefinedC include directory. *)
-    let cpp_include =
-      try
-        let opam_prefix = Sys.getenv "OPAM_SWITCH_PREFIX" in
-        Filename.concat opam_prefix ("lib/refinedc/include") :: cpp_I
-      with Not_found ->
-        Panic.wrn None "The RefinedC include directory could not be located.";
-        cpp_I
-    in
-    Cerb_wrapper.{cpp_include; cpp_nostdinc}
+    Cerb_wrapper.{cpp_include = cpp_I; cpp_nostdinc}
   in
   Term.(pure build $ cpp_I $ cpp_nostdinc)
 
@@ -279,16 +295,21 @@ let no_analysis =
 
 let no_locs =
   let doc =
-    "Do not output any location information in the generated Coq files. This \
-     flag subsumes both $(b,--no-expr-loc) and $(b,--no-stmt-loc)."
+    "Do not output any location information in the generated Coq files."
   in
   Arg.(value & flag & info ["no-locs"] ~doc)
 
-let opts : config Term.t =
-  let build cpp_config no_analysis no_locs =
-    { cpp_config ; no_analysis ; no_locs }
+let no_build =
+  let doc =
+    "Do not build Coq object files after generation."
   in
-  Term.(pure build $ cpp_config $ no_analysis $ no_locs)
+  Arg.(value & flag & info ["no-build"] ~doc)
+
+let opts : config Term.t =
+  let build cpp_config no_analysis no_locs no_build =
+    { cpp_config ; no_analysis ; no_locs ; no_build }
+  in
+  Term.(pure build $ cpp_config $ no_analysis $ no_locs $ no_build)
 
 let c_file =
   let doc = "C language source file." in
@@ -341,14 +362,13 @@ let check_coqdir_member id =
     invalid_arg "invalid Coq directory member (starts with '_')."
 
 let init : string list option -> unit = fun coqdir ->
-  let panic = Panic.panic_no_pos in
   (* Read the current working directory. *)
   let wd =
     try Filename.realpath (Sys.getcwd ()) with Invalid_argument(_) ->
       panic "Error while reading the current working directory."
   in
   (* Files to generate. *)
-  let rc_project_path = Filename.concat wd rc_project_file in
+  let rc_project_path = Filename.concat wd rc_project_file in (* FIXME *)
   let dune_project_path = Filename.concat wd dune_project_file in
   let coq_project_path = Filename.concat wd coq_project_file in
   (* Check for an existing project. *)
@@ -404,12 +424,8 @@ let init : string list option -> unit = fun coqdir ->
     with Invalid_argument(msg) ->
       panic "Current directory name is an %s" msg
   in
-  let coqdir = String.concat "." coqdir in
   (* Now we are safe, generate the project files. *)
-  write_file rc_project_path [
-    "# Generated by [refinedc], do not edit.";
-    coqdir;
-  ];
+  write_project_file rc_project_path (default_project_config coqdir);
   write_file dune_project_path [
     "(lang dune 2.7)";
     "(using coq 0.2)";
@@ -421,6 +437,7 @@ let init : string list option -> unit = fun coqdir ->
     "-arg -w -arg -redundant-canonical-projection";
   ];
   (* Reporting. *)
+  let coqdir = String.concat "." coqdir in
   Format.printf "Initialized a RefinedC project in [%s].\n" wd;
   Format.printf "Using the Coq logical directory [%s].\n%!" coqdir
 

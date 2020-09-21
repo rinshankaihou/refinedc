@@ -41,8 +41,7 @@ build-dep: build-dep/opam phony
 
 update-deps: refinedc.opam refinedc-rcgen.opam
 	opam pin add -n -y refinedc .
-	opam pin add -n -y refinedc-rcgen .
-	opam install --working-dir --deps-only refinedc refinedc-rcgen
+	opam install --working-dir --deps-only refinedc
 .PHONY: update-deps
 
 # Some files that do *not* need to be forwarded to Makefile.coq
