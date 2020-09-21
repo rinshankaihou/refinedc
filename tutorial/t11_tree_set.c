@@ -1,5 +1,5 @@
 #include <stdbool.h>
-#include "../inc/refinedc.h"
+#include <refinedc.h>
 #include "alloc.h"
 
 // In part inspired from the following example from Verifast:

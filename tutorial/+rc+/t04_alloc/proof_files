@@ -1,0 +1,10 @@
+/home/rodolphe/research/projects/refinedc/refinedc/tutorial/+rc+/t04_alloc/proof_alloc.v
+/home/rodolphe/research/projects/refinedc/refinedc/tutorial/+rc+/t04_alloc/proof_alloc_array.v
+/home/rodolphe/research/projects/refinedc/refinedc/tutorial/+rc+/t04_alloc/proof_atomic_signal_fence.v
+/home/rodolphe/research/projects/refinedc/refinedc/tutorial/+rc+/t04_alloc/proof_atomic_thread_fence.v
+/home/rodolphe/research/projects/refinedc/refinedc/tutorial/+rc+/t04_alloc/proof_free.v
+/home/rodolphe/research/projects/refinedc/refinedc/tutorial/+rc+/t04_alloc/proof_free_array.v
+/home/rodolphe/research/projects/refinedc/refinedc/tutorial/+rc+/t04_alloc/proof_init_alloc.v
+/home/rodolphe/research/projects/refinedc/refinedc/tutorial/+rc+/t04_alloc/proof_sl_init.v
+/home/rodolphe/research/projects/refinedc/refinedc/tutorial/+rc+/t04_alloc/proof_sl_lock.v
+/home/rodolphe/research/projects/refinedc/refinedc/tutorial/+rc+/t04_alloc/proof_sl_unlock.v

@@ -1,4 +1,4 @@
-#include "../inc/refinedc.h"
+#include <refinedc.h>
 
 // type checking of this function should terminate
 [[rc::args("int<i32>")]]

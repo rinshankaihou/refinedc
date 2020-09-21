@@ -1,5 +1,6 @@
 #pragma once
-#include "../inc/spinlock.h"
+#include <spinlock.h>
+//@rc::require refinedc.examples.spinlock
 #include "alloc.h"
 
 typedef struct [[rc::refined_by("sizes : {list nat}")]]

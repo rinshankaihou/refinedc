@@ -1,0 +1,7 @@
+; FIXME
+;(coq.theory
+; (flags -w -notation-overridden -w -redundant-canonical-projection)
+; (name refinedc.tutorial.adequacy)
+; (theories refinedc.lang refinedc.typing refinedc.typing.automation refinedc.lithium
+;  refinedc.examples.spinlock refinedc.examples.latch
+;  refinedc.tutorial.t03_list refinedc.tutorial.t04_alloc refinedc.tutorial.t05_main))
