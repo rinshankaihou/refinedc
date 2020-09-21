@@ -3,4 +3,7 @@
  (dev     (flags :standard))
  (release (flags :standard)))
 
-(dirs frontend)
+(install
+ (files FAQ.md ANNOTATIONS.md)
+ (section doc)
+ (package refinedc))

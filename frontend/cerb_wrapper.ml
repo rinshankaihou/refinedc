@@ -2,6 +2,10 @@ open Cerb_frontend
 open Cerb_backend
 open Pipeline
 
+type cpp_config =
+  { cpp_include  : string list
+  ; cpp_nostdinc : bool }
+
 let (>>=)  = Exception.except_bind
 let return = Exception.except_return
 
@@ -62,10 +66,12 @@ let source_file_check filename =
   if not (Filename.check_suffix filename ".c") then
     Panic.panic_no_pos "File [%s] does not have the [.c] extension." filename
 
-let c_file_to_ail cpp_includes cpp_nostd filename =
+let c_file_to_ail config fname =
   let open Exception in
-  source_file_check filename;
-  match frontend (cpp_cmd cpp_includes cpp_nostd) filename with
+  let cpp_includes = config.cpp_include in
+  let cpp_nostd = config.cpp_nostdinc in
+  source_file_check fname;
+  match frontend (cpp_cmd cpp_includes cpp_nostd) fname with
   | Result(_, Some(ast), _) -> ast
   | Result(_, None     , _) ->
       Panic.panic_no_pos "Unexpected frontend error."
@@ -80,11 +86,27 @@ let c_file_to_ail cpp_includes cpp_nostd filename =
   in
   Panic.panic loc "Frontend error.\n%s\n\027[0m%s%!" err pos
 
-let cpp_lines cpp_includes cpp_nostd filename =
-  source_file_check filename;
+let cpp_lines config fname =
+  let cpp_includes = config.cpp_include in
+  let cpp_nostd = config.cpp_nostdinc in
+  source_file_check fname;
   let str =
-    match run_cpp (cpp_cmd cpp_includes cpp_nostd) filename with
+    match run_cpp (cpp_cmd cpp_includes cpp_nostd) fname with
     | Result(str)  -> str
     | Exception(_) -> Panic.panic_no_pos "Failed due to preprocessor error."
   in
   String.split_on_char '\n' str
+
+let print_ail : Ail_to_coq.typed_ail -> unit = fun ast ->
+  match io.run_pp None (Pp_ail_ast.pp_program true false ast) with
+  | Result(_)            -> ()
+  | Exception((loc,err)) ->
+  match err with
+  | CPP(_) -> Panic.panic_no_pos "Failed due to preprocessor error."
+  | _      ->
+  let err = Pp_errors.short_message err in
+  let (_, pos) =
+    try Location_ocaml.head_pos_of_location loc with Invalid_argument(_) ->
+      ("", "(Cerberus position bug)")
+  in
+  Panic.panic loc "Frontend error.\n%s\n\027[0m%s%!" err pos

@@ -1,0 +1,4 @@
+(install
+ (files (refinedc.h as include/refinedc.h))
+ (section lib)
+ (package refinedc))

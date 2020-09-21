@@ -1,21 +1,30 @@
 opam-version: "2.0"
-name: "coq-refinedc"
-maintainer: "Michael Sammler <msammler@mpi-sws.org>"
-authors: "Michael Sammler"
+name: "refinedc"
+synopsis: "RefinedC verification framework"
+description: """
+RefinedC is a framework for verifying idiomatic, low-level C code using a
+combination of refinement types and ownership types.
+"""
 license: "BSD"
-homepage: "https://gitlab.mpi-sws.org/iris/refinedc"
+
+maintainer: ["Michael Sammler <msammler@mpi-sws.org>"
+             "Rodolphe Lepigre <lepigre@mpi-sws.org>"]
+authors: ["Michael Sammler" "Rodolphe Lepigre" "Kayvan Memarian"]
+
+homepage: "https://plv.mpi-sws.org/refinedc"
 bug-reports: "https://gitlab.mpi-sws.org/iris/refinedc/issues"
 dev-repo: "git+https://gitlab.mpi-sws.org/iris/refinedc.git"
-
-synopsis: "RefinedC"
-description: """
-RefinedC: Framework for verifying low-level code using refinement types and ownership types.
-"""
 
 depends: [
   "coq" { (>= "8.11.0" & < "8.12~") | (= "dev") }
   "coq-iris" { (= "dev.2020-09-29.7.19ba2bc0") | (= "dev") }
+  "dune" {>= "2.0.0"}
+  "cerberus" {= "~dev"}
+  "cmdliner" {>= "1.0.4"}
+  "earley" {= "2.0.0"}
 ]
 
-build: [make "-j%{jobs}%"]
-install: [make "install"]
+build: [
+  ["dune" "subst"] {pinned}
+  ["dune" "build" "-p" name "-j" jobs]
+]
