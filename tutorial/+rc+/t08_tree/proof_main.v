@@ -9,14 +9,14 @@ Section proof_main.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [main]. *)
-  Lemma type_main (sempty sinit sfree_tree smember sinsert sremove : loc) :
+  Lemma type_main (sempty sfree_tree sinit sinsert smember sremove : loc) :
     sempty ◁ᵥ sempty @ function_ptr type_of_sempty -∗
-    sinit ◁ᵥ sinit @ function_ptr type_of_sinit -∗
     sfree_tree ◁ᵥ sfree_tree @ function_ptr type_of_sfree_tree -∗
-    smember ◁ᵥ smember @ function_ptr type_of_smember -∗
+    sinit ◁ᵥ sinit @ function_ptr type_of_sinit -∗
     sinsert ◁ᵥ sinsert @ function_ptr type_of_sinsert -∗
+    smember ◁ᵥ smember @ function_ptr type_of_smember -∗
     sremove ◁ᵥ sremove @ function_ptr type_of_sremove -∗
-    typed_function (impl_main sempty sinit sfree_tree smember sinsert sremove) type_of_main.
+    typed_function (impl_main sempty sfree_tree sinit sinsert smember sremove) type_of_main.
   Proof.
     start_function "main" ([]) => local_t.
     split_blocks ((

@@ -593,7 +593,7 @@ Section code.
   Solve Obligations with solve_struct_obligations.
 
   (* Definition of function [fsm_realloc_if_necessary]. *)
-  Definition impl_fsm_realloc_if_necessary (free_array fsm_init fsm_insert compute_min_count : loc): function := {|
+  Definition impl_fsm_realloc_if_necessary (compute_min_count free_array fsm_init fsm_insert : loc): function := {|
     f_args := [
       ("m", LPtr)
     ];
@@ -926,7 +926,7 @@ Section code.
   |}.
 
   (* Definition of function [fsm_insert]. *)
-  Definition impl_fsm_insert (fsm_realloc_if_necessary fsm_probe : loc): function := {|
+  Definition impl_fsm_insert (fsm_probe fsm_realloc_if_necessary : loc): function := {|
     f_args := [
       ("m", LPtr);
       ("key", it_layout size_t);

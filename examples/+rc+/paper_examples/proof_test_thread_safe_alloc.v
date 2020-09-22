@@ -10,12 +10,12 @@ Section proof_test_thread_safe_alloc.
   Context `{!lockG Σ}.
 
   (* Typing proof for [test_thread_safe_alloc]. *)
-  Lemma type_test_thread_safe_alloc (param thread_safe_alloc fork test_thread_safe_alloc_fork_fn : loc) :
+  Lemma type_test_thread_safe_alloc (param fork test_thread_safe_alloc_fork_fn thread_safe_alloc : loc) :
     global_locs !! "param" = Some param →
-    thread_safe_alloc ◁ᵥ thread_safe_alloc @ function_ptr type_of_thread_safe_alloc -∗
     fork ◁ᵥ fork @ function_ptr type_of_fork -∗
     test_thread_safe_alloc_fork_fn ◁ᵥ test_thread_safe_alloc_fork_fn @ function_ptr type_of_test_thread_safe_alloc_fork_fn -∗
-    typed_function (impl_test_thread_safe_alloc param thread_safe_alloc fork test_thread_safe_alloc_fork_fn) type_of_test_thread_safe_alloc.
+    thread_safe_alloc ◁ᵥ thread_safe_alloc @ function_ptr type_of_thread_safe_alloc -∗
+    typed_function (impl_test_thread_safe_alloc param fork test_thread_safe_alloc_fork_fn thread_safe_alloc) type_of_test_thread_safe_alloc.
   Proof.
     start_function "test_thread_safe_alloc" (lid).
     split_blocks ((

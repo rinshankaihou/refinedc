@@ -994,7 +994,7 @@ Section code.
   |}.
 
   (* Definition of function [mpool_init_from]. *)
-  Definition impl_mpool_init_from (sl_lock sl_unlock mpool_init : loc): function := {|
+  Definition impl_mpool_init_from (mpool_init sl_lock sl_unlock : loc): function := {|
     f_args := [
       ("p", LPtr);
       ("from", LPtr)
@@ -1384,7 +1384,7 @@ Section code.
   |}.
 
   (* Definition of function [mpool_alloc_contiguous_no_fallback]. *)
-  Definition impl_mpool_alloc_contiguous_no_fallback (sl_lock sl_unlock round_pointer_up : loc): function := {|
+  Definition impl_mpool_alloc_contiguous_no_fallback (round_pointer_up sl_lock sl_unlock : loc): function := {|
     f_args := [
       ("p", LPtr);
       ("count", it_layout size_t);

@@ -488,7 +488,7 @@ Section code.
   |}.
 
   (* Definition of function [test]. *)
-  Definition impl_test (init push pop : loc): function := {|
+  Definition impl_test (init pop push : loc): function := {|
     f_args := [
     ];
     f_local_vars := [

@@ -923,7 +923,7 @@ Section code.
   |}.
 
   (* Definition of function [insert_rec]. *)
-  Definition impl_insert_rec (node insert_rec : loc): function := {|
+  Definition impl_insert_rec (insert_rec node : loc): function := {|
     f_args := [
       ("t", LPtr);
       ("k", it_layout i32)
@@ -1127,7 +1127,7 @@ Section code.
   |}.
 
   (* Definition of function [remove]. *)
-  Definition impl_remove (free tree_max remove : loc): function := {|
+  Definition impl_remove (free remove tree_max : loc): function := {|
     f_args := [
       ("t", LPtr);
       ("k", it_layout i32)
@@ -1361,7 +1361,7 @@ Section code.
   |}.
 
   (* Definition of function [main]. *)
-  Definition impl_main (sempty sinit sfree_tree smember sinsert sremove : loc): function := {|
+  Definition impl_main (sempty sfree_tree sinit sinsert smember sremove : loc): function := {|
     f_args := [
     ];
     f_local_vars := [

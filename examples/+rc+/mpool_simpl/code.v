@@ -201,7 +201,7 @@ Section code.
   |}.
 
   (* Definition of function [main]. *)
-  Definition impl_main (e1 e2 mpool_init mpool_get mpool_put : loc): function := {|
+  Definition impl_main (e1 e2 mpool_get mpool_init mpool_put : loc): function := {|
     f_args := [
     ];
     f_local_vars := [

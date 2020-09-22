@@ -10,11 +10,11 @@ Section proof_mpool_init_from.
   Context `{!lockG Σ}.
 
   (* Typing proof for [mpool_init_from]. *)
-  Lemma type_mpool_init_from (sl_lock sl_unlock mpool_init : loc) :
+  Lemma type_mpool_init_from (mpool_init sl_lock sl_unlock : loc) :
+    mpool_init ◁ᵥ mpool_init @ function_ptr type_of_mpool_init -∗
     sl_lock ◁ᵥ sl_lock @ function_ptr type_of_sl_lock -∗
     sl_unlock ◁ᵥ sl_unlock @ function_ptr type_of_sl_unlock -∗
-    mpool_init ◁ᵥ mpool_init @ function_ptr type_of_mpool_init -∗
-    typed_function (impl_mpool_init_from sl_lock sl_unlock mpool_init) type_of_mpool_init_from.
+    typed_function (impl_mpool_init_from mpool_init sl_lock sl_unlock) type_of_mpool_init_from.
   Proof.
     start_function "mpool_init_from" ([[[[p entry_size] q] entries] from]) => arg_p arg_from.
     split_blocks ((

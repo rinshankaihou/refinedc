@@ -32,13 +32,13 @@ Section adequate.
     impl_latch_wait; impl_latch_release;
 
     impl_init; impl_is_empty; impl_push loc_alloc; impl_pop loc_free; impl_member; impl_reverse;
-    impl_test loc_alloc loc_free loc_init loc_is_empty loc_push loc_pop loc_reverse loc_member;
+    impl_test loc_alloc loc_free loc_init loc_is_empty loc_member loc_pop loc_push loc_reverse;
 
     impl_alloc loc_allocator_state loc_sl_lock loc_sl_unlock;
     impl_free loc_allocator_state loc_sl_lock loc_sl_unlock;
     impl_init_alloc loc_allocator_state loc_sl_init;
 
-    impl_main loc_initialized loc_allocator_data loc_latch_release loc_test loc_free loc_init_alloc;
+    impl_main loc_allocator_data loc_initialized loc_free loc_init_alloc loc_latch_release loc_test;
     impl_main2 loc_initialized loc_latch_wait loc_test
   ].
   Definition function_locs : list loc := [

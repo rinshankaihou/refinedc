@@ -1779,7 +1779,7 @@ Section code.
   |}.
 
   (* Definition of function [btree_insert]. *)
-  Definition impl_btree_insert (alloc free key_index insert_br btree_make_root : loc): function := {|
+  Definition impl_btree_insert (alloc btree_make_root free insert_br key_index : loc): function := {|
     f_args := [
       ("t", LPtr);
       ("k", it_layout i32);

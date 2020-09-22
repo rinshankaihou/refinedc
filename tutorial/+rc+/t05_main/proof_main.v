@@ -11,15 +11,15 @@ Section proof_main.
   Context `{!lockG Σ}.
 
   (* Typing proof for [main]. *)
-  Lemma type_main (initialized allocator_data latch_release test free init_alloc : loc) :
-    global_locs !! "initialized" = Some initialized →
+  Lemma type_main (allocator_data initialized free init_alloc latch_release test : loc) :
     global_locs !! "allocator_data" = Some allocator_data →
+    global_locs !! "initialized" = Some initialized →
     global_initialized_types !! "initialized" = Some (GT () (λ '(), (latch (alloc_initialized)) : type)) →
-    latch_release ◁ᵥ latch_release @ function_ptr type_of_latch_release -∗
-    test ◁ᵥ test @ function_ptr type_of_test -∗
     free ◁ᵥ free @ function_ptr type_of_free -∗
     init_alloc ◁ᵥ init_alloc @ function_ptr type_of_init_alloc -∗
-    typed_function (impl_main initialized allocator_data latch_release test free init_alloc) type_of_main.
+    latch_release ◁ᵥ latch_release @ function_ptr type_of_latch_release -∗
+    test ◁ᵥ test @ function_ptr type_of_test -∗
+    typed_function (impl_main allocator_data initialized free init_alloc latch_release test) type_of_main.
   Proof.
     start_function "main" ([]).
     split_blocks ((

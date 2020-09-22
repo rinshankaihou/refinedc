@@ -81,7 +81,7 @@ Section code.
   Solve Obligations with solve_struct_obligations.
 
   (* Definition of function [main]. *)
-  Definition impl_main (initialized allocator_data latch_release test free init_alloc : loc): function := {|
+  Definition impl_main (allocator_data initialized free init_alloc latch_release test : loc): function := {|
     f_args := [
     ];
     f_local_vars := [

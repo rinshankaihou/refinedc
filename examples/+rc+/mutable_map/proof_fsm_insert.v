@@ -9,10 +9,10 @@ Section proof_fsm_insert.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [fsm_insert]. *)
-  Lemma type_fsm_insert (fsm_realloc_if_necessary fsm_probe : loc) :
-    fsm_realloc_if_necessary ◁ᵥ fsm_realloc_if_necessary @ function_ptr type_of_fsm_realloc_if_necessary -∗
+  Lemma type_fsm_insert (fsm_probe fsm_realloc_if_necessary : loc) :
     fsm_probe ◁ᵥ fsm_probe @ function_ptr type_of_fsm_probe -∗
-    typed_function (impl_fsm_insert fsm_realloc_if_necessary fsm_probe) type_of_fsm_insert.
+    fsm_realloc_if_necessary ◁ᵥ fsm_realloc_if_necessary @ function_ptr type_of_fsm_realloc_if_necessary -∗
+    typed_function (impl_fsm_insert fsm_probe fsm_realloc_if_necessary) type_of_fsm_insert.
   Proof.
     start_function "fsm_insert" ([[[[[m mp] items] count] key] ty]) => arg_m arg_key arg_value local_item local_replaced local_slot_idx.
     split_blocks ((

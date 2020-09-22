@@ -223,7 +223,7 @@ Section code.
   |}.
 
   (* Definition of function [thread_safe_alloc]. *)
-  Definition impl_thread_safe_alloc (lock data sl_lock sl_unlock alloc : loc): function := {|
+  Definition impl_thread_safe_alloc (data lock alloc sl_lock sl_unlock : loc): function := {|
     f_args := [
       ("size", it_layout size_t)
     ];
@@ -366,7 +366,7 @@ Section code.
   |}.
 
   (* Definition of function [test_thread_safe_alloc]. *)
-  Definition impl_test_thread_safe_alloc (param thread_safe_alloc fork test_thread_safe_alloc_fork_fn : loc): function := {|
+  Definition impl_test_thread_safe_alloc (param fork test_thread_safe_alloc_fork_fn thread_safe_alloc : loc): function := {|
     f_args := [
     ];
     f_local_vars := [

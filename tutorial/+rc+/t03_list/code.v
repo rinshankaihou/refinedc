@@ -382,7 +382,7 @@ Section code.
   Solve Obligations with solve_struct_obligations.
 
   (* Definition of function [test]. *)
-  Definition impl_test (alloc free init is_empty push pop reverse member : loc): function := {|
+  Definition impl_test (alloc free init is_empty member pop push reverse : loc): function := {|
     f_args := [
     ];
     f_local_vars := [

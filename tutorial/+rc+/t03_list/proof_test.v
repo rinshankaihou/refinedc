@@ -8,16 +8,16 @@ Section proof_test.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [test]. *)
-  Lemma type_test (alloc free init is_empty push pop reverse member : loc) :
+  Lemma type_test (alloc free init is_empty member pop push reverse : loc) :
     alloc ◁ᵥ alloc @ function_ptr type_of_alloc -∗
     free ◁ᵥ free @ function_ptr type_of_free -∗
     init ◁ᵥ init @ function_ptr type_of_init -∗
     is_empty ◁ᵥ is_empty @ function_ptr type_of_is_empty -∗
-    push ◁ᵥ push @ function_ptr type_of_push -∗
-    pop ◁ᵥ pop @ function_ptr type_of_pop -∗
-    reverse ◁ᵥ reverse @ function_ptr type_of_reverse -∗
     member ◁ᵥ member @ function_ptr type_of_member -∗
-    typed_function (impl_test alloc free init is_empty push pop reverse member) type_of_test.
+    pop ◁ᵥ pop @ function_ptr type_of_pop -∗
+    push ◁ᵥ push @ function_ptr type_of_push -∗
+    reverse ◁ᵥ reverse @ function_ptr type_of_reverse -∗
+    typed_function (impl_test alloc free init is_empty member pop push reverse) type_of_test.
   Proof.
     start_function "test" ([]) => local_list local_elem2 local_elem1 local_elem3.
     split_blocks ((
