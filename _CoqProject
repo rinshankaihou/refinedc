@@ -33,3 +33,4 @@
 -Q _build/default/tutorial/+rc+/t11_tree_set refinedc.tutorial.t11_tree_set
 -Q _build/default/tutorial/adequacy refinedc.tutorial.adequacy
 -Q _build/default/tutorial/+rc+/quicksort_solution refinedc.tutorial.quicksort_solution
+-Q _build/default/tutorial/+rc+/quicksort_exercise refinedc.tutorial.quicksort_exercise

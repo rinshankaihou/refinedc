@@ -1,8 +1,8 @@
-/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/queue/proof_alloc.v
-/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/queue/proof_alloc_array.v
-/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/queue/proof_dequeue.v
-/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/queue/proof_enqueue.v
-/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/queue/proof_free.v
-/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/queue/proof_free_array.v
-/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/queue/proof_init_queue.v
-/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/queue/proof_is_empty.v
+proof_alloc.v
+proof_alloc_array.v
+proof_dequeue.v
+proof_enqueue.v
+proof_free.v
+proof_free_array.v
+proof_init_queue.v
+proof_is_empty.v

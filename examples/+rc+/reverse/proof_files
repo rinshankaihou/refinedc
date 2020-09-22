@@ -1,8 +1,8 @@
-/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/reverse/proof_forward.v
-/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/reverse/proof_init.v
-/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/reverse/proof_member.v
-/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/reverse/proof_member_rec.v
-/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/reverse/proof_pop.v
-/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/reverse/proof_push.v
-/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/reverse/proof_reverse.v
-/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/reverse/proof_test.v
+proof_forward.v
+proof_init.v
+proof_member.v
+proof_member_rec.v
+proof_pop.v
+proof_push.v
+proof_reverse.v
+proof_test.v

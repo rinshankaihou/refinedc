@@ -1,4 +1,4 @@
-/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/mpool_simpl/proof_main.v
-/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/mpool_simpl/proof_mpool_get.v
-/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/mpool_simpl/proof_mpool_init.v
-/home/rodolphe/research/projects/refinedc/refinedc/examples/+rc+/mpool_simpl/proof_mpool_put.v
+proof_main.v
+proof_mpool_get.v
+proof_mpool_init.v
+proof_mpool_put.v

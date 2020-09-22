@@ -213,7 +213,8 @@ let run : config -> string -> unit = fun cfg c_file ->
   in
   (* Delete obsolete proof files. *)
   let already_generated =
-    try read_file proof_files_file with Sys_error(_) -> []
+    let files = try read_file proof_files_file with Sys_error(_) -> [] in
+    List.map (Filename.concat output_dir) files
   in
   let delete_when_obsolete fname =
     if not (List.mem fname to_generate) then
@@ -221,7 +222,7 @@ let run : config -> string -> unit = fun cfg c_file ->
   in
   List.iter delete_when_obsolete already_generated;
   (* Write the new list of proof files. *)
-  write_file proof_files_file to_generate;
+  write_file proof_files_file (List.map Filename.basename to_generate);
   (* Generate the proof files. *)
   let proof_imports = ca.ca_imports @ ca.ca_proof_imports in
   let write_proof (id, def_or_decl) =

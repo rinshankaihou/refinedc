@@ -14,6 +14,14 @@ uninstall:
 	@dune uninstall
 .PHONY: uninstall
 
+C_SRC = $(wildcard examples/*.c) $(wildcard tutorial/*.c)
+
+%.c.gen: %.c
+	@dune exec -- refinedc check --no-build $<
+	@touch $@
+
+generate_all: $(addsuffix .gen, $(C_SRC))
+
 build-dep-opamfiles: build-dep/opam
 	@true
 .PHONY: build-dep-opamfiles

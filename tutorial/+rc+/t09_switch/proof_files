@@ -1,4 +1,4 @@
-/home/rodolphe/research/projects/refinedc/refinedc/tutorial/+rc+/t09_switch/proof_duffs_identity.v
-/home/rodolphe/research/projects/refinedc/refinedc/tutorial/+rc+/t09_switch/proof_incr_less_than_5.v
-/home/rodolphe/research/projects/refinedc/refinedc/tutorial/+rc+/t09_switch/proof_test_switch.v
-/home/rodolphe/research/projects/refinedc/refinedc/tutorial/+rc+/t09_switch/proof_test_switch_default.v
+proof_duffs_identity.v
+proof_incr_less_than_5.v
+proof_test_switch.v
+proof_test_switch_default.v
