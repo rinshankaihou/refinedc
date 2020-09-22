@@ -192,9 +192,10 @@ let run : config -> string -> unit = fun cfg c_file ->
   let ca = parse_annots (Cerb_wrapper.cpp_lines cpp_config c_file) in
   let ctxt = List.map (fun s -> "Context " ^ s) ca.ca_context in
   (* Do the translation to Ail, analyse, and generate our AST. *)
+  Sys.chdir root_dir; (* Move to the root to get relative paths. *)
+  let c_file = Filename.relative_path root_dir c_file in
   let ail_ast = Cerb_wrapper.c_file_to_ail cpp_config c_file in
   if not cfg.no_analysis then Warn.warn_file ail_ast;
-  let c_file = Filename.relative_path root_dir c_file in
   let coq_ast = Ail_to_coq.translate c_file ail_ast in
   (* Generate the code file. *)
   let open Coq_pp in
