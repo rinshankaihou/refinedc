@@ -4,7 +4,7 @@
 # Cannot use non-canonical projections as it causes massive unification failures
 # (https://github.com/coq/coq/issues/6294).
 -arg -w -arg -redundant-canonical-projection
--Q _build/default/examples/+rc+/spinlock refinedc.examples.examples.spinlock
+-Q _build/default/examples/+rc+/spinlock refinedc.examples.spinlock
 -Q _build/default/examples/+rc+/mpool_simpl refinedc.examples.mpool_simpl
 -Q _build/default/examples/+rc+/mpool refinedc.examples.mpool
 -Q _build/default/examples/+rc+/malloc1 refinedc.examples.malloc1
