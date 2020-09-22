@@ -40,6 +40,7 @@ build-dep/opam: refinedc.opam Makefile
 build-dep: build-dep/opam
 	@echo "# Installing build-dep package."
 	@opam install $(OPAMFLAGS) build-dep/
+.PHONY: build-dep
 
 # FIXME
 #%.generate: % phony
