@@ -38,8 +38,8 @@ Section adequate.
     impl_free loc_allocator_state loc_sl_lock loc_sl_unlock;
     impl_init_alloc loc_allocator_state loc_sl_init;
 
-    impl_main loc_initialized loc_allocator_data loc_test loc_free loc_init_alloc loc_latch_release;
-    impl_main2 loc_initialized loc_test loc_latch_wait
+    impl_main loc_initialized loc_allocator_data loc_latch_release loc_test loc_free loc_init_alloc;
+    impl_main2 loc_initialized loc_latch_wait loc_test
   ].
   Definition function_locs : list loc := [
     loc_sl_init; loc_sl_lock; loc_sl_unlock;
@@ -65,11 +65,10 @@ Section adequate.
     <["initialized" := loc_initialized]> $
     ∅.
   Definition global_types `{!typeG Σ} `{!lockG Σ} : gmap string global_type :=
-    <["allocator_state" := GT unit (λ '(), alloc_state)]> $
+    <["allocator_state" := GT unit (λ '(),  t04_alloc.spec.alloc_state)]> $
     (* We need to use initialized_raw to avoid a cyclic definition of globalG  *)
-    <["initialized" := GT unit (λ '(), latch (initialized_raw "allocator_state" () (Some loc_allocator_state) (Some (GT unit (λ '(), alloc_state)))))]> $
+    <["initialized" := GT unit (λ '(), latch (initialized_raw "allocator_state" () (Some loc_allocator_state) (Some (GT unit (λ '(), t04_alloc.spec.alloc_state)))))]> $
     ∅.
-
 
   Lemma tutorial_adequate n κs t2 σ2:
     NoDup [block_allocator_data; block_allocator_state; block_initialized] →
