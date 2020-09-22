@@ -43,17 +43,6 @@ build-dep: build-dep/opam
 .PHONY: build-dep
 
 # FIXME
-#%.generate: % phony
-#	./scripts/rcgen $<
-#	@touch $@
-#
-#ALL_EXAMPLES_GENERATE = $(wildcard theories/examples/*/*.generate)
-#ALL_TUTORIAL_GENERATE = $(wildcard theories/examples/tutorial/*.generate)
-#
-#.PHONY: all_examples all_tutorial
-#all_examples: $(ALL_EXAMPLES_GENERATE)
-#all_tutorial: $(ALL_TUTORIAL_GENERATE)
-#
 #TUTORIAL_SRC = \
 #	theories/examples/tutorial/t3_list.c \
 #	theories/examples/tutorial/t4_alloc.c \
