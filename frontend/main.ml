@@ -155,11 +155,7 @@ let run : config -> string -> unit = fun cfg c_file ->
       Unix.mkdir output_dir 0o755;
       (* Add the mapping to the Coq project file for editors. *)
       let dune_dir_path =
-        let relative_path =
-          let prefix_len = String.length root_dir in
-          let full_len = String.length c_file_dir in
-          String.sub c_file_dir (prefix_len + 1) (full_len - prefix_len - 1)
-        in
+        let relative_path = Filename.relative_path root_dir c_file_dir in
         let path = Filename.concat "_build/default" relative_path in
         let path = Filename.concat path rc_dir_name in
         Filename.concat path c_file_name_no_ext
@@ -198,6 +194,7 @@ let run : config -> string -> unit = fun cfg c_file ->
   (* Do the translation to Ail, analyse, and generate our AST. *)
   let ail_ast = Cerb_wrapper.c_file_to_ail cpp_config c_file in
   if not cfg.no_analysis then Warn.warn_file ail_ast;
+  let c_file = Filename.relative_path root_dir c_file in
   let coq_ast = Ail_to_coq.translate c_file ail_ast in
   (* Generate the code file. *)
   let open Coq_pp in
@@ -372,7 +369,7 @@ let init : string list option -> unit = fun coqdir ->
       panic "Error while reading the current working directory."
   in
   (* Files to generate. *)
-  let rc_project_path = Filename.concat wd rc_project_file in (* FIXME *)
+  let rc_project_path = Filename.concat wd rc_project_file in
   let dune_project_path = Filename.concat wd dune_project_file in
   let coq_project_path = Filename.concat wd coq_project_file in
   (* Check for an existing project. *)

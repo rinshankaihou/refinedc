@@ -88,6 +88,21 @@ module Filename =
           iter dirs
       in
       iter [(Filename.dirname dir, Filename.basename dir)]
+
+    (** [relative_path root file] computes a relative filepath for [file] with
+        its origin at [root]. The exception [Invalid_argument] is raised if an
+        error occurs. *)
+    let relative_path : string -> string -> string = fun root file ->
+      let root = realpath root in
+      let file = realpath file in
+      let root_len = String.length root in
+      let full_len = String.length file in
+      if root_len > full_len then
+        invalid_arg "Extra.Filename.relative_path";
+      let file_root = String.sub file 0 root_len in
+      if file_root <> root then
+        invalid_arg "Extra.Filename.relative_path";
+      String.sub file (root_len + 1) (full_len - root_len - 1)
   end
 
 module SMap = Map.Make(String)
