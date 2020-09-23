@@ -32,7 +32,7 @@ variables:
 build-coq.8.11.2:
   <<: *template
   variables:
-    OPAM_PINS: "coq version 8.11.2"
+    OPAM_PINS: "coq version 8.11.2   cerberus git git+https://github.com/rlepigre/cerberus.git#da87de09974dd4063c0b50fea7f23420374dd169"
     DENY_WARNINGS: "1"
   tags:
   - fp-timing
