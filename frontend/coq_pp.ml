@@ -740,7 +740,7 @@ let pp_spec : string -> import list -> string list -> typedef list ->
 
   (* Printing some header. *)
   pp "@[<v 0>From refinedc.typing Require Import typing.@;";
-  pp "From %s Require Import code.@;" import_path;
+  pp "From %s Require Import generated_code.@;" import_path;
   List.iter (pp_import ff) imports;
   pp "Set Default Proof Using \"Type\".@;@;";
 
@@ -1069,8 +1069,8 @@ let pp_proof : string -> func_def -> import list -> string list -> proof_kind
 
   (* Printing some header. *)
   pp "@[<v 0>From refinedc.typing Require Import typing.@;";
-  pp "From %s Require Import code.@;" import_path;
-  pp "From %s Require Import spec.@;" import_path;
+  pp "From %s Require Import generated_code.@;" import_path;
+  pp "From %s Require Import generated_spec.@;" import_path;
   List.iter (pp_import ff) imports;
   pp "Set Default Proof Using \"Type\".@;@;";
 

@@ -1,15 +1,18 @@
 From refinedc.typing Require Import typing.
 From refinedc.examples.spinlock Require Import
-  code spinlock_def spinlock_proof.
+  generated_code spinlock_def spinlock_proof.
 From refinedc.examples.latch Require Import
-  code latch_def proof_latch_release proof_latch_wait.
+  generated_code latch_def generated_proof_latch_release
+  generated_proof_latch_wait.
 From refinedc.tutorial.t03_list Require Import
-  code spec proof_test proof_reverse proof_pop proof_push proof_is_empty
-  proof_init proof_member.
+  generated_code generated_spec generated_proof_test generated_proof_reverse
+  generated_proof_pop generated_proof_push generated_proof_is_empty
+  generated_proof_init generated_proof_member.
 From refinedc.tutorial.t04_alloc Require Import
-  code spec proof_init_alloc proof_alloc proof_free.
+  generated_code generated_spec generated_proof_init_alloc
+  generated_proof_alloc generated_proof_free.
 From refinedc.tutorial.t05_main Require Import
-  code spec proof_main proof_main2.
+  generated_code generated_spec generated_proof_main generated_proof_main2.
 From refinedc.typing Require Import adequacy.
 (* Set Default Proof Using "Type". *)
 
@@ -65,9 +68,9 @@ Section adequate.
     <["initialized" := loc_initialized]> $
     ∅.
   Definition global_types `{!typeG Σ} `{!lockG Σ} : gmap string global_type :=
-    <["allocator_state" := GT unit (λ '(),  t04_alloc.spec.alloc_state)]> $
+    <["allocator_state" := GT unit (λ '(),  t04_alloc.generated_spec.alloc_state)]> $
     (* We need to use initialized_raw to avoid a cyclic definition of globalG  *)
-    <["initialized" := GT unit (λ '(), latch (initialized_raw "allocator_state" () (Some loc_allocator_state) (Some (GT unit (λ '(), t04_alloc.spec.alloc_state)))))]> $
+    <["initialized" := GT unit (λ '(), latch (initialized_raw "allocator_state" () (Some loc_allocator_state) (Some (GT unit (λ '(), t04_alloc.generated_spec.alloc_state)))))]> $
     ∅.
 
   Lemma tutorial_adequate n κs t2 σ2:

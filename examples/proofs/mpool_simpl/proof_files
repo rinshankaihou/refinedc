@@ -1,4 +1,4 @@
-proof_main.v
-proof_mpool_get.v
-proof_mpool_init.v
-proof_mpool_put.v
+generated_proof_main.v
+generated_proof_mpool_get.v
+generated_proof_mpool_init.v
+generated_proof_mpool_put.v

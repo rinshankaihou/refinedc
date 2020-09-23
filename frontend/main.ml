@@ -11,9 +11,9 @@ let dune_project_file = "dune-project"
 let coq_project_file  = "_CoqProject"
 let rc_dir_name       = "proofs"
 
-let code_file_name    = "code.v"
-let spec_file_name    = "spec.v"
-let proof_file_name   = Printf.sprintf "proof_%s.v"
+let code_file_name    = "generated_code.v"
+let spec_file_name    = "generated_spec.v"
+let proof_file_name   = Printf.sprintf "generated_proof_%s.v"
 let proofs_file_name  = "proof_files"
 
 let default_coqdir base = ["refinedc"; "project"; base]

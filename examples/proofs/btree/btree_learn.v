@@ -1,5 +1,5 @@
 From refinedc.typing Require Import typing.
-From refinedc.examples.btree Require Import code spec btree_extra.
+From refinedc.examples.btree Require Import generated_code generated_spec btree_extra.
 Set Default Proof Using "Type".
 
 (* Generated from [theories/examples/btree/btree.c]. *)

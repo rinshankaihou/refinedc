@@ -1,5 +1,5 @@
 From refinedc.typing Require Import typing.
-From refinedc.examples.latch Require Import code.
+From refinedc.examples.latch Require Import generated_code.
 Set Default Proof Using "Type".
 
 Definition latchN : namespace := nroot.@"lockN".

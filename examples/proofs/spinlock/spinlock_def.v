@@ -1,5 +1,5 @@
 From refinedc.typing Require Import typing.
-From refinedc.examples.spinlock Require Import spinlock_annot code.
+From refinedc.examples.spinlock Require Import spinlock_annot generated_code.
 From iris.algebra Require Import csum excl auth cmra_big_op.
 From iris.algebra Require Import big_op gset frac agree.
 Set Default Proof Using "Type".

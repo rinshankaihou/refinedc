@@ -2,7 +2,7 @@ From iris.algebra Require Import csum excl auth cmra_big_op.
 From iris.algebra Require Import big_op gset frac agree.
 From refinedc.typing Require Import typing.
 From refinedc.examples.spinlock Require Import spinlock_def.
-From refinedc.examples.spinlock Require Import code spec.
+From refinedc.examples.spinlock Require Import generated_code generated_spec.
 Set Default Proof Using "Type".
 
 Section type.

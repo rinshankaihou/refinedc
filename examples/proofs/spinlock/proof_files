@@ -1,5 +1,5 @@
-proof_atomic_signal_fence.v
-proof_atomic_thread_fence.v
-proof_sl_init.v
-proof_sl_lock.v
-proof_sl_unlock.v
+generated_proof_atomic_signal_fence.v
+generated_proof_atomic_thread_fence.v
+generated_proof_sl_init.v
+generated_proof_sl_lock.v
+generated_proof_sl_unlock.v

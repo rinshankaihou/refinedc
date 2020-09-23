@@ -1,4 +1,4 @@
-proof_blue.v
-proof_green.v
-proof_red.v
-proof_rgb.v
+generated_proof_blue.v
+generated_proof_green.v
+generated_proof_red.v
+generated_proof_rgb.v

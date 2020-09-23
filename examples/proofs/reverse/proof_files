@@ -1,8 +1,8 @@
-proof_forward.v
-proof_init.v
-proof_member.v
-proof_member_rec.v
-proof_pop.v
-proof_push.v
-proof_reverse.v
-proof_test.v
+generated_proof_forward.v
+generated_proof_init.v
+generated_proof_member.v
+generated_proof_member_rec.v
+generated_proof_pop.v
+generated_proof_push.v
+generated_proof_reverse.v
+generated_proof_test.v
