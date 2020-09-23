@@ -9,7 +9,7 @@ open Version
 let rc_project_file   = "rc-project.toml"
 let dune_project_file = "dune-project"
 let coq_project_file  = "_CoqProject"
-let rc_dir_name       = "+rc+"
+let rc_dir_name       = "proofs"
 
 let default_coqdir base = ["refinedc"; "project"; base]
 
