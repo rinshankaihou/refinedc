@@ -25,6 +25,7 @@ C_SRC = $(wildcard examples/*.c) $(wildcard tutorial/*.c)
 	@touch $@
 
 generate_all: $(addsuffix .gen, $(C_SRC))
+.PHONY: generate_all
 
 build-dep-opamfiles: build-dep/opam
 	@true
