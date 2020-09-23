@@ -25,6 +25,7 @@ variables:
   - triggers
   - schedules
   - api
+  - merge_requests
 
 ## Build jobs
 
