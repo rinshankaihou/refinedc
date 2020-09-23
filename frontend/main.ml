@@ -11,6 +11,11 @@ let dune_project_file = "dune-project"
 let coq_project_file  = "_CoqProject"
 let rc_dir_name       = "proofs"
 
+let code_file_name    = "code.v"
+let spec_file_name    = "spec.v"
+let proof_file_name   = Printf.sprintf "proof_%s.v"
+let proofs_file_name  = "proof_files"
+
 let default_coqdir base = ["refinedc"; "project"; base]
 
 (* RefinedC include directory (containing [refinedc.h]). *)
@@ -167,10 +172,10 @@ let run : config -> string -> unit = fun cfg c_file ->
         append_file (Filename.concat root_dir coq_project_file) [new_line]
     end;
   (* Paths to the output files. *)
-  let code_file = Filename.concat output_dir "code.v" in
-  let spec_file = Filename.concat output_dir "spec.v" in
-  let proof_of_file id = Filename.concat output_dir ("proof_" ^ id ^ ".v") in
-  let proof_files_file = Filename.concat output_dir "proof_files" in
+  let code_file = Filename.concat output_dir code_file_name in
+  let spec_file = Filename.concat output_dir spec_file_name in
+  let proof_of_file id = Filename.concat output_dir (proof_file_name id) in
+  let proof_files_file = Filename.concat output_dir proofs_file_name in
   let dune_file = Filename.concat output_dir "dune" in
   (* Prepare the CPP configuration. *)
   let cpp_config =
@@ -345,6 +350,89 @@ let ail_cmd =
   Term.(pure run_ail $ cpp_config $ c_file),
   Term.info "ail" ~version ~doc
 
+(* Cleaning command. *)
+
+let run_clean c_file =
+  (* Split the file path into a file name and absolute directory path. *)
+  let c_file_name = Filename.basename c_file in
+  let c_file_name_no_ext = Filename.remove_extension c_file_name in
+  let c_file_dir =
+    let c_file_dir = Filename.dirname c_file in
+    try Filename.realpath c_file_dir with Invalid_argument(_) ->
+      panic "Directory [%s] disappeared..." c_file_dir
+  in
+  (* Check that the C source file is indeed in a RefinedC project. *)
+  let find_root_and_dir_path dir =
+    let rec find acc dir =
+      let rc_project = Filename.concat dir rc_project_file in
+      if Sys.file_exists rc_project then
+        (dir, acc)
+      else
+       let parent = Filename.dirname dir in
+       if parent = dir then raise Not_found;
+       find (Filename.basename dir :: acc) parent
+    in
+    find [] dir
+  in
+  let (root_dir, c_file_dir_path) =
+    try find_root_and_dir_path c_file_dir with Not_found ->
+      panic "No RefinedC project can be located for file [%s]." c_file
+  in
+  (* Read the project configuration from the project file. *)
+  let project_config =
+    let project_file = Filename.concat root_dir rc_project_file in
+    try
+      if Sys.is_directory project_file then
+        panic "Invalid project file [%s] (directory)." project_file;
+      read_project_file project_file
+    with Sys_error(_) ->
+      panic "Error while reading the project file [%s]." project_file
+  in
+  (* Compute the base Coq logical path for the files. *)
+  let file_coq_dir = project_config.project_coq_root @ c_file_dir_path in
+  (* Compute the relevant directory and file paths. *)
+  let rc_dir = Filename.concat c_file_dir rc_dir_name in
+  let gen_dir = Filename.concat rc_dir c_file_name_no_ext in
+  let dune_file = Filename.concat gen_dir "dune" in
+  let proofs_file = Filename.concat gen_dir proofs_file_name in
+  let code_file = Filename.concat gen_dir code_file_name in
+  let spec_file = Filename.concat gen_dir spec_file_name in
+  let proof_files =
+    let files = try read_file proofs_file with Sys_error(_) -> [] in
+    List.map (Filename.concat gen_dir) files
+  in
+  (* Compute the list of files to delete, and delete them. *)
+  let all = [code_file; spec_file; dune_file; proofs_file] @ proof_files in
+  List.iter (fun f -> try Sys.remove f with Sys_error(_) -> ()) all;
+  (* Check if the generated directories are empty and if so delete them. *)
+  let all_dirs = [gen_dir; rc_dir] in
+  let rmdir dir =
+    if Array.length (Sys.readdir dir) = 0 then
+      ignore (Sys.command (Printf.sprintf "rm -rf %s" dir))
+  in
+  List.iter rmdir all_dirs;
+  (* Delete the Coq project mapping for the file. *)
+  let path = String.concat "." file_coq_dir ^ "." ^ c_file_name_no_ext in
+  let dune_dir_path =
+    let relative_path = Filename.relative_path root_dir c_file_dir in
+    let path = Filename.concat "_build/default" relative_path in
+    let path = Filename.concat path rc_dir_name in
+    Filename.concat path c_file_name_no_ext
+  in
+  let coq_project_path = Filename.concat root_dir coq_project_file in
+  let line = Printf.sprintf "-Q %s %s" dune_dir_path path in
+  let lines = try read_file coq_project_path with Sys_error(_) -> [] in
+  if List.mem line lines then
+    begin
+      let new_lines = List.filter (fun s -> s <> line) lines in
+      write_file coq_project_path new_lines
+    end
+
+let clean_cmd =
+  let doc = "Delete all the generated files for the given C source file." in
+  Term.(pure run_clean $ c_file),
+  Term.info "clean" ~version ~doc
+
 (* Project initialization command. *)
 
 let check_coqdir_member id =
@@ -493,6 +581,7 @@ let default_cmd =
 (* Entry point. *)
 let _ =
   let cmds =
-    [ init_cmd ; cpp_cmd ; ail_cmd ; check_cmd ; help_cmd ; version_cmd ]
+    [ init_cmd ; cpp_cmd ; ail_cmd ; check_cmd ; clean_cmd
+    ; help_cmd ; version_cmd ]
   in
   Term.(exit (eval_choice default_cmd cmds))
