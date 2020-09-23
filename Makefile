@@ -1,6 +1,10 @@
 all:
-	@dune build _build/default/refinedc.install
+	@dune build _build/default/refinedc.install --display short
 .PHONY: all
+
+all_with_examples:
+	@dune build --display short
+.PHONY: all_with_examples
 
 clean:
 	@dune clean
