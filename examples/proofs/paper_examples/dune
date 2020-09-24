@@ -2,4 +2,4 @@
 (coq.theory
  (flags -w -notation-overridden -w -redundant-canonical-projection)
  (name refinedc.examples.paper_examples)
- (theories refinedc.examples.spinlock refinedc.lang refinedc.typing refinedc.typing.automation refinedc.lithium))
+ (theories refinedc.examples.spinlock refinedc.lang refinedc.lithium refinedc.typing refinedc.typing.automation))

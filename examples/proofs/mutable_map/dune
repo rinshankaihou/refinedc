@@ -2,4 +2,4 @@
 (coq.theory
  (flags -w -notation-overridden -w -redundant-canonical-projection)
  (name refinedc.examples.mutable_map)
- (theories refinedc.lang refinedc.typing refinedc.typing.automation refinedc.lithium))
+ (theories refinedc.lang refinedc.lithium refinedc.typing refinedc.typing.automation))

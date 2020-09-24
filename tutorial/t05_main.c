@@ -1,5 +1,4 @@
 #include <latch.h>
-//@rc::require refinedc.examples.latch
 #include "list.h"
 #include "alloc_internal.h"
 

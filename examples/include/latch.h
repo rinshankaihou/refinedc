@@ -6,6 +6,7 @@
 #include <stdatomic.h>
 
 //@rc::import latch_def from refinedc.examples.latch
+//@rc::require refinedc.examples.latch
 
 struct latch {
     atomic_bool released;

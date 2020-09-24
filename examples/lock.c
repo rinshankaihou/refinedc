@@ -1,8 +1,6 @@
 #include <stddef.h>
 #include <refinedc.h>
 #include <spinlock.h>
-//@rc::require refinedc.examples.spinlock
-
 
 struct [[rc::refined_by("n1 : Z", "n2 : Z", "n3 : Z")]]
        [[rc::exists("l: lock_id")]] lock_test {

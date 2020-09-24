@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdatomic.h>
 
+//@rc::require refinedc.examples.spinlock
 //@rc::import spinlock_annot from refinedc.examples.spinlock (for code only)
 //@rc::import spinlock_def from refinedc.examples.spinlock
 //@rc::context `{!lockG Σ}

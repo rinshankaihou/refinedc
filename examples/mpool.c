@@ -19,7 +19,6 @@
 #include <stdbool.h>
 #include <refinedc.h>
 #include <spinlock.h>
-//@rc::require refinedc.examples.spinlock
 
 [[rc::parameters("p : loc", "size : loc", "align : nat")]]
 [[rc::args("p @ ptr", "align @ int<size_t>", "size @ &own<uninit<size_t>>")]]

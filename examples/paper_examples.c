@@ -2,7 +2,6 @@
 #include <stdbool.h>
 #include <refinedc.h>
 #include <spinlock.h>
-//@rc::require refinedc.examples.spinlock
 
 struct [[rc::refined_by("nlen : nat")]] alloc_data {
   [[rc::field("nlen @ int<size_t>")]]
