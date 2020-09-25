@@ -179,18 +179,18 @@ let run : config -> string -> unit = fun cfg c_file ->
   let dune_file = Filename.concat output_dir "dune" in
   (* Prepare the CPP configuration. *)
   let cpp_config =
-    let cpp_include =
+    let cpp_I =
       let project_include =
         List.map (Filename.concat root_dir) project_config.project_cpp_include
       in
-      let cpp_include = cfg.cpp_config.cpp_include @ project_include in
+      let cpp_include = cfg.cpp_config.cpp_I @ project_include in
       match (refinedc_include, project_config.project_cpp_with_rc) with
       | (_      , false) -> cpp_include
       | (Some(d), true ) -> d :: cpp_include
       | (None   , true ) ->
           panic "Unable to locate the RefinedC include directory."
     in
-    {cfg.cpp_config with cpp_include}
+    {cfg.cpp_config with cpp_I}
   in
   (* Parse the comment annotations. *)
   let open Comment_annot in
@@ -271,6 +271,14 @@ let cpp_I =
   let i = Arg.(info ["I"] ~docv:"DIR" ~doc) in
   Arg.(value & opt_all dir [] & i)
 
+let cpp_include =
+  let doc =
+    "Add an include for the file $(docv) at the beginning of the source file."
+  in
+  let i = Arg.(info ["include"] ~docv:"FILE" ~doc) in
+  Arg.(value & opt_all file [] & i)
+
+
 let cpp_nostdinc =
   let doc =
     "Do not search the standard system directories for header files. Only \
@@ -278,11 +286,19 @@ let cpp_nostdinc =
   in
   Arg.(value & flag & info ["nostdinc"] ~doc)
 
-let cpp_config =
-  let build cpp_I cpp_nostdinc =
-    Cerb_wrapper.{cpp_include = cpp_I; cpp_nostdinc}
+let cpp_D =
+  let doc =
+    "Do not search the standard system directories for header files. Only \
+     the directories explicitly specified with $(b,-I) options are searched."
   in
-  Term.(pure build $ cpp_I $ cpp_nostdinc)
+  let i = Arg.(info ["D"] ~docv:"MACRODEF" ~doc) in
+  Arg.(value & opt_all string [] & i)
+
+let cpp_config =
+  let build cpp_I cpp_include cpp_nostdinc cpp_D =
+    Cerb_wrapper.{cpp_I; cpp_include; cpp_nostdinc; cpp_D}
+  in
+  Term.(pure build $ cpp_I $ cpp_include $ cpp_nostdinc $ cpp_D)
 
 let no_analysis =
   let doc =

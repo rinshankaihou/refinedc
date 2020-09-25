@@ -1,7 +1,9 @@
 (** Preprocessor configuration. *)
 type cpp_config =
-  { cpp_include  : string list (** Directories in the search path.    *)
-  ; cpp_nostdinc : bool        (** Do not search standard lib C dirs. *) }
+  { cpp_I        : string list (** Directories in the search path.    *)
+  ; cpp_include  : string list (** Add as includes in source file.    *)
+  ; cpp_nostdinc : bool        (** Do not search standard lib C dirs. *)
+  ; cpp_D        : string list (** Issue the given macro definition.  *) }
 
 (** [c_file_to_ail config fname] uses Cerberus to preprocess, parse, elaborate
     and type-check the C source file [fname]. The given configuration [config]
