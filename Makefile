@@ -27,6 +27,9 @@ build-dep/opam: refinedc.opam Makefile
 	@sed <refinedc.opam -E 's/^(build|install|remove):.*/\1: []/; s/^name: *"(.*)" */name: "\1-builddep"/' >build-dep/opam
 	@fgrep builddep build-dep/opam >/dev/null || (echo "sed failed to fix the package name" && exit 1) # sanity check
 
+build-dep-opamfiles: build-dep/opam phony
+	@true
+
 build-dep: build-dep/opam phony
 	@# We want opam to not just instal the build-deps now, but to also keep satisfying these
 	@# constraints.  Otherwise, `opam upgrade` may well update some packages to versions
