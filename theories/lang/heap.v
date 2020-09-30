@@ -125,7 +125,7 @@ Section fntbl.
     fntbl_ctx t -∗ fntbl_entry f fn -∗ ⌜t !! f = Some fn⌝.
   Proof.
     rewrite fntbl_entry_eq. iIntros "Htbl Hf".
-    iDestruct (own_valid_2 with "Htbl Hf") as %[Hf?]%auth_both_valid.
+    iDestruct (own_valid_2 with "Htbl Hf") as %[Hf?]%auth_both_valid_discrete.
     iPureIntro. move: Hf=> /singleton_included_l [f'].
     rewrite lookup_fmap fmap_Some_equiv => [[[f'' [? ->]]]] /Some_included_total /to_agree_included.
     by intros ->%leibniz_equiv.
@@ -263,7 +263,7 @@ Section heap.
         h !! l = Some (match ls with RSt n => RSt (n+n') | WSt => WSt end, b)⌝.
   Proof.
     iIntros "H● H◯".
-    iDestruct (own_valid_2 with "H● H◯") as %[Hl?]%auth_both_valid.
+    iDestruct (own_valid_2 with "H● H◯") as %[Hl?]%auth_both_valid_discrete.
     iPureIntro. move: Hl=> /singleton_included_l [[[q' ls'] dv]].
     rewrite /to_heap lookup_fmap fmap_Some_equiv.
     move=> [[[ls'' v'] [?[[/=??]->]]]]; simplify_eq.
@@ -280,7 +280,7 @@ Section heap.
     ⌜h !! l = Some (ls, b)⌝.
   Proof.
     iIntros "H● H◯".
-    iDestruct (own_valid_2 with "H● H◯") as %[Hl?]%auth_both_valid.
+    iDestruct (own_valid_2 with "H● H◯") as %[Hl?]%auth_both_valid_discrete.
     iPureIntro. move: Hl=> /singleton_included_l [[[q' ls'] dv]].
     rewrite /to_heap lookup_fmap fmap_Some_equiv.
     move=> [[[ls'' v'] [?[[/=??]->]]] Hincl]; simplify_eq.
