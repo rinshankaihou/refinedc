@@ -41,7 +41,7 @@ MPFR library on your system (`libmpfr-dev` package on Debian). It is required
 by [Cerberus](https://github.com/rems-project/cerberus), which we use or our
 frontend (but the dependency is implicit).
 
-The frontend also requires a C compile (accessible through `cc`). Any standard
+The frontend also requires a C compiler (accessible through `cc`). A standard
 GCC or Clang installation should do the trick.
 
 ### Setting up [opam](https://opam.ocaml.org/doc/Install.html)
@@ -73,7 +73,7 @@ In the following instructions we are going to create an "opam switch" (i.e., a
 fresh OCaml environment) in which RefinedC can be installed and used. Creating
 a new switch is a good way to make sure that other OCaml projects are not at
 all impacted, even if they have conflicting dependencies. It makes sense to
-follow these steps even if you are practiced OCamler.
+follow these steps even if you are a practiced OCamler.
 
 The "opam swith" we are going to create will be tied to a particular directory
 of your system, and the corresponding OCaml environment (including `refinedc`)
@@ -198,7 +198,7 @@ directory should contain the following.
     └── example.c
 ```
 The generated files should not be edited directly, to the exception of the
-project configuration file `rc-project.toml`, which is used to configure the
+project configuration file `rc-project.toml`, which is used to configure
 certain things like C preprocessor options or Coq dependencies. For now, you
 don't need to worry about it.
 
@@ -281,7 +281,7 @@ two error messages of the following form (abbreviated).
 ```
 Cannot solve sidecondition in function "add3" !
 ```
-Next to the messages, Coq goals are show to tell us what it is that could not
+Next to the messages, Coq goals are shown to tell us what it is that could not
 be proved. In our case, both goals are of the form `_ + _ < it_max u32`. That
 explains the error: the additions in our `add3` function can overflow (which
 leads to undefined behaviour in RefinedC).
