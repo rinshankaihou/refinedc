@@ -1,12 +1,21 @@
-(** [c_file_to_ail includes nostdinc fname] uses Cerberus to preprocess, parse
-    and also type-check the C source file [fname]. All the directory in of the
-    [includes] list are passed to the C preprocessor through the ["-I"] option
-    (they are hence searched for header files). If [nostdinc] then the default
-    system directories are not searched for header files. In case of error, an
-    a message is displayed and the program exits with error code [-1]. *)
-val c_file_to_ail : string list -> bool -> string -> Ail_to_coq.typed_ail
+(** Preprocessor configuration. *)
+type cpp_config =
+  { cpp_I        : string list (** Directories in the search path.    *)
+  ; cpp_include  : string list (** Add as includes in source file.    *)
+  ; cpp_nostdinc : bool        (** Do not search standard lib C dirs. *)
+  ; cpp_D        : string list (** Issue the given macro definition.  *) }
 
-(** [cpp_lines includes nostdinc fname] preprocesses the C source file [fname]
-    using Cerberus, and returns the list of the lines of the output. The flags
-    [includes] and [nostdinc] have the same effect as for [c_file_to_ail]. *)
-val cpp_lines : string list -> bool -> string -> string list
+(** [c_file_to_ail config fname] uses Cerberus to preprocess, parse, elaborate
+    and type-check the C source file [fname]. The given configuration [config]
+    is used to alter the behaviour of the preprocessor. In case of an error, a
+    message is displayed and the program exits with error code [-1]. *)
+val c_file_to_ail : cpp_config -> string -> Ail_to_coq.typed_ail
+
+(** [cpp_lines config fname] preprocesses the C file [fname] with Cerberus and
+    returns the obtained list of lines. The configuration [config] can be used
+    to alter the behaviour of the preprocessor. In case of an error, a message
+    is displayed and the program exits with error code [-1]. *)
+val cpp_lines : cpp_config -> string -> string list
+
+(** [print_ail ast] outputs the given Ail [ast] to standard output. *)
+val print_ail : Ail_to_coq.typed_ail -> unit

@@ -45,3 +45,10 @@ let panic : loc -> ('a, 'b) koutfmt -> 'a = fun loc fmt ->
 let panic_no_pos : ('a,'b) koutfmt -> 'a = fun fmt ->
   let fmt = red (fmt ^^ "\n") in
   Format.kfprintf (fun _ -> exit 1) Format.err_formatter fmt
+
+(** Simpler interface for when there is no precise position. *)
+module Simple =
+  struct
+    let panic : ('a,'b) koutfmt -> 'a = panic_no_pos
+    let wrn   : 'a outfmt -> 'a = fun fmt -> wrn None fmt
+  end

@@ -1,0 +1,5 @@
+(coq.theory
+ (name refinedc.lang)
+ (package refinedc)
+ (flags -w -notation-overridden -w -redundant-canonical-projection)
+ (synopsis "Core language"))

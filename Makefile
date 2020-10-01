@@ -1,56 +1,58 @@
-# Permit local customization
--include Makefile.local
-
-# Forward most targets to Coq makefile (with some trick to make this phony)
-%: Makefile.coq phony
-	+@make -f Makefile.coq $@
-
-all: Makefile.coq
-	+@make -f Makefile.coq all
+all:
+	@dune build _build/default/refinedc.install --display short
 .PHONY: all
 
-clean: Makefile.coq
-	+@make -f Makefile.coq clean
-	find theories tests exercises solutions \( -name "*.d" -o -name "*.vo" -o -name "*.vo[sk]" -o -name "*.aux" -o -name "*.cache" -o -name "*.glob" -o -name "*.vio" \) -print -delete || true
-	rm -f Makefile.coq .lia.cache
-	dune clean
+all_with_examples:
+	@dune build --display short
+.PHONY: all_with_examples
+
+clean:
+	@dune clean
 .PHONY: clean
 
-# Create Coq Makefile.
-Makefile.coq: _CoqProject Makefile
-	"$(COQBIN)coq_makefile" -f _CoqProject -o Makefile.coq $(EXTRA_COQFILES)
+install:
+	@dune install
+.PHONY: install
 
-# Install build-dependencies
+uninstall:
+	@dune uninstall
+.PHONY: uninstall
+
+C_SRC = $(wildcard examples/*.c) $(wildcard tutorial/*.c)
+
+%.c.gen: %.c
+	@dune exec -- refinedc check --no-build $<
+	@touch $@
+
+generate_all: $(addsuffix .gen, $(C_SRC))
+.PHONY: generate_all
+
+build-dep-opamfiles: build-dep/opam
+	@true
+.PHONY: build-dep-opamfiles
+
+# Create a virtual Opam package with the same dependencies as RefinedC.
 build-dep/opam: refinedc.opam Makefile
 	@echo "# Creating build-dep package."
 	@mkdir -p build-dep
-	@sed <refinedc.opam -E 's/^(build|install|remove):.*/\1: []/; s/^name: *"(.*)" */name: "\1-builddep"/' >build-dep/opam
-	@fgrep builddep build-dep/opam >/dev/null || (echo "sed failed to fix the package name" && exit 1) # sanity check
+	@head -n -5 $< > $@
+	@sed -i -E 's/^name: *"(.*)" */name: "\1-builddep"/' $@
 
-build-dep-opamfiles: build-dep/opam phony
-	@true
-
-build-dep: build-dep/opam phony
-	@# We want opam to not just instal the build-deps now, but to also keep satisfying these
-	@# constraints.  Otherwise, `opam upgrade` may well update some packages to versions
-	@# that are incompatible with our build requirements.
-	@# To achieve this, we create a fake opam package that has our build-dependencies as
-	@# dependencies, but does not actually install anything itself.
+# Install the virtual Opam package to ensure that:
+#  1) dependencies of RefinedC are installed,
+#  2) they will remain satisfied even if other packages are updated/installed,
+#  3) we do not have to pin the RefinedC package itself (which takes time).
+build-dep: build-dep/opam
 	@echo "# Installing build-dep package."
 	@opam install $(OPAMFLAGS) build-dep/
+.PHONY: build-dep
 
-update-deps: refinedc.opam refinedc-rcgen.opam
-	opam pin add -n -y refinedc .
-	opam pin add -n -y refinedc-rcgen .
-	opam install --working-dir --deps-only refinedc refinedc-rcgen
-.PHONY: update-deps
-
-# Some files that do *not* need to be forwarded to Makefile.coq
-Makefile: ;
-_CoqProject: ;
-%.opam: ;
-Makefile.local: ;
-
-# Phony wildcard targets
-phony: ;
-.PHONY: phony
+# FIXME
+#TUTORIAL_SRC = \
+#	theories/examples/tutorial/t3_list.c \
+#	theories/examples/tutorial/t4_alloc.c \
+#	theories/examples/tutorial/t5_main.c \
+#	theories/examples/spinlock/spinlock.c
+#
+#theories/examples/tutorial/tutorial: $(TUTORIAL_SRC)
+#	clang -fdouble-square-bracket-attributes -Wno-unknown-attributes -g -O0 $^ -o $@

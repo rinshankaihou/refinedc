@@ -1,166 +1,267 @@
 open Cmdliner
 open Extra
+open Panic.Simple
+open Project
+open Version
+
+(* Standard file and directory names. *)
+
+let rc_project_file   = "rc-project.toml"
+let dune_project_file = "dune-project"
+let coq_project_file  = "_CoqProject"
+let rc_dir_name       = "proofs"
+
+let code_file_name    = "generated_code.v"
+let spec_file_name    = "generated_spec.v"
+let proof_file_name   = Printf.sprintf "generated_proof_%s.v"
+let proofs_file_name  = "proof_files"
+
+let default_coqdir base = ["refinedc"; "project"; base]
+
+(* RefinedC include directory (containing [refinedc.h]). *)
+let refinedc_include : string option =
+  try
+    let opam_prefix = Sys.getenv "OPAM_SWITCH_PREFIX" in
+    Some(Filename.concat opam_prefix "lib/refinedc/include")
+  with Not_found -> None
+
+(* The RefinedC tooling assumes a specific structure of the working directory.
+   It is organized in a "RefinedC project", that can be set up with a provided
+   command. Further actions maintain several invariants, like the existence of
+   certain files.
+
+   A RefinedC project, when it is initialized, contains the following files in
+   its root directory:
+    - [rc_project_file] containing certain project metadata,
+    - [dune_project_file] containing the build system setup for Coq,
+    - [coq_project_file] containing editor setup for Coq.
+   These files are generated, and should not be modified directly. These files
+   all have special, reserved names, that should not be used for other files.
+
+   When checking a C source file, say ["src/dir/file.c"], RefinedC creates the
+   special directory ["src/dir/" ^ rc_dir_name] if it does not already exists,
+   and it also creates a directory ["file"] inside it (having the same name as
+   the C source file, without the extension). This directory then contains all
+   the generated (Coq) files corresponding to ["src/dir/file.c"]. For example,
+   it would contain the code file ["src/dir/+rc+/file/code.c"].
+
+   When checking another file of the same directory, a similar directory (with
+   the base name of the file) is created under the special RefinedC directory.
+   For example, the project source tree may look like the following:
+   [{|
+     .
+     ├── _CoqProject
+     ├── dune-project
+     ├── lib
+     │   ├── +rc+
+     │   │   └── socket
+     │   │       ├── code.v
+     │   │       └── spec.v
+     │   └── socket.c
+     ├── rc-project.toml
+     └── src
+         ├── client
+         │   ├── client.c
+         │   ├── lib.c
+         │   └── +rc+
+         │       ├── client
+         │       │   ├── code.v
+         │       │   └── spec.v
+         │       └── lib
+         │           ├── code.v
+         │           └── spec.v
+         └── server
+             ├── +rc+
+             │   └── server
+             │       ├── code.v
+             │       └── spec.v
+             └── server.c
+   |}]
+   The Coq qualification for each source file is determined by the Coq logical
+   directory chosen at project creation (which defaults to something using the
+   directory name if possible). Using the example above, and assuming that the
+   Coq logical directory name of the project is ["refinedc.project.my_server"]
+   then the file ["src/client/+rc+/client/code.v"] is mapped to the Coq module
+   name ["refinedc.project.my_server.src.client.code"].
+
+   A directory corresponding to the generated code of a C source file also has
+   a ["dune"] file, that controls its building. It is automatically generated,
+   and automatically updated in case of changes.
+
+   The user can freely add Coq files (provided they do not have reserved names
+   like ["code"], ["spec"] or ["proof_*"]) to directories corresponding to any
+   C source file.
+
+   TODO Find a better way, with a specific directory?
+
+   RefinedC relies on a file ["proof_files"] next to the generated proof files
+   to identify the currently valid proof files. When the user removes or moves
+   a function spec, a proof file may no longer correspond to anything. In that
+   case it is deleted by RefinedC automatically upon generation. *)
 
 type config =
-  { output_dir  : string option
-  ; gen_code    : bool
-  ; gen_spec    : bool
-  ; no_proof    : string list
-  ; full_paths  : bool
-  ; imports     : (string * string) list
-  ; spec_ctxt   : string list
-  ; cpp_I       : string list
-  ; cpp_nostd   : bool
-  ; cpp_output  : bool
-  ; no_expr_loc : bool
-  ; no_stmt_loc : bool
-  ; no_analysis : bool }
+  { cpp_config  : Cerb_wrapper.cpp_config
+  ; no_locs     : bool
+  ; no_analysis : bool
+  ; no_build    : bool }
 
 (* Main entry point. *)
 let run : config -> string -> unit = fun cfg c_file ->
   (* Set the printing flags. *)
-  if cfg.no_expr_loc then Coq_pp.print_expr_locs := false;
-  if cfg.no_stmt_loc then Coq_pp.print_stmt_locs := false;
-  (* Get an absolute path to the file, for better error reporting. *)
-  let full_c_file =
-    try Filename.realpath c_file with Invalid_argument(_) ->
-      Panic.panic_no_pos "File [%s] disappeared..." c_file
-  in
-  let c_file = if cfg.full_paths then full_c_file else c_file in
-  (* Compute the path to the output files. *)
-  let output_dir =
-    match cfg.output_dir with
-    | Some(dir) -> dir
-    | None      -> Filename.dirname full_c_file
-  in
-  let base_name =
-    let name = Filename.basename c_file in
-    try Filename.chop_extension name with Invalid_argument(_) -> name
-  in
-  let outfile suffix = Filename.concat output_dir (base_name ^ suffix) in
-  let cppc_file = outfile ".cpp.c" in
-  let code_file = outfile "_code.v" in
-  let spec_file = outfile "_spec.v" in
-  let fprf_file name = outfile ("_proof_" ^ name ^ ".v") in
-  (* Compute the import path (for the generated Coq files). *)
-  let path =
-    let path = List.tl (String.split_on_char '/' output_dir) in
-    let rec build_path path =
-      match path with
-      | "examples" :: _    -> "refinedc" :: path
-      | _          :: path -> build_path path
-      | []                 ->
-      Panic.wrn None "A precise Coq import path cannot be derived form the \
-        given C source file.\nDefaulting to [refinedc]."; ["refinedc"]
-    in
-    String.concat "." (build_path path)
-  in
-  (* Print the output of the preprocessor if necessary. *)
-  let src_lines = Cerb_wrapper.cpp_lines cfg.cpp_I cfg.cpp_nostd c_file in
-  if cfg.cpp_output then
+  if cfg.no_locs then
     begin
-      let oc = open_out cppc_file in
-      output_lines oc src_lines; close_out oc
+      Coq_pp.print_expr_locs := false;
+      Coq_pp.print_stmt_locs := false
     end;
-  (* Parse the comment annotations. *)
-  let ca = Comment_annot.parse_annots src_lines in
-  let imports = cfg.imports @ ca.Comment_annot.ca_imports in
-  let context =
-    let fn s = "Context " ^ s in
-    cfg.spec_ctxt @ List.map fn ca.Comment_annot.ca_context
+  (* Split the file path into a file name and absolute directory path. *)
+  let c_file_name = Filename.basename c_file in
+  let c_file_name_no_ext = Filename.remove_extension c_file_name in
+  let c_file_dir =
+    let c_file_dir = Filename.dirname c_file in
+    try Filename.realpath c_file_dir with Invalid_argument(_) ->
+      panic "Directory [%s] disappeared..." c_file_dir
   in
-  let proof_imports = imports @ ca.Comment_annot.ca_proof_imports in
-  let code_imports = cfg.imports @ ca.Comment_annot.ca_code_imports in
-  (* Do the translation from C to Ail, and then to our AST (if necessary). *)
-  if not cfg.no_analysis || cfg.gen_code || cfg.gen_spec then
-  let ail_ast = Cerb_wrapper.c_file_to_ail cfg.cpp_I cfg.cpp_nostd c_file in
+  (* Locate the RefinedC project root and the relitive logical directory. *)
+  let find_root_and_dir_path dir =
+    let rec find acc dir =
+      let rc_project = Filename.concat dir rc_project_file in
+      if Sys.file_exists rc_project then
+        (dir, acc)
+      else
+       let parent = Filename.dirname dir in
+       if parent = dir then raise Not_found;
+       find (Filename.basename dir :: acc) parent
+    in
+    find [] dir
+  in
+  let (root_dir, c_file_dir_path) =
+    try find_root_and_dir_path c_file_dir with Not_found ->
+      panic "No RefinedC project can be located for file [%s]." c_file
+  in
+  (* Read the project configuration from the project file. *)
+  let project_config =
+    let project_file = Filename.concat root_dir rc_project_file in
+    try
+      if Sys.is_directory project_file then
+        panic "Invalid project file [%s] (directory)." project_file;
+      read_project_file project_file
+    with Sys_error(_) ->
+      panic "Error while reading the project file [%s]." project_file
+  in
+  (* Compute the base Coq logical path for the files. *)
+  let file_coq_dir = project_config.project_coq_root @ c_file_dir_path in
+  let path = String.concat "." file_coq_dir ^ "." ^ c_file_name_no_ext in
+  (* Prepare the output folder if need be. *)
+  let file_rc_dir = Filename.concat c_file_dir rc_dir_name in
+  if not (Sys.file_exists file_rc_dir) then Unix.mkdir file_rc_dir 0o755;
+  let output_dir = Filename.concat file_rc_dir c_file_name_no_ext in
+  if not (Sys.file_exists output_dir) then
+    begin
+      Unix.mkdir output_dir 0o755;
+      (* Add the mapping to the Coq project file for editors. *)
+      let dune_dir_path =
+        let relative_path = Filename.relative_path root_dir c_file_dir in
+        let path = Filename.concat "_build/default" relative_path in
+        let path = Filename.concat path rc_dir_name in
+        Filename.concat path c_file_name_no_ext
+      in
+      let coq_project_path = Filename.concat root_dir coq_project_file in
+      let new_line = Printf.sprintf "-Q %s %s" dune_dir_path path in
+      let lines = try read_file coq_project_path with Sys_error(_) -> [] in
+      if not (List.mem new_line lines) then
+        append_file (Filename.concat root_dir coq_project_file) [new_line]
+    end;
+  (* Paths to the output files. *)
+  let code_file = Filename.concat output_dir code_file_name in
+  let spec_file = Filename.concat output_dir spec_file_name in
+  let proof_of_file id = Filename.concat output_dir (proof_file_name id) in
+  let proof_files_file = Filename.concat output_dir proofs_file_name in
+  let dune_file = Filename.concat output_dir "dune" in
+  (* Prepare the CPP configuration. *)
+  let cpp_config =
+    let cpp_I =
+      let project_include =
+        List.map (Filename.concat root_dir) project_config.project_cpp_include
+      in
+      let cpp_include = cfg.cpp_config.cpp_I @ project_include in
+      match (refinedc_include, project_config.project_cpp_with_rc) with
+      | (_      , false) -> cpp_include
+      | (Some(d), true ) -> d :: cpp_include
+      | (None   , true ) ->
+          panic "Unable to locate the RefinedC include directory."
+    in
+    {cfg.cpp_config with cpp_I}
+  in
+  (* Parse the comment annotations. *)
+  let open Comment_annot in
+  let ca = parse_annots (Cerb_wrapper.cpp_lines cpp_config c_file) in
+  let ctxt = List.map (fun s -> "Context " ^ s) ca.ca_context in
+  (* Do the translation to Ail, analyse, and generate our AST. *)
+  Sys.chdir root_dir; (* Move to the root to get relative paths. *)
+  let c_file = Filename.relative_path root_dir c_file in
+  let ail_ast = Cerb_wrapper.c_file_to_ail cpp_config c_file in
   if not cfg.no_analysis then Warn.warn_file ail_ast;
   let coq_ast = Ail_to_coq.translate c_file ail_ast in
-  (* Generate the code, if necessary. *)
-  if cfg.gen_code then
-    begin
-      let open Coq_pp in
-      let mode = Code(code_imports) in
-      write mode code_file coq_ast
-    end;
-  (* Generate the spec, if necessary. *)
-  if cfg.gen_spec then
-    begin
-      let open Coq_pp in
-      let inlined = ca.Comment_annot.ca_inlined in
-      let typedefs = ca.Comment_annot.ca_typedefs in
-      let mode = Spec(path, imports, inlined, typedefs, context) in
-      write mode spec_file coq_ast
-    end;
-  (* Generate the proof for each function, if necessary. *)
+  (* Generate the code file. *)
+  let open Coq_pp in
+  let mode = Code(ca.ca_code_imports) in
+  write mode code_file coq_ast;
+  (* Generate the spec file. *)
+  let mode = Spec(path, ca.ca_imports, ca.ca_inlined, ca.ca_typedefs, ctxt) in
+  write mode spec_file coq_ast;
+  (* Compute the list of proof files to generate. *)
+  let to_generate =
+    let fn (id, _) = proof_of_file id in
+    List.sort_uniq String.compare (List.map fn coq_ast.functions)
+  in
+  (* Delete obsolete proof files. *)
+  let already_generated =
+    let files = try read_file proof_files_file with Sys_error(_) -> [] in
+    List.map (Filename.concat output_dir) files
+  in
+  let delete_when_obsolete fname =
+    if not (List.mem fname to_generate) then
+      try Sys.remove fname with Sys_error(_) -> ()
+  in
+  List.iter delete_when_obsolete already_generated;
+  (* Write the new list of proof files. *)
+  write_file proof_files_file (List.map Filename.basename to_generate);
+  (* Generate the proof files. *)
+  let proof_imports = ca.ca_imports @ ca.ca_proof_imports in
   let write_proof (id, def_or_decl) =
     let open Coq_ast in
-    let open Coq_pp in
-    match def_or_decl with
-    | FDec(_)   -> ()
-    | FDef(def) ->
-    let proof_kind =
-      if List.mem id cfg.no_proof then Rc_annot.Proof_trusted
-      else Coq_ast.proof_kind def
-    in
-    let mode = Fprf(path, def, proof_imports, context, proof_kind) in
-    write mode (fprf_file id) coq_ast
+    match def_or_decl with FDec(_) -> () | FDef(def) ->
+    let mode = Fprf(path, def, proof_imports, ctxt, proof_kind def) in
+    write mode (proof_of_file id) coq_ast
   in
-  if cfg.gen_spec then List.iter write_proof coq_ast.functions
-
-let output_dir =
-  let doc =
-    "Directory in which generated files are placed. By default, output files \
-     are placed in the same directory as the input file $(i,FILE)."
+  List.iter write_proof coq_ast.functions;
+  (* Generate the dune file. *)
+  let theories =
+    let glob = List.map coq_path_to_string project_config.project_theories in
+    let imports = ca.ca_imports @ ca.ca_proof_imports @ ca.ca_code_imports in
+    let imports = List.sort_uniq Stdlib.compare imports in
+    ignore imports; (* TODO some dependency analysis based on [imports]. *)
+    List.sort_uniq String.compare (List.filter (fun s -> s <> path) (ca.ca_requires @ glob))
   in
-  Arg.(value & opt (some dir) None & info ["output-dir"] ~docv:"DIR" ~doc)
-
-let no_code =
-  let doc =
-    "Do not generate the Coq file that corresponds to the $(i,code) of the \
-     functions defined in $(i,FILE)."
-  in
-  Arg.(value & flag & info ["no-code"] ~doc)
-
-let no_spec =
-  let doc =
-    "Do not generate the Coq file that corresponds to the $(i,spec) of the \
-     functions defined in $(i,FILE)."
-  in
-  Arg.(value & flag & info ["no-spec"] ~doc)
-
-let no_proof =
-  let doc =
-    "Do not generate the Coq file that corresponds to the typing proof for \
-     function $(docv) defined in $(i,FILE). If there is no function with the 
-     given name then nothing happens."
-  in
-  Arg.(value & opt_all string [] & info ["no-proof"] ~docv:"NAME" ~doc)
-
-let full_paths =
-  let doc =
-    "Use full, absolute file paths in generated files."
-  in
-  Arg.(value & flag & info ["full-paths"] ~doc)
-
-let imports =
-  let doc =
-    "Specifies a module to import at the beginning of every generated Coq \
-     source file. The argument $(docv) will lead to the following commant \
-     being generated: \
-     \"$(b,From) $(i,FROM) $(b,Require Import) $(i,MOD)$(b,.)\""
-  in
-  let i = Arg.(info ["import"] ~docv:"FROM:MOD" ~doc) in
-  Arg.(value & opt_all (pair ~sep:':' string string) [] & i)
-
-let spec_ctxt =
-  let doc =
-    "Specifies a Coq vernacular command to insert at the beginning of the \
-     section generated for specification file. The can typically used with \
-     an argument of the form $(b,\"Context \\\\`{!lockG Sigma}\")."
-  in
-  let i = Arg.(info ["spec-context"] ~docv:"CMD" ~doc) in
-  Arg.(value & opt_all string [] & i)
+  write_file dune_file [
+    "; Generated by [refinedc], do not edit.";
+    "(coq.theory";
+    " (flags -w -notation-overridden -w -redundant-canonical-projection)";
+    Printf.sprintf " (name %s)" path;
+    Printf.sprintf " (theories %s))" (String.concat " " theories);
+  ];
+  (* Run Coq type-checking. *)
+  if not cfg.no_build then
+    begin
+      Sys.chdir output_dir;
+      match Sys.command "dune build --display=short" with
+      | 0           ->
+          Format.printf "File [%s] successfully checked.\n%!" c_file
+      | i           ->
+          panic "The call to [dune] returned with error code %i." i
+      | exception _ ->
+          panic "The call to [dune] failed for some reason."
+    end
 
 let cpp_I =
   let doc =
@@ -170,32 +271,34 @@ let cpp_I =
   let i = Arg.(info ["I"] ~docv:"DIR" ~doc) in
   Arg.(value & opt_all dir [] & i)
 
-let cpp_nostd =
+let cpp_include =
+  let doc =
+    "Add an include for the file $(docv) at the beginning of the source file."
+  in
+  let i = Arg.(info ["include"] ~docv:"FILE" ~doc) in
+  Arg.(value & opt_all file [] & i)
+
+
+let cpp_nostdinc =
   let doc =
     "Do not search the standard system directories for header files. Only \
      the directories explicitly specified with $(b,-I) options are searched."
   in
   Arg.(value & flag & info ["nostdinc"] ~doc)
 
-let cpp_output =
+let cpp_D =
   let doc =
-    "Write the output of the preprocessor to a file with '.cpp.c' extension."
+    "Do not search the standard system directories for header files. Only \
+     the directories explicitly specified with $(b,-I) options are searched."
   in
-  Arg.(value & flag & info ["cpp-output"] ~doc)
+  let i = Arg.(info ["D"] ~docv:"MACRODEF" ~doc) in
+  Arg.(value & opt_all string [] & i)
 
-let no_expr_loc =
-  let doc =
-    "Do not output location information for expressions in the generated \
-     Coq files."
+let cpp_config =
+  let build cpp_I cpp_include cpp_nostdinc cpp_D =
+    Cerb_wrapper.{cpp_I; cpp_include; cpp_nostdinc; cpp_D}
   in
-  Arg.(value & flag & info ["no-expr-loc"] ~doc)
-
-let no_stmt_loc =
-  let doc =
-    "Do not output location information for statements in the generated \
-     Coq files."
-  in
-  Arg.(value & flag & info ["no-stmt-loc"] ~doc)
+  Term.(pure build $ cpp_I $ cpp_include $ cpp_nostdinc $ cpp_D)
 
 let no_analysis =
   let doc =
@@ -213,33 +316,288 @@ let no_analysis =
   in
   Arg.(value & flag & info ["no-extra-analysis"] ~doc)
 
-let no_loc =
+let no_locs =
   let doc =
-    "Do not output any location information in the generated Coq files. This \
-     flag subsumes both $(b,--no-expr-loc) and $(b,--no-stmt-loc)."
+    "Do not output any location information in the generated Coq files."
   in
-  Arg.(value & flag & info ["no-loc"] ~doc)
+  Arg.(value & flag & info ["no-locs"] ~doc)
+
+let no_build =
+  let doc =
+    "Do not build Coq object files after generation."
+  in
+  Arg.(value & flag & info ["no-build"] ~doc)
 
 let opts : config Term.t =
-  let build output_dir no_code no_spec no_proof full_paths imports spec_ctxt
-      cpp_I cpp_nostd cpp_output no_expr_loc no_stmt_loc no_loc no_analysis =
-    let no_expr_loc = no_expr_loc || no_loc in
-    let no_stmt_loc = no_stmt_loc || no_loc in
-    { output_dir ; gen_code = not no_code ; gen_spec = not no_spec
-    ; no_proof ; full_paths ; imports ; spec_ctxt ; cpp_I ; cpp_nostd
-    ; cpp_output ; no_stmt_loc ; no_expr_loc ; no_analysis }
+  let build cpp_config no_analysis no_locs no_build =
+    { cpp_config ; no_analysis ; no_locs ; no_build }
   in
-  Term.(pure build $ output_dir $ no_code $ no_spec $ no_proof $ full_paths $
-          imports $ spec_ctxt $ cpp_I $ cpp_nostd $ cpp_output $
-          no_expr_loc $ no_stmt_loc $ no_loc $ no_analysis)
+  Term.(pure build $ cpp_config $ no_analysis $ no_locs $ no_build)
 
 let c_file =
   let doc = "C language source file." in
   Arg.(required & pos 0 (some non_dir_file) None & info [] ~docv:"FILE" ~doc)
 
-let _ =
+let check_cmd =
   let open Term in
   let term = pure run $ opts $ c_file in
-  let doc = "Generator form C to the RefinedC type system (in Coq)." in
-  let version = Cerb_frontend.Version.version in (* FIXME use our own? *)
-  exit @@ eval (term, info ~version ~doc "rcgen")
+  let doc = "Run RefiendC on the given C file." in
+  (term, info "check" ~version ~doc)
+
+(* Preprocessing command (useful for debugging). *)
+
+let run_cpp config c_file =
+  output_lines stdout (Cerb_wrapper.cpp_lines config c_file);
+  flush stdout
+
+let cpp_cmd =
+  let doc = "Print the result of the Cerberus preprocessor to stdout." in
+  Term.(pure run_cpp $ cpp_config $ c_file),
+  Term.info "cpp" ~version ~doc
+
+(* Ail printing command (useful for debugging). *)
+
+let run_ail config c_file =
+  let ail_ast = Cerb_wrapper.c_file_to_ail config c_file in
+  Cerb_wrapper.print_ail ail_ast
+
+let ail_cmd =
+  let doc = "Print the Cerberus Ail AST of the given C file to stdout." in
+  Term.(pure run_ail $ cpp_config $ c_file),
+  Term.info "ail" ~version ~doc
+
+(* Cleaning command. *)
+
+let run_clean c_file =
+  (* Split the file path into a file name and absolute directory path. *)
+  let c_file_name = Filename.basename c_file in
+  let c_file_name_no_ext = Filename.remove_extension c_file_name in
+  let c_file_dir =
+    let c_file_dir = Filename.dirname c_file in
+    try Filename.realpath c_file_dir with Invalid_argument(_) ->
+      panic "Directory [%s] disappeared..." c_file_dir
+  in
+  (* Check that the C source file is indeed in a RefinedC project. *)
+  let find_root_and_dir_path dir =
+    let rec find acc dir =
+      let rc_project = Filename.concat dir rc_project_file in
+      if Sys.file_exists rc_project then
+        (dir, acc)
+      else
+       let parent = Filename.dirname dir in
+       if parent = dir then raise Not_found;
+       find (Filename.basename dir :: acc) parent
+    in
+    find [] dir
+  in
+  let (root_dir, c_file_dir_path) =
+    try find_root_and_dir_path c_file_dir with Not_found ->
+      panic "No RefinedC project can be located for file [%s]." c_file
+  in
+  (* Read the project configuration from the project file. *)
+  let project_config =
+    let project_file = Filename.concat root_dir rc_project_file in
+    try
+      if Sys.is_directory project_file then
+        panic "Invalid project file [%s] (directory)." project_file;
+      read_project_file project_file
+    with Sys_error(_) ->
+      panic "Error while reading the project file [%s]." project_file
+  in
+  (* Compute the base Coq logical path for the files. *)
+  let file_coq_dir = project_config.project_coq_root @ c_file_dir_path in
+  (* Compute the relevant directory and file paths. *)
+  let rc_dir = Filename.concat c_file_dir rc_dir_name in
+  let gen_dir = Filename.concat rc_dir c_file_name_no_ext in
+  let dune_file = Filename.concat gen_dir "dune" in
+  let proofs_file = Filename.concat gen_dir proofs_file_name in
+  let code_file = Filename.concat gen_dir code_file_name in
+  let spec_file = Filename.concat gen_dir spec_file_name in
+  let proof_files =
+    let files = try read_file proofs_file with Sys_error(_) -> [] in
+    List.map (Filename.concat gen_dir) files
+  in
+  (* Compute the list of files to delete, and delete them. *)
+  let all = [code_file; spec_file; dune_file; proofs_file] @ proof_files in
+  List.iter (fun f -> try Sys.remove f with Sys_error(_) -> ()) all;
+  (* Check if the generated directories are empty and if so delete them. *)
+  let all_dirs = [gen_dir; rc_dir] in
+  let rmdir dir =
+    if Array.length (Sys.readdir dir) = 0 then
+      ignore (Sys.command (Printf.sprintf "rm -rf %s" dir))
+  in
+  List.iter rmdir all_dirs;
+  (* Delete the Coq project mapping for the file. *)
+  let path = String.concat "." file_coq_dir ^ "." ^ c_file_name_no_ext in
+  let dune_dir_path =
+    let relative_path = Filename.relative_path root_dir c_file_dir in
+    let path = Filename.concat "_build/default" relative_path in
+    let path = Filename.concat path rc_dir_name in
+    Filename.concat path c_file_name_no_ext
+  in
+  let coq_project_path = Filename.concat root_dir coq_project_file in
+  let line = Printf.sprintf "-Q %s %s" dune_dir_path path in
+  let lines = try read_file coq_project_path with Sys_error(_) -> [] in
+  if List.mem line lines then
+    begin
+      let new_lines = List.filter (fun s -> s <> line) lines in
+      write_file coq_project_path new_lines
+    end
+
+let clean_cmd =
+  let doc = "Delete all the generated files for the given C source file." in
+  Term.(pure run_clean $ c_file),
+  Term.info "clean" ~version ~doc
+
+(* Project initialization command. *)
+
+let check_coqdir_member id =
+  (* Empty string is invalid. *)
+  if String.length id = 0 then
+    invalid_arg "invalid empty Coq directory member.";
+  (* Only accept characters and underscores. *)
+  let check_char c =
+    match c with
+    | 'a'..'z' | 'A'..'Z' | '_' -> ()
+    | _                         ->
+        invalid_arg "invalid Coq directory member (contains %C)." c;
+  in
+  String.iter check_char id;
+  (* Should not start with an underscore. *)
+  if id.[0] = '_' then
+    invalid_arg "invalid Coq directory member (starts with '_')."
+
+let init : string list option -> unit = fun coqdir ->
+  (* Read the current working directory. *)
+  let wd =
+    try Filename.realpath (Sys.getcwd ()) with Invalid_argument(_) ->
+      panic "Error while reading the current working directory."
+  in
+  (* Files to generate. *)
+  let rc_project_path = Filename.concat wd rc_project_file in
+  let dune_project_path = Filename.concat wd dune_project_file in
+  let coq_project_path = Filename.concat wd coq_project_file in
+  (* Check for an existing project. *)
+  if Sys.file_exists rc_project_path then
+    panic "A RefinedC project already exists here.";
+  (* Check for conflicting project files in subdirectories. *)
+  let file_check is_dir path =
+    let dir = Filename.dirname path in
+    let base = Filename.basename path in
+    if base = rc_project_file then
+      if is_dir then panic "Subdirectory [%s] uses a reserved name." path
+      else panic "A RefinedC project exists in directory [%s]." dir
+    else if base = dune_project_file then
+      if is_dir then panic "Subdirectory [%s] uses a reserved name." path
+      else panic "A [%s] file exists in directory [%s]." dune_project_file dir
+    else if base = coq_project_file then
+      if is_dir then panic "Subdirectory [%s] uses a reserved name." path
+      else panic "A [%s] file exists in directory [%s]." dune_project_file dir
+    else if base = rc_dir_name then
+      if is_dir then panic "Directory [%s] uses a reserved name." path
+      else panic "File [%s] uses a reserved name." path
+    else ()
+  in
+  Filename.iter_files ~ignored_dirs:[".git"; "_build"] wd file_check;
+  (* Check for conflicting projects in parent directories. *)
+  let rec check_parents dir =
+    let check_dir dir =
+      (* Avoid nested RefinedC projects for sanity. *)
+      let file = Filename.concat dir rc_project_file in
+      if Sys.file_exists file then begin
+        if Sys.is_directory file then
+          panic "Parent directory [%s] has a reserved name." file;
+        panic "Nested under RefinedC project [%s]." file
+      end;
+      (* Avoid nested dune workspaces, leads to problems. *)
+      let file = Filename.concat dir dune_project_file in
+      if Sys.file_exists file then begin
+        if Sys.is_directory file then
+          panic "Parent directory [%s] has a reserved name." file;
+        panic "Nested under RefinedC project [%s]." file
+      end
+      (* Coq project files should be OK. *)
+    in
+    let parent = Filename.dirname dir in
+    if parent <> dir then (check_dir parent; check_parents parent)
+  in
+  check_parents wd;
+  (* Build the Coq directory, using a possible CLI argument. *)
+  let coqdir =
+    match coqdir with Some(d) -> d | None ->
+    let base = Filename.basename wd in
+    try check_coqdir_member base; default_coqdir base
+    with Invalid_argument(msg) ->
+      panic "Current directory name is an %s" msg
+  in
+  (* Now we are safe, generate the project files. *)
+  write_project_file rc_project_path (default_project_config coqdir);
+  write_file dune_project_path [
+    "(lang dune 2.7)";
+    "(using coq 0.2)";
+    "; Generated by [refinedc], do not edit.";
+  ];
+  write_file coq_project_path [
+    "# Generated by [refinedc], do not edit.";
+    "-arg -w -arg -notation-overridden";
+    "-arg -w -arg -redundant-canonical-projection";
+  ];
+  (* Reporting. *)
+  let coqdir = String.concat "." coqdir in
+  Format.printf "Initialized a RefinedC project in [%s].\n" wd;
+  Format.printf "Using the Coq logical directory [%s].\n%!" coqdir
+
+let coqdir =
+  let doc =
+    "Specify the logical Coq directory under which the created verification \
+    project is to be placed. The argument is expected to be a dot-sperated \
+    list of identifiers formed of letters and underscores (but not in first \
+    position). If no explicit Coq directory is given then it defaults to \
+    [refinedc.project.DIRNAME], where DIRNAME is the current directory name. \
+    If DIRNAME is not a valid identifier then the command fails."
+  in
+  let coqdir =
+    let parse s =
+      let ids = String.split_on_char '.' s in
+      try List.iter check_coqdir_member ids; Ok ids
+      with Invalid_argument(msg) -> Error (`Msg msg)
+    in
+    let pp fmt ids = Format.pp_print_string fmt (String.concat "." ids) in
+    Arg.conv ~docv:"COQDIR" (parse, pp)
+  in
+  let i = Arg.(info ["coqdir"] ~docv:"COQDIR" ~doc) in
+  Arg.(value & opt (some coqdir) None & i)
+
+let init_cmd =
+  let doc = "Create a new RefinedC project in the current directory." in
+  Term.(pure init $ coqdir),
+  Term.info "init" ~version ~doc
+
+(* A few trivial commands. *)
+
+let print_version () =
+  Format.printf "RefinedC version: %s\nRelying on Cerberus version: %s\n%!"
+    Version.version Cerb_frontend.Version.version
+
+let version_cmd =
+  let doc = "Show detailed version information for RefinedC." in
+  Term.(const print_version $ const ()),
+  Term.info "version" ~version ~doc
+
+let help_cmd =
+  let doc = "Show the main help page for RefinedC." in
+  Term.(ret (const (`Help (`Pager, None)))),
+  Term.info "help" ~version ~doc
+
+let default_cmd =
+  let doc = "RefinedC program verification framework." in
+  Term.(ret (const (`Help(`Pager, None)))),
+  Term.info "refinedc" ~version ~doc
+
+(* Entry point. *)
+let _ =
+  let cmds =
+    [ init_cmd ; cpp_cmd ; ail_cmd ; check_cmd ; clean_cmd
+    ; help_cmd ; version_cmd ]
+  in
+  Term.(exit (eval_choice default_cmd cmds))

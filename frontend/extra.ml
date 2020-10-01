@@ -59,6 +59,50 @@ module Filename =
         [path] is invalid (i.e., it does not describe an existing file),  then
         the exception [Invalid_argument] is raised. *)
     external realpath : string -> string = "c_realpath"
+
+    (** [iter_files ?ignored_dirs dir f] recursively traverses directory [dir]
+        and calls function [f] on each file, using as first argument a boolean
+        indicating whether the file is a directory, and as second arugment the
+        full path to the file. The traversal ignores directories whose name is
+        contained in [ignored_dirs], as well as their contents. *)
+    let iter_files : ?ignored_dirs:string list -> string
+        -> (bool -> string -> unit) -> unit = fun ?(ignored_dirs=[]) dir f ->
+      let rec iter dirs =
+        match dirs with
+        | []                  -> ()
+        | (dir, base) :: dirs ->
+        let file = Filename.concat dir base in
+        let is_dir = Sys.is_directory file in
+        (* Ignore if necessary. *)
+        match is_dir && List.mem base ignored_dirs with
+        | true  -> iter dirs
+        | false ->
+        (* Run the action on the current file. *)
+        f is_dir file;
+        (* Compute remaining files. *)
+        if is_dir then
+          let files = Sys.readdir file in
+          let fn name dirs = (file, name) :: dirs in
+          iter (Array.fold_right fn files dirs)
+        else
+          iter dirs
+      in
+      iter [(Filename.dirname dir, Filename.basename dir)]
+
+    (** [relative_path root file] computes a relative filepath for [file] with
+        its origin at [root]. The exception [Invalid_argument] is raised if an
+        error occurs. *)
+    let relative_path : string -> string -> string = fun root file ->
+      let root = realpath root in
+      let file = realpath file in
+      let root_len = String.length root in
+      let full_len = String.length file in
+      if root_len > full_len then
+        invalid_arg "Extra.Filename.relative_path";
+      let file_root = String.sub file 0 root_len in
+      if file_root <> root then
+        invalid_arg "Extra.Filename.relative_path";
+      String.sub file (root_len + 1) (full_len - root_len - 1)
   end
 
 module SMap = Map.Make(String)
@@ -122,9 +166,38 @@ module String =
       with Exit -> false
   end
 
-(** [outut_lines oc ls] prints the lines [ls] to the output channel [oc] while
-    inserting newlines according to [String.split_on_char]. *)
+(** [outut_lines oc ls] prints the lines [ls] to the output channel [oc]. Note
+    that a newline character is added at the end of each line. *)
 let output_lines : out_channel -> string list -> unit = fun oc ls ->
-  match ls with
-  | []      -> ()
-  | l :: ls -> output_string oc l; List.iter (Printf.fprintf oc "\n%s") ls
+  List.iter (Printf.fprintf oc "%s\n") ls
+
+(** [write_file fname ls] writes the lines [ls] to file [fname]. All lines are
+    terminated with a newline character. *)
+let write_file : string -> string list -> unit = fun fname ls ->
+  let oc = open_out fname in
+  output_lines oc ls; close_out oc
+
+(** [append_file fname ls] writes the lines [ls] at the end of file [fname]. A
+    newline terminates each inserted lines. The file must exist. *)
+let append_file : string -> string list -> unit = fun fname ls ->
+  let oc = open_out_gen [Open_append] 0 fname in
+  output_lines oc ls; close_out oc
+
+(** [read_file fname] returns the list of the lines of file [fname]. Note that
+    the trailing newlines are removed. *)
+let read_file : string -> string list = fun fname ->
+  let ic = open_in fname in
+  let lines = ref [] in
+  try
+    while true do lines := input_line ic :: !lines done;
+    assert false (* Unreachable. *)
+  with End_of_file -> close_in ic; List.rev !lines
+
+(** Short name for a standard formatter with continuation. *)
+type ('a,'b) koutfmt = ('a, Format.formatter, unit, unit, unit, 'b) format6
+
+(** [invalid_arg fmt ...] raises [Invalid_argument] with the given message. It
+    can be formed using the standard formatter syntax. *)
+let invalid_arg : ('a, 'b) koutfmt -> 'a = fun fmt ->
+  let cont _ = invalid_arg (Format.flush_str_formatter ()) in
+  Format.kfprintf cont Format.str_formatter fmt

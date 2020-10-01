@@ -2,6 +2,7 @@
 
 type comment_annots =
   { ca_inlined       : string list
+  ; ca_requires      : string list
   ; ca_imports       : (string * string) list
   ; ca_proof_imports : (string * string) list
   ; ca_code_imports  : (string * string) list
@@ -53,6 +54,7 @@ let parse_annots : string list -> comment_annots = fun ls ->
     Panic.panic_no_pos "Comment annotation error: %s." msg
   in
   let imports = ref [] in
+  let requires = ref [] in
   let inlined = ref [] in
   let typedefs = ref [] in
   let context = ref [] in
@@ -93,6 +95,12 @@ let parse_annots : string list -> comment_annots = fun ls ->
                 | None    ->
                     error ("invalid [rc::import] annotation")
               end
+          | "require" ->
+              begin
+                check_inline false;
+                let s = String.trim (get_payload ()) in
+                requires := s :: !requires; loop inline ls
+              end
           | "typedef" ->
               begin
                 check_inline false;
@@ -125,5 +133,6 @@ let parse_annots : string list -> comment_annots = fun ls ->
   ; ca_proof_imports  = List.map (fun (f,m,_) -> (f,m)) proof_imports
   ; ca_code_imports   = List.map (fun (f,m,_) -> (f,m)) code_imports
   ; ca_imports        = List.map (fun (f,m,_) -> (f,m)) imports
+  ; ca_requires       = List.rev !requires
   ; ca_context        = List.rev !context
   ; ca_typedefs       = List.rev !typedefs }

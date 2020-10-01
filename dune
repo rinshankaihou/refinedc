@@ -1,6 +1,13 @@
 ; Add project-wide flags here.
 (env
- (dev     (flags :standard))
- (release (flags :standard)))
+ (dev
+  (binaries (tools/coqc_timing.sh as coqc))
+  (flags :standard))
+ (release
+  (binaries (tools/coqc_timing.sh as coqc))
+  (flags :standard)))
 
-(dirs frontend)
+(install
+ (files FAQ.md ANNOTATIONS.md)
+ (section doc)
+ (package refinedc))

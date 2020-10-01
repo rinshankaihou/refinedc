@@ -734,18 +734,13 @@ let collect_invs : func_def -> (string * loop_annot) list = fun def ->
 let pp_spec : string -> import list -> string list -> typedef list ->
       string list -> Coq_ast.t pp =
     fun import_path imports inlined typedefs ctxt ff ast ->
-  (* Stuff for import of the code. *)
-  let basename =
-    let name = Filename.basename ast.source_file in
-    try Filename.chop_extension name with Invalid_argument(_) -> name
-  in
 
   (* Formatting utilities. *)
   let pp fmt = Format.fprintf ff fmt in
 
   (* Printing some header. *)
   pp "@[<v 0>From refinedc.typing Require Import typing.@;";
-  pp "From %s Require Import %s_code.@;" import_path basename;
+  pp "From %s Require Import generated_code.@;" import_path;
   List.iter (pp_import ff) imports;
   pp "Set Default Proof Using \"Type\".@;@;";
 
@@ -1072,16 +1067,10 @@ let pp_proof : string -> func_def -> import list -> string list -> proof_kind
     | _                         -> imports
   in
 
-  (* Stuff for import of the code. *)
-  let basename =
-    let name = Filename.basename ast.source_file in
-    try Filename.chop_extension name with Invalid_argument(_) -> name
-  in
-
   (* Printing some header. *)
   pp "@[<v 0>From refinedc.typing Require Import typing.@;";
-  pp "From %s Require Import %s_code.@;" import_path basename;
-  pp "From %s Require Import %s_spec.@;" import_path basename;
+  pp "From %s Require Import generated_code.@;" import_path;
+  pp "From %s Require Import generated_spec.@;" import_path;
   List.iter (pp_import ff) imports;
   pp "Set Default Proof Using \"Type\".@;@;";
 

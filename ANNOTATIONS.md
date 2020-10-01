@@ -573,6 +573,13 @@ code file.
 //@rc::import <modpath> from <library> (for code only)
 ```
 
+Note that it is not directly possible to import Coq modules from theories
+defined in the same RefinedC project. To do so, one must first use a directive
+like the following.
+```c
+//@rc::require <modpath>
+```
+
 ## Context directive
 
 The Coq context (in spec and proof sections) using the following annotation:

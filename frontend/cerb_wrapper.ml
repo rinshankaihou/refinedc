@@ -2,6 +2,12 @@ open Cerb_frontend
 open Cerb_backend
 open Pipeline
 
+type cpp_config =
+  { cpp_I        : string list
+  ; cpp_include  : string list
+  ; cpp_nostdinc : bool
+  ; cpp_D        : string list }
+
 let (>>=)  = Exception.except_bind
 let return = Exception.except_return
 
@@ -42,16 +48,23 @@ let run_cpp cpp_cmd filename =
   Global_ocaml.(set_cerb_conf false Random false Basic false false false);
   cpp (conf, io) ~filename
 
-let cpp_cmd includes nostd =
-  let includes =
-    if nostd then includes else
-    let cerb_runtime = Cerb_runtime.runtime () in
-    Filename.concat cerb_runtime "libc/include" :: includes
+let cpp_cmd config =
+  let stdinc =
+    if config.cpp_nostdinc then []
+    else [Filename.concat (Cerb_runtime.runtime ()) "libc/include"]
   in
-  let includes = List.map (fun dir -> "-I" ^ dir) includes in
-  let includes = String.concat " " includes in
-  let defs = "-D__cerb__ -DDEBUG -DMAX_CPUS=4 -DMAX_VMS=2 -DHEAP_PAGES=10" in
-  "cc -E -C -Werror -nostdinc -undef " ^ defs ^ " " ^ includes
+  let cpp_I = List.map (fun dir -> "-I" ^ dir) (stdinc @ config.cpp_I) in
+  let cpp_include =
+    List.map  (fun file -> "-include " ^ file) config.cpp_include
+  in
+  let macros =
+    ["__cerb__"; "DEBUG"; "MAX_CPUS=4"; "MAX_VMS=2"; "HEAP_PAGES=10"]
+    @ config.cpp_D
+  in
+  let cpp_D = List.map (fun mac -> "-D" ^ mac) macros in
+  let opts = cpp_I @ cpp_include @ cpp_D in
+  let cmd = "cc -E -C -Werror -nostdinc -undef " ^ String.concat " " opts in
+  (* Printf.printf "CPP: %s\n%!" cmd; *) cmd
 
 (* A couple of things that the frontend does not seem to check. *)
 let source_file_check filename =
@@ -62,10 +75,10 @@ let source_file_check filename =
   if not (Filename.check_suffix filename ".c") then
     Panic.panic_no_pos "File [%s] does not have the [.c] extension." filename
 
-let c_file_to_ail cpp_includes cpp_nostd filename =
+let c_file_to_ail config fname =
   let open Exception in
-  source_file_check filename;
-  match frontend (cpp_cmd cpp_includes cpp_nostd) filename with
+  source_file_check fname;
+  match frontend (cpp_cmd config) fname with
   | Result(_, Some(ast), _) -> ast
   | Result(_, None     , _) ->
       Panic.panic_no_pos "Unexpected frontend error."
@@ -80,11 +93,25 @@ let c_file_to_ail cpp_includes cpp_nostd filename =
   in
   Panic.panic loc "Frontend error.\n%s\n\027[0m%s%!" err pos
 
-let cpp_lines cpp_includes cpp_nostd filename =
-  source_file_check filename;
+let cpp_lines config fname =
+  source_file_check fname;
   let str =
-    match run_cpp (cpp_cmd cpp_includes cpp_nostd) filename with
+    match run_cpp (cpp_cmd config) fname with
     | Result(str)  -> str
     | Exception(_) -> Panic.panic_no_pos "Failed due to preprocessor error."
   in
   String.split_on_char '\n' str
+
+let print_ail : Ail_to_coq.typed_ail -> unit = fun ast ->
+  match io.run_pp None (Pp_ail_ast.pp_program true false ast) with
+  | Result(_)            -> ()
+  | Exception((loc,err)) ->
+  match err with
+  | CPP(_) -> Panic.panic_no_pos "Failed due to preprocessor error."
+  | _      ->
+  let err = Pp_errors.short_message err in
+  let (_, pos) =
+    try Location_ocaml.head_pos_of_location loc with Invalid_argument(_) ->
+      ("", "(Cerberus position bug)")
+  in
+  Panic.panic loc "Frontend error.\n%s\n\027[0m%s%!" err pos

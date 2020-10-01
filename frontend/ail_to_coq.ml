@@ -1413,15 +1413,14 @@ let translate : string -> typed_ail -> Coq_ast.t = fun source_file ail ->
       let func_vars = collect_bindings () in
       let func_deps =
         let globals_used =
-          (* We preserve order of declaration. *)
           List.filter (Hashtbl.mem used_globals) (List.map fst global_vars)
         in
         let func_used =
-          (* We preserve order of declaration. *)
           let potential = List.map (fun (id, _) -> sym_to_str id) decls in
           List.filter (Hashtbl.mem used_functions) potential
         in
-        (globals_used, func_used)
+        let sort = List.sort String.compare in
+        (sort globals_used, sort func_used)
       in
       let func =
         { func_name ; func_annot ; func_args ; func_vars ; func_init
