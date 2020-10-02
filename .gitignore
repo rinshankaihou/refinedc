@@ -1,14 +1,5 @@
 _build/
 .merlin
-*.vo
-*.vos
-*.vok
-*.vio
-*.v.d
-.coqdeps.d
-*.glob
-*.cache
-*.aux
 \#*\#
 .\#*
 *~
