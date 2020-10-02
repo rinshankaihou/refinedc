@@ -59,15 +59,13 @@ Lemma refinedc_adequacy Σ `{!typePreG Σ} (thread_mains : list loc) (fns : gmap
   nsteps (Λ := stmt_lang) n (initial_thread_state <$> thread_mains, initial_state fns gs ) κs (t2, σ2) →
   ∀ e2, e2 ∈ t2 → not_stuck e2 σ2.
 Proof.
-  move => Hwp. apply: wp_strong_adequacy'. move => ?.
+  move => Hwp. apply: wp_strong_adequacy. move => ?.
   set h := to_heap ((λ b, (RSt 0%nat, b)) <$> gs).
-  iMod (own_alloc (Auth (Some (1%Qp, to_agree h)) h)) as (γh) "Hh" => //.
-  { apply auth_valid_discrete => /=. split => //. exists h. eauto using to_heap_valid. }
-  rewrite (auth_both_op _ h). iDestruct "Hh" as "[Hh Hm]".
+  iMod (own_alloc (● h ⋅ ◯ h)) as (γh) "[Hh Hm]" => //.
+  { apply auth_both_valid_discrete. split => //. eauto using to_heap_valid. }
   set f := to_fntbl fns.
-  iMod (own_alloc (Auth (Some (1%Qp, to_agree f)) f)) as (γf) "Hf" => //.
-  { apply auth_valid_discrete => /=. split => //. exists f. eauto using to_fntbl_valid. }
-  rewrite (auth_both_op _ f). iDestruct "Hf" as "[Hf Hfm]".
+  iMod (own_alloc (● f ⋅ ◯ f)) as (γf) "[Hf Hfm]" => //.
+  { apply auth_both_valid_discrete. split => //. eauto using to_fntbl_valid. }
 
   set (HheapG := HeapG _ _ γh _ γf).
   set (HrefinedCG := RefinedCG _ _ HheapG).
@@ -101,7 +99,7 @@ Proof.
     iApply type_callable. iExists () => /=. iFrame. iIntros (v []) "Hv _" => /=.
     simpl_subst. iApply type_return. iApply type_val. iApply type_void.
     iIntros (_). by iExists ().
-  - iFrame. iIntros (?? _ ?) "_ _ _". iApply fupd_mask_weaken => //. iPureIntro. by eauto.
+  - iFrame. iIntros (?? _ _ ?) "_ _ _". iApply fupd_mask_weaken => //. iPureIntro. by eauto.
   - iFrame. iPureIntro => /=. clear. move => l Hl i. rewrite lookup_fmap fmap_None.
     destruct (gs !! (l +ₗ i)) as [x|] eqn:? => //. exfalso. apply: Hl.
     apply elem_of_list_to_set. apply elem_of_list_fmap. exists (l +ₗ i). split. by destruct l.
