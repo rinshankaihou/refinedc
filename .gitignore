@@ -5,7 +5,7 @@ _build/
 *~
 *.bak
 .coq-native/
-build-dep/
+builddep/
 Makefile.coq
 .Makefile.coq.d
 Makefile.coq.conf

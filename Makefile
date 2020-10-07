@@ -27,14 +27,14 @@ C_SRC = $(wildcard examples/*.c) $(wildcard tutorial/*.c)
 generate_all: $(addsuffix .gen, $(C_SRC))
 .PHONY: generate_all
 
-build-dep-opamfiles: build-dep/opam
+builddep-opamfiles: builddep/refinedc-builddep.opam
 	@true
-.PHONY: build-dep-opamfiles
+.PHONY: builddep-opamfiles
 
-# Create a virtual Opam package with the same dependencies as RefinedC.
-build-dep/opam: refinedc.opam Makefile
-	@echo "# Creating build-dep package."
-	@mkdir -p build-dep
+# Create a virtual Opam package with the same deps as RefinedC, but no build.
+builddep/refinedc-builddep.opam: refinedc.opam Makefile
+	@echo "# Creating builddep package."
+	@mkdir -p builddep
 	@head -n -5 $< > $@
 	@sed -i -E 's/^name: *"(.*)" */name: "\1-builddep"/' $@
 
@@ -42,10 +42,10 @@ build-dep/opam: refinedc.opam Makefile
 #  1) dependencies of RefinedC are installed,
 #  2) they will remain satisfied even if other packages are updated/installed,
 #  3) we do not have to pin the RefinedC package itself (which takes time).
-build-dep: build-dep/opam
-	@echo "# Installing build-dep package."
-	@opam install $(OPAMFLAGS) build-dep/
-.PHONY: build-dep
+builddep: builddep/refinedc-builddep.opam
+	@echo "# Installing package $^."
+	@opam install $(OPAMFLAGS) $^
+.PHONY: builddep
 
 # FIXME
 #TUTORIAL_SRC = \
