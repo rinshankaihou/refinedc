@@ -134,8 +134,8 @@ Lemma wp_cas_fail vl1 vl2 vd vo ve z1 z2 Φ l1 l2 it q E:
   l2 `has_layout_loc` it_layout it →
   val_to_int vo it = Some z1 →
   val_to_int ve it = Some z2 →
-  length vd = it_length it →
-  (it_length it ≤ loc_size)%nat →
+  length vd = bytes_per_int it →
+  (bytes_per_int it ≤ bytes_per_addr)%nat →
   z1 ≠ z2 →
   l1↦{q}vo -∗ l2↦ve -∗ ▷ (l1 ↦{q} vo -∗ l2↦vo -∗ Φ (val_of_bool false)) -∗
    WP CAS (IntOp it) (Val vl1) (Val vl2) (Val vd) @ E {{ Φ }}.
@@ -164,8 +164,8 @@ Lemma wp_cas_suc vl1 vl2 vd vo ve z1 z2 Φ l1 l2 it E q:
   l2 `has_layout_loc` it_layout it →
   val_to_int vo it = Some z1 →
   val_to_int ve it = Some z2 →
-  length vd = it_length it →
-  (it_length it ≤ loc_size)%nat →
+  length vd = bytes_per_int it →
+  (bytes_per_int it ≤ bytes_per_addr)%nat →
   z1 = z2 →
   l1↦vo -∗ l2↦{q}ve -∗ ▷ (l1 ↦ vd -∗ l2↦{q}ve -∗ Φ (val_of_bool true)) -∗
    WP CAS (IntOp it) (Val vl1) (Val vl2) (Val vd) @ E {{ Φ }}.
@@ -235,7 +235,7 @@ Proof.
   iIntros (Hvl [i Hi]) "HΦ".
   rewrite /GetMember/GetMemberLoc/offset_of Hi /=.
   have [|? Hs]:= (val_of_int_is_some size_t (offset_of_idx sl.(sl_members) i)). {
-    split; first by rewrite /it_min/=; lia.
+    split; first by rewrite /min_int/=; lia.
     by apply offset_of_bound.
   }
   rewrite Hs /=. move: Hs => /val_to_of_int Hs.
@@ -294,7 +294,7 @@ Proof. by iApply (wps_concat_bind_ind []). Qed.
 
 Lemma wp_struct_init E Φ sl fs:
   foldr (λ '(n, ly) f, (λ vl,
-     WP default (Val (replicate (ly_size ly) Poison)) (n' ← n; (list_to_map fs : gmap _ _) !! n')
+     WP default (Val (replicate (ly_size ly) MPoison)) (n' ← n; (list_to_map fs : gmap _ _) !! n')
         @ E {{ v, f (vl ++ [v]) }}))
     (λ vl, Φ (mjoin vl)) sl.(sl_members) [] -∗
   WP StructInit sl fs @ E {{ Φ }}.

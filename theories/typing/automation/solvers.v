@@ -158,10 +158,14 @@ Ltac enrich_context :=
 (*   move => n m ??. enrich_context. *)
 (* Abort. *)
 
+Lemma unfold_int_elem_of_it (z : Z) (it : int_type) :
+  z ∈ it = (min_int it ≤ z ∧ z ≤ max_int it).
+Proof. done. Qed.
 
 (** * [solve_goal] without cleaning of the context  *)
 Ltac unprepared_solve_goal :=
-  unfold ly_size, ly_align_log, it_in_range, it_max, it_min, it_half_modulus, it_modulus in *; simpl in *;
+  try rewrite -> unfold_int_elem_of_it in *;
+  unfold ly_size, ly_align_log, max_int, min_int, int_half_modulus, int_modulus in *; simpl in *;
   normalize_and_simpl_goal;
   rewrite /ly_size/ly_align_log //=; enrich_context;
   repeat case_bool_decide => //; repeat case_decide => //; repeat case_match => //;

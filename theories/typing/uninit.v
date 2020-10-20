@@ -85,7 +85,7 @@ Section uninit.
     iIntros "(%&%&HT)" (Hint) "Hp". iIntros (Φ) "HΦ".
     iDestruct (split_uninit (Z.to_nat n) with "Hp") as "[H1 H2]"; [lia..|].
     iApply wp_ptr_offset. by apply val_to_of_loc. by apply val_to_of_int.
-    { have := val_of_int_in_range _ _ _ Hint. unfold it_in_range, it_min; simpl. lia. }
+    { have := val_of_int_in_range _ _ _ Hint. unfold elem_of, int_elem_of_it, min_int; simpl. lia. }
     iModIntro. rewrite offset_loc_sz1//.
     iApply ("HΦ" with "[H2]"). 2: iApply ("HT" with "H1 []"). rewrite Z2Nat.id; [|lia]. by iFrame.
     by iPureIntro.

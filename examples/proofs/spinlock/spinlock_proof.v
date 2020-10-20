@@ -35,7 +35,7 @@ Section type.
     - repeat liRStep; liShow.
     - repeat liRStep; liShow.
       Unshelve. all: prepare_sideconditions; try solve_goal.
-      rewrite /it_length/=. have ->: loc_size = 8%nat; solve_goal.
+      rewrite /bytes_per_int/=. have ->: bytes_per_addr = 8%nat; solve_goal.
   Qed.
 
   Lemma type_sl_unlock:

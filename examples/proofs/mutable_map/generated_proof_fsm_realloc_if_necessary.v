@@ -31,7 +31,7 @@ Section proof_fsm_realloc_if_necessary.
         ⌜0 < count⌝ ∗
         ⌜length items * 2 <= length items2⌝ ∗
         ⌜fsm_invariant mp items⌝ ∗
-        ⌜struct_item.(ly_size) * length items < it_max size_t⌝
+        ⌜struct_item.(ly_size) * length items ≤ max_int size_t⌝
     ]> $
       <[ "#11" :=
         arg_m ◁ₗ (m @ (&own ((mp, items, count) @ (fixed_size_map)))) ∗

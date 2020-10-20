@@ -195,7 +195,7 @@ Section code.
     sl_members := [
       (Some "outside", it_layout size_t);
       (Some "lock", layout_of struct_spinlock);
-      (None, mk_layout 7%nat 0%nat);
+      (None, Layout 7%nat 0%nat);
       (Some "locked_int", it_layout size_t);
       (Some "locked_struct", layout_of struct_lock_test_inner)
     ];

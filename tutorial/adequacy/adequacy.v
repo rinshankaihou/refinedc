@@ -57,8 +57,8 @@ Section adequate.
   ].
 
   Definition initial_heap : gmap Z (list mbyte) :=
-    <[block_allocator_data := replicate (Z.to_nat 10000) Poison ]> $
-    <[block_allocator_state := replicate (struct_alloc_state).(ly_size) Poison ]> $
+    <[block_allocator_data := replicate (Z.to_nat 10000) MPoison ]> $
+    <[block_allocator_state := replicate (struct_alloc_state).(ly_size) MPoison ]> $
     <[block_initialized := LATCH_INIT ]> $
     ∅.
 

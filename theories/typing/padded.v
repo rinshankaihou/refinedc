@@ -101,13 +101,14 @@ Section padded.
     iDestruct (ty_deref with "Hr") as (v2) "[Hr Hv2]".
     iDestruct (ty_size_eq with "Hv2") as %Hlen2.
     iDestruct ("HT" with "Hv1") as (<-) "$".
-    iExists (v1 ++ v2). rewrite /= heap_mapsto_app /has_layout_val app_length Hlen1 Hlen2. iFrame.
-    iPureIntro. split => //. rewrite /= /ly_offset{2}/ly_size. lia.
+    iExists (v1 ++ v2).
+    rewrite /= heap_mapsto_app /has_layout_val app_length Hlen1 Hlen2.
+    iFrame. iPureIntro.
+    split => //. rewrite /= /ly_offset {2}/ly_size. lia.
   Qed.
   Global Instance subsume_padded_uninit_inst l ly lyty ty `{!Movable ty}:
     SubsumePlace l Own (padded ty lyty ly) (uninit ly) :=
     λ T, i2p (subsume_padded_uninit l ly lyty ty T).
-
 
   Lemma subsume_uninit_padded l β ly lyty T:
     ⌜lyty ⊑ ly⌝ ∗ T -∗
@@ -175,7 +176,7 @@ Section padded.
     iIntros "(% & % & % & HT)" (Hint) "Hp". iIntros (Φ) "HΦ".
     iDestruct (split_padded (Z.to_nat n) with "Hp") as "[H1 H2]"; [lia..|].
     iApply wp_ptr_offset. by apply val_to_of_loc. by apply val_to_of_int.
-    { have := val_of_int_in_range _ _ _ Hint. unfold it_in_range, it_min; simpl. lia. }
+    { have := val_of_int_in_range _ _ _ Hint. unfold elem_of, int_elem_of_it, min_int; simpl. lia. }
     iModIntro. rewrite offset_loc_sz1//.
     iApply ("HΦ" with "[H2]"). 2: iApply ("HT" with "H1 []"). rewrite Z2Nat.id; [|lia]. by iFrame.
     by iPureIntro.

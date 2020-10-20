@@ -1563,11 +1563,11 @@ Section code.
     sl_members := [
       (Some "nb_keys", it_layout i32);
       (Some "keys", mk_array_layout (it_layout i32) 4);
-      (None, mk_layout 4%nat 0%nat);
+      (None, Layout 4%nat 0%nat);
       (Some "vals", mk_array_layout LPtr 4);
       (Some "children", mk_array_layout LPtr 5);
       (Some "height", it_layout i32);
-      (None, mk_layout 4%nat 0%nat)
+      (None, Layout 4%nat 0%nat)
     ];
   |}.
   Solve Obligations with solve_struct_obligations.

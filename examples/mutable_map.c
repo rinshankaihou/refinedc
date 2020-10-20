@@ -66,7 +66,7 @@ void fsm_realloc_if_necessary(struct fixed_size_map *m);
 [[rc::parameters("m : loc", "len : nat")]]
 [[rc::args("m @ &own<uninit<struct_fixed_size_map>>")]]
 [[rc::args("len @ int<size_t>")]]
-[[rc::requires("{1 < len}", "{struct_item.(ly_size) * len + 16 < it_max size_t}")]]
+[[rc::requires("{1 < len}", "{struct_item.(ly_size) * len + 16 ≤ max_int size_t}")]]
 [[rc::requires("[alloc_initialized]")]]
 [[rc::ensures("m @ &own<{∅, replicate len Empty, len} @ fixed_size_map> ")]]
  [[rc::lemmas("fsm_invariant_init")]]
@@ -236,7 +236,7 @@ void fsm_realloc_if_necessary(struct fixed_size_map *m) {
   [[rc::inv_vars("m2 : {fsm_copy_entries items i, items2, count2} @ fixed_size_map")]]
   [[rc::constraints("{count + length items - i < count2}", "{i <= length items}", "{0 < count}",
                     "{length items * 2 <= length items2}", "{fsm_invariant mp items}",
-                    "{struct_item.(ly_size) * length items < it_max size_t}")]]
+                    "{struct_item.(ly_size) * length items ≤ max_int size_t}")]]
   for(size_t i = 0; i < m->length; i += 1) {
     if((*m->items)[i].tag == ITEM_ENTRY) {
       fsm_insert(&m2, (*m->items)[i].u.entry.key, (*m->items)[i].u.entry.value);

@@ -4,7 +4,7 @@
 
 typedef struct [[rc::refined_by("sizes : {list nat}")]]
                [[rc::ptr_type("alloc_entry_t : {maybe2 cons sizes} @ optionalO<λ (size, l) : {(nat * _)}. &own<...>>")]]
-               [[rc::size("{mk_layout size 3}")]]
+               [[rc::size("{Layout size 3}")]]
                [[rc::constraints("{(8 | size)}")]] alloc_entry {
     [[rc::field("size @ int<size_t>")]]
     size_t size;

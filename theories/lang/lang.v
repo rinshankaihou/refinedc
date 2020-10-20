@@ -6,30 +6,209 @@ Set Default Proof Using "Type".
 
 Open Scope Z_scope.
 
-(*** Definitions of the language *)
-Definition signed : Set := bool.
-Definition block_id := string. (* make TC opaque and implement countable and eqdicision *)
-Definition var_name := string.
+(** Representation of a standard (8-bit) byte. *)
+Section Byte.
+  Definition bits_per_byte : Z := 8.
 
-Definition byte_len : Z := 256.
-Record byte := {byte_val : Z; byte_constr : -1 < byte_val < byte_len }.
+  Definition byte_modulus : Z :=
+    Eval cbv in 2 ^ bits_per_byte.
 
-Record layout := mk_layout {ly_size : nat; ly_align_log : nat}.
-Definition sizeof (ly : layout) := ly.(ly_size).
-Instance layout_dec_eq : EqDecision layout.
-Proof. solve_decision. Defined.
-Instance layout_inhabited : Inhabited layout := populate (mk_layout 0 0).
-Instance layout_countable : Countable layout.
-Proof.
- refine (inj_countable'
-   (λ ly, (ly.(ly_size), ly.(ly_align_log)))
-   (λ '(sz, a), mk_layout sz a) _); by intros [].
-Qed.
-Definition ly_align (ly : layout) : nat := 2^ly.(ly_align_log).
+  Record byte :=
+    Byte {
+      byte_val : Z;
+      byte_constr : -1 < byte_val < byte_modulus;
+    }.
+
+  Global Instance byte_eq_dec : EqDecision byte.
+  Proof.
+    move => [b1 H1] [b2 H2]. destruct (decide (b1 = b2)) as [->|].
+    - left. assert (H1 = H2) as ->; [|done]. apply proof_irrel.
+    - right. naive_solver.
+  Qed.
+End Byte.
+
+(** Representation of a type layout (byte size and alignment constraint). *)
+Section Layout.
+  Record layout :=
+    Layout {
+      ly_size : nat;
+      ly_align_log : nat;
+    }.
+
+  Definition sizeof   (ly : layout) : nat := ly.(ly_size).
+  Definition ly_align (ly : layout) : nat := 2 ^ ly.(ly_align_log).
+
+  Global Instance layout_dec_eq : EqDecision layout.
+  Proof. solve_decision. Defined.
+
+  Global Instance layout_inhabited : Inhabited layout :=
+    populate (Layout 0 0).
+
+  Global Instance layout_countable : Countable layout.
+  Proof.
+    refine (inj_countable'
+      (λ ly, (ly.(ly_size), ly.(ly_align_log)))
+      (λ '(sz, a), Layout sz a) _); by intros [].
+  Qed.
+
+  Global Instance layout_le : SqSubsetEq layout := λ ly1 ly2,
+    (ly1.(ly_size) ≤ ly2.(ly_size))%nat ∧
+    (ly1.(ly_align_log) ≤ ly2.(ly_align_log))%nat.
+
+  Global Instance layout_le_po : PreOrder layout_le.
+  Proof.
+    split => ?; rewrite /layout_le => *; repeat case_bool_decide => //; lia.
+  Qed.
+
+  Definition ly_offset (ly : layout) (n : nat) : layout := {|
+    ly_size := ly.(ly_size) - n;
+    (* Sadly we need to have the second argument to factor2 as we want
+    that if l is aligned to x, then l + n * x is aligned to x for all n
+    including 0. *)
+    ly_align_log := ly.(ly_align_log) `min` factor2 n ly.(ly_align_log)
+  |}.
+
+  Definition ly_set_size (ly : layout) (n : nat) : layout := {|
+    ly_size := n;
+    ly_align_log := ly.(ly_align_log)
+  |}.
+
+  Definition ly_mult (ly : layout) (n : nat) : layout := {|
+    ly_size := ly.(ly_size) * n;
+    ly_align_log := ly.(ly_align_log)
+  |}.
+
+  Definition ly_with_align (sz : nat) (align : nat) : layout := {|
+    ly_size := sz;
+    ly_align_log := factor2 align 0
+  |}.
+
+  Definition layout_wf (ly : layout) : Prop := (ly_align ly | ly.(ly_size)).
+
+  Lemma layout_wf_mod (ly : layout) :
+    ly.(ly_size) `mod` ly_align ly = 0 → layout_wf ly.
+  Proof.
+    move => ?. apply Z.mod_divide => //. have ->: 0 = O by [].
+    move => /Nat2Z.inj/Nat.pow_nonzero. lia.
+  Qed.
+
+  Class LayoutWf (ly : layout) : Prop := layout_wf_wf : layout_wf ly.
+
+  (* Class required because the combinators of layout are made typeclass opaque
+     later, so TCEq does not work. *)
+  Class LayoutEq (ly1 ly2 : layout) : Prop := layout_eq : ly1 = ly2.
+End Layout.
+
 Arguments ly_size : simpl never.
 Arguments sizeof _ /.
-(* Arguments ly_align_log : simpl never. *)
+(*Arguments ly_align_log : simpl never.*)
 Arguments ly_align : simpl never.
+
+Typeclasses Opaque layout_le ly_offset ly_set_size ly_mult ly_with_align.
+
+Hint Extern 0 (LayoutWf _) => refine (layout_wf_mod _ _); done : typeclass_instances.
+Hint Extern 0 (LayoutWf _) => unfold LayoutWf; done : typeclass_instances.
+Hint Extern 0 (LayoutEq _ _) => exact: eq_refl : typeclass_instances.
+
+(** Representation of an integer type (size and signedness). *)
+Section IntType.
+  Definition signed := bool.
+
+  Record int_type :=
+    IntType {
+      it_byte_size_log : nat;
+      it_signed : signed;
+    }.
+
+  Definition bytes_per_int (it : int_type) : nat :=
+    2 ^ it.(it_byte_size_log).
+
+  Lemma bytes_per_int_gt_0 it : bytes_per_int it > 0.
+  Proof.
+    rewrite /bytes_per_int. move: it => [log ?] /=.
+    rewrite Z2Nat_inj_pow. assert (0 < 2%nat ^ log); last lia.
+    apply Z.pow_pos_nonneg; lia.
+  Qed.
+
+  Definition bits_per_int (it : int_type) : Z :=
+    bytes_per_int it * bits_per_byte.
+
+  Definition int_modulus (it : int_type) : Z :=
+    2 ^ bits_per_int it.
+
+  Definition int_half_modulus (it : int_type) : Z :=
+    2 ^ (bits_per_int it - 1).
+
+  Lemma int_modulus_twice_half_modulus (it : int_type) :
+    int_modulus it = 2 * int_half_modulus it.
+  Proof.
+    rewrite /int_modulus /int_half_modulus.
+    rewrite -[X in X * _]Z.pow_1_r -Z.pow_add_r; try f_equal; try lia.
+    rewrite /bits_per_int /bytes_per_int.
+    apply Z.le_add_le_sub_l. rewrite Z.add_0_r.
+    rewrite Z2Nat_inj_pow.
+    assert (0 < 2%nat ^ it_byte_size_log it * bits_per_byte); last lia.
+    apply Z.mul_pos_pos; last (rewrite /bits_per_byte; lia).
+    apply Z.pow_pos_nonneg; lia.
+  Qed.
+
+  (* Minimal representable integer. *)
+  Definition min_int (it : int_type) : Z :=
+    if it.(it_signed) then - int_half_modulus it else 0.
+
+  (* Maximal representable integer. *)
+  Definition max_int (it : int_type) : Z :=
+    (if it.(it_signed) then int_half_modulus it else int_modulus it) - 1.
+
+  Lemma min_int_le_0 (it : int_type) : min_int it ≤ 0.
+  Proof.
+    have ? := bytes_per_int_gt_0 it. rewrite /min_int /int_half_modulus.
+    destruct (it_signed it) => //. trans (- 2 ^ 7) => //.
+    rewrite -Z.opp_le_mono. apply Z.pow_le_mono_r => //.
+    rewrite /bits_per_int /bits_per_byte. lia.
+  Qed.
+
+  Lemma max_int_ge_127 (it : int_type) : 127 ≤ max_int it.
+  Proof.
+    have ? := bytes_per_int_gt_0 it.
+    rewrite /max_int /int_modulus /int_half_modulus.
+    rewrite /bits_per_int /bits_per_byte.
+    have ->: (127 = 2 ^ 7 - 1) by []. apply Z.sub_le_mono => //.
+    destruct (it_signed it); apply Z.pow_le_mono_r; lia.
+  Qed.
+
+  Global Instance int_elem_of_it : ElemOf Z int_type :=
+    λ z it, min_int it ≤ z ≤ max_int it.
+
+  Definition it_layout (it : int_type) :=
+    Layout (bytes_per_int it) it.(it_byte_size_log).
+
+  Definition i8  := IntType 0 true.
+  Definition u8  := IntType 0 false.
+  Definition i16 := IntType 1 true.
+  Definition u16 := IntType 1 false.
+  Definition i32 := IntType 2 true.
+  Definition u32 := IntType 2 false.
+  Definition i64 := IntType 3 true.
+  Definition u64 := IntType 3 false.
+
+  (* hardcoding 64bit pointers for now *)
+  Definition bytes_per_addr_log : nat := 3%nat.
+  Definition bytes_per_addr : nat := (2 ^ bytes_per_addr_log)%nat.
+
+  Definition intptr_t  := IntType bytes_per_addr_log false.
+  Definition uintptr_t := IntType bytes_per_addr_log true.
+
+  Definition size_t  := intptr_t.
+  Definition ssize_t := uintptr_t.
+  Definition bool_it := u8.
+End IntType.
+
+
+
+(*** Definitions of the language *)
+Definition block_id := string. (* make TC opaque and implement countable and eqdicision *)
+Definition var_name := string.
 
 Definition loc : Set := Z * Z.
 Declare Scope loc_scope.
@@ -43,13 +222,8 @@ Definition offset_loc (l : loc) (ly : layout) (z : Z) : loc := (l +ₗ ly.(ly_si
 Notation "l 'offset{' ly '}ₗ' z" := (offset_loc l%L ly z%Z)
   (at level 50, format "l  'offset{' ly '}ₗ'  z", left associativity) : loc_scope.
 
-
-(* hardcoding 64bit pointers for now *)
-Definition loc_size_log : nat := 3%nat.
-Definition loc_size : nat := (2 ^ loc_size_log)%nat.
-
 Inductive mbyte : Set :=
-| Byte (b : byte) | PtrFrag (l : loc) (n : nat) | Poison.
+| MByte (b : byte) | MPtrFrag (l : loc) (n : nat) | MPoison.
 
 Definition val : Set := list mbyte.
 Bind Scope val_scope with val.
@@ -61,75 +235,14 @@ Notation "l `has_layout_loc` n" := (has_layout_loc l n) (at level 50) : stdpp_sc
 Definition has_layout_val (v : val) (ly : layout) : Prop := length v = ly.(ly_size).
 Notation "v `has_layout_val` n" := (has_layout_val v n) (at level 50) : stdpp_scope.
 
-Instance layout_le : SqSubsetEq layout := λ ly1 ly2,
-  (ly1.(ly_size) ≤ ly2.(ly_size) ∧ ly1.(ly_align_log) ≤ ly2.(ly_align_log))%nat.
-Instance layout_le_po : PreOrder layout_le.
-Proof. split => ?; rewrite /layout_le => *; repeat case_bool_decide => //; lia. Qed.
-
-Definition ly_offset (ly : layout) (n : nat) : layout := {|
-  ly_size := ly.(ly_size) - n;
-  (* Sadly we need to have the second argument to factor2 as we want
-  that if l is aligned to x, then l + n * x is aligned to x for all n
-  including 0. *)
-  ly_align_log := ly.(ly_align_log) `min` factor2 n ly.(ly_align_log)
-|}.
-Definition ly_set_size (ly : layout) (n : nat) : layout := {|
-  ly_size := n;
-  ly_align_log := ly.(ly_align_log)
-|}.
-Definition ly_mult (ly : layout) (n : nat) : layout := {|
-  ly_size := ly.(ly_size) * n;
-  ly_align_log := ly.(ly_align_log)
-|}.
-Definition ly_with_align (sz : nat) (align : nat) : layout := {|
-  ly_size := sz;
-  ly_align_log := factor2 align 0
-|}.
-
-Definition layout_wf (ly : layout) : Prop := (ly_align ly | ly.(ly_size)).
-Class LayoutWf (ly : layout) : Prop := layout_wf_wf : layout_wf ly.
-Lemma layout_wf_mod ly:
-  ly.(ly_size) `mod` ly_align ly = 0 → layout_wf ly.
-Proof. move => ?. apply Z.mod_divide => //. have ->: 0 = O by []. move => /Nat2Z.inj/Nat.pow_nonzero. lia. Qed.
-Hint Extern 0 (LayoutWf _) => refine (layout_wf_mod _ _); done : typeclass_instances.
-Hint Extern 0 (LayoutWf _) => unfold LayoutWf; done : typeclass_instances.
-(* This class is necessary because the combinators of layout are TC opaque and thus TCEq does not work*)
-Class LayoutEq (ly1 ly2 : layout) : Prop := layout_eq : ly1 = ly2.
-Hint Extern 0 (LayoutEq _ _) => exact: eq_refl : typeclass_instances.
-
 Arguments aligned_to : simpl never.
 (* Arguments aligned_to_log : simpl never. *)
 Arguments has_layout_loc : simpl never.
 Arguments has_layout_val : simpl never.
-Typeclasses Opaque aligned_to has_layout_loc has_layout_val layout_le ly_offset ly_set_size ly_mult ly_with_align.
-
-Record int_type := { it_size : nat; it_signed : signed }.
-Definition it_length (it : int_type) : nat := (2 ^ it.(it_size))%nat.
-Definition it_modulus (it : int_type) : Z := 2 ^ (it_length it * 8).
-Definition it_half_modulus (it : int_type) : Z := 2 ^ (it_length it * 8 - 1).
-(* inclusive *)
-Definition it_min (it : int_type) : Z := if it.(it_signed) then -it_half_modulus it else 0.
-(* exclusive *)
-(* TODO: should we change this to be one less? *)
-Definition it_max (it : int_type) : Z := if it.(it_signed) then it_half_modulus it else it_modulus it.
-Definition it_in_range (it : int_type) (n : Z) : Prop := it_min it ≤ n < it_max it.
-Definition it_layout (it : int_type) := mk_layout (it_length it) it.(it_size).
+Typeclasses Opaque aligned_to has_layout_loc has_layout_val.
 
 Inductive op_type : Set :=
 | IntOp (i : int_type) | PtrOp.
-
-Definition size_t : int_type := {| it_size := loc_size_log; it_signed := false; |}.
-Definition ssize_t : int_type := {| it_size := loc_size_log; it_signed := true; |}.
-Definition bool_it : int_type := {| it_size := 0; it_signed := false; |}.
-Definition i8 : int_type := {| it_size := 0; it_signed := true; |}.
-Definition u8 : int_type := {| it_size := 0; it_signed := false; |}.
-Definition i16 : int_type := {| it_size := 1; it_signed := true; |}.
-Definition u16 : int_type := {| it_size := 1; it_signed := false; |}.
-Definition i32 : int_type := {| it_size := 2; it_signed := true; |}.
-Definition u32 : int_type := {| it_size := 2; it_signed := false; |}.
-Definition i64 : int_type := {| it_size := 3; it_signed := true; |}.
-Definition u64 : int_type := {| it_size := 3; it_signed := false; |}.
-
 
 (* see http://compcert.inria.fr/doc/html/compcert.cfrontend.Cop.html#binary_operation *)
 Inductive bin_op : Set :=
@@ -228,130 +341,100 @@ Implicit Type (l : loc) (e : expr) (v : val) (sz : nat) (h : heap) (σ : state) 
 Fixpoint val_to_int_go v : option Z :=
 match v with
 | [] => Some 0
-| (Byte b)::v' => z ← val_to_int_go v'; Some (byte_len * z + b.(byte_val))
+| (MByte b)::v' => z ← val_to_int_go v'; Some (byte_modulus * z + b.(byte_val))
 | _ => None
 end.
 Definition val_to_int (v : val) (it : int_type) : option Z :=
-  if decide (length v = it_length it) then
-    z ← val_to_int_go v; if it.(it_signed) && bool_decide (it_half_modulus it ≤ z) then Some (z - it_modulus it) else Some z
+  if decide (length v = bytes_per_int it) then
+    z ← val_to_int_go v; if it.(it_signed) && bool_decide (int_half_modulus it ≤ z) then Some (z - int_modulus it) else Some z
   else None.
 
 Program Fixpoint val_of_int_go (n : Z) sz : val :=
   match sz return _ with
   | O => []
-  | S sz' => (Byte ({| byte_val := (n `mod` byte_len) |}))::(val_of_int_go (n / byte_len) sz')
+  | S sz' => (MByte ({| byte_val := (n `mod` byte_modulus) |}))::(val_of_int_go (n / byte_modulus) sz')
   end.
-Next Obligation. move => n. have [] := Z_mod_lt n byte_len => //*. lia. Qed.
+Next Obligation. move => n. have [] := Z_mod_lt n byte_modulus => //*. lia. Qed.
 
 Definition val_of_int (z : Z) (it : int_type) : option val :=
-  if bool_decide (it_in_range it z) then
-    let p := if bool_decide (z < 0) then z + it_modulus it else z in
-    Some (val_of_int_go p (it_length it))
+  if bool_decide (z ∈ it) then
+    let p := if bool_decide (z < 0) then z + int_modulus it else z in
+    Some (val_of_int_go p (bytes_per_int it))
   else
     None.
-
-Lemma it_length_gt_0 it : (it_length it > 0)%nat.
-Proof.
-  rewrite /it_length. move: it => [l ?] /=.
-  destruct (decide (2 ^ l = 0)%nat) as [He|]; try lia.
-  exfalso. by apply: (Nat.pow_nonzero _ _ _ He).
-Qed.
-
-Lemma it_min_max it:
-  it_min it ≤ 0.
-Proof.
-  have ? := it_length_gt_0 it.
-  unfold it_min, it_half_modulus. destruct (it_signed it) => //.
-  trans (- 2 ^ 7) => //. rewrite -Z.opp_le_mono.
-  apply Z.pow_le_mono_r; lia.
-Qed.
-
-Lemma it_max_min it:
-  128 ≤ it_max it.
-Proof.
-  unfold it_max, it_modulus, it_half_modulus.
-  have ->: (128 = 2 ^ 7) by []. have ?:= it_length_gt_0 it.
-  destruct (it_signed it); apply Z.pow_le_mono_r; lia.
-Qed.
 
 Lemma val_of_int_go_length z sz :
   length (val_of_int_go z sz) = sz.
 Proof. elim: sz z => //= ? IH ?. by f_equal. Qed.
 
 Lemma val_to_of_int_go z sz :
-  0 ≤ z < 2 ^ (sz * 8) →
+  0 ≤ z < 2 ^ (sz * bits_per_byte) →
   val_to_int_go (val_of_int_go z sz) = Some z.
 Proof.
+  rewrite /bits_per_byte.
   elim: sz z => /=. 1: rewrite /Z.of_nat; move => ??; f_equal; lia.
-  move => sz IH z [? Hlt]. rewrite IH /byte_len /= -?Z_div_mod_eq //.
+  move => sz IH z [? Hlt]. rewrite IH /byte_modulus /= -?Z_div_mod_eq //.
   split. apply Z_div_pos => //. apply Zdiv_lt_upper_bound => //.
   rewrite Nat2Z.inj_succ -Zmult_succ_l_reverse Z.pow_add_r // in Hlt.
   lia.
 Qed.
 
 Lemma val_of_int_length z it v:
-  val_of_int z it = Some v →
-  length v = it_length it.
+  val_of_int z it = Some v → length v = bytes_per_int it.
 Proof. rewrite /val_of_int => Hv. case_bool_decide => //. simplify_eq. by rewrite val_of_int_go_length. Qed.
 
 Lemma val_to_int_length v it z:
-  val_to_int v it = Some z →
-  length v = it_length it.
+  val_to_int v it = Some z → length v = bytes_per_int it.
 Proof. rewrite /val_to_int. by case_decide. Qed.
 
 Lemma val_of_int_is_some it z:
-  it_in_range it z →
-  is_Some (val_of_int z it).
+  z ∈ it → is_Some (val_of_int z it).
 Proof. rewrite /val_of_int. case_bool_decide; by eauto. Qed.
 
 Lemma val_of_int_in_range it z v:
-  val_of_int z it = Some v →
-  it_in_range it z.
+  val_of_int z it = Some v → z ∈ it.
 Proof. rewrite /val_of_int. case_bool_decide; by eauto. Qed.
 
-
 Lemma val_to_of_int z it v:
-  val_of_int z it = Some v →
-  val_to_int v it = Some z.
+  val_of_int z it = Some v → val_to_int v it = Some z.
 Proof.
   rewrite /val_of_int /val_to_int => Ht.
-  destruct (bool_decide (it_in_range it z)) eqn: Hr => //. simplify_eq.
-  move: Hr => /bool_decide_eq_true[Hm Hu].
-  have /Nat2Z.inj_gt Hlen := it_length_gt_0 it.
+  destruct (bool_decide (z ∈ it)) eqn: Hr => //. simplify_eq.
+  move: Hr => /bool_decide_eq_true[Hm HM].
+  have Hlen := bytes_per_int_gt_0 it.
+  rewrite /max_int in HM. rewrite /min_int in Hm.
   rewrite val_of_int_go_length val_to_of_int_go /=.
-  - case_decide => //.
-    destruct (it_signed it) eqn: Hs => /=.
-    + do ! case_bool_decide; f_equal => //; try lia.
-      * unfold it_max in *. rewrite ->Hs in *. lia.
-      * unfold it_min in *. rewrite ->Hs in *. contradict H0.
-        etrans; last by [apply Z.add_le_mono; [exact Hm| reflexivity]].
-        rewrite /it_half_modulus/it_modulus. move: (Z.of_nat (it_length _)) Hlen => len Hlen.
-        rewrite [2 ^ (len * 8)](Z_div_exact_2 _ 2); try lia.
-        rewrite Z.pow_sub_r; try lia. rewrite Z.pow_1_r. lia.
-        have ->: (len * 8 = (len * 8 - 1) + 1) by lia.
-        rewrite Z.pow_add_r; try lia. rewrite Z.pow_1_r. by apply Z_mod_mult.
-    + f_equal. case_bool_decide => //. unfold it_min in *. rewrite ->Hs in *. lia.
-  - case_bool_decide; destruct it as [l []]; unfold it_min, it_max, it_half_modulus, it_modulus in *; simpl in *;
-      move: (Z.of_nat (it_length _)) Hlen Hm Hu => len Hlen Hm Hu; split; try lia.
-    + rewrite -[2^_]Z.opp_involutive. apply Zle_left. etrans; last exact Hm. apply Z.opp_le_mono.
-      rewrite !Z.opp_involutive. apply Z.pow_le_mono_r; lia.
-    + etrans; first exact Hu. apply Z.pow_lt_mono_r; lia.
+  - case_decide as H => //. clear H.
+    destruct (it_signed it) eqn:Hs => /=.
+    + case_decide => /=; last (rewrite bool_decide_false //; lia).
+      rewrite bool_decide_true; [f_equal; lia|].
+      rewrite int_modulus_twice_half_modulus. move: Hm HM.
+      generalize (int_half_modulus it). move => n Hm HM. lia.
+    + rewrite bool_decide_false //. lia.
+  - case_bool_decide as Hneg; case_match; split; try lia.
+    + rewrite int_modulus_twice_half_modulus. lia.
+    + rewrite /int_modulus /bits_per_int. lia.
+    + rewrite /int_half_modulus in HM.
+      transitivity (2 ^ (bits_per_int it -1)); first lia.
+      rewrite /bits_per_int /bytes_per_int /bits_per_byte /=. 
+      apply Z.pow_lt_mono_r; try lia.
+    + rewrite /int_modulus /bits_per_int in HM. lia.
 Qed.
 
 Fixpoint val_to_loc_go (v : val) (pos : nat) (l : loc) : option loc :=
   match v with
-  | (PtrFrag l' pos')::v' =>
+  | (MPtrFrag l' pos')::v' =>
     if bool_decide (pos = pos' ∧ l = l') then
-      if bool_decide (pos = loc_size - 1)%nat then (if v' is [] then Some l else None) else val_to_loc_go v' (S pos) l
+      if bool_decide (pos = bytes_per_addr - 1)%nat then (if v' is [] then Some l else None) else val_to_loc_go v' (S pos) l
     else None
   | _ => None
   end.
 Definition val_to_loc (v : val) : option loc :=
   match v with
-  | (PtrFrag l 0)::v' => val_to_loc_go v' 1%nat l
+  | (MPtrFrag l 0)::v' => val_to_loc_go v' 1%nat l
   | _ => None
   end.
-Definition val_of_loc (l : loc) : val := PtrFrag l <$> seq 0 loc_size.
+Definition val_of_loc (l : loc) : val := MPtrFrag l <$> seq 0 bytes_per_addr.
 
 Lemma val_to_of_loc l :
   val_to_loc (val_of_loc l) = Some l.
@@ -368,7 +451,7 @@ Proof.
   by case_match => // [[->]].
 Qed.
 
-Definition i2v (n : Z) (it : int_type) : val := default [Poison] (val_of_int n it).
+Definition i2v (n : Z) (it : int_type) : val := default [MPoison] (val_of_int n it).
 
 Definition val_of_bool (b : bool) : val := i2v (Z_of_bool b) bool_it.
 
@@ -376,12 +459,13 @@ Lemma val_of_int_bool b it:
   val_of_int (Z_of_bool b) it = Some (i2v (Z_of_bool b) it).
 Proof.
   have [|? Hv] := val_of_int_is_some it (Z_of_bool b); last by rewrite /i2v Hv.
-  unfold it_in_range. have ? := it_max_min it. have ? := it_min_max it.
+  rewrite /elem_of /int_elem_of_it.
+  have ? := min_int_le_0 it. have ? := max_int_ge_127 it.
   split; destruct b => /=; lia.
 Qed.
 
 Lemma i2v_bool_length b it:
-  length (i2v (Z_of_bool b) it) = it_length it.
+  length (i2v (Z_of_bool b) it) = bytes_per_int it.
 Proof. by have /val_of_int_length -> := val_of_int_bool b it. Qed.
 Lemma i2v_bool_Some b it:
   val_to_int (i2v (Z_of_bool b) it) it = Some (Z_of_bool b).
@@ -700,7 +784,7 @@ comparing pointers? (see lambda rust) *)
     val_to_int vo it = Some z1 →
     val_to_int ve it = Some z2 →
     v3 `has_layout_val` it_layout it →
-    (it_length it ≤ loc_size)%nat →
+    (bytes_per_int it ≤ bytes_per_addr)%nat →
     z1 ≠ z2 →
     expr_step (CAS (IntOp it) (Val v1) (Val v2) (Val v3)) σ []
               (Val (val_of_bool false)) (heap_fmap (heap_upd l2 vo (λ _, RSt 0%nat)) σ) []
@@ -712,7 +796,7 @@ comparing pointers? (see lambda rust) *)
     val_to_int vo it = Some z1 →
     val_to_int ve it = Some z2 →
     v3 `has_layout_val` it_layout it →
-    (it_length it ≤ loc_size)%nat →
+    (bytes_per_int it ≤ bytes_per_addr)%nat →
     z1 = z2 →
     expr_step (CAS (IntOp it) (Val v1) (Val v2) (Val v3)) σ []
               (Val (val_of_bool true)) (heap_fmap (heap_upd l1 v3 (λ _, RSt 0%nat)) σ) []
@@ -922,7 +1006,7 @@ Inductive stmt_step : thread_state → state → list Empty_set → thread_state
     (* ensure that the blocks in ls are disjoint *)
     NoDup (lsa ++ lsv).*1 →
     (* initialize the local vars to poison *)
-    heap_upd_list lsv ((λ p, replicate p.2.(ly_size) Poison) <$> fn.(f_local_vars)) (λ _, RSt 0%nat) σ.(st_heap) = h' →
+    heap_upd_list lsv ((λ p, replicate p.2.(ly_size) MPoison) <$> fn.(f_local_vars)) (λ _, RSt 0%nat) σ.(st_heap) = h' →
     (* initialize the arguments with the supplied values *)
     heap_upd_list lsa vs (λ _, RSt 0%nat) h' = h'' →
     σ.(st_used_blocks) ∪ list_to_set (lsa ++ lsv).*1 = ub' →
@@ -1122,7 +1206,7 @@ Lemma heap_free_list_app ls1 ls2 h:
   heap_free_list (ls1 ++ ls2) h = heap_free_list ls1 (heap_free_list ls2 h).
 Proof. by elim: ls1 => //= [[??]] ? ->. Qed.
 
-Instance mbyte_inhabited : Inhabited mbyte := populate (Poison).
+Instance mbyte_inhabited : Inhabited mbyte := populate (MPoison).
 Instance val_inhabited : Inhabited val := _.
 Instance expr_inhabited : Inhabited expr := populate (Val inhabitant).
 Instance stmt_inhabited : Inhabited stmt := populate (Goto "a").
@@ -1138,5 +1222,5 @@ Canonical Structure exprO := leibnizO expr.
 (*** Tests *)
 
 Example simpl_subst :
-  subst_stmt (["y"; "x"]) [[Poison; Poison]; [Poison]] (Return (BinOp AddOp PtrOp PtrOp (Var "x") (Var "y"))) = Return (BinOp AddOp PtrOp PtrOp (Val [Poison]) (Val [Poison; Poison])).
+  subst_stmt (["y"; "x"]) [[MPoison; MPoison]; [MPoison]] (Return (BinOp AddOp PtrOp PtrOp (Var "x") (Var "y"))) = Return (BinOp AddOp PtrOp PtrOp (Val [MPoison]) (Val [MPoison; MPoison])).
 Proof. simpl. done. Abort.

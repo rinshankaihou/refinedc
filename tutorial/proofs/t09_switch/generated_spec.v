@@ -15,7 +15,7 @@ Section spec.
 
   (* Specifications for function [test_switch_default]. *)
   Definition type_of_test_switch_default :=
-    fn(∀ i : nat; (i @ (int (i32))); ⌜i + 1 < it_max i32⌝)
+    fn(∀ i : nat; (i @ (int (i32))); ⌜i + 1 ≤ max_int i32⌝)
       → ∃ () : (), (((if bool_decide (i ≤ 4) then 5 else i + 1)%nat) @ (int (i32))); True.
 
   (* Specifications for function [incr_less_than_5]. *)
@@ -25,6 +25,6 @@ Section spec.
 
   (* Specifications for function [duffs_identity]. *)
   Definition type_of_duffs_identity :=
-    fn(∀ i : Z; (i @ (int (i32))); ⌜0 < i⌝ ∗ ⌜i + 3 < it_max i32⌝)
+    fn(∀ i : Z; (i @ (int (i32))); ⌜0 < i⌝ ∗ ⌜i + 3 ≤ max_int i32⌝)
       → ∃ () : (), (i @ (int (i32))); True.
 End spec.

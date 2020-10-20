@@ -16,7 +16,7 @@ struct [[rc::refined_by("n1 : Z", "n2 : Z", "n3 : Z")]]
 
     [[rc::field("spinlocked_ex<l, {\"locked_struct\"}, n3, λ n3. ...>")]]
     struct [[rc::exists("a : Z", "b : Z")]]
-           [[rc::constraints("{n3 = (a + b)%Z}", "{it_in_range size_t n3}")]] lock_test_inner {
+           [[rc::constraints("{n3 = (a + b)%Z}", "{n3 ∈ size_t}")]] lock_test_inner {
 
         [[rc::field("a @ int<size_t>")]]
         size_t a;

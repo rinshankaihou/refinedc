@@ -315,7 +315,7 @@ let pp_code : import list -> Coq_ast.t pp = fun imports ff ast ->
       if is_struct && !nb_bytes mod align <> 0 then
         begin
           let pad = align - !nb_bytes mod align in
-          pp "@;(None, mk_layout %i%%nat 0%%nat);" pad;
+          pp "@;(None, Layout %i%%nat 0%%nat);" pad;
           nb_bytes := !nb_bytes + pad;
         end;
       let sc = if i = n - 1 then "" else ";" in
@@ -332,7 +332,7 @@ let pp_code : import list -> Coq_ast.t pp = fun imports ff ast ->
           List.fold_left fn 1 members
         in
         let r = !nb_bytes mod max_align in
-        if r <> 0 then pp ";@;(None, mk_layout %i%%nat 0%%nat)" (max_align - r)
+        if r <> 0 then pp ";@;(None, Layout %i%%nat 0%%nat)" (max_align - r)
       end
   in
 

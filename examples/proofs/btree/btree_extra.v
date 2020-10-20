@@ -454,8 +454,8 @@ Section defs.
   Definition BRroot (h : nat) (m : gmap Z type) : btree_rfmt := {|
     br_root := true;
     br_height := h;
-    br_min := it_min i32;
-    br_max := it_max i32 - 1;
+    br_min := min_int i32;
+    br_max := max_int i32;
     br_map := m;
   |}.
 

@@ -1,6 +1,6 @@
 [[rc::parameters("x : nat")]]
 [[rc::args("x @ int<u32>")]]
-[[rc::requires("{2 * x < it_max u32}")]]
+[[rc::requires("{2 * x ≤ max_int u32}")]]
 [[rc::returns("{2 * x} @ int<u32>")]]
 unsigned int times_two(unsigned int x){
   return x << 1;

@@ -859,7 +859,7 @@ Section code.
     sl_members := [
       (Some "entry_size", it_layout size_t);
       (Some "lock", layout_of struct_spinlock);
-      (None, mk_layout 7%nat 0%nat);
+      (None, Layout 7%nat 0%nat);
       (Some "locked", layout_of struct_mpool_locked_inner);
       (Some "fallback", LPtr)
     ];

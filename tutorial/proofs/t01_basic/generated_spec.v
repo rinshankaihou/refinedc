@@ -19,7 +19,7 @@ Section spec.
 
   (* Specifications for function [add1]. *)
   Definition type_of_add1 :=
-    fn(∀ n : Z; (n @ (int (i32))); ⌜n + 1 < it_max i32⌝)
+    fn(∀ n : Z; (n @ (int (i32))); ⌜n + 1 ≤ max_int i32⌝)
       → ∃ () : (), ((n + 1) @ (int (i32))); True.
 
   (* Specifications for function [min]. *)
@@ -29,7 +29,7 @@ Section spec.
 
   (* Specifications for function [looping_add]. *)
   Definition type_of_looping_add :=
-    fn(∀ (va, vb) : Z * Z; (va @ (int (i32))), (vb @ (int (i32))); ⌜va + vb < it_max i32⌝ ∗ ⌜0 <= va⌝)
+    fn(∀ (va, vb) : Z * Z; (va @ (int (i32))), (vb @ (int (i32))); ⌜va + vb ≤ max_int i32⌝ ∗ ⌜0 <= va⌝)
       → ∃ () : (), ((va + vb) @ (int (i32))); True.
 
   (* Specifications for function [init_int]. *)

@@ -279,14 +279,14 @@ Section spec.
 
   (* Specifications for function [mpool_alloc_contiguous_no_fallback]. *)
   Definition type_of_mpool_alloc_contiguous_no_fallback :=
-    fn(∀ (p, q, n, entry_size, count, align) : loc * own_state * nat * nat * nat * nat; (p @ (&frac{q} (n @ (mpool (entry_size))))), (count @ (int (size_t))), (align @ (int (size_t))); ⌜it_in_range size_t (align * entry_size + count * entry_size)⌝ ∗ ⌜is_power_of_two align⌝)
+    fn(∀ (p, q, n, entry_size, count, align) : loc * own_state * nat * nat * nat * nat; (p @ (&frac{q} (n @ (mpool (entry_size))))), (count @ (int (size_t))), (align @ (int (size_t))); ⌜(align * entry_size + count * entry_size)%Z ∈ size_t⌝ ∗ ⌜is_power_of_two align⌝)
       → ∃ n2 : nat, (optionalO (λ _ : unit,
         &own (uninit (ly_with_align (count * entry_size) (align * entry_size)))
       ) null); (p ◁ₗ{q} (n2 @ (mpool (entry_size)))) ∗ ⌜q = Own → n2 <= n⌝.
 
   (* Specifications for function [mpool_alloc_contiguous]. *)
   Definition type_of_mpool_alloc_contiguous :=
-    fn(∀ (p, q, n, entry_size, count, align) : loc * own_state * nat * nat * nat * nat; (p @ (&frac{q} (n @ (mpool (entry_size))))), (count @ (int (size_t))), (align @ (int (size_t))); ⌜it_in_range size_t (align * entry_size + count * entry_size)⌝ ∗ ⌜is_power_of_two align⌝)
+    fn(∀ (p, q, n, entry_size, count, align) : loc * own_state * nat * nat * nat * nat; (p @ (&frac{q} (n @ (mpool (entry_size))))), (count @ (int (size_t))), (align @ (int (size_t))); ⌜(align * entry_size + count * entry_size)%Z ∈ size_t⌝ ∗ ⌜is_power_of_two align⌝)
       → ∃ n2 : nat, (optionalO (λ _ : unit,
         &own (uninit (ly_with_align (count * entry_size) (align * entry_size)))
       ) null); (p ◁ₗ{q} (n2 @ (mpool (entry_size)))) ∗ ⌜q = Own → n2 <= n⌝.

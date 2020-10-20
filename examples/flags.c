@@ -25,7 +25,7 @@ flags {
 
 [[rc::parameters("fs : Flags", "n1 : nat", "n2 : nat")]]
 [[rc::args("fs @ flags", "n1 @ int<u32>", "n2 @ int<u32>")]]
-[[rc::requires("{n1 + n2 < it_max u32}")]]
+[[rc::requires("{n1 + n2 ≤ max_int u32}")]]
 [[rc::returns("{(if flag1 fs then n1 else 0) + (if flag2 fs then n2 else 0)} @ int<u32>")]]
 [[rc::trust_me]] // FIXME automation
 unsigned int sum(flags_t f, unsigned int arg1, unsigned int arg2){

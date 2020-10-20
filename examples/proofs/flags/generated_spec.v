@@ -73,7 +73,7 @@ Section spec.
 
   (* Specifications for function [sum]. *)
   Definition type_of_sum :=
-    fn(∀ (fs, n1, n2) : Flags * nat * nat; (fs @ (flags)), (n1 @ (int (u32))), (n2 @ (int (u32))); ⌜n1 + n2 < it_max u32⌝)
+    fn(∀ (fs, n1, n2) : Flags * nat * nat; (fs @ (flags)), (n1 @ (int (u32))), (n2 @ (int (u32))); ⌜n1 + n2 ≤ max_int u32⌝)
       → ∃ () : (), (((if flag1 fs then n1 else 0) + (if flag2 fs then n2 else 0)) @ (int (u32))); True.
 End spec.
 

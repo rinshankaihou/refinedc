@@ -372,11 +372,11 @@ let integer_constant_to_string loc i =
       (Z.to_string i, None)
   | IConstantMax(it) ->
       let it : int_type = translate_int_type loc it in
-      Format.(fprintf str_formatter) "(it_max %a - 1)" Coq_pp.pp_int_type it;
+      Format.(fprintf str_formatter) "(max_int %a)" Coq_pp.pp_int_type it;
       (Format.flush_str_formatter (), Some(it))
   | IConstantMin(it) ->
       let it : int_type = translate_int_type loc it in
-      Format.(fprintf str_formatter) "(it_min %a)" Coq_pp.pp_int_type it;
+      Format.(fprintf str_formatter) "(min_int %a)" Coq_pp.pp_int_type it;
       (Format.flush_str_formatter (), Some(it))
 
 (* Calls accumulated while translating expressions. *)

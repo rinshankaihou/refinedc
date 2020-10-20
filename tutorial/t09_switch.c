@@ -18,7 +18,7 @@ int test_switch(int i){
 
 [[rc::parameters("i : nat")]]
 [[rc::args("i @ int<i32>")]]
-[[rc::requires("{i + 1 < it_max i32}")]]
+[[rc::requires("{i + 1 ≤ max_int i32}")]]
 [[rc::returns("{(if bool_decide (i ≤ 4) then 5 else i + 1)%nat} @ int<i32>")]]
 int test_switch_default(int i){
   int o = i;
@@ -53,7 +53,7 @@ int incr_less_than_5(int i){
 
 [[rc::parameters("i : Z")]]
 [[rc::args("i @ int<i32>")]]
-[[rc::requires("{0 < i}", "{i + 3 < it_max i32}")]]
+[[rc::requires("{0 < i}", "{i + 3 ≤ max_int i32}")]]
 [[rc::returns("i @ int<i32>")]]
 int duffs_identity(int i){
   int o = 0;

@@ -630,7 +630,7 @@ Section code.
       (Some "left", LPtr);
       (Some "right", LPtr);
       (Some "key", it_layout i32);
-      (None, mk_layout 4%nat 0%nat)
+      (None, Layout 4%nat 0%nat)
     ];
   |}.
   Solve Obligations with solve_struct_obligations.

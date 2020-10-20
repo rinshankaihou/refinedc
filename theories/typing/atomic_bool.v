@@ -116,7 +116,7 @@ Section programs.
 
   Lemma type_cas_atomic_bool (l : loc) β it PT PF lexp Pexp vnew Pnew T:
     (∃ bexp bnew, subsume Pexp (lexp ◁ₗ bexp @ boolean it) (
-                  subsume Pnew (vnew ◁ᵥ bnew @ boolean it) ( ⌜it_length it ≤ loc_size⌝%nat ∗ (
+                  subsume Pnew (vnew ◁ᵥ bnew @ boolean it) ( ⌜bytes_per_int it ≤ bytes_per_addr⌝%nat ∗ (
         ((if bexp then PT else PF) -∗ (if bnew then PT else PF) ∗ (
             l ◁ₗ{β} atomic_bool it PT PF -∗ lexp ◁ₗ bexp @ boolean it -∗
               T (val_of_bool true) (t2mt (true @ boolean bool_it)))) ∧

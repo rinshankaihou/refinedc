@@ -21,7 +21,7 @@ Section spec.
         constrained (padded (struct struct_alloc_entry [@{type}
           (size @ (int (size_t))) ;
           (guarded ("alloc_entry_t_0") (apply_dfun self (l)))
-        ]) struct_alloc_entry (mk_layout size 3)) (
+        ]) struct_alloc_entry (Layout size 3)) (
           ⌜(8 | size)⌝
         )
       )
@@ -46,7 +46,7 @@ Section spec.
           constrained (padded (struct struct_alloc_entry [@{type}
             (size @ (int (size_t))) ;
             (guarded "alloc_entry_t_0" (l @ alloc_entry_t))
-          ]) struct_alloc_entry (mk_layout size 3)) (
+          ]) struct_alloc_entry (Layout size 3)) (
             ⌜(8 | size)⌝
           )
         )
@@ -147,22 +147,22 @@ Section spec.
 
   (* Specifications for function [alloc]. *)
   Definition type_of_alloc :=
-    fn(∀ size : nat; (size @ (int (size_t))); ⌜size + 16 < it_max size_t⌝ ∗ ⌜(8 | size)⌝ ∗ (alloc_initialized))
-      → ∃ () : (), (&own (uninit (mk_layout size 3))); True.
+    fn(∀ size : nat; (size @ (int (size_t))); ⌜size + 16 ≤ max_int size_t⌝ ∗ ⌜(8 | size)⌝ ∗ (alloc_initialized))
+      → ∃ () : (), (&own (uninit (Layout size 3))); True.
 
   (* Specifications for function [free]. *)
   Definition type_of_free :=
-    fn(∀ size : nat; (size @ (int (size_t))), (&own (uninit (mk_layout size 3))); (alloc_initialized) ∗ ⌜(8 | size)⌝)
+    fn(∀ size : nat; (size @ (int (size_t))), (&own (uninit (Layout size 3))); (alloc_initialized) ∗ ⌜(8 | size)⌝)
       → ∃ () : (), (void); True.
 
   (* Specifications for function [alloc_array]. *)
   Definition type_of_alloc_array :=
-    fn(∀ (size, n) : nat * nat; (size @ (int (size_t))), (n @ (int (size_t))); ⌜size * n + 16 < it_max size_t⌝ ∗ ⌜(8 | size)⌝ ∗ (alloc_initialized))
-      → ∃ () : (), (&own (array (mk_layout size 3) (replicate n (uninit (mk_layout size 3))))); True.
+    fn(∀ (size, n) : nat * nat; (size @ (int (size_t))), (n @ (int (size_t))); ⌜size * n + 16 ≤ max_int size_t⌝ ∗ ⌜(8 | size)⌝ ∗ (alloc_initialized))
+      → ∃ () : (), (&own (array (Layout size 3) (replicate n (uninit (Layout size 3))))); True.
 
   (* Specifications for function [free_array]. *)
   Definition type_of_free_array :=
-    fn(∀ (size, n) : nat * nat; (size @ (int (size_t))), (n @ (int (size_t))), (&own (array (mk_layout size 3) (replicate n (uninit (mk_layout size 3))))); ⌜size * n < it_max size_t⌝ ∗ ⌜(8 | size)⌝ ∗ (alloc_initialized))
+    fn(∀ (size, n) : nat * nat; (size @ (int (size_t))), (n @ (int (size_t))), (&own (array (Layout size 3) (replicate n (uninit (Layout size 3))))); ⌜size * n ≤ max_int size_t⌝ ∗ ⌜(8 | size)⌝ ∗ (alloc_initialized))
       → ∃ () : (), (void); True.
 
   (* Specifications for function [init_alloc]. *)

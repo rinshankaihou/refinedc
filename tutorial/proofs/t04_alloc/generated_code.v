@@ -255,7 +255,7 @@ Section code.
   Program Definition struct_alloc_state := {|
     sl_members := [
       (Some "lock", layout_of struct_spinlock);
-      (None, mk_layout 7%nat 0%nat);
+      (None, Layout 7%nat 0%nat);
       (Some "data", LPtr)
     ];
   |}.

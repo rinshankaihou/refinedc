@@ -99,7 +99,7 @@ Section code.
   Program Definition struct_list_node := {|
     sl_members := [
       (Some "val", it_layout i32);
-      (None, mk_layout 4%nat 0%nat);
+      (None, Layout 4%nat 0%nat);
       (Some "next", LPtr)
     ];
   |}.

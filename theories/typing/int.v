@@ -82,7 +82,7 @@ Section programs.
 
   (*** int *)
   Lemma type_val_int n it T:
-    (⌜it_in_range it n⌝ ∗ T (t2mt (n @ (int it)))) -∗ typed_value (i2v n it) T.
+    (⌜n ∈ it⌝ ∗ T (t2mt (n @ (int it)))) -∗ typed_value (i2v n it) T.
   Proof. iDestruct 1 as ([v Hv]%val_of_int_is_some) "HT". iExists  _. iFrame. by rewrite /i2v Hv. Qed.
   Global Instance type_val_int_inst n it : TypedValue (i2v n it) :=
     λ T, i2p (type_val_int n it T).
@@ -100,7 +100,7 @@ Section programs.
     | GeOp => Some (bool_decide (n1 >= n2))
     | _ => None
     end = Some b →
-    (⌜it_in_range it n1⌝ -∗ ⌜it_in_range it n2⌝ -∗ T (i2v (Z_of_bool b) i32) (t2mt (b @ boolean i32))) -∗
+    (⌜n1 ∈ it⌝ -∗ ⌜n2 ∈ it⌝ -∗ T (i2v (Z_of_bool b) i32) (t2mt (b @ boolean i32))) -∗
       typed_bin_op v1 (v1 ◁ᵥ n1 @ int it) v2 (v2 ◁ᵥ n2 @ int it) op (IntOp it) (IntOp it) T.
   Proof.
     iIntros (Hop) "HT". iIntros (Hv1 Hv2 Φ) "HΦ".
@@ -142,7 +142,7 @@ Section programs.
     | ShrOp => Some (n1 ≫ n2)
     | _ => None
     end = Some n →
-    (⌜it_in_range it n1⌝ -∗ ⌜it_in_range it n2⌝ -∗ ⌜it_in_range it n⌝ ∗ T (i2v n it) (t2mt (n @ int it))) -∗
+    (⌜n1 ∈ it⌝ -∗ ⌜n2 ∈ it⌝ -∗ ⌜n ∈ it⌝ ∗ T (i2v n it) (t2mt (n @ int it))) -∗
       typed_bin_op v1 (v1 ◁ᵥ n1 @ int it) v2 (v2 ◁ᵥ n2 @ int it) op (IntOp it) (IntOp it) T.
   Proof.
     iIntros (Hop) "HT". iIntros (Hv1 Hv2 Φ) "HΦ".
@@ -158,7 +158,7 @@ Section programs.
     | ModOp => Some (n1 `rem` n2)
     | _ => None
     end = Some n →
-    (⌜it_in_range it n1⌝ -∗ ⌜it_in_range it n2⌝ -∗ ⌜n2 ≠ 0⌝ ∗ ⌜it_in_range it n⌝ ∗ T (i2v n it) (t2mt (n @ int it))) -∗
+    (⌜n1 ∈ it⌝ -∗ ⌜n2 ∈ it⌝ -∗ ⌜n2 ≠ 0⌝ ∗ ⌜n ∈ it⌝ ∗ T (i2v n it) (t2mt (n @ int it))) -∗
       typed_bin_op v1 (v1 ◁ᵥ n1 @ int it) v2 (v2 ◁ᵥ n2 @ int it) op (IntOp it) (IntOp it) T.
   Proof.
     iIntros (Hop) "HT". iIntros (Hv1 Hv2 Φ) "HΦ".
@@ -234,7 +234,7 @@ Section programs.
     λ B m ss def fn ls fr Q, i2p (type_switch_int n it m ss def Q fn ls fr v).
 
   Lemma type_neg_int n it v T:
-    (⌜it_in_range it n⌝ -∗ ⌜it.(it_signed)⌝ ∗ ⌜n ≠ it_min it⌝ ∗ T (i2v (-n) it) (t2mt ((-n) @ int it))) -∗
+    (⌜n ∈ it⌝ -∗ ⌜it.(it_signed)⌝ ∗ ⌜n ≠ min_int it⌝ ∗ T (i2v (-n) it) (t2mt ((-n) @ int it))) -∗
     typed_un_op v (v ◁ᵥ n @ int it)%I (NegOp) (IntOp it) T.
   Proof.
     iIntros "HT". iIntros (Hv Φ) "HΦ".
@@ -242,7 +242,7 @@ Section programs.
     iDestruct ("HT" with "[//]") as (Hs Hn) "HT".
     have ? : val_of_int (- n) it = Some (i2v (- n) it). {
       have [|? Hv'] := val_of_int_is_some it (- n); last by rewrite /i2v Hv'.
-      unfold it_in_range, it_max, it_min in *.
+      unfold elem_of, int_elem_of_it, max_int, min_int in *.
       destruct it as [?[]] => //; simpl in *; lia.
     }
     iApply wp_neg_int => //. by iApply ("HΦ" with "[] HT").
@@ -252,7 +252,7 @@ Section programs.
     λ T, i2p (type_neg_int n it v T).
 
   Lemma type_cast_int n it1 it2 v T:
-    (⌜it_in_range it1 n⌝ -∗ ⌜it_in_range it2 n⌝ ∗ T (i2v n it2) (t2mt (n @ int it2))) -∗
+    (⌜n ∈ it1⌝ -∗ ⌜n ∈ it2⌝ ∗ T (i2v n it2) (t2mt (n @ int it2))) -∗
     typed_un_op v (v ◁ᵥ n @ int it1)%I (CastOp (IntOp it2)) (IntOp it1) T.
   Proof.
     iIntros "HT". iIntros (Hv Φ) "HΦ".
@@ -371,8 +371,8 @@ Section tests.
   Context `{!typeG Σ}.
 
   Example type_eq n1 n3 T:
-    it_in_range size_t n1 →
-    it_in_range size_t n3 →
+    n1 ∈ size_t →
+    n3 ∈ size_t →
     ⊢ typed_val_expr ((i2v n1 size_t +{IntOp size_t, IntOp size_t} i2v 0 size_t) = {IntOp size_t, IntOp size_t} i2v n3 size_t ) T.
   Proof.
     move => Hn1 Hn2.
@@ -381,7 +381,7 @@ Section tests.
     iApply type_val. iApply type_val_int. iSplit => //.
     iApply type_val. iApply type_val_int. iSplit => //.
     iApply type_arithop_int_int => //. iIntros (??). iSplit. {
-      iPureIntro. unfold it_in_range, it_min, it_max in *; lia.
+      iPureIntro. unfold elem_of, int_elem_of_it, min_int, max_int in *; lia.
     }
     iApply type_val. iApply type_val_int. iSplit => //.
     iApply type_relop_int_int => //.

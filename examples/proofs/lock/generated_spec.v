@@ -28,7 +28,7 @@ Section spec.
           (b @ (int (size_t)))
         ]) (
           ⌜n3 = (a + b)%Z⌝ ∗
-          ⌜it_in_range size_t n3⌝
+          ⌜n3 ∈ size_t⌝
         )))
       )))
     ])
@@ -60,7 +60,7 @@ Section spec.
             (b @ (int (size_t)))
           ]) (
             ⌜n3 = (a + b)%Z⌝ ∗
-            ⌜it_in_range size_t n3⌝
+            ⌜n3 ∈ size_t⌝
           )))
         )))
       ])

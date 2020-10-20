@@ -7,7 +7,7 @@ Coercion Var : var_name >-> expr.
 Definition string_to_varname (s : string) : var_name := s.
 Coercion string_to_varname : string >-> var_name.
 Coercion it_layout : int_type >-> layout.
-Notation "☠" := Poison : val_scope.
+Notation "☠" := MPoison : val_scope.
 Notation "!{ ly , o } e" := (Deref o ly e%E) (at level 9, format "!{ ly ,  o } e") : expr_scope.
 Notation "!{ ly } e" := (Deref Na1Ord ly e%E) (at level 9, format "!{ ly } e") : expr_scope.
 (* − is a unicode minus, not the normal minus to prevent parsing conflicts *)
@@ -111,7 +111,7 @@ Lemma annot_stmt_S_r {A} n (a : A) s:
 Proof. by rewrite /AnnotStmt Nat_iter_S_r. Qed.
 
 (*** Layouts and structs *)
-Definition LPtr : layout := {| ly_size := loc_size; ly_align_log := loc_size_log |}.
+Definition LPtr : layout := {| ly_size := bytes_per_addr; ly_align_log := bytes_per_addr_log |}.
 Definition LVoid : layout := {| ly_size := 0; ly_align_log := 0 |}.
 
 Definition NULL : val := i2v 0 size_t.
@@ -149,13 +149,13 @@ Fixpoint check_fields_aligned (s : field_list) (pos : nat) : bool :=
 Record struct_layout := {
    sl_members : field_list;
    sl_nodup : NoDup (field_names sl_members);
-   sl_size : sum_list (ly_size <$> sl_members.*2) < it_max size_t;
+   sl_size : sum_list (ly_size <$> sl_members.*2) ≤ max_int size_t;
    sl_fields_aligned : check_fields_aligned sl_members 0 = true;
 }.
 
 Definition StructInit (ly : struct_layout) (fs : list (string * expr)) : expr :=
   let fs : gmap string expr := list_to_map fs in
-  let fn idly := default (Val (replicate (ly_size idly.2) Poison)) (x ← idly.1; fs !! x) in
+  let fn idly := default (Val (replicate (ly_size idly.2) MPoison)) (x ← idly.1; fs !! x) in
   Concat (fn <$> sl_members ly).
 Typeclasses Opaque StructInit.
 Arguments StructInit : simpl never.
@@ -236,9 +236,9 @@ Proof.
 Qed.
 
 Lemma offset_of_bound i sl:
-  offset_of_idx sl.(sl_members) i < it_max size_t.
+  offset_of_idx sl.(sl_members) i ≤ max_int size_t.
 Proof.
-  eapply Z.le_lt_trans; last by apply (sl_size sl).
+  etrans; last by apply (sl_size sl).
   by apply Nat2Z.inj_le, sum_list_with_take.
 Qed.
 
@@ -263,7 +263,7 @@ Proof.
 Qed.
 
 Definition GetMember (e : expr) (s : struct_layout) (m : var_name) : expr :=
-  (e +{PtrOp, IntOp size_t} Val (default [Poison] (val_of_int (Z.of_nat (offset_of s.(sl_members) m)) size_t)))%E.
+  (e +{PtrOp, IntOp size_t} Val (default [MPoison] (val_of_int (Z.of_nat (offset_of s.(sl_members) m)) size_t)))%E.
 Notation "e 'at{' s } m" := (GetMember e%E s m) (at level 10, format "e  'at{' s }  m") : expr_scope.
 Typeclasses Opaque GetMember.
 Arguments GetMember : simpl never.
@@ -277,7 +277,7 @@ Arguments GetMemberLoc : simpl never.
 Record union_layout := {
    ul_members : list (var_name * layout);
    ul_nodup : NoDup ul_members.*1;
-   ul_size : max_list (ly_size <$> ul_members.*2) < it_max size_t;
+   ul_size : max_list (ly_size <$> ul_members.*2) ≤ max_int size_t;
 }.
 
 Definition ul_layout (ul : union_layout) : layout := {|

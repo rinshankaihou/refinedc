@@ -261,10 +261,10 @@ btree_t insert_br(btree_t* node, int k, void* v, btree_t b,
 [[rc::parameters("k : Z", "v : loc", "ty : type")]]
 [[rc::args("rl @ btree_t", "rr @ btree_t", "k @ int<i32>", "v @ &own<ty>")]]
 [[rc::requires("[alloc_initialized]")]]
-[[rc::requires("{br_height rl + 1 < it_max i32}")]]
+[[rc::requires("{br_height rl + 1 ≤ max_int i32}")]]
 [[rc::requires("{br_height rl = br_height rr}")]]
 [[rc::requires("{br_max rl = (k - 1)%Z}", "{br_min rr = (k + 1)%Z}")]]
-[[rc::requires("{br_min rl = it_min i32}", "{br_max rr = (it_max i32 - 1)%Z}")]]
+[[rc::requires("{br_min rl = min_int i32}", "{br_max rr = max_int i32}")]]
 [[rc::returns("{BR true (br_height rl + 1)%nat (br_min rl) (br_max rr) "
               "({[k:=ty]} ∪ (br_map (non_root rl) ∪ br_map (non_root rr)))} "
               "@ btree_t")]]

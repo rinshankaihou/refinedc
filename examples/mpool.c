@@ -348,7 +348,7 @@ void mpool_free(struct mpool *p, void *ptr) {
  */
 [[rc::parameters("p : loc", "q : own_state", "n : nat", "entry_size : nat", "count : nat", "align : nat")]]
 [[rc::args("p @ &frac<q, n @ mpool<entry_size>>", "count @ int<size_t>", "align @ int<size_t>")]]
-[[rc::requires("{it_in_range size_t (align * entry_size + count * entry_size)}", "{is_power_of_two align}")]]
+[[rc::requires("{(align * entry_size + count * entry_size)%Z ∈ size_t}", "{is_power_of_two align}")]]
 [[rc::exists("n2 : nat")]]
 [[rc::returns("optional<&own<uninit<{ly_with_align (count * entry_size) (align * entry_size)}>>>")]]
 [[rc::ensures("p @ &frac<q, n2 @ mpool<entry_size>>", "{q = Own → n2 <= n}")]]
@@ -447,7 +447,7 @@ void *mpool_alloc_contiguous_no_fallback(struct mpool *p, size_t count, size_t a
  */
 [[rc::parameters("p : loc", "q : own_state", "n : nat", "entry_size : nat", "count : nat", "align : nat")]]
 [[rc::args("p @ &frac<q, n @ mpool<entry_size>>", "count @ int<size_t>", "align @ int<size_t>")]]
-[[rc::requires("{it_in_range size_t (align * entry_size + count * entry_size)}", "{is_power_of_two align}")]]
+[[rc::requires("{(align * entry_size + count * entry_size)%Z ∈ size_t}", "{is_power_of_two align}")]]
 [[rc::exists("n2 : nat")]]
 [[rc::returns("optional<&own<uninit<{ly_with_align (count * entry_size) (align * entry_size)}>>>")]]
 [[rc::ensures("p @ &frac<q, n2 @ mpool<entry_size>>", "{q = Own → n2 <= n}")]]

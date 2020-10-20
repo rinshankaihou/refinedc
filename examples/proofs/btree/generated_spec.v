@@ -90,22 +90,22 @@ Section spec.
 
   (* Specifications for function [alloc]. *)
   Definition type_of_alloc :=
-    fn(∀ size : nat; (size @ (int (size_t))); ⌜size + 16 < it_max size_t⌝ ∗ ⌜(8 | size)⌝ ∗ (alloc_initialized))
-      → ∃ () : (), (&own (uninit (mk_layout size 3))); True.
+    fn(∀ size : nat; (size @ (int (size_t))); ⌜size + 16 ≤ max_int size_t⌝ ∗ ⌜(8 | size)⌝ ∗ (alloc_initialized))
+      → ∃ () : (), (&own (uninit (Layout size 3))); True.
 
   (* Specifications for function [free]. *)
   Definition type_of_free :=
-    fn(∀ size : nat; (size @ (int (size_t))), (&own (uninit (mk_layout size 3))); (alloc_initialized) ∗ ⌜(8 | size)⌝)
+    fn(∀ size : nat; (size @ (int (size_t))), (&own (uninit (Layout size 3))); (alloc_initialized) ∗ ⌜(8 | size)⌝)
       → ∃ () : (), (void); True.
 
   (* Specifications for function [alloc_array]. *)
   Definition type_of_alloc_array :=
-    fn(∀ (size, n) : nat * nat; (size @ (int (size_t))), (n @ (int (size_t))); ⌜size * n + 16 < it_max size_t⌝ ∗ ⌜(8 | size)⌝ ∗ (alloc_initialized))
-      → ∃ () : (), (&own (array (mk_layout size 3) (replicate n (uninit (mk_layout size 3))))); True.
+    fn(∀ (size, n) : nat * nat; (size @ (int (size_t))), (n @ (int (size_t))); ⌜size * n + 16 ≤ max_int size_t⌝ ∗ ⌜(8 | size)⌝ ∗ (alloc_initialized))
+      → ∃ () : (), (&own (array (Layout size 3) (replicate n (uninit (Layout size 3))))); True.
 
   (* Specifications for function [free_array]. *)
   Definition type_of_free_array :=
-    fn(∀ (size, n) : nat * nat; (size @ (int (size_t))), (n @ (int (size_t))), (&own (array (mk_layout size 3) (replicate n (uninit (mk_layout size 3))))); ⌜size * n < it_max size_t⌝ ∗ ⌜(8 | size)⌝ ∗ (alloc_initialized))
+    fn(∀ (size, n) : nat * nat; (size @ (int (size_t))), (n @ (int (size_t))), (&own (array (Layout size 3) (replicate n (uninit (Layout size 3))))); ⌜size * n ≤ max_int size_t⌝ ∗ ⌜(8 | size)⌝ ∗ (alloc_initialized))
       → ∃ () : (), (void); True.
 
   (* Specifications for function [new_btree]. *)
@@ -148,7 +148,7 @@ Section spec.
 
   (* Specifications for function [btree_make_root]. *)
   Definition type_of_btree_make_root :=
-    fn(∀ (rl, rr, k, v, ty) : btree_rfmt * btree_rfmt * Z * loc * type; (rl @ (btree_t)), (rr @ (btree_t)), (k @ (int (i32))), (v @ (&own (ty))); (alloc_initialized) ∗ ⌜br_height rl + 1 < it_max i32⌝ ∗ ⌜br_height rl = br_height rr⌝ ∗ ⌜br_max rl = (k - 1)%Z⌝ ∗ ⌜br_min rr = (k + 1)%Z⌝ ∗ ⌜br_min rl = it_min i32⌝ ∗ ⌜br_max rr = (it_max i32 - 1)%Z⌝)
+    fn(∀ (rl, rr, k, v, ty) : btree_rfmt * btree_rfmt * Z * loc * type; (rl @ (btree_t)), (rr @ (btree_t)), (k @ (int (i32))), (v @ (&own (ty))); (alloc_initialized) ∗ ⌜br_height rl + 1 ≤ max_int i32⌝ ∗ ⌜br_height rl = br_height rr⌝ ∗ ⌜br_max rl = (k - 1)%Z⌝ ∗ ⌜br_min rr = (k + 1)%Z⌝ ∗ ⌜br_min rl = min_int i32⌝ ∗ ⌜br_max rr = max_int i32⌝)
       → ∃ () : (), ((BR true (br_height rl + 1)%nat (br_min rl) (br_max rr) ({[k:=ty]} ∪ (br_map (non_root rl) ∪ br_map (non_root rr)))) @ (btree_t)); True.
 End spec.
 
