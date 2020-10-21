@@ -14,9 +14,9 @@ Section proof_int_id.
     start_function "int_id" ([]) => arg_a.
     split_blocks ((
       ∅
-    )%I : gmap block_id (iProp Σ)) ((
+    )%I : gmap label (iProp Σ)) ((
       ∅
-    )%I : gmap block_id (iProp Σ)).
+    )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "int_id" "#0".
     Unshelve. all: prepare_sideconditions; normalize_and_simpl_goal; try solve_goal.

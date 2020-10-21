@@ -23,9 +23,9 @@ Section proof_member.
         ⌜tree_member k t ↔ tree_member k branch⌝
     ]> $
       ∅
-    )%I : gmap block_id (iProp Σ)) ((
+    )%I : gmap label (iProp Σ)) ((
       ∅
-    )%I : gmap block_id (iProp Σ)).
+    )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "member" "#0".
     - repeat liRStep; liShow.

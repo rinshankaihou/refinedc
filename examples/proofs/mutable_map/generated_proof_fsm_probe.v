@@ -24,9 +24,9 @@ Section proof_fsm_probe.
         ⌜∃ x, items !! rotate_nat_add (slot_for_key_ref key (length items)) offset (length items) = Some x⌝
     ]> $
       ∅
-    )%I : gmap block_id (iProp Σ)) ((
+    )%I : gmap label (iProp Σ)) ((
       ∅
-    )%I : gmap block_id (iProp Σ)).
+    )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "fsm_probe" "#0".
     - repeat liRStep; liShow.

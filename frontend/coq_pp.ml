@@ -1247,9 +1247,9 @@ let pp_proof : string -> func_def -> import list -> string list -> proof_kind
   let invs = collect_invs def in
   let (invs_fb, invs_b) = List.partition (fun (_,la) -> la.la_full) invs in
   List.iter pp_inv invs_fb;
-  pp "@;  ∅@;)%%I : gmap block_id (iProp Σ)) ((";
+  pp "@;  ∅@;)%%I : gmap label (iProp Σ)) ((";
   List.iter pp_inv invs_b;
-  pp "@;  ∅@;)%%I : gmap block_id (iProp Σ)).";
+  pp "@;  ∅@;)%%I : gmap label (iProp Σ)).";
   let pp_do_step id =
     pp "@;- repeat liRStep; liShow.";
     pp "@;  all: print_typesystem_goal \"%s\" \"%s\"." def.func_name id

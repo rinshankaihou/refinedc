@@ -27,7 +27,7 @@ Section proof_alloc.
         (initialized "allocator_state" ())
     ]> $
       ∅
-    )%I : gmap block_id (iProp Σ)) ((
+    )%I : gmap label (iProp Σ)) ((
       <[ "#4" :=
         ∃ pc : loc,
         arg_size ◁ₗ (size @ (int (size_t))) ∗
@@ -37,7 +37,7 @@ Section proof_alloc.
         (allocator_state at{struct_alloc_state}ₗ "data" ◁ₗ wand (pc ◁ₗ alloc_entry_t) alloc_entry_t)
     ]> $
       ∅
-    )%I : gmap block_id (iProp Σ)).
+    )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "alloc" "#0".
     - repeat liRStep; liShow.

@@ -14,9 +14,9 @@ Section proof_no_alias.
     start_function "no_alias" ([p q]) => arg_a arg_b local_old_b.
     split_blocks ((
       ∅
-    )%I : gmap block_id (iProp Σ)) ((
+    )%I : gmap label (iProp Σ)) ((
       ∅
-    )%I : gmap block_id (iProp Σ)).
+    )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "no_alias" "#0".
     Unshelve. all: prepare_sideconditions; normalize_and_simpl_goal; try solve_goal.

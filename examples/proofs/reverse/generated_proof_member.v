@@ -24,9 +24,9 @@ Section proof_member.
         ⌜n ∈ l ↔ n ∈ l1⌝
     ]> $
       ∅
-    )%I : gmap block_id (iProp Σ)) ((
+    )%I : gmap label (iProp Σ)) ((
       ∅
-    )%I : gmap block_id (iProp Σ)).
+    )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "member" "#0".
     - repeat liRStep; liShow.

@@ -21,9 +21,9 @@ Section proof_append.
         arg_l1 ◁ₗ (p @ (&own (wand (pl ◁ₗ (l1_suffix ++ l2) @ list_t) ((l1 ++ l2) @ (list_t)))))
     ]> $
       ∅
-    )%I : gmap block_id (iProp Σ)) ((
+    )%I : gmap label (iProp Σ)) ((
       ∅
-    )%I : gmap block_id (iProp Σ)).
+    )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "append" "#0".
     - repeat liRStep; liShow.

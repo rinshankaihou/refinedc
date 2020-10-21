@@ -30,9 +30,9 @@ Section proof_test.
         local_local2_node ◁ₗ (singleton_place (l4))
     ]> $
       ∅
-    )%I : gmap block_id (iProp Σ)) ((
+    )%I : gmap label (iProp Σ)) ((
       ∅
-    )%I : gmap block_id (iProp Σ)).
+    )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "test" "#0".
     - repeat liRStep; liShow.

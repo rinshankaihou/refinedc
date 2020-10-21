@@ -16,9 +16,9 @@ Section proof_sfree_tree.
     start_function "sfree_tree" (p) => arg_t.
     split_blocks ((
       ∅
-    )%I : gmap block_id (iProp Σ)) ((
+    )%I : gmap label (iProp Σ)) ((
       ∅
-    )%I : gmap block_id (iProp Σ)).
+    )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "sfree_tree" "#0".
     Unshelve. all: prepare_sideconditions; normalize_and_simpl_goal; try solve_goal.

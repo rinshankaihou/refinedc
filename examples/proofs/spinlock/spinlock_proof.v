@@ -13,7 +13,7 @@ Section type.
   Lemma type_sl_init:
     ⊢ typed_function impl_sl_init type_of_sl_init.
   Proof.
-    start_function "sl_init" (p) => vl. split_blocks (∅ : gmap block_id (iProp Σ)) (∅ : gmap block_id (iProp Σ)).
+    start_function "sl_init" (p) => vl. split_blocks (∅ : gmap label (iProp Σ)) (∅ : gmap label (iProp Σ)).
 
     iApply fupd_typed_stmt.
     iMod (own_alloc (● GSet ∅)) as (γ) "Hown". by apply auth_auth_valid.
@@ -30,7 +30,7 @@ Section type.
     ⊢ typed_function impl_sl_lock type_of_sl_lock.
   Proof.
     start_function "sl_lock" ([[p γ] β]) => vl vexpected.
-    split_blocks ({[ "#1" := vl ◁ₗ p @ &frac{β} (spinlock γ) ∗ vexpected ◁ₗ false @ boolean bool_it ]}%I : gmap block_id (iProp Σ)) (∅ : gmap block_id (iProp Σ)).
+    split_blocks ({[ "#1" := vl ◁ₗ p @ &frac{β} (spinlock γ) ∗ vexpected ◁ₗ false @ boolean bool_it ]}%I : gmap label (iProp Σ)) (∅ : gmap label (iProp Σ)).
 
     - repeat liRStep; liShow.
     - repeat liRStep; liShow.
@@ -41,7 +41,7 @@ Section type.
   Lemma type_sl_unlock:
     ⊢ typed_function impl_sl_unlock type_of_sl_unlock.
   Proof.
-    start_function "sl_unlock" ([[p γ] β]) => vl. split_blocks (∅ : gmap block_id (iProp Σ)) (∅ : gmap block_id (iProp Σ)).
+    start_function "sl_unlock" ([[p γ] β]) => vl. split_blocks (∅ : gmap label (iProp Σ)) (∅ : gmap label (iProp Σ)).
 
     repeat liRStep; liShow.
     Unshelve. all: prepare_sideconditions; solve_goal.

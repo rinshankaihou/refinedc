@@ -18,9 +18,9 @@ Section proof_free_btree.
     start_function "free_btree" ([]) => arg_t.
     split_blocks ((
       ∅
-    )%I : gmap block_id (iProp Σ)) ((
+    )%I : gmap label (iProp Σ)) ((
       ∅
-    )%I : gmap block_id (iProp Σ)).
+    )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "free_btree" "#0".
     Unshelve. all: prepare_sideconditions; normalize_and_simpl_goal; try solve_goal.

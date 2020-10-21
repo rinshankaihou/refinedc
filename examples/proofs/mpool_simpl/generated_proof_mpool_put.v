@@ -14,9 +14,9 @@ Section proof_mpool_put.
     start_function "mpool_put" ([p n]) => arg_p arg_ptr local_e.
     split_blocks ((
       ∅
-    )%I : gmap block_id (iProp Σ)) ((
+    )%I : gmap label (iProp Σ)) ((
       ∅
-    )%I : gmap block_id (iProp Σ)).
+    )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "mpool_put" "#0".
     Unshelve. all: prepare_sideconditions; normalize_and_simpl_goal; try solve_goal.

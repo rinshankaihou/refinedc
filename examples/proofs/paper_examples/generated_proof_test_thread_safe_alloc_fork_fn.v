@@ -17,9 +17,9 @@ Section proof_test_thread_safe_alloc_fork_fn.
     start_function "test_thread_safe_alloc_fork_fn" ([]) => arg_num local_num_int.
     split_blocks ((
       ∅
-    )%I : gmap block_id (iProp Σ)) ((
+    )%I : gmap label (iProp Σ)) ((
       ∅
-    )%I : gmap block_id (iProp Σ)).
+    )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "test_thread_safe_alloc_fork_fn" "#0".
     Unshelve. all: prepare_sideconditions; normalize_and_simpl_goal; try solve_goal.

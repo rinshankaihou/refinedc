@@ -21,9 +21,9 @@ Section proof_forward.
         arg_p ◁ₗ (wand (pc ◁ₗ l1 @ list_t) (l @ (list_t)))
     ]> $
       ∅
-    )%I : gmap block_id (iProp Σ)) ((
+    )%I : gmap label (iProp Σ)) ((
       ∅
-    )%I : gmap block_id (iProp Σ)).
+    )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "forward" "#0".
     - repeat liRStep; liShow.

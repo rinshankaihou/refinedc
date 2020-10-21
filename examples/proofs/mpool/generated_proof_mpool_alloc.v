@@ -25,9 +25,9 @@ Section proof_mpool_alloc.
         ⌜q = Own → n = 0%nat⌝
     ]> $
       ∅
-    )%I : gmap block_id (iProp Σ)) ((
+    )%I : gmap label (iProp Σ)) ((
       ∅
-    )%I : gmap block_id (iProp Σ)).
+    )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "mpool_alloc" "#0".
     - repeat liRStep; liShow.

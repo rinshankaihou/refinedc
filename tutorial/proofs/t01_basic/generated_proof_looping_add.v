@@ -20,9 +20,9 @@ Section proof_looping_add.
         ⌜0 <= acc⌝
     ]> $
       ∅
-    )%I : gmap block_id (iProp Σ)) ((
+    )%I : gmap label (iProp Σ)) ((
       ∅
-    )%I : gmap block_id (iProp Σ)).
+    )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "looping_add" "#0".
     - repeat liRStep; liShow.

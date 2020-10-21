@@ -25,9 +25,9 @@ Section proof_free.
         arg_list ◁ₗ (p @ (&own (wand (cp ◁ₗ ({[ly]} ⊎ cs) @ chunks_t) (({[ly]} ⊎ s) @ (chunks_t)))))
     ]> $
       ∅
-    )%I : gmap block_id (iProp Σ)) ((
+    )%I : gmap label (iProp Σ)) ((
       ∅
-    )%I : gmap block_id (iProp Σ)).
+    )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "free" "#0".
     - repeat liRStep; liShow.

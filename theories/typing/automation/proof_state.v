@@ -12,7 +12,7 @@ Definition pop_location_info {A} (i : location_info) (a : A) : A := a.
 Arguments pop_location_info : simpl never.
 Typeclasses Opaque pop_location_info.
 
-Definition BLOCK_PRECOND `{!typeG Σ} (bid : block_id) (P : iProp Σ) : Set := unit.
+Definition BLOCK_PRECOND `{!typeG Σ} (bid : label) (P : iProp Σ) : Set := unit.
 Arguments BLOCK_PRECOND : simpl never.
 
 (** * Tactics for manipulating location information *)
@@ -77,7 +77,7 @@ Ltac prepare_sideconditions :=
   repeat match goal with | H : BLOCK_PRECOND _ _ |- _ => clear H end;
   (* get rid of Q *)
   try match goal with
-      | H : gmap block_id stmt |- _ => clear H
+      | H : gmap label stmt |- _ => clear H
       end;
   clear_unused_vars.
 

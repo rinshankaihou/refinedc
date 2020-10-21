@@ -20,12 +20,12 @@ Section proof_loop_without_annot.
         arg_a ◁ₗ (int (i32))
     ]> $
       ∅
-    )%I : gmap block_id (iProp Σ)) ((
+    )%I : gmap label (iProp Σ)) ((
       <[ "#4" :=
         arg_a ◁ₗ (int (i32))
     ]> $
       ∅
-    )%I : gmap block_id (iProp Σ)).
+    )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "loop_without_annot" "#0".
     - repeat liRStep; liShow.

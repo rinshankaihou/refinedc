@@ -24,9 +24,9 @@ Section proof_fsm_init.
         ⌜i <= len⌝
     ]> $
       ∅
-    )%I : gmap block_id (iProp Σ)) ((
+    )%I : gmap label (iProp Σ)) ((
       ∅
-    )%I : gmap block_id (iProp Σ)).
+    )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "fsm_init" "#0".
     - repeat liRStep; liShow.

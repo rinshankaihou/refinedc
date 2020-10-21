@@ -27,9 +27,9 @@ Section proof_min_array.
         ⌜index_of_min_list_Z (take i elts) res⌝
     ]> $
       ∅
-    )%I : gmap block_id (iProp Σ)) ((
+    )%I : gmap label (iProp Σ)) ((
       ∅
-    )%I : gmap block_id (iProp Σ)).
+    )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "min_array" "#0".
     - repeat liRStep; liShow.

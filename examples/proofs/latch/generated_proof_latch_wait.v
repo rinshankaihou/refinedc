@@ -18,9 +18,9 @@ Section proof_latch_wait.
         arg_latch ◁ₗ (p @ (&frac{beta} (latch (P))))
     ]> $
       ∅
-    )%I : gmap block_id (iProp Σ)) ((
+    )%I : gmap label (iProp Σ)) ((
       ∅
-    )%I : gmap block_id (iProp Σ)).
+    )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "latch_wait" "#0".
     - repeat liRStep; liShow.

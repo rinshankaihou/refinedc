@@ -21,9 +21,9 @@ Section proof_duffs_identity.
         ⌜0 ≤ n⌝
     ]> $
       ∅
-    )%I : gmap block_id (iProp Σ)) ((
+    )%I : gmap label (iProp Σ)) ((
       ∅
-    )%I : gmap block_id (iProp Σ)).
+    )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "duffs_identity" "#0".
     - repeat liRStep; liShow.

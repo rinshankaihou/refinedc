@@ -17,9 +17,9 @@ Section proof_mpool_init_with_fallback.
     start_function "mpool_init_with_fallback" ([[[[p entry_size] q] entries] fallback]) => arg_p arg_fallback.
     split_blocks ((
       ∅
-    )%I : gmap block_id (iProp Σ)) ((
+    )%I : gmap label (iProp Σ)) ((
       ∅
-    )%I : gmap block_id (iProp Σ)).
+    )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "mpool_init_with_fallback" "#0".
     Unshelve. all: prepare_sideconditions; normalize_and_simpl_goal; try solve_goal.

@@ -22,9 +22,9 @@ Section proof_init_alloc.
         (allocator_state ◁ₗ (alloc_state))
     ]> $
       ∅
-    )%I : gmap block_id (iProp Σ)) ((
+    )%I : gmap label (iProp Σ)) ((
       ∅
-    )%I : gmap block_id (iProp Σ)).
+    )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "init_alloc" "#0".
     - repeat liRStep; liShow.

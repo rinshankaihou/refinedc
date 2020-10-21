@@ -204,29 +204,37 @@ Section IntType.
   Definition bool_it := u8.
 End IntType.
 
-
-
-(*** Definitions of the language *)
-Definition block_id := string. (* make TC opaque and implement countable and eqdicision *)
-Definition var_name := string.
-
-Definition loc : Set := Z * Z.
 Declare Scope loc_scope.
-Bind Scope loc_scope with loc.
 Delimit Scope loc_scope with L.
 Open Scope loc_scope.
+
+Definition block_id := Z.
+
+Definition loc : Set := block_id * Z.
+Bind Scope loc_scope with loc.
+
+Inductive mbyte : Set :=
+| MByte (b : byte)
+| MPtrFrag (l : loc) (n : nat)
+| MPoison.
+
+Definition val : Set := list mbyte.
+Bind Scope val_scope with val.
+
+Inductive lock_state := WSt | RSt (n : nat).
+
+Definition heap := gmap loc (lock_state * mbyte).
+
+Definition blocks := gset block_id.
+
+
+
 Definition shift_loc (l : loc) (z : Z) : loc := (l.1, l.2 + z).
 Notation "l +ₗ z" := (shift_loc l%L z%Z)
   (at level 50, left associativity) : loc_scope.
 Definition offset_loc (l : loc) (ly : layout) (z : Z) : loc := (l +ₗ ly.(ly_size) * z).
 Notation "l 'offset{' ly '}ₗ' z" := (offset_loc l%L ly z%Z)
   (at level 50, format "l  'offset{' ly '}ₗ'  z", left associativity) : loc_scope.
-
-Inductive mbyte : Set :=
-| MByte (b : byte) | MPtrFrag (l : loc) (n : nat) | MPoison.
-
-Definition val : Set := list mbyte.
-Bind Scope val_scope with val.
 
 Definition aligned_to (l : loc) (n : nat) : Prop := (n | l.2).
 Notation "l `aligned_to` n" := (aligned_to l n) (at level 50) : stdpp_scope.
@@ -240,6 +248,11 @@ Arguments aligned_to : simpl never.
 Arguments has_layout_loc : simpl never.
 Arguments has_layout_val : simpl never.
 Typeclasses Opaque aligned_to has_layout_loc has_layout_val.
+
+
+(*** Definitions of the language *)
+Definition label := string. (* make TC opaque and implement countable and eqdicision *)
+Definition var_name := string.
 
 Inductive op_type : Set :=
 | IntOp (i : int_type) | PtrOp.
@@ -272,7 +285,7 @@ Inductive expr :=
 contain multiple threads (like a processor which has a fixed number of
 hardware threads). *)
 Inductive stmt :=
-| Goto (b : block_id)
+| Goto (b : label)
 | Return (e : expr)
 (* m: map from values of e to indices into bs, def: default *)
 | Switch (it : int_type) (e : expr) (m : gmap Z nat) (bs : list stmt) (def : stmt)
@@ -290,18 +303,14 @@ Record function := {
   f_args : list (var_name * layout);
   f_local_vars : list (var_name * layout);
   (* TODO should we add this: f_ret : layout; ?*)
-  f_code : gmap block_id stmt;
-  f_init : block_id;
+  f_code : gmap label stmt;
+  f_init : label;
 }.
-
-Inductive lock_state :=
-| WSt | RSt (n : nat).
-Definition heap := gmap loc (lock_state * mbyte).
 
 (* TODO: put both function and bytes in the same heap or make pointers disjoint (current version is wrong)*)
 Record state := {
   st_heap: heap;
-  st_used_blocks: gset Z;
+  st_used_blocks: blocks;
   st_fntbl: gmap loc function;
 }.
 

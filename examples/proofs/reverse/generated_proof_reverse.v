@@ -23,9 +23,9 @@ Section proof_reverse.
         ⌜l = rev l1 ++ l2⌝
     ]> $
       ∅
-    )%I : gmap block_id (iProp Σ)) ((
+    )%I : gmap label (iProp Σ)) ((
       ∅
-    )%I : gmap block_id (iProp Σ)).
+    )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "reverse" "#0".
     - repeat liRStep; liShow.

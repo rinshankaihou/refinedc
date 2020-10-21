@@ -31,9 +31,9 @@ Section proof_btree_member.
         ⌜m !! k = cur_m !! k⌝
     ]> $
       ∅
-    )%I : gmap block_id (iProp Σ)) ((
+    )%I : gmap label (iProp Σ)) ((
       ∅
-    )%I : gmap block_id (iProp Σ)).
+    )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "btree_member" "#0".
     - repeat liRStep; liShow.

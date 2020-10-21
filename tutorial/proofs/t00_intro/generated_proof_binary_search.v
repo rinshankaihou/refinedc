@@ -28,9 +28,9 @@ Section proof_binary_search.
         ⌜must_be_in_range ls vl vr x⌝
     ]> $
       ∅
-    )%I : gmap block_id (iProp Σ)) ((
+    )%I : gmap label (iProp Σ)) ((
       ∅
-    )%I : gmap block_id (iProp Σ)).
+    )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "binary_search" "#0".
     - repeat liRStep; liShow.

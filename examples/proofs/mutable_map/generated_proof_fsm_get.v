@@ -16,9 +16,9 @@ Section proof_fsm_get.
     start_function "fsm_get" ([[[[m mp] items] count] key]) => arg_m arg_key local_item local_slot_idx.
     split_blocks ((
       ∅
-    )%I : gmap block_id (iProp Σ)) ((
+    )%I : gmap label (iProp Σ)) ((
       ∅
-    )%I : gmap block_id (iProp Σ)).
+    )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "fsm_get" "#0".
     Unshelve. all: prepare_sideconditions; normalize_and_simpl_goal; try solve_goal.

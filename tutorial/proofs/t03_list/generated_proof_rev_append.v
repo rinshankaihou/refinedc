@@ -25,9 +25,9 @@ Section proof_rev_append.
         ⌜l1 = rev l1_prefix ++ l1_suffix⌝
     ]> $
       ∅
-    )%I : gmap block_id (iProp Σ)) ((
+    )%I : gmap label (iProp Σ)) ((
       ∅
-    )%I : gmap block_id (iProp Σ)).
+    )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "rev_append" "#0".
     - repeat liRStep; liShow.

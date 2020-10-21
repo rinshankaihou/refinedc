@@ -34,9 +34,9 @@ Section proof_mpool_fini.
         arg_p ◁ₗ (p @ (&own (struct (struct_mpool) [@{type} entry_size @ (int (size_t)) ; uninit (struct_spinlock) ; uninit (struct_mpool_locked_inner) ; &shr (tyexists (λ n, n @ (mpool (entry_size)))) ])))
     ]> $
       ∅
-    )%I : gmap block_id (iProp Σ)) ((
+    )%I : gmap label (iProp Σ)) ((
       ∅
-    )%I : gmap block_id (iProp Σ)).
+    )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "mpool_fini" "#0".
     - repeat liRStep; liShow.

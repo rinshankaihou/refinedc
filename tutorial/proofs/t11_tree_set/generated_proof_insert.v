@@ -22,9 +22,9 @@ Section proof_insert.
         arg_t ◁ₗ (p @ (&own (wand (cur_p ◁ₗ ({[k]} ∪ cur_s) @ tree_t) (({[k]} ∪ s) @ (tree_t)))))
     ]> $
       ∅
-    )%I : gmap block_id (iProp Σ)) ((
+    )%I : gmap label (iProp Σ)) ((
       ∅
-    )%I : gmap block_id (iProp Σ)).
+    )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "insert" "#0".
     - repeat liRStep; liShow.

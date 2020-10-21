@@ -268,7 +268,7 @@ Proof. elim: vl => //; csimpl => *. by f_equal. Qed.
 Section stmt.
 Local Unset Elimination Schemes.
 Inductive stmt :=
-| Goto (b : block_id)
+| Goto (b : label)
 | Return (e : expr)
 | Switch (it : int_type) (e : expr) (m : gmap Z nat) (bs : list stmt) (def : stmt)
 | Assign (o : order) (ly : layout) (e1 e2 : expr) (s : stmt)
@@ -286,7 +286,7 @@ Inductive stmt :=
 End stmt.
 
 Lemma stmt_ind (P : stmt → Prop):
-  (∀ b : block_id, P (Goto b)) →
+  (∀ b : label, P (Goto b)) →
   (∀ e : expr, P (Return e)) →
   (∀ (it : int_type) (e : expr) (m : gmap Z nat) (bs : list stmt) (def : stmt), P def → Forall P bs → P (Switch it e m bs def)) →
   (∀ (o : order) (ly : layout) (e1 e2 : expr) (s : stmt), P s → P (Assign o ly e1 e2 s)) →

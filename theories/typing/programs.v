@@ -70,20 +70,20 @@ Section judgements.
 
   Definition typed_stmt_post_cond {B} (fn : function) (ls : list loc) (fr : B → fn_ret) (v : val) : iProp Σ :=
     (∃ x, v ◁ᵥ (fr x).(fr_rty) ∗ ([∗ list] l;v ∈ ls;(fn.(f_args) ++ fn.(f_local_vars)), l ↦|v.2|) ∗ (fr x).(fr_R))%I.
-  Definition typed_stmt {B} (s : stmt) (fn : function) (ls : list loc) (fr : B → fn_ret) (Q : gmap block_id stmt) : iProp Σ :=
+  Definition typed_stmt {B} (s : stmt) (fn : function) (ls : list loc) (fr : B → fn_ret) (Q : gmap label stmt) : iProp Σ :=
     (⌜length ls = length (fn.(f_args) ++ fn.(f_local_vars))⌝ -∗ WPs s {{Q, typed_stmt_post_cond fn ls fr}})%I.
   Global Arguments typed_stmt {_} _%E _ _ _%I _.
 
-  Definition typed_block {B} (P : iProp Σ) (b : block_id) (fn : function) (ls : list loc) (fr : B → fn_ret) (Q : gmap block_id stmt) : iProp Σ :=
+  Definition typed_block {B} (P : iProp Σ) (b : label) (fn : function) (ls : list loc) (fr : B → fn_ret) (Q : gmap label stmt) : iProp Σ :=
     (wps_block P b Q (typed_stmt_post_cond fn ls fr)).
 
-  Definition typed_if {B} (v : val) (ty : type) `{!Movable ty} (s1 s2 : stmt) (fn : function) (ls : list loc) (fr : B → fn_ret) (Q : gmap block_id stmt) : iProp Σ :=
+  Definition typed_if {B} (v : val) (ty : type) `{!Movable ty} (s1 s2 : stmt) (fn : function) (ls : list loc) (fr : B → fn_ret) (Q : gmap label stmt) : iProp Σ :=
     (v ◁ᵥ ty -∗ ∃ z, ⌜val_to_int v bool_it = Some z⌝ ∗
       (if decide (z = 0) then typed_stmt s2 fn ls fr Q else typed_stmt s1 fn ls fr Q)).
   Class TypedIf (v : val) (ty : type) `{!Movable ty} : Type :=
     typed_if_proof B s1 s2 fn ls fr Q : iProp_to_Prop (typed_if (B:=B) v ty s1 s2 fn ls fr Q).
 
-  Definition typed_switch {B} (v : val) (ty : type) `{!Movable ty} (it : int_type) (m : gmap Z nat) (ss : list stmt) (def : stmt) (fn : function) (ls : list loc) (fr : B → fn_ret) (Q : gmap block_id stmt) : iProp Σ :=
+  Definition typed_switch {B} (v : val) (ty : type) `{!Movable ty} (it : int_type) (m : gmap Z nat) (ss : list stmt) (def : stmt) (fn : function) (ls : list loc) (fr : B → fn_ret) (Q : gmap label stmt) : iProp Σ :=
     (v ◁ᵥ ty -∗ ∃ z, ⌜val_to_int v it = Some z⌝ ∗
       match m !! z with
       | Some i => ∃ s, ⌜ss !! i = Some s⌝ ∗ typed_stmt s fn ls fr Q
@@ -92,7 +92,7 @@ Section judgements.
   Class TypedSwitch (v : val) (ty : type) `{!Movable ty} (it : int_type) : Type :=
     typed_switch_proof B m ss def fn ls fr Q : iProp_to_Prop (typed_switch (B:=B) v ty it m ss def fn ls fr Q).
 
-  Definition typed_assert {B} (v : val) (ty : type) `{!Movable ty} (s : stmt) (fn : function) (ls : list loc) (fr : B → fn_ret) (Q : gmap block_id stmt) : iProp Σ :=
+  Definition typed_assert {B} (v : val) (ty : type) `{!Movable ty} (s : stmt) (fn : function) (ls : list loc) (fr : B → fn_ret) (Q : gmap label stmt) : iProp Σ :=
     (v ◁ᵥ ty -∗ ∃ z, ⌜val_to_int v bool_it = Some z⌝ ∗ ⌜z ≠ 0⌝ ∗ typed_stmt s fn ls fr Q)%I.
   Class TypedAssert (v : val) (ty : type) `{!Movable ty} : Type :=
     typed_assert_proof B s fn ls fr Q : iProp_to_Prop (typed_assert (B:=B) v ty s fn ls fr Q).

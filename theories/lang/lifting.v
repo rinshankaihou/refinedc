@@ -308,14 +308,14 @@ Qed.
 End expr_lifting.
 
 (*** Lifting of statements *)
-Definition stmt_wp_def `{!refinedcG Σ} (E : coPset) (Q : gmap block_id stmt) (Ψ : val → iProp Σ) (s : stmt) : iProp Σ :=
+Definition stmt_wp_def `{!refinedcG Σ} (E : coPset) (Q : gmap label stmt) (Ψ : val → iProp Σ) (s : stmt) : iProp Σ :=
   (∀ ts Φ, ⌜Q = ts.(ts_rfn).(rf_fn).(f_code)⌝ -∗
            (∀ v, Ψ v -∗ WP (update_stmt ts (Return v)) {{ Φ }}) -∗
     WP (update_stmt ts s) @ E {{ Φ }}).
-Definition stmt_wp_aux `{!refinedcG Σ} (E : coPset) (Q : gmap block_id stmt) (Ψ : val → iProp Σ) : seal (@stmt_wp_def Σ _ E Q Ψ). by eexists. Qed.
-Definition stmt_wp `{!refinedcG Σ} (E : coPset) (Q : gmap block_id stmt) (Ψ : val → iProp Σ) :
+Definition stmt_wp_aux `{!refinedcG Σ} (E : coPset) (Q : gmap label stmt) (Ψ : val → iProp Σ) : seal (@stmt_wp_def Σ _ E Q Ψ). by eexists. Qed.
+Definition stmt_wp `{!refinedcG Σ} (E : coPset) (Q : gmap label stmt) (Ψ : val → iProp Σ) :
   stmt → iProp Σ := (stmt_wp_aux E Q Ψ).(unseal).
-Definition stmt_wp_eq `{!refinedcG Σ} (E : coPset) (Q : gmap block_id stmt) (Ψ : val → iProp Σ) : stmt_wp E Q Ψ = @stmt_wp_def Σ _ E Q Ψ := (stmt_wp_aux E Q Ψ).(seal_eq).
+Definition stmt_wp_eq `{!refinedcG Σ} (E : coPset) (Q : gmap label stmt) (Ψ : val → iProp Σ) : stmt_wp E Q Ψ = @stmt_wp_def Σ _ E Q Ψ := (stmt_wp_aux E Q Ψ).(seal_eq).
 
 Notation "'WPs' s @ E {{ Q , Ψ } }" := (stmt_wp E Q Ψ s%E)
   (at level 20, s, Q, Ψ at level 200, format "'[' 'WPs'  s  '/' '[       ' @  E  {{  Q ,  Ψ  } } ']' ']'" ) : bi_scope.
@@ -603,7 +603,7 @@ Proof.
 Qed.
 
 
-Definition wps_block (P : iProp Σ) (b : block_id) (Q : gmap block_id stmt) (Ψ : val → iProp Σ) : iProp Σ :=
+Definition wps_block (P : iProp Σ) (b : label) (Q : gmap label stmt) (Ψ : val → iProp Σ) : iProp Σ :=
   (□ (P -∗ WPs Goto b {{ Q, Ψ }})).
 
 Lemma wps_block_rec Ps Q Ψ :

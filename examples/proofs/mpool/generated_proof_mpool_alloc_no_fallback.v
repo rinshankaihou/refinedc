@@ -18,9 +18,9 @@ Section proof_mpool_alloc_no_fallback.
     start_function "mpool_alloc_no_fallback" ([[[p q] n] entry_size]) => arg_p local_new_chunk local_entry local_ret local_chunk.
     split_blocks ((
       ∅
-    )%I : gmap block_id (iProp Σ)) ((
+    )%I : gmap label (iProp Σ)) ((
       ∅
-    )%I : gmap block_id (iProp Σ)).
+    )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "mpool_alloc_no_fallback" "#0".
     Unshelve. all: prepare_sideconditions; normalize_and_simpl_goal; try solve_goal.

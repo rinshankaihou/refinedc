@@ -28,9 +28,9 @@ Section proof_mpool_alloc_contiguous.
         ⌜q = Own → n2 <= n⌝
     ]> $
       ∅
-    )%I : gmap block_id (iProp Σ)) ((
+    )%I : gmap label (iProp Σ)) ((
       ∅
-    )%I : gmap block_id (iProp Σ)).
+    )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "mpool_alloc_contiguous" "#0".
     - repeat liRStep; liShow.

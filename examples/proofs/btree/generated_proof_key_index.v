@@ -25,9 +25,9 @@ Section proof_key_index.
         ⌜s ≤ length l⌝
     ]> $
       ∅
-    )%I : gmap block_id (iProp Σ)) ((
+    )%I : gmap label (iProp Σ)) ((
       ∅
-    )%I : gmap block_id (iProp Σ)).
+    )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "key_index" "#0".
     - repeat liRStep; liShow.

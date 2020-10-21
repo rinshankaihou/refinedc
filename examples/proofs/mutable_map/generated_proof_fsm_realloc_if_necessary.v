@@ -40,9 +40,9 @@ Section proof_fsm_realloc_if_necessary.
         local_new_len ◁ₗ uninit (it_layout size_t)
     ]> $
       ∅
-    )%I : gmap block_id (iProp Σ)) ((
+    )%I : gmap label (iProp Σ)) ((
       ∅
-    )%I : gmap block_id (iProp Σ)).
+    )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "fsm_realloc_if_necessary" "#0".
     - repeat liRStep; liShow.

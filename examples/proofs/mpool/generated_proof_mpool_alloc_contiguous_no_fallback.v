@@ -19,7 +19,7 @@ Section proof_mpool_alloc_contiguous_no_fallback.
     start_function "mpool_alloc_contiguous_no_fallback" ([[[[[p q] n] entry_size] count] align]) => arg_p arg_count arg_align local_prev local_before_start local_chunk_next local_new_chunk local_start local_ret local_chunk_size local_chunk.
     split_blocks ((
       ∅
-    )%I : gmap block_id (iProp Σ)) ((
+    )%I : gmap label (iProp Σ)) ((
       <[ "#1" :=
         ∃ pc : loc,
         ∃ entries_in_chunks1 : nat,
@@ -40,7 +40,7 @@ Section proof_mpool_alloc_contiguous_no_fallback.
         ⌜shelve_hint (q = Own → n = (entries_in_chunks1 + entries_in_chunks2 + entries_in_entry_list)%nat)⌝
     ]> $
       ∅
-    )%I : gmap block_id (iProp Σ)).
+    )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "mpool_alloc_contiguous_no_fallback" "#0".
     Unshelve. all: prepare_sideconditions; normalize_and_simpl_goal; try solve_goal.

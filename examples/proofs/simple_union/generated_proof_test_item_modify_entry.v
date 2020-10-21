@@ -14,9 +14,9 @@ Section proof_test_item_modify_entry.
     start_function "test_item_modify_entry" ([[i x] k]) => arg_i arg_key local_old_key.
     split_blocks ((
       ∅
-    )%I : gmap block_id (iProp Σ)) ((
+    )%I : gmap label (iProp Σ)) ((
       ∅
-    )%I : gmap block_id (iProp Σ)).
+    )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "test_item_modify_entry" "#0".
     Unshelve. all: prepare_sideconditions; normalize_and_simpl_goal; try solve_goal.
