@@ -379,7 +379,7 @@ Definition keep_factor2 (n : nat) (def : nat) : nat :=
 
 Lemma Pos_pow_add_r a b c:
   (a ^ (b + c) = a ^ b * a ^ c)%positive.
-Proof. zify. rewrite !Pos2Z.inj_pow Pos2Z.inj_add Z.pow_add_r; lia. Qed.
+Proof. zify. rewrite Z.pow_add_r; lia. Qed.
 
 Lemma Pos_factor2_mult_xI a b:
   Pos_factor2 (a~1 * b) = Pos_factor2 b.

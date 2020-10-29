@@ -93,7 +93,6 @@ Proof.
   unfold CanSolve in *. rewrite /Z.divide. split.
   - move => HT [x Hx]. apply: (HT (Z.to_nat x)).
     rewrite -Z2Nat.inj_mul; try lia.
-    apply (Z.mul_nonneg_cancel_r _ a); lia.
   - move => HT n ?. apply HT. eexists n. lia.
 Qed.
 
