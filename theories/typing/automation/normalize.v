@@ -13,10 +13,13 @@ Lemma NatZmul_add_distr_r (n1 n2 : nat) z:
 Proof. lia. Qed.
 
 Hint Rewrite @drop_0 @take_ge using can_solve_tac : refinedc_rewrite.
+Hint Rewrite @take_app_le @drop_app_ge using can_solve_tac : refinedc_rewrite.
 Hint Rewrite @insert_length @app_length @fmap_length @rotate_length @replicate_length @drop_length : refinedc_rewrite.
+Hint Rewrite <- @fmap_take @fmap_drop : refinedc_rewrite.
 Hint Rewrite @list_insert_fold : refinedc_rewrite.
 Hint Rewrite @list_insert_insert : refinedc_rewrite.
-Hint Rewrite @tail_replicate : refinedc_rewrite.
+Hint Rewrite @drop_drop : refinedc_rewrite.
+Hint Rewrite @tail_replicate @take_replicate @drop_replicate : refinedc_rewrite.
 Hint Rewrite <- @app_assoc @cons_middle : refinedc_rewrite.
 Hint Rewrite @app_nil_r @rev_involutive : refinedc_rewrite.
 Hint Rewrite @list_fmap_insert : refinedc_rewrite.

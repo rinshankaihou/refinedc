@@ -70,8 +70,9 @@ void fsm_realloc_if_necessary(struct fixed_size_map *m);
 [[rc::requires("[alloc_initialized]")]]
 [[rc::ensures("m @ &own<{∅, replicate len Empty, len} @ fixed_size_map> ")]]
  [[rc::lemmas("fsm_invariant_init")]]
+ [[rc::tactics("all: try by apply/list_subequiv_split; solve_goal.")]]
  [[rc::tactics("all: try by rewrite length_filter_replicate_True; solve_goal.")]]
- [[rc::tactics("all: try by f_equal; solve_goal.")]]
+ [[rc::tactics("all: try by rewrite !replicate_O; solve_goal.")]]
 void fsm_init(struct fixed_size_map *m, size_t len) {
   size_t i;
   void *storage = alloc_array(sizeof(struct item), len);
@@ -81,9 +82,9 @@ void fsm_init(struct fixed_size_map *m, size_t len) {
 
   [[rc::exists("i : nat")]]
   [[rc::inv_vars("i : i @ int<size_t>")]]
-  [[rc::inv_vars("m : m @ &own<struct<struct_fixed_size_map, &own<array_iterator<" \
-                "struct_item, i, len, {replicate i Empty `at_type` item}," \
-                 "uninit<struct_item>, {replicate (len - i)%nat (uninit (struct_item))}>>, len @ int<size_t>, len @ int<size_t>>> ")]]
+  [[rc::inv_vars("m : m @ &own<struct<struct_fixed_size_map, &own<array<struct_item," \
+                "{replicate i Empty `at_type` item ++ replicate (len - i)%nat (uninit (struct_item))}>>," \
+                 "len @ int<size_t>, len @ int<size_t>>>")]]
   [[rc::constraints("{i <= len}")]]
   for(i = 0; i < len; i += 1) {
     (*m->items)[i].tag = ITEM_EMPTY;
@@ -213,12 +214,7 @@ size_t compute_min_count(size_t len) {
  [[rc::tactics("all: try by apply: fsm_copy_entries_not_add; solve_goal.")]]
  [[rc::tactics("all: try by apply: fsm_copy_entries_add; solve_goal.")]]
  [[rc::tactics("all: try by apply: fsm_copy_entries_id; solve_goal.")]]
- [[rc::tactics("all: try (apply list_subequiv_split; [solve_goal|]).")]]
- [[rc::tactics("all: try rewrite !firstn_app !take_replicate !skipn_app !drop_replicate !replicate_length !fmap_drop !drop_drop -minus_n_n.")]]
- [[rc::tactics("all: try split; f_equal.")]]
- [[rc::tactics("all: try by f_equal; lia.")]]
- [[rc::tactics("all: try have ->:(i - (i + 1) = 0)%nat by lia.")]]
- [[rc::tactics("all: try by rewrite !firstn_O.")]]
+ [[rc::tactics("all: try by apply list_subequiv_split; [solve_goal|]; normalize_and_simpl_goal; try solve_goal; f_equal; solve_goal.")]]
 void fsm_realloc_if_necessary(struct fixed_size_map *m) {
   if(compute_min_count(m->length) <= m->count) {
     return;

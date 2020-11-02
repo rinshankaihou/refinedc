@@ -117,6 +117,10 @@ Proof using Type*. move => ?. by apply: partial_alter_ext => ? <-. Qed.
 
 End theorems.
 
+Lemma replicate_O {A} (x : A) n:
+  n = 0%nat -> replicate n x = [].
+Proof. by move => ->. Qed.
+
 Global Instance set_unfold_replicate A (x y : A) n:
   SetUnfoldElemOf x (replicate n y) (x = y ∧ n ≠ 0%nat).
 Proof. constructor. apply elem_of_replicate. Qed.

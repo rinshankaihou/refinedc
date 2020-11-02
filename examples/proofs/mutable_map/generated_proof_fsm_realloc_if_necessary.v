@@ -55,12 +55,7 @@ Section proof_fsm_realloc_if_necessary.
     all: try by apply: fsm_copy_entries_not_add; solve_goal.
     all: try by apply: fsm_copy_entries_add; solve_goal.
     all: try by apply: fsm_copy_entries_id; solve_goal.
-    all: try (apply list_subequiv_split; [solve_goal|]).
-    all: try rewrite !firstn_app !take_replicate !skipn_app !drop_replicate !replicate_length !fmap_drop !drop_drop -minus_n_n.
-    all: try split; f_equal.
-    all: try by f_equal; lia.
-    all: try have ->:(i - (i + 1) = 0)%nat by lia.
-    all: try by rewrite !firstn_O.
+    all: try by apply list_subequiv_split; [solve_goal|]; normalize_and_simpl_goal; try solve_goal; f_equal; solve_goal.
     all: print_sidecondition_goal "fsm_realloc_if_necessary".
   Qed.
 End proof_fsm_realloc_if_necessary.

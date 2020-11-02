@@ -286,12 +286,18 @@ Global Instance simpl_fmap_cons_impl {A B} (l : list A) l2 (f : A → B):
   SimplImplRel (=) true (f <$> l) (x :: l2) (λ T, ∀ x' l2', l = x' :: l2' → f x' = x → f <$> l2' = l2 → T).
 Proof. split; last naive_solver. intros ? ?%fmap_cons_inv. naive_solver. Qed.
 Global Instance simpl_fmap_app_and {A B} (l : list A) l1 l2 (f : A → B):
-  SimplAndRel (=) (f <$> l) (l1 ++ l2) (λ T, ∃ l1' l2', l = l1' ++ l2' ∧ f <$> l1' = l1 ∧ f <$> l2' = l2 ∧ T).
+  SimplAndRel (=) (f <$> l) (l1 ++ l2) (λ T, f <$> take (length l1) l = l1 ∧ f <$> drop (length l1) l = l2 ∧ T).
 Proof.
   split.
-  - move => [?[?[?[?[??]]]]]; subst. rewrite fmap_app. naive_solver.
-  - move => [/fmap_app_inv]. naive_solver.
+  - move => [Hl1 [Hl2 ?]]; subst. split => //.
+    rewrite -Hl1 -fmap_app fmap_length take_length_le ?take_drop //.
+    rewrite -Hl1 fmap_length take_length. lia.
+  - move => [/fmap_app_inv [? [? [? [? Hfmap]]]] ?]; subst.
+    by rewrite fmap_length take_app drop_app.
 Qed.
+Global Instance simpl_fmap_assume_inj_Unsafe {A B} (l1 l2 : list A) (f : A → B) `{!AssumeInj (=) (=) f}:
+  SimplAndUnsafe true (f <$> l1 = f <$> l2) (λ T, l1 = l2 ∧ T).
+Proof. move => T [-> ?]. naive_solver. Qed.
 
 Global Instance simpl_replicate_app_and {A} (l1 l2 : list A) x n:
   SimplAndRel (=) (replicate n x) (l1 ++ l2) (λ T, ∃ n', shelve_hint (n' ≤ n)%nat ∧ l1 = replicate n' x ∧ l2 = replicate (n - n') x ∧ T).
