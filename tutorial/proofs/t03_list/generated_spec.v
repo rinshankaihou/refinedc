@@ -122,6 +122,11 @@ Section spec.
     fn(∀ l : (list type); (l @ (list_t)); True)
       → ∃ () : (), ((rev l) @ (list_t)); True.
 
+  (* Specifications for function [length]. *)
+  Definition type_of_length :=
+    fn(∀ (p, l) : loc * (list type); (p @ (&own (l @ (list_t)))); ⌜length l <= max_int size_t⌝)
+      → ∃ () : (), ((length l) @ (int (size_t))); (p ◁ₗ (l @ (list_t))).
+
   (* Specifications for function [append]. *)
   Definition type_of_append :=
     fn(∀ (p, l1, l2) : loc * (list type) * (list type); (p @ (&own (l1 @ (list_t)))), (l2 @ (list_t)); True)
