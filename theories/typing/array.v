@@ -179,18 +179,19 @@ Section type.
 
 
   Lemma type_place_array l β T ly1 it v (tyv : mtype) tys ly2 K:
-    (∃ i', ⌜ly1 = ly2⌝ ∗ subsume (v ◁ᵥ tyv) (v ◁ᵥ i' @ int it) (∃ i : nat, ⌜i' = i⌝ ∗ ⌜i < length tys⌝%nat ∗
-     ∀ ty, ⌜tys !! i = Some ty⌝ -∗
-    typed_place K (l offset{ly2}ₗ i) β ty (λ l2 β2 ty2 typ, T l2 β2 ty2 (λ t, array ly2 (<[i := typ t]>tys))))) -∗
+    (∃ i, ⌜ly1 = ly2⌝ ∗ subsume (v ◁ᵥ tyv) (v ◁ᵥ i @ int it) (⌜0 ≤ i⌝ ∗ ⌜i < length tys⌝ ∗
+     ∀ ty, ⌜tys !! Z.to_nat i = Some ty⌝ -∗
+    typed_place K (l offset{ly2}ₗ i) β ty (λ l2 β2 ty2 typ, T l2 β2 ty2 (λ t, array ly2 (<[Z.to_nat i := typ t]>tys))))) -∗
     typed_place (BinOpPCtx (PtrOffsetOp ly1) (IntOp it) v tyv :: K) l β (array ly2 tys) T.
   Proof.
-    iDestruct 1 as (i' ->) "HP". iIntros (Φ) "[% Hl] HΦ" => /=. iIntros "Hv".
+    iDestruct 1 as (i ->) "HP". iIntros (Φ) "[% Hl] HΦ" => /=. iIntros "Hv".
     iDestruct ("HP" with "Hv") as "[Hv HP]".
-    iDestruct "HP" as (i -> [ty ?]%lookup_lt_is_Some_2) "HP".
+    iDestruct "HP" as (? Hlen) "HP".
+    have [|ty ?]:= lookup_lt_is_Some_2 tys (Z.to_nat i). lia.
     iDestruct (int_val_to_int_Some with "Hv") as %?.
-    iApply wp_ptr_offset => //. by apply val_to_of_loc. lia.
+    iApply wp_ptr_offset => //. by apply val_to_of_loc.
     iIntros "!#". iExists _. iSplit => //.
-    iDestruct (big_sepL_insert_acc with "Hl") as "[Hl Hc]" => //.
+    iDestruct (big_sepL_insert_acc with "Hl") as "[Hl Hc]" => //. rewrite Z2Nat.id//.
     iApply ("HP" $! ty with "[//] Hl"). iIntros (l' ty2 β2 typ R) "Hl' Htyp HT".
     iApply ("HΦ" with "Hl' [-HT] HT"). iIntros (ty') "Hl'".
     iMod ("Htyp" with "Hl'") as "[? $]". iSplitR => //. by iApply "Hc".

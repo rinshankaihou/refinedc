@@ -22,7 +22,7 @@ Hint Rewrite @drop_drop : refinedc_rewrite.
 Hint Rewrite @tail_replicate @take_replicate @drop_replicate : refinedc_rewrite.
 Hint Rewrite <- @app_assoc @cons_middle : refinedc_rewrite.
 Hint Rewrite @app_nil_r @rev_involutive : refinedc_rewrite.
-Hint Rewrite @list_fmap_insert : refinedc_rewrite.
+Hint Rewrite <- @list_fmap_insert : refinedc_rewrite.
 Hint Rewrite <- minus_n_O plus_n_O minus_n_n : refinedc_rewrite.
 Hint Rewrite Nat2Z.id : refinedc_rewrite.
 Hint Rewrite Z2Nat.inj_mul Z2Nat.inj_sub Z2Nat.id using can_solve_tac : refinedc_rewrite.

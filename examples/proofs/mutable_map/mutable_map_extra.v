@@ -188,7 +188,9 @@ Section defs.
       assert (probe_ref key (<[n:=ir']> items) = Some (n, ir')) as ->. 2: destruct ir'; naive_solver.
       naive_simpl. revert select (_ ∈ _). rewrite rotate_take_insert;[case_decide|..]; naive_solver lia.
     - rewrite lookup_partial_alter_ne // Hinv1. f_equiv => i. split; naive_simpl.
-      1,3: case_bool_decide; naive_solver. 2: case_bool_decide; [naive_solver|].
+      1: { rewrite list_lookup_insert_Some. naive_solver. }
+      2: { revert select ( <[ _ := _ ]> _ !! _ = Some _). rewrite list_lookup_insert_Some. naive_solver. }
+      2: revert select ( <[ _ := _ ]> _ !! _ = Some _); rewrite list_lookup_insert_Some => -[?|[??]]; [ naive_solver |].
       all: revert select (_ ∈ _); revert select (∀ y, y ∈ _ → _); rewrite rotate_take_insert ?insert_length; [|lia];
         case_decide;[|naive_solver lia].
       + move => ? /(list_elem_of_insert1 _ _ _ _)[?|?]; subst; destruct ir'; naive_solver.

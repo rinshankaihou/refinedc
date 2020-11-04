@@ -399,18 +399,17 @@ Proof.
   - move => Hf /(list_lookup_fmap_inv _ _ _ _)?. naive_solver.
   - move => HT y ? Hl; subst. apply HT. by rewrite list_lookup_fmap Hl.
 Qed.
-
-Global Instance simpl_lookup_insert {A} (l : list A) i j x x':
-  SimplBothRel (=) (<[i := x']> l !! j) (Some x) ((if bool_decide(i = j) then x = x' else l !! j = Some x) ∧ (j < length l)%nat).
+Global Instance simpl_lookup_insert_eq {A} (l : list A) i j x x' `{!CanSolve (i = j)}:
+  SimplBothRel (=) (<[i := x']> l !! j) (Some x) (x = x' ∧ (j < length l)%nat).
 Proof.
-  split.
-  - move => /list_lookup_insert_Some [|].
-    + move => [-> [-> ?]]. by rewrite bool_decide_true.
-    + move => [? H]. rewrite bool_decide_false; last done.
-      split; first done. by apply lookup_lt_Some in H.
-  - destruct (decide (i = j)) as [->|Hne].
-    + rewrite bool_decide_true; last done. move => [-> H]. by rewrite list_lookup_insert.
-    + rewrite bool_decide_false; last done. rewrite list_lookup_insert_ne; by naive_solver.
+  unfold SimplBothRel, CanSolve in *; subst.
+  rewrite list_lookup_insert_Some. naive_solver.
+Qed.
+Global Instance simpl_lookup_insert_neq {A} (l : list A) i j x x' `{!CanSolve (i ≠ j)}:
+  SimplBothRel (=) (<[i := x']> l !! j) (Some x) (l !! j = Some x).
+Proof.
+  unfold SimplBothRel, CanSolve in *; subst.
+  rewrite list_lookup_insert_Some. naive_solver.
 Qed.
 
 Global Instance simpl_learn_insert_some_len_impl {A} l i (x : A) :
