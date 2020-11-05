@@ -177,8 +177,8 @@ Proof. split; naive_solver lia. Qed.
 Global Instance simpl_and_S n m `{!ContainsProtected n}:
   SimplAndRel (=) (S n) (m) (λ T, (m > 0)%nat ∧ n = pred m ∧ T).
 Proof. split; destruct n; naive_solver lia. Qed.
-Global Instance simpl_and_Z_of_nat n m `{!CanSolve (0 ≤ m)} `{!ContainsProtected n}:
-  SimplAndRel (=) (Z.of_nat n) (m) (λ T, n = Z.to_nat m ∧ T).
+Global Instance simpl_and_Z_of_nat n m `{!ContainsProtected n}:
+  SimplAndRel (=) (Z.of_nat n) (m) (λ T, 0 ≤ m ∧ n = Z.to_nat m ∧ T).
 Proof. unfold CanSolve in *. split; naive_solver lia. Qed.
 
 Global Instance simpl_in_nil {A} (x : A):
