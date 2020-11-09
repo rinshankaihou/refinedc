@@ -31,7 +31,7 @@ Section proof_member.
       all: print_typesystem_goal "member" "#0".
     - repeat liRStep; liShow.
       all: print_typesystem_goal "member" "#1".
-    Unshelve. all: prepare_sideconditions; normalize_and_simpl_goal; try solve_goal.
+    Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
     all: try set_solver.
     all: print_sidecondition_goal "member".
   Qed.

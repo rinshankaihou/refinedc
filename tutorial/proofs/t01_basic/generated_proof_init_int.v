@@ -19,7 +19,7 @@ Section proof_init_int.
     )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "init_int" "#0".
-    Unshelve. all: prepare_sideconditions; normalize_and_simpl_goal; try solve_goal.
+    Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
     all: print_sidecondition_goal "init_int".
   Qed.
 End proof_init_int.

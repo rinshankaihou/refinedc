@@ -1255,8 +1255,8 @@ let pp_proof : string -> func_def -> import list -> string list -> proof_kind
     pp "@;  all: print_typesystem_goal \"%s\" \"%s\"." def.func_name id
   in
   List.iter pp_do_step (List.cons "#0" (List.map fst invs_fb));
-  pp "@;Unshelve. all: prepare_sideconditions; ";
-  pp "normalize_and_simpl_goal; try solve_goal.";
+  pp "@;Unshelve. all: sidecond_hook; prepare_sideconditions; ";
+  pp "normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.";
   let tactics_items =
     let is_all t =
       let is_selector s =

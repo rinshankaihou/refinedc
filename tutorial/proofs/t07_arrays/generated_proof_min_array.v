@@ -34,7 +34,7 @@ Section proof_min_array.
       all: print_typesystem_goal "min_array" "#0".
     - repeat liRStep; liShow.
       all: print_typesystem_goal "min_array" "#2".
-    Unshelve. all: prepare_sideconditions; normalize_and_simpl_goal; try solve_goal.
+    Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
     all: try by apply: index_of_min_list_Z_take_1; solve_goal.
     all: try by apply: index_of_min_list_Z_take_last; solve_goal.
     all: try by apply: index_of_min_list_Z_take_not_last; solve_goal.

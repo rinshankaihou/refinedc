@@ -31,7 +31,7 @@ Section proof_fsm_probe.
       all: print_typesystem_goal "fsm_probe" "#0".
     - repeat liRStep; liShow.
       all: print_typesystem_goal "fsm_probe" "#1".
-    Unshelve. all: prepare_sideconditions; normalize_and_simpl_goal; try solve_goal.
+    Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
     all: try by apply: lookup_lt_is_Some_2; solve_goal.
     all: try by eexists _; split => //; apply probe_ref_take_Some; naive_solver.
     all: try by apply: probe_ref_go_next_take=> //i; intros Hi%lookup_rotate_r_Some; try lia; simplify_eq; naive_solver.

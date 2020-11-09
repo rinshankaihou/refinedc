@@ -31,7 +31,7 @@ Section proof_fsm_init.
       all: print_typesystem_goal "fsm_init" "#0".
     - repeat liRStep; liShow.
       all: print_typesystem_goal "fsm_init" "#1".
-    Unshelve. all: prepare_sideconditions; normalize_and_simpl_goal; try solve_goal.
+    Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
     all: try by apply: fsm_invariant_init; solve_goal.
     all: try by apply/list_subequiv_split; solve_goal.
     all: try by rewrite length_filter_replicate_True; solve_goal.

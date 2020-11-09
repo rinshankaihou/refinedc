@@ -32,7 +32,7 @@ Section proof_rev_append.
       all: print_typesystem_goal "rev_append" "#0".
     - repeat liRStep; liShow.
       all: print_typesystem_goal "rev_append" "#1".
-    Unshelve. all: prepare_sideconditions; normalize_and_simpl_goal; try solve_goal.
+    Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
     all: print_sidecondition_goal "rev_append".
   Qed.
 End proof_rev_append.

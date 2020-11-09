@@ -49,7 +49,7 @@ Section proof_fsm_realloc_if_necessary.
       all: print_typesystem_goal "fsm_realloc_if_necessary" "#3".
     - repeat liRStep; liShow.
       all: print_typesystem_goal "fsm_realloc_if_necessary" "#11".
-    Unshelve. all: prepare_sideconditions; normalize_and_simpl_goal; try solve_goal.
+    Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
     all: try by eexists (length items); rewrite /shelve_hint; split_and?; rewrite ?drop_ge; solve_goal.
     all: try match goal with | H : fsm_invariant ?mp2 ?items2 |- fsm_invariant ?mp1 ?items1 => have ->: mp1 = mp2; [|done] end.
     all: try by apply: fsm_copy_entries_not_add; solve_goal.

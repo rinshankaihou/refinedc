@@ -35,7 +35,7 @@ Section proof_binary_search.
       all: print_typesystem_goal "binary_search" "#0".
     - repeat liRStep; liShow.
       all: print_typesystem_goal "binary_search" "#1".
-    Unshelve. all: prepare_sideconditions; normalize_and_simpl_goal; try solve_goal.
+    Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
     all: try by apply: elem_of_list_lookup_2; solve_goal.
     all: try by apply: must_be_in_range_full; solve_goal.
     all: try by apply: must_be_in_range_not_in; solve_goal.

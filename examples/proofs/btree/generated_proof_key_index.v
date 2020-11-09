@@ -32,7 +32,7 @@ Section proof_key_index.
       all: print_typesystem_goal "key_index" "#0".
     - repeat liRStep; liShow.
       all: print_typesystem_goal "key_index" "#1".
-    Unshelve. all: prepare_sideconditions; normalize_and_simpl_goal; try solve_goal.
+    Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
     + destruct (decide (i = s)); by naive_solver lia.
     + move: (elem_of_list_lookup_1 _ _ H14) => [i Hi]. destruct (decide (y = k)); [ done | exfalso ]. assert (k < y) as Hky by lia. assert (i < s)%nat as Hle by by eapply StronglySorted_lookup_index_lt. assert (i < s) as His  by lia. assert (k < k) by by eapply H0. by lia.
     + apply StronglySorted_insert_drop_take; last done. * move => z Hz. destruct (l !! z) eqn:?; naive_solver lia. * move: (elem_of_list_lookup_2 l s y H7) => Hy. rewrite H7 /=.   assert (k ≠ y); [ by set_solver | by lia ].

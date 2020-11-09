@@ -305,7 +305,10 @@ Ltac create_protected_evar A :=
       end in
   Hevar.
 
+Ltac unfold_instantiated_evar_hook H := idtac.
+
 Ltac unfold_instantiated_evar H :=
+  unfold_instantiated_evar_hook H;
   (* first we need to rewrap unfolded evars in H*)
   revert H;
   repeat lazymatch goal with
@@ -390,11 +393,12 @@ Ltac convert_to_i2p P cont :=
   | subsume_list ?A ?l1 ?l2 ?f ?T => cont uconstr:(((_ : SubsumeList _ _ _ _) _).(i2p_proof))
   | _ => let converted := convert_to_i2p_tac P in cont converted
   end.
+Ltac extensible_judgment_hook := idtac.
 Ltac liExtensibleJudgement :=
   lazymatch goal with
   | |- envs_entails _ ?P =>
     convert_to_i2p P ltac:(fun converted =>
-    simple notypeclasses refine (tac_fast_apply converted _); [solve [refine _] |]
+    simple notypeclasses refine (tac_fast_apply converted _); [solve [refine _] |]; extensible_judgment_hook
   )end.
 
 Ltac liSimpl :=

@@ -28,7 +28,7 @@ Section proof_duffs_identity.
       all: print_typesystem_goal "duffs_identity" "#0".
     - repeat liRStep; liShow.
       all: print_typesystem_goal "duffs_identity" "#5".
-    Unshelve. all: prepare_sideconditions; normalize_and_simpl_goal; try solve_goal.
+    Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
     all: print_sidecondition_goal "duffs_identity".
   Qed.
 End proof_duffs_identity.

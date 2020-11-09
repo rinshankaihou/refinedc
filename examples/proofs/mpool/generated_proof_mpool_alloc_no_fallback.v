@@ -23,7 +23,7 @@ Section proof_mpool_alloc_no_fallback.
     )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "mpool_alloc_no_fallback" "#0".
-    Unshelve. all: prepare_sideconditions; normalize_and_simpl_goal; try solve_goal.
+    Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
     all: try by destruct x1 as [|[]]; try solve_goal; zify; ring_simplify; solve_goal.
     all: print_sidecondition_goal "mpool_alloc_no_fallback".
   Qed.

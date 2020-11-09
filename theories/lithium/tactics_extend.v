@@ -3,6 +3,9 @@ From refinedc.lithium Require Import base infrastructure.
 Ltac can_solve_tac := fail "provide a can_solve_tac!".
 Hint Extern 10 (CanSolve ?P) => (change P; can_solve_tac) : typeclass_instances.
 
+Ltac sidecond_hook := idtac.
+Ltac unsolved_sidecond_hook := idtac.
+
 (** * general normalization infrastructure *)
 Ltac normalize_tac := fail "provide a normalize_tac!".
 Lemma tac_normalize_goal (P1 P2 : Prop):

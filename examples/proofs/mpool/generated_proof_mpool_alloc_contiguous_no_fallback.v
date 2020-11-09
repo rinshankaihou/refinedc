@@ -43,7 +43,7 @@ Section proof_mpool_alloc_contiguous_no_fallback.
     )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "mpool_alloc_contiguous_no_fallback" "#0".
-    Unshelve. all: prepare_sideconditions; normalize_and_simpl_goal; try solve_goal.
+    Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
     all: try by destruct o'; solve_goal.
     all: try by apply mult_le_compat_r; solve_goal.
     all: try by repeat progress rewrite /ly_size/=; have : (x4 - Z.to_nat o' - count > 0)%nat; solve_goal.

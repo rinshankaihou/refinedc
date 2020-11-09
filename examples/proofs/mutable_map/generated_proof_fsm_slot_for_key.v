@@ -20,7 +20,7 @@ Section proof_fsm_slot_for_key.
     )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
       all: print_typesystem_goal "fsm_slot_for_key" "#0".
-    Unshelve. all: prepare_sideconditions; normalize_and_simpl_goal; try solve_goal.
+    Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
     all: try by apply: slot_for_key_ref_unfold_rem; solve_goal.
     all: print_sidecondition_goal "fsm_slot_for_key".
   Qed.

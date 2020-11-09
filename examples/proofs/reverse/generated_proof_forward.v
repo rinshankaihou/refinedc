@@ -28,7 +28,7 @@ Section proof_forward.
       all: print_typesystem_goal "forward" "#0".
     - repeat liRStep; liShow.
       all: print_typesystem_goal "forward" "#1".
-    Unshelve. all: prepare_sideconditions; normalize_and_simpl_goal; try solve_goal.
+    Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
     all: print_sidecondition_goal "forward".
   Qed.
 End proof_forward.
