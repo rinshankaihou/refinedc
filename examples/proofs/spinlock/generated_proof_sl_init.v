@@ -3,6 +3,7 @@ From refinedc.examples.spinlock Require Import generated_code.
 From refinedc.examples.spinlock Require Import generated_spec.
 From refinedc.examples.spinlock Require Import spinlock_def.
 From refinedc.examples.spinlock Require Import spinlock_proof.
+From refinedc.examples.spinlock Require Import spinlock_proof.
 Set Default Proof Using "Type".
 
 (* Generated from [examples/spinlock.c]. *)

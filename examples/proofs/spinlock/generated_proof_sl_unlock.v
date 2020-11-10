@@ -13,5 +13,16 @@ Section proof_sl_unlock.
   (* Typing proof for [sl_unlock]. *)
   Lemma type_sl_unlock :
     ⊢ typed_function impl_sl_unlock type_of_sl_unlock.
-  Proof. refine type_sl_unlock. Qed.
+  Proof.
+    start_function "sl_unlock" ([[p gamma] beta]) => arg_lock.
+    split_blocks ((
+      ∅
+    )%I : gmap label (iProp Σ)) ((
+      ∅
+    )%I : gmap label (iProp Σ)).
+    - repeat liRStep; liShow.
+      all: print_typesystem_goal "sl_unlock" "#0".
+    Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
+    all: print_sidecondition_goal "sl_unlock".
+  Qed.
 End proof_sl_unlock.

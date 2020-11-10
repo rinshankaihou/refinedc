@@ -13,5 +13,23 @@ Section proof_sl_lock.
   (* Typing proof for [sl_lock]. *)
   Lemma type_sl_lock :
     ⊢ typed_function impl_sl_lock type_of_sl_lock.
-  Proof. refine type_sl_lock. Qed.
+  Proof.
+    start_function "sl_lock" ([[p gamma] beta]) => arg_lock local_expected.
+    split_blocks ((
+      <[ "#1" :=
+        arg_lock ◁ₗ (p @ (&frac{beta} (spinlock (gamma)))) ∗
+        local_expected ◁ₗ (false @ (boolean (bool_it)))
+    ]> $
+      ∅
+    )%I : gmap label (iProp Σ)) ((
+      ∅
+    )%I : gmap label (iProp Σ)).
+    - repeat liRStep; liShow.
+      all: print_typesystem_goal "sl_lock" "#0".
+    - repeat liRStep; liShow.
+      all: print_typesystem_goal "sl_lock" "#1".
+    Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
+    all: try by rewrite /bytes_per_int/=; have ->: bytes_per_addr = 8%nat; solve_goal.
+    all: print_sidecondition_goal "sl_lock".
+  Qed.
 End proof_sl_lock.
