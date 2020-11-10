@@ -1,6 +1,7 @@
 From refinedc.typing Require Import typing.
 From refinedc.examples.spinlock Require Import
-  generated_code spinlock_def spinlock_proof.
+  generated_code spinlock_def spinlock_proof
+  generated_proof_sl_lock generated_proof_sl_unlock.
 From refinedc.examples.latch Require Import
   generated_code latch_def generated_proof_latch_release
   generated_proof_latch_wait.
