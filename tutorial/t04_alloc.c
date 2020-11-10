@@ -25,14 +25,12 @@ void *alloc(size_t size) {
 
       if(cur->size == size) {
         *prev = cur->next;
-        rc_unfold(*prev);
         sl_unlock(&allocator_state.lock);
         return cur;
       }
       if(cur->size >= size + sizeof(struct alloc_entry)) {
         cur->size -= size;
         void *ret = ((unsigned char*)cur + cur->size);
-        rc_unfold(*prev);
         sl_unlock(&allocator_state.lock);
         return ret;
       }
@@ -40,7 +38,6 @@ void *alloc(size_t size) {
       prev = &cur->next;
     }
 
-    rc_unfold(*prev);
     sl_unlock(&allocator_state.lock);
   }
 

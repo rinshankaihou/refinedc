@@ -300,6 +300,17 @@ Section ptr.
     SimplifyGoalVal p (l @ ptr)%I (Some 50%N) :=
     λ T, i2p (simplify_ptr_goal_val p l T).
 
+  Lemma find_in_context_type_loc_own l T:
+    (∃ l1 β1 β ty, l1 ◁ₗ{β1} (l @ &frac{β} ty) ∗ (l1 ◁ₗ{β1} (l @ &frac{β} (singleton_place l)) -∗ T (own_state_min β1 β, ty))) -∗
+    find_in_context (FindLoc l) T.
+  Proof.
+    iDestruct 1 as (l1 β1 β ty) "[[% [Hmt Hl]] HT]".
+    iExists (_, _) => /=. iFrame. iApply "HT".
+    iSplit => //. by iFrame.
+  Qed.
+  Global Instance find_in_context_type_loc_own_inst l :
+    FindInContext (FindLoc l) 1%nat :=
+    λ T, i2p (find_in_context_type_loc_own l T).
 End ptr.
 
 Section null.

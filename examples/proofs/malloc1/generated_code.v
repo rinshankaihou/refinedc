@@ -109,28 +109,22 @@ Section code.
   Definition loc_104 : location_info := LocationInfo file_0 59 8 59 9.
   Definition loc_105 : location_info := LocationInfo file_0 59 19 59 33.
   Definition loc_108 : location_info := LocationInfo file_0 81 4 81 27.
-  Definition loc_109 : location_info := LocationInfo file_0 83 4 83 10.
-  Definition loc_110 : location_info := LocationInfo file_0 83 10 83 5.
-  Definition loc_111 : location_info := LocationInfo file_0 85 4 85 22.
-  Definition loc_112 : location_info := LocationInfo file_0 86 4 86 16.
-  Definition loc_113 : location_info := LocationInfo file_0 86 4 86 11.
-  Definition loc_114 : location_info := LocationInfo file_0 86 4 86 5.
-  Definition loc_115 : location_info := LocationInfo file_0 86 4 86 5.
-  Definition loc_116 : location_info := LocationInfo file_0 86 14 86 15.
-  Definition loc_117 : location_info := LocationInfo file_0 86 14 86 15.
-  Definition loc_118 : location_info := LocationInfo file_0 85 4 85 11.
-  Definition loc_119 : location_info := LocationInfo file_0 85 4 85 5.
-  Definition loc_120 : location_info := LocationInfo file_0 85 4 85 5.
-  Definition loc_121 : location_info := LocationInfo file_0 85 14 85 21.
-  Definition loc_122 : location_info := LocationInfo file_0 85 14 85 21.
-  Definition loc_123 : location_info := LocationInfo file_0 85 14 85 15.
-  Definition loc_124 : location_info := LocationInfo file_0 85 14 85 15.
-  Definition loc_125 : location_info := LocationInfo file_0 83 4 83 9.
-  Definition loc_126 : location_info := LocationInfo file_0 83 5 83 9.
-  Definition loc_127 : location_info := LocationInfo file_0 83 7 83 8.
-  Definition loc_128 : location_info := LocationInfo file_0 83 7 83 8.
-  Definition loc_129 : location_info := LocationInfo file_0 81 25 81 26.
-  Definition loc_130 : location_info := LocationInfo file_0 81 25 81 26.
+  Definition loc_109 : location_info := LocationInfo file_0 85 4 85 22.
+  Definition loc_110 : location_info := LocationInfo file_0 86 4 86 16.
+  Definition loc_111 : location_info := LocationInfo file_0 86 4 86 11.
+  Definition loc_112 : location_info := LocationInfo file_0 86 4 86 5.
+  Definition loc_113 : location_info := LocationInfo file_0 86 4 86 5.
+  Definition loc_114 : location_info := LocationInfo file_0 86 14 86 15.
+  Definition loc_115 : location_info := LocationInfo file_0 86 14 86 15.
+  Definition loc_116 : location_info := LocationInfo file_0 85 4 85 11.
+  Definition loc_117 : location_info := LocationInfo file_0 85 4 85 5.
+  Definition loc_118 : location_info := LocationInfo file_0 85 4 85 5.
+  Definition loc_119 : location_info := LocationInfo file_0 85 14 85 21.
+  Definition loc_120 : location_info := LocationInfo file_0 85 14 85 21.
+  Definition loc_121 : location_info := LocationInfo file_0 85 14 85 15.
+  Definition loc_122 : location_info := LocationInfo file_0 85 14 85 15.
+  Definition loc_123 : location_info := LocationInfo file_0 81 25 81 26.
+  Definition loc_124 : location_info := LocationInfo file_0 81 25 81 26.
 
   (* Definition of struct [freelist]. *)
   Program Definition struct_freelist := {|
@@ -258,15 +252,13 @@ Section code.
     f_code := (
       <[ "#0" :=
         "f" <-{ LPtr }
-          LocInfoE loc_129 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_129 (use{LPtr} (LocInfoE loc_130 ("x"))))) ;
+          LocInfoE loc_123 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_123 (use{LPtr} (LocInfoE loc_124 ("x"))))) ;
         locinfo: loc_109 ;
-        expr: (LocInfoE loc_125 (&(LocInfoE loc_127 (!{LPtr} (LocInfoE loc_128 ("s")))))) ;
-        locinfo: loc_111 ;
-        LocInfoE loc_118 ((LocInfoE loc_119 (!{LPtr} (LocInfoE loc_120 ("f")))) at{struct_freelist} "next") <-{ LPtr }
-          LocInfoE loc_121 (use{LPtr} (LocInfoE loc_122 ((LocInfoE loc_123 (!{LPtr} (LocInfoE loc_124 ("s")))) at{struct_slab} "free"))) ;
-        locinfo: loc_112 ;
-        LocInfoE loc_113 ((LocInfoE loc_114 (!{LPtr} (LocInfoE loc_115 ("s")))) at{struct_slab} "free") <-{ LPtr }
-          LocInfoE loc_116 (use{LPtr} (LocInfoE loc_117 ("f"))) ;
+        LocInfoE loc_116 ((LocInfoE loc_117 (!{LPtr} (LocInfoE loc_118 ("f")))) at{struct_freelist} "next") <-{ LPtr }
+          LocInfoE loc_119 (use{LPtr} (LocInfoE loc_120 ((LocInfoE loc_121 (!{LPtr} (LocInfoE loc_122 ("s")))) at{struct_slab} "free"))) ;
+        locinfo: loc_110 ;
+        LocInfoE loc_111 ((LocInfoE loc_112 (!{LPtr} (LocInfoE loc_113 ("s")))) at{struct_slab} "free") <-{ LPtr }
+          LocInfoE loc_114 (use{LPtr} (LocInfoE loc_115 ("f"))) ;
         Return (VOID)
       ]> $∅
     )%E

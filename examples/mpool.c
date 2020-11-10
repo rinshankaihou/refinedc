@@ -331,7 +331,6 @@ void *mpool_alloc(struct mpool *p) {
 [[rc::ensures("p @ &frac<q, {(n + 1)%nat} @ mpool<entry_size>>")]]
 void mpool_free(struct mpool *p, void *ptr) {
   struct mpool_entry *e = ptr;
-  rc_unfold(p->entry_size);
 
   /* Store the newly freed entry in the front of the free list. */
   sl_lock(&p->lock);
@@ -418,7 +417,6 @@ void *mpool_alloc_contiguous_no_fallback(struct mpool *p, size_t count, size_t a
         chunk->size = before_start;
       }
 
-      rc_unfold(*chunk);
       rc_uninit_strengthen_align(*start);
       ret = (void *)start;
       break;
@@ -426,7 +424,6 @@ void *mpool_alloc_contiguous_no_fallback(struct mpool *p, size_t count, size_t a
 
     prev = &chunk->next_chunk;
   }
-  rc_unfold(*prev);
 
   sl_unlock(&p->lock);
 

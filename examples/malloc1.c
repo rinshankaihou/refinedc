@@ -79,8 +79,6 @@ void* slab_alloc(struct slab *s)
 void slab_free(struct slab *s, void* x)
 {
     struct freelist* f = x;
-    // unfold slab to learn that struct_freelist < entry_size
-    rc_unfold(*s);
 
     f->next = s->free;
     s->free = f;
