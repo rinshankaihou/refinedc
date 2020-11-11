@@ -459,6 +459,7 @@ Ltac liExist protect :=
         custom_exist_tac A protect
       | lazymatch A with
         | TCForall2 _ _ _ => eexists _
+        (* | Type => eexists _ *)
         | @eq ?B ?x _ => exists (@eq_refl B x)
         | prod _ _ => apply: tac_exist_prod
         | sigT _ => apply: tac_exist_sigT

@@ -128,8 +128,16 @@ Section type.
     simplify_hyp (l ◁ₗ{β} uninit (mk_array_layout ly n)) T.
   Proof. iIntros "[% HT] Hl". iApply "HT". rewrite array_replicate_uninit_equiv // {1}/ly_size/=. Qed.
   Global Instance simplify_hyp_uninit_array_inst ly l β n:
-    SimplifyHyp (l ◁ₗ{β} uninit (mk_array_layout ly n)) (Some 0%N) :=
+    SimplifyHypPlace l β (uninit (mk_array_layout ly n)) (Some 50%N) :=
     λ T, i2p (simplify_hyp_uninit_array ly l β T n).
+
+  Lemma simplify_goal_uninit_array ly l β T n:
+    (⌜layout_wf ly⌝ ∗ T (l ◁ₗ{β} array ly (replicate n (uninit ly)))) -∗
+     simplify_goal (l ◁ₗ{β} uninit (mk_array_layout ly n)) T.
+  Proof. iIntros "[% HT]". iExists _. iFrame. iIntros "?". rewrite array_replicate_uninit_equiv //. Qed.
+  Global Instance simplify_goal_uninit_array_inst ly l β n:
+    SimplifyGoalPlace l β (uninit (mk_array_layout ly n)) (Some 50%N) :=
+    λ T, i2p (simplify_goal_uninit_array ly l β T n).
 
   Lemma subsume_uninit_array_replicate l β T n (ly1 : layout) ly2:
     ⌜layout_wf ly2⌝ ∗ ⌜ly1 = mk_array_layout ly2 n⌝ ∗ T -∗
