@@ -35,7 +35,7 @@ Section singleton_val.
     iIntros "[% [% Hl]]". iApply "HT". by iApply (ty_ref with "[] Hl Hv").
   Qed.
   Global Instance singleton_val_merge_inst v l ly:
-    SimplifyHypPlace l Own (singleton_val ly v)%I (Some 50%N) :=
+    SimplifyHypPlace l Own (singleton_val ly v)%I (Some 50%N) | 20 :=
     λ T, i2p (singleton_val_merge v l ly T).
 
   Lemma type_read_move T l ty ly a `{!Movable ty}:

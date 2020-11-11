@@ -34,3 +34,4 @@
 -Q _build/default/tutorial/adequacy refinedc.tutorial.adequacy
 -Q _build/default/tutorial/proofs/quicksort_solution refinedc.tutorial.quicksort_solution
 -Q _build/default/tutorial/proofs/quicksort_exercise refinedc.tutorial.quicksort_exercise
+-Q _build/default/examples/proofs/binary_search refinedc.examples.binary_search

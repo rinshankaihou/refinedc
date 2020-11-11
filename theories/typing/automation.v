@@ -92,8 +92,9 @@ Ltac liRIntroduceLetInGoal :=
     end
   end.
 
-(* TODO: make this extensible via a hook tactic *)
+Ltac liRInstantiateEvars_hook := idtac.
 Ltac liRInstantiateEvars :=
+  liRInstantiateEvars_hook;
   lazymatch goal with
   | |- (_ < protected ?H)%nat ∧ _ => liInst H (S (protected (EVAR_ID _)))
   (* This is very hard to figure out for unification because of the
@@ -101,6 +102,7 @@ Ltac liRInstantiateEvars :=
   definition of ty without this. This is the reason why do_instantiate
   evars must come before do_side_cond *)
   | |- protected ?H = ( _ @ ?ty)%I ∧ _ => liInst H ((protected (EVAR_ID _)) @ ty)%I
+  | |- protected ?H = ty_of_rty (frac_ptr ?β _)%I ∧ _ => liInst H (frac_ptr β (protected (EVAR_ID _)))%I
   | |- envs_entails _ (subsume (?x ◁ₗ{?β} ?ty) (_ ◁ₗ{_} (protected ?H)) _) => liInst H ty
   | |- envs_entails _ (subsume (?x ◁ₗ{?β} ?ty) (_ ◁ₗ{protected ?H} _) _) => liInst H β
   end.

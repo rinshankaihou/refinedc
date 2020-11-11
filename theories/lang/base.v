@@ -186,6 +186,15 @@ Lemma bool_decide_eq_x_x_true {A} (x : A) `{!Decision (x = x)} :
   bool_decide (x = x) = true.
 Proof. by case_bool_decide.  Qed.
 
+Lemma StronglySorted_lookup_le {A} R (l : list A) i j x y:
+  StronglySorted R l → l !! i = Some x → l !! j = Some y → (i ≤ j)%nat → x = y ∨ R x y.
+Proof.
+  move => Hsorted. elim: Hsorted i j => // z {}l ? IH Hall [|?] [|?]//=???; simplify_eq; try lia.
+  - by left.
+  - right. by apply: (Forall_lookup_1 _ _ _ _ Hall).
+  - apply: IH => //. lia.
+Qed.
+
 
   Lemma StronglySorted_lookup_lt {A} R (l : list A) i j x y:
     StronglySorted R l → l !! i = Some x → l !! j = Some y → ¬ R y x → x ≠ y → (i < j)%nat.

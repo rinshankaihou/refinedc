@@ -524,6 +524,14 @@ Section typing.
     SubsumeVal v (x1 @ ty)%I (x2 @ ty)%I | 2:=
     λ T, i2p (subsume_val_refinement_id v ty T x1 x2).
 
+  Lemma subtype_var {A} (ty : A → type) x y l β T:
+    ⌜x = y⌝ ∗ T -∗
+    subsume (l ◁ₗ{β} ty x) (l ◁ₗ{β} ty y) T.
+  Proof. iIntros "[-> $] $". Qed.
+  (* This must be an hint extern because an instance would be a big slowdown . *)
+  Definition subtype_var_inst {A} (ty : A → type) x y l β : SubsumePlace l β (ty x) (ty y) :=
+    λ T, i2p (subtype_var ty x y l β T).
+
   Lemma typed_binop_simplify v1 P1 v2 P2 T o1 o2 ot1 ot2 {SH1 : SimplifyHyp P1 o1} {SH2 : SimplifyHyp P2 o2} op:
     let G1 := (SH1 (find_in_context (FindValP v1) (λ P, typed_bin_op v1 P v2 P2 op ot1 ot2 T))).(i2p_P) in
     let G2 := (SH2 (find_in_context (FindValP v2) (λ P, typed_bin_op v1 P1 v2 P op ot1 ot2 T))).(i2p_P) in
@@ -979,6 +987,10 @@ Section typing.
     TypedAnnotStmt (LearnAnnot) l β ty :=
     λ T, i2p (annot_learn l β ty T).
 End typing.
+
+(* This must be an hint extern because an instance would be a big slowdown . *)
+Hint Extern 1 (SubsumePlace _ _ (?ty _) (?ty2 _)) =>
+  match ty with | ty2 => is_var ty; class_apply subtype_var_inst end : typeclass_instances.
 
 (*** guarded *)
 Section guarded.

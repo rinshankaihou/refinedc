@@ -45,6 +45,14 @@ Section function.
   Next Obligation. iIntros (f v ???) "?". iDestruct 1 as (? ->) "?". iFrame. iExists _. by iFrame. Qed.
   Next Obligation. by iIntros (f v). Qed.
 
+  Global Program Instance copyable_function_ptr p fp : Copyable (p @ function_ptr fp).
+  Next Obligation.
+    iIntros (p fp E l ?). iDestruct 1 as (fn Hl) "(Hl&?&?)".
+    iMod (heap_mapsto_own_state_to_mt with "Hl") as (q) "[_ Hl]" => //. iSplitR => //.
+    iExists _, _. iFrame. iModIntro. iSplit. by iExists _; iFrame.
+    by iIntros "_".
+  Qed.
+
   Definition typed_callable (v : val) (ty : type) `{!Movable ty} (T : (A → fn_params) → iProp Σ) : iProp Σ :=
     (v ◁ᵥ ty -∗ ∃ f fn fp, ⌜v = val_of_loc f⌝ ∗ fntbl_entry f fn ∗ ▷ typed_function fn fp ∗ T fp)%I.
 
