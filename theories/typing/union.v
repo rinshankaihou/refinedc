@@ -36,7 +36,7 @@ Section function.
   Proof.
     iIntros "HP" (Φ) "Hs HΦ" => /=.
     iDestruct "Hs" as (ly ?) "Hpad".
-    rewrite /padded. iDestruct "Hpad" as (??) "[Hty Hpad]".
+    rewrite /padded. iDestruct "Hpad" as (??) "[Hb [Hty Hpad]]".
     iApply wp_get_member_union. by apply val_to_of_loc. iExists _. iSplit => //.
     iApply ("HP" with "[Hty]"). by rewrite /GetMemberUnionLoc.
     iIntros (l2 β2 ty2 typ R) "Hl Hc HT".
@@ -193,7 +193,7 @@ Section function.
   Proof.
     move: Heq => /TCEq_eq <-.
     iIntros "[-> HP]" (Φ) "Hs HΦ" => /=.
-    rewrite {2}/variant /padded/=. iDestruct "Hs" as (??) "[Hty Hpad]".
+    rewrite {2}/variant /padded/=. iDestruct "Hs" as (??) "[Hb [Hty Hpad]]".
     iApply wp_get_member_union. by apply val_to_of_loc. iExists _. iSplit => //.
     iApply ("HP" with "[Hty]"). by rewrite /GetMemberUnionLoc.
     iIntros (l2 β2 ty2 typ R) "Hl Hc HT".

@@ -6,18 +6,22 @@ Set Default Proof Using "Type".
 Section type.
   Context `{typeG Σ}.
   (*** arrays *)
-  (*** array *)
   Program Definition array (ly : layout) (tys : list type) : type := {|
-    ty_own β l := (⌜l `has_layout_loc` ly⌝ ∗ [∗ list] i ↦ ty ∈ tys, (l offset{ly}ₗ i) ◁ₗ{β} ty)%I
+    ty_own β l := (
+      ⌜l `has_layout_loc` ly⌝ ∗
+      loc_in_bounds l (ly_size ly * length tys)%nat ∗
+      [∗ list] i ↦ ty ∈ tys, (l offset{ly}ₗ i) ◁ₗ{β} ty
+    )%I
   |}.
   Next Obligation.
-    iIntros (ly tys l E He) "[$ Ha]". iApply big_sepL_fupd. iApply (big_sepL_impl with "Ha").
+    iIntros (ly tys l E He) "($&$&Ha)". iApply big_sepL_fupd. iApply (big_sepL_impl with "Ha").
     iIntros "!#" (???). by iApply ty_share.
   Qed.
 
   Global Instance array_ne n : Proper ((=) ==> (dist n) ==> (dist n)) array.
   Proof.
-    move => ? sl -> tys1 tys2 Htys. constructor => β l; rewrite/ty_own/=. f_equiv.
+    move => ? sl -> tys1 tys2 Htys. constructor => β l; rewrite/ty_own/=.
+    f_equiv. f_equiv; first by rewrite ->Htys.
     elim: Htys l => // ???????? /=. f_equiv. solve_proper.
     by setoid_rewrite offset_loc_S.
   Qed.
@@ -35,24 +39,28 @@ Section type.
       (⌜v `has_layout_val` (mk_array_layout ly (length tys))⌝ ∗
        [∗ list] v';ty∈reshape (replicate (length tys) (ly_size ly)) v;(movablelst_to_list tys), (v' ◁ᵥ (ty : mtype)))%I;
   |}.
-  Next Obligation. by iIntros (ly tys ? Hall%movable_array_forall ? l) "[% Ha]". Qed.
+  Next Obligation. by iIntros (ly tys ? Hall%movable_array_forall ? l) "[% _]". Qed.
   Next Obligation. by iIntros (ly tys ? ? ? v) "(?&_)". Qed.
   Next Obligation.
     rewrite /LayoutWf. move => ly tys ? /movable_array_forall. rewrite {2}(to_movablelst tys).
     move Heq: (movablelst_to_list tys) => tys'.
     have ->: (length tys = length tys') by rewrite -Heq movablelst_to_list_length.
-    clear dependent tys. rewrite /ty_own/=. iIntros (Hlys Hly l) "[_ Htys]".
+    clear dependent tys. rewrite /ty_own/=. iIntros (Hlys Hly l) "(_&#Hb&Htys)".
     iInduction (tys') as [|ty tys] "IH" forall (l); csimpl.
-    { iExists []. iSplitR => //. by iApply heap_mapsto_nil. iSplit => //. iPureIntro. rewrite /has_layout_val/ly_size/=. lia. }
+    { iExists []. iSplitR => //.
+      - iApply heap_mapsto_nil; first by iApply (loc_in_bounds_shorten with "Hb"); lia.
+      - iSplit => //. iPureIntro. rewrite /has_layout_val/ly_size/=. lia. }
     move: Hlys. intros (->&?)%Forall_cons. csimpl.
     rewrite offset_loc_0. iDestruct "Htys" as "[Hty Htys]".
+    iDestruct (loc_in_bounds_split_mul_S with "Hb") as "[Hb1 Hb2]".
     iDestruct (ty_deref with "Hty") as (v') "[Hl Hty]".
     iDestruct (ty_size_eq with "Hty") as %Hszv.
     setoid_rewrite offset_loc_S.
-    iDestruct ("IH" $! _ (l offset{ty_layout ty}ₗ 1) with "Htys") as (vs') "(Hl' & Hsz & Htys)".
+    iDestruct ("IH" $! _ (l offset{ty_layout ty}ₗ 1) with "[Hb2] Htys") as (vs') "(Hl' & Hsz & Htys)".
+    { by rewrite /offset_loc Z.mul_1_r. }
     iDestruct "Hsz" as %Hsz. iExists (v' ++ vs').
-    rewrite /has_layout_val heap_mapsto_app Hszv offset_loc_1 take_app_alt // drop_app_alt // app_length Hszv Hsz. iFrame.
-    iPureIntro. rewrite /ly_size/= -/(ly_size _). lia.
+    rewrite /has_layout_val heap_mapsto_app Hszv offset_loc_1 take_app_alt // drop_app_alt // app_length Hszv Hsz.
+    iFrame. iPureIntro. rewrite /ly_size/= -/(ly_size _). lia.
     Unshelve. done.
   Qed.
   Next Obligation.
@@ -61,16 +69,20 @@ Section type.
     have ->: (length tys = length tys') by rewrite -Heq movablelst_to_list_length.
     clear dependent tys. iIntros (Hlys Hly l v Hl) "Hl". rewrite /ty_own/=.
     iDestruct 1 as (Hv) "Htys". iSplit => //.
-    iInduction (tys') as [|ty tys] "IH" forall (l v Hv Hl); csimpl in * => //.
+    iInduction (tys') as [|ty tys] "IH" forall (l v Hv Hl); csimpl in *.
+    { rewrite mult_0_r right_id. by iApply heap_mapsto_loc_in_bounds_0. }
     move: Hlys. intros [-> ?]%Forall_cons. iDestruct "Htys" as "[Hty Htys]".
     rewrite -{1}(take_drop (ly_size (ty_layout ty)) v).
     rewrite offset_loc_0 heap_mapsto_app take_length_le ?Hv; last by repeat unfold ly_size => /=; lia.
     iDestruct "Hl" as "[Hl Hl']".
+    iDestruct (heap_mapsto_loc_in_bounds with "Hl") as "#Hb1".
     iDestruct (ty_ref with "[] Hl Hty") as "$" => //.
     setoid_rewrite offset_loc_S. rewrite offset_loc_1.
-    iApply ("IH" with "[//] [] [] Hl' Htys"); iPureIntro.
-    - rewrite /has_layout_val drop_length Hv. by repeat unfold ly_size => /=; lia.
-    - by apply has_layout_loc_ly_mult_offset.
+    iDestruct ("IH" with "[//] [] [] Hl' Htys") as "[#Hb2 $]".
+    { iPureIntro. rewrite /has_layout_val drop_length Hv. by repeat unfold ly_size => /=; lia. }
+    { iPureIntro. by apply has_layout_loc_ly_mult_offset. }
+    iApply loc_in_bounds_split_mul_S. rewrite take_length min_l; first by eauto.
+    rewrite Hv. repeat unfold ly_size => /=; lia.
   Qed.
 
 
@@ -78,25 +90,33 @@ Section type.
     tys !! i = Some ty →
     l ◁ₗ{β} array ly tys -∗ (l offset{ly}ₗ i) ◁ₗ{β} ty ∗ l ◁ₗ{β} array ly (<[ i := singleton_place (l offset{ly}ₗ i)]>tys).
   Proof.
-    rewrite !/(ty_own (array _ _))/=. iIntros (Hi) "[$ Ha]".
-    iInduction (i) as [|i] "IH" forall (l tys Hi); destruct tys as [|ty' tys] => //; simpl in *; simplify_eq;
-      iDestruct "Ha" as "[$ Ha]". by iSplitR.
+    rewrite !/(ty_own (array _ _))/=. iIntros (Hi) "($&Hb&Ha)".
+    iInduction (i) as [|i] "IH" forall (l tys Hi);
+    destruct tys as [|ty' tys] => //; simpl in *; simplify_eq;
+    iDestruct "Ha" as "[$ Ha]"; first by iFrame.
     rewrite offset_loc_S. setoid_rewrite offset_loc_S.
-    iApply ("IH" with "[//] Ha").
+    iDestruct (loc_in_bounds_split_mul_S with "Hb") as "[Hb1 Hb2]".
+    rewrite /offset_loc Z.mul_1_r.
+    iDestruct ("IH" with "[//] [Hb2] Ha") as "[$[Hb2 $]]" => //.
+    iApply loc_in_bounds_split_mul_S. iFrame.
   Qed.
 
   Lemma array_put_type (i : nat) ly tys ty l β:
     (l offset{ly}ₗ i) ◁ₗ{β} ty -∗ l ◁ₗ{β} array ly tys -∗ l ◁ₗ{β} array ly (<[ i := ty ]>tys).
   Proof.
-    rewrite !/(ty_own (array _ _))/=. iIntros "Hl [$ Ha]".
-    destruct (decide (i < length tys)%nat) as [Hlt |]. 2: {
-      rewrite list_insert_ge => //. lia.
-    }
-    iInduction (i) as [|i] "IH" forall (l tys Hlt); destruct tys as [|ty' tys] => //; simpl in *; simplify_eq.
+    rewrite !/(ty_own (array _ _))/=. iIntros "Hl ($&Hb&Ha)".
+    destruct (decide (i < length tys)%nat) as [Hlt |]; last first.
+    { rewrite list_insert_ge => //; last by lia. iFrame. }
+    iInduction (i) as [|i] "IH" forall (l tys Hlt);
+    destruct tys as [|ty' tys] => //; simpl in *; simplify_eq; eauto.
     - iFrame. by iDestruct "Ha" as "[_ $]".
     - rewrite offset_loc_S. setoid_rewrite offset_loc_S.
       iDestruct "Ha" as "[$ Ha]".
-      iApply ("IH" with "[] Hl Ha"). iPureIntro. lia.
+      iDestruct (loc_in_bounds_split_mul_S with "Hb") as "[Hb1 Hb2]".
+      rewrite /offset_loc Z.mul_1_r.
+      iDestruct ("IH" with "[] Hl [Hb2] Ha") as "[Hb2 $]" => //.
+      { iPureIntro. lia. }
+      iApply loc_in_bounds_split_mul_S. iFrame.
   Qed.
 
   Lemma array_replicate_uninit_equiv l β ly n:
@@ -104,23 +124,37 @@ Section type.
     l ◁ₗ{β} array ly (replicate n (uninit ly)) ⊣⊢ l ◁ₗ{β} uninit (mk_array_layout ly n).
   Proof.
     rewrite /ty_own/= => ?. iSplit.
-    - rewrite heap_mapsto_own_state_layout_alt. iDestruct 1 as (Hl) "Ha". iSplit => //. clear Hl.
+    - rewrite heap_mapsto_own_state_layout_alt. iDestruct 1 as (Hl) "[Hb Ha]". iSplit => //. clear Hl.
       iInduction n as [|n] "IH" forall (l) => /=.
-      { iExists []. rewrite heap_mapsto_own_state_nil. iPureIntro. rewrite /has_layout_val/ly_size/=. lia. }
+      { iExists []. rewrite heap_mapsto_own_state_nil mult_0_r.
+        iFrame. iPureIntro. rewrite /has_layout_val/ly_size/=. lia. }
       setoid_rewrite offset_loc_S. setoid_rewrite offset_loc_1. rewrite offset_loc_0.
-      iDestruct "Ha" as "[Hl Ha]". iDestruct ("IH" with "Ha") as (v2 Hv2) "Hv2".
+      iDestruct "Ha" as "[Hl Ha]". iDestruct (loc_in_bounds_split_mul_S with "Hb") as "[#Hb1 Hb2]".
+      iDestruct ("IH" with "Hb2 Ha") as (v2 Hv2) "Hv2".
       iDestruct "Hl" as (v1 Hv1  Hl1) "Hv1".
       iExists (v1 ++ v2). rewrite heap_mapsto_own_state_app Hv1 /has_layout_val app_length Hv1 Hv2. iFrame.
       iPureIntro. rewrite {2 3}/ly_size/=. lia.
     - iDestruct 1 as (v Hv Hl) "Hl". iSplit => //.
-      iInduction n as [|n] "IH" forall (v l Hv Hl) => //=.
+      iInduction n as [|n] "IH" forall (v l Hv Hl) => /=.
+      { rewrite mult_0_r right_id.
+        iApply loc_in_bounds_shorten; last by iApply heap_mapsto_own_state_loc_in_bounds. lia. }
       setoid_rewrite offset_loc_S. setoid_rewrite offset_loc_1. rewrite offset_loc_0.
       rewrite -(take_drop (ly.(ly_size)) v) heap_mapsto_own_state_app.
       iDestruct "Hl" as "[Hl Hr]". rewrite take_length_le ?Hv; last by repeat unfold ly_size => /=; lia.
-      iSplitL "Hl".
-      + iExists _. iFrame. iPureIntro. split => //. rewrite /has_layout_val take_length_le ?Hv; repeat unfold ly_size => /=; lia.
-      + iApply ("IH" with "[] [] Hr"); iPureIntro. 2: by apply has_layout_loc_ly_mult_offset.
-        rewrite /has_layout_val drop_length Hv; repeat unfold ly_size => /=; lia.
+      iDestruct (heap_mapsto_own_state_loc_in_bounds with "Hl") as "#Hbl".
+      iDestruct (heap_mapsto_own_state_loc_in_bounds with "Hr") as "#Hbr".
+      iDestruct ("IH" with "[] [] Hr") as "[Hb HH]".
+      { iPureIntro. rewrite /has_layout_val drop_length Hv. repeat unfold ly_size => /=; lia. }
+      { iPureIntro. by apply has_layout_loc_ly_mult_offset. }
+      iSplitR.
+      + iClear "IH". iApply loc_in_bounds_split_mul_S.
+        rewrite take_length min_l; last first.
+        { rewrite Hv. repeat unfold ly_size => /=; lia. }
+        iFrame "Hbl". rewrite replicate_length drop_length Hv.
+        destruct ly as [k?]. repeat unfold ly_size => /=.
+        have ->: (k * n = k * S n - k)%nat by lia. done.
+      + iSplitL "Hl"; last done. iExists _. iFrame. iPureIntro. split => //.
+        rewrite /has_layout_val take_length_le ?Hv; repeat unfold ly_size => /=; lia.
   Qed.
 
   Lemma simplify_hyp_uninit_array ly l β T n:
@@ -160,10 +194,11 @@ Section type.
     subsume_list type tys1 tys2 (λ i ty, (l offset{ly1}ₗ i) ◁ₗ{β} ty) T -∗
       subsume (l ◁ₗ{β} array ly1 tys1) (l ◁ₗ{β} array ly2 tys2) T.
   Proof.
-    iIntros "[-> [Hlen H]] [$ H1]". iDestruct "Hlen" as %Hlen.
+    iIntros "[-> [Hlen H]] ($&Hb&H1)". iDestruct "Hlen" as %Hlen.
     iDestruct ("H" $! Hlen) as "H2".
-    iAssert (([^bi_sep list] i↦x ∈ tys2, (l offset{ly2}ₗ i) ◁ₗ{β} x) ∗ T)%I with "[H1 H2]" as "[$ $]".
-    by iApply "H2".
+    iAssert (([^bi_sep list] i↦x ∈ tys2, (l offset{ly2}ₗ i) ◁ₗ{β} x) ∗ T)%I
+      with "[H1 H2]" as "[$ $]"; first by iApply "H2".
+    by rewrite Hlen.
   Qed.
   Global Instance subsume_array_inst ly1 ly2 tys1 tys2 l β:
     SubsumePlace l β (array ly1 tys1) (array ly2 tys2) | 100 :=
@@ -192,7 +227,7 @@ Section type.
     typed_place K (l offset{ly2}ₗ i) β ty (λ l2 β2 ty2 typ, T l2 β2 ty2 (λ t, array ly2 (<[Z.to_nat i := typ t]>tys))))) -∗
     typed_place (BinOpPCtx (PtrOffsetOp ly1) (IntOp it) v tyv :: K) l β (array ly2 tys) T.
   Proof.
-    iDestruct 1 as (i ->) "HP". iIntros (Φ) "[% Hl] HΦ" => /=. iIntros "Hv".
+    iDestruct 1 as (i ->) "HP". iIntros (Φ) "(%&#Hb&Hl) HΦ" => /=. iIntros "Hv".
     iDestruct ("HP" with "Hv") as "[Hv HP]".
     iDestruct "HP" as (? Hlen) "HP".
     have [|ty ?]:= lookup_lt_is_Some_2 tys (Z.to_nat i). lia.
@@ -202,7 +237,8 @@ Section type.
     iDestruct (big_sepL_insert_acc with "Hl") as "[Hl Hc]" => //. rewrite Z2Nat.id//.
     iApply ("HP" $! ty with "[//] Hl"). iIntros (l' ty2 β2 typ R) "Hl' Htyp HT".
     iApply ("HΦ" with "Hl' [-HT] HT"). iIntros (ty') "Hl'".
-    iMod ("Htyp" with "Hl'") as "[? $]". iSplitR => //. by iApply "Hc".
+    iMod ("Htyp" with "Hl'") as "[? $]".
+    iSplitR => //. iSplitR; first by rewrite insert_length. by iApply "Hc".
   Qed.
   Global Instance type_place_array_inst l β ly1 it v (tyv : mtype) tys ly2 K:
     TypedPlace (BinOpPCtx (PtrOffsetOp ly1) (IntOp it) v tyv :: K) l β (array ly2 tys):=

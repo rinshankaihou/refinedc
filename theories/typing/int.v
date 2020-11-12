@@ -103,12 +103,14 @@ Section programs.
     (⌜n1 ∈ it⌝ -∗ ⌜n2 ∈ it⌝ -∗ T (i2v (Z_of_bool b) i32) (t2mt (b @ boolean i32))) -∗
       typed_bin_op v1 (v1 ◁ᵥ n1 @ int it) v2 (v2 ◁ᵥ n2 @ int it) op (IntOp it) (IntOp it) T.
   Proof.
-    iIntros (Hop) "HT". iIntros (Hv1 Hv2 Φ) "HΦ".
+    move => Hop. iIntros "HT" (Hv1 Hv2 Φ) "HΦ".
     iDestruct ("HT" with "[] []" ) as "HT".
     1-2: iPureIntro; by apply: val_of_int_in_range.
     move: Hv1 Hv2 => /val_to_of_int Hv1 /val_to_of_int Hv2.
-    iApply (wp_binop); first eauto using RelOpII.
-    iIntros "!#" (v' h Heq). inversion Heq; destruct op; simplify_eq; iApply "HΦ" => //; by iPureIntro; repeat case_bool_decide.
+    iApply (wp_binop_det (i2v (Z_of_bool b) i32)). iSplit.
+    { iIntros (σ v') "_ !%". split; last (move => ->; by econstructor).
+      destruct op => //; inversion 1; by simplify_eq. }
+    iIntros "!>". iApply "HΦ" => //. by destruct b.
   Qed.
 
   Global Program Instance type_eq_int_int_inst it v1 n1 v2 n2:
@@ -149,8 +151,10 @@ Section programs.
     iDestruct ("HT" with "[] []" ) as ([v Hv]%val_of_int_is_some) "HT".
     1-2: iPureIntro; by apply: val_of_int_in_range.
     move: Hv1 Hv2 => /val_to_of_int Hv1 /val_to_of_int Hv2. rewrite /i2v Hv/=.
-    iApply (wp_binop); first by destruct op; eauto using ArithOpII.
-    iIntros "!#" (v' h Heq). inversion Heq; destruct op; simplify_eq; iApply "HΦ" => //; by iPureIntro.
+    iApply (wp_binop_det v). iSplit.
+    { iIntros (σ v') "_ !%". split; last (move => ->; destruct op; by econstructor).
+      destruct op => //; inversion 1; by simplify_eq. }
+    iIntros "!>". iApply "HΦ"; last done.  by iPureIntro.
   Qed.
   Lemma type_arithop_int_int_div_mod it v1 n1 v2 n2 T n op:
     match op with
@@ -165,8 +169,11 @@ Section programs.
     iDestruct ("HT" with "[] []" ) as (Hn [v Hv]%val_of_int_is_some) "HT".
     1-2: iPureIntro; by apply: val_of_int_in_range.
     move: Hv1 Hv2 => /val_to_of_int Hv1 /val_to_of_int Hv2. rewrite /i2v Hv/=.
-    iApply wp_binop; first by intros; destruct op; apply: ArithOpII => //; by case_match.
-    iIntros "!#" (v' h Heq). inversion Heq; destruct op, n2; simplify_eq; iApply "HΦ" => //; by iPureIntro.
+    iApply (wp_binop_det v). iSplit.
+    { iIntros (σ v') "_ !%".
+      split; last (move => ->; destruct op; econstructor => //; by case_match).
+      destruct op => //; inversion 1; simplify_eq; case_match; by simplify_eq. }
+    iApply "HΦ"; last done. by iPureIntro.
   Qed.
   Global Program Instance type_add_int_int_inst it v1 n1 v2 n2:
     TypedBinOpVal v1 (n1 @ int it)%I v2 (n2 @ int it)%I AddOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_int_int it v1 n1 v2 n2 T (n1 + n2) _ _).
@@ -286,10 +293,11 @@ Section programs.
   Proof.
     iIntros (Hop) "HT". iIntros (Hv1 Hv2 Φ) "HΦ".
     move: Hv1 Hv2 => /val_to_of_int Hv1 /val_to_of_int Hv2.
-    iApply (wp_binop (i2v (Z_of_bool b) i32)).
-    { intros. by destruct op => //; apply: RelOpII => //; destruct b1, b2. }
-    iIntros "!#" (v' h Heq).
-    inversion Heq; destruct op; simplify_eq; destruct b1, b2; iApply "HΦ" => //=; by iPureIntro.
+    iApply (wp_binop_det (i2v (Z_of_bool b) i32)). iSplit.
+    { iIntros (σ v) "_ !%". destruct op, b1, b2; simplify_eq;
+      (split; [ inversion 1 | move => -> ]); simplify_eq;
+      econstructor => //; by case_bool_decide. }
+    iApply "HΦ"; last done. iPureIntro. by destruct b.
   Qed.
 
   Global Program Instance type_eq_bool_bool_inst it v1 b1 v2 b2:

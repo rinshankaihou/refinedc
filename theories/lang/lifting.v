@@ -50,48 +50,60 @@ Proof. rewrite /Use. solve_atomic. Qed.
 Section expr_lifting.
 Context `{!refinedcG Σ}.
 
-Lemma wp_binop v' v1 v2 Φ op E ot1 ot2:
-  (∀ h, eval_bin_op op ot1 ot2 h v1 v2 v') →
-  ▷ (∀ v h, ⌜eval_bin_op op ot1 ot2 h v1 v2 v⌝ -∗ Φ v) -∗
-   WP BinOp op ot1 ot2 (Val v1) (Val v2) @ E {{ Φ }}.
+Lemma wp_binop v1 v2 Φ op E ot1 ot2:
+  (∀ σ, state_ctx σ -∗
+    ⌜∃ v', eval_bin_op op ot1 ot2 σ v1 v2 v'⌝ ∗
+    ▷ (∀ v', ⌜eval_bin_op op ot1 ot2 σ v1 v2 v'⌝ -∗ state_ctx σ ∗ Φ v')) -∗
+  WP BinOp op ot1 ot2 (Val v1) (Val v2) @ E {{ Φ }}.
 Proof.
-  iIntros (Hop) "HΦ".
+  iIntros "HΦ".
   iApply wp_lift_atomic_head_step; auto.
-  iIntros (σ1 ???) "[Hhctx Hfctx]".
-  iModIntro. iSplit; first by eauto using BinOpS.
+  iIntros (σ1 ???) "Hctx !>".
+  iDestruct ("HΦ" with "Hctx") as ([v' Heval]) "HΦ".
+  iSplit; first by eauto using BinOpS.
   iIntros "!#" (e2 σ2 efs Hst). inv_expr_step.
-  iFrame. iModIntro. iSplitL => //. by iApply "HΦ".
+  iModIntro. rewrite right_id. by iApply "HΦ".
 Qed.
 
 Lemma wp_binop_det v' v1 v2 Φ op E ot1 ot2:
-  (∀ h v, eval_bin_op op ot1 ot2 h v1 v2 v ↔ v = v') →
-  ▷ Φ v' -∗ WP BinOp op ot1 ot2 (Val v1) (Val v2) @ E {{ Φ }}.
+  (∀ σ v, state_ctx σ -∗ ⌜eval_bin_op op ot1 ot2 σ v1 v2 v ↔ v = v'⌝) ∧ ▷ Φ v' -∗
+    WP BinOp op ot1 ot2 (Val v1) (Val v2) @ E {{ Φ }}.
 Proof.
-  iIntros (Hop) "HΦ".
-  iApply (wp_binop v'). by move => h; apply Hop.
-  iIntros "!#" (v h). rewrite Hop. iIntros (?). subst. by iApply "HΦ".
+  iIntros "H".
+  iApply wp_binop. iIntros (σ) "Hctx". iSplit.
+  { iExists v'. iDestruct "H" as "[Hσ _]". by iDestruct ("Hσ" with "Hctx") as %->. }
+  iIntros "!>" (v Hbinop). iAssert (⌜v = v'⌝)%I as %->.
+  { iDestruct "H" as "[Hσ _]". iDestruct ("Hσ" with "Hctx") as %Hvv'.
+    iPureIntro. naive_solver. }
+  by iDestruct "H" as "[_ $]".
 Qed.
 
-Lemma wp_unop v' v1 Φ op E ot:
-  (∀ h, eval_un_op op ot h v1 v') →
-  ▷ (∀ v h, ⌜eval_un_op op ot h v1 v⌝ -∗ Φ v) -∗
+Lemma wp_unop v1 Φ op E ot:
+  (∀ σ, state_ctx σ -∗
+    ⌜∃ v', eval_un_op op ot σ v1 v'⌝ ∗
+    ▷ (∀ v', ⌜eval_un_op op ot σ v1 v'⌝ -∗ state_ctx σ ∗ Φ v')) -∗
    WP UnOp op ot (Val v1) @ E {{ Φ }}.
 Proof.
-  iIntros (Hop) "HΦ".
+  iIntros "HΦ".
   iApply wp_lift_atomic_head_step; auto.
-  iIntros (σ1 ???) "[Hhctx Hfctx]".
-  iModIntro. iSplit; first by eauto using UnOpS.
+  iIntros (σ1 ???) "Hctx !>".
+  iDestruct ("HΦ" with "Hctx") as ([v' Heval]) "HΦ".
+  iSplit; first by eauto using UnOpS.
   iIntros "!#" (e2 σ2 efs Hst). inv_expr_step.
-  iFrame. iModIntro. iSplitL => //. by iApply "HΦ".
+  iModIntro. rewrite right_id. by iApply "HΦ".
 Qed.
 
 Lemma wp_unop_det v' v1 Φ op E ot:
-  (∀ h v, eval_un_op op ot h v1 v ↔ v = v') →
-  ▷ Φ v' -∗ WP UnOp op ot (Val v1) @ E {{ Φ }}.
+  (∀ σ v, state_ctx σ -∗ ⌜eval_un_op op ot σ v1 v ↔ v = v'⌝) ∧ ▷ Φ v' -∗
+  WP UnOp op ot (Val v1) @ E {{ Φ }}.
 Proof.
-  iIntros (Hop) "HΦ".
-  iApply (wp_unop v'). by move => h; apply Hop.
-  iIntros "!#" (v h). rewrite Hop. iIntros (?). subst. by iApply "HΦ".
+  iIntros "H".
+  iApply wp_unop. iIntros (σ) "Hctx". iSplit.
+  { iExists v'. iDestruct "H" as "[Hσ _]". by iDestruct ("Hσ" with "Hctx") as %->. }
+  iIntros "!>" (v Hbinop). iAssert (⌜v = v'⌝)%I as %->.
+  { iDestruct "H" as "[Hσ _]". iDestruct ("Hσ" with "Hctx") as %Hvv'.
+    iPureIntro. naive_solver. }
+  by iDestruct "H" as "[_ $]".
 Qed.
 
 Lemma wp_deref v Φ vl l ly q E o:
@@ -117,13 +129,13 @@ Proof.
     iSplit; first by eauto 7 using DerefS.
     iIntros "!#" (e2 σ2 efs Hst). inv_expr_step. iMod "Hclose" as "$". iModIntro. unfold end_st, end_expr.
     have <- : (v = v') by apply: heap_at_inj_val.
-    iFrame => /=. iSplit; first by eauto 7 using block_used_agree_heap_upd.
+    iFrame => /=. iSplit; first by eauto 7 using blocks_used_agree_heap_upd.
     iApply wp_lift_atomic_head_step_no_fork; auto.
     iIntros ([h2 fn2] ???) "(%&Hhctx&Hfctx)". iMod ("Hσclose" with "Hhctx") as (?) "(Hσ & Hv)".
     iModIntro; iSplit; first by eauto 7 using DerefS.
     iIntros "!#" (e2 σ2 efs Hst) "!#". inv_expr_step.
     have <- : (v = v'0) by apply: heap_at_inj_val.
-    iFrame. iSplitR => //=. iSplit; first by eauto 7 using block_used_agree_heap_upd.
+    iFrame. iSplitR => //=. iSplit; first by eauto 7 using blocks_used_agree_heap_upd.
       by iApply "HΦ".
 Qed.
 
@@ -153,7 +165,7 @@ Proof.
   have ? : (length ve0 = length vo0) by congruence.
   iMod (heap_write with "Hhctx Hl2") as "[$ Hl2]" => //.
   iFrame. iModIntro. rewrite right_id /=.
-  iSplit; first by eauto using block_used_agree_heap_upd.
+  iSplit; first by eauto using blocks_used_agree_heap_upd.
   by iApply ("HΦ" with "Hl1").
 Qed.
 
@@ -183,7 +195,7 @@ Proof.
   have ? : (length vo0 = length vd) by congruence.
   iMod (heap_write with "Hhctx Hl1") as "[$ Hmt]" => //.
   iFrame. iModIntro. rewrite right_id /=.
-  iSplit; first by eauto using block_used_agree_heap_upd.
+  iSplit; first by eauto using blocks_used_agree_heap_upd.
   by iApply ("HΦ" with "Hmt").
 Qed.
 
@@ -193,8 +205,10 @@ Lemma wp_neg_int Φ v v' n E it:
   ▷ Φ (v') -∗ WP UnOp NegOp (IntOp it) (Val v) @ E {{ Φ }}.
 Proof.
   iIntros (Hv Hv') "HΦ".
-  iApply wp_unop; first eauto using NegOpI.
-  iIntros "!#" (v2 h Hop). by inversion Hop; simplify_eq.
+  iApply wp_unop_det. iSplit => //.
+  iIntros (σ v2) "_ !%". split.
+  - by inversion 1; simplify_eq.
+  - move => ->. by econstructor.
 Qed.
 
 Lemma wp_cast_int Φ v v' n E its itt:
@@ -203,8 +217,10 @@ Lemma wp_cast_int Φ v v' n E its itt:
   ▷ Φ (v') -∗ WP UnOp (CastOp (IntOp itt)) (IntOp its) (Val v) @ E {{ Φ }}.
 Proof.
   iIntros (Hv Hv') "HΦ".
-  iApply wp_unop; first eauto using CastOpII.
-  iIntros "!#" (v2 h Hop). by inversion Hop; simplify_eq.
+  iApply wp_unop_det. iSplit => //.
+  iIntros (σ v2) "_ !%". split.
+  - by inversion 1; simplify_eq.
+  - move => ->. by econstructor.
 Qed.
 
 Lemma wp_cast_loc Φ v l E:
@@ -212,8 +228,10 @@ Lemma wp_cast_loc Φ v l E:
   ▷ Φ (val_of_loc l) -∗ WP UnOp (CastOp PtrOp) PtrOp (Val v) @ E {{ Φ }}.
 Proof.
   iIntros (Hv) "HΦ".
-  iApply wp_unop; first eauto using CastOpPP.
-  iIntros "!#" (v2 h Hop). by inversion Hop; simplify_eq.
+  iApply wp_unop_det. iSplit => //.
+  iIntros (σ v2) "_ !%". split.
+  - by inversion 1; simplify_eq.
+  - move => ->. by econstructor.
 Qed.
 
 Lemma wp_ptr_offset Φ vl l E it o ly vo:
@@ -223,8 +241,10 @@ Lemma wp_ptr_offset Φ vl l E it o ly vo:
   ▷ Φ (val_of_loc (l offset{ly}ₗ o)) -∗ WP Val vl at_offset{ ly , PtrOp, IntOp it} Val vo @ E {{ Φ }}.
 Proof.
   iIntros (Hvl Hvo Ho) "HΦ".
-  iApply wp_binop; first eauto using PtrOffsetOpIP.
-  iIntros "!#" (v h Hbop). by inversion Hbop; simplify_eq.
+  iApply wp_binop_det. iSplit; last done.
+  iIntros (σ v) "_ !%". split.
+  - inversion 1. by simplify_eq.
+  - move => ->. by apply PtrOffsetOpIP.
 Qed.
 
 Lemma wp_get_member Φ vl l sl n E:
@@ -239,8 +259,10 @@ Proof.
     by apply offset_of_bound.
   }
   rewrite Hs /=. move: Hs => /val_to_of_int Hs.
-  iApply wp_binop; first eauto using AddOpPI.
-  iIntros "!#" (v h Hbop). by inversion Hbop; simplify_eq.
+  iApply wp_binop_det. iSplit; last done.
+  iIntros (σ v) "_ !%". split.
+  - inversion 1. by simplify_eq.
+  - move => ->. by apply AddOpPI.
 Qed.
 
 Lemma wp_get_member_union Φ vl l ul n E:
@@ -426,12 +448,13 @@ Lemma wps_call Q Ψ r vf vl s f fn:
    ) -∗
    WPs (r <- Val vf with Val <$> vl; s) {{ Q , Ψ }}.
 Proof.
-  rewrite (stmt_wp_unfold (Call _ _ _ _)).
-  move => Hf Hly. iIntros "Hf HWP" (ts Φ ->) "HΨ".
-  move: (Hly) => /Forall2_length. rewrite fmap_length => ?.
-  iApply wp_lift_step => /=. 1: by apply stmt_to_val_non_ret.
-  iIntros (σ1 κ _ _) "(H&Hhctx&Hfctx)". iDestruct "H" as %Hub.
+  rewrite (stmt_wp_unfold (Call _ _ _ _)) => Hf Hly.
+  move: (Hly) => /Forall2_length; rewrite fmap_length => Hlen_vs.
+  iIntros "Hf HWP" (ts Φ ->) "HΨ".
+  iApply wp_lift_step => /=; first by apply stmt_to_val_non_ret.
+  iIntros (σ1 κ _ _) "(H&Hhctx&Hbctx&Hfctx)". iDestruct "H" as %Hub.
   iDestruct (fntbl_entry_lookup with "Hfctx Hf") as %Hfn.
+
   iMod (fupd_intro_mask' _ ∅) as "HE"; first set_solver. iModIntro. iSplit. {
     have [|ls [Hlen [Hfree [HND Hlys]]]] := heap_fresh_blocks (length fn.(f_args) + length fn.(f_local_vars)) σ1.(st_used_blocks) ((f_args fn).*2 ++ (f_local_vars fn).*2). by rewrite !app_length !fmap_length.
     have [lsa [lsv [? [Ha Hv]]]] : (∃ lsa lsv, ls = lsa ++ lsv ∧ length lsa = length fn.(f_args) ∧ length lsv = length fn.(f_local_vars)). {
@@ -441,29 +464,71 @@ Proof.
     subst ls. move: Hfree => /Forall_app[/Forall_forall ? /Forall_forall?].
     move: Hlys => /Forall2_app_inv[|??]. by rewrite fmap_length.
     iPureIntro. eexists _, _, _, _; simpl.
-    eapply (CallS lsa lsv) => //; apply/Forall_forall => ??; try apply Hub;set_solver. }
+    eapply (CallS lsa lsv) => //;apply/Forall_forall => ??; try apply Hub; set_solver.
+  }
   iIntros "!#" (e2 σ2 efs Hst). inv_stmt_step.
   match goal with | H : NoDup _ |- _ => rewrite ->fmap_app, NoDup_app in H; revert H end.
   move => [? [? ?]].
-  iMod (heap_alloc_list lsv (((λ p, replicate (ly_size p.2) ☠%V) <$> f_local_vars fn)) with "Hhctx") as "[Hhctx Hv]" => //.
+  repeat match goal with | H : Forall (fun l => _ !! _ = None) _ |- _ => move/Forall_forall in H end.
+  revert select (length lsa = _) => Hlena.
+  revert select (length lsv = _) => Hlenv.
+
+  (* Allocate new allocation blocks for the local variables. *)
+  iMod (allocs_alloc_list lsv (((λ p, replicate (ly_size p.2) ☠%V) <$> f_local_vars fn))
+          with "Hbctx") as "[Hbctx Hblsv]" => //.
+  { apply elem_of_disjoint => id Hdom Hin. move: Hdom. apply/not_elem_of_dom. set_solver. }
   { by rewrite fmap_length. }
 
-  iMod (heap_alloc_list lsa vs with "Hhctx") as "[$ Ha]" => //.
+  (* Allocate heap segments for the local variables. *)
+  iMod (heap_alloc_list lsv (((λ p, replicate (ly_size p.2) ☠%V) <$> f_local_vars fn))
+          with "[Hhctx $Hblsv]") as "[Hhctx Hv]" => //.
+  { by rewrite fmap_length. }
+
+  (* Allocate new allocation blocks for the function arguments. *)
+  iMod (allocs_alloc_list lsa vs with "Hbctx") as "[Hbctx Hblsa]" => //.
+  { apply elem_of_disjoint => id. rewrite dom_union => Hid1 /elem_of_list_to_set Hlsa. move: Hid1.
+    apply/not_elem_of_union. split; [ | apply/not_elem_of_dom; set_solver].
+    rewrite dom_list_to_map_L fst_zip. { apply/elem_of_list_to_set. naive_solver. }
+    rewrite zip_with_length !fmap_length Hlenv. lia. }
+  { by etrans. }
+
+  (* Allocate heap segments for the function arguments. *)
+  iMod (heap_alloc_list lsa vs with "[Hhctx $Hblsa]") as "[$ Ha]" => //.
   { apply Forall_forall => [[??]] Hin. apply heap_block_free_upd_list.
     by eapply (Forall_forall _ lsa). set_solver. }
   { by etrans. }
+
+  rewrite /= [in list_to_map _ ∪ (list_to_map _ ∪ _)]assoc -list_to_map_app.
+  rewrite -zip_with_app.
+  2: { rewrite zip_with_length !fmap_length Min.min_l //. by rewrite Hlena Hlen_vs. }
+  rewrite -zip_with_app; last by rewrite !fmap_length Hlena Hlen_vs.
+
+  have -> : (length <$> vs) = ly_size <$> (f_args fn).*2. {
+    move: Hly. clear. move: (f_args fn).*2 => f. elim => //. by csimpl => ???? -> ? ->.
+  }
+  have -> : (length <$> ((λ p, replicate (ly_size p.2) ☠%V) <$> f_local_vars fn)) = ly_size <$> (f_local_vars fn).*2. {
+    rewrite -!list_fmap_compose. apply list_fmap_ext => // -[??] /=. by rewrite replicate_length.
+  }
+  rewrite -(fmap_app ly_size).
+
   iDestruct ("HWP" $! lsa lsv with "[//] Ha [Hv]") as (Ψ') "(HQinit & HΨ')". {
     rewrite big_sepL2_fmap_r. iApply (big_sepL2_mono with "Hv") => ??? ?? /=.
     iIntros "?". iExists _. iFrame. iPureIntro. split; first by apply replicate_length.
     apply: Forall2_lookup_lr. 2: done. done. rewrite list_lookup_fmap. apply fmap_Some. naive_solver.
   }
   iMod "HE". iModIntro. iFrame.
-  rewrite -(update_stmt_id {| ts_rfn := _; ts_conts := _|}).
+  rewrite -(update_stmt_id {| ts_rfn := _; ts_conts := _|}) /=.
   rewrite stmt_wp_unfold. iSplit. {
     iPureIntro => /=.
-    apply: block_used_agree_heap_upd_list_in. set_solver.
-    apply: block_used_agree_heap_upd_list_in. set_solver.
-    move => l' Hl'. apply Hub. set_solver.
+    apply: blocks_used_agree_heap_upd_list_in.
+    { rewrite dom_union dom_list_to_map fst_zip; first by set_solver.
+      rewrite zip_with_length !app_length !fmap_length Min.min_l //.
+      rewrite !app_length !fmap_length Hlena Hlenv. done. }
+    apply: blocks_used_agree_heap_upd_list_in.
+    { rewrite dom_union dom_list_to_map fst_zip; first by set_solver.
+      rewrite zip_with_length !app_length !fmap_length Min.min_l //.
+      rewrite !app_length !fmap_length Hlena Hlenv. done. }
+    move => l' Hl'. apply Hub. by apply lookup_union_None in Hl' as [??].
   }
   iApply ("HQinit") => //=.
   (** prove Return *)
@@ -479,7 +544,7 @@ Proof.
   iMod (heap_free_list_free with "Hhctx Hv") as "Hhctx".
   iMod (heap_free_list_free with "Hhctx Ha") as "$". iModIntro.
   rewrite stmt_wp_unfold.
-  iSplit; first by eauto using block_used_agree_heap_free_list.
+  iSplit; first by eauto using blocks_used_agree_heap_free_list.
   by iApply "Hs".
 Qed.
 
@@ -504,14 +569,14 @@ Proof.
     iMod (heap_write with "Hhctx Hl") as "[$ Hl]" => //.
     iMod ("HWP" with "Hl") as "HWP".
     iModIntro. iFrame. rewrite update_stmt_update stmt_wp_unfold. rewrite right_id /=.
-    iSplit; first by eauto 7 using block_used_agree_heap_upd.
+    iSplit; first by eauto 7 using blocks_used_agree_heap_upd.
     by iApply ("HWP" with "HQ HΨ").
   - iMod (heap_write_na _ _ _ vr with "Hhctx Hl") as (?) "[Hhctx Hc]" => //. congruence.
     iModIntro. iSplit; first by eauto 10 using AssignS.
     iIntros "!#" (e2 σ2 efs Hst). inv_stmt_step. iMod "HE" as "$".
     have ? : (v' = v'0) by [apply: heap_at_inj_val]; subst v'0.
     iFrame => /=. iModIntro. rewrite update_stmt_update.
-    iSplit; first by eauto using block_used_agree_heap_upd.
+    iSplit; first by eauto using blocks_used_agree_heap_upd.
 
     iApply wp_lift_step => /=. 1: by apply stmt_to_val_non_ret.
     iIntros ([h2 ?] κ _ _) "(%&Hhctx&Hfctx)" => /=. iMod (fupd_intro_mask' _ ∅) as "HE"; first set_solver.
@@ -522,7 +587,7 @@ Proof.
     iFrame => /=. iMod ("HWP" with "Hmt") as "HWP".
     iModIntro. rewrite update_stmt_update stmt_wp_unfold.
     have ? : (length v' = length v3) by congruence.
-    iSplit; first by eauto using block_used_agree_heap_upd.
+    iSplit; first by eauto using blocks_used_agree_heap_upd.
     by iApply ("HWP" with "HQ HΨ").
 Qed.
 

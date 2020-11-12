@@ -24,6 +24,12 @@ Section constrained.
   Next Obligation. iIntros (????) "[? $]". by iApply ty_deref. Qed.
   Next Obligation. iIntros (??????) "Hl [? $]". by iApply (ty_ref with "[//] [Hl]"). Qed.
 
+  Global Instance constrained_loc_in_bounds ty β P `{!LocInBounds ty β} :
+    LocInBounds (constrained ty P) β.
+  Proof.
+    constructor. iIntros (l) "[Hl _]". by iApply loc_in_bounds_in_bounds.
+  Qed.
+
   Lemma simplify_hyp_place_constrained P l β ty T `{!Persistent P}:
     (P -∗ l ◁ₗ{β} ty -∗ T) -∗ simplify_hyp (l◁ₗ{β} constrained ty P) T.
   Proof. iIntros "HT [Hl #?]". by iApply "HT". Qed.
@@ -52,12 +58,14 @@ Section constrained.
     SimplifyGoalVal v (constrained ty P)%I (Some 0%N) :=
     λ T, i2p (simplify_goal_val_constrained P v ty T).
 
-  Global Program Instance constrained_optional ty P optty ot1 ot2 `{!Movable ty} `{!Movable optty} `{!Optionable ty optty ot1 ot2} : Optionable (constrained ty P) optty ot1 ot2.
+  Global Program Instance constrained_optional ty P optty ot1 ot2 `{!Movable ty} `{!Movable optty} `{!Optionable ty optty ot1 ot2} : Optionable (constrained ty P) optty ot1 ot2 := {|
+    opt_pre v1 v2 := opt_pre ty v1 v2
+  |}.
   Next Obligation. move => ???????? /=. apply opt_alt_sz. Qed.
   Next Obligation.
-    iIntros (????????[]???) "H1 H2". 1: iDestruct "H1" as "[H1 _]".
-    by iApply (opt_bin_op true with "H1 H2").
-    by iApply (opt_bin_op false with "H1 H2").
+    iIntros (????????[]?????) "Hpre H1 H2". 1: iDestruct "H1" as "[H1 _]".
+    by iApply (opt_bin_op true with "Hpre H1 H2").
+    by iApply (opt_bin_op false with "Hpre H1 H2").
   Qed.
 
   Global Instance optionable_agree_constrained P (ty2 : type) `{!OptionableAgree ty1 ty2} : OptionableAgree (constrained ty1 P) ty2.

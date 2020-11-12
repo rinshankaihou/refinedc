@@ -57,7 +57,7 @@ Section adequate.
     loc_main; loc_main2
   ].
 
-  Definition initial_heap : gmap Z (list mbyte) :=
+  Definition initial_heap : gmap block_id (list mbyte) :=
     <[block_allocator_data := replicate (Z.to_nat 10000) MPoison ]> $
     <[block_allocator_state := replicate (struct_alloc_state).(ly_size) MPoison ]> $
     <[block_initialized := LATCH_INIT ]> $
@@ -79,7 +79,8 @@ Section adequate.
     NoDup function_locs →
     nsteps (Λ := stmt_lang) n (initial_thread_state <$> [loc_main; loc_main2],
                                initial_state (fn_lists_to_fns function_locs functions)
-                                             (heap_list_to_heap initial_heap)) κs (t2, σ2) →
+                                             (heap_list_to_heap initial_heap)
+                                             (heap_list_to_used_blocks initial_heap)) κs (t2, σ2) →
     ∀ e2, e2 ∈ t2 → not_stuck e2 σ2.
   Proof.
     move => HNDblocks HNDfns.
@@ -87,15 +88,16 @@ Section adequate.
     set Σ : gFunctors := #[typeΣ; lockΣ].
     (* TODO: is there a nicer way to do this? *)
     change ([initial_thread_state loc_main]) with (initial_thread_state <$> [loc_main]).
-    apply: (refinedc_adequacy Σ) => ? //.
+    apply: (refinedc_adequacy Σ). { by apply heap_list_blocks_agree. }
+    move => ?.
     exists global_locs, global_types => Hglobals.
-    iIntros "Hmt Hfn".
+    iIntros "Hmt Ha Hfn".
 
     move: HNDblocks => /NoDup_cons[?/NoDup_cons[? _]].
-    iDestruct (heap_list_to_heap_insert with "Hmt") as "[Hdata Hmt]"; [rewrite !lookup_insert_ne //; set_solver|].
-    iDestruct (heap_list_to_heap_insert with "Hmt") as "[Hstate Hmt]"; [rewrite !lookup_insert_ne //; set_solver|].
-    iDestruct (heap_list_to_heap_insert with "Hmt") as "[Hinit Hmt]"; [done|].
-    iClear "Hmt".
+    iDestruct (heap_list_to_heap_insert with "Hmt Ha") as "(Hdata&Hmt&Ha)"; [rewrite !lookup_insert_ne //; set_solver|].
+    iDestruct (heap_list_to_heap_insert with "Hmt Ha") as "(Hstate&Hmt&Ha)"; [rewrite !lookup_insert_ne //; set_solver|].
+    iDestruct (heap_list_to_heap_insert with "Hmt Ha") as "(Hinit&Hmt&Ha)"; [done|].
+    iClear "Hmt Ha".
 
     have Hin := I.
     repeat (

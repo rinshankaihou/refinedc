@@ -1,7 +1,7 @@
 From stdpp Require Import coPset.
 From iris.algebra Require Import big_op gmap frac agree.
 From iris.algebra Require Import csum excl auth cmra_big_op numbers.
-From iris.bi Require Import fractional.
+From iris.bi Require Import fractional tactics.
 From iris.base_logic Require Export lib.own.
 From iris.proofmode Require Export tactics.
 From refinedc.lang Require Export lang.
@@ -14,40 +14,75 @@ Definition lock_stateR : cmraT :=
 Definition heapUR : ucmraT :=
   gmapUR loc (prodR (prodR fracR lock_stateR) (agreeR mbyteO)).
 
+Definition allocR : cmraT :=
+  agreeR allocationO.
+
+Definition allocsUR : ucmraT :=
+  gmapUR Z allocR.
+
 Definition fntblUR : ucmraT :=
   gmapUR loc (agreeR functionO).
 
 Class heapG Σ := HeapG {
   heap_inG :> inG Σ (authR heapUR);
   heap_name : gname;
+  heap_allocs_inG :> inG Σ (authR allocsUR);
+  heap_allocs_name : gname;
   heap_fntbl_inG :> inG Σ (authR fntblUR);
   heap_fntbl_name : gname;
 }.
 
 Definition to_lock_stateR (x : lock_state) : lock_stateR :=
   match x with RSt n => Cinr n | WSt => Cinl (Excl ()) end.
+
 Definition to_heap : heap → heapUR :=
   fmap (λ v, (1%Qp, to_lock_stateR (v.1), to_agree (v.2))).
 
+Definition to_alloc (a : allocation) : allocR :=
+  to_agree a.
+
+Definition to_allocs : gmap block_id allocation → allocsUR :=
+  fmap to_alloc.
+
 Definition to_fntbl : gmap loc function → fntblUR :=
-  fmap (λ v, to_agree (v)).
+  fmap to_agree.
 
 Section definitions.
   Context `{!heapG Σ}.
 
-  Definition heap_mapsto_mbyte_st (st : lock_state)
-             (l : loc) (q : Qp) (b: mbyte) : iProp Σ :=
+  Implicit Types (st : lock_state) (l : loc) (q : Qp) (b : mbyte).
+
+  Definition allocs_entry_def (id : block_id) (a : allocation) : iProp Σ :=
+    own heap_allocs_name (◯ {[ id := to_alloc a ]}).
+  Definition allocs_entry_aux : seal (@allocs_entry_def). by eexists. Qed.
+  Definition allocs_entry := unseal allocs_entry_aux.
+  Definition allocs_entry_eq : @allocs_entry = @allocs_entry_def :=
+    seal_eq allocs_entry_aux.
+
+  Definition loc_in_bounds_def (l : loc) (n : nat) : iProp Σ :=
+    ∃ a, ⌜alloc_start a ≤ l.2 ∧ l.2 + n ≤ alloc_end a⌝ ∗ allocs_entry (fst l) a.
+  Definition loc_in_bounds_aux : seal (@loc_in_bounds_def). by eexists. Qed.
+  Definition loc_in_bounds := unseal loc_in_bounds_aux.
+  Definition loc_in_bounds_eq : @loc_in_bounds = @loc_in_bounds_def :=
+    seal_eq loc_in_bounds_aux.
+
+  Definition heap_mapsto_mbyte_st st l q b : iProp Σ :=
     own heap_name (◯ {[ l := (q, to_lock_stateR st, to_agree b) ]}).
 
-  Definition heap_mapsto_mbyte_def (l : loc) (q : Qp) (b: mbyte) : iProp Σ :=
+  Definition heap_mapsto_mbyte_def l q b : iProp Σ :=
     heap_mapsto_mbyte_st (RSt 0) l q b.
+
   Definition heap_mapsto_mbyte_aux : seal (@heap_mapsto_mbyte_def). by eexists. Qed.
   Definition heap_mapsto_mbyte := unseal heap_mapsto_mbyte_aux.
   Definition heap_mapsto_mbyte_eq : @heap_mapsto_mbyte = @heap_mapsto_mbyte_def :=
     seal_eq heap_mapsto_mbyte_aux.
 
-  Definition heap_mapsto (l : loc) (q : Qp) (v : val) : iProp Σ :=
-    ([∗ list] i ↦ b ∈ v, heap_mapsto_mbyte (l +ₗ i) q b)%I.
+  Definition heap_mapsto_def (l : loc) (q : Qp) (v : val) : iProp Σ :=
+    loc_in_bounds l (length v) ∗ ([∗ list] i ↦ b ∈ v, heap_mapsto_mbyte (l +ₗ i) q b)%I.
+  Definition heap_mapsto_aux : seal (@heap_mapsto_def). by eexists. Qed.
+  Definition heap_mapsto := unseal heap_mapsto_aux.
+  Definition heap_mapsto_eq : @heap_mapsto = @heap_mapsto_def :=
+    seal_eq heap_mapsto_aux.
 
   Definition fntbl_entry_def (l : loc) (f: function) : iProp Σ :=
     own heap_fntbl_name (◯ {[ l := to_agree f ]}).
@@ -56,14 +91,23 @@ Section definitions.
   Definition fntbl_entry_eq : @fntbl_entry = @fntbl_entry_def :=
     seal_eq fntbl_entry_aux.
 
-  Definition heap_ctx (h:heap) : iProp Σ := (own heap_name (● to_heap h))%I.
-  Definition fntbl_ctx (t:gmap loc function) : iProp Σ := (own heap_fntbl_name (● to_fntbl t))%I.
-  Definition block_used_agree (h:heap) (ub : gset Z) : Prop :=
-    ∀ l, l.1 ∉ ub → heap_block_free h l.
+  Definition heap_ctx (h : heap) : iProp Σ :=
+    (own heap_name (● to_heap h))%I.
+
+  Definition allocs_ctx (ub : blocks) : iProp Σ :=
+    (own heap_allocs_name (● to_allocs ub))%I.
+
+  Definition fntbl_ctx (t : gmap loc function) : iProp Σ :=
+    (own heap_fntbl_name (● to_fntbl t))%I.
+
+  Definition blocks_used_agree (h : heap) (ub : blocks) : Prop :=
+    ∀ l, ub !! l.1 = None → heap_block_free h l.
+
   Definition state_ctx (σ:state) : iProp Σ :=
-    ⌜block_used_agree σ.(st_heap) σ.(st_used_blocks)⌝
-  ∗ heap_ctx σ.(st_heap)
-  ∗ fntbl_ctx σ.(st_fntbl).
+    ⌜blocks_used_agree σ.(st_heap) σ.(st_used_blocks)⌝ ∗
+    heap_ctx σ.(st_heap) ∗
+    allocs_ctx σ.(st_used_blocks) ∗
+    fntbl_ctx σ.(st_fntbl).
 End definitions.
 
 Typeclasses Opaque heap_mapsto_mbyte heap_mapsto.
@@ -101,6 +145,13 @@ Section to_heap.
   Proof. by rewrite /to_heap fmap_delete. Qed.
 End to_heap.
 
+Section to_allocs.
+  Implicit Types b : blocks.
+
+  Lemma to_allocs_valid b : ✓ to_allocs b.
+  Proof. intros id. rewrite lookup_fmap. by case (b !! id) => // -[[]?]. Qed.
+End to_allocs.
+
 Section fntbl.
   Context `{!heapG Σ}.
   Implicit Types P Q : iProp Σ.
@@ -117,7 +168,6 @@ Section fntbl.
   Lemma lookup_to_fntbl_None f l : f !! l = None → to_fntbl f !! l = None.
   Proof. by rewrite /to_fntbl lookup_fmap=> ->. Qed.
 
-
   Global Instance fntbl_entry_pers f fn : Persistent (fntbl_entry f fn).
   Proof. rewrite fntbl_entry_eq. by apply _. Qed.
 
@@ -133,12 +183,12 @@ Section fntbl.
 
 End fntbl.
 
-Section block_used_agree.
+Section blocks_used_agree.
 
-  Lemma block_used_agree_heap_upd l v v2 f f2 ly h ub:
+  Lemma blocks_used_agree_heap_upd l v v2 f f2 ly h ub:
     heap_at l ly v2 f2 h →
-    block_used_agree h ub →
-    length v = length v2 → block_used_agree (heap_upd l v f h) ub.
+    blocks_used_agree h ub →
+    length v = length v2 → blocks_used_agree (heap_upd l v f h) ub.
   Proof.
     destruct v, v2 => //. move: ly => -[[|?] ?] [?[?]]// [[?[??]]?].
     move => Hused Hlen l' Hl' o. rewrite heap_upd_lookup_ne. by apply Hused.
@@ -146,40 +196,139 @@ Section block_used_agree.
     apply Hused. by rewrite Heq.
   Qed.
 
-  Lemma block_used_agree_heap_free_list ls ub h:
-    block_used_agree h ub → block_used_agree (heap_free_list ls h) ub.
-  Proof. move => Hub l Hl. apply heap_block_free_free_list. by apply Hub. Qed.
+  Lemma blocks_used_agree_heap_free_list ls ub h:
+    blocks_used_agree h ub → blocks_used_agree (heap_free_list ls h) ub.
+  Proof.
+    move => Hub l Hl. apply heap_block_free_free_list. by apply Hub.
+  Qed.
 
-  Lemma block_used_agree_heap_upd_list_in ls vs f ub h:
-    list_to_set ls.*1 ⊆ ub →
-    block_used_agree h ub → block_used_agree (heap_upd_list ls vs f h) ub.
-  Proof. move => Hls Hb ??. apply heap_block_free_upd_list; last by set_solver. by apply Hb. Qed.
-End block_used_agree.
+  Lemma blocks_used_agree_heap_upd_list_in ls vs f ub h:
+    list_to_set ls.*1 ⊆ dom (gset block_id) ub →
+    blocks_used_agree h ub → blocks_used_agree (heap_upd_list ls vs f h) ub.
+  Proof.
+    move => Hls Hb l Hl. apply heap_block_free_upd_list; first by apply Hb.
+    assert (l.1 ∉ dom (gset block_id) ub); last by set_solver.
+    by rewrite elem_of_dom Hl.
+  Qed.
+End blocks_used_agree.
+
+Section allocs.
+  Context `{!heapG Σ}.
+
+  Global Instance allocs_entry_pers b a : Persistent (allocs_entry b a).
+  Proof. rewrite allocs_entry_eq. by apply _. Qed.
+
+  Global Instance alloc_entry_timeless b a : Timeless (allocs_entry b a).
+  Proof. rewrite allocs_entry_eq. by apply _. Qed.
+
+  Lemma allocs_entry_agree b a1 a2 :
+    allocs_entry b a1 -∗ allocs_entry b a2 -∗ ⌜a1 = a2⌝.
+  Proof.
+    move: a1 a2 => ? ?. rewrite allocs_entry_eq /allocs_entry_def.
+    iIntros "H1 H2". iCombine "H1 H2" as "H".
+    by iDestruct (own_valid with "H") as %H%singleton_valid%to_agree_op_inv_L.
+  Qed.
+
+  Lemma allocs_alloc ub id a :
+    ub !! id = None →
+    allocs_ctx ub ==∗ allocs_ctx (<[id := a]> ub) ∗ allocs_entry id a.
+  Proof.
+    move => Hid. rewrite /allocs_ctx allocs_entry_eq /allocs_entry_def.
+    rewrite -own_op. apply own_update, auth_update_alloc.
+    rewrite /to_allocs fmap_insert.
+    apply alloc_singleton_local_update; last done.
+    by rewrite lookup_fmap Hid.
+  Qed.
+
+  Lemma allocs_entry_to_loc_in_bounds l (n : nat) a:
+    alloc_start a ≤ l.2 ∧ l.2 + n ≤ alloc_end a ->
+    allocs_entry l.1 a -∗ loc_in_bounds l n.
+  Proof.
+    iIntros (?) "?". rewrite loc_in_bounds_eq/loc_in_bounds_def. iExists _. by iFrame.
+  Qed.
+
+  Lemma allocs_alloc_list (ls : list loc) (vs : list val) (ub : blocks):
+    NoDup ls.*1 ->
+    dom (gset _) ub ## (list_to_set ls.*1) →
+    length vs = length ls →
+    allocs_ctx ub ==∗
+      allocs_ctx (list_to_map (zip ls.*1 (zip_with to_allocation ls.*2 (length <$> vs))) ∪ ub) ∗
+      ([∗ list] l;v ∈ ls;vs, loc_in_bounds l (length v)).
+  Proof.
+    elim: ls vs.
+    - move => [] // _ _ _ /=. rewrite left_id. by iIntros "$".
+    - move => [id off] ls IH [|v vs] //. csimpl. move => /NoDup_cons [??] Hdisj Hlen.
+      iIntros "H". iMod (IH vs with "H") as "[H $]"; [done | set_solver | lia | ..].
+      iMod (allocs_alloc _ id (Allocation off (off + length v)) with "H") as "[H1 H2]".
+      { apply lookup_union_None. split; last by (apply not_elem_of_dom; set_solver).
+        apply not_elem_of_list_to_map. rewrite fst_zip // zip_with_length !fmap_length.
+        rewrite Min.min_l //. simplify_eq. by rewrite Hlen. }
+      iSplitR "H2"; first by rewrite insert_union_l.
+      iModIntro.
+      by iApply allocs_entry_to_loc_in_bounds => //=.
+  Qed.
+
+  Lemma allocs_entry_lookup t b a :
+    allocs_ctx t -∗ allocs_entry b a -∗ ⌜t !! b = Some a⌝.
+  Proof.
+    rewrite allocs_entry_eq. iIntros "Htbl Hf".
+    iDestruct (own_valid_2 with "Htbl Hf") as %[Hf?]%auth_both_valid_discrete.
+    iPureIntro. move: Hf=> /singleton_included_l [f'].
+    rewrite lookup_fmap fmap_Some_equiv => [[[f'' [? ->]]]] /Some_included_total /to_agree_included.
+    by intros ->%leibniz_equiv.
+  Qed.
+End allocs.
+
+Section loc_in_bounds.
+  Context `{!heapG Σ}.
+
+  Global Instance loc_in_bounds_pers l n : Persistent (loc_in_bounds l n).
+  Proof. rewrite loc_in_bounds_eq. by apply _. Qed.
+
+  Global Instance loc_in_bounds_timeless l n : Timeless (loc_in_bounds l n).
+  Proof. rewrite loc_in_bounds_eq. by apply _. Qed.
+
+  Lemma loc_in_bounds_split l n m :
+    loc_in_bounds l n ∗ loc_in_bounds (l +ₗ n) m ⊣⊢ loc_in_bounds l (n + m).
+  Proof.
+    rewrite loc_in_bounds_eq.
+    iSplit.
+    - iIntros "[H1 H2]".
+      iDestruct "H1" as (a [Hstart ?]) "#H1".
+      iDestruct "H2" as (? [?   Hend]) "#H2".
+      iDestruct (allocs_entry_agree with "H2 H1") as %->.
+      iExists a. iFrame "H1". iPureIntro. simpl in Hend. lia.
+    - iIntros "H". iDestruct "H" as (a [??]) "#H".
+      iSplit; iExists a; iFrame "H"; iPureIntro; simpl; lia.
+  Qed.
+
+  Lemma loc_in_bounds_split_mul_S l n m :
+    loc_in_bounds l n ∗ loc_in_bounds (l +ₗ n) (n * m) ⊣⊢ loc_in_bounds l (n * S m).
+  Proof.
+    have ->: (n * S m = n + n * m)%nat by lia.
+    etrans; [ by apply loc_in_bounds_split | done ].
+  Qed.
+
+  Lemma loc_in_bounds_shorten l n m:
+    (m ≤ n)%nat ->
+    loc_in_bounds l n -∗ loc_in_bounds l m.
+  Proof. move => ?. rewrite (le_plus_minus m n) // -loc_in_bounds_split. iIntros "[$ _]". Qed.
+
+  Lemma loc_in_bounds_to_heap_loc_in_bounds l σ n:
+    loc_in_bounds l n -∗ state_ctx σ -∗ ⌜heap_loc_in_bounds l n σ⌝.
+  Proof.
+    rewrite loc_in_bounds_eq.
+    iIntros "Hb (?&?&Hctx&?)". iDestruct "Hb" as (a Ha) "Hb".
+    iExists a. iSplit; last done.
+    by iApply (allocs_entry_lookup with "Hctx").
+  Qed.
+End loc_in_bounds.
 
 Section heap.
   Context `{!heapG Σ}.
   Implicit Types P Q : iProp Σ.
   Implicit Types σ : state.
   Implicit Types E : coPset.
-
-  Lemma heap_mapsto_nil l q:
-    l ↦{q} [] ⊣⊢ True.
-  Proof. by rewrite /heap_mapsto. Qed.
-
-  Lemma heap_mapsto_cons l b v q:
-    l ↦{q} (b::v) ⊣⊢ heap_mapsto_mbyte l q b  ∗ (l +ₗ 1) ↦{q} v.
-  Proof.
-    rewrite /heap_mapsto /= shift_loc_0. setoid_rewrite shift_loc_assoc.
-    have Hn:(∀ n, Z.of_nat (S n) = 1 + n) by lia. by setoid_rewrite Hn.
-  Qed.
-
-  Lemma heap_mapsto_app l v1 v2 q:
-    l ↦{q} (v1 ++ v2) ⊣⊢ l ↦{q} v1 ∗ (l +ₗ length v1) ↦{q} v2.
-  Proof.
-    elim: v1 l. { move => l. by rewrite /= heap_mapsto_nil left_id shift_loc_0. }
-    move => b v1 IH l /=. rewrite !heap_mapsto_cons IH assoc. do 2 f_equiv.
-    rewrite shift_loc_assoc. f_equal. lia.
-  Qed.
 
   Global Instance heap_mapsto_mbyte_timeless l q v : Timeless (heap_mapsto_mbyte l q v).
   Proof.  rewrite heap_mapsto_mbyte_eq. apply _. Qed.
@@ -195,14 +344,60 @@ Section heap.
   Proof. split. done. apply _. Qed.
 
   Global Instance heap_mapsto_timeless l q v : Timeless (l↦{q}v).
-  Proof.  rewrite /heap_mapsto. apply _. Qed.
+  Proof.  rewrite heap_mapsto_eq. apply _. Qed.
 
   Global Instance heap_mapsto_fractional l v: Fractional (λ q, l ↦{q} v)%I.
-  Proof. rewrite /heap_mapsto. apply _. Qed.
+  Proof. rewrite heap_mapsto_eq. apply _. Qed.
 
   Global Instance heap_mapsto_as_fractional l q v:
     AsFractional (l ↦{q} v) (λ q, l ↦{q} v)%I q.
   Proof. split. done. apply _. Qed.
+
+  Lemma heap_mapsto_loc_in_bounds l q v:
+    l ↦{q} v -∗ loc_in_bounds l (length v).
+  Proof. rewrite heap_mapsto_eq. iIntros "[$ _]". Qed.
+
+  Lemma heap_mapsto_loc_in_bounds_0 l q v:
+    l ↦{q} v -∗ loc_in_bounds l 0.
+  Proof. iIntros "Hl". iApply loc_in_bounds_shorten; [ | by iApply heap_mapsto_loc_in_bounds]. lia. Qed.
+
+  Lemma heap_mapsto_nil l q:
+    l ↦{q} [] ⊣⊢ loc_in_bounds l 0.
+  Proof.
+    rewrite heap_mapsto_eq/heap_mapsto_def /=.
+    apply equiv_spec. split; solve_sep_entails.
+  Qed.
+
+  Lemma heap_mapsto_cons_mbyte l b v q:
+    l ↦{q} (b::v) ⊣⊢ heap_mapsto_mbyte l q b ∗ loc_in_bounds l 1 ∗ (l +ₗ 1) ↦{q} v.
+  Proof.
+    rewrite heap_mapsto_eq/heap_mapsto_def /= shift_loc_0. setoid_rewrite shift_loc_assoc.
+    have Hn:(∀ n, Z.of_nat (S n) = 1 + n) by lia. setoid_rewrite Hn.
+    have ->:(∀ n, S n = 1 + n)%nat by lia.
+    rewrite -loc_in_bounds_split. have <- : (1 = 1%nat) by lia.
+    apply equiv_spec. split; solve_sep_entails.
+  Qed.
+
+  Lemma heap_mapsto_cons l b v q:
+    l ↦{q} (b::v) ⊣⊢ l ↦{q} [b] ∗ (l +ₗ 1) ↦{q} v.
+  Proof.
+    rewrite heap_mapsto_cons_mbyte !assoc. f_equiv.
+    rewrite heap_mapsto_eq/heap_mapsto_def /= shift_loc_0.
+    apply equiv_spec. split; solve_sep_entails.
+  Qed.
+
+  Lemma heap_mapsto_app l v1 v2 q:
+    l ↦{q} (v1 ++ v2) ⊣⊢ l ↦{q} v1 ∗ (l +ₗ length v1) ↦{q} v2.
+  Proof.
+    elim: v1 l.
+    - move => l /=. rewrite heap_mapsto_nil shift_loc_0.
+      iSplit; [ iIntros "Hl" | by iIntros "[_ $]" ].
+      iSplit => //. by iApply heap_mapsto_loc_in_bounds_0.
+    - move => b v1 IH l /=.
+      rewrite heap_mapsto_cons IH assoc -heap_mapsto_cons.
+      rewrite shift_loc_assoc.
+      by have ->:(∀ n : nat, 1 + n = S n) by lia.
+  Qed.
 
   Lemma heap_mapsto_mbyte_agree l q1 q2 v1 v2 : heap_mapsto_mbyte l q1 v1 ∗ heap_mapsto_mbyte l q2 v2 ⊢ ⌜v1 = v2⌝.
   Proof.
@@ -217,21 +412,24 @@ Section heap.
   Proof.
     elim: v1 v2 l. by iIntros ([] ??)"??".
     move => ?? IH []//=???[?].
-    rewrite !heap_mapsto_cons.
-    iIntros "[? ?] [? ?]".
+    rewrite !heap_mapsto_cons_mbyte.
+    iIntros "[? [_ ?]] [? [_ ?]]".
     iDestruct (IH with "[$] [$]") as %-> => //.
     by iDestruct (heap_mapsto_mbyte_agree with "[$]") as %->.
   Qed.
 
   Lemma heap_alloc l h v :
     heap_block_free h l ->
-    heap_ctx h ==∗ heap_ctx (heap_upd l v (λ _, RSt 0%nat) h) ∗ l ↦ v.
+    heap_ctx h ∗ loc_in_bounds l (length v) ==∗
+      heap_ctx (heap_upd l v (λ _, RSt 0%nat) h) ∗ l ↦ v.
   Proof.
     rewrite /heap_block_free => Hfree.
-    have [->|Hv] := decide(v = []). 1: iIntros "$ !#"; by rewrite /heap_mapsto.
-    rewrite /heap_mapsto heap_mapsto_mbyte_eq /heap_mapsto_mbyte_def.
-    rewrite -big_opL_commute1 // -(big_opL_commute auth_frag) -own_op.
-    apply own_update, auth_update_alloc.
+    have [->|Hv] := decide(v = []).
+    { iIntros "[$ ?] !#" => /=. by iApply heap_mapsto_nil. }
+    rewrite heap_mapsto_eq/heap_mapsto_def heap_mapsto_mbyte_eq /heap_mapsto_mbyte_def.
+    rewrite -big_opL_commute1 // -(big_opL_commute auth_frag) /=.
+    iIntros "[H $]". rewrite -own_op. iApply own_update; last done.
+    apply auth_update_alloc.
     elim: v l Hfree {Hv} => // b bl IH l Hfree.
     rewrite (big_opL_consZ_l (λ k _, _ (_ k) _ )) /= shift_loc_0.
     etrans. 1: by apply (IH (l +ₗ 1)); intros; rewrite shift_loc_assoc.
@@ -247,12 +445,14 @@ Section heap.
     Forall (heap_block_free h) ls ->
     NoDup ls.*1 ->
     length vs = length ls →
-    heap_ctx h ==∗ heap_ctx (heap_upd_list ls vs (λ _, RSt 0%nat) h) ∗ ([∗ list] l;v ∈ ls;vs, l ↦ v).
+    heap_ctx h ∗ ([∗ list] l;v ∈ ls;vs, loc_in_bounds l (length v)) ==∗
+      heap_ctx (heap_upd_list ls vs (λ _, RSt 0%nat) h) ∗ ([∗ list] l;v ∈ ls;vs, l ↦ v).
   Proof.
-    elim: ls vs. by move => [] //; iIntros "_ _ _ $ !#".
-    move => l ls IH [|v vs] //; csimpl => /Forall_cons[??] /NoDup_cons[??] [?]. iIntros "Hown".
-    iMod (IH vs with "Hown") as "[Hown $]" => //.
-    iApply (heap_alloc with "Hown").
+    elim: ls vs; first by move => [] /=; iIntros.
+    move => l ls IH [|v vs] //. csimpl => /Forall_cons[??] /NoDup_cons[??] [?].
+    iIntros "[Hown [Hinbl Hinbls]]".
+    iMod (IH vs with "[Hown Hinbls]") as "[Hown $]" => //; first by iFrame.
+    iApply (heap_alloc with "[Hown Hinbl]"); last by iFrame.
     by apply heap_block_free_upd_list.
   Qed.
 
@@ -295,7 +495,8 @@ Section heap.
   Proof.
     iIntros (?) "Hh Hl".
     iInduction v as [|b v] "IH" forall (l) => //.
-    rewrite heap_mapsto_cons heap_mapsto_mbyte_eq /=. iDestruct "Hl" as "[Hb Hl]".
+    rewrite heap_mapsto_cons_mbyte heap_mapsto_mbyte_eq /=.
+    iDestruct "Hl" as "[Hb [_ Hl]]".
     iSplit; last by iApply ("IH" with "Hh Hl").
     iDestruct (heap_mapsto_mbyte_lookup_q with "Hh Hb") as %[n Hn]. by eauto.
   Qed.
@@ -306,7 +507,8 @@ Section heap.
   Proof.
     iIntros (?) "Hh Hl".
     iInduction v as [|b v] "IH" forall (l) => //.
-    rewrite heap_mapsto_cons heap_mapsto_mbyte_eq /=. iDestruct "Hl" as "[Hb Hl]".
+    rewrite heap_mapsto_cons_mbyte heap_mapsto_mbyte_eq /=.
+    iDestruct "Hl" as "[Hb [_ Hl]]".
     iSplit; last by iApply ("IH" with "Hh Hl").
     iDestruct (heap_mapsto_mbyte_lookup_1 with "Hh Hb") as %Hl. by eauto.
   Qed.
@@ -335,7 +537,8 @@ Section heap.
     iDestruct (heap_mapsto_lookup_q with "Hh Hv") as %Hat. 2: iSplitR => //. 1: by naive_solver.
     iInduction (v) as [|b v] "IH" forall (l Hat) => //=.
     { iFrame. by iIntros "!#" (?) "$ !#". }
-    rewrite ->heap_mapsto_cons, heap_mapsto_mbyte_eq. iDestruct "Hv" as "[Hb Hl]".
+    rewrite ->heap_mapsto_cons_mbyte, heap_mapsto_mbyte_eq.
+    iDestruct "Hv" as "[Hb [? Hl]]".
     move: Hat => /= -[[? [Hin [n ?]]] ?]; subst.
     iMod ("IH" with "[] Hh Hl") as "{IH}[Hh IH]" => //.
     iMod (heap_read_mbyte_vs _ 0 1 with "Hh Hb") as "[Hh Hb]". by rewrite heap_upd_lookup_lt.
@@ -345,7 +548,7 @@ Section heap.
     iMod ("IH" with "Hh") as (Hat) "[Hh Hl]".
     iSplitR; first by iPureIntro; naive_solver.
     iMod (heap_read_mbyte_vs _ 1 0 with "Hh Hb") as "[Hh Hb]". by rewrite heap_upd_lookup_lt.
-    rewrite heap_mapsto_cons heap_mapsto_mbyte_eq. iFrame. iModIntro.
+    rewrite heap_mapsto_cons_mbyte heap_mapsto_mbyte_eq. iFrame. iModIntro.
     { iStopProof. f_equiv. symmetry. apply partial_alter_to_insert. by rewrite heap_upd_lookup_lt // Hn. }
   Qed.
 
@@ -364,13 +567,15 @@ Section heap.
     length v = length v' → f (Some (RSt 0)) = RSt 0 →
     heap_ctx h -∗ l ↦ v ==∗ heap_ctx (heap_upd l v' f h) ∗ l ↦ v'.
   Proof.
-    iIntros (Hlen Hf) "Hh Hmt". iInduction (v) as [|v b] "IH" forall (l v' Hlen); destruct v' => //. by iFrame.
-    move: Hlen => [] Hlen. rewrite !heap_mapsto_cons !heap_mapsto_mbyte_eq.
-    iDestruct "Hmt" as "[Hb Hl]".
+    iIntros (Hlen Hf) "Hh Hmt".
+    iInduction (v) as [|v b] "IH" forall (l v' Hlen); destruct v' => //; first by iFrame.
+    move: Hlen => [] Hlen. rewrite !heap_mapsto_cons_mbyte !heap_mapsto_mbyte_eq.
+    iDestruct "Hmt" as "[Hb [Hinb Hl]]".
     iDestruct (heap_mapsto_mbyte_lookup_1 with "Hh Hb") as % Hin; auto.
     iMod ("IH" with "[//] Hh Hl") as "[Hh $]".
     iMod (heap_write_mbyte_vs with "Hh Hb") as "[Hh $]". by rewrite heap_upd_lookup_lt.
-    iModIntro => /=. iClear "IH". iStopProof. f_equiv => /=. symmetry. apply: partial_alter_to_insert.
+    iModIntro => /=. iClear "IH". iFrame "Hinb". iStopProof. f_equiv => /=. symmetry.
+    apply: partial_alter_to_insert.
     by rewrite heap_upd_lookup_lt // Hin Hf.
   Qed.
 
@@ -387,7 +592,8 @@ Section heap.
     iInduction (v) as [|b v] "IH" forall (l v' Hat Hlen) => //=; destruct v' => //.
     { iFrame. by iIntros "!#" (?) "$ !#". }
     move: Hlen => -[] Hlen.
-    rewrite ->heap_mapsto_cons, heap_mapsto_mbyte_eq. iDestruct "Hv" as "[Hb Hl]".
+    rewrite heap_mapsto_cons_mbyte heap_mapsto_mbyte_eq.
+    iDestruct "Hv" as "[Hb [? Hl]]".
     move: Hat => /= -[[? [Hin ?]] ?]; subst.
     iMod ("IH" with "[] [] Hh Hl") as "{IH}[Hh IH]" => //.
     iMod (heap_write_mbyte_vs with "Hh Hb") as "[Hh Hb]". by rewrite heap_upd_lookup_lt.
@@ -395,7 +601,7 @@ Section heap.
     iMod ("IH" with "Hh") as (Hat) "[Hh Hl]".
     iSplitR; first by iPureIntro; naive_solver.
     iMod (heap_write_mbyte_vs with "Hh Hb") as "[Hh Hb]". by rewrite heap_upd_lookup_lt. iFrame.
-    rewrite heap_mapsto_cons heap_mapsto_mbyte_eq. by iFrame.
+    rewrite heap_mapsto_cons_mbyte heap_mapsto_mbyte_eq. by iFrame.
   Qed.
 
   Lemma heap_free_free l ly h :
@@ -403,7 +609,8 @@ Section heap.
   Proof.
     iIntros "Hown". iDestruct 1 as (v <- _) "Hl".
     have [->|Hv] := decide(v = []). done.
-    rewrite /heap_mapsto heap_mapsto_mbyte_eq /heap_mapsto_mbyte_def.
+    rewrite heap_mapsto_eq/heap_mapsto_def heap_mapsto_mbyte_eq /heap_mapsto_mbyte_def.
+    iDestruct "Hl" as "[_ Hl]".
     iStopProof.
     rewrite -big_opL_commute1 // -(big_opL_commute auth_frag) -own_op.
     apply own_update, auth_update_dealloc.
@@ -430,5 +637,4 @@ Section heap.
     iMod (IH lys with "Hown Hls") as "Hown" => //.
     by iApply (heap_free_free with "Hown").
   Qed.
-
 End heap.

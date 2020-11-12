@@ -36,6 +36,13 @@ Section own.
   Next Obligation. iIntros (β ty l l' v ?) "Hl [-> Hl']". iFrame. iSplit => //. by rewrite left_id. Qed.
   Next Obligation. done. Qed.
 
+  Global Instance frac_ptr_loc_in_bounds l ty β1 β2 : LocInBounds (l @ frac_ptr β1 ty) β2.
+  Proof.
+    constructor. iIntros (?) "(_&Hl&_)".
+    iDestruct (heap_mapsto_own_state_loc_in_bounds with "Hl") as "Hb".
+    iApply loc_in_bounds_shorten; last done. lia.
+  Qed.
+
   Lemma frac_ptr_mono ty1 ty2 l β β' p p' T:
     ⌜p = p'⌝ ∗ subsume (p ◁ₗ{own_state_min β β'} ty1) (p ◁ₗ{own_state_min β β'} ty2) T -∗
     subsume (l ◁ₗ{β} p @ frac_ptr β' ty1) (l ◁ₗ{β} p' @ frac_ptr β' ty2) T.
@@ -236,6 +243,13 @@ Section ptr.
   Next Obligation. iIntros (l l' v ?) "Hl ->". by iFrame. Qed.
   Next Obligation. done. Qed.
 
+  Instance ptr_loc_in_bounds l β : LocInBounds (l @ ptr) β.
+  Proof.
+    constructor. iIntros (?) "[_ Hl]".
+    iDestruct (heap_mapsto_own_state_loc_in_bounds with "Hl") as "Hb".
+    iApply loc_in_bounds_shorten; last done. lia.
+  Qed.
+
   (* TODO: Think about this. This instance is probably not a good idea
   since it is not clear how the ownership is split. More specialized
   isntances like for uninit make more sense. *)
@@ -329,6 +343,13 @@ Section null.
   Next Obligation. iIntros (?) "[% ?]". iExists _. by iFrame. Qed.
   Next Obligation. iIntros (???) "? ->". by iFrame. Qed.
 
+  Global Instance null_loc_in_bounds β : LocInBounds null β.
+  Proof.
+    constructor. iIntros (l) "[_ Hl]".
+    iDestruct (heap_mapsto_own_state_loc_in_bounds with "Hl") as "Hb".
+    iApply loc_in_bounds_shorten; last done. lia.
+  Qed.
+
   Lemma type_null T :
     T (t2mt null) -∗
     typed_value NULL T.
@@ -344,11 +365,12 @@ Section null.
   Qed.
 
   Lemma eval_bin_op_ptr_null (b : bool) op h (p : loc) v:
+    heap_loc_in_bounds p 0 h →
     (if b then op = NeOp else op = EqOp) →
     eval_bin_op op PtrOp PtrOp h p NULL v
      ↔ val_of_int (Z_of_bool b) i32 = Some v.
   Proof.
-    move => ?.
+    move => ??.
     destruct b => //; split => Heq; subst; try by [inversion Heq; simplify_eq].
     all: econstructor; rewrite ?val_to_of_loc /val_of_bool/i2v ?Heq //.
   Qed.
@@ -369,59 +391,63 @@ Section null.
     typed_bin_op v1 (v1 ◁ᵥ null) v2 (v2 ◁ᵥ null) op PtrOp PtrOp T.
   Proof.
     iIntros "[% HT]" (-> -> Φ) "HΦ".
-    iApply (wp_binop_det (i2v (Z_of_bool (if op is EqOp then true else false)) i32)).
-    { move => ??. destruct op => //; split => Heq; subst; try by [inversion Heq]; by constructor. }
+    iApply (wp_binop_det (i2v (Z_of_bool (if op is EqOp then true else false)) i32)). iSplit.
+    { iIntros (??) "_ !%". destruct op => //; split => Heq; subst; try by [inversion Heq]; by constructor. }
     iApply "HΦ" => //. by destruct op.
   Qed.
   Global Instance type_binop_null_null_inst v1 v2 op:
     TypedBinOp v1 (v1 ◁ᵥ null) v2 (v2 ◁ᵥ null) op PtrOp PtrOp :=
     λ T, i2p (type_binop_null_null v1 v2 op T).
 
-  Lemma type_binop_ptr_null v2 op T (l : loc) ty:
-    (⌜match op with | EqOp | NeOp => True | _ => False end⌝ ∗ ∀ v, l ◁ₗ ty -∗
+  Lemma type_binop_ptr_null v2 op T (l : loc) ty β `{!LocInBounds ty β}:
+    (⌜match op with | EqOp | NeOp => True | _ => False end⌝ ∗ ∀ v, l ◁ₗ{β} ty -∗
           T v (t2mt ((if op is EqOp then false else true) @ boolean i32))) -∗
-    typed_bin_op l (l ◁ₗ ty) v2 (v2 ◁ᵥ null) op PtrOp PtrOp T.
+    typed_bin_op l (l ◁ₗ{β} ty) v2 (v2 ◁ᵥ null) op PtrOp PtrOp T.
   Proof.
     iIntros "[% HT] Hl" (-> Φ) "HΦ".
-    iApply (wp_binop_det (i2v (Z_of_bool (if op is EqOp then false else true)) i32)).
-    { move => ??. destruct op => //; split => Heq; subst; try by [inversion Heq].
+    iDestruct (loc_in_bounds_in_bounds with "Hl") as "#Hb".
+    iApply (wp_binop_det (i2v (Z_of_bool (if op is EqOp then false else true)) i32)). iSplit.
+    { iIntros (??) "Hctx".
+      iDestruct (loc_in_bounds_to_heap_loc_in_bounds with "Hb Hctx") as %?.
+      iPureIntro. destruct op => //; split => Heq; subst; try by [inversion Heq].
       all: econstructor; rewrite ?val_to_of_loc /val_of_bool/i2v//. }
     iApply "HΦ". 2: by iApply "HT". by destruct op.
   Qed.
-  Global Instance type_binop_ptr_null_inst v2 op (l : loc) ty:
-    TypedBinOp l (l ◁ₗ ty) v2 (v2 ◁ᵥ null) op PtrOp PtrOp :=
-    λ T, i2p (type_binop_ptr_null v2 op T l ty).
+  Global Instance type_binop_ptr_null_inst v2 op (l : loc) ty β `{!LocInBounds ty β}:
+    TypedBinOp l (l ◁ₗ{β} ty) v2 (v2 ◁ᵥ null) op PtrOp PtrOp :=
+    λ T, i2p (type_binop_ptr_null v2 op T l ty β).
 
 End null.
 
 Section optionable.
   Context `{!typeG Σ}.
 
-  Global Program Instance frac_ptr_optional ty β : ROptionable (frac_ptr β ty) null PtrOp PtrOp := {|
-    ropt_opt x := {| opt_alt_sz := _ |}
+  Global Program Instance frac_ptr_optional ty β: ROptionable (frac_ptr β ty) null PtrOp PtrOp := {|
+    ropt_opt p := {| opt_pre v1 v2 := (p ◁ₗ{β} ty -∗ loc_in_bounds p 0 ∗ True)%I |}
   |}.
   Next Obligation. move => ty ??. done. Qed.
   Next Obligation.
-    iIntros (ty β p bty beq v1 v2) "H1 ->".
-    destruct bty. 1: iDestruct "H1" as (->) "_". 2: iDestruct "H1" as %->.
-    all: iPureIntro => h v.
-    1: by etrans; first apply (eval_bin_op_ptr_null (negb beq)); destruct beq => //.
-    1: by etrans; first apply (eval_bin_op_null_null beq); destruct beq => //.
+    iIntros (ty β p bty beq v1 v2 σ v) "Hpre H1 -> Hctx".
+    destruct bty; [ iDestruct "H1" as (->) "Hty" | iDestruct "H1" as %-> ].
+    - iDestruct (loc_in_bounds_to_heap_loc_in_bounds with "[Hpre Hty] Hctx") as %?;
+        first by iDestruct ("Hpre" with "Hty") as "[$ _]".
+      iPureIntro. by etrans; first apply (eval_bin_op_ptr_null (negb beq)); destruct beq => //.
+    - iPureIntro. by etrans; first apply (eval_bin_op_null_null beq); destruct beq => //.
   Qed.
   Global Program Instance frac_ptr_optional_agree ty1 ty2 β : OptionableAgree (frac_ptr β ty1) (frac_ptr β ty2).
   Next Obligation. done. Qed.
 
-  Global Program Instance ptr_optional : ROptionable ptr null PtrOp PtrOp := {|
-    ropt_opt x := {| opt_alt_sz := _ |}
-  |}.
-  Next Obligation. move => ?. done. Qed.
-  Next Obligation.
-    iIntros (p bty beq v1 v2) "H1 ->".
-    destruct bty. 1: iDestruct "H1" as %->. 2: iDestruct "H1" as %->.
-    all: iPureIntro => h v.
-    1: by etrans; first apply (eval_bin_op_ptr_null (negb beq)); destruct beq => //.
-    1: by etrans; first apply (eval_bin_op_null_null beq); destruct beq => //.
-  Qed.
+
+  (* Global Program Instance ptr_optional : ROptionable ptr null PtrOp PtrOp := {| *)
+  (*   ropt_opt x := {| opt_alt_sz := _ |} *)
+  (* |}. *)
+  (* Next Obligation. move => ?. done. Qed. *)
+  (* Next Obligation. *)
+  (*   iIntros (p bty beq v1 v2 σ v) "H1 -> Hctx". *)
+  (*   destruct bty; [ iDestruct "H1" as %-> | iDestruct "H1" as %-> ]; iPureIntro. *)
+  (*   - admit. (*by etrans; first apply (eval_bin_op_ptr_null (negb beq)); destruct beq => //.*) *)
+  (*   - by etrans; first apply (eval_bin_op_null_null beq); destruct beq => //. *)
+  (* Admitted. *)
 
   Lemma subsume_optional_place_val_null ty l β T b ty' `{!Movable ty} `{!Optionable ty null ot1 ot2}:
     (⌜b⌝ ∗ subsume (l ◁ₗ{β} ty') (l ◁ᵥ ty) T) -∗ subsume (l ◁ₗ{β} ty') (l ◁ᵥ b @ optional ty null) T.

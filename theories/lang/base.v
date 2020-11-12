@@ -66,6 +66,31 @@ Lemma entails_eq {PROP : bi} (P1 P2 : PROP) :
   P1 = P2 → P1 -∗ P2.
 Proof. move => ->. reflexivity. Qed.
 
+Section theorems.
+  Context `{FinMapDom K M D}.
+
+  Lemma dom_list_to_map {A} (l : list (K * A)) :
+    dom D (list_to_map (M:=M A) l) ≡ list_to_set l.*1.
+  Proof using Type*.
+    elim: l => /=. { by apply dom_empty. }
+    move => ? l <-. by apply dom_insert.
+  Qed.
+
+  Lemma dom_list_to_map_L {A} (l : list (K * A)) `{!LeibnizEquiv D}:
+    dom D (list_to_map (M:=M A) l) = list_to_set l.*1.
+  Proof using Type*. unfold_leibniz. apply: dom_list_to_map. Qed.
+End theorems.
+
+Section list_to_map.
+  Context `{FinMap K M}.
+
+  Lemma list_to_map_app {A} (l1 l2 : list (K * A)):
+    list_to_map (M := M A) (l1 ++ l2) = list_to_map l1 ∪ list_to_map l2.
+  Proof using Type*.
+    elim: l1 => /=. { by rewrite left_id. }
+    move => [??] ? IH /=. by rewrite IH insert_union_l.
+  Qed.
+End list_to_map.
 
 Inductive TCOneIsSome {A} : option A → option A → Prop :=
 | tc_one_is_some_left n1 o2 : TCOneIsSome (Some n1) o2

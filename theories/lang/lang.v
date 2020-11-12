@@ -225,7 +225,13 @@ Inductive lock_state := WSt | RSt (n : nat).
 
 Definition heap := gmap loc (lock_state * mbyte).
 
-Definition blocks := gset block_id.
+Record allocation :=
+  Allocation {
+    alloc_start : Z; (* First valid address. *)
+    alloc_end : Z;   (* One-past-the-end address. *)
+  }.
+
+Definition blocks := gmap block_id allocation.
 
 
 
@@ -425,7 +431,7 @@ Proof.
     + rewrite /int_modulus /bits_per_int. lia.
     + rewrite /int_half_modulus in HM.
       transitivity (2 ^ (bits_per_int it -1)); first lia.
-      rewrite /bits_per_int /bytes_per_int /bits_per_byte /=. 
+      rewrite /bits_per_int /bytes_per_int /bits_per_byte /=.
       apply Z.pow_lt_mono_r; try lia.
     + rewrite /int_modulus /bits_per_int in HM. lia.
 Qed.
@@ -565,6 +571,14 @@ Qed.
 
 (*** Helper functions for accessing the heap *)
 
+(* The address range between [l] and [l +ₗ n] (included) is in range of the
+   allocation that contains [l]. Note that we consider the 1-past-the-end
+   pointer to be in range of an allocation. *)
+Definition heap_loc_in_bounds (l : loc) (n : nat) (st : state) : Prop :=
+  ∃ alloc, st.(st_used_blocks) !! l.1 = Some alloc ∧
+           alloc.(alloc_start) ≤ l.2 ∧
+           l.2 + n ≤ alloc.(alloc_end).
+
 Fixpoint heap_at_go l v flk h : Prop :=
   match v with
   | [] => True
@@ -658,51 +672,53 @@ Definition ptr_eq l1 l2 h : option bool :=
 
 (* evaluation can be non-deterministic for comparing pointers *)
 (* TODO: implement *)
-Inductive eval_bin_op : bin_op → op_type → op_type → heap → val → val → val → Prop :=
-| AddOpPI v1 v2 h o l:
+Inductive eval_bin_op : bin_op → op_type → op_type → state → val → val → val → Prop :=
+| AddOpPI v1 v2 σ o l:
     val_to_loc v1 = Some l →
     val_to_int v2 size_t = Some o →
-    eval_bin_op AddOp PtrOp (IntOp size_t) h v1 v2 (val_of_loc (l +ₗ o))
-| PtrOffsetOpIP v1 v2 h o l ly it:
+    eval_bin_op AddOp PtrOp (IntOp size_t) σ v1 v2 (val_of_loc (l +ₗ o))
+| PtrOffsetOpIP v1 v2 σ o l ly it:
     val_to_int v1 it = Some o →
     val_to_loc v2 = Some l →
     (* TODO: should we have an alignment check here? *)
     0 ≤ o →
-    eval_bin_op (PtrOffsetOp ly) (IntOp it) PtrOp h v1 v2 (val_of_loc (l offset{ly}ₗ o))
-| EqOpPNull v1 v2 h l v:
+    eval_bin_op (PtrOffsetOp ly) (IntOp it) PtrOp σ v1 v2 (val_of_loc (l offset{ly}ₗ o))
+| EqOpPNull v1 v2 σ l v:
+    heap_loc_in_bounds l 0%nat σ →
     val_to_loc v1 = Some l →
     val_to_int v2 size_t = Some 0 →
     (* TODO ( see below ): Should we really hard code i32 here because of C? *)
     i2v (Z_of_bool false) i32 = v →
-    eval_bin_op EqOp PtrOp PtrOp h v1 v2 v
-| NeOpPNull v1 v2 h l v:
+    eval_bin_op EqOp PtrOp PtrOp σ v1 v2 v
+| NeOpPNull v1 v2 σ l v:
+    heap_loc_in_bounds l 0%nat σ →
     val_to_loc v1 = Some l →
     val_to_int v2 size_t = Some 0 →
     i2v (Z_of_bool true) i32 = v →
-    eval_bin_op NeOp PtrOp PtrOp h v1 v2 v
-| EqOpNullNull v1 v2 h v:
+    eval_bin_op NeOp PtrOp PtrOp σ v1 v2 v
+| EqOpNullNull v1 v2 σ v:
     val_to_int v1 size_t = Some 0 →
     val_to_int v2 size_t = Some 0 →
     i2v (Z_of_bool true) i32 = v →
-    eval_bin_op EqOp PtrOp PtrOp h v1 v2 v
-| NeOpNullNull v1 v2 h v:
+    eval_bin_op EqOp PtrOp PtrOp σ v1 v2 v
+| NeOpNullNull v1 v2 σ v:
     val_to_int v1 size_t = Some 0 →
     val_to_int v2 size_t = Some 0 →
     i2v (Z_of_bool false) i32 = v →
-    eval_bin_op NeOp PtrOp PtrOp h v1 v2 v
-| EqOpPP v1 v2 h l1 l2 v b:
+    eval_bin_op NeOp PtrOp PtrOp σ v1 v2 v
+| EqOpPP v1 v2 σ l1 l2 v b:
     val_to_loc v1 = Some l1 →
     val_to_loc v2 = Some l2 →
-    ptr_eq l1 l2 h = Some b →
+    ptr_eq l1 l2 σ.(st_heap) = Some b →
     i2v (Z_of_bool b) i32 = v →
-    eval_bin_op EqOp PtrOp PtrOp h v1 v2 v
-| NeOpPP v1 v2 h l1 l2 v b:
+    eval_bin_op EqOp PtrOp PtrOp σ v1 v2 v
+| NeOpPP v1 v2 σ l1 l2 v b:
     val_to_loc v1 = Some l1 →
     val_to_loc v2 = Some l2 →
-    ptr_eq l1 l2 h = Some b →
+    ptr_eq l1 l2 σ.(st_heap) = Some b →
     i2v (Z_of_bool (negb b)) i32 = v →
-    eval_bin_op NeOp PtrOp PtrOp h v1 v2 v
-| RelOpII op v1 v2 h n1 n2 it b:
+    eval_bin_op NeOp PtrOp PtrOp σ v1 v2 v
+| RelOpII op v1 v2 σ n1 n2 it b:
     match op with
     | EqOp => Some (bool_decide (n1 = n2))
     | NeOp => Some (bool_decide (n1 ≠ n2))
@@ -716,10 +732,10 @@ Inductive eval_bin_op : bin_op → op_type → op_type → heap → val → val 
     val_to_int v2 it = Some n2 →
     (* TODO: What is the right int type of the result here? C seems to
     use i32 but maybe we don't want to hard code that. *)
-    eval_bin_op op (IntOp it) (IntOp it) h v1 v2 (i2v (Z_of_bool b) i32)
+    eval_bin_op op (IntOp it) (IntOp it) σ v1 v2 (i2v (Z_of_bool b) i32)
 (* This defines checked versions of the arithmetic operations which
 are UB if the result is out of bounds for it. *)
-| ArithOpII op v1 v2 h n1 n2 it n v:
+| ArithOpII op v1 v2 σ n1 n2 it n v:
     match op with
     | AddOp => Some (n1 + n2)
     | SubOp => Some (n1 - n2)
@@ -740,23 +756,23 @@ are UB if the result is out of bounds for it. *)
     val_to_int v1 it = Some n1 →
     val_to_int v2 it = Some n2 →
     val_of_int n it = Some v →
-    eval_bin_op op (IntOp it) (IntOp it) h v1 v2 v
+    eval_bin_op op (IntOp it) (IntOp it) σ v1 v2 v
 .
 
 
-Inductive eval_un_op : un_op → op_type → heap → val → val → Prop :=
-| CastOpII itt its h vs vt n:
+Inductive eval_un_op : un_op → op_type → state → val → val → Prop :=
+| CastOpII itt its σ vs vt n:
     val_to_int vs its = Some n →
     val_of_int n itt = Some vt →
-    eval_un_op (CastOp (IntOp itt)) (IntOp its) h vs vt
-| CastOpPP h vs vt l:
+    eval_un_op (CastOp (IntOp itt)) (IntOp its) σ vs vt
+| CastOpPP σ vs vt l:
     val_to_loc vs = Some l →
     val_of_loc l = vt →
-    eval_un_op (CastOp PtrOp) PtrOp h vs vt
-| NegOpI it h vs vt n:
+    eval_un_op (CastOp PtrOp) PtrOp σ vs vt
+| NegOpI it σ vs vt n:
     val_to_int vs it = Some n →
     val_of_int (-n) it = Some vt →
-    eval_un_op NegOp (IntOp it) h vs vt
+    eval_un_op NegOp (IntOp it) σ vs vt
 .
 
 (*** Evaluation of Expressions *)
@@ -765,10 +781,10 @@ Inductive expr_step : expr → state → list Empty_set → expr → state → l
 | SkipES v σ:
     expr_step (SkipE (Val v)) σ [] (Val v) σ []
 | UnOpS op v σ v' ot:
-    eval_un_op op ot σ.(st_heap) v v' →
+    eval_un_op op ot σ v v' →
     expr_step (UnOp op ot (Val v)) σ [] (Val v') σ []
 | BinOpS op v1 v2 σ v' ot1 ot2:
-    eval_bin_op op ot1 ot2 σ.(st_heap) v1 v2 v' →
+    eval_bin_op op ot1 ot2 σ v1 v2 v' →
     expr_step (BinOp op ot1 ot2 (Val v1) (Val v2)) σ [] (Val v') σ []
 | DerefS o v l ly v' σ:
     let start_st st := ∃ n, st = if o is Na2Ord then RSt (S n) else RSt n in
@@ -960,6 +976,9 @@ Definition subst_function (xs : list var_name) (vs : list val) (f : function) : 
   f_args := f.(f_args); f_init := f.(f_init); f_local_vars := f.(f_local_vars);
 |}.
 
+Definition to_allocation (off : Z) (len : nat) : allocation :=
+  Allocation off (off + len).
+
 (*** Evaluation of statements *)
 Inductive stmt_step : thread_state → state → list Empty_set → thread_state → state → list thread_state → Prop :=
 | StmtExprS ts σ σ' Ks e e' os efs:
@@ -1007,8 +1026,8 @@ Inductive stmt_step : thread_state → state → list Empty_set → thread_state
     Forall (heap_block_free σ.(st_heap)) lsa →
     Forall (heap_block_free σ.(st_heap)) lsv →
     (* ensure that ls blocks are unused *)
-    Forall (λ l, l.1 ∉ σ.(st_used_blocks)) lsa →
-    Forall (λ l, l.1 ∉ σ.(st_used_blocks)) lsv →
+    Forall (λ l, σ.(st_used_blocks) !! l.1 = None) lsa →
+    Forall (λ l, σ.(st_used_blocks) !! l.1 = None) lsv →
     (* ensure that locations are aligned *)
     Forall2 has_layout_loc lsa fn.(f_args).*2 →
     Forall2 has_layout_loc lsv fn.(f_local_vars).*2 →
@@ -1018,7 +1037,8 @@ Inductive stmt_step : thread_state → state → list Empty_set → thread_state
     heap_upd_list lsv ((λ p, replicate p.2.(ly_size) MPoison) <$> fn.(f_local_vars)) (λ _, RSt 0%nat) σ.(st_heap) = h' →
     (* initialize the arguments with the supplied values *)
     heap_upd_list lsa vs (λ _, RSt 0%nat) h' = h'' →
-    σ.(st_used_blocks) ∪ list_to_set (lsa ++ lsv).*1 = ub' →
+    (* add used blocks allocations  *)
+    list_to_map (zip (lsa.*1 ++ lsv.*1) (zip_with to_allocation (lsa.*2 ++ lsv.*2) (ly_size <$> (fn.(f_args).*2 ++ fn.(f_local_vars).*2)))) ∪ σ.(st_used_blocks) = ub' →
     rf = {| rf_fn := fn'; rf_locs := zip lsa fn.(f_args).*2 ++ zip lsv fn.(f_local_vars).*2; rf_stmt := Goto fn'.(f_init); |} →
     co = {| c_rfn := (update_stmt ts s).(ts_rfn); c_rvar := ret |} →
     stmt_step ts σ [] {| ts_conts := co::ts.(ts_conts); ts_rfn := rf |}
@@ -1140,16 +1160,15 @@ Lemma heap_at_inj_val l ly h v v' flk1 flk2:
   heap_at l ly v flk1 h → heap_at l ly v' flk2 h → v = v'.
 Proof. move => [_ [Hv1 H1]] [_ [Hv2 H2]]. apply: heap_at_go_inj_val => //. congruence. Qed.
 
-Lemma heap_fresh_blocks n (ub : gset Z) lys :
+Lemma heap_fresh_blocks n (ub : blocks) lys :
   length lys = n →
-  ∃ ls, length ls = n ∧ Forall (λ l : loc, l.1 ∉ ub) ls ∧ NoDup ls.*1 ∧ Forall2 has_layout_loc ls lys.
+  ∃ ls, length ls = n ∧ Forall (λ l : loc, ub !! l.1 = None) ls ∧ NoDup ls.*1 ∧ Forall2 has_layout_loc ls lys.
 Proof.
-  eexists ((λ x, (x, 0)) <$> fresh_list n ub). rewrite fmap_length fresh_list_length.
-  split_and! => //.
-  - apply Forall_forall => l. move => /elem_of_list_fmap[?[->?]]/=.
-      by apply: fresh_list_is_fresh.
-  - rewrite -list_fmap_compose. eapply (NoDup_proper _ (fresh_list n ub)); last by apply NoDup_fresh_list.
-    elim: (fresh_list n ub); naive_solver.
+  eexists ((λ x, (x, 0)) <$> fresh_list n (dom (gset block_id) ub)). split_and!.
+  - rewrite fmap_length fresh_list_length //.
+  - apply Forall_forall => l. move => /elem_of_list_fmap[?[->He]]/=.
+    by apply fresh_list_is_fresh, not_elem_of_dom in He.
+  - rewrite -list_fmap_compose NoDup_fmap. by apply NoDup_fresh_list.
   - rewrite Forall2_fmap_l. apply Forall2_true; last by rewrite fresh_list_length.
     move => ?? /=. by apply Z.divide_0_r.
 Qed.
@@ -1227,6 +1246,7 @@ Canonical Structure locO := leibnizO loc.
 Canonical Structure layoutO := leibnizO layout.
 Canonical Structure valO := leibnizO val.
 Canonical Structure exprO := leibnizO expr.
+Canonical Structure allocationO := leibnizO allocation.
 
 (*** Tests *)
 

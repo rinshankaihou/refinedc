@@ -401,6 +401,19 @@ Section typing.
   Global Instance related_to_loc l β ty : RelatedTo (l ◁ₗ{β} ty) := {| rt_fic := FindLoc l |}.
   Global Instance related_to_val v ty `{!Movable ty} : RelatedTo (v ◁ᵥ ty) := {| rt_fic := FindValP v |}.
 
+  Global Instance related_to_loc_in_bounds l n : RelatedTo (loc_in_bounds l n) := {| rt_fic := FindLoc l |}.
+
+  Lemma subsume_loc_in_bounds ty β l `{!LocInBounds ty β} T :
+    (l ◁ₗ{β} ty -∗ T) -∗
+    subsume (l ◁ₗ{β} ty) (loc_in_bounds l 0) T.
+  Proof.
+    iIntros "HT Hl". iSplit; last by iApply "HT".
+    by iApply loc_in_bounds_in_bounds.
+  Qed.
+  Global Instance subsume_loc_in_bounds_inst ty β l `{!LocInBounds ty β} :
+    Subsume (l ◁ₗ{β} ty) (loc_in_bounds l 0) :=
+    λ T, i2p (subsume_loc_in_bounds ty β l T).
+
   Lemma apply_subsume_place_true l1 β1 ty1 l2 β2 ty2:
     l1 ◁ₗ{β1} ty1 -∗
     subsume (l1 ◁ₗ{β1} ty1) (l2 ◁ₗ{β2} ty2) True -∗

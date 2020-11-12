@@ -41,6 +41,13 @@ Section tyexist.
   Next Obligation. iIntros (ty ? ? x l). rewrite tyexists_eq. by apply ty_deref. Qed.
   Next Obligation. iIntros (ty ? ? x l v). rewrite tyexists_eq. by apply ty_ref. Qed.
   Next Obligation. move => ?? H x1 x2 /=. move: (H x1 x2). by inversion 1. Qed.
+
+  Global Instance tyexists_loc_in_bounds ty β `{!∀ x, LocInBounds (ty x) β} :
+    LocInBounds (tyexists ty) β.
+  Proof.
+    constructor. iIntros (l) "Hl". iDestruct "Hl" as (x) "Hl".
+    rewrite tyexists_eq. by iApply loc_in_bounds_in_bounds.
+  Qed.
 End tyexist.
 
 Hint Extern 1 (RMovable (tyexists _)) => simple notypeclasses refine (@tyexists_movable _ _ _ _ _ _) => /= : typeclass_instances.
@@ -84,9 +91,14 @@ Section tyexist.
     SimpleSubsumePlace ty1 (x @ tyexists ty2) P.
   Proof. iIntros (l β) "HP Hl". rewrite ! tyexists_eq. iApply (@simple_subsume_place with "HP Hl"). Qed.
 
-  Global Instance tyexist_optional (ty : A → _) optty ot1 ot2 `{!∀ x, Movable (ty x)} `{!Movable optty} `{!∀ x, Optionable (ty x) optty ot1 ot2} `{!∀ x1 x2, TCEq (ty x1).(ty_layout) (ty x2).(ty_layout)} : ROptionable (tyexists ty) optty ot1 ot2.
-  Proof.
-    constructor => /= ?. split; rewrite /rmovable/=/ty_layout/ty_own_val. apply opt_alt_sz. apply opt_bin_op.
+  Global Program Instance tyexist_optional (ty : A → _) optty ot1 ot2 `{!∀ x, Movable (ty x)} `{!Movable optty} `{!∀ x, Optionable (ty x) optty ot1 ot2} `{!∀ x1 x2, TCEq (ty x1).(ty_layout) (ty x2).(ty_layout)} : ROptionable (tyexists ty) optty ot1 ot2 := {|
+    ropt_opt x := {| opt_pre v1 v2 := opt_pre (ty x) v1 v2 |}
+  |}.
+  Next Obligation.
+    move => ?????????. rewrite /rmovable/=/ty_layout/ty_own_val. apply opt_alt_sz.
+  Qed.
+  Next Obligation.
+    move => ?????????. rewrite /rmovable/=/ty_layout/ty_own_val. apply opt_bin_op.
   Qed.
 
   Global Instance optionable_agree_tyexists (ty2 : A → type) ty1 `{!∀ x, OptionableAgree (ty2 x) ty1} : OptionableAgree (tyexists ty2) ty1.

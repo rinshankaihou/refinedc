@@ -130,7 +130,7 @@ Definition heap_mapsto_own_state `{!typeG Σ} (l : loc) (β : own_state) (v : va
   of heap_mapsto_own_state_app. For only ⊢, one big invariant would be
   enough, but not for the other direction since inv_sep only goes in
   one direction. *)
-  | Shr => [∗ list] i ↦ b ∈ v, inv mtN (∃ q, (l +ₗ i)↦{q} [ b ] )
+  | Shr => loc_in_bounds l (length v) ∗ [∗ list] i ↦ b ∈ v, inv mtN (∃ q, (l +ₗ i)↦{q} [ b ] )
   end.
 Notation "l ↦[ β ] v" := (heap_mapsto_own_state l β v)
   (at level 20, β at level 50, format "l  ↦[ β ]  v") : bi_scope.
@@ -149,37 +149,49 @@ Section own_state.
   Global Instance heap_mapsto_own_state_shr_persistent l v : Persistent (l ↦[ Shr ] v).
   Proof. apply _. Qed.
 
+  Lemma heap_mapsto_own_state_loc_in_bounds l β v :
+    l ↦[β] v -∗ loc_in_bounds l (length v).
+  Proof.
+    destruct β; last by iIntros "[$ _]".
+    iIntros "Hl". by iApply heap_mapsto_loc_in_bounds.
+  Qed.
+
   Lemma heap_mapsto_own_state_nil l β:
-    l ↦[β] [] ⊣⊢ True.
-  Proof. by destruct β. Qed.
+    l ↦[β] [] ⊣⊢ loc_in_bounds l 0.
+  Proof. destruct β; [ by apply heap_mapsto_nil | by rewrite /= right_id ]. Qed.
 
   Lemma heap_mapsto_own_state_to_mt l v E β:
     ↑mtN ⊆ E → l ↦[β] v ={E}=∗ ∃ q, ⌜β = Own → q = 1%Qp⌝ ∗ l ↦{q} v.
   Proof.
     iIntros (?) "Hl".
     destruct β; simpl; eauto with iFrame.
-    iInduction v as [|b v] "IH" forall (l); first by iExists 1%Qp; iModIntro; iSplit.
-    iDestruct "Hl" as "[Hl Hv]". rewrite shift_loc_0.
+    iInduction v as [|b v] "IH" forall (l). {
+      iExists 1%Qp. iModIntro; iSplit => //.
+      rewrite heap_mapsto_nil. iDestruct "Hl" as "[$ _]".
+   }
+    iDestruct "Hl" as "(#Hb&Hl&Hv)". rewrite shift_loc_0.
     setoid_rewrite shift_loc_S.
     iInv "Hl" as (q1) ">[H1 H2]". iModIntro.
     iSplitL "H1"; first by iExists _; iFrame.
-    iMod ("IH" with "Hv") as (q2 _) "Hl".
+    iMod ("IH" $! (l +ₗ 1%nat) with "[Hb Hv]") as (q2 _) "Hl".
+    { iFrame. simpl. assert (S (length v) = 1 + length v)%nat as -> by lia.
+      iDestruct (loc_in_bounds_split with "Hb") as "[_ $]". }
     have [q [q1' [q2' [-> ->]]]]:= Qp_lower_bound (q1 / 2) q2.
     iDestruct "H2" as "[H2 _]". iDestruct "Hl" as "[Hl _]".
-    iExists q. have -> :(b :: v) = [b] ++ v by []. rewrite heap_mapsto_app. by iFrame.
+    iExists q. rewrite (heap_mapsto_cons _ b v). by iFrame.
   Qed.
 
   Lemma heap_mapsto_own_state_from_mt l v E β q:
     (β = Own → q = 1%Qp) → l ↦{q} v ={E}=∗ l ↦[β] v.
   Proof.
     iIntros (Hb) "Hl" => /=.
-    destruct β => /=. by rewrite Hb.
+    destruct β => /=; first by rewrite Hb.
+    iDestruct (heap_mapsto_loc_in_bounds with "Hl") as "#Hin". iFrame "Hin". iClear "Hin".
     iInduction v as [|b v] "IH" forall (l) => //=.
-    (* TODO: make this proof less crappy *)
-    have -> :(b :: v) = [b] ++ v by []. rewrite heap_mapsto_app /=.
-    setoid_rewrite shift_loc_S at 2.
-    iDestruct "Hl" as "[Hb Hv]".
-    iMod ("IH" with "Hv") as "$".
+    rewrite heap_mapsto_cons /=. iDestruct "Hl" as "[Hl1 Hl2]".
+    iMod ("IH" with "Hl2") as "Hl".
+    setoid_rewrite shift_loc_assoc.
+    have Hi :∀ i : nat, 1%Z + i = S i by lia. setoid_rewrite Hi. iFrame.
     iApply inv_alloc. iModIntro. rewrite shift_loc_0. iExists _. iFrame.
   Qed.
 
@@ -198,7 +210,9 @@ Section own_state.
     l ↦[β] (v1 ++ v2) ⊣⊢ l ↦[β] v1 ∗ (l +ₗ length v1) ↦[β] v2.
   Proof.
     destruct β; rewrite /= ?heap_mapsto_app //.
-    rewrite big_sepL_app. by setoid_rewrite shift_loc_assoc_nat.
+    rewrite big_sepL_app app_length -loc_in_bounds_split.
+    setoid_rewrite shift_loc_assoc_nat.
+    iSplit; iIntros "[[??][??]]"; iFrame.
   Qed.
 
   Lemma heap_mapsto_own_state_layout_alt l β ly:
@@ -287,6 +301,21 @@ Class Copyable `{!typeG Σ} (ty : type) `{!Movable ty} := {
        ∃ q' vl, l ↦{q'} vl ∗ ▷ ty.(ty_own_val) vl ∗ (▷l ↦{q'} vl ={E}=∗ True)
 }.
 Existing Instance copy_own_persistent.
+
+Class LocInBounds `{!typeG Σ} (ty : type) (β : own_state) := {
+  loc_in_bounds_in_bounds l : ty.(ty_own) β l -∗ loc_in_bounds l 0
+}.
+
+Section loc_in_bounds.
+  Context `{!typeG Σ}.
+
+  Lemma movable_loc_in_bounds ty l `{!Movable ty} :
+    ty_own ty Own l -∗ loc_in_bounds l (ly_size (ty_layout ty)).
+  Proof.
+    iIntros "Hl". iDestruct (ty_deref with "Hl") as (v) "[Hl Hv]".
+    iDestruct (ty_size_eq with "Hv") as %<-. by iApply heap_mapsto_loc_in_bounds.
+  Qed.
+End loc_in_bounds.
 
 Notation "l ◁ₗ{ β } ty" := (ty_own ty β l) (at level 15, format "l  ◁ₗ{ β }  ty") : bi_scope.
 Notation "l ◁ₗ ty" := (ty_own ty Own l) (at level 15) : bi_scope.

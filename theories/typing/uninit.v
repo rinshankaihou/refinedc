@@ -24,6 +24,20 @@ Section uninit.
     iIntros (ly l v ?) "Hl ?". iExists _. by iFrame.
   Qed.
 
+  Lemma uninit_loc_in_bounds l β ly :
+    l ◁ₗ{β} uninit ly -∗ loc_in_bounds l (ly_size ly).
+  Proof.
+    iIntros "Hl". iDestruct "Hl" as (v <-) "[_ Hl]".
+    by iApply heap_mapsto_own_state_loc_in_bounds.
+  Qed.
+
+  Global Instance loc_in_bounds_uninit ly β: LocInBounds (uninit ly) β.
+  Proof.
+    constructor. iIntros (l) "Hl".
+    iDestruct (uninit_loc_in_bounds with "Hl") as "#Hb".
+    iApply loc_in_bounds_shorten; last done. lia.
+  Qed.
+
   (* This only works for own because of ty might have interior mutability. *)
   Lemma uninit_mono l ty `{!Movable ty} ly T:
     ⌜ty.(ty_layout) = ly⌝ ∗ (∀ v, v ◁ᵥ ty -∗ T) -∗ subsume (l ◁ₗ ty) (l ◁ₗ uninit ly) T.
