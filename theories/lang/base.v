@@ -66,21 +66,6 @@ Lemma entails_eq {PROP : bi} (P1 P2 : PROP) :
   P1 = P2 → P1 -∗ P2.
 Proof. move => ->. reflexivity. Qed.
 
-Section theorems.
-  Context `{FinMapDom K M D}.
-
-  Lemma dom_list_to_map {A} (l : list (K * A)) :
-    dom D (list_to_map (M:=M A) l) ≡ list_to_set l.*1.
-  Proof using Type*.
-    elim: l => /=. { by apply dom_empty. }
-    move => ? l <-. by apply dom_insert.
-  Qed.
-
-  Lemma dom_list_to_map_L {A} (l : list (K * A)) `{!LeibnizEquiv D}:
-    dom D (list_to_map (M:=M A) l) = list_to_set l.*1.
-  Proof using Type*. unfold_leibniz. apply: dom_list_to_map. Qed.
-End theorems.
-
 Section list_to_map.
   Context `{FinMap K M}.
 
@@ -585,3 +570,14 @@ Qed.
 Lemma if_bool_decide_eq_branches {A} P `{!Decision P} (x : A) :
   (if bool_decide P then x else x) = x.
 Proof. by case_bool_decide. Qed.
+
+(* from https://mattermost.mpi-sws.org/iris/pl/dcktjjjpsiycmrieyh74bzoagr *)
+Ltac solve_sep_entails :=
+  try (apply equiv_spec; split);
+  iIntros;
+  repeat iMatchHyp (fun H P =>
+    lazymatch P with
+    | (_ ∗ _)%I => iDestruct H as "[??]"
+    | (∃ _, _)%I => iDestruct H as (?) "?"
+    end);
+  eauto with iFrame.

@@ -1,7 +1,7 @@
 From stdpp Require Import coPset.
 From iris.algebra Require Import big_op gmap frac agree.
 From iris.algebra Require Import csum excl auth cmra_big_op numbers.
-From iris.bi Require Import fractional tactics.
+From iris.bi Require Import fractional.
 From iris.base_logic Require Export lib.own.
 From iris.proofmode Require Export tactics.
 From refinedc.lang Require Export lang.
@@ -226,7 +226,8 @@ Section allocs.
   Proof.
     move: a1 a2 => ? ?. rewrite allocs_entry_eq /allocs_entry_def.
     iIntros "H1 H2". iCombine "H1 H2" as "H".
-    by iDestruct (own_valid with "H") as %H%singleton_valid%to_agree_op_inv_L.
+    iDestruct (own_valid with "H") as %Hvalid.
+    by move: Hvalid => /auth_frag_valid/singleton_valid/to_agree_op_inv_L.
   Qed.
 
   Lemma allocs_alloc ub id a :
@@ -363,10 +364,7 @@ Section heap.
 
   Lemma heap_mapsto_nil l q:
     l ↦{q} [] ⊣⊢ loc_in_bounds l 0.
-  Proof.
-    rewrite heap_mapsto_eq/heap_mapsto_def /=.
-    apply equiv_spec. split; solve_sep_entails.
-  Qed.
+  Proof. rewrite heap_mapsto_eq/heap_mapsto_def /=. solve_sep_entails. Qed.
 
   Lemma heap_mapsto_cons_mbyte l b v q:
     l ↦{q} (b::v) ⊣⊢ heap_mapsto_mbyte l q b ∗ loc_in_bounds l 1 ∗ (l +ₗ 1) ↦{q} v.
@@ -374,8 +372,8 @@ Section heap.
     rewrite heap_mapsto_eq/heap_mapsto_def /= shift_loc_0. setoid_rewrite shift_loc_assoc.
     have Hn:(∀ n, Z.of_nat (S n) = 1 + n) by lia. setoid_rewrite Hn.
     have ->:(∀ n, S n = 1 + n)%nat by lia.
-    rewrite -loc_in_bounds_split. have <- : (1 = 1%nat) by lia.
-    apply equiv_spec. split; solve_sep_entails.
+    rewrite -loc_in_bounds_split.
+    solve_sep_entails.
   Qed.
 
   Lemma heap_mapsto_cons l b v q:
@@ -383,7 +381,7 @@ Section heap.
   Proof.
     rewrite heap_mapsto_cons_mbyte !assoc. f_equiv.
     rewrite heap_mapsto_eq/heap_mapsto_def /= shift_loc_0.
-    apply equiv_spec. split; solve_sep_entails.
+    solve_sep_entails.
   Qed.
 
   Lemma heap_mapsto_app l v1 v2 q:
