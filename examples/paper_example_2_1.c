@@ -1,3 +1,5 @@
+// Example of Section 2.1.
+
 #include <stddef.h>
 #include <stdbool.h>
 #include <refinedc.h>
@@ -14,8 +16,6 @@
 //@Coercion byte_layout : nat >-> layout.
 //@rc::end
 
-//// Example of Section 2.1 //////////////////////////////////////////////////
-
 struct [[rc::refined_by("a : nat")]] mem_t {
   [[rc::field("a @ int<size_t>")]] size_t len;
   [[rc::field("&own<uninit<a>>")]] unsigned char *buffer;
@@ -31,47 +31,7 @@ void *alloc(struct mem_t *d, size_t size) {
   return d->buffer + d->len;
 }
 
-//// Example of Section 2.2 //////////////////////////////////////////////////
-
-// In the paper this example is simplified to ignore memory alignment.
-// For the actual example we work on multisets of layouts, not nat.
-
-typedef struct
-[[rc::refined_by("s: {gmultiset layout}")]]
-[[rc::ptr_type("chunks_t : {s ≠ ∅} @ optional<&own<...>, null>")]]
-[[rc::exists  ("ly : layout", "tail : {gmultiset layout}")]]
-[[rc::size    ("ly")]]
-[[rc::constraints("{s = {[ly]} ⊎ tail}",
-                  "{∀ k, k ∈ tail → ly.(ly_size) ≤ k.(ly_size)}")]]
-chunk {
-  [[rc::field("{ly.(ly_size)} @ int<size_t>")]] size_t size;
-  [[rc::field("tail @ chunks_t")]] struct chunk* next;
-}* chunks_t;
-
-[[rc::parameters("s : {gmultiset layout}", "p : loc", "ly : layout")]]
-[[rc::args      ("p @ &own<s @ chunks_t>", "&own<uninit<ly>>",
-                 "{ly.(ly_size)} @ int<size_t>")]]
-[[rc::requires  ("{layout_of struct_chunk ⊑ ly}")]]
-[[rc::ensures   ("p @ &own<{{[ly]} ⊎ s} @ chunks_t>")]]
-[[rc::tactics   ("all: multiset_solver.")]]
-void free(chunks_t* list, void *data, size_t size) {
-  chunks_t *cur = list;
-  [[rc::exists  ("cp : loc", "cs : {gmultiset layout}")]]
-  [[rc::inv_vars("cur : cp @ &own<cs @ chunks_t>")]]
-  [[rc::inv_vars("list : p @ &own<"
-                   "wand<{cp ◁ₗ ({[ly]} ⊎ cs) @ chunks_t}, "
-                   "{{[ly]} ⊎ s} @ chunks_t>>")]]
-  while(*cur != NULL) {
-    if(size <= (*cur)->size) break;
-    cur = &(*cur)->next;
-  }
-  chunks_t entry = data;
-  entry->size = size;
-  entry->next = *cur;
-  *cur = entry;
-}
-
-//// Example given in appendix ///////////////////////////////////////////////
+// Thread-safe version (given in appendix).
 
 [[rc::parameters("lid : lock_id")]]
 [[rc::global("spinlock<lid>")]]
@@ -93,7 +53,7 @@ void *thread_safe_alloc(size_t size) {
   return ret;
 }
 
-//// Testing thread-safety of thread_safe alloc //////////////////////////////
+// Testing thread-safety.
 
 // RefinedC does not have forking built-in at the moment.
 // We axiomatize it using the following [fork] function.

@@ -1,10 +1,10 @@
 From refinedc.typing Require Import typing.
-From refinedc.examples.paper_examples Require Import generated_code.
-From refinedc.examples.paper_examples Require Import generated_spec.
+From refinedc.examples.paper_example_2_2 Require Import generated_code.
+From refinedc.examples.paper_example_2_2 Require Import generated_spec.
 From refinedc.examples.spinlock Require Import spinlock_def.
 Set Default Proof Using "Type".
 
-(* Generated from [examples/paper_examples.c]. *)
+(* Generated from [examples/paper_example_2_2.c]. *)
 Section proof_free.
   Context `{!typeG Σ} `{!globalG Σ}.
   Context `{!lockG Σ}.
@@ -13,16 +13,16 @@ Section proof_free.
   Lemma type_free :
     ⊢ typed_function impl_free type_of_free.
   Proof.
-    start_function "free" ([[s p] ly]) => arg_list arg_data arg_size local_cur local_entry.
+    start_function "free" ([[[s p] q] n]) => arg_list arg_data arg_size local_cur local_entry.
     split_blocks ((
       <[ "#1" :=
         ∃ cp : loc,
-        ∃ cs : gmultiset layout,
-        arg_data ◁ₗ (&own (uninit (ly))) ∗
-        arg_size ◁ₗ ((ly.(ly_size)) @ (int (size_t))) ∗
+        ∃ cs : gmultiset nat,
+        arg_data ◁ₗ (q @ (&own (uninit (n)))) ∗
+        arg_size ◁ₗ (n @ (int (size_t))) ∗
         local_entry ◁ₗ uninit LPtr ∗
         local_cur ◁ₗ (cp @ (&own (cs @ (chunks_t)))) ∗
-        arg_list ◁ₗ (p @ (&own (wand (cp ◁ₗ ({[ly]} ⊎ cs) @ chunks_t) (({[ly]} ⊎ s) @ (chunks_t)))))
+        arg_list ◁ₗ (p @ (&own (wand (cp ◁ₗ ({[n]} ⊎ cs) @ chunks_t) (({[n]} ⊎ s) @ (chunks_t)))))
     ]> $
       ∅
     )%I : gmap label (iProp Σ)) ((

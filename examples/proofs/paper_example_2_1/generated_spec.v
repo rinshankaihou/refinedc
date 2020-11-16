@@ -1,9 +1,9 @@
 From refinedc.typing Require Import typing.
-From refinedc.examples.paper_examples Require Import generated_code.
+From refinedc.examples.paper_example_2_1 Require Import generated_code.
 From refinedc.examples.spinlock Require Import spinlock_def.
 Set Default Proof Using "Type".
 
-(* Generated from [examples/paper_examples.c]. *)
+(* Generated from [examples/paper_example_2_1.c]. *)
 Section spec.
   Context `{!typeG Σ} `{!globalG Σ}.
   Context `{!lockG Σ}.
@@ -66,67 +66,6 @@ Section spec.
     λ T, i2p (simplify_goal_val_eq v_ _ _ (mem_t_unfold _) T _).
   Next Obligation. done. Qed.
 
-  (* Definition of type [chunks_t]. *)
-  Definition chunks_t_rec : ((gmultiset layout) -d> typeO) → ((gmultiset layout) -d> typeO) := (λ self s,
-    ((s ≠ ∅) @ (optional (&own (
-      tyexists (λ ly : layout,
-      tyexists (λ tail : gmultiset layout,
-      constrained (padded (struct struct_chunk [@{type}
-        ((ly.(ly_size)) @ (int (size_t))) ;
-        (guarded ("chunks_t_0") (apply_dfun self (tail)))
-      ]) struct_chunk ly) (
-        ⌜s = {[ly]} ⊎ tail⌝ ∗
-        ⌜∀ k, k ∈ tail → ly.(ly_size) ≤ k.(ly_size)⌝
-      )))
-    )) (null)))
-  )%I.
-  Typeclasses Opaque chunks_t_rec.
-
-  Global Instance chunks_t_rec_ne : Contractive chunks_t_rec.
-  Proof. solve_type_proper. Qed.
-
-  Definition chunks_t : rtype := {|
-    rty_type := (gmultiset layout);
-    rty r__ := fixp chunks_t_rec r__
-  |}.
-
-  Lemma chunks_t_unfold (s : gmultiset layout) :
-    (s @ chunks_t)%I ≡@{type} (
-      ((s ≠ ∅) @ (optional (&own (
-        tyexists (λ ly : layout,
-        tyexists (λ tail : gmultiset layout,
-        constrained (padded (struct struct_chunk [@{type}
-          ((ly.(ly_size)) @ (int (size_t))) ;
-          (guarded "chunks_t_0" (tail @ chunks_t))
-        ]) struct_chunk ly) (
-          ⌜s = {[ly]} ⊎ tail⌝ ∗
-          ⌜∀ k, k ∈ tail → ly.(ly_size) ≤ k.(ly_size)⌝
-        )))
-      )) (null)))
-    )%I.
-  Proof. by rewrite {1}/with_refinement/=fixp_unfold. Qed.
-
-
-  Global Program Instance chunks_t_rmovable : RMovable chunks_t :=
-    {| rmovable 's := movable_eq _ _ (chunks_t_unfold s) |}.
-  Next Obligation. solve_ty_layout_eq. Qed.
-
-  Global Instance chunks_t_simplify_hyp_place_inst l_ β_ (s : gmultiset layout) :
-    SimplifyHypPlace l_ β_ (s @ chunks_t)%I (Some 100%N) :=
-    λ T, i2p (simplify_hyp_place_eq l_ β_ _ _ T (chunks_t_unfold _)).
-  Global Instance chunks_t_simplify_goal_place_inst l_ β_ (s : gmultiset layout) :
-    SimplifyGoalPlace l_ β_ (s @ chunks_t)%I (Some 100%N) :=
-    λ T, i2p (simplify_goal_place_eq l_ β_ _ _ T (chunks_t_unfold _)).
-
-  Global Program Instance chunks_t_simplify_hyp_val_inst v_ (s : gmultiset layout) :
-    SimplifyHypVal v_ (s @ chunks_t)%I (Some 100%N) :=
-    λ T, i2p (simplify_hyp_val_eq v_ _ _ (chunks_t_unfold _) T _).
-  Next Obligation. done. Qed.
-  Global Program Instance chunks_t_simplify_goal_val_inst v_ (s : gmultiset layout) :
-    SimplifyGoalVal v_ (s @ chunks_t)%I (Some 100%N) :=
-    λ T, i2p (simplify_goal_val_eq v_ _ _ (chunks_t_unfold _) T _).
-  Next Obligation. done. Qed.
-
   (* Type definitions. *)
 
   (* Function [atomic_thread_fence] has been skipped. *)
@@ -153,11 +92,6 @@ Section spec.
     fn(∀ (a, n, p) : nat * nat * loc; (p @ (&own (a @ (mem_t)))), (n @ (int (size_t))); True)
       → ∃ () : (), ((n ≤ a) @ (optional (&own (uninit (n))) (null))); (p ◁ₗ ((n ≤ a ? a - n : a) @ (mem_t))).
 
-  (* Specifications for function [free]. *)
-  Definition type_of_free :=
-    fn(∀ (s, p, ly) : (gmultiset layout) * loc * layout; (p @ (&own (s @ (chunks_t)))), (&own (uninit (ly))), ((ly.(ly_size)) @ (int (size_t))); ⌜layout_of struct_chunk ⊑ ly⌝)
-      → ∃ () : (), (void); (p ◁ₗ (({[ly]} ⊎ s) @ (chunks_t))).
-
   (* Specifications for function [thread_safe_alloc]. *)
   Definition type_of_thread_safe_alloc :=
     fn(∀ (lid, n) : lock_id * nat; (n @ (int (size_t))); (initialized "lock" lid) ∗ (initialized "data" lid))
@@ -181,4 +115,3 @@ Section spec.
 End spec.
 
 Typeclasses Opaque mem_t_rec.
-Typeclasses Opaque chunks_t_rec.

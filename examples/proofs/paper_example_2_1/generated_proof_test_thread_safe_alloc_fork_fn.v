@@ -1,10 +1,10 @@
 From refinedc.typing Require Import typing.
-From refinedc.examples.paper_examples Require Import generated_code.
-From refinedc.examples.paper_examples Require Import generated_spec.
+From refinedc.examples.paper_example_2_1 Require Import generated_code.
+From refinedc.examples.paper_example_2_1 Require Import generated_spec.
 From refinedc.examples.spinlock Require Import spinlock_def.
 Set Default Proof Using "Type".
 
-(* Generated from [examples/paper_examples.c]. *)
+(* Generated from [examples/paper_example_2_1.c]. *)
 Section proof_test_thread_safe_alloc_fork_fn.
   Context `{!typeG Σ} `{!globalG Σ}.
   Context `{!lockG Σ}.
