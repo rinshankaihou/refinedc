@@ -13,7 +13,7 @@ Section proof_alloc.
   Lemma type_alloc :
     ⊢ typed_function impl_alloc type_of_alloc.
   Proof.
-    start_function "alloc" ([[nlen nsize] p]) => arg_d arg_size.
+    start_function "alloc" ([[a n] p]) => arg_d arg_size.
     split_blocks ((
       ∅
     )%I : gmap label (iProp Σ)) ((
