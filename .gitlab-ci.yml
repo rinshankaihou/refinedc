@@ -40,7 +40,7 @@ build-coq.8.12.0:
 build-iris.dev:
   <<: *template
   variables:
-    OPAM_PINS: "coq version 8.12.dev   coq-stdpp.dev git git+https://gitlab.mpi-sws.org/iris/stdpp.git#$STDPP_REV   coq-iris.dev git git+https://gitlab.mpi-sws.org/iris/iris.git#$IRIS_REV  cerberus git git+https://github.com/rlepigre/cerberus.git#da87de09974dd4063c0b50fea7f23420374dd169"
+    OPAM_PINS: "coq version 8.12.dev   coq-stdpp.dev git git+https://gitlab.mpi-sws.org/iris/stdpp.git#$STDPP_REV   coq-iris.dev git git+https://gitlab.mpi-sws.org/iris/iris.git#$IRIS_REV  cerberus git git+https://github.com/rems-project/cerberus.git#6ea80db048080468761499238fa0d045222ccc52"
   except:
   only:
   - triggers
