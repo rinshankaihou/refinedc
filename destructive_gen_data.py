@@ -100,7 +100,7 @@ def parse_file(f):
 def compute_annots(FILES):
     total = {}
     o = subprocess.check_output(["tokei", "--output=json", "--files"] + FILES)
-    print(o)
+    # print(o)
     inner = json.loads(o)
     if "CHeader" not in inner:
         inner["CHeader"] = { "code": 0, "reports": []}
@@ -263,6 +263,9 @@ stats = [ {
 #   liInst Hevar γ.
 stats[5]["progs"][0]["stats"]["annot"] += 6
 
-print(json.dumps(stats, indent=2))
-with open('data.json', 'w') as f:
+# print(json.dumps(stats, indent=2))
+
+output_file = 'data.json'
+with open(output_file, 'w') as f:
     json.dump(stats, f, indent=2)
+print("Data written to [{}].", output_file)
