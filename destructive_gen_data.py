@@ -264,5 +264,5 @@ stats = [ {
 stats[5]["progs"][0]["stats"]["annot"] += 6
 
 print(json.dumps(stats, indent=2))
-with open('stats.json', 'w') as f:
+with open('data.json', 'w') as f:
     json.dump(stats, f, indent=2)
