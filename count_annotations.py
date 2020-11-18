@@ -3,11 +3,9 @@ import sys
 import re
 import json
 import subprocess
-
-## TODO: distinguish between specification annotations and proof
-## annotations (by checking if there is whitespace at the beginning of
-## the line?)
-## TODO: also count Coq code
+import shutil
+import os
+import random
 
 annotation_re = re.compile(r"( ?)\[\[rc::([A-Za-z_]+)\s*\((.*?)\)\s*\]\]", re.DOTALL)
 annotation_block_re = re.compile(r"\[\[rc::([A-Za-z_]+)\s*\]\]")
@@ -39,8 +37,8 @@ ANNOT_TYPE = {
     "loopexists": "annot",
     "inv_vars": "annot",
     "block": "annot",
-    "tactics": "side",
-    "lemmas": "side",
+    "tactics": "pure",
+    "lemmas": "pure",
     "unfold": "rule",
     "unfold_once": "rule",
     "unlock": "rule",
@@ -60,22 +58,14 @@ def print_stats(annots, loc):
         t = ANNOT_TYPE[k]
         types[t] = types.get(t, 0)
         types[t] += v
-        if t != "import" and t != "inlined" and t != "require":
+        if k != "import" and k != "inlined" and k != "require":
             total += v
     types["LoC"] = loc - total
+    types["annot"] = types.get("annot", 0) + types.get("rule", 0)
+    types.pop('rule', None)
     print(json.dumps(types, indent=2))
+    return types
 
-    # annots_sum_with_spec = 0
-    # for k,v in annots.items():
-    #     annots_sum_with_spec += v[0]
-    # annots_sum_without_spec = 0
-    # for k,v in annots.items():
-    #     annots_sum_without_spec += v[1]
-    # loc -= annots_sum_with_spec + annots_sum_without_spec
-    # print("with spec: {}/{} = {:.2f}".format(annots_sum_with_spec, loc, annots_sum_with_spec / loc))
-    # print("without spec: {}/{} = {:.2f}".format(annots_sum_without_spec, loc, annots_sum_without_spec / loc))
-
-total = {}
 def parse_file(f):
     per_file = {}
     for match in annotation_re.finditer(f):
@@ -84,69 +74,194 @@ def parse_file(f):
         if name == "exists" and match.group(1) != "":
             name = "loopexists"
 
-        # idx = 0 if match.group(1) == "" else 1
-        # if "::" in name:
-        # if match.group(1) == "parameters":
-            # print(match.group(1), name)
         per_file[name] = per_file.get(name, 0)
         per_file[name] += num_lines
 
     for match in annotation_block_re.finditer(f):
         num_lines = 1
-        # if "::" in match.group(2):
-        # if match.group(1) == "parameters":
-        # print(match.group(1))
 
         per_file[match.group(1)] = per_file.get(match.group(1), 0)
         per_file[match.group(1)] += num_lines
 
     for match in inline_re.finditer(f):
         num_lines = 1
-        # if "::" in match.group(2):
-        # if match.group(1) == "parameters":
-        # print(match.group(1))
 
         per_file[match.group(1)] = per_file.get(match.group(1), 0)
         per_file[match.group(1)] += num_lines
 
     for match in comment_re.finditer(f):
         num_lines = 1
-        # if "::" in match.group(2):
-        # if match.group(1) == "parameters":
-        # print(match.group(1))
 
         per_file[match.group(1)] = per_file.get(match.group(1), 0)
         per_file[match.group(1)] += num_lines
 
     return per_file
 
+def compute_annots(FILES):
+    total = {}
+    o = subprocess.check_output(["tokei", "--output=json", "--files"] + FILES)
+    inner = json.loads(o)["inner"]
+    if "CHeader" not in inner:
+        inner["CHeader"] = { "code": 0, "stats": []}
+    lines_total = inner["C"]["code"] + inner["CHeader"]["code"]
+    lines_per_file = {}
+    for s in inner["C"]["stats"] + inner["CHeader"]["stats"]:
+        lines_per_file[s["name"]] = s["code"]
 
-if len(sys.argv) < 2:
-    print("Usage: {} <files.c> ...".format(sys.argv[0]))
-    exit(1)
+    # count annotations
+    for f in FILES:
+        if f.endswith(".v"):
+            continue
+        print(f)
+        with open(f, 'r') as content_file:
+            per_file = parse_file(content_file.read())
 
-FILES=sys.argv[1:]
+        print_stats(per_file, lines_per_file[f])
 
-o = subprocess.check_output(["tokei", "--output=json", "--files"] + FILES)
-inner = json.loads(o)["inner"]
-if "CHeader" not in inner:
-    inner["CHeader"] = { "code": 0, "stats": []}
-lines_total = inner["C"]["code"] + inner["CHeader"]["code"]
-lines_per_file = {}
-for s in inner["C"]["stats"] + inner["CHeader"]["stats"]:
-    lines_per_file[s["name"]] = s["code"]
+        for k,v in per_file.items():
+            total[k] = total.get(k, 0)
+            total[k] += v
 
-for f in FILES:
-    print(f)
-    with open(f, 'r') as content_file:
-        per_file = parse_file(content_file.read())
 
-    print_stats(per_file, lines_per_file[f])
+    total = print_stats(total, lines_total)
+    if "Coq" in inner:
+        total["pure"] = total.get("pure", 0) + inner["Coq"]["code"]
+    # count lemmas and quantifier instantiations
+    total["exists"] = 0
+    total["sideconds"] = 0
+    total["unsolvedsideconds"] = 0
+    total["rules"] = 0
+    results = []
 
-    for k,v in per_file.items():
-        total[k] = total.get(k, 0)
-        total[k] += v
+    for f in FILES:
+        if not f.endswith(".c"):
+            continue
+        proofsdir = os.path.join(os.path.dirname(f), "proofs", os.path.basename(f)[:-2])
+        print(proofsdir)
+        tmpname = f + ".statstmp"
+        shutil.copyfile(f, tmpname)
+        with open(f, "a") as fd:
+            fd.write("//@rc::import enable_debug from refinedc.typing.automation\n")
+            fd.write(f"//@rc::inlined Definition marker_{random.randint(0, 1000)} := tt.\n")
 
-print("total:")
-print_stats(total, lines_total)
-# print(json.dumps(total, indent=2))
+        subprocess.check_output(["dune", "exec", "--", "refinedc", "check", "--no-build", f])
+
+        o = subprocess.check_output(["dune", "build", "--display", "short"],
+                                    cwd=proofsdir, stderr=subprocess.STDOUT).split(b"\n")
+        current = None
+
+        for line in o:
+            if b"coqc " in line:
+                if current is not None:
+                    results.append(current)
+                    current = None
+
+                name = line.decode("utf8")
+                if proofsdir in name:
+                    print(name)
+                    current = { "name" : name,
+                                "exists": 0, "sideconds": 0, "unsolvedsideconds": 0, "rules": 0 }
+            if current is None:
+                continue
+            if line == b"EVAR":
+                current["exists"] += 1
+                total["exists"] += 1
+            if line == b"SIDECOND":
+                current["sideconds"] += 1
+                total["sideconds"] += 1
+            if line == b"UNSOLVEDSIDECOND":
+                current["unsolvedsideconds"] += 1
+                total["unsolvedsideconds"] += 1
+            if line == b"EXTENSIBLE":
+                current["rules"] += 1
+                total["rules"] += 1
+        if current is not None:
+            results.append(current)
+            current = None
+
+        # print((json.dumps(results, indent=2)))
+        # print((json.dumps(total, indent=2)))
+        shutil.move(tmpname, f)
+
+    print("total:")
+    # print_stats(total, lines_total)
+    print(json.dumps(total, indent=2))
+    return total
+
+stats = [ {
+    "name": "#1",
+    "progs": [ {
+        "name": "Singly linked list",
+        "abs": "wand, alloc",
+        "stats": compute_annots(["tutorial/t03_list.c"])
+    }, {
+        "name": "Queue",
+        "abs": "list segments, alloc",
+        "stats": compute_annots(["examples/queue.c"])
+    }, {
+        "name": "Binary search",
+        "abs": "arrays, func. ptr.",
+        "stats": compute_annots(["examples/binary_search.c",
+                                 "examples/proofs/binary_search/binary_search_extra.v"])
+    } ]
+}, {
+    "name": "#2",
+    "progs": [ {
+        "name": "Thread-safe allocator",
+        "abs": "wand, padded, spinlock",
+        "stats": compute_annots(["tutorial/t04_alloc.c", "tutorial/alloc.h", "tutorial/alloc_internal.h"])
+    }, {
+        "name": "Page allocator",
+        "abs": "padded",
+        "stats": compute_annots(["examples/malloc1.c"])
+    } ]
+}, {
+    "name": "#3",
+    "progs": [ {
+        "name": "Binary search tree (layered)",
+        "abs": "wand, alloc",
+        "stats": compute_annots(["tutorial/t08_tree.c", "tutorial/proofs/t08_tree/t08_tree_extra.v"])
+    }, {
+        "name": "Binary search tree (direct)",
+        "abs": "wand, alloc",
+        "stats": compute_annots(["tutorial/t11_tree_set.c"])
+    } ]
+}, {
+    "name": "#4",
+    "progs": [ {
+        "name": "Linear probing hashmap",
+        "abs": "unions, arrays, alloc",
+        "stats": compute_annots(["examples/mutable_map.c", "examples/proofs/mutable_map/mutable_map_extra.v"])
+    } ]
+}, {
+    "name": "#5",
+    "progs": [ {
+        "name": "Hafnium's mpool allocator",
+        "abs": "wand, padded, spinlock",
+        "stats": compute_annots(["examples/mpool.c"])
+    } ]
+}, {
+    "name": "#6",
+    "progs": [ {
+        "name": "Spinlock",
+        "abs": "atomic Boolean",
+        "stats": compute_annots(["examples/spinlock.c", "examples/include/spinlock.h"])
+    }, {
+        "name": "One-time barrier",
+        "abs": "atomic Boolean",
+        "stats": compute_annots(["examples/latch.c", "examples/include/latch.h"])
+    } ]
+} ]
+
+# Add 6 to spinlock for the 6 non-trivial lines in examples/proofs/spinlock/spinlock_proof.v
+#   Typeclasses Transparent spinlock spinlocked_ex spinlock_token spinlocked_ex_token.
+#   iApply fupd_typed_stmt.
+#   iMod (own_alloc (● GSet ∅)) as (γ) "Hown"; [ by apply auth_auth_valid |].
+#   iAssert (spinlock_token γ []) with "[Hown]" as "?"; [ by iExists _; iFrame |].
+#   iModIntro.
+#   liInst Hevar γ.
+stats[5]["progs"][0]["stats"]["annot"] += 6
+
+print(json.dumps(stats, indent=2))
+with open('stats.json', 'w') as f:
+    json.dump(stats, f, indent=2)

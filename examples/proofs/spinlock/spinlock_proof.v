@@ -17,8 +17,8 @@ Section type.
     start_function "sl_init" (p) => vl. split_blocks (∅ : gmap label (iProp Σ)) (∅ : gmap label (iProp Σ)).
 
     iApply fupd_typed_stmt.
-    iMod (own_alloc (● GSet ∅)) as (γ) "Hown". by apply auth_auth_valid.
-    iAssert (spinlock_token γ []) with "[Hown]" as "?". iExists _. by iFrame.
+    iMod (own_alloc (● GSet ∅)) as (γ) "Hown"; [ by apply auth_auth_valid |].
+    iAssert (spinlock_token γ []) with "[Hown]" as "?"; [ by iExists _; iFrame |].
     iModIntro.
 
     repeat liRStep; liShow.
