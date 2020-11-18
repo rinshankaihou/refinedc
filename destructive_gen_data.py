@@ -268,4 +268,4 @@ stats[5]["progs"][0]["stats"]["annot"] += 6
 output_file = 'data.json'
 with open(output_file, 'w') as f:
     json.dump(stats, f, indent=2)
-print("Data written to [{}].", output_file)
+print("Data written to [" + output_file + "].")
