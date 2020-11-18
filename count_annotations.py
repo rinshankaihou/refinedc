@@ -100,13 +100,14 @@ def parse_file(f):
 def compute_annots(FILES):
     total = {}
     o = subprocess.check_output(["tokei", "--output=json", "--files"] + FILES)
-    inner = json.loads(o)["inner"]
+    print(o)
+    inner = json.loads(o)
     if "CHeader" not in inner:
-        inner["CHeader"] = { "code": 0, "stats": []}
+        inner["CHeader"] = { "code": 0, "reports": []}
     lines_total = inner["C"]["code"] + inner["CHeader"]["code"]
     lines_per_file = {}
-    for s in inner["C"]["stats"] + inner["CHeader"]["stats"]:
-        lines_per_file[s["name"]] = s["code"]
+    for s in inner["C"]["reports"] + inner["CHeader"]["reports"]:
+        lines_per_file[s["name"]] = s["stats"]["code"]
 
     # count annotations
     for f in FILES:
