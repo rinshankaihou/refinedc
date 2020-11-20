@@ -41,3 +41,15 @@ struct color blue(uint8_t b) {
   c = (struct color){ .b = b };
   return c;
 }
+
+[[rc::parameters("r : nat", "g : nat", "b : nat")]]
+[[rc::args("{(r, g, b)} @ color")]]
+[[rc::returns("{b} @ int<u8>")]]
+uint8_t getblue(struct color b) {
+  return b.b;
+}
+
+[[rc::ensures("True")]]
+void argtest() {
+  assert(getblue(blue(5)) == (uint8_t)5);
+}

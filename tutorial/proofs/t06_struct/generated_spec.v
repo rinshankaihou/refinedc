@@ -79,6 +79,15 @@ Section spec.
   Definition type_of_blue :=
     fn(∀ b : nat; (b @ (int (u8))); True)
       → ∃ () : (), (((0, 0, b)%nat) @ (color)); True.
+
+  (* Specifications for function [getblue]. *)
+  Definition type_of_getblue :=
+    fn(∀ (r, g, b) : nat * nat * nat; (((r, g, b)) @ (color)); True)
+      → ∃ () : (), ((b) @ (int (u8))); True.
+
+  (* Specifications for function [argtest]. *)
+  Definition type_of_argtest :=
+    fn(∀ () : (); True) → ∃ () : (), (void); ⌜True⌝.
 End spec.
 
 Typeclasses Opaque color_rec.

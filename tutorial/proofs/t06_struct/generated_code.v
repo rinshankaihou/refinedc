@@ -35,6 +35,21 @@ Section code.
   Definition loc_43 : location_info := LocationInfo file_0 41 6 41 30.
   Definition loc_45 : location_info := LocationInfo file_0 41 27 41 28.
   Definition loc_46 : location_info := LocationInfo file_0 41 27 41 28.
+  Definition loc_51 : location_info := LocationInfo file_0 49 2 49 13.
+  Definition loc_52 : location_info := LocationInfo file_0 49 9 49 12.
+  Definition loc_53 : location_info := LocationInfo file_0 49 9 49 12.
+  Definition loc_54 : location_info := LocationInfo file_0 49 9 49 10.
+  Definition loc_57 : location_info := LocationInfo file_0 54 2 54 41.
+  Definition loc_58 : location_info := LocationInfo file_0 54 9 54 39.
+  Definition loc_59 : location_info := LocationInfo file_0 54 9 54 25.
+  Definition loc_60 : location_info := LocationInfo file_0 54 9 54 16.
+  Definition loc_61 : location_info := LocationInfo file_0 54 9 54 16.
+  Definition loc_62 : location_info := LocationInfo file_0 54 17 54 24.
+  Definition loc_63 : location_info := LocationInfo file_0 54 17 54 21.
+  Definition loc_64 : location_info := LocationInfo file_0 54 17 54 21.
+  Definition loc_65 : location_info := LocationInfo file_0 54 22 54 23.
+  Definition loc_66 : location_info := LocationInfo file_0 54 29 54 39.
+  Definition loc_67 : location_info := LocationInfo file_0 54 38 54 39.
 
   (* Definition of struct [color]. *)
   Program Definition struct_color := {|
@@ -131,6 +146,43 @@ Section code.
           ] ;
         locinfo: loc_38 ;
         Return (LocInfoE loc_39 (use{layout_of struct_color} (LocInfoE loc_40 ("c"))))
+      ]> $∅
+    )%E
+  |}.
+
+  (* Definition of function [getblue]. *)
+  Definition impl_getblue : function := {|
+    f_args := [
+      ("b", layout_of struct_color)
+    ];
+    f_local_vars := [
+    ];
+    f_init := "#0";
+    f_code := (
+      <[ "#0" :=
+        locinfo: loc_51 ;
+        Return (LocInfoE loc_52 (use{it_layout u8} (LocInfoE loc_53 ((LocInfoE loc_54 ("b")) at{struct_color} "b"))))
+      ]> $∅
+    )%E
+  |}.
+
+  (* Definition of function [argtest]. *)
+  Definition impl_argtest (blue getblue : loc): function := {|
+    f_args := [
+    ];
+    f_local_vars := [
+    ];
+    f_init := "#0";
+    f_code := (
+      <[ "#0" :=
+        locinfo: loc_62 ;
+        "$0" <- LocInfoE loc_64 (blue) with
+          [ LocInfoE loc_65 (UnOp (CastOp $ IntOp u8) (IntOp i32) (LocInfoE loc_65 (i2v 5 i32))) ] ;
+        locinfo: loc_59 ;
+        "$1" <- LocInfoE loc_61 (getblue) with [ LocInfoE loc_62 ("$0") ] ;
+        locinfo: loc_57 ;
+        assert: (LocInfoE loc_58 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_58 ((LocInfoE loc_59 ("$1")) ={IntOp u8, IntOp u8} (LocInfoE loc_66 (UnOp (CastOp $ IntOp u8) (IntOp i32) (LocInfoE loc_67 (i2v 5 i32)))))))) ;
+        Return (VOID)
       ]> $∅
     )%E
   |}.
