@@ -1,6 +1,7 @@
 From refinedc.typing Require Import typing.
 From refinedc.tutorial.quicksort_solution Require Import generated_code.
 From refinedc.tutorial.quicksort_solution Require Import generated_spec.
+From refinedc.tutorial.quicksort_solution Require Import list_proofs.
 Set Default Proof Using "Type".
 
 (* Generated from [tutorial/quicksort_solution.c]. *)

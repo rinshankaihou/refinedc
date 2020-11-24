@@ -39,6 +39,10 @@ Proof. split; destruct l; naive_solver. Qed.
 Global Instance simpl_to_cons_Some A (l : list A) x : SimplBothRel (=) (maybe2 cons l) (Some x) (l = x.1::x.2).
 Proof. split; destruct l, x; naive_solver. Qed.
 
+Global Instance simpl_protected_neq_nil A (l : list A) `{!IsProtected l} :
+  SimplBoth (l ≠ []) (∃ x l', l = x :: l').
+Proof. split; destruct l; naive_solver. Qed.
+
 Global Instance simpl_gt_0_neg n : SimplBoth (¬ (0 < n))%nat (n = 0%nat).
 Proof. split; destruct n; naive_solver lia. Qed.
 

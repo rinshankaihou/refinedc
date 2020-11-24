@@ -11,4 +11,6 @@ Section spec.
   (* Function [append] has been skipped. *)
 
   (* Function [partition] has been skipped. *)
+
+  (* Function [quicksort] has been skipped. *)
 End spec.

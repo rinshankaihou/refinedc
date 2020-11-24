@@ -32,12 +32,24 @@ list_t partition(list_t *l, int pivot) {
   } else {
     list_t rest = partition(&(*l)->next, pivot);
     list_t head = *l;
-    if((*l)->val <= pivot) {
+    if(pivot <= (*l)->val) {
       *l = (*l)->next;
       head->next = rest;
       return head;
     } else {
       return rest;
     }
+  }
+}
+
+void quicksort(list_t* l) {
+  if(*l == NULL) {
+    return;
+  } else {
+    int pivot = (*l)->val;
+    list_t higher = partition(l, pivot);
+    quicksort(&higher);
+    quicksort(l);
+    append(l, higher);
   }
 }

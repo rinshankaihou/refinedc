@@ -65,14 +65,14 @@ Section code.
   Definition loc_60 : location_info := LocationInfo file_0 40 13 40 17.
   Definition loc_61 : location_info := LocationInfo file_0 40 13 40 17.
   Definition loc_62 : location_info := LocationInfo file_0 35 7 35 25.
-  Definition loc_63 : location_info := LocationInfo file_0 35 7 35 16.
-  Definition loc_64 : location_info := LocationInfo file_0 35 7 35 16.
-  Definition loc_65 : location_info := LocationInfo file_0 35 7 35 11.
-  Definition loc_66 : location_info := LocationInfo file_0 35 7 35 11.
-  Definition loc_67 : location_info := LocationInfo file_0 35 9 35 10.
-  Definition loc_68 : location_info := LocationInfo file_0 35 9 35 10.
-  Definition loc_69 : location_info := LocationInfo file_0 35 20 35 25.
-  Definition loc_70 : location_info := LocationInfo file_0 35 20 35 25.
+  Definition loc_63 : location_info := LocationInfo file_0 35 7 35 12.
+  Definition loc_64 : location_info := LocationInfo file_0 35 7 35 12.
+  Definition loc_65 : location_info := LocationInfo file_0 35 16 35 25.
+  Definition loc_66 : location_info := LocationInfo file_0 35 16 35 25.
+  Definition loc_67 : location_info := LocationInfo file_0 35 16 35 20.
+  Definition loc_68 : location_info := LocationInfo file_0 35 16 35 20.
+  Definition loc_69 : location_info := LocationInfo file_0 35 18 35 19.
+  Definition loc_70 : location_info := LocationInfo file_0 35 18 35 19.
   Definition loc_71 : location_info := LocationInfo file_0 34 18 34 20.
   Definition loc_72 : location_info := LocationInfo file_0 34 18 34 20.
   Definition loc_73 : location_info := LocationInfo file_0 34 19 34 20.
@@ -94,6 +94,48 @@ Section code.
   Definition loc_93 : location_info := LocationInfo file_0 30 6 30 7.
   Definition loc_94 : location_info := LocationInfo file_0 30 6 30 7.
   Definition loc_95 : location_info := LocationInfo file_0 30 11 30 25.
+  Definition loc_98 : location_info := LocationInfo file_0 46 2 54 3.
+  Definition loc_99 : location_info := LocationInfo file_0 46 27 48 3.
+  Definition loc_100 : location_info := LocationInfo file_0 47 4 47 11.
+  Definition loc_102 : location_info := LocationInfo file_0 48 9 54 3.
+  Definition loc_103 : location_info := LocationInfo file_0 49 4 49 26.
+  Definition loc_104 : location_info := LocationInfo file_0 50 4 50 40.
+  Definition loc_105 : location_info := LocationInfo file_0 51 4 51 23.
+  Definition loc_106 : location_info := LocationInfo file_0 52 4 52 17.
+  Definition loc_107 : location_info := LocationInfo file_0 53 4 53 22.
+  Definition loc_108 : location_info := LocationInfo file_0 53 4 53 10.
+  Definition loc_109 : location_info := LocationInfo file_0 53 4 53 10.
+  Definition loc_110 : location_info := LocationInfo file_0 53 11 53 12.
+  Definition loc_111 : location_info := LocationInfo file_0 53 11 53 12.
+  Definition loc_112 : location_info := LocationInfo file_0 53 14 53 20.
+  Definition loc_113 : location_info := LocationInfo file_0 53 14 53 20.
+  Definition loc_114 : location_info := LocationInfo file_0 52 4 52 13.
+  Definition loc_115 : location_info := LocationInfo file_0 52 4 52 13.
+  Definition loc_116 : location_info := LocationInfo file_0 52 14 52 15.
+  Definition loc_117 : location_info := LocationInfo file_0 52 14 52 15.
+  Definition loc_118 : location_info := LocationInfo file_0 51 4 51 13.
+  Definition loc_119 : location_info := LocationInfo file_0 51 4 51 13.
+  Definition loc_120 : location_info := LocationInfo file_0 51 14 51 21.
+  Definition loc_121 : location_info := LocationInfo file_0 51 15 51 21.
+  Definition loc_122 : location_info := LocationInfo file_0 50 20 50 39.
+  Definition loc_123 : location_info := LocationInfo file_0 50 20 50 29.
+  Definition loc_124 : location_info := LocationInfo file_0 50 20 50 29.
+  Definition loc_125 : location_info := LocationInfo file_0 50 30 50 31.
+  Definition loc_126 : location_info := LocationInfo file_0 50 30 50 31.
+  Definition loc_127 : location_info := LocationInfo file_0 50 33 50 38.
+  Definition loc_128 : location_info := LocationInfo file_0 50 33 50 38.
+  Definition loc_131 : location_info := LocationInfo file_0 49 16 49 25.
+  Definition loc_132 : location_info := LocationInfo file_0 49 16 49 25.
+  Definition loc_133 : location_info := LocationInfo file_0 49 16 49 20.
+  Definition loc_134 : location_info := LocationInfo file_0 49 16 49 20.
+  Definition loc_135 : location_info := LocationInfo file_0 49 18 49 19.
+  Definition loc_136 : location_info := LocationInfo file_0 49 18 49 19.
+  Definition loc_139 : location_info := LocationInfo file_0 46 5 46 25.
+  Definition loc_140 : location_info := LocationInfo file_0 46 5 46 7.
+  Definition loc_141 : location_info := LocationInfo file_0 46 5 46 7.
+  Definition loc_142 : location_info := LocationInfo file_0 46 6 46 7.
+  Definition loc_143 : location_info := LocationInfo file_0 46 6 46 7.
+  Definition loc_144 : location_info := LocationInfo file_0 46 11 46 25.
 
   (* Definition of struct [list_node]. *)
   Program Definition struct_list_node := {|
@@ -176,7 +218,7 @@ Section code.
         "head" <-{ LPtr }
           LocInfoE loc_71 (use{LPtr} (LocInfoE loc_73 (!{LPtr} (LocInfoE loc_74 ("l"))))) ;
         locinfo: loc_62 ;
-        if: LocInfoE loc_62 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_62 ((LocInfoE loc_63 (use{it_layout i32} (LocInfoE loc_64 ((LocInfoE loc_65 (!{LPtr} (LocInfoE loc_67 (!{LPtr} (LocInfoE loc_68 ("l")))))) at{struct_list_node} "val")))) ≤{IntOp i32, IntOp i32} (LocInfoE loc_69 (use{it_layout i32} (LocInfoE loc_70 ("pivot")))))))
+        if: LocInfoE loc_62 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_62 ((LocInfoE loc_63 (use{it_layout i32} (LocInfoE loc_64 ("pivot")))) ≤{IntOp i32, IntOp i32} (LocInfoE loc_65 (use{it_layout i32} (LocInfoE loc_66 ((LocInfoE loc_67 (!{LPtr} (LocInfoE loc_69 (!{LPtr} (LocInfoE loc_70 ("l")))))) at{struct_list_node} "val")))))))
         then
         locinfo: loc_39 ;
           Goto "#3"
@@ -197,6 +239,53 @@ Section code.
       <[ "#4" :=
         locinfo: loc_59 ;
         Return (LocInfoE loc_60 (use{LPtr} (LocInfoE loc_61 ("rest"))))
+      ]> $∅
+    )%E
+  |}.
+
+  (* Definition of function [quicksort]. *)
+  Definition impl_quicksort (append partition quicksort : loc): function := {|
+    f_args := [
+      ("l", LPtr)
+    ];
+    f_local_vars := [
+      ("pivot", it_layout i32);
+      ("higher", LPtr)
+    ];
+    f_init := "#0";
+    f_code := (
+      <[ "#0" :=
+        locinfo: loc_139 ;
+        if: LocInfoE loc_139 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_139 ((LocInfoE loc_140 (use{LPtr} (LocInfoE loc_142 (!{LPtr} (LocInfoE loc_143 ("l")))))) ={PtrOp, PtrOp} (LocInfoE loc_144 (NULL)))))
+        then
+        locinfo: loc_100 ;
+          Goto "#1"
+        else
+        Goto "#2"
+      ]> $
+      <[ "#1" :=
+        locinfo: loc_100 ;
+        Return (VOID)
+      ]> $
+      <[ "#2" :=
+        "pivot" <-{ it_layout i32 }
+          LocInfoE loc_131 (use{it_layout i32} (LocInfoE loc_132 ((LocInfoE loc_133 (!{LPtr} (LocInfoE loc_135 (!{LPtr} (LocInfoE loc_136 ("l")))))) at{struct_list_node} "val"))) ;
+        locinfo: loc_122 ;
+        "$0" <- LocInfoE loc_124 (partition) with
+          [ LocInfoE loc_125 (use{LPtr} (LocInfoE loc_126 ("l"))) ;
+          LocInfoE loc_127 (use{it_layout i32} (LocInfoE loc_128 ("pivot"))) ] ;
+        "higher" <-{ LPtr } LocInfoE loc_122 ("$0") ;
+        locinfo: loc_105 ;
+        "_" <- LocInfoE loc_119 (quicksort) with
+          [ LocInfoE loc_120 (&(LocInfoE loc_121 ("higher"))) ] ;
+        locinfo: loc_106 ;
+        "_" <- LocInfoE loc_115 (quicksort) with
+          [ LocInfoE loc_116 (use{LPtr} (LocInfoE loc_117 ("l"))) ] ;
+        locinfo: loc_107 ;
+        "_" <- LocInfoE loc_109 (append) with
+          [ LocInfoE loc_110 (use{LPtr} (LocInfoE loc_111 ("l"))) ;
+          LocInfoE loc_112 (use{LPtr} (LocInfoE loc_113 ("higher"))) ] ;
+        Return (VOID)
       ]> $∅
     )%E
   |}.
