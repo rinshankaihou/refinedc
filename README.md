@@ -367,7 +367,10 @@ the `dune` environment one should not call `dune`.
 # !!!INVALID!!!
 dune exec -- refinedc check examples/queue.c
 
-# Equivalent valid command sequence.
+# Alternative
+./build.sh examples/queue.c
+
+# Equivalent to the following valid command sequence.
 dune exec -- refinedc check --no-build examples/queue.c
 cd examples/proofs/queue
 dune build
@@ -377,6 +380,27 @@ cd -
 To generate the Coq code for all the examples of the repository you can run
 `make generate_all`. You can also force the generation of all the generated
 code using `make -B generate_all`.
+
+## Emacs setup
+
+The following elisp function enables direct execution of the `build.sh` script in this repo from emacs.
+It searches for a `build.sh` file in parent directories of the current file and executes it with the name
+of the current file. A similar functionallity should be easy to add to other editors as well.
+This script binds `build` to the keys `C-c c`. Use at your own risk!
+
+```elisp
+(setq build-file-name "build.sh")
+(defun build ()
+  "Search in the current and parent directories for a file with the name of variable `build-file-name' and execute the first file it find."
+  (interactive)
+  (save-some-buffers t) ; save all buffers
+  (let ((buildfile (locate-dominating-file default-directory build-file-name)))
+    (unless buildfile (error "No build file found!"))
+    (let ((default-directory buildfile))
+      (compile (concat buildfile build-file-name " " (buffer-file-name))))
+    (select-window (get-buffer-window "*compilation*"))))
+(global-set-key (kbd "C-c c") 'build)
+```
 
 ## Structure of the repository
 
