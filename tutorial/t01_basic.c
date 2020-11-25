@@ -17,12 +17,12 @@
    something like
 
    ...
-   theories/examples/tutorial/t1_basic_proof_int_id (...)
+   coqc tutorial/proofs/t01_basic/.generated_proof_int_id.aux,...
    ...
 
    This means that this function was verified successfully. If you only see
 
-   make[2]: Nothing to be done for 'real-all'.
+   Entering directory '/local/home/mackie/andres/Jobs/MPI-SWS/repos/refinedc'
 
    This means that the proof is already up-to-date. The simplest way
    to force a rechecking is to add an empty line at the top of this
@@ -160,21 +160,17 @@ int add1(int a) {
    something like:
 
    Cannot solve sidecondition in function "add1" !
-   Location: "theories/examples/tutorial/t1_basic.c" [ 149 : 11 - 149 : 16 ]
-   Location: "theories/examples/tutorial/t1_basic.c" [ 149 : 4 - 149 : 17 ]
+   Location: "tutorial/t01_basic.c" [ 154 : 11 - 154 : 16 ]
+   Location: "tutorial/t01_basic.c" [ 154 : 4 - 154 : 17 ]
    up to date: true
    Goal:
-   Σ : gFunctors
-   typeG0 : (typeG Σ)
-   globalG0 : (globalG Σ)
    n : Z
-   arg_a : loc
-   x : val
-   _Hyp_ : (min_int i32 ≤ n)
-   _Hyp1_ : (n ≤ max_int i32)
-   _Hyp2_ : (min_int i32 ≤ 1)
+   H : (min_int i32 ≤ n)
+   H0 : (n ≤ max_int i32)
+   H1 : (min_int i32 ≤ 1)
    ---------------------------------------
-   ((n + 1) ∈ i32)
+   (n + 1 ≤ max_int i32)
+
 
    This is one of the possible failure modes of RefinedC. If you look
    at the first line, you can see that RefinedC could not prove a side
@@ -237,7 +233,7 @@ int add1(int a) {
 
      Case distinction (DHintDestruct bool (bool_decide (a < b)))  -
      (false, DestructHintIfBool (bool_decide (a < b)))
-     at "theories/examples/tutorial/t1_basic.c" [ 260 : 7 - 260 : 12 ]
+     at "tutorial/t01_basic.c" [ 256 : 7 - 256 : 12 ]
 
    This kind of output gives us some information which case
    distinctions took place before this sidecondition was generated,
@@ -276,7 +272,7 @@ int min(int a, int b) {
    As you can see, loops must have an annotated loop invariant.
 
      ATTENTION: If you forget annotating a loop invariant, the
-     typechecker will happily go around the loop forever and never
+     typechecker might happily go around the loop forever and never
      terminate!
 
   The main part of the loop invariant annotation is the [rc::inv_vars]
@@ -334,17 +330,17 @@ int looping_add(int a, int b) {
    gets stuck. For this example, it should look something like
 
      _ : block{ "#1" }
-     _ : i2v (a + b - x + 1) i32 ◁ᵥ (a + b - x + 1) @ int i32
-     _ : arg_b ◁ₗ (a + b - x + 1) @ int i32
-     _ : arg_a ◁ₗ x @ int i32
+     _ : i2v (va + vb - acc + 1) i32 ◁ᵥ (va + vb - acc + 1) @ int i32
+     _ : arg_b ◁ₗ (va + vb - acc + 1) @ int i32
+     _ : arg_a ◁ₗ acc @ int i32
      --------------------------------------∗
 
    The first line only tells us that there is a precondtion for block
    "#1", but the other ones are more interesting:
 
-      arg_a ◁ₗ x @ int i32
+      arg_a ◁ₗ acc @ int i32
 
-   Tells us that the /location/ where [a] is stored has type [x @ int
+   Tells us that the /location/ where [a] is stored has type [acc @ int
    i32]. In general, RefinedC has two kinds of type assignments:
 
    - The main type assignment of RefinedC is based on locations in
