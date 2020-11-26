@@ -2,7 +2,7 @@
 
 set -e
 
-export TIMECMD="time -f \t%es\t%P"
+# export TIMECMD="time -f \t%es\t%P"
 
 if [[ "${1##*.}" == "c" ]]; then
     dune exec -- refinedc check --no-build "$1"
