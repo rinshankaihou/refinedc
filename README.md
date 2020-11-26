@@ -28,10 +28,10 @@ Assuming an appropriate [opam](https://opam.ocaml.org/doc/Install.html) switch
 (OCaml version 4.07.0 at least), run the following commands.
 ```bash
 sudo apt-get install libmpfr-dev # Implicit Cerberus dependency.
-opam repo add coq-released https://coq.inria.fr/opam/released
-opam repo add iris-dev https://gitlab.mpi-sws.org/iris/opam.git
-opam pin add -n -y cerberus git+https://github.com/rems-project/cerberus.git#6ea80db048080468761499238fa0d045222ccc52
-opam pin add refinedc git+https://gitlab.mpi-sws.org/iris/refinedc.git
+opam repo add coq-released "https://coq.inria.fr/opam/released"
+opam repo add iris-dev "https://gitlab.mpi-sws.org/iris/opam.git"
+opam pin add -n -y cerberus "git+https://github.com/rems-project/cerberus.git#6ea80db048080468761499238fa0d045222ccc52"
+opam pin add refinedc "git+https://gitlab.mpi-sws.org/iris/refinedc.git"
 ```
 
 ### System dependencies
@@ -97,19 +97,19 @@ cd refinedc-projects
 RefinedC requires Coq, Iris, as well as a number of OCaml dependencies. These
 dependencies can be made available to opam by running the following commands.
 ```bash
-opam repo add coq-released https://coq.inria.fr/opam/released
-opam repo add iris-dev https://gitlab.mpi-sws.org/iris/opam.git
-opam pin add -n -y cerberus git+https://github.com/rems-project/cerberus.git#6ea80db048080468761499238fa0d045222ccc52
+opam repo add coq-released "https://coq.inria.fr/opam/released"
+opam repo add iris-dev "https://gitlab.mpi-sws.org/iris/opam.git"
+opam pin add -n -y cerberus "git+https://github.com/rems-project/cerberus.git#6ea80db048080468761499238fa0d045222ccc52"
 ```
 You can then finally install RefinedC with the following command, or rather
 decide to install it from a local clone to have access to various examples.
 ```bash
-opam pin add refinedc git+https://gitlab.mpi-sws.org/iris/refinedc.git
+opam pin add refinedc "git+https://gitlab.mpi-sws.org/iris/refinedc.git"
 ```
 
 To install RefinedC from a local clone you can run the following commands.
 ```bash
-git clone https://gitlab.mpi-sws.org/iris/refinedc.git
+git clone "https://gitlab.mpi-sws.org/iris/refinedc.git"
 opam pin add refinedc refinedc
 ```
 You can then start checking annotated C files in the repository using, for
