@@ -30,12 +30,14 @@ Definition initial_thread_state (main : loc) : thread_state := {|
     rf_fn := {| f_args := []; f_local_vars := []; f_init := ""; f_code := ∅ |}
   |};
   ts_conts := [];
+  ts_alloc_failure := false;
 |}.
 
-Definition initial_state (fns : gmap loc function) (gs : gmap loc mbyte) (bs : blocks) :=
+Definition initial_state (fns : gmap loc function) (gs : gmap loc mbyte) (bs : allocs) :=
   {| st_heap := (λ b, (RSt 0%nat, b) ) <$> gs;
      st_fntbl := fns;
-     st_used_blocks := bs |}.
+     st_allocs := bs;
+     st_alloc_failure := false; |}.
 
 Lemma wp_to_typed_stmt `{!typeG Σ} (ts : thread_state) v':
   f_code (rf_fn (ts_rfn ts)) = ∅ →
@@ -45,16 +47,19 @@ Lemma wp_to_typed_stmt `{!typeG Σ} (ts : thread_state) v':
   WP ts {{ v, True }}.
 Proof.
   rewrite /typed_stmt stmt_wp_unfold -{9}(update_stmt_id ts) => ? Happ /of_to_val Hv. iIntros "Hs".
-  iApply "Hs" => //. by rewrite Happ. iIntros (v).
-  iDestruct 1 as ([]) "[% _]". destruct v => //. rewrite -Hv. by iApply wp_value'.
+  destruct ts.(ts_alloc_failure) eqn:Heq.
+  - iApply (wp_value _ _ _ _ {| sv_fn := _; sv_locs := _; sv_val_or_alloc_failure := VOAF_fail _ _; |}); last done.
+    rewrite /update_stmt Heq. done.
+  - iApply "Hs" => //. by rewrite Happ. iIntros (v).
+    iDestruct 1 as ([]) "[% _]". destruct v => //. rewrite -Hv. by iApply wp_value'.
 Qed.
 
 Definition main_type `{!typeG Σ} (P : iProp Σ) :=
   fn(∀ () : (); P) → ∃ () : (), int i32; True.
 
 (** * The main adequacy lemma *)
-Lemma refinedc_adequacy Σ `{!typePreG Σ} (thread_mains : list loc) (fns : gmap loc function) (gs : gmap loc mbyte) (bs : blocks) n t2 σ2 κs:
-  blocks_used_agree (initial_state fns gs bs).(st_heap) (initial_state fns gs bs).(st_used_blocks) →
+Lemma refinedc_adequacy Σ `{!typePreG Σ} (thread_mains : list loc) (fns : gmap loc function) (gs : gmap loc mbyte) (bs : allocs) n t2 σ2 κs:
+  blocks_used_agree (initial_state fns gs bs).(st_heap) (initial_state fns gs bs).(st_allocs) →
   (∀ {HtypeG : typeG Σ}, ∃ gl gt,
   let Hglobals : globalG Σ := {| global_locs := gl; global_initialized_types := gt; |} in
     ([∗ map] k↦qs∈gs, heap_mapsto_mbyte k 1 qs) -∗
@@ -120,9 +125,9 @@ Proof.
 Qed.
 
 (** * Helper functions for using the adequacy lemma *)
-Definition block_to_loc (l: block_id): loc := (l, 0%Z).
+Definition block_to_loc (l: alloc_id): loc := (l, 0%Z).
 
-Definition block_list_to_loc (l: block_id): list mbyte → gmap loc mbyte :=
+Definition block_list_to_loc (l: alloc_id): list mbyte → gmap loc mbyte :=
   list_to_map ∘ imap (λ i b, (block_to_loc l +ₗ i, b)).
 
 Lemma block_list_to_loc_nil l :
@@ -149,19 +154,19 @@ Proof.
   apply not_elem_of_list_to_map_1 => /= Hin2. set_solver.
 Qed.
 
-Definition heap_list_to_heap : gmap block_id (list mbyte) → gmap loc mbyte :=
+Definition heap_list_to_heap : gmap alloc_id (list mbyte) → gmap loc mbyte :=
   map_fold (λ b ls m, block_list_to_loc b ls ∪ m) ∅.
 
-Definition heap_list_to_used_blocks : gmap block_id (list mbyte) → blocks :=
+Definition heap_list_to_allocs : gmap alloc_id (list mbyte) → allocs :=
     fmap (λ l, to_allocation 0 (length l)).
 
 Lemma heap_list_to_heap_insert `{!refinedcG Σ} l v h :
   h !! l = None →
   ([∗ map] k↦qs ∈ heap_list_to_heap (<[l := v]> h), heap_mapsto_mbyte k 1 qs) -∗
-  ([∗ map] k↦qs ∈ heap_list_to_used_blocks (<[l := v]> h), allocs_entry k qs) -∗
+  ([∗ map] k↦qs ∈ heap_list_to_allocs (<[l := v]> h), allocs_entry k qs) -∗
   block_to_loc l ↦ v ∗
   ([∗ map] k↦qs ∈ heap_list_to_heap h, heap_mapsto_mbyte k 1 qs) ∗
-  ([∗ map] k↦qs ∈ heap_list_to_used_blocks h, allocs_entry k qs).
+  ([∗ map] k↦qs ∈ heap_list_to_allocs h, allocs_entry k qs).
 Proof.
   iIntros (HNone) "Hm Ha".
   rewrite /heap_list_to_heap map_fold_insert_L //; last by move => *; apply block_list_to_loc_comm.
@@ -174,7 +179,7 @@ Proof.
     apply not_elem_of_list_to_map_1. set_solver.
   }
   iDestruct "Hm" as "[Hv $]".
-  rewrite /heap_list_to_used_blocks fmap_insert big_sepM_insert; last by rewrite lookup_fmap HNone.
+  rewrite /heap_list_to_allocs fmap_insert big_sepM_insert; last by rewrite lookup_fmap HNone.
   iDestruct "Ha" as "[Ha $]".
   rewrite heap_mapsto_eq/heap_mapsto_def.
   iSplitL "Ha". { iApply allocs_entry_to_loc_in_bounds => //. simpl. lia. }
@@ -186,9 +191,9 @@ Proof.
 Qed.
 
 Lemma heap_list_blocks_agree fns gs:
-  blocks_used_agree (initial_state fns (heap_list_to_heap gs) (heap_list_to_used_blocks gs)).(st_heap) (initial_state fns (heap_list_to_heap gs) (heap_list_to_used_blocks gs)).(st_used_blocks).
+  blocks_used_agree (initial_state fns (heap_list_to_heap gs) (heap_list_to_allocs gs)).(st_heap) (initial_state fns (heap_list_to_heap gs) (heap_list_to_allocs gs)).(st_allocs).
 Proof.
-  move => /= l. rewrite /heap_list_to_used_blocks lookup_fmap fmap_None. move => Hgs i.
+  move => /= l. rewrite /heap_list_to_allocs lookup_fmap fmap_None. move => Hgs i.
   rewrite lookup_fmap fmap_None /heap_list_to_heap. move: Hgs.
   induction gs as [|] using map_ind. { by rewrite map_fold_empty. }
   rewrite map_fold_insert_L //; last by move => *; apply block_list_to_loc_comm.

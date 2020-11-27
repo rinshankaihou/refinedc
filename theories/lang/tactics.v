@@ -564,7 +564,7 @@ Qed.
 
 Ltac inv_stmt_step :=
    match goal with
-  | H : stmt_step (update_stmt _ ?st) _ _ _ _ _ |- _ =>
+  | H : simple_stmt_step (update_stmt _ ?st) _ _ _ _ _ |- _ =>
     inversion H; subst; clear H; simplify_map_eq/=;
       match goal with
       | H2 : st = ?e2 |- _ =>

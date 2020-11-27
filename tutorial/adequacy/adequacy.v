@@ -57,7 +57,7 @@ Section adequate.
     loc_main; loc_main2
   ].
 
-  Definition initial_heap : gmap block_id (list mbyte) :=
+  Definition initial_heap : gmap alloc_id (list mbyte) :=
     <[block_allocator_data := replicate (Z.to_nat 10000) MPoison ]> $
     <[block_allocator_state := replicate (struct_alloc_state).(ly_size) MPoison ]> $
     <[block_initialized := LATCH_INIT ]> $
@@ -80,7 +80,7 @@ Section adequate.
     nsteps (Λ := stmt_lang) n (initial_thread_state <$> [loc_main; loc_main2],
                                initial_state (fn_lists_to_fns function_locs functions)
                                              (heap_list_to_heap initial_heap)
-                                             (heap_list_to_used_blocks initial_heap)) κs (t2, σ2) →
+                                             (heap_list_to_allocs initial_heap)) κs (t2, σ2) →
     ∀ e2, e2 ∈ t2 → not_stuck e2 σ2.
   Proof.
     move => HNDblocks HNDfns.

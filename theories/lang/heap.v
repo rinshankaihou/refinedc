@@ -41,7 +41,7 @@ Definition to_heap : heap → heapUR :=
 Definition to_alloc (a : allocation) : allocR :=
   to_agree a.
 
-Definition to_allocs : gmap block_id allocation → allocsUR :=
+Definition to_allocs : gmap alloc_id allocation → allocsUR :=
   fmap to_alloc.
 
 Definition to_fntbl : gmap loc function → fntblUR :=
@@ -52,7 +52,7 @@ Section definitions.
 
   Implicit Types (st : lock_state) (l : loc) (q : Qp) (b : mbyte).
 
-  Definition allocs_entry_def (id : block_id) (a : allocation) : iProp Σ :=
+  Definition allocs_entry_def (id : alloc_id) (a : allocation) : iProp Σ :=
     own heap_allocs_name (◯ {[ id := to_alloc a ]}).
   Definition allocs_entry_aux : seal (@allocs_entry_def). by eexists. Qed.
   Definition allocs_entry := unseal allocs_entry_aux.
@@ -94,19 +94,19 @@ Section definitions.
   Definition heap_ctx (h : heap) : iProp Σ :=
     (own heap_name (● to_heap h))%I.
 
-  Definition allocs_ctx (ub : blocks) : iProp Σ :=
+  Definition allocs_ctx (ub : allocs) : iProp Σ :=
     (own heap_allocs_name (● to_allocs ub))%I.
 
   Definition fntbl_ctx (t : gmap loc function) : iProp Σ :=
     (own heap_fntbl_name (● to_fntbl t))%I.
 
-  Definition blocks_used_agree (h : heap) (ub : blocks) : Prop :=
+  Definition blocks_used_agree (h : heap) (ub : allocs) : Prop :=
     ∀ l, ub !! l.1 = None → heap_block_free h l.
 
   Definition state_ctx (σ:state) : iProp Σ :=
-    ⌜blocks_used_agree σ.(st_heap) σ.(st_used_blocks)⌝ ∗
+    ⌜blocks_used_agree σ.(st_heap) σ.(st_allocs)⌝ ∗
     heap_ctx σ.(st_heap) ∗
-    allocs_ctx σ.(st_used_blocks) ∗
+    allocs_ctx σ.(st_allocs) ∗
     fntbl_ctx σ.(st_fntbl).
 End definitions.
 
@@ -146,7 +146,7 @@ Section to_heap.
 End to_heap.
 
 Section to_allocs.
-  Implicit Types b : blocks.
+  Implicit Types b : allocs.
 
   Lemma to_allocs_valid b : ✓ to_allocs b.
   Proof. intros id. rewrite lookup_fmap. by case (b !! id) => // -[[]?]. Qed.
@@ -203,11 +203,11 @@ Section blocks_used_agree.
   Qed.
 
   Lemma blocks_used_agree_heap_upd_list_in ls vs f ub h:
-    list_to_set ls.*1 ⊆ dom (gset block_id) ub →
+    list_to_set ls.*1 ⊆ dom (gset alloc_id) ub →
     blocks_used_agree h ub → blocks_used_agree (heap_upd_list ls vs f h) ub.
   Proof.
     move => Hls Hb l Hl. apply heap_block_free_upd_list; first by apply Hb.
-    assert (l.1 ∉ dom (gset block_id) ub); last by set_solver.
+    assert (l.1 ∉ dom (gset alloc_id) ub); last by set_solver.
     by rewrite elem_of_dom Hl.
   Qed.
 End blocks_used_agree.
@@ -248,7 +248,7 @@ Section allocs.
     iIntros (?) "?". rewrite loc_in_bounds_eq/loc_in_bounds_def. iExists _. by iFrame.
   Qed.
 
-  Lemma allocs_alloc_list (ls : list loc) (vs : list val) (ub : blocks):
+  Lemma allocs_alloc_list (ls : list loc) (vs : list val) (ub : allocs):
     NoDup ls.*1 ->
     dom (gset _) ub ## (list_to_set ls.*1) →
     length vs = length ls →

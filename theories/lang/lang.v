@@ -208,9 +208,9 @@ Declare Scope loc_scope.
 Delimit Scope loc_scope with L.
 Open Scope loc_scope.
 
-Definition block_id := Z.
+Definition alloc_id := Z.
 
-Definition loc : Set := block_id * Z.
+Definition loc : Set := alloc_id * Z.
 Bind Scope loc_scope with loc.
 
 Inductive mbyte : Set :=
@@ -231,7 +231,7 @@ Record allocation :=
     alloc_end : Z;   (* One-past-the-end address. *)
   }.
 
-Definition blocks := gmap block_id allocation.
+Definition allocs := gmap alloc_id allocation.
 
 
 
@@ -316,9 +316,14 @@ Record function := {
 (* TODO: put both function and bytes in the same heap or make pointers disjoint (current version is wrong)*)
 Record state := {
   st_heap: heap;
-  st_used_blocks: blocks;
+  st_allocs: allocs;
   st_fntbl: gmap loc function;
+  st_alloc_failure: bool;
 }.
+
+Definition st_set_alloc_failure (σ : state) : state :=
+  {| st_heap := σ.(st_heap); st_allocs := σ.(st_allocs);
+     st_fntbl := σ.(st_fntbl); st_alloc_failure := true; |}.
 
 Record runtime_function := {
   (* locations of args and local vars are substitued in the body *)
@@ -340,13 +345,21 @@ Record continuation := {
 Record thread_state := {
   ts_rfn: runtime_function;
   ts_conts: list continuation;
+  ts_alloc_failure: bool;
 }.
+
+Definition set_alloc_failure (ts : thread_state) : thread_state :=
+  {| ts_rfn := ts.(ts_rfn); ts_conts := ts.(ts_conts); ts_alloc_failure := true; |}.
+
+Inductive val_or_alloc_failure :=
+  | VOAF_val (v: val)
+  | VOAF_fail (s : stmt) (ks: list continuation).
 
 (* values for statements *)
 Record stmt_val := {
   sv_fn : function;
   sv_locs: list (loc * layout);
-  sv_val: val;
+  sv_val_or_alloc_failure: val_or_alloc_failure;
 }.
 
 Implicit Type (l : loc) (e : expr) (v : val) (sz : nat) (h : heap) (σ : state) (ly : layout) (s : stmt) (sgn : signed) (rf : runtime_function) (ts : thread_state) (co : continuation).
@@ -556,7 +569,7 @@ Proof. apply Z.divide_add_r. Qed.
 Lemma aligned_to_add l (n : nat) x:
   (l +ₗ x * n) `aligned_to` n ↔ l `aligned_to` n.
 Proof.
-  unfold aligned_to. destruct l as [? a] => /=. rewrite Z.add_comm.
+  unfold aligned_to. destruct l => /=. rewrite Z.add_comm.
   split.
   - apply: Z.divide_add_cancel_r. by apply Z.divide_mul_r.
   - apply Z.divide_add_r. by apply Z.divide_mul_r.
@@ -565,7 +578,7 @@ Qed.
 Lemma aligned_to_mult_eq l n1 n2 off:
   l `aligned_to` n2 → (l +ₗ off) `aligned_to` (n1 * n2) → (n2 | off).
 Proof.
-  unfold aligned_to. destruct l as [? a] => /= ??. apply: Z.divide_add_cancel_r => //.
+  unfold aligned_to. destruct l => /= ??. apply: Z.divide_add_cancel_r => //.
   apply: (Zdivide_mult_l _ n1). by rewrite Z.mul_comm -Nat2Z.inj_mul.
 Qed.
 
@@ -575,7 +588,7 @@ Qed.
    allocation that contains [l]. Note that we consider the 1-past-the-end
    pointer to be in range of an allocation. *)
 Definition heap_loc_in_bounds (l : loc) (n : nat) (st : state) : Prop :=
-  ∃ alloc, st.(st_used_blocks) !! l.1 = Some alloc ∧
+  ∃ alloc, st.(st_allocs) !! l.1 = Some alloc ∧
            alloc.(alloc_start) ≤ l.2 ∧
            l.2 + n ≤ alloc.(alloc_end).
 
@@ -617,12 +630,14 @@ Fixpoint heap_free_list ls h : heap :=
 Definition update_stmt ts s := {|
   ts_conts := ts.(ts_conts);
   ts_rfn := {| rf_fn := ts.(ts_rfn).(rf_fn); rf_stmt := s; rf_locs := ts.(ts_rfn).(rf_locs) |};
+  ts_alloc_failure := ts.(ts_alloc_failure);
 |}.
 
 Definition heap_fmap f σ := {|
   st_heap := f σ.(st_heap);
   st_fntbl := σ.(st_fntbl);
-  st_used_blocks := σ.(st_used_blocks);
+  st_allocs := σ.(st_allocs);
+  st_alloc_failure := σ.(st_alloc_failure);
 |}.
 
 Definition to_val (e : expr) : option val :=
@@ -632,19 +647,35 @@ Definition to_val (e : expr) : option val :=
   end.
 
 Definition stmt_to_val (ts : thread_state) : option stmt_val :=
-  match ts.(ts_rfn).(rf_stmt), ts.(ts_conts) with
-  | Return (Val v), [] => Some {| sv_fn := ts.(ts_rfn).(rf_fn); sv_locs := ts.(ts_rfn).(rf_locs); sv_val := v |}
-  | _,_ => None
+  if ts.(ts_alloc_failure) then
+    Some {| sv_fn := ts.(ts_rfn).(rf_fn);
+            sv_locs := ts.(ts_rfn).(rf_locs);
+            sv_val_or_alloc_failure := VOAF_fail ts.(ts_rfn).(rf_stmt) ts.(ts_conts) |}
+  else
+    match ts.(ts_rfn).(rf_stmt), ts.(ts_conts) with
+    | Return (Val v), [] => Some {| sv_fn := ts.(ts_rfn).(rf_fn);
+                                    sv_locs := ts.(ts_rfn).(rf_locs);
+                                    sv_val_or_alloc_failure := VOAF_val v |}
+    | _             , _  => None
+    end.
+
+Definition stmt_of_val (sv : stmt_val) : thread_state :=
+  match sv.(sv_val_or_alloc_failure) with
+  | VOAF_val v => {|
+      ts_rfn := {| rf_stmt := Return (Val v);
+                   rf_locs := sv.(sv_locs);
+                   rf_fn := sv.(sv_fn); |};
+      ts_conts := [];
+      ts_alloc_failure := false;
+    |}
+  | VOAF_fail s ks => {|
+      ts_rfn := {| rf_stmt := s;
+                   rf_locs := sv.(sv_locs);
+                   rf_fn := sv.(sv_fn); |};
+      ts_conts := ks;
+      ts_alloc_failure := true;
+    |}
   end.
-
-Definition stmt_of_val (sv : stmt_val) : thread_state := {|
-  ts_rfn := {| rf_stmt := Return (Val sv.(sv_val));
-               rf_locs := sv.(sv_locs);
-               rf_fn := sv.(sv_fn); |};
-  ts_conts := [];
-|}.
-
-
 
 (*** Evaluation of operations *)
 (** Checks that the location [l] is allocated on the heap [h] *)
@@ -980,11 +1011,11 @@ Definition to_allocation (off : Z) (len : nat) : allocation :=
   Allocation off (off + len).
 
 (*** Evaluation of statements *)
-Inductive stmt_step : thread_state → state → list Empty_set → thread_state → state → list thread_state → Prop :=
+Inductive simple_stmt_step : thread_state → state → list Empty_set → thread_state → state → list thread_state → Prop :=
 | StmtExprS ts σ σ' Ks e e' os efs:
     ts.(ts_rfn).(rf_stmt) = stmt_fill Ks e →
     prim_step e σ os e' σ' efs →
-    stmt_step ts σ os (update_stmt ts (stmt_fill Ks e')) σ' []
+    simple_stmt_step ts σ os (update_stmt ts (stmt_fill Ks e')) σ' []
 | AssignS (o : order) ts σ s v1 v2 l v' ly:
     let start_st st := st = if o is Na2Ord then WSt else RSt 0%nat in
     let end_st _ := if o is Na1Ord then WSt else RSt 0%nat in
@@ -994,22 +1025,22 @@ Inductive stmt_step : thread_state → state → list Empty_set → thread_state
     val_to_loc v1 = Some l →
     v2 `has_layout_val` ly →
     heap_at l ly v' start_st σ.(st_heap) →
-    stmt_step ts σ [] (update_stmt ts end_stmt) (heap_fmap (heap_upd l end_val end_st) σ) []
+    simple_stmt_step ts σ [] (update_stmt ts end_stmt) (heap_fmap (heap_upd l end_val end_st) σ) []
 | SwitchS ts σ v n m bs s def it :
     ts.(ts_rfn).(rf_stmt) = Switch it (Val v) m bs def →
     val_to_int v it = Some n →
     (∀ i : nat, m !! n = Some i → is_Some (bs !! i)) →
-    stmt_step ts σ [] (update_stmt ts $ default def (i ← m !! n; bs !! i)) σ []
+    simple_stmt_step ts σ [] (update_stmt ts $ default def (i ← m !! n; bs !! i)) σ []
 | GotoS ts σ b s :
     ts.(ts_rfn).(rf_stmt) = Goto b →
     ts.(ts_rfn).(rf_fn).(f_code) !! b = Some s →
-    stmt_step ts σ [] (update_stmt ts s) σ []
+    simple_stmt_step ts σ [] (update_stmt ts s) σ []
 | ReturnS ts σ v co cs:
     ts.(ts_rfn).(rf_stmt) = Return (Val v) →
     ts.(ts_conts) = co :: cs →
-    stmt_step ts σ []
+    simple_stmt_step ts σ []
      (* substitute the return value for rvar *)
-     (update_stmt {| ts_conts := cs; ts_rfn := co.(c_rfn) |} (subst_stmt [co.(c_rvar)] [v] co.(c_rfn).(rf_stmt)))
+     (update_stmt {| ts_conts := cs; ts_rfn := co.(c_rfn); ts_alloc_failure := false; |} (subst_stmt [co.(c_rvar)] [v] co.(c_rfn).(rf_stmt)))
      (* deallocate the stack *)
      (heap_fmap (heap_free_list ts.(ts_rfn).(rf_locs)) σ) []
 | CallS lsa lsv ts σ vf vs s co f rf fn fn' h' h'' ret ub':
@@ -1026,8 +1057,8 @@ Inductive stmt_step : thread_state → state → list Empty_set → thread_state
     Forall (heap_block_free σ.(st_heap)) lsa →
     Forall (heap_block_free σ.(st_heap)) lsv →
     (* ensure that ls blocks are unused *)
-    Forall (λ l, σ.(st_used_blocks) !! l.1 = None) lsa →
-    Forall (λ l, σ.(st_used_blocks) !! l.1 = None) lsv →
+    Forall (λ l, σ.(st_allocs) !! l.1 = None) lsa →
+    Forall (λ l, σ.(st_allocs) !! l.1 = None) lsv →
     (* ensure that locations are aligned *)
     Forall2 has_layout_loc lsa fn.(f_args).*2 →
     Forall2 has_layout_loc lsv fn.(f_local_vars).*2 →
@@ -1038,35 +1069,56 @@ Inductive stmt_step : thread_state → state → list Empty_set → thread_state
     (* initialize the arguments with the supplied values *)
     heap_upd_list lsa vs (λ _, RSt 0%nat) h' = h'' →
     (* add used blocks allocations  *)
-    list_to_map (zip (lsa.*1 ++ lsv.*1) (zip_with to_allocation (lsa.*2 ++ lsv.*2) (ly_size <$> (fn.(f_args).*2 ++ fn.(f_local_vars).*2)))) ∪ σ.(st_used_blocks) = ub' →
+    list_to_map (zip (lsa.*1 ++ lsv.*1) (zip_with to_allocation (lsa.*2 ++ lsv.*2) (ly_size <$> (fn.(f_args).*2 ++ fn.(f_local_vars).*2)))) ∪ σ.(st_allocs) = ub' →
     rf = {| rf_fn := fn'; rf_locs := zip lsa fn.(f_args).*2 ++ zip lsv fn.(f_local_vars).*2; rf_stmt := Goto fn'.(f_init); |} →
     co = {| c_rfn := (update_stmt ts s).(ts_rfn); c_rvar := ret |} →
-    stmt_step ts σ [] {| ts_conts := co::ts.(ts_conts); ts_rfn := rf |}
-              {| st_heap:= h''; st_fntbl := σ.(st_fntbl); st_used_blocks := ub' |} []
+    simple_stmt_step ts σ []
+      {| ts_conts := co::ts.(ts_conts); ts_rfn := rf; ts_alloc_failure := ts.(ts_alloc_failure); |}
+      {| st_heap:= h''; st_fntbl := σ.(st_fntbl); st_allocs := ub'; st_alloc_failure := σ.(st_alloc_failure); |} []
+| CallFailS ts σ vf vs s f fn ret:
+    ts.(ts_rfn).(rf_stmt) = Call ret (Val vf) (Val <$> vs) s →
+    val_to_loc vf = Some f →
+    σ.(st_fntbl) !! f = Some fn →
+    Forall2 has_layout_val vs fn.(f_args).*2 →
+    simple_stmt_step ts σ [] (set_alloc_failure ts) (st_set_alloc_failure σ) []
 | SkipSS ts σ s :
     ts.(ts_rfn).(rf_stmt) = SkipS s →
-    stmt_step ts σ [] (update_stmt ts s) σ []
+    simple_stmt_step ts σ [] (update_stmt ts s) σ []
 | ExprSS ts σ s v:
     ts.(ts_rfn).(rf_stmt) = ExprS (Val v) s →
-    stmt_step ts σ [] (update_stmt ts s) σ []
+    simple_stmt_step ts σ [] (update_stmt ts s) σ []
 (* no rule for StuckS *)
 .
 
+Inductive stmt_step : thread_state → state → list Empty_set → thread_state → state → list thread_state → Prop :=
+| SStep_ok ts σ os ts' σ' tsl :
+   ts.(ts_alloc_failure) = false →
+   σ.(st_alloc_failure) = false →
+   simple_stmt_step ts σ os ts' σ' tsl →
+   stmt_step ts σ os ts' σ' tsl
+| SStep_fail ts σ os ts' σ' tsl :
+   σ.(st_alloc_failure) = true →
+   ts.(ts_alloc_failure) = false →
+   simple_stmt_step ts σ os ts' σ' tsl →
+   σ'.(st_alloc_failure) = true →
+   stmt_step ts σ os (set_alloc_failure ts') σ' [].
+
 (*** Language instance for statements *)
 Lemma stmt_to_of_val sv : stmt_to_val (stmt_of_val sv) = Some sv.
-Proof. move: sv => [???]. by cbn. Qed.
+Proof. by move: sv => [??[]]. Qed.
 
 Lemma stmt_of_to_val ts sv : stmt_to_val ts = Some sv → stmt_of_val sv = ts.
 Proof.
-  destruct ts as [rf [|??]]; destruct rf as [?? s]; destruct s as [|[] |  |  | | | |]; cbn => //?.
-  by simplify_eq.
+  destruct ts as [rf [|??] []]; destruct rf as [?? s];
+    destruct s as [|[] | | | | | |]; cbn => //?; by simplify_eq.
 Qed.
 
 Lemma stmt_val_stuck ts σ κ ts' σ' efs : stmt_step ts σ κ ts' σ' efs → stmt_to_val ts = None.
 Proof.
-  move sv: (stmt_to_val ts) => [] // /stmt_of_to_val <-;
-    inversion_clear 1; cbn in * => //. destruct Ks => //; simpl in *. simplify_eq.
-  exfalso. apply: val_irreducible H1. by eexists.
+  move sv: (stmt_to_val ts) => [] // /stmt_of_to_val <- H. exfalso.
+  inversion_clear H; destruct sv as [??[]] => //; cbn in *; simplify_eq;
+  inversion_clear H2; cbn in * => //; destruct Ks => //; simpl in *; simplify_eq;
+  [ apply: val_irreducible H0 | apply: val_irreducible H1 ]; by eexists.
 Qed.
 
 Lemma stmt_lang_mixin : LanguageMixin stmt_of_val stmt_to_val stmt_step.
@@ -1118,11 +1170,12 @@ Proof. rewrite /offset_loc/shift_loc/=. destruct l => /=. f_equal. lia. Qed.
 Lemma offset_loc_sz1 ly l n : ly.(ly_size) = 1%nat → l offset{ly}ₗ n = l +ₗ n.
 Proof. rewrite /offset_loc => ->. f_equal. lia. Qed.
 
-
+(*
 Lemma stmt_to_val_non_ret ts s :
   (if s is Return (Val v) then False else True) →
   stmt_to_val (update_stmt ts s) = None.
-Proof. destruct s as [ |e| | | | | |] => //. by destruct e. Qed.
+Proof. destruct s as [|e| | | | | |] => //. by destruct e. Qed.
+*)
 
 Lemma stmt_fill_inj Ks1 Ks2 e1 e2 :
   to_val e1 = None → to_val e2 = None → stmt_fill Ks1 e1 = stmt_fill Ks2 e2 →
@@ -1159,19 +1212,6 @@ Proof. move => ??[_[??]]. apply: heap_at_go_inj_val => //. congruence. Qed.
 Lemma heap_at_inj_val l ly h v v' flk1 flk2:
   heap_at l ly v flk1 h → heap_at l ly v' flk2 h → v = v'.
 Proof. move => [_ [Hv1 H1]] [_ [Hv2 H2]]. apply: heap_at_go_inj_val => //. congruence. Qed.
-
-Lemma heap_fresh_blocks n (ub : blocks) lys :
-  length lys = n →
-  ∃ ls, length ls = n ∧ Forall (λ l : loc, ub !! l.1 = None) ls ∧ NoDup ls.*1 ∧ Forall2 has_layout_loc ls lys.
-Proof.
-  eexists ((λ x, (x, 0)) <$> fresh_list n (dom (gset block_id) ub)). split_and!.
-  - rewrite fmap_length fresh_list_length //.
-  - apply Forall_forall => l. move => /elem_of_list_fmap[?[->He]]/=.
-    by apply fresh_list_is_fresh, not_elem_of_dom in He.
-  - rewrite -list_fmap_compose NoDup_fmap. by apply NoDup_fresh_list.
-  - rewrite Forall2_fmap_l. apply Forall2_true; last by rewrite fresh_list_length.
-    move => ?? /=. by apply Z.divide_0_r.
-Qed.
 
 Lemma heap_upd_ext h l v f1 f2:
   (∀ x, f1 x = f2 x) →
