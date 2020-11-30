@@ -223,7 +223,9 @@ Open Scope loc_scope.
 Definition alloc_id := Z.
 Definition addr := Z.
 
-Definition loc : Set := alloc_id * addr.
+Definition dummy_alloc_id : alloc_id := 0.
+
+Definition loc : Set := option alloc_id * addr.
 Bind Scope loc_scope with loc.
 
 Inductive mbyte : Set :=
@@ -236,7 +238,7 @@ Bind Scope val_scope with val.
 
 Inductive lock_state := WSt | RSt (n : nat).
 
-Definition heap := gmap loc (lock_state * mbyte).
+Definition heap := gmap addr (alloc_id * lock_state * mbyte).
 
 Record allocation :=
   Allocation {
@@ -610,24 +612,31 @@ Qed.
    allocation that contains [l]. Note that we consider the 1-past-the-end
    pointer to be in range of an allocation. *)
 Definition heap_loc_in_bounds (l : loc) (n : nat) (st : state) : Prop :=
-  ∃ alloc, st.(st_allocs) !! l.1 = Some alloc ∧
-           alloc.(alloc_start) ≤ l.2 ∧
-           l.2 + n ≤ alloc.(alloc_end).
+  ∃ alloc_id alloc,
+    l.1 = Some alloc_id ∧
+    st.(st_allocs) !! alloc_id = Some alloc ∧
+    alloc.(alloc_start) ≤ l.2 ∧
+    l.2 + n ≤ alloc.(alloc_end).
 
 Fixpoint heap_at_go l v flk h : Prop :=
   match v with
   | [] => True
-  | b::v' => (∃ lk, h !! l = Some (lk, b) ∧ flk lk) ∧ heap_at_go (l +ₗ 1) v' flk h
+  | b::v' => (∃ lk, h !! l.2 = Some (default dummy_alloc_id l.1, lk, b) ∧ flk lk) ∧ heap_at_go (l +ₗ 1) v' flk h
   end.
 
 Definition heap_at l ly v flk h : Prop :=
-  l `has_layout_loc` ly ∧ v `has_layout_val` ly ∧ heap_at_go l v flk h.
+  is_Some l.1 ∧ l `has_layout_loc` ly ∧ v `has_layout_val` ly ∧ heap_at_go l v flk h.
 
-Definition heap_block_free h l : Prop := ∀ i, h !! (l +ₗ i) = None.
+Definition heap_block_free (h : heap) (aid : alloc_id) : Prop :=
+  ∀ a ha, h !! a = Some ha → ha.1.1 ≠ aid.
 
-Fixpoint heap_upd l v flk h : heap :=
+Definition heap_range_free (h : heap) (a : addr) (n : nat) : Prop :=
+  ∀ a', a ≤ a' < a + n → h !! a' = None.
+
+Fixpoint heap_upd l v (flk : option lock_state → lock_state) (h : heap) : heap :=
   match v with
-  | b::v' => partial_alter (λ m, Some (flk (fst <$> m), b)) l (heap_upd (l +ₗ 1) v' flk h)
+  | b::v' => partial_alter (λ m, Some (default dummy_alloc_id l.1,
+                                       flk (snd <$> (fst <$> m)), b)) l.2 (heap_upd (l +ₗ 1) v' flk h)
   | [] => h
   end.
 
@@ -640,7 +649,7 @@ Fixpoint heap_upd_list ls vs flk h : heap :=
 Fixpoint heap_free l n h : heap :=
   match n with
   | O => h
-  | S n' => delete l (heap_free (l +ₗ 1) n' h)
+  | S n' => delete l.2 (heap_free (l +ₗ 1) n' h)
   end.
 
 Fixpoint heap_free_list ls h : heap :=
@@ -702,7 +711,13 @@ Definition stmt_of_val (sv : stmt_val) : thread_state :=
 (*** Evaluation of operations *)
 (** Checks that the location [l] is allocated on the heap [h] *)
 Definition valid_ptr l h : Prop :=
-  is_Some (h !! l).
+  ∃ aid lk b, l.1 = Some aid ∧ h !! l.2 = Some (aid, lk, b).
+Instance valid_ptr_dec l h : Decision (valid_ptr l h).
+Proof.
+  rewrite /valid_ptr/=. destruct l as [[aid|] a]; [ | right; naive_solver].
+  destruct (h !! a) as [[[aid' ?]?]|] eqn: Hh; [ | right; naive_solver].
+  destruct (decide (aid' = aid)); [left | right]; naive_solver.
+Qed.
 (** Checks whether location [l] is a weak valid pointer in heap [h].
 [Some true] means [l] is a valid in bounds pointer, [Some false] means
 [l] is a end of block pointer, [None] means [l] is not a valid pointer. *)
@@ -718,7 +733,7 @@ http://compcert.inria.fr/doc/html/compcert.common.Values.html#Val.cmplu_bool
 Definition ptr_eq l1 l2 h : option bool :=
   eob1 ← weak_valid_ptr l1 h;
   eob2 ← weak_valid_ptr l2 h;
-  if decide (l1.1 = l2.2) then
+  if decide (l1.1 = l2.1) then
     Some (bool_decide (l1 = l2))
   else
     if eob1 || eob2 then None else Some false.
@@ -839,12 +854,14 @@ Inductive expr_step : expr → state → list Empty_set → expr → state → l
     expr_step (BinOp op ot1 ot2 (Val v1) (Val v2)) σ [] (Val v') σ []
 | DerefS o v l ly v' σ:
     let start_st st := ∃ n, st = if o is Na2Ord then RSt (S n) else RSt n in
-    let end_st st := match o, st with
-                     | Na1Ord, Some (RSt n) => RSt (S n)
-                     | Na2Ord, Some (RSt (S n)) => RSt n
-                     | ScOrd, Some st => st
-                     (* unreachable *)
-                     |  _, _ => WSt end in
+    let end_st st :=
+      match o, st with
+      | Na1Ord, Some (RSt n)     => RSt (S n)
+      | Na2Ord, Some (RSt (S n)) => RSt n
+      | ScOrd , Some st          => st
+      |  _    , _                => WSt (* unreachable *)
+      end
+    in
     let end_expr := if o is Na1Ord then Deref Na2Ord ly (Val v) else Val v' in
     val_to_loc v = Some l →
     heap_at l ly v' start_st σ.(st_heap) →
@@ -1027,16 +1044,29 @@ Definition subst_function (xs : list var_name) (vs : list val) (f : function) : 
   f_args := f.(f_args); f_init := f.(f_init); f_local_vars := f.(f_local_vars);
 |}.
 
+(*** Allocation semantics *)
+(* We reserve 0 for NULL. *)
+Definition min_alloc_start : Z := 1.
+
+(* We never allocate the last byte to always have valid one-past pointers. *)
+Definition max_alloc_end   : Z := 2 ^ (bytes_per_addr * bits_per_byte) - 2.
+
 Definition to_allocation (off : Z) (len : nat) : allocation :=
   Allocation off (off + len).
 
+Definition in_range_allocation (a : allocation) : Prop :=
+  min_alloc_start ≤ a.(alloc_start) ∧ a.(alloc_end) ≤ max_alloc_end.
+
 Inductive alloc_new_block : state → loc → val → state → Prop :=
-| AllocNewBlock σ l v:
-    σ.(st_allocs) !! l.1 = None →
-    heap_block_free σ.(st_heap) l →
+| AllocNewBlock σ l aid v:
+    l.1 = Some aid →
+    σ.(st_allocs) !! aid = None →
+    heap_block_free σ.(st_heap) aid →
+    in_range_allocation (to_allocation l.2 (length v)) →
+    heap_range_free σ.(st_heap) l.2 (length v) →
     alloc_new_block σ l v {|
       st_heap   := heap_upd l v (λ _, RSt 0%nat) σ.(st_heap);
-      st_allocs := <[l.1 := to_allocation l.2 (length v)]> σ.(st_allocs);
+      st_allocs := <[aid := to_allocation l.2 (length v)]> σ.(st_allocs);
       st_fntbl  := σ.(st_fntbl); st_alloc_failure := σ.(st_alloc_failure);
     |}.
 
@@ -1199,13 +1229,6 @@ Proof. rewrite /offset_loc/shift_loc/=. destruct l => /=. f_equal. lia. Qed.
 Lemma offset_loc_sz1 ly l n : ly.(ly_size) = 1%nat → l offset{ly}ₗ n = l +ₗ n.
 Proof. rewrite /offset_loc => ->. f_equal. lia. Qed.
 
-(*
-Lemma stmt_to_val_non_ret ts s :
-  (if s is Return (Val v) then False else True) →
-  stmt_to_val (update_stmt ts s) = None.
-Proof. destruct s as [|e| | | | | |] => //. by destruct e. Qed.
-*)
-
 Lemma stmt_fill_inj Ks1 Ks2 e1 e2 :
   to_val e1 = None → to_val e2 = None → stmt_fill Ks1 e1 = stmt_fill Ks2 e2 →
   Ks1 = Ks2 ∧ e1 = e2.
@@ -1228,43 +1251,41 @@ Lemma heap_at_go_inj_val l h v v' flk1 flk2:
   length v = length v' →
   heap_at_go l v flk1 h → heap_at_go l v' flk2 h → v = v'.
 Proof.
-  elim: v v' l. by move => [|??] // ? [[]].
-  move => b v IH [|b' v'] //= l [?] [[?[??]]?] [[?[??]]?]; simplify_eq. f_equal.
-  by apply: IH.
+  elim: v v' l; first by move => [|??] // ? [[]].
+  move => b v IH [|b' v'] //= l [?] [[?[??]]?] [[?[??]]?]; simplify_eq.
+  f_equal. by apply: IH.
 Qed.
 
 Lemma heap_at_go_inj_val'  l h v v' flk1 flk2 ly:
   v `has_layout_val` ly →
   heap_at_go l v flk1 h → heap_at l ly v' flk2 h → v = v'.
-Proof. move => ??[_[??]]. apply: heap_at_go_inj_val => //. congruence. Qed.
+Proof.
+  move => ??[_[?[??]]]. apply: heap_at_go_inj_val => //. congruence.
+Qed.
 
 Lemma heap_at_inj_val l ly h v v' flk1 flk2:
   heap_at l ly v flk1 h → heap_at l ly v' flk2 h → v = v'.
-Proof. move => [_ [Hv1 H1]] [_ [Hv2 H2]]. apply: heap_at_go_inj_val => //. congruence. Qed.
+Proof.
+  move => [_ [Hv1 [H1 ?]]] [_ [Hv2 [H2 ?]]].
+  apply: heap_at_go_inj_val => //. congruence.
+Qed.
 
 Lemma heap_upd_ext h l v f1 f2:
   (∀ x, f1 x = f2 x) →
   heap_upd l v f1 h = heap_upd l v f2 h.
-Proof. move => Hext. elim: v l => //= ?? IH ?. rewrite IH. apply: partial_alter_ext => ??. by rewrite Hext. Qed.
+Proof.
+  move => Hext. elim: v l => //= ?? IH ?. rewrite IH.
+  apply: partial_alter_ext => ??. by rewrite Hext.
+Qed.
 
 Lemma heap_upd_lookup_lt l n bl h flk:
   n > 0 →
-  heap_upd (l +ₗ n) bl flk h !! l = h !! l.
+  heap_upd (l +ₗ n) bl flk h !! l.2 = h !! l.2.
 Proof.
   elim: bl n => // b bl IH /= n Hn. rewrite shift_loc_assoc.
   rewrite lookup_partial_alter_ne //.
   - apply IH. lia.
-  - rewrite /shift_loc. destruct l => /= [[]]. lia.
-Qed.
-
-Lemma heap_upd_lookup_ne l v h i l' flk:
-  l'.1 ≠ l.1 →
-  heap_upd l' v flk h !! (l +ₗ i) = h !! (l +ₗ i).
-Proof.
-  elim: v l' => // b bl IH l' Hne /=.
-  rewrite lookup_partial_alter_ne //.
-  - by apply IH.
-  - by destruct l, l' => [[]].
+  - rewrite /shift_loc. destruct l. lia.
 Qed.
 
 Lemma heap_upd_heap_at_id l v flk flk' h:
@@ -1276,27 +1297,8 @@ Proof.
   apply: partial_alter_self_alt'. by rewrite Hlk Hflk.
 Qed.
 
-
-Lemma heap_block_free_upd_list ls vs h l flk:
-  heap_block_free h l → l.1 ∉ ls.*1 →
-  heap_block_free (heap_upd_list ls vs flk h) l.
-Proof.
-  rewrite /heap_block_free.
-  elim: ls vs => // l' ls IH [|v vs] // Hfree; csimpl => Hl i.
-  rewrite heap_upd_lookup_ne; set_solver.
-Qed.
-
-Lemma heap_block_free_free_list h l ls:
-  heap_block_free h l →
-  heap_block_free (heap_free_list ls h) l.
-Proof.
-  elim: ls l => // -[l [sz ?]] ls IH l' Hf /= o. unfold ly_size.
-  elim: sz l. move => ?. by apply IH.
-  move => sz IH2 l /=. apply lookup_delete_None. naive_solver.
-Qed.
-
 Lemma heap_free_delete h l l' n :
-  delete l (heap_free l' n h) = heap_free l' n (delete l h).
+  delete l.2 (heap_free l' n h) = heap_free l' n (delete l.2 h).
 Proof. revert l'. induction n as [|n IH]=> l' //=. by rewrite delete_commute IH. Qed.
 
 Lemma heap_free_list_app ls1 ls2 h:
@@ -1312,6 +1314,7 @@ Instance function_inhabited : Inhabited function := populate {| f_args := []; f_
 Canonical Structure mbyteO := leibnizO mbyte.
 Canonical Structure functionO := leibnizO function.
 Canonical Structure locO := leibnizO loc.
+Canonical Structure alloc_idO := leibnizO alloc_id.
 Canonical Structure layoutO := leibnizO layout.
 Canonical Structure valO := leibnizO val.
 Canonical Structure exprO := leibnizO expr.

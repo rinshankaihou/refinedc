@@ -116,27 +116,27 @@ Proof.
   iIntros (Ho Hl Hll Hlv) "Hmt HΦ".
   iApply wp_lift_head_step; auto.
   iIntros ([h ub fn] ???) "(%&Hhctx&Hfctx)".
+  iDestruct (heap_mapsto_has_alloc_id with "Hmt") as %Haid.
   destruct o; try by destruct Ho.
   - iMod (fupd_intro_mask' _ ∅) as "Hclose"; first set_solver. iModIntro.
     iDestruct (heap_mapsto_lookup_q (λ st, ∃ n, st = RSt n) with "Hhctx Hmt") as %Hat. naive_solver.
-    iSplit; first by eauto 7 using DerefS.
+    iSplit; first by eauto 8 using DerefS.
     iIntros "!#" (e2 σ2 efs Hst). inv_expr_step. iMod "Hclose" as "$". iModIntro. unfold end_st, end_expr.
     have <- : (v = v') by apply: heap_at_inj_val.
     rewrite /heap_fmap/=. erewrite heap_upd_heap_at_id => //.
     iFrame. iSplit => //. iApply @wp_value. by iApply "HΦ".
   - iMod (heap_read_na with "Hhctx Hmt") as "(% & Hσ & Hσclose)" => //.
     iMod (fupd_intro_mask' _ ∅) as "Hclose"; first set_solver. iModIntro.
-    iSplit; first by eauto 7 using DerefS.
+    iSplit; first by eauto 8 using DerefS.
     iIntros "!#" (e2 σ2 efs Hst). inv_expr_step. iMod "Hclose" as "$". iModIntro. unfold end_st, end_expr.
     have <- : (v = v') by apply: heap_at_inj_val.
-    iFrame => /=. iSplit; first by eauto 7 using blocks_used_agree_heap_upd.
+    iFrame => /=. iSplit => //.
     iApply wp_lift_atomic_head_step_no_fork; auto.
     iIntros ([h2 fn2] ???) "(%&Hhctx&Hfctx)". iMod ("Hσclose" with "Hhctx") as (?) "(Hσ & Hv)".
-    iModIntro; iSplit; first by eauto 7 using DerefS.
+    iModIntro; iSplit; first by eauto 8 using DerefS.
     iIntros "!#" (e2 σ2 efs Hst) "!#". inv_expr_step.
     have <- : (v = v'0) by apply: heap_at_inj_val.
-    iFrame. iSplitR => //=. iSplit; first by eauto 7 using blocks_used_agree_heap_upd.
-      by iApply "HΦ".
+    iFrame. iSplitR => //=. by iApply "HΦ".
 Qed.
 
 Lemma wp_cas_fail vl1 vl2 vd vo ve z1 z2 Φ l1 l2 it q E:
@@ -153,19 +153,20 @@ Lemma wp_cas_fail vl1 vl2 vd vo ve z1 z2 Φ l1 l2 it q E:
    WP CAS (IntOp it) (Val vl1) (Val vl2) (Val vd) @ E {{ Φ }}.
 Proof.
   iIntros (Hl1 Hl2 Hly1 Hly2 Hvo Hve Hlen1 Hlen2 Hneq) "Hl1 Hl2 HΦ".
+  iDestruct (heap_mapsto_has_alloc_id with "Hl1") as %Haid1.
+  iDestruct (heap_mapsto_has_alloc_id with "Hl2") as %Haid2.
   move: (Hvo) (Hve) => /val_to_int_length ? /val_to_int_length ?.
   iApply wp_lift_atomic_head_step; auto.
   iIntros (σ1 ???) "(%&Hhctx&Hfctx)".
   iDestruct (heap_mapsto_lookup_q (λ st : lock_state, ∃ n : nat, st = RSt n) with "Hhctx Hl1") as %? => //. { naive_solver. }
   iDestruct (heap_mapsto_lookup_1 (λ st : lock_state, st = RSt 0%nat) with "Hhctx Hl2") as %? => //.
-  iModIntro. iSplit; first by eauto 10 using CasFailS.
+  iModIntro. iSplit; first by eauto 12 using CasFailS.
   iIntros "!#" (e2 σ2 efs Hst). inv_expr_step;
   have ? : (vo = vo0) by [apply: heap_at_go_inj_val' => //; congruence];
   have ? : (ve = ve0) by [apply: heap_at_go_inj_val' => //; congruence]; simplify_eq.
   have ? : (length ve0 = length vo0) by congruence.
   iMod (heap_write with "Hhctx Hl2") as "[$ Hl2]" => //.
   iFrame. iModIntro. rewrite right_id /=.
-  iSplit; first by eauto using blocks_used_agree_heap_upd.
   by iApply ("HΦ" with "Hl1").
 Qed.
 
@@ -183,19 +184,20 @@ Lemma wp_cas_suc vl1 vl2 vd vo ve z1 z2 Φ l1 l2 it E q:
    WP CAS (IntOp it) (Val vl1) (Val vl2) (Val vd) @ E {{ Φ }}.
 Proof.
   iIntros (Hl1 Hl2 Hly1 Hly2 Hvo Hve Hlen1 Hlen2 Heq) "Hl1 Hl2 HΦ".
+  iDestruct (heap_mapsto_has_alloc_id with "Hl1") as %Haid1.
+  iDestruct (heap_mapsto_has_alloc_id with "Hl2") as %Haid2.
   move: (Hvo) (Hve) => /val_to_int_length ? /val_to_int_length ?.
   iApply wp_lift_atomic_head_step; auto.
   iIntros (σ1 ???) "(%&Hhctx&Hfctx)".
   iDestruct (heap_mapsto_lookup_1 (λ st : lock_state, st = RSt 0%nat) with "Hhctx Hl1") as %? => //.
   iDestruct (heap_mapsto_lookup_q (λ st : lock_state, ∃ n : nat, st = RSt n) with "Hhctx Hl2") as %? => //. { naive_solver. }
-  iModIntro. iSplit; first by eauto 10 using CasSucS.
+  iModIntro. iSplit; first by eauto 12 using CasSucS.
   iIntros "!#" (e2 σ2 efs Hst). inv_expr_step;
   have ? : (ve = ve0) by [apply: heap_at_go_inj_val' => //; congruence];
   have ? : (vo = vo0) by [apply: heap_at_go_inj_val' => //; congruence]; simplify_eq.
   have ? : (length vo0 = length vd) by congruence.
   iMod (heap_write with "Hhctx Hl1") as "[$ Hmt]" => //.
   iFrame. iModIntro. rewrite right_id /=.
-  iSplit; first by eauto using blocks_used_agree_heap_upd.
   by iApply ("HΦ" with "Hmt").
 Qed.
 
@@ -529,13 +531,14 @@ Proof.
   iIntros (???? Hstep). inv_stmt_step; last first. {
     (* Alloc failure case. *)
     iIntros "!> !>". iMod "HE" as "_". iIntros "!>". iSplit; first done.
-    rewrite /state_ctx. iFrame. iSplit; first done. iIntros (?). done.
+    rewrite /state_ctx. iFrame. by iIntros (?).
   }
-  iMod (heap_alloc_new_blocks_upd with "[$Hhctx $Hbctx $Hfctx]") as "[Hctx [Hv' Hv]]" => //.
-  iMod (heap_alloc_new_blocks_upd with "Hctx") as "[Hctx [Ha' Ha]]" => //.
+  iMod (heap_alloc_new_blocks_upd with "[$Hhctx $Hbctx $Hfctx]") as "[Hctx Hlv]" => //.
+  iMod (heap_alloc_new_blocks_upd with "Hctx") as "[Hctx Hla]" => //.
   iModIntro. iNext.
-  iDestruct ("HWP" $! lsa lsv with "[//] Ha [Hv]") as (Ψ') "(HQinit & HΨ')". {
-    rewrite big_sepL2_fmap_r. iApply (big_sepL2_mono with "Hv") => ??? ?? /=.
+
+  iDestruct ("HWP" $! lsa lsv with "[//] Hla [Hlv]") as (Ψ') "(HQinit & HΨ')". {
+    rewrite big_sepL2_fmap_r. iApply (big_sepL2_mono with "Hlv") => ??? ?? /=.
     iIntros "?". iExists _. iFrame. iPureIntro. split; first by apply replicate_length.
     apply: Forall2_lookup_lr. 2: done. done. rewrite list_lookup_fmap. apply fmap_Some. naive_solver.
   }
@@ -551,9 +554,9 @@ Proof.
   iMod "HE" as "$". iFrame. rewrite /heap_fmap/= heap_free_list_app /=.
   rewrite -!(big_sepL2_fmap_r snd (λ _ l ly, l↦|ly|)%I).
   iMod (heap_free_list_free with "Hhctx Hv") as "Hhctx".
-  iMod (heap_free_list_free with "Hhctx Ha") as "$". iModIntro.
+  iMod (heap_free_list_free with "Hhctx Ha") as "$".
+  iModIntro.
   rewrite stmt_wp_unfold. iSplit => //.
-  iSplit; first by eauto using blocks_used_agree_heap_free_list.
   iIntros "_". iApply "Hs" => //. iIntros (v) "HΨ".
   destruct ts1 as [??[]] => //. by iApply "HWP".
 Qed.
@@ -569,37 +572,36 @@ Proof.
   iIntros (E Ho Hvl Hly) "HWP". iApply wps_lift_stmt_step. iIntros (ts ? ->).
   iSplit; first done. iIntros ([h1 ?]) "(%&Hhctx&Hfctx)". iMod "HWP" as "[Hl HWP]".
   iMod (fupd_intro_mask' _ ∅) as "HE"; first set_solver.
-  iDestruct "Hl" as (v' ? ?) "Hl". unfold E. case: Ho => ->.
+  iDestruct "Hl" as (v' ? ?) "Hl".
+  iDestruct (heap_mapsto_has_alloc_id with "Hl") as %Haid.
+  unfold E. case: Ho => ->.
   - iModIntro.
     iDestruct (heap_mapsto_lookup_1 (λ st : lock_state, st = RSt 0%nat) with "Hhctx Hl") as %? => //.
-    iSplit; first by eauto 11 using AssignS.
+    iSplit; first by eauto 12 using AssignS.
     iIntros (? e2 σ2 efs Hstep). inv_stmt_step. unfold end_val.
     have ? : (length v' = length v2) by congruence.
     iMod (heap_write with "Hhctx Hl") as "[$ Hl]" => //.
     iIntros "!> !>". iMod ("HWP" with "Hl") as "HWP".
-    iModIntro => /=. iSplit; first done. iFrame.
-    iSplit; first by eauto 7 using blocks_used_agree_heap_upd. iIntros (?).
+    iModIntro => /=. iSplit; first done. iFrame. iIntros (?).
     rewrite update_stmt_update /=. iApply (wps_wand with "HWP").
     iIntros (v) "HΨ HWP". rewrite update_stmt_update. by iApply "HWP".
   - iMod (heap_write_na _ _ _ vr with "Hhctx Hl") as (?) "[Hhctx Hc]" => //; first by congruence.
-    iModIntro. iSplit; first by eauto 11 using AssignS.
+    iModIntro. iSplit; first by eauto 12 using AssignS.
     iIntros (? e2 σ2 efs Hst). inv_stmt_step.
     have ? : (v' = v'0) by [apply: heap_at_inj_val]; subst v'0.
     iFrame => /=. iModIntro. iNext. iMod "HE" as "_". iModIntro. iSplit; first done.
     rewrite update_stmt_update.
-    iSplit; first by eauto using blocks_used_agree_heap_upd.
 
     iIntros (?). iApply wps_lift_stmt_step. iIntros (???). iSplit; first done.
     iIntros ([h2 ?]) "(%&Hhctx&Hfctx)" => /=.
     iMod (fupd_intro_mask' _ ∅) as "HE"; first set_solver.
     iMod ("Hc" with "Hhctx") as (?) "[Hhctx Hmt]".
-    iModIntro. iSplit; first by eauto 11 using AssignS. unfold end_stmt.
+    iModIntro. iSplit; first by eauto 12 using AssignS. unfold end_stmt.
     iIntros (? e2 σ2 efs Hst). inv_stmt_step. iModIntro. iNext. iMod "HE" as "_".
     have ? : (v' = v'0) by [apply: heap_at_go_inj_val']; subst v'0.
     iFrame => /=. iMod ("HWP" with "Hmt") as "HWP".
     iModIntro. rewrite update_stmt_update. iSplit; first done.
     have ? : (length v' = length v3) by congruence.
-    iSplit; first by eauto using blocks_used_agree_heap_upd.
     iIntros (?). subst end_stmt0. rewrite H8. iApply (wps_wand with "HWP").
     iIntros (v) "HΨ HWP". rewrite update_stmt_update. iApply "HWP".
     iIntros "HWP". rewrite update_stmt_update. by iApply "HWP".

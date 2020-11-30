@@ -19,17 +19,13 @@ From refinedc.typing Require Import adequacy.
 
 
 Section adequate.
-  Context (block_allocator_data block_allocator_state block_initialized : Z).
-  Let loc_allocator_data := block_to_loc block_allocator_data.
-  Let loc_allocator_state := block_to_loc block_allocator_state.
-  Let loc_initialized := block_to_loc block_initialized.
+  Context (loc_allocator_data loc_allocator_state loc_initialized : loc).
+
   Context (loc_sl_init loc_sl_lock loc_sl_unlock
            loc_latch_wait loc_latch_release
            loc_init loc_is_empty loc_push loc_pop loc_member loc_reverse loc_test
            loc_alloc loc_free loc_init_alloc
            loc_main loc_main2 : loc).
-  Context (Hlayout_alloc_state : loc_allocator_state `has_layout_loc` struct_alloc_state).
-  Context (Hlayout_initialized : loc_initialized `has_layout_loc` struct_latch).
   Definition functions  : list function := [
     impl_sl_init; impl_sl_lock; impl_sl_unlock;
 
@@ -57,11 +53,16 @@ Section adequate.
     loc_main; loc_main2
   ].
 
-  Definition initial_heap : gmap alloc_id (list mbyte) :=
-    <[block_allocator_data := replicate (Z.to_nat 10000) MPoison ]> $
-    <[block_allocator_state := replicate (struct_alloc_state).(ly_size) MPoison ]> $
-    <[block_initialized := LATCH_INIT ]> $
-    ∅.
+  Definition initial_heap_locs : list loc := [
+    loc_allocator_data;
+    loc_allocator_state;
+    loc_initialized
+  ].
+  Definition initial_heap_values : list lang.val := [
+    replicate (Z.to_nat 10000) MPoison;
+    replicate (struct_alloc_state).(ly_size) MPoison;
+    LATCH_INIT
+  ].
 
   Definition global_locs : gmap string loc :=
     <["allocator_data" := loc_allocator_data]> $
@@ -74,30 +75,24 @@ Section adequate.
     <["initialized" := GT unit (λ '(), latch (initialized_raw "allocator_state" () (Some loc_allocator_state) (Some (GT unit (λ '(), t04_alloc.generated_spec.alloc_state)))))]> $
     ∅.
 
-  Lemma tutorial_adequate n κs t2 σ2:
-    NoDup [block_allocator_data; block_allocator_state; block_initialized] →
+  Lemma tutorial_adequate n κs t2 σ2 σ:
+    loc_allocator_data `has_layout_loc` LPtr →
+    loc_allocator_state `has_layout_loc` struct_alloc_state →
+    loc_initialized `has_layout_loc` struct_latch →
+    (* TODO: Should we try to show that this assumption is provable? *)
+    alloc_new_blocks (initial_state (fn_lists_to_fns function_locs functions))
+                     initial_heap_locs initial_heap_values σ →
     NoDup function_locs →
-    nsteps (Λ := stmt_lang) n (initial_thread_state <$> [loc_main; loc_main2],
-                               initial_state (fn_lists_to_fns function_locs functions)
-                                             (heap_list_to_heap initial_heap)
-                                             (heap_list_to_allocs initial_heap)) κs (t2, σ2) →
+    nsteps (Λ := stmt_lang) n (initial_thread_state <$> [loc_main; loc_main2], σ) κs (t2, σ2) →
     ∀ e2, e2 ∈ t2 → not_stuck e2 σ2.
   Proof.
-    move => HNDblocks HNDfns.
+    move => Hly1 Hly2 Hly3 Halloc HNDfns.
 
     set Σ : gFunctors := #[typeΣ; lockΣ].
-    (* TODO: is there a nicer way to do this? *)
-    change ([initial_thread_state loc_main]) with (initial_thread_state <$> [loc_main]).
-    apply: (refinedc_adequacy Σ). { by apply heap_list_blocks_agree. }
+    apply: (refinedc_adequacy Σ) => //.
     move => ?.
     exists global_locs, global_types => Hglobals.
-    iIntros "Hmt Ha Hfn".
-
-    move: HNDblocks => /NoDup_cons[?/NoDup_cons[? _]].
-    iDestruct (heap_list_to_heap_insert with "Hmt Ha") as "(Hdata&Hmt&Ha)"; [rewrite !lookup_insert_ne //; set_solver|].
-    iDestruct (heap_list_to_heap_insert with "Hmt Ha") as "(Hstate&Hmt&Ha)"; [rewrite !lookup_insert_ne //; set_solver|].
-    iDestruct (heap_list_to_heap_insert with "Hmt Ha") as "(Hinit&Hmt&Ha)"; [done|].
-    iClear "Hmt Ha".
+    iIntros "(Hdata&Hstate&Hinit&_) Hfn".
 
     have Hin := I.
     repeat (

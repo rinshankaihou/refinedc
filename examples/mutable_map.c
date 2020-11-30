@@ -165,6 +165,7 @@ void *fsm_insert(struct fixed_size_map *m, size_t key, void *value) {
 [[rc::ensures("m @ &own<{alter (λ _, singleton_place p) key mp, items2, count} @ fixed_size_map>")]]
  [[rc::lemmas("fsm_invariant_alter")]]
  [[rc::tactics("all: try by erewrite length_filter_insert => //; solve_goal.")]]
+ [[rc::tactics("all: try by apply inhabitant.")]]
 void *fsm_get(struct fixed_size_map *m, size_t key) {
     size_t slot_idx = fsm_probe(m, key);
     struct item *item = &(*m->items)[slot_idx];

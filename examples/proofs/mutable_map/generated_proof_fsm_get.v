@@ -24,6 +24,7 @@ Section proof_fsm_get.
     Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
     all: try by apply: fsm_invariant_alter; solve_goal.
     all: try by erewrite length_filter_insert => //; solve_goal.
+    all: try by apply inhabitant.
     all: print_sidecondition_goal "fsm_get".
   Qed.
 End proof_fsm_get.
