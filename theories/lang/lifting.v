@@ -531,82 +531,23 @@ Proof.
     iIntros "!> !>". iMod "HE" as "_". iIntros "!>". iSplit; first done.
     rewrite /state_ctx. iFrame. iSplit; first done. iIntros (?). done.
   }
-  match goal with | H : NoDup _ |- _ => rewrite ->fmap_app, NoDup_app in H; revert H end.
-  move => [? [? ?]].
-  repeat match goal with | H : Forall (fun l => _ !! _ = None) _ |- _ => move/Forall_forall in H end.
-  revert select (length lsa = _) => Hlena.
-  revert select (length lsv = _) => Hlenv.
-
-  (* Allocate new allocation blocks for the local variables. *)
-  iMod (allocs_alloc_list lsv (((λ p, replicate (ly_size p.2) ☠%V) <$> f_local_vars fn))
-          with "Hbctx") as "[Hbctx Hblsv]" => //.
-  { apply elem_of_disjoint => id Hdom Hin. move: Hdom. apply/not_elem_of_dom. set_solver. }
-  { by rewrite fmap_length. }
-
-  (* Allocate heap segments for the local variables. *)
-  iMod (heap_alloc_list lsv (((λ p, replicate (ly_size p.2) ☠%V) <$> f_local_vars fn))
-          with "[Hhctx $Hblsv]") as "[Hhctx Hv]" => //.
-  { by rewrite fmap_length. }
-
-  (* Allocate new allocation blocks for the function arguments. *)
-  iMod (allocs_alloc_list lsa vs with "Hbctx") as "[Hbctx Hblsa]" => //.
-  { apply elem_of_disjoint => id. rewrite dom_union => Hid1 /elem_of_list_to_set Hlsa. move: Hid1.
-    apply/not_elem_of_union. split; [ | apply/not_elem_of_dom; set_solver].
-    rewrite dom_list_to_map_L fst_zip. { apply/elem_of_list_to_set. naive_solver. }
-    rewrite zip_with_length !fmap_length Hlenv. lia. }
-  { by etrans. }
-
-  (* Allocate heap segments for the function arguments. *)
-  iMod (heap_alloc_list lsa vs with "[Hhctx $Hblsa]") as "[$ Ha]" => //.
-  { apply Forall_forall => [[??]] Hin. apply heap_block_free_upd_list.
-    by eapply (Forall_forall _ lsa). set_solver. }
-  { by etrans. }
-
-  rewrite /= [in list_to_map _ ∪ (list_to_map _ ∪ _)]assoc -list_to_map_app.
-  rewrite -zip_with_app.
-  2: { rewrite zip_with_length !fmap_length Min.min_l //. by rewrite Hlena Hlen_vs. }
-  rewrite -zip_with_app; last by rewrite !fmap_length Hlena Hlen_vs.
-
-  have -> : (length <$> vs) = ly_size <$> (f_args fn).*2. {
-    move: Hly. clear. move: (f_args fn).*2 => f. elim => //. by csimpl => ???? -> ? ->.
-  }
-  have -> : (length <$> ((λ p, replicate (ly_size p.2) ☠%V) <$> f_local_vars fn)) =
-            ly_size <$> (f_local_vars fn).*2. {
-    rewrite -!list_fmap_compose. apply list_fmap_ext => // -[??] /=. by rewrite replicate_length.
-  }
-  rewrite -(fmap_app ly_size).
-
+  iMod (heap_alloc_new_blocks_upd with "[$Hhctx $Hbctx $Hfctx]") as "[Hctx [Hv' Hv]]" => //.
+  iMod (heap_alloc_new_blocks_upd with "Hctx") as "[Hctx [Ha' Ha]]" => //.
   iModIntro. iNext.
   iDestruct ("HWP" $! lsa lsv with "[//] Ha [Hv]") as (Ψ') "(HQinit & HΨ')". {
     rewrite big_sepL2_fmap_r. iApply (big_sepL2_mono with "Hv") => ??? ?? /=.
     iIntros "?". iExists _. iFrame. iPureIntro. split; first by apply replicate_length.
     apply: Forall2_lookup_lr. 2: done. done. rewrite list_lookup_fmap. apply fmap_Some. naive_solver.
   }
-  iMod "HE" as "_". iModIntro. iSplit; first done. iFrame.
-  rewrite -(update_stmt_id {| ts_rfn := _; ts_conts := _|}) /=.
-  iSplit. {
-    iPureIntro => /=.
-    apply: blocks_used_agree_heap_upd_list_in.
-    { rewrite dom_union dom_list_to_map fst_zip; first by set_solver.
-      rewrite zip_with_length !app_length !fmap_length Min.min_l //.
-      rewrite !app_length !fmap_length Hlena Hlenv. done. }
-    apply: blocks_used_agree_heap_upd_list_in.
-    { rewrite dom_union dom_list_to_map fst_zip; first by set_solver.
-      rewrite zip_with_length !app_length !fmap_length Min.min_l //.
-      rewrite !app_length !fmap_length Hlena Hlenv. done. }
-    move => l' Hl'. apply Hub. by apply lookup_union_None in Hl' as [??].
-  }
-  iIntros (_).
+  iMod "HE" as "_". iModIntro. iSplit; first done. iFrame. iIntros (_).
   iApply (wps_wand with "HQinit").
-
   (** prove Return *)
   iIntros (v) "Hv HWP". iDestruct ("HΨ'" with "Hv") as "(Ha & Hv & Hs)".
-  rewrite update_stmt_update.
   iApply wp_lift_stmt_step => //; first by right.
   iIntros (σ3) "(%&Hhctx&Hfctx)".
   iMod (fupd_intro_mask' _ ∅) as "HE"; first set_solver. iModIntro.
   iSplit; first by eauto 8 using ReturnS.
-  iIntros (os ts3 σ2 ? Hst). inv_stmt_step. iIntros "!> !>".
+  iIntros (os ts3 σ2' ? Hst). inv_stmt_step. iIntros "!> !>".
   iMod "HE" as "$". iFrame. rewrite /heap_fmap/= heap_free_list_app /=.
   rewrite -!(big_sepL2_fmap_r snd (λ _ l ly, l↦|ly|)%I).
   iMod (heap_free_list_free with "Hhctx Hv") as "Hhctx".

@@ -210,6 +210,16 @@ Section blocks_used_agree.
     assert (l.1 ∉ dom (gset alloc_id) ub); last by set_solver.
     by rewrite elem_of_dom Hl.
   Qed.
+
+  Lemma blocks_used_agree_update l v h flk allocs:
+    blocks_used_agree h allocs →
+    allocs !! l.1 = None →
+    heap_block_free h l →
+    blocks_used_agree (heap_upd l v flk h) (<[l.1:=to_allocation l.2 (length v)]> allocs).
+  Proof.
+    move => Hagree Hnone Hfree l' /lookup_insert_None[??] ?.
+    rewrite heap_upd_lookup_ne //. by apply: Hagree.
+  Qed.
 End blocks_used_agree.
 
 Section allocs.
@@ -636,3 +646,36 @@ Section heap.
     by iApply (heap_free_free with "Hown").
   Qed.
 End heap.
+
+Section alloc_new_blocks.
+  Context `{!heapG Σ}.
+
+  Lemma heap_alloc_new_block_upd σ1 l v σ2:
+    alloc_new_block σ1 l v σ2 →
+    state_ctx σ1 ==∗
+      state_ctx σ2 ∗
+      allocs_entry l.1 (to_allocation l.2 (length v)) ∗
+      l ↦ v.
+  Proof.
+    iIntros (Halloc) "Hctx". iDestruct "Hctx" as (Hagree) "(Hhctx&Hbctx&Hfctx)".
+    inversion_clear Halloc.
+    iMod (allocs_alloc (st_allocs σ1) l.1 (to_allocation l.2 (length v))
+            with "Hbctx") as "[Hbctx Hb]"; first done.
+    iDestruct (allocs_entry_to_loc_in_bounds l (length v)
+                 with "Hb") as "#Hinb"; first by naive_solver.
+    iMod (heap_alloc l (st_heap σ1) v with "[Hhctx $Hinb]") as "[Hhctx Hv]" => //.
+    iModIntro. iFrame. iPureIntro => /=. by apply blocks_used_agree_update.
+  Qed.
+
+  Lemma heap_alloc_new_blocks_upd σ1 ls vs σ2:
+    alloc_new_blocks σ1 ls vs σ2 →
+    state_ctx σ1 ==∗
+      state_ctx σ2 ∗
+      ([∗ list] l; v ∈ ls; vs, allocs_entry l.1 (to_allocation l.2 (length v))) ∗
+      ([∗ list] l; v ∈ ls; vs, l ↦ v).
+  Proof.
+    move => H. iInduction H as [] "IH"; first by iIntros "$ !>" => //=.
+    iIntros "H". iMod (heap_alloc_new_block_upd with "H") as "(H&Ha&Hl)" => //.
+    iFrame. by iApply "IH".
+  Qed.
+End alloc_new_blocks.

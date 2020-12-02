@@ -209,8 +209,9 @@ Delimit Scope loc_scope with L.
 Open Scope loc_scope.
 
 Definition alloc_id := Z.
+Definition addr := Z.
 
-Definition loc : Set := alloc_id * Z.
+Definition loc : Set := alloc_id * addr.
 Bind Scope loc_scope with loc.
 
 Inductive mbyte : Set :=
@@ -1010,6 +1011,24 @@ Definition subst_function (xs : list var_name) (vs : list val) (f : function) : 
 Definition to_allocation (off : Z) (len : nat) : allocation :=
   Allocation off (off + len).
 
+Inductive alloc_new_block : state → loc → val → state → Prop :=
+| AllocNewBlock σ l v:
+    σ.(st_allocs) !! l.1 = None →
+    heap_block_free σ.(st_heap) l →
+    alloc_new_block σ l v {|
+      st_heap   := heap_upd l v (λ _, RSt 0%nat) σ.(st_heap);
+      st_allocs := <[l.1 := to_allocation l.2 (length v)]> σ.(st_allocs);
+      st_fntbl  := σ.(st_fntbl); st_alloc_failure := σ.(st_alloc_failure);
+    |}.
+
+Inductive alloc_new_blocks : state → list loc → list val → state → Prop :=
+| AllocNewBlock_nil σ :
+    alloc_new_blocks σ [] [] σ
+| AllocNewBlock_cons σ σ' σ'' l v ls vs :
+    alloc_new_block σ l v σ' →
+    alloc_new_blocks σ' ls vs σ'' →
+    alloc_new_blocks σ (l :: ls) (v :: vs) σ''.
+
 (*** Evaluation of statements *)
 Inductive simple_stmt_step : thread_state → state → list Empty_set → thread_state → state → list thread_state → Prop :=
 | StmtExprS ts σ σ' Ks e e' os efs:
@@ -1043,7 +1062,7 @@ Inductive simple_stmt_step : thread_state → state → list Empty_set → threa
      (update_stmt {| ts_conts := cs; ts_rfn := co.(c_rfn); ts_alloc_failure := false; |} (subst_stmt [co.(c_rvar)] [v] co.(c_rfn).(rf_stmt)))
      (* deallocate the stack *)
      (heap_fmap (heap_free_list ts.(ts_rfn).(rf_locs)) σ) []
-| CallS lsa lsv ts σ vf vs s co f rf fn fn' h' h'' ret ub':
+| CallS lsa lsv ts σ σ' σ'' vf vs s co f rf fn fn' ret :
     ts.(ts_rfn).(rf_stmt) = Call ret (Val vf) (Val <$> vs) s →
     val_to_loc vf = Some f →
     σ.(st_fntbl) !! f = Some fn →
@@ -1053,28 +1072,19 @@ Inductive simple_stmt_step : thread_state → state → list Empty_set → threa
     fn' = subst_function (fn.(f_args).*1 ++ fn.(f_local_vars).*1) (val_of_loc <$> (lsa ++ lsv)) fn →
     (* check the layout of the arguments *)
     Forall2 has_layout_val vs fn.(f_args).*2 →
-    (* ensure that ls points to free blocks *)
-    Forall (heap_block_free σ.(st_heap)) lsa →
-    Forall (heap_block_free σ.(st_heap)) lsv →
-    (* ensure that ls blocks are unused *)
-    Forall (λ l, σ.(st_allocs) !! l.1 = None) lsa →
-    Forall (λ l, σ.(st_allocs) !! l.1 = None) lsv →
     (* ensure that locations are aligned *)
     Forall2 has_layout_loc lsa fn.(f_args).*2 →
     Forall2 has_layout_loc lsv fn.(f_local_vars).*2 →
-    (* ensure that the blocks in ls are disjoint *)
-    NoDup (lsa ++ lsv).*1 →
     (* initialize the local vars to poison *)
-    heap_upd_list lsv ((λ p, replicate p.2.(ly_size) MPoison) <$> fn.(f_local_vars)) (λ _, RSt 0%nat) σ.(st_heap) = h' →
+    alloc_new_blocks σ lsv ((λ p, replicate p.2.(ly_size) MPoison) <$> fn.(f_local_vars)) σ' →
     (* initialize the arguments with the supplied values *)
-    heap_upd_list lsa vs (λ _, RSt 0%nat) h' = h'' →
+    alloc_new_blocks σ' lsa vs σ'' →
     (* add used blocks allocations  *)
-    list_to_map (zip (lsa.*1 ++ lsv.*1) (zip_with to_allocation (lsa.*2 ++ lsv.*2) (ly_size <$> (fn.(f_args).*2 ++ fn.(f_local_vars).*2)))) ∪ σ.(st_allocs) = ub' →
-    rf = {| rf_fn := fn'; rf_locs := zip lsa fn.(f_args).*2 ++ zip lsv fn.(f_local_vars).*2; rf_stmt := Goto fn'.(f_init); |} →
+    rf = {| rf_fn := fn'; rf_locs := zip lsa fn.(f_args).*2 ++ zip lsv fn.(f_local_vars).*2;
+            rf_stmt := Goto fn'.(f_init); |} →
     co = {| c_rfn := (update_stmt ts s).(ts_rfn); c_rvar := ret |} →
     simple_stmt_step ts σ []
-      {| ts_conts := co::ts.(ts_conts); ts_rfn := rf; ts_alloc_failure := ts.(ts_alloc_failure); |}
-      {| st_heap:= h''; st_fntbl := σ.(st_fntbl); st_allocs := ub'; st_alloc_failure := σ.(st_alloc_failure); |} []
+      {| ts_conts := co::ts.(ts_conts); ts_rfn := rf; ts_alloc_failure := ts.(ts_alloc_failure); |} σ'' []
 | CallFailS ts σ vf vs s f fn ret:
     ts.(ts_rfn).(rf_stmt) = Call ret (Val vf) (Val <$> vs) s →
     val_to_loc vf = Some f →

@@ -62,6 +62,14 @@ Proof. by intros ?? ->%leibniz_equiv. Qed.
 Lemma zip_fmap_r {A B C} (l1 : list A) (l2 : list B) (f : B → C) :
   zip l1 (f <$> l2) = (λ x, (x.1, f x.2)) <$>  zip l1 l2.
 Proof. rewrite zip_with_fmap_r zip_with_zip. by apply: list_fmap_ext => // [[]]. Qed.
+
+Lemma zip_with_nil_inv' {A B C : Type} (f : A → B → C) (l1 : list A) (l2 : list B) :
+  length l1 = length l2 → zip_with f l1 l2 = [] → l1 = [] ∧ l2 = [].
+Proof.
+  move => Hlen /zip_with_nil_inv [] H; rewrite H /= in Hlen;
+  split => //; by apply nil_length_inv.
+Qed.
+
 Lemma entails_eq {PROP : bi} (P1 P2 : PROP) :
   P1 = P2 → P1 -∗ P2.
 Proof. move => ->. reflexivity. Qed.
