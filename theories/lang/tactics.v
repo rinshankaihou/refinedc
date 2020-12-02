@@ -25,6 +25,7 @@ Inductive expr :=
 | AnnotExpr (n : nat) {A} (a : A) (e : expr)
 | LocInfoE (a : location_info) (e : expr)
 | StructInit (ly : struct_layout) (fs : list (string * expr))
+| MacroE (m : list lang.expr → lang.expr) (es : list expr) (wf : MacroWfSubst m)
 (* for opaque expressions*)
 | Expr (e : lang.expr)
 .
@@ -47,16 +48,20 @@ Lemma expr_ind (P : expr → Prop) :
   (∀ (e : expr) (ul : union_layout) (m : var_name), P e → P (GetMemberUnion e ul m)) →
   (∀ (n : nat) (A : Type) (a : A) (e : expr), P e → P (AnnotExpr n a e)) →
   (∀ (a : location_info) (e : expr), P e → P (LocInfoE a e)) →
-  (∀ (ly : struct_layout) (fs : list (string * expr)), Forall (λ se, P se) fs.*2 → P (StructInit ly fs)) →
+  (∀ (ly : struct_layout) (fs : list (string * expr)), Forall P fs.*2 → P (StructInit ly fs)) →
+  (∀ (m : list lang.expr → lang.expr) (es : list expr) (wf : MacroWfSubst m), Forall P es → P (MacroE m es wf)) →
   (∀ (e : lang.expr), P (Expr e)) → ∀ (e : expr), P e.
 Proof.
   move => *. generalize dependent P => P. match goal with | e : expr |- _ => revert e end.
-  fix FIX 1. move => [ ^e] => ??????? Hconcat ???????? Hstruct *.
+  fix FIX 1. move => [ ^e] => ??????? Hconcat ???????? Hstruct Hmacro ?.
   8: {
     apply Hconcat. apply Forall_true => ?. by apply: FIX.
   }
   16: {
     apply Hstruct. apply Forall_fmap. apply Forall_true => ?. by apply: FIX.
+  }
+  16: {
+    apply Hmacro. apply Forall_true => ?. by apply: FIX.
   }
   all: auto.
 Qed.
@@ -80,6 +85,7 @@ Fixpoint to_expr (e : expr) : lang.expr :=
   | StructInit ly fs => notation.StructInit ly (prod_map id to_expr <$> fs)
   | GetMember e s m => notation.GetMember (to_expr e) s m
   | GetMemberUnion e ul m => notation.GetMemberUnion (to_expr e) ul m
+  | MacroE m es _ => notation.MacroE m (to_expr <$> es)
   | Expr e => e
   end.
 
@@ -96,6 +102,8 @@ Ltac of_expr e :=
     let e := of_expr e in constr:(AddrOf e)
   | notation.AnnotExpr ?n ?a ?e =>
     let e := of_expr e in constr:(AnnotExpr n a e)
+  | notation.MacroE ?m ?es =>
+    let es := of_expr es in constr:(MacroE m es _)
   | notation.LocInfo ?a ?e =>
     let e := of_expr e in constr:(LocInfoE a e)
   | notation.StructInit ?ly ?fs =>
@@ -201,6 +209,7 @@ Fixpoint find_expr_fill (e : expr) (bind_val : bool) : option (list ectx_item * 
       if e1 is Val v1 then if e2 is Val v2 then Some (Ks ++ [CASRCtx ot v1 v2], e') else None else None
     else Some ([], e)
   | Concat _ => None
+  | MacroE _ _ _ => None
   | SkipE e1 =>
     if find_expr_fill e1 bind_val is Some (Ks, e') then
       Some (Ks ++ [SkipECtx], e') else Some ([], e)
@@ -462,6 +471,7 @@ Fixpoint subst (x : var_name) (v : val) (e : expr)  : expr :=
   | StructInit ly fs => StructInit ly (prod_map id (subst x v) <$> fs)
   | GetMember e s m => GetMember (subst x v e) s m
   | GetMemberUnion e ul m => GetMemberUnion (subst x v e) ul m
+  | MacroE m es wf => MacroE m (subst x v <$> es) wf
   | Expr e => Expr (lang.subst x v e)
   end.
 
@@ -498,6 +508,9 @@ Proof.
     rewrite !list_to_map_fmap !lookup_fmap. destruct (list_to_map fs !! f) as [e|] eqn:H; simpl; last done.
     f_equal. move: Hf => /Forall_forall IH. apply (IH _).
     simplify_eq. apply elem_of_list_to_map_2 in H. set_solver.
+  - (** MacroE *)
+    rewrite /notation.MacroE macro_wf_subst. f_equal.
+    rewrite -!list_fmap_compose. apply list_fmap_ext' => //. by apply Forall_forall.
 Qed.
 
 Lemma to_expr_subst_l xs vs e :

@@ -180,6 +180,18 @@ Section IntType.
   Global Instance int_elem_of_it : ElemOf Z int_type :=
     λ z it, min_int it ≤ z ≤ max_int it.
 
+  Lemma int_modulus_mod_in_range n it:
+    it_signed it = false →
+    (n `mod` int_modulus it) ∈ it.
+  Proof.
+    move => ?.
+    have [|??]:= Z.mod_pos_bound n (int_modulus it). {
+      apply: Z.pow_pos_nonneg => //. rewrite /bits_per_int/bits_per_byte/=. lia.
+    }
+    destruct it as [? []] => //.
+    split; unfold min_int, max_int => /=; lia.
+  Qed.
+
   Definition it_layout (it : int_type) :=
     Layout (bytes_per_int it) it.(it_byte_size_log).
 

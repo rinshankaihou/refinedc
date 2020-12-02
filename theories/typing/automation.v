@@ -51,6 +51,7 @@ Ltac convert_to_i2p_tac P ::=
   | typed_cas ?ot ?v1 ?P1 ?v2 ?P2 ?v3 ?P3 ?T => uconstr:(((_ : TypedCas _ _ _ _ _ _ _) _).(i2p_proof))
   | typed_annot_expr ?n ?a ?v ?ty ?T => uconstr:(((_ : TypedAnnotExpr _ _ _ _) _) .(i2p_proof))
   | typed_annot_stmt ?a ?l ?β ?ty ?T => uconstr:(((_ : TypedAnnotStmt _ _ _ _) _).(i2p_proof))
+  | typed_macro_expr ?m ?es ?T => uconstr:(((_ : TypedMacroExpr _ _) _).(i2p_proof))
   end.
 
 (** * Main automation tactics *)
@@ -182,6 +183,7 @@ Ltac liRExpr :=
     | W.AnnotExpr _ ?a _ => notypeclasses refine (tac_fast_apply (type_annot_expr _ _ _ _) _)
     | W.StructInit _ _ => notypeclasses refine (tac_fast_apply (type_struct_init _ _ _) _)
     | W.SkipE _ => notypeclasses refine (tac_fast_apply (type_skipe' _ _) _)
+    | W.MacroE _ _ _ => notypeclasses refine (tac_fast_apply (type_macro_expr _ _ _) _)
     | _ => fail "do_expr: unknown expr" e
     end
   end.

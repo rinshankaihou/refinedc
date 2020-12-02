@@ -179,6 +179,27 @@ let is_const_0 (AilSyntax.AnnotatedExpression(_, _, _, e)) =
       end
   | _            -> false
 
+
+type 'a macro_annot_arg =
+  | MacroString of string
+  | MacroExpr of ail_expr
+
+let rec macro_annot_to_list e =
+  let open AilSyntax in
+  let get_expr e =
+    match e with
+    | AnnotatedExpression(_, _, _, AilEarray_decay(AnnotatedExpression(_, _, _, AilEstr(_, strs)))) -> MacroString(String.concat "" strs)
+    | _            -> MacroExpr(e)
+  in
+  match e with
+  | AnnotatedExpression(_, _, _, AilEbinary(e1, Comma, e2)) -> List.append (macro_annot_to_list e1) [get_expr e2]
+  | _            -> [get_expr e]
+
+let is_macro_annot e =
+  match macro_annot_to_list e with
+  | MacroString("rc_macro") :: _ -> true
+  | _ -> false
+
 let rec op_type_of loc Ctype.(Ctype(_, c_ty)) =
   match c_ty with
   | Void                -> not_impl loc "op_type_of (Void)"
@@ -457,6 +478,27 @@ let rec translate_expr : bool -> op_type option -> ail_expr -> expr * calls =
         (locate (BinOp(op, ty1, ty2, e1, e2)), l1 @ l2)
     | AilEassign(e1,e2)            -> forbidden loc "nested assignment"
     | AilEcompoundAssign(e1,op,e2) -> not_impl loc "expr compound assign"
+    | AilEcond(e1,e2,e3) when is_const_0 e1 && is_macro_annot e2 ->
+       begin
+       match macro_annot_to_list e2 with
+       | _ :: MacroString(name) :: rest ->
+          let rec process_rest rest =
+            match rest with
+            | [_] -> ([], [])
+            | MacroString("ARG") :: MacroString(s) :: rest ->
+               let (args, es) = process_rest rest in
+               (s :: args, es)
+            | MacroString("EXPR") :: MacroExpr(e) :: rest ->
+               let (args, es) = process_rest rest in
+               let (e, l) = translate e in
+               (args, e :: es)
+            | _ -> not_impl loc "wrong macro args"
+          in
+          let (args, es) = process_rest rest in
+          let (e3, l) = translate e3 in
+          (locate(Macro(name, args, es, e3)), l)
+       | _ -> not_impl loc "wrong macro"
+       end
     | AilEcond(e1,e2,e3)           -> not_impl loc "expr cond"
     | AilEcast(q,c_ty,e)           ->
         begin

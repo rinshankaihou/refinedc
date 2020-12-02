@@ -97,6 +97,33 @@ Notation "'locinfo:' a ; b" := (LocInfo (B:=stmt) a b%E)
   (at level 80, b at level 200, format "'locinfo:'  a ;  b") : expr_scope.
 Notation LocInfoE := (LocInfo (B:=expr)).
 
+Definition MacroE (m : list expr → expr) (es : list expr) := m es.
+Arguments MacroE : simpl never.
+Typeclasses Opaque MacroE.
+
+(* One could probably get rid of this type class by swallowing the
+substitutions in MacroE, i.e. make it parametrized by a list of names
+and a list of expressions which are substituted in m. (Then one can
+maybe also get rid of es?) *)
+Class MacroWfSubst (m : list expr → expr) : Prop :=
+  macro_wf_subst x v es: subst x v (m es) = m (subst x v <$> es)
+.
+
+(* Like [MacroE m es] but checks that [m es] is equal to [e] *)
+Notation CheckedMacroE m es e := (ltac:(
+   let rec get_head e := match e with
+                         | ?f ?a => get_head f
+                         | ?x => x
+                         end in
+   let mhead := get_head constr:(m%function) in
+   let munf := (eval unfold mhead in (m%function)) in
+   let esunf := (eval unfold LocInfo in (es%list)) in
+   let eunf := (eval unfold LocInfo in e) in
+   (* idtac munf; *)
+   unify (munf esunf) eunf with typeclass_instances;
+   exact (MacroE m es))) (only parsing).
+
+
 Lemma annot_expr_S {A} n (a : A) e:
   AnnotExpr (S n) a e = SkipE (AnnotExpr n a e).
 Proof. done. Qed.

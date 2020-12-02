@@ -127,6 +127,14 @@ Section judgements.
   Class TypedCas (ot : op_type) (v1 : val) (P1 : iProp Σ) (v2 : val) (P2 : iProp Σ) (v3 : val) (P3 : iProp Σ) : Type :=
     typed_cas_proof T : iProp_to_Prop (typed_cas ot v1 P1 v2 P2 v3 P3 T).
 
+  (* This does not allow overloading the macro based on the type of
+  es. Is this a problem? There is a work around where the rule inserts
+  another judgment that allows type-based overloading. *)
+  Definition typed_macro_expr (m : list expr → expr) (es : list expr) (T : val → mtype → iProp Σ) : iProp Σ :=
+    (typed_val_expr (m es) T).
+  Class TypedMacroExpr (m : list expr → expr) (es : list expr) : Type :=
+    typed_macro_expr_proof T : iProp_to_Prop (typed_macro_expr m es T).
+
   (*** places *)
   Definition typed_write (atomic : bool) (e : expr) (v : val) (ty : type) `{!Movable ty} (T : iProp Σ) : iProp Σ :=
     let E := if atomic then ∅ else ⊤ in
@@ -305,8 +313,10 @@ Hint Mode TypedAddrOfEnd + + + + + : typeclass_instances.
 Hint Mode TypedPlace + + + + + + : typeclass_instances.
 Hint Mode TypedAnnotExpr + + + + + + + : typeclass_instances.
 Hint Mode TypedAnnotStmt + + + + + + + : typeclass_instances.
+Hint Mode TypedMacroExpr + + + + : typeclass_instances.
 Arguments typed_annot_expr : simpl never.
 Arguments typed_annot_stmt : simpl never.
+Arguments typed_macro_expr : simpl never.
 Arguments learnalign_align {_ _ _ _} _.
 Arguments learnalign_learn {_ _ _ _} _.
 
@@ -813,6 +823,11 @@ Section typing.
     iMod "HT". iModIntro. iApply wp_skip. iModIntro. iMod "HT". iModIntro.
     by iApply ("IH" with "HΦ HT").
   Qed.
+
+  Lemma type_macro_expr m es T:
+    typed_macro_expr m es T -∗
+    typed_val_expr (MacroE m es) T.
+  Proof. done. Qed.
 
   Lemma type_use ly T e o:
     ⌜if o is Na2Ord then False else True⌝ ∗ typed_read (if o is ScOrd then true else false) e ly T -∗

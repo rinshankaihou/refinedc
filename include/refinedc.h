@@ -35,4 +35,8 @@
 #define RC_FOCUS_X
 #endif
 
+#define RC_MACRO_ARG(arg) "ARG", #arg
+#define RC_MACRO_EXPR(expr) "EXPR", expr
+#define RC_MACRO(name, m, ...) (0 ? ("rc_macro", #name, __VA_ARGS__, (m)) : (m))
+
 #endif

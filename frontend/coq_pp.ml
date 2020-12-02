@@ -189,6 +189,14 @@ let rec pp_expr : Coq_ast.expr pp = fun ff e ->
         in
         List.iteri fn fs;
         pp "@]@;]@]"
+    | Macro(name, args, es, e)                ->
+        pp "@[@[<hov 2>CheckedMacroE (%s %s) [" name (String.concat " " args);
+        let fn i e =
+          let s = if i = List.length es - 1 then "" else " ;" in
+          pp "@;(%a : expr)%s" pp_expr e s
+        in
+        List.iteri fn es;
+        pp "@]@;] (%a : expr)@]" pp_expr e
   in
   match Location.get e.loc with
   | Some(d) when !print_expr_locs ->
