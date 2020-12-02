@@ -450,6 +450,15 @@ Proof.
     + rewrite /int_modulus /bits_per_int in HM. lia.
 Qed.
 
+Lemma it_in_range_mod n it:
+  n ∈ it → it_signed it = false →
+  n `mod` int_modulus it = n.
+Proof.
+  move => [??] ?. rewrite Z.mod_small //.
+  destruct it as [? []] => //. unfold min_int, max_int in *. simpl in *.
+  lia.
+Qed.
+
 Fixpoint val_to_loc_go (v : val) (pos : nat) (l : loc) : option loc :=
   match v with
   | (MPtrFrag l' pos')::v' =>
@@ -765,8 +774,6 @@ Inductive eval_bin_op : bin_op → op_type → op_type → state → val → val
     (* TODO: What is the right int type of the result here? C seems to
     use i32 but maybe we don't want to hard code that. *)
     eval_bin_op op (IntOp it) (IntOp it) σ v1 v2 (i2v (Z_of_bool b) i32)
-(* This defines checked versions of the arithmetic operations which
-are UB if the result is out of bounds for it. *)
 | ArithOpII op v1 v2 σ n1 n2 it n v:
     match op with
     | AddOp => Some (n1 + n2)
@@ -777,7 +784,7 @@ are UB if the result is out of bounds for it. *)
     which round towards floor)*)
     | DivOp => if n2 is 0 then None else Some (n1 `quot` n2)
     | ModOp => if n2 is 0 then None else Some (n1 `rem` n2)
-    (* TODO: Figure out if these are the operations we want *)
+    (* TODO: Figure out if these are the operations we want and what sideconditions they have *)
     | AndOp => Some (Z.land n1 n2)
     | OrOp => Some (Z.lor n1 n2)
     | XorOp => Some (Z.lxor n1 n2)
@@ -787,7 +794,7 @@ are UB if the result is out of bounds for it. *)
     end = Some n →
     val_to_int v1 it = Some n1 →
     val_to_int v2 it = Some n2 →
-    val_of_int n it = Some v →
+    val_of_int (if it_signed it then n else n `mod` int_modulus it) it = Some v →
     eval_bin_op op (IntOp it) (IntOp it) σ v1 v2 v
 .
 

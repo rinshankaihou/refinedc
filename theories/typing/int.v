@@ -150,11 +150,18 @@ Section programs.
     iIntros (Hop) "HT". iIntros (Hv1 Hv2 Φ) "HΦ".
     iDestruct ("HT" with "[] []" ) as ([v Hv]%val_of_int_is_some) "HT".
     1-2: iPureIntro; by apply: val_of_int_in_range.
+    move: (Hv) => /val_of_int_in_range ?.
     move: Hv1 Hv2 => /val_to_of_int Hv1 /val_to_of_int Hv2. rewrite /i2v Hv/=.
     iApply (wp_binop_det v). iSplit.
-    { iIntros (σ v') "_ !%". split; last (move => ->; destruct op; by econstructor).
-      destruct op => //; inversion 1; by simplify_eq. }
-    iIntros "!>". iApply "HΦ"; last done.  by iPureIntro.
+    - iIntros (σ v') "_ !%". split.
+      + destruct op => //.
+        all: inversion 1; simplify_eq/=.
+        all: destruct it as [? []]; simplify_eq/= => //.
+        all: by rewrite ->it_in_range_mod in * => //; simplify_eq.
+      + move => ->; destruct op => //; econstructor => //.
+        all: destruct it as [? []]; simplify_eq/= => //.
+        all: by rewrite it_in_range_mod; simplify_eq/=.
+    - iIntros "!>". iApply "HΦ"; last done.  by iPureIntro.
   Qed.
   Lemma type_arithop_int_int_div_mod it v1 n1 v2 n2 T n op:
     match op with
@@ -168,12 +175,18 @@ Section programs.
     iIntros (Hop) "HT". iIntros (Hv1 Hv2 Φ) "HΦ".
     iDestruct ("HT" with "[] []" ) as (Hn [v Hv]%val_of_int_is_some) "HT".
     1-2: iPureIntro; by apply: val_of_int_in_range.
+    move: (Hv) => /val_of_int_in_range ?.
     move: Hv1 Hv2 => /val_to_of_int Hv1 /val_to_of_int Hv2. rewrite /i2v Hv/=.
     iApply (wp_binop_det v). iSplit.
-    { iIntros (σ v') "_ !%".
-      split; last (move => ->; destruct op; econstructor => //; by case_match).
-      destruct op => //; inversion 1; simplify_eq; case_match; by simplify_eq. }
-    iApply "HΦ"; last done. by iPureIntro.
+    - iIntros (σ v') "_ !%". split.
+      + destruct op => //.
+        all: inversion 1; destruct n2; simplify_eq/=.
+        all: destruct it as [? []]; simplify_eq/= => //.
+        all: by rewrite ->it_in_range_mod in * => //; simplify_eq.
+      + move => ->; destruct op, n2 => //; econstructor => // => //.
+        all: destruct it as [? []]; simplify_eq/= => //.
+        all: by rewrite it_in_range_mod; simplify_eq/=.
+    - iIntros "!>". iApply "HΦ"; last done.  by iPureIntro.
   Qed.
   Global Program Instance type_add_int_int_inst it v1 n1 v2 n2:
     TypedBinOpVal v1 (n1 @ int it)%I v2 (n2 @ int it)%I AddOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_int_int it v1 n1 v2 n2 T (n1 + n2) _ _).
