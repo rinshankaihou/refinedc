@@ -282,7 +282,7 @@ two error messages of the following form (abbreviated).
 Cannot solve sidecondition in function "add3" !
 ```
 Next to the messages, Coq goals are shown to tell us what it is that could not
-be proved. In our case, both goals are of the form `_ + _ < it_max u32`. That
+be proved. In our case, both goals are of the form `_ + _ ≤ max_int u32`. That
 explains the error: the additions in our `add3` function can overflow (which
 leads to undefined behaviour in RefinedC).
 
@@ -294,7 +294,7 @@ corresponding to a singleton (integer) type with value `n`.
 ```
 [[rc::parameters("nx : nat", "ny : nat", "nz : nat")]]
 [[rc::args("nx @ int<u32>", "ny @ int<u32>", "nz @ int<u32>")]]
-[[rc::requires("{nx + ny < it_max u32}", "{(nx + ny) + nz < it_max u32}")]]
+[[rc::requires("{nx + ny ≤ max_int u32}", "{(nx + ny) + nz ≤ max_int u32}")]]
 [[rc::returns("int<u32>")]]
 unsigned int add3(unsigned int x, unsigned int y, unsigned int z){
   unsigned int r = x + y;
