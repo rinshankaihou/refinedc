@@ -434,7 +434,7 @@ Lemma wps_bind Q Ψ Ks e E:
 Proof.
   iIntros "He". iLöb as "IH" forall (e).
   move Hv: (to_val e) => [|]. {
-    move => /of_to_val <-. iApply fupd_wps. by iMod (wp_value_inv' with "He").
+    move => /of_to_val <-. rewrite wp_value_fupd'. by iApply fupd_wps.
   }
   iApply wps_lift_stmt_step.
   iIntros (?? ->). iSplit. {

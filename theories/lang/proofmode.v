@@ -34,7 +34,7 @@ Lemma tac_wp_bind' `{refinedcG Σ} e Ks Φ E:
 Proof.
   move: Ks Φ => /=. elim/rev_ind. {
     iIntros (Φ) "He". iApply @wp_fupd.
-    iApply (wp_wand with "He") => /=. iIntros (v). iApply @wp_value_inv'.
+    iApply (wp_wand with "He") => /=. iIntros (v). rewrite wp_value_fupd. by iIntros "$".
   }
   move => K Ks IH Φ.
   have [Ks' HKs']:= W.ectx_item_correct [K].
