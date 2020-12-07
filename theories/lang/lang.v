@@ -25,6 +25,11 @@ Section Byte.
     - left. assert (H1 = H2) as ->; [|done]. apply proof_irrel.
     - right. naive_solver.
   Qed.
+
+  Program Definition byte0 : byte := {|
+    byte_val := 0;
+  |}.
+  Next Obligation. done. Qed.
 End Byte.
 
 (** Representation of a type layout (byte size and alignment constraint). *)
@@ -533,6 +538,11 @@ Typeclasses Opaque val_to_loc val_of_loc val_to_int val_of_int val_of_bool.
 Lemma val_to_int_bool b :
   val_to_int (val_of_bool b) bool_it = Some (Z_of_bool b).
 Proof. by destruct b. Qed.
+
+Definition zero_val (n : nat) : val :=
+  replicate n (MByte byte0).
+Arguments zero_val : simpl never.
+Typeclasses Opaque zero_val.
 
 (*** Properties of layouts and alignment *)
 Lemma ly_align_log_ly_align_eq_iff ly1 ly2:
