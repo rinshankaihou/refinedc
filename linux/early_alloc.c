@@ -43,7 +43,7 @@ void hyp_early_alloc_init(unsigned long virt, unsigned long size)
 	_end = virt + size;
 	cur = virt;
 
-  /* hyp_early_alloc_mm_ops.zalloc_page = hyp_early_alloc_page; */
+	/* hyp_early_alloc_mm_ops.zalloc_page = hyp_early_alloc_page; */
 	/* hyp_early_alloc_mm_ops.phys_to_virt = hyp_phys_to_virt; */
 	/* hyp_early_alloc_mm_ops.virt_to_phys = hyp_virt_to_phys; */
 }
@@ -72,9 +72,9 @@ static unsigned char * cur1;
 [[rc::ensures("[global_with_type \"cur1\" Own (&own (uninit (ly_set_size PAGE_LAYOUT m)))]")]]
 void * hyp_early_alloc_page1(void *arg)
 {
-  if (size1 <= (unsigned long) PAGE_SIZE) {
-    return NULL;
-  }
+	if (size1 <= (unsigned long) PAGE_SIZE) {
+		return NULL;
+	}
 
 	unsigned char *ret = cur1;
 	cur1 += PAGE_SIZE;
@@ -98,7 +98,7 @@ void hyp_early_alloc_init1(unsigned char *virt, unsigned long size)
 	size1 = size;
 	cur1 = virt;
 
-  /* hyp_early_alloc_mm_ops.zalloc_page = hyp_early_alloc_page; */
+	/* hyp_early_alloc_mm_ops.zalloc_page = hyp_early_alloc_page; */
 	/* hyp_early_alloc_mm_ops.phys_to_virt = hyp_phys_to_virt; */
 	/* hyp_early_alloc_mm_ops.virt_to_phys = hyp_virt_to_phys; */
 }
