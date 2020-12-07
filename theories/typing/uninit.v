@@ -90,23 +90,24 @@ Section uninit.
   Qed.
 
 
-
-  Lemma type_add_uninit v2 β ly T (p : loc) n:
-    (⌜0 ≤ n⌝ ∗ ⌜Z.to_nat n ≤ ly.(ly_size)⌝%nat ∗ (p ◁ₗ{β} uninit (ly_set_size ly (Z.to_nat n)) -∗ v2 ◁ᵥ n @ int size_t -∗
+  Lemma type_add_uninit v2 β ly (p : loc) n it T:
+    (⌜n ∈ it⌝ -∗ ⌜0 ≤ n⌝ ∗ ⌜Z.to_nat n ≤ ly.(ly_size)⌝%nat ∗ (
+        p ◁ₗ{β} uninit (ly_set_size ly (Z.to_nat n)) -∗ v2 ◁ᵥ n @ int it -∗
           T (val_of_loc (p +ₗ n)) (t2mt ((p +ₗ n) @ &frac{β} (uninit (ly_offset ly (Z.to_nat n))))))) -∗
-      typed_bin_op v2 (v2 ◁ᵥ n @ int size_t) p (p ◁ₗ{β} uninit ly) (PtrOffsetOp u8) (IntOp size_t) PtrOp T.
+      typed_bin_op v2 (v2 ◁ᵥ n @ int it) p (p ◁ₗ{β} uninit ly) (PtrOffsetOp u8) (IntOp it) PtrOp T.
   Proof.
-    iIntros "(%&%&HT)" (Hint) "Hp". iIntros (Φ) "HΦ".
+    iIntros "HT" (Hint) "Hp". iIntros (Φ) "HΦ".
+    move: (Hint) => /val_of_int_in_range?.
+    iDestruct ("HT" with "[//]") as (??) "HT".
     iDestruct (split_uninit (Z.to_nat n) with "Hp") as "[H1 H2]"; [lia..|].
-    iApply wp_ptr_offset. by apply val_to_of_loc. by apply val_to_of_int.
-    { have := val_of_int_in_range _ _ _ Hint. unfold elem_of, int_elem_of_it, min_int; simpl. lia. }
+    iApply wp_ptr_offset. by apply val_to_of_loc. by apply val_to_of_int. done.
     iModIntro. rewrite offset_loc_sz1//.
     iApply ("HΦ" with "[H2]"). 2: iApply ("HT" with "H1 []"). rewrite Z2Nat.id; [|lia]. by iFrame.
     by iPureIntro.
   Qed.
-  Global Instance type_add_uninit_inst v2 β ly (p : loc) n:
-    TypedBinOp v2 (v2 ◁ᵥ n @ int size_t)%I p (p ◁ₗ{β} uninit ly) (PtrOffsetOp u8) (IntOp size_t) PtrOp :=
-    λ T, i2p (type_add_uninit v2 β ly T p n).
+  Global Instance type_add_uninit_inst v2 β ly (p : loc) n it:
+    TypedBinOp v2 (v2 ◁ᵥ n @ int it)%I p (p ◁ₗ{β} uninit ly) (PtrOffsetOp u8) (IntOp it) PtrOp :=
+    λ T, i2p (type_add_uninit v2 β ly p n it T).
 
   Lemma annot_to_uninit l β ty T:
     (∃ ly, (subsume (l ◁ₗ{β} ty) (l ◁ₗ{β} uninit ly) (l ◁ₗ{β} uninit ly -∗ T))) -∗

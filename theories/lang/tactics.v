@@ -257,7 +257,7 @@ Proof.
     eexists (_)|
     eexists (_ ++ replicate n lang.SkipECtx )|
     eexists (_)|
-    eexists (_ ++ [lang.BinOpLCtx _ _ _ _])|
+    eexists (_ ++ [lang.BinOpRCtx _ _ _ _])|
     eexists (_)|
     ..] => ?; rewrite fill_app ?ectxi_language.fill_app /= /notation.GetMember; f_equal; eauto.
   - (** Concat *)

@@ -263,8 +263,8 @@ Proof.
   rewrite Hs /=. move: Hs => /val_to_of_int Hs.
   iApply wp_binop_det. iSplit; last done.
   iIntros (σ v) "_ !%". split.
-  - inversion 1. by simplify_eq.
-  - move => ->. by apply AddOpPI.
+  - inversion 1; simplify_eq. by rewrite offset_loc_sz1.
+  - move => ->. rewrite -(offset_loc_sz1 u8) //. apply: PtrOffsetOpIP => //. lia.
 Qed.
 
 Lemma wp_get_member_union Φ vl l ul n E:

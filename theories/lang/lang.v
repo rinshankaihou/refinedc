@@ -739,12 +739,7 @@ Definition ptr_eq l1 l2 h : option bool :=
     if eob1 || eob2 then None else Some false.
 
 (* evaluation can be non-deterministic for comparing pointers *)
-(* TODO: implement *)
 Inductive eval_bin_op : bin_op → op_type → op_type → state → val → val → val → Prop :=
-| AddOpPI v1 v2 σ o l:
-    val_to_loc v1 = Some l →
-    val_to_int v2 size_t = Some o →
-    eval_bin_op AddOp PtrOp (IntOp size_t) σ v1 v2 (val_of_loc (l +ₗ o))
 | PtrOffsetOpIP v1 v2 σ o l ly it:
     val_to_int v1 it = Some o →
     val_to_loc v2 = Some l →
