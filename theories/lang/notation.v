@@ -49,6 +49,8 @@ Notation "e1 ^{ ot1 , ot2 } e2" := (BinOp XorOp ot1 ot2 e1%E e2%E)
 (* The offset must be evaluated first for the type system to work, thus the order is switched here. *)
 Notation "e1 'at_offset{' ly , ot1 , ot2 } e2" := (BinOp (PtrOffsetOp ly) ot2 ot1 e2%E e1%E)
   (at level 70, format "e1  at_offset{ ly ,  ot1 ,  ot2 }  e2") : expr_scope.
+Notation "e1 'at_neg_offset{' ly , ot1 , ot2 } e2" := (BinOp (PtrNegOffsetOp ly) ot2 ot1 e2%E e1%E)
+  (at level 70, format "e1  at_neg_offset{ ly ,  ot1 ,  ot2 }  e2") : expr_scope.
 (* The unicode ← is already part of the notation "_ ← _; _" for bind. *)
 Notation "e1 <-{ ly , o } e2 ; s" := (Assign o ly e1%E e2%E s%E)
   (at level 80, s at level 200, format "e1  <-{ ly ,  o }  e2 ;  s") : expr_scope.
@@ -152,8 +154,8 @@ Definition offset_of_idx (s : field_list) (i : nat) : nat :=
   sum_list (take i (ly_size <$> s.*2)).
 Definition index_of (s : field_list) (n : var_name) : option nat :=
   fst <$> list_find (λ x, x.1 = Some n) s.
-Definition offset_of (s : field_list) (n : var_name) : nat :=
-  default 0%nat ((λ idx, offset_of_idx s idx) <$> index_of s n).
+Definition offset_of (s : field_list) (n : var_name) : option nat :=
+  (λ idx, offset_of_idx s idx) <$> index_of s n.
 Definition field_idx_of_idx (s : field_list) (i : nat) : nat :=
   length (field_names (take i s)).
 Fixpoint field_index_of (s : field_list) (n : var_name) : option nat :=
@@ -253,13 +255,27 @@ Lemma pad_struct_snoc_None {A} s ly (ls : list A) f :
   pad_struct (s ++ [(None, ly)]) ls f = pad_struct s ls f ++ [f ly].
 Proof. elim: s ls => //=. move => -[n' ly'] s IH ls /=. f_equal. by apply IH. Qed.
 
+Lemma offset_of_cons' n n' ly s:
+  offset_of ((n', ly)::s) n = (if decide (n' = Some n) then Some 0 else (λ m, ly_size ly + m) <$> (offset_of s n))%nat.
+Proof. rewrite /offset_of/= index_of_cons. case_decide => //=. destruct (index_of s n) eqn: Hfind => //=. Qed.
+
 Lemma offset_of_cons n n' ly s:
   n' = Some n ∨ n ∈ field_names s →
-  offset_of ((n', ly)::s) n = (if decide (n' = Some n) then 0 else ly_size ly + offset_of s n)%nat.
+  default 0%nat (offset_of ((n', ly)::s) n) = (if decide (n' = Some n) then 0 else ly_size ly + (default 0%nat (offset_of s n)))%nat.
 Proof.
   rewrite /offset_of/= index_of_cons. case_decide => //= -[|/elem_of_list_omap[x Hin]]//.
   destruct (index_of s n) eqn: Hfind => //=.
   move: Hfind => /fmap_None/list_find_None /Forall_forall Hfind. set_solver.
+Qed.
+
+Lemma offset_of_from_in m s:
+  Some m ∈ s.*1 → ∃ n, offset_of s m = Some n.
+Proof.
+  elim: s. set_solver.
+  move => [??]? IH. rewrite offset_of_cons'. csimpl => ?.
+  case_decide => //; [ naive_solver |].
+  have [|? ->]:= IH. by set_solver.
+  naive_solver.
 Qed.
 
 Lemma offset_of_bound i sl:
@@ -290,16 +306,21 @@ Proof.
 Qed.
 
 Definition GetMember (e : expr) (s : struct_layout) (m : var_name) : expr :=
-  (e at_offset{u8, PtrOp, IntOp size_t} Val (default [MPoison] (val_of_int (Z.of_nat (offset_of s.(sl_members) m)) size_t)))%E.
+  (e at_offset{u8, PtrOp, IntOp size_t} Val (default [MPoison] (offset_of s.(sl_members) m ≫= (λ m, val_of_int (Z.of_nat m) size_t))))%E.
 Notation "e 'at{' s } m" := (GetMember e%E s m) (at level 10, format "e  'at{' s }  m") : expr_scope.
 Typeclasses Opaque GetMember.
 Arguments GetMember : simpl never.
 
 Definition GetMemberLoc (l : loc) (s : struct_layout) (m : var_name) : loc :=
-  (l +ₗ Z.of_nat (offset_of s.(sl_members) m))%E.
+  (l +ₗ Z.of_nat (default 0%nat (offset_of s.(sl_members) m)))%E.
 Notation "l 'at{' s '}ₗ' m" := (GetMemberLoc l s m) (at level 10, format "l  'at{' s '}ₗ'  m") : stdpp_scope.
 Typeclasses Opaque GetMemberLoc.
 Arguments GetMemberLoc : simpl never.
+
+Definition OffsetOf (s : struct_layout) (m : var_name) : expr :=
+  (default StuckE (Val <$> (offset_of s.(sl_members) m) ≫= (λ m, val_of_int (Z.of_nat m) size_t)))%E.
+Typeclasses Opaque OffsetOf.
+Arguments OffsetOf : simpl never.
 
 Record union_layout := {
    ul_members : list (var_name * layout);
@@ -346,6 +367,10 @@ Definition GetMemberUnionLoc (l : loc) (ul : union_layout) (m : var_name) : loc 
 Notation "l 'at_union{' ul '}ₗ' m" := (GetMemberUnionLoc l ul m) (at level 10, format "l  'at_union{' ul '}ₗ'  m") : stdpp_scope.
 Typeclasses Opaque GetMemberUnionLoc.
 Arguments GetMemberUnionLoc : simpl never.
+
+Definition OffsetOfUnion (ul : union_layout) (m : var_name) : expr := (i2v 0 size_t).
+Typeclasses Opaque OffsetOfUnion.
+Arguments OffsetOfUnion : simpl never.
 
 Definition mk_array_layout := ly_mult.
 Typeclasses Opaque mk_array_layout.

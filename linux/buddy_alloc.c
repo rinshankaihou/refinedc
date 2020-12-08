@@ -79,7 +79,8 @@ static inline void __list_add(struct list_head *new,
 			      struct list_head *prev,
 			      struct list_head *next)
 {
-	if (!__list_add_valid(new, prev, next))
+	/* if (!__list_add_valid(new, prev, next)) */
+	if (__list_add_valid(new, prev, next) == (bool)0)
 		return;
 
 	next->prev = new;
@@ -130,7 +131,8 @@ static inline void __list_del(struct list_head * prev, struct list_head * next)
 
 static inline void __list_del_entry(struct list_head *entry)
 {
-	if (!__list_del_entry_valid(entry))
+	/* if (!__list_del_entry_valid(entry)) */
+	if (__list_del_entry_valid(entry) == (bool)0)
 		return;
 
 	__list_del(entry->prev, entry->next);
@@ -294,7 +296,10 @@ static void __hyp_attach_page(struct hyp_pool *pool,
 		/* Otherwise, coalesce the buddies and go one level up */
 		list_del_init(&buddy->node);
 		buddy->order = HYP_NO_ORDER;
-		p = (p < buddy) ? p : buddy;
+		if (buddy < p) {
+			p = buddy;
+		}
+		/* p = (p < buddy) ? p : buddy; */
 	}
 
 	p->order = order;
@@ -353,8 +358,10 @@ static void clear_hyp_page(struct hyp_page *p)
 {
 	unsigned long i;
 
-	for (i = 0; i < (1 << p->order); i++)
-		clear_page(hyp_page_to_virt(p) + (i << PAGE_SHIFT));
+	/* for (i = 0; i < (1 << p->order); i++) */
+	for (i = 0; i < (1UL << p->order); i++)
+		clear_page((unsigned char *)hyp_page_to_virt(p) + (i << PAGE_SHIFT));
+		/* clear_page(hyp_page_to_virt(p) + (i << PAGE_SHIFT)); */
 }
 
 static void * __hyp_alloc_pages(struct hyp_pool *pool, gfp_t mask,
@@ -388,9 +395,14 @@ void * hyp_alloc_pages(struct hyp_pool *pool, gfp_t mask,
 	p = __hyp_alloc_pages(pool, mask, order);
 	/* nvhe_spin_unlock(&pool->lock); */
 
-	return p ? hyp_page_to_virt(p) : NULL;
+	/* return p ? hyp_page_to_virt(p) : NULL; */
+	if (p) {
+		return hyp_page_to_virt(p);
+	} else {
+		return NULL;
+	}
 }
-
+#if 0
 /* hyp_vmemmap must be backed beforehand */
 int hyp_pool_extend_used(struct hyp_pool *pool, phys_addr_t phys,
 				    unsigned int nr_pages,
@@ -425,7 +437,7 @@ int hyp_pool_extend_used(struct hyp_pool *pool, phys_addr_t phys,
 
 	return 0;
 }
-
+#endif
 void hyp_pool_init(struct hyp_pool *pool)
 {
 	unsigned int i;

@@ -387,6 +387,53 @@ Section programs.
 End programs.
 Typeclasses Opaque int_inner_type boolean_inner_type.
 
+Section offsetof.
+  Context `{!typeG Σ}.
+
+  (*** OffsetOf *)
+  Program Definition offsetof (s : struct_layout) (m : var_name) : type := {|
+    ty_own β l := ∃ n, ⌜offset_of s.(sl_members) m = Some n⌝ ∗ l ◁ₗ{β} n @ int size_t
+  |}%I.
+  Next Obligation.
+    iIntros (s m l E ?). iDestruct 1 as (n Hn) "H". iExists _. iSplitR => //. by iApply ty_share.
+  Qed.
+
+  Global Program Instance movable_offsetof s m : Movable (offsetof s m) := {|
+    ty_layout := it_layout size_t;
+    ty_own_val v := ∃ n, ⌜offset_of s.(sl_members) m = Some n⌝ ∗ v ◁ᵥ n @ int size_t
+  |}%I.
+  Next Obligation. iIntros (s m l). iDestruct 1 as (??)"Hn". iDestruct (ty_aligned with "Hn") as "$". Qed.
+  Next Obligation. iIntros (s m l). iDestruct 1 as (??)"Hn". iDestruct (ty_size_eq with "Hn") as "$". Qed.
+  Next Obligation.
+    iIntros (s m l). iDestruct 1 as (??)"Hn".
+    iDestruct (ty_deref with "Hn") as (v) "[Hl Hi]". iExists _. iFrame.
+    eauto with iFrame.
+  Qed.
+  Next Obligation.
+    iIntros (s m l v ?) "Hl". iDestruct 1 as (??)"Hn".
+    iExists _. iSplit => //. iApply (@ty_ref with "[] Hl") => //. done.
+  Qed.
+
+  Global Program Instance offsetof_copyable s m : Copyable (offsetof s m).
+  Next Obligation.
+    iIntros (s m E l ?). iDestruct 1 as (n Hn) "Hl".
+    iMod (copy_shr_acc with "Hl") as (???) "(Hl&H2&H3)" => //.
+    iModIntro. iSplitR => //. iExists _, _. iFrame.
+    iModIntro. iExists _. by iFrame.
+  Qed.
+
+  Lemma type_offset_of s m T:
+    ⌜Some m ∈ s.(sl_members).*1⌝ ∗ (∀ v, T v (t2mt (offsetof s m))) -∗
+    typed_val_expr (OffsetOf s m) T.
+  Proof.
+    iDestruct 1 as ([n Hn]%offset_of_from_in) "HT".
+    iIntros (Φ) "HΦ". iApply wp_offset_of => //.
+    iIntros (v Hv). iApply "HΦ" => //. iExists _. by iSplit.
+  Qed.
+
+End offsetof.
+Typeclasses Opaque offsetof.
+
 (*** Tests *)
 Section tests.
   Context `{!typeG Σ}.

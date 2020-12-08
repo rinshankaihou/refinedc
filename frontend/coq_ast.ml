@@ -50,6 +50,7 @@ and expr_aux =
   | Use       of bool (* Atomic? *) * layout * expr
   | AddrOf    of expr
   | GetMember of expr * string * bool (* From_union? *) * string
+  | OffsetOf  of string * bool (* From_union? *) * string
   | AnnotExpr of int * coq_expr * expr
   | Struct    of string * (string * expr) list
   | Macro     of string * string list * expr list * expr

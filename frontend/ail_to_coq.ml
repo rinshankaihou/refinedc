@@ -110,7 +110,7 @@ let rec translate_int_type : loc -> i_type -> Coq_ast.int_type = fun loc i ->
   | Wchar_t     -> not_impl loc "layout_of (Wchar_t)"
   | Wint_t      -> not_impl loc "layout_of (Win_t)"
   | Size_t      -> ItSize_t(false)
-  | Ptrdiff_t   -> not_impl loc "layout_of (Ptrdiff_t)"
+  | Ptrdiff_t   -> ItSize_t(true)
 
 (** [layout_of fa c_ty] translates the C type [c_ty] into a layout.  Note that
     argument [fa] must be set to [true] when in function arguments, since this
@@ -264,6 +264,12 @@ let struct_data : ail_expr -> string * bool = fun e ->
   | GenLValueType(_,Ctype(_,Union(s) ),_)           ->(sym_to_str s, true )
   | GenRValueType(_                               ) -> assert false
   | GenLValueType(_,_                 ,_)           -> assert false
+
+let struct_data_of_type : c_type -> string * bool = fun Ctype.(Ctype(_, c_ty)) ->
+  match c_ty with
+  | Struct(s) -> (sym_to_str s, false)
+  | Union(s)  -> (sym_to_str s, true)
+  | _         -> assert false
 
 let strip_expr (AilSyntax.AnnotatedExpression(_,_,_,e)) = e
 
@@ -522,7 +528,9 @@ let rec translate_expr : bool -> op_type option -> ail_expr -> expr * calls =
               (locate (Var(ret_id, false)), l @ [(coq_loc, ret_id, e, es)])
         end
     | AilEassert(e)                -> not_impl loc "expr assert nested"
-    | AilEoffsetof(c_ty,is)        -> not_impl loc "expr offsetof"
+    | AilEoffsetof(c_ty,is)        ->
+       let (struct_name, from_union) = struct_data_of_type c_ty in
+       (locate (OffsetOf(struct_name,from_union, id_to_str is)), [])
     | AilEgeneric(e,gas)           -> not_impl loc "expr generic"
     | AilEarray(b,c_ty,oes)        -> not_impl loc "expr array"
     | AilEstruct(sym,fs) when lval -> not_impl loc "Struct initializer not supported in lvalue context"

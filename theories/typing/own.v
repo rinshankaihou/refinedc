@@ -154,6 +154,19 @@ Section own.
     by iDestruct (strip_guarded with "Hty") as "Hty".
   Qed.
 
+  Lemma type_offset_of_sub v1 l s m P ly T:
+    ⌜ly_size ly = 1%nat⌝ ∗ (P -∗ T (val_of_loc l) (t2mt (l @ frac_ptr Own (singleton_place l)))) -∗
+    typed_bin_op v1 (v1 ◁ᵥ offsetof s m) (l at{s}ₗ m) P (PtrNegOffsetOp ly) (IntOp size_t) PtrOp T.
+  Proof.
+    iDestruct 1 as (Hly) "HT". iIntros ([n [Ho Hi%val_to_of_int]]) "HP". iIntros (Φ) "HΦ".
+    iApply wp_ptr_neg_offset. by apply val_to_of_loc. done. iModIntro.
+    rewrite offset_loc_sz1 // /GetMemberLoc shift_loc_assoc Ho /= Z.add_opp_diag_r shift_loc_0.
+    iApply "HΦ"; [ | by iApply "HT"]. done.
+  Qed.
+  Global Instance type_offset_of_sub_inst v1 l s m P ly:
+    TypedBinOp v1 (v1 ◁ᵥ offsetof s m) (l at{s}ₗ m) P (PtrNegOffsetOp ly) (IntOp size_t) PtrOp :=
+    λ T, i2p (type_offset_of_sub v1 l s m P ly T).
+
   Lemma type_cast_ptr_ptr p β ty T:
     (T (val_of_loc p) (t2mt (p @ frac_ptr β ty))) -∗
     typed_un_op p (p ◁ₗ{β} ty)%I (CastOp PtrOp) PtrOp T.

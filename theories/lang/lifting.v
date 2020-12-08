@@ -249,6 +249,18 @@ Proof.
   - move => ->. by apply PtrOffsetOpIP.
 Qed.
 
+Lemma wp_ptr_neg_offset Φ vl l E it o ly vo:
+  val_to_loc vl = Some l →
+  val_to_int vo it = Some o →
+  ▷ Φ (val_of_loc (l offset{ly}ₗ -o)) -∗ WP Val vl at_neg_offset{ ly , PtrOp, IntOp it} Val vo @ E {{ Φ }}.
+Proof.
+  iIntros (Hvl Hvo) "HΦ".
+  iApply wp_binop_det. iSplit; last done.
+  iIntros (σ v) "_ !%". split.
+  - inversion 1. by simplify_eq.
+  - move => ->. by apply PtrNegOffsetOpIP.
+Qed.
+
 Lemma wp_get_member Φ vl l sl n E:
   val_to_loc vl = Some l →
   is_Some (index_of sl.(sl_members) n) →
@@ -271,6 +283,25 @@ Lemma wp_get_member_union Φ vl l ul n E:
   val_to_loc vl = Some l →
   Φ (val_of_loc (l at_union{ul}ₗ n)) -∗ WP Val vl at_union{ul} n @ E {{ Φ }}.
 Proof. iIntros (->%val_of_to_loc) "?". rewrite /GetMemberUnion/GetMemberUnionLoc. by iApply @wp_value. Qed.
+
+Lemma wp_offset_of Φ s m i E:
+  offset_of s.(sl_members) m = Some i →
+  (∀ v, ⌜val_of_int i size_t = Some v⌝ -∗ Φ v) -∗
+  WP OffsetOf s m @ E {{ Φ }}.
+Proof.
+  rewrite /OffsetOf. iIntros (Ho) "HΦ".
+  have [|? Hs]:= (val_of_int_is_some size_t i). {
+    split; first by rewrite /min_int/=; lia.
+    move: Ho => /fmap_Some[?[?->]].
+    by apply offset_of_bound.
+  }
+  rewrite Ho /= Hs /=. iApply @wp_value.
+  by iApply "HΦ".
+Qed.
+
+Lemma wp_offset_of_union Φ ul m E:
+  Φ (i2v 0 size_t) -∗ WP OffsetOfUnion ul m @ E {{ Φ }}.
+Proof. by iApply @wp_value. Qed.
 
 Lemma wp_skip Φ v E:
   ▷ Φ v -∗ WP SkipE (Val v) @ E {{ Φ }}.

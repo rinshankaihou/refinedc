@@ -147,6 +147,9 @@ let rec pp_expr : Coq_ast.expr pp = fun ff e ->
           | (OpPtr(l), OpInt(_), AddOp) ->
               pp "(%a) at_offset{%a, PtrOp, %a} (%a)" pp_expr e1
                 (pp_layout false) l pp_op_type ty2 pp_expr e2
+          | (OpPtr(l), OpInt(_), SubOp) ->
+              pp "(%a) at_neg_offset{%a, PtrOp, %a} (%a)" pp_expr e1
+                (pp_layout false) l pp_op_type ty2 pp_expr e2
           | (OpPtr(_), OpInt(_), _) ->
               panic_no_pos "Binop [%a] not supported on pointers."
                 pp_bin_op op
@@ -178,6 +181,10 @@ let rec pp_expr : Coq_ast.expr pp = fun ff e ->
         pp "(%a) at{struct_%s} %S" pp_expr e name field
     | GetMember(e,name,true ,field) ->
         pp "(%a) at_union{union_%s} %S" pp_expr e name field
+    | OffsetOf(name,false,field) ->
+        pp "(OffsetOf (struct_%s) (%S))" name field
+    | OffsetOf(name,true,field) ->
+        pp "(OffsetOfUnion (union_%s) (%S))" name field
     | AnnotExpr(i,coq_e,e)          ->
         pp "AnnotExpr %i%%nat %a (%a)" i
           (pp_simple_coq_expr true) coq_e pp_expr e

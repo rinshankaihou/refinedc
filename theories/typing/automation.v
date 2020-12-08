@@ -2,7 +2,7 @@ From iris.proofmode Require Import coq_tactics reduction.
 From refinedc.typing Require Export type.
 From refinedc.lithium Require Export tactics.
 From refinedc.typing.automation Require Export normalize solvers simplification proof_state.
-From refinedc.typing Require Import programs function singleton own struct uninit.
+From refinedc.typing Require Import programs function singleton own struct uninit int.
 Set Default Proof Using "Type".
 
 (** * Registering extensions *)
@@ -180,6 +180,7 @@ Ltac liRExpr :=
     | W.BinOp _ _ _ _ _ => notypeclasses refine (tac_fast_apply (type_bin_op _ _ _ _ _ _) _)
     | W.UnOp _ _ _ => notypeclasses refine (tac_fast_apply (type_un_op _ _ _ _) _)
     | W.CAS _ _ _ _ => notypeclasses refine (tac_fast_apply (type_cas _ _ _ _ _) _)
+    | W.OffsetOf _ _ => notypeclasses refine (tac_fast_apply (type_offset_of _ _ _) _)
     | W.AnnotExpr _ ?a _ => notypeclasses refine (tac_fast_apply (type_annot_expr _ _ _ _) _)
     | W.StructInit _ _ => notypeclasses refine (tac_fast_apply (type_struct_init _ _ _) _)
     | W.SkipE _ => notypeclasses refine (tac_fast_apply (type_skipe' _ _) _)

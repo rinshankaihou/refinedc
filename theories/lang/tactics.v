@@ -22,6 +22,8 @@ Inductive expr :=
 | AddrOf (e : expr)
 | GetMember (e : expr) (s : struct_layout) (m : var_name)
 | GetMemberUnion (e : expr) (ul : union_layout) (m : var_name)
+| OffsetOf (s : struct_layout) (m : var_name)
+| OffsetOfUnion (ul : union_layout) (m : var_name)
 | AnnotExpr (n : nat) {A} (a : A) (e : expr)
 | LocInfoE (a : location_info) (e : expr)
 | StructInit (ly : struct_layout) (fs : list (string * expr))
@@ -46,6 +48,8 @@ Lemma expr_ind (P : expr → Prop) :
   (∀ (e : expr), P e → P (AddrOf e)) →
   (∀ (e : expr) (s : struct_layout) (m : var_name), P e → P (GetMember e s m)) →
   (∀ (e : expr) (ul : union_layout) (m : var_name), P e → P (GetMemberUnion e ul m)) →
+  (∀ (s : struct_layout) (m : var_name), P (OffsetOf s m)) →
+  (∀ (ul : union_layout) (m : var_name), P (OffsetOfUnion ul m)) →
   (∀ (n : nat) (A : Type) (a : A) (e : expr), P e → P (AnnotExpr n a e)) →
   (∀ (a : location_info) (e : expr), P e → P (LocInfoE a e)) →
   (∀ (ly : struct_layout) (fs : list (string * expr)), Forall P fs.*2 → P (StructInit ly fs)) →
@@ -53,14 +57,14 @@ Lemma expr_ind (P : expr → Prop) :
   (∀ (e : lang.expr), P (Expr e)) → ∀ (e : expr), P e.
 Proof.
   move => *. generalize dependent P => P. match goal with | e : expr |- _ => revert e end.
-  fix FIX 1. move => [ ^e] => ??????? Hconcat ???????? Hstruct Hmacro ?.
+  fix FIX 1. move => [ ^e] => ??????? Hconcat ?????????? Hstruct Hmacro ?.
   8: {
     apply Hconcat. apply Forall_true => ?. by apply: FIX.
   }
-  16: {
+  18: {
     apply Hstruct. apply Forall_fmap. apply Forall_true => ?. by apply: FIX.
   }
-  16: {
+  18: {
     apply Hmacro. apply Forall_true => ?. by apply: FIX.
   }
   all: auto.
@@ -85,6 +89,8 @@ Fixpoint to_expr (e : expr) : lang.expr :=
   | StructInit ly fs => notation.StructInit ly (prod_map id to_expr <$> fs)
   | GetMember e s m => notation.GetMember (to_expr e) s m
   | GetMemberUnion e ul m => notation.GetMemberUnion (to_expr e) ul m
+  | OffsetOf s m => notation.OffsetOf s m
+  | OffsetOfUnion ul m => notation.OffsetOfUnion ul m
   | MacroE m es _ => notation.MacroE m (to_expr <$> es)
   | Expr e => e
   end.
@@ -112,6 +118,8 @@ Ltac of_expr e :=
     let e := of_expr e in constr:(GetMember e s m)
   | notation.GetMemberUnion ?e ?ul ?m =>
     let e := of_expr e in constr:(GetMemberUnion e ul m)
+  | notation.OffsetOf ?s ?m => constr:(OffsetOf s m)
+  | notation.OffsetOfUnion ?ul ?m => constr:(OffsetOfUnion ul m)
   | notation.Use ?o ?ly ?e =>
     let e := of_expr e in constr:(Use o ly e)
   | lang.Val ?x => constr:(Val x)
@@ -208,8 +216,7 @@ Fixpoint find_expr_fill (e : expr) (bind_val : bool) : option (list ectx_item * 
     else if find_expr_fill e3 bind_val is Some (Ks, e') then
       if e1 is Val v1 then if e2 is Val v2 then Some (Ks ++ [CASRCtx ot v1 v2], e') else None else None
     else Some ([], e)
-  | Concat _ => None
-  | MacroE _ _ _ => None
+  | Concat _ | MacroE _ _ _ | OffsetOf _ _ | OffsetOfUnion _ _ => None
   | SkipE e1 =>
     if find_expr_fill e1 bind_val is Some (Ks, e') then
       Some (Ks ++ [SkipECtx], e') else Some ([], e)
@@ -471,6 +478,8 @@ Fixpoint subst (x : var_name) (v : val) (e : expr)  : expr :=
   | StructInit ly fs => StructInit ly (prod_map id (subst x v) <$> fs)
   | GetMember e s m => GetMember (subst x v e) s m
   | GetMemberUnion e ul m => GetMemberUnion (subst x v e) ul m
+  | OffsetOf s m => OffsetOf s m
+  | OffsetOfUnion ul m => OffsetOfUnion ul m
   | MacroE m es wf => MacroE m (subst x v <$> es) wf
   | Expr e => Expr (lang.subst x v e)
   end.
@@ -492,6 +501,9 @@ Proof.
     match goal with
     | _ : ?e1 = ?e2 |- _ => assert (e1 = e2) as -> by assumption
     end; done.
+  - rewrite /notation.OffsetOf/=.
+    match goal with | |- context [offset_of ?s ?m] => destruct (offset_of s m) end => //=.
+    by match goal with | |- context [val_of_int ?o ?it] => destruct (val_of_int o it) end.
   - (** AnnotExpr *)
     match goal with
     | |- notation.AnnotExpr ?n _ _ = _ => generalize dependent n
