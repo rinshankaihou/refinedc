@@ -40,3 +40,6 @@
 -Q _build/default/examples/proofs/wrapping_add refinedc.examples.wrapping_add
 -Q _build/default/linux/proofs/early_alloc refinedc.linux.early_alloc
 -Q _build/default/examples/proofs/container_of refinedc.examples.container_of
+-Q _build/default/examples/proofs/talk_demo1 refinedc.examples.talk_demo1
+-Q _build/default/examples/proofs/talk_demo2 refinedc.examples.talk_demo2
+-Q _build/default/examples/proofs/talk_demo3 refinedc.examples.talk_demo3
