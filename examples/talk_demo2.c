@@ -3,7 +3,6 @@
 #include <alloc.h>
 
 typedef struct
-[[rc::refined_by("u : unit")]]
 [[rc::ptr_type("list_t : optional<&own<...>, null>")]]
 list_node {
   [[rc::field("int<i32>")]]
