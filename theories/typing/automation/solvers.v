@@ -181,6 +181,7 @@ Ltac solve_rmovable :=
 Ltac solve_ty_layout_eq :=
   simpl;
   repeat lazymatch goal with
+    | |- ∀ _ : (), _ => case
     | |- ∀ _ : (_ * _), _ => case
     | |- ∀ _ : _, _ => move => ?
     end;
