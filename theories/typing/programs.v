@@ -122,6 +122,14 @@ Section judgements.
   Class TypedUnOpVal (v : val) (ty : type) `{!Movable ty} (o : un_op) (ot : op_type) : Type :=
     typed_un_op_val :> TypedUnOp v (v ◁ᵥ ty) o ot.
 
+  Definition typed_copy_alloc_id (v1 : val) (P1 : iProp Σ) (v2 : val) (P2 : iProp Σ) (T : val → mtype → iProp Σ) : iProp Σ :=
+    (P1 -∗ P2 -∗ typed_val_expr (CopyAllocId v1 v2) T).
+
+  Class TypedCopyAllocId (v1 : val) (P1 : iProp Σ) (v2 : val) (P2 : iProp Σ) : Type :=
+    typed_copy_alloc_id_proof T : iProp_to_Prop (typed_copy_alloc_id v1 P1 v2 P2 T).
+  Class TypedCopyAllocIdVal (v1 : val) (ty1 : type) `{!Movable ty1} (v2 : val) (ty2 : type) `{!Movable ty2} : Type :=
+    typed_copy_alloc_id_val :> TypedCopyAllocId v1 (v1 ◁ᵥ ty1) v2 (v2 ◁ᵥ ty2).
+
   Definition typed_cas (ot : op_type) (v1 : val) (P1 : iProp Σ) (v2 : val) (P2 : iProp Σ) (v3 : val) (P3 : iProp Σ)  (T : val → mtype → iProp Σ) : iProp Σ :=
     (P1 -∗ P2 -∗ P3 -∗ typed_val_expr (CAS ot v1 v2 v3) T).
   Class TypedCas (ot : op_type) (v1 : val) (P1 : iProp Σ) (v2 : val) (P2 : iProp Σ) (v3 : val) (P3 : iProp Σ) : Type :=
@@ -307,6 +315,8 @@ Hint Mode TypedBinOp + + + + + + + + + : typeclass_instances.
 Hint Mode TypedBinOpVal + + + + + + + + + + + : typeclass_instances.
 Hint Mode TypedUnOp + + + + + + : typeclass_instances.
 Hint Mode TypedUnOpVal + + + + + + + : typeclass_instances.
+Hint Mode TypedCopyAllocId + + + + + + : typeclass_instances.
+Hint Mode TypedCopyAllocIdVal + + + + + + + + : typeclass_instances.
 Hint Mode TypedReadEnd + + + + + + + : typeclass_instances.
 Hint Mode TypedWriteEnd + + + + + + + + + : typeclass_instances.
 Hint Mode TypedAddrOfEnd + + + + + : typeclass_instances.
@@ -586,6 +596,27 @@ Section typing.
     TypedUnOp v P op ot | 1000 :=
     λ T, i2p (typed_unop_simplify v P T n ot op).
 
+  Lemma typed_copy_alloc_id_simplify v1 P1 v2 P2 T o1 o2 {SH1 : SimplifyHyp P1 o1} {SH2 : SimplifyHyp P2 o2}:
+    let G1 := (SH1 (find_in_context (FindValP v1) (λ P, typed_copy_alloc_id v1 P v2 P2 T))).(i2p_P) in
+    let G2 := (SH2 (find_in_context (FindValP v2) (λ P, typed_copy_alloc_id v1 P1 v2 P T))).(i2p_P) in
+    let G :=
+       match o1, o2 with
+     | Some n1, Some n2 => if (n2 ?= n1)%N is Lt then G2 else G1
+     | Some n1, _ => G1
+     | _, _ => G2
+       end in
+    G -∗ typed_copy_alloc_id v1 P1 v2 P2 T.
+  Proof.
+    iIntros "Hs Hv1 Hv2".
+    destruct o1 as [n1|], o2 as [n2|] => //. case_match.
+    1,3,4: iDestruct (i2p_proof with "Hs Hv1") as (P) "[Hv Hsub]".
+    4,5,6: iDestruct (i2p_proof with "Hs Hv2") as (P) "[Hv Hsub]".
+    all: by simpl in *; iApply ("Hsub" with "[$]").
+  Qed.
+  Global Instance typed_copy_alloc_id_simplify_inst v1 P1 v2 P2 o1 o2 {SH1 : SimplifyHyp P1 o1} {SH2 : SimplifyHyp P2 o2} `{!TCOneIsSome o1 o2} :
+    TypedCopyAllocId v1 P1 v2 P2 | 1000 :=
+    λ T, i2p (typed_copy_alloc_id_simplify v1 P1 v2 P2 T o1 o2).
+
   Lemma typed_cas_simplify v1 P1 v2 P2 v3 P3 T ot o1 o2 o3 {SH1 : SimplifyHyp P1 o1} {SH2 : SimplifyHyp P2 o2} {SH3 : SimplifyHyp P3 o3}:
     let G1 := (SH1 (find_in_context (FindValP v1) (λ P, typed_cas ot v1 P v2 P2 v3 P3 T))).(i2p_P) in
     let G2 := (SH2 (find_in_context (FindValP v2) (λ P, typed_cas ot v1 P1 v2 P v3 P3 T))).(i2p_P) in
@@ -777,6 +808,16 @@ Section typing.
     iIntros "He" (Φ) "HΦ".
     wp_bind. iApply "He". iIntros (v ty) "Hv Hop".
     by iApply ("Hop" with "Hv").
+  Qed.
+
+  Lemma type_copy_alloc_id e1 e2 T:
+    typed_val_expr e1 (λ v1 ty1, typed_val_expr e2 (λ v2 ty2, typed_copy_alloc_id v1 (v1 ◁ᵥ ty1) v2 (v2 ◁ᵥ ty2) T)) -∗
+    typed_val_expr (CopyAllocId e1 e2) T.
+  Proof.
+    iIntros "He1" (Φ) "HΦ".
+    wp_bind. iApply "He1". iIntros (v1 ty1) "Hv1 He2".
+    wp_bind. iApply "He2". iIntros (v2 ty2) "Hv2 Hop".
+    by iApply ("Hop" with "Hv1 Hv2").
   Qed.
 
   Lemma type_cas ot e1 e2 e3 T:

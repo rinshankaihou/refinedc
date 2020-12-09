@@ -60,7 +60,9 @@ Section definitions.
     seal_eq allocs_entry_aux.
 
   Definition loc_in_bounds_def (l : loc) (n : nat) : iProp Σ :=
-    ∃ id a, ⌜l.1 = Some id ∧ alloc_start a ≤ l.2 ∧ l.2 + n ≤ alloc_end a⌝ ∗ allocs_entry id a.
+    ∃ id a, ⌜l.1 = Some id ∧ alloc_start a ≤ l.2 ∧
+             l.2 + n ≤ alloc_end a ∧ in_range_allocation a⌝ ∗
+             allocs_entry id a.
   Definition loc_in_bounds_aux : seal (@loc_in_bounds_def). by eexists. Qed.
   Definition loc_in_bounds := unseal loc_in_bounds_aux.
   Definition loc_in_bounds_eq : @loc_in_bounds = @loc_in_bounds_def :=
@@ -212,9 +214,10 @@ Section allocs.
   Lemma allocs_entry_to_loc_in_bounds l aid (n : nat) a:
     l.1 = Some aid →
     alloc_start a ≤ l.2 ∧ l.2 + n ≤ alloc_end a →
+    in_range_allocation a →
     allocs_entry aid a -∗ loc_in_bounds l n.
   Proof.
-    iIntros (??) "?". rewrite loc_in_bounds_eq/loc_in_bounds_def.
+    iIntros (?[??]?) "?". rewrite loc_in_bounds_eq/loc_in_bounds_def.
     iExists _, _. by iFrame.
   Qed.
 
@@ -243,14 +246,14 @@ Section loc_in_bounds.
   Proof.
     rewrite loc_in_bounds_eq. iSplit.
     - iIntros "[H1 H2]".
-      iDestruct "H1" as (?[??][H1[??]]) "#H1".
-      iDestruct "H2" as (?[??][H2[??]]) "#H2".
-      move: H2. rewrite /= H1. move => [<-].
+      iDestruct "H1" as (?[??][Hl1[?[??]]]) "#H1".
+      iDestruct "H2" as (?[??][Hl2[?[??]]]) "#H2".
+      move: Hl2. rewrite /= Hl1. move => [<-].
       iDestruct (allocs_entry_agree with "H2 H1") as %Heq.
       inversion Heq. simplify_eq. iExists _, _. iFrame "H1".
-      iPureIntro. split => // /=. simpl in *. lia.
-    - iIntros "H". iDestruct "H" as (aid a [?[??]]) "#H".
-      iSplit; iExists aid, a; iFrame "H"; iPureIntro; split => //=; lia.
+      iPureIntro. split => // /=. simpl in *. split_and! => //; by lia.
+    - iIntros "H". iDestruct "H" as (aid a [?[?[??]]]) "#H".
+      iSplit; iExists aid, a; iFrame "H"; iPureIntro; split_and! => //=; lia.
   Qed.
 
   Lemma loc_in_bounds_split_mul_S l n m :
@@ -272,6 +275,23 @@ Section loc_in_bounds.
     iIntros "Hb (?&?&Hctx&?)". iDestruct "Hb" as (aid a [?[??]]) "Hb".
     iExists aid, a. iSplit; first done. iSplit; last (iPureIntro; lia).
     by iApply (allocs_entry_lookup with "Hctx").
+  Qed.
+
+  Lemma loc_in_bounds_ptr_in_range l n:
+    loc_in_bounds l n -∗ ⌜min_alloc_start ≤ l.2 ∧ l.2 + n ≤ max_alloc_end⌝.
+  Proof.
+    rewrite loc_in_bounds_eq. iIntros "Hlib".
+    iDestruct "Hlib" as (??(?&?&?&[??])) "_".
+    iPureIntro. lia.
+  Qed.
+
+  Lemma loc_in_bounds_in_range_size_t l n:
+    loc_in_bounds l n -∗ ⌜l.2 ∈ size_t⌝.
+  Proof.
+    etrans; first by apply loc_in_bounds_ptr_in_range. iPureIntro.
+    rewrite /min_alloc_start /max_alloc_end /bytes_per_addr /bytes_per_addr_log /=.
+    move => [??]. split; cbn; first by lia.
+    rewrite /max_int /= /int_modulus /bits_per_int /bytes_per_int /=. lia.
   Qed.
 End loc_in_bounds.
 

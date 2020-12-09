@@ -196,7 +196,7 @@ let rec pp_expr : Coq_ast.expr pp = fun ff e ->
         in
         List.iteri fn fs;
         pp "@]@;]@]"
-    | Macro(name, args, es, e)                ->
+    | Macro(name, args, es, e)      ->
         pp "@[@[<hov 2>CheckedMacroE (%s %s) [" name (String.concat " " args);
         let fn i e =
           let s = if i = List.length es - 1 then "" else " ;" in
@@ -204,6 +204,8 @@ let rec pp_expr : Coq_ast.expr pp = fun ff e ->
         in
         List.iteri fn es;
         pp "@]@;] (%a : expr)@]" pp_expr e
+    | CopyAID(e1, e2)               ->
+        pp "CopyAllocId (%a) (%a)" pp_expr e1 pp_expr e2
   in
   match Location.get e.loc with
   | Some(d) when !print_expr_locs ->

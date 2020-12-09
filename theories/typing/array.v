@@ -228,11 +228,10 @@ Section type.
     typed_place (BinOpPCtx (PtrOffsetOp ly1) (IntOp it) v tyv :: K) l β (array ly2 tys) T.
   Proof.
     iDestruct 1 as (i ->) "HP". iIntros (Φ) "(%&#Hb&Hl) HΦ" => /=. iIntros "Hv".
-    iDestruct ("HP" with "Hv") as "[Hv HP]".
+    iDestruct ("HP" with "Hv") as (Hv) "HP".
     iDestruct "HP" as (? Hlen) "HP".
     have [|ty ?]:= lookup_lt_is_Some_2 tys (Z.to_nat i). lia.
-    iDestruct (int_val_to_int_Some with "Hv") as %?.
-    iApply wp_ptr_offset => //. by apply val_to_of_loc.
+    iApply wp_ptr_offset => //. by apply val_to_of_loc. by apply val_to_of_int.
     iIntros "!#". iExists _. iSplit => //.
     iDestruct (big_sepL_insert_acc with "Hl") as "[Hl Hc]" => //. rewrite Z2Nat.id//.
     iApply ("HP" $! ty with "[//] Hl"). iIntros (l' ty2 β2 typ R) "Hl' Htyp HT".

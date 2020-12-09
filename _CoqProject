@@ -43,3 +43,4 @@
 -Q _build/default/examples/proofs/talk_demo1 refinedc.examples.talk_demo1
 -Q _build/default/examples/proofs/talk_demo2 refinedc.examples.talk_demo2
 -Q _build/default/examples/proofs/talk_demo3 refinedc.examples.talk_demo3
+-Q _build/default/examples/proofs/intptr refinedc.examples.intptr

@@ -30,3 +30,15 @@ Qed.
 (** * location offset *)
 Global Instance simpl_offset_inj l1 l2 sl n : SimplBothRel (=) (l1 at{sl}ₗ n) (l2 at{sl}ₗ n) (l1 = l2).
 Proof. unfold GetMemberLoc. split; [apply shift_loc_inj1| naive_solver]. Qed.
+
+(** * Location normalzation. *)
+Definition normalize_loc (p1 p2 : loc) : Prop := locked eq p1 p2.
+Typeclasses Opaque normalize_loc.
+
+Global Instance simpl_normalize_loc_pair (p q : loc):
+  SimplAnd (normalize_loc (p.1, p.2) q) (λ T, normalize_loc p q ∧ T).
+Proof. rewrite /normalize_loc. unlock. by destruct p. Qed.
+
+Global Instance simpl_normalize_loc_refl (p q : loc):
+  SimplAnd (normalize_loc p q) (λ T, p = q ∧ T) | 1000.
+Proof. rewrite /normalize_loc. unlock. done. Qed.

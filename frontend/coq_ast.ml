@@ -54,6 +54,7 @@ and expr_aux =
   | AnnotExpr of int * coq_expr * expr
   | Struct    of string * (string * expr) list
   | Macro     of string * string list * expr list * expr
+  | CopyAID   of expr * expr
 
 type stmt = stmt_aux Location.located
 and stmt_aux =

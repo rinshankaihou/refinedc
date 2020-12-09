@@ -1,5 +1,6 @@
 From refinedc.typing Require Export type.
 From refinedc.typing Require Import programs optional int singleton.
+From refinedc.typing.automation Require Import simplification.
 Set Default Proof Using "Type".
 
 Section own.
@@ -169,7 +170,7 @@ Section own.
 
   Lemma type_cast_ptr_ptr p β ty T:
     (T (val_of_loc p) (t2mt (p @ frac_ptr β ty))) -∗
-    typed_un_op p (p ◁ₗ{β} ty)%I (CastOp PtrOp) PtrOp T.
+    typed_un_op p (p ◁ₗ{β} ty) (CastOp PtrOp) PtrOp T.
   Proof.
     iIntros "HT Hp" (Φ) "HΦ".
     iApply wp_cast_loc. by apply val_to_of_loc.
@@ -178,6 +179,54 @@ Section own.
   Global Instance type_cast_ptr_ptr_inst (p : loc) β ty:
     TypedUnOp p (p ◁ₗ{β} ty)%I (CastOp PtrOp) PtrOp :=
     λ T, i2p (type_cast_ptr_ptr p β ty T).
+
+  (* Allow direct casts to other integer types. *)
+  Lemma type_cast_ptr_int (p : loc) β ty T:
+    ((p ◁ₗ{β} ty -∗ loc_in_bounds p 0 ∗ True) ∧ (p ◁ₗ{β} ty -∗ T (i2v p.2 size_t) (t2mt (p.2 @ int size_t)))) -∗
+    typed_un_op p (p ◁ₗ{β} ty) (CastOp (IntOp size_t)) PtrOp T.
+  Proof.
+    iIntros "HT Hp" (Φ) "HΦ".
+    iAssert (⌜p.2 ∈ size_t⌝)%I as %[? Heq]%val_of_int_is_some.
+    { iDestruct "HT" as "[HT _]". iDestruct ("HT" with "Hp") as "[Hlib _]".
+      by iApply loc_in_bounds_in_range_size_t. }
+    iDestruct "HT" as "[_ HT]". rewrite /i2v Heq.
+    iApply wp_cast_ptr_int => //=; first by rewrite val_to_of_loc.
+    iApply ("HΦ" with "[] [HT Hp]"); last by iApply "HT". done.
+  Qed.
+  Global Instance type_cast_ptr_int_inst (p : loc) β ty:
+    TypedUnOp p (p ◁ₗ{β} ty)%I (CastOp (IntOp size_t)) PtrOp :=
+    λ T, i2p (type_cast_ptr_int p β ty T).
+
+  Lemma type_cast_int_ptr n v it T:
+    (⌜n ∈ it⌝ -∗ T (val_of_loc (None, n)) (t2mt ((None, n) @ frac_ptr Own (singleton_place (None, n))))) -∗
+    typed_un_op v (v ◁ᵥ n @ int it) (CastOp PtrOp) (IntOp it) T.
+  Proof.
+    iIntros "HT" (Hn Φ) "HΦ".
+    iApply wp_cast_int_ptr => //. by apply val_to_of_int.
+    iApply ("HΦ" with "[]"); last iApply "HT"; first done.
+    iPureIntro. by apply: val_of_int_in_range.
+  Qed.
+  Global Instance type_cast_int_ptr_inst n v it:
+    TypedUnOp v (v ◁ᵥ n @ int it)%I (CastOp PtrOp) (IntOp it) :=
+    λ T, i2p (type_cast_int_ptr n v it T).
+
+  Lemma type_copy_aid v1 v2 P1 P2 T:
+    (∃ p1 p2, subsume P1 (v1 ◁ᵥ p1 @ frac_ptr Own (singleton_place p1)) (
+              subsume P2 (v2 ◁ᵥ p2 @ frac_ptr Own (singleton_place p2)) (
+              ∃ p, ⌜normalize_loc (p2.1, p1.2) p⌝ ∗
+                   T (val_of_loc p) (t2mt (singleton_val LPtr (val_of_loc p)))))) -∗
+    typed_copy_alloc_id v1 P1 v2 P2 T.
+  Proof.
+    iIntros "HT Hp1 Hp2" (Φ) "HΦ". iDestruct "HT" as (p1 p2) "HT".
+    iDestruct ("HT" with "Hp1") as "[Hp1 HT]". iDestruct "Hp1" as (->) "Hp1".
+    iDestruct ("HT" with "Hp2") as "[Hp2 HT]". iDestruct "Hp2" as (->) "Hp2".
+    iDestruct "HT" as (p Hp) "HT". rewrite /normalize_loc in Hp. unlock in Hp.
+    iApply wp_copy_alloc_id; try by rewrite val_to_of_loc. rewrite Hp.
+    by iApply ("HΦ" with "[] HT").
+  Qed.
+  Global Instance type_copy_aid_inst v1 v2 P1 P2:
+    TypedCopyAllocId v1 P1 v2 P2 :=
+    λ T, i2p (type_copy_aid v1 v2 P1 P2 T).
 
   (* Lemma type_roundup_frac_ptr v2 β ty P2 T p: *)
   (*   (P2 -∗ T (val_of_loc p) (t2mt (p @ frac_ptr β ty))) -∗ *)
@@ -224,11 +273,18 @@ Section own.
   Lemma find_in_context_type_val_own_singleton (l : loc) T:
     (True ∗ T (t2mt (l @ frac_ptr Own (singleton_place l)))) -∗
     find_in_context (FindVal l) T.
-  Proof. iIntros "[_ HT]". iExists _ => /=. by iFrame. Qed.
-  Global Instance find_in_context_type_val_own_singleton_inst (l : loc) :
+  Proof. iIntros "[_ HT]". iExists _ => /=. iFrame "HT". simpl. done. Qed.
+  Global Instance find_in_context_type_val_own_singleton_inst (l : loc):
     FindInContext (FindVal l) 2%nat :=
     λ T, i2p (find_in_context_type_val_own_singleton l T).
 
+  Lemma find_in_context_type_val_P_own_singleton (l : loc) T:
+    (True ∗ T (l ◁ₗ singleton_place l)) -∗
+    find_in_context (FindValP l) T.
+  Proof. iIntros "[_ HT]". iExists _. iFrame "HT" => //=. Qed.
+  Global Instance find_in_context_type_val_P_own_singleton_inst (l : loc):
+    FindInContext (FindValP l) 2%nat :=
+    λ T, i2p (find_in_context_type_val_P_own_singleton l T).
 End own.
 
 Notation "&frac{ β }" := (frac_ptr β) (format "&frac{ β }") : bi_scope.

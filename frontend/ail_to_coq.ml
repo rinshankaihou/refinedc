@@ -200,6 +200,11 @@ let is_macro_annot e =
   | MacroString("rc_macro") :: _ -> true
   | _ -> false
 
+let is_copy_alloc_id_annot e =
+  match macro_annot_to_list e with
+  | MacroString("rc_copy_alloc_id") :: _ -> true
+  | _ -> false
+
 let rec op_type_of loc Ctype.(Ctype(_, c_ty)) =
   match c_ty with
   | Void                -> not_impl loc "op_type_of (Void)"
@@ -502,9 +507,18 @@ let rec translate_expr : bool -> op_type option -> ail_expr -> expr * calls =
           in
           let (args, es) = process_rest rest in
           let (e3, l) = translate e3 in
-          (locate(Macro(name, args, es, e3)), l)
+          (locate (Macro(name, args, es, e3)), l)
        | _ -> not_impl loc "wrong macro"
        end
+    | AilEcond(e1,e2,e3) when is_const_0 e1 && is_copy_alloc_id_annot e2 ->
+       let e2 =
+         match macro_annot_to_list e2 with
+         | [_; MacroExpr(e2)] -> e2
+         | _                  -> not_impl loc "wrong copy alloc id annotation"
+       in
+       let (e2, l2) = translate_expr lval None e2 in
+       let (e3, l3) = translate_expr lval None e3 in
+       (locate (CopyAID(e3, e2)), l2 @ l3)
     | AilEcond(e1,e2,e3)           -> not_impl loc "expr cond"
     | AilEcast(q,c_ty,e)           ->
         begin

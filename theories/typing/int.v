@@ -32,6 +32,20 @@ Section int.
   Next Obligation. iIntros (it n l v Hly) "Hl". iIntros (?). iExists _. by iFrame. Qed.
   Next Obligation. iIntros (it x1 x2). done. Qed.
 
+  Lemma int_loc_in_bounds l β n it:
+     l ◁ₗ{β} n @ int it -∗ loc_in_bounds l (bytes_per_int it).
+  Proof.
+    iIntros "Hl". iDestruct "Hl" as (? <-%val_of_int_length) "[% Hl]".
+    by iApply heap_mapsto_own_state_loc_in_bounds.
+  Qed.
+
+  Global Instance loc_in_bounds_int n it β: LocInBounds (n @ int it) β.
+  Proof.
+    constructor. iIntros (l) "Hl".
+    iDestruct (int_loc_in_bounds with "Hl") as "Hlib".
+    iApply loc_in_bounds_shorten; last done. lia.
+  Qed.
+
   (* TODO: make a simple type as in lambda rust such that we do not
   have to reprove this everytime? *)
   Global Program Instance int_copyable x it : Copyable (x @ int it).
@@ -41,10 +55,6 @@ Section int.
     iExists _, _. iFrame. iModIntro. iSplit => //.
     by iIntros "_".
   Qed.
-
-  Lemma int_val_to_int_Some n v it:
-    v ◁ᵥ n @ int it -∗ ⌜val_to_int v it = Some n⌝.
-  Proof. iIntros "%". iPureIntro. by apply val_to_of_int. Qed.
 
 End int.
 (* Typeclasses Opaque int. *)

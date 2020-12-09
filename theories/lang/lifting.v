@@ -236,6 +236,41 @@ Proof.
   - move => ->. by econstructor.
 Qed.
 
+Lemma wp_cast_ptr_int Φ v v' l E it:
+  val_to_loc v = Some l →
+  val_of_int l.2 it = Some v' →
+  ▷ Φ (v') -∗ WP UnOp (CastOp (IntOp it)) PtrOp (Val v) @ E {{ Φ }}.
+Proof.
+  iIntros (Hv Hv') "HΦ".
+  iApply wp_unop_det. iSplit => //.
+  iIntros (σ ?) "_ !%". split.
+  - by inversion 1; simplify_eq.
+  - move => ->. by econstructor.
+Qed.
+
+Lemma wp_cast_int_ptr Φ v n E it:
+  val_to_int v it = Some n →
+  ▷ Φ (val_of_loc (None, n)) -∗ WP UnOp (CastOp PtrOp) (IntOp it) (Val v) @ E {{ Φ }}.
+Proof.
+  iIntros (Hv) "HΦ".
+  iApply wp_unop_det. iSplit => //.
+  iIntros (σ ?) "_ !%". split.
+  - by inversion 1; simplify_eq.
+  - move => ->. by econstructor.
+Qed.
+
+Lemma wp_copy_alloc_id Φ l1 l2 v1 v2 E:
+  val_to_loc v1 = Some l1 →
+  val_to_loc v2 = Some l2 →
+  ▷ Φ (val_of_loc (l2.1, l1.2)) -∗ WP CopyAllocId (Val v1) (Val v2) @ E {{ Φ }}.
+Proof.
+  iIntros (Hl1 Hl2) "HΦ". iApply wp_lift_atomic_head_step => //.
+  iIntros (σ1 ???) "Hctx !>". iSplit; first by eauto using CopyAllocIdS.
+  iIntros "!>" (??? Hstep) "!>".
+  inversion_clear Hstep. rewrite /=. simplify_eq.
+  by iFrame.
+Qed.
+
 Lemma wp_ptr_offset Φ vl l E it o ly vo:
   val_to_loc vl = Some l →
   val_to_int vo it = Some o →

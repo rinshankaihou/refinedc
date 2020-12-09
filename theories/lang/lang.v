@@ -300,6 +300,7 @@ Inductive expr :=
 | Val (v : val)
 | UnOp (op : un_op) (ot : op_type) (e : expr)
 | BinOp (op : bin_op) (ot1 ot2 : op_type) (e1 e2 : expr)
+| CopyAllocId (e1 : expr) (e2 : expr)
 | Deref (o : order) (ly : layout) (e : expr)
 | CAS (ot : op_type) (e1 e2 e3 : expr)
 | Concat (es : list expr)
@@ -835,7 +836,6 @@ Inductive eval_bin_op : bin_op → op_type → op_type → state → val → val
     eval_bin_op op (IntOp it) (IntOp it) σ v1 v2 v
 .
 
-
 Inductive eval_un_op : un_op → op_type → state → val → val → Prop :=
 | CastOpII itt its σ vs vt n:
     val_to_int vs its = Some n →
@@ -845,6 +845,14 @@ Inductive eval_un_op : un_op → op_type → state → val → val → Prop :=
     val_to_loc vs = Some l →
     val_of_loc l = vt →
     eval_un_op (CastOp PtrOp) PtrOp σ vs vt
+| CastOpPI it σ vs vt l:
+    val_to_loc vs = Some l →
+    val_of_int l.2 it = Some vt →
+    eval_un_op (CastOp (IntOp it)) PtrOp σ vs vt
+| CastOpIP it σ vs vt n:
+    val_to_int vs it = Some n →
+    val_of_loc (None, n) = vt →
+    eval_un_op (CastOp PtrOp) (IntOp it) σ vs vt
 | NegOpI it σ vs vt n:
     val_to_int vs it = Some n →
     val_of_int (-n) it = Some vt →
@@ -905,6 +913,10 @@ comparing pointers? (see lambda rust) *)
               (Val (val_of_bool true)) (heap_fmap (heap_upd l1 v3 (λ _, RSt 0%nat)) σ) []
 | ConcatS vs σ:
     expr_step (Concat (Val <$> vs)) σ [] (Val (mjoin vs)) σ []
+| CopyAllocIdS l1 l2 v1 v2 σ:
+    val_to_loc v1 = Some l1 →
+    val_to_loc v2 = Some l2 →
+    expr_step (CopyAllocId (Val v1) (Val v2)) σ [] (Val (val_of_loc (l2.1, l1.2))) σ []
 (* no rule for StuckE *)
 .
 
@@ -914,6 +926,8 @@ Inductive ectx_item :=
 | UnOpCtx (op : un_op) (ot : op_type)
 | BinOpLCtx (op : bin_op) (ot1 ot2 : op_type) (e2 : expr)
 | BinOpRCtx (op : bin_op) (ot1 ot2 : op_type) (v1 : val)
+| CopyAllocIdLCtx (e2 : expr)
+| CopyAllocIdRCtx (v1 : val)
 | DerefCtx (o : order) (l : layout)
 | CASLCtx (ot : op_type) (e2 e3 : expr)
 | CASMCtx (ot : op_type) (v1 : val) (e3 : expr)
@@ -927,6 +941,8 @@ Definition fill_item (Ki : ectx_item) (e : expr) : expr :=
   | UnOpCtx op ot => UnOp op ot e
   | BinOpLCtx op ot1 ot2 e2 => BinOp op ot1 ot2 e e2
   | BinOpRCtx op ot1 ot2 v1 => BinOp op ot1 ot2 (Val v1) e
+  | CopyAllocIdLCtx e2 => CopyAllocId e e2
+  | CopyAllocIdRCtx v1 => CopyAllocId (Val v1) e
   | DerefCtx o l => Deref o l e
   | CASLCtx ot e2 e3 => CAS ot e e2 e3
   | CASMCtx ot v1 e3 => CAS ot (Val v1) e e3
@@ -1022,6 +1038,7 @@ Fixpoint subst (x : var_name) (v : val) (e : expr)  : expr :=
   | Val v => Val v
   | UnOp op ot e => UnOp op ot (subst x v e)
   | BinOp op ot1 ot2 e1 e2 => BinOp op ot1 ot2 (subst x v e1) (subst x v e2)
+  | CopyAllocId e1 e2 => CopyAllocId (subst x v e1) (subst x v e2)
   | Deref o l e => Deref o l (subst x v e)
   | CAS ly e1 e2 e3 => CAS ly (subst x v e1) (subst x v e2) (subst x v e3)
   | Concat el => Concat (subst x v <$> el)

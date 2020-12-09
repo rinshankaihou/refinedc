@@ -12,6 +12,7 @@ Inductive expr :=
 | Val (v : val)
 | UnOp (op : un_op) (ot : op_type) (e : expr)
 | BinOp (op : bin_op) (ot1 ot2 : op_type) (e1 e2 : expr)
+| CopyAllocId (e1 e2 : expr)
 | Deref (o : order) (ly : layout) (e : expr)
 | CAS (ot : op_type) (e1 e2 e3 : expr)
 | Concat (es : list expr)
@@ -39,6 +40,7 @@ Lemma expr_ind (P : expr → Prop) :
   (∀ (v : val), P (Val v)) →
   (∀ (op : un_op) (ot : op_type) (e : expr), P e → P (UnOp op ot e)) →
   (∀ (op : bin_op) (ot1 ot2 : op_type) (e1 e2 : expr), P e1 → P e2 → P (BinOp op ot1 ot2 e1 e2)) →
+  (∀ (e1 e2 : expr), P e1 → P e2 → P (CopyAllocId e1 e2)) →
   (∀ (o : order) (ly : layout) (e : expr), P e → P (Deref o ly e)) →
   (∀ (ot : op_type) (e1 e2 e3 : expr), P e1 → P e2 → P e3 → P (CAS ot e1 e2 e3)) →
   (∀ (es : list expr), Forall P es → P (Concat es)) →
@@ -57,14 +59,14 @@ Lemma expr_ind (P : expr → Prop) :
   (∀ (e : lang.expr), P (Expr e)) → ∀ (e : expr), P e.
 Proof.
   move => *. generalize dependent P => P. match goal with | e : expr |- _ => revert e end.
-  fix FIX 1. move => [ ^e] => ??????? Hconcat ?????????? Hstruct Hmacro ?.
-  8: {
+  fix FIX 1. move => [ ^e] => ???????? Hconcat ?????????? Hstruct Hmacro ?.
+  9: {
     apply Hconcat. apply Forall_true => ?. by apply: FIX.
   }
-  18: {
+  19: {
     apply Hstruct. apply Forall_fmap. apply Forall_true => ?. by apply: FIX.
   }
-  18: {
+  19: {
     apply Hmacro. apply Forall_true => ?. by apply: FIX.
   }
   all: auto.
@@ -77,6 +79,7 @@ Fixpoint to_expr (e : expr) : lang.expr :=
   | Var x => lang.Var x
   | UnOp op ot e  => lang.UnOp op ot (to_expr e)
   | BinOp op ot1 ot2 e1 e2 => lang.BinOp op ot1 ot2 (to_expr e1) (to_expr e2)
+  | CopyAllocId e1 e2 => lang.CopyAllocId (to_expr e1) (to_expr e2)
   | Deref o ly e => lang.Deref o ly (to_expr e)
   | CAS ot e1 e2 e3 => lang.CAS ot (to_expr e1) (to_expr e2) (to_expr e3)
   | Concat es => lang.Concat (to_expr <$> es)
@@ -128,6 +131,8 @@ Ltac of_expr e :=
     let e := of_expr e in constr:(UnOp op ot e)
   | lang.BinOp ?op ?ot1 ?ot2 ?e1 ?e2 =>
     let e1 := of_expr e1 in let e2 := of_expr e2 in constr:(BinOp op ot1 ot2 e1 e2)
+  | lang.CopyAllocId ?e1 ?e2 =>
+    let e1 := of_expr e1 in let e2 := of_expr e2 in constr:(CopyAllocId e1 e2)
   | lang.Deref ?o ?ly ?e =>
     let e := of_expr e in constr:(Deref o ly e)
   | lang.CAS ?ot ?e1 ?e2 ?e3 =>
@@ -152,6 +157,8 @@ Inductive ectx_item :=
 | UnOpCtx (op : un_op) (ot : op_type)
 | BinOpLCtx (op : bin_op) (ot1 ot2 : op_type) (e2 : expr)
 | BinOpRCtx (op : bin_op) (ot1 ot2 : op_type) (v1 : val)
+| CopyAllocIdLCtx (e2 : expr)
+| CopyAllocIdRCtx (v1 : val)
 | DerefCtx (o : order) (l : layout)
 | CASLCtx (ot : op_type) (e2 e3 : expr)
 | CASMCtx (ot : op_type) (v1 : val) (e3 : expr)
@@ -174,6 +181,8 @@ Definition fill_item (Ki : ectx_item) (e : expr) : expr :=
   | UnOpCtx op ot => UnOp op ot e
   | BinOpLCtx op ot1 ot2 e2 => BinOp op ot1 ot2 e e2
   | BinOpRCtx op ot1 ot2 v1 => BinOp op ot1 ot2 (Val v1) e
+  | CopyAllocIdLCtx e2 => CopyAllocId e e2
+  | CopyAllocIdRCtx v1 => CopyAllocId (Val v1) e
   | DerefCtx o l => Deref o l e
   | CASLCtx ot e2 e3 => CAS ot e e2 e3
   | CASMCtx ot v1 e3 => CAS ot (Val v1) e e3
@@ -207,6 +216,12 @@ Fixpoint find_expr_fill (e : expr) (bind_val : bool) : option (list ectx_item * 
       Some (Ks ++ [BinOpLCtx op ot1 ot2 e2], e')
     else if find_expr_fill e2 bind_val is Some (Ks, e') then
            if e1 is Val v then Some (Ks ++ [BinOpRCtx op ot1 ot2 v], e') else None
+         else Some ([], e)
+  | CopyAllocId e1 e2 =>
+    if find_expr_fill e1 bind_val is Some (Ks, e') then
+      Some (Ks ++ [CopyAllocIdLCtx e2], e')
+    else if find_expr_fill e2 bind_val is Some (Ks, e') then
+           if e1 is Val v then Some (Ks ++ [CopyAllocIdRCtx v], e') else None
          else Some ([], e)
   | CAS ot e1 e2 e3 =>
     if find_expr_fill e1 bind_val is Some (Ks, e') then
@@ -250,10 +265,12 @@ Lemma ectx_item_correct Ks:
 Proof.
   elim/rev_ind: Ks. by exists [].
   move => K Ks [Ks' IH].
-  move: K => [|||||||||||n|||] *; [
+  move: K => [|||||||||||||n|||] *; [
     eexists (_ ++ [lang.UnOpCtx _ _])|
     eexists (_ ++ [lang.BinOpLCtx _ _ _ _])|
     eexists (_ ++ [lang.BinOpRCtx _ _ _ _])|
+    eexists (_ ++ [lang.CopyAllocIdLCtx _])|
+    eexists (_ ++ [lang.CopyAllocIdRCtx _])|
     eexists (_ ++ [lang.DerefCtx _ _])|
     eexists (_ ++ [lang.CASLCtx _ _ _])|
     eexists (_ ++ [lang.CASMCtx _ _ _])|
@@ -466,6 +483,7 @@ Fixpoint subst (x : var_name) (v : val) (e : expr)  : expr :=
   | Val v => Val v
   | UnOp op ot e => UnOp op ot (subst x v e)
   | BinOp op ot1 ot2 e1 e2 => BinOp op ot1 ot2 (subst x v e1) (subst x v e2)
+  | CopyAllocId e1 e2 => CopyAllocId (subst x v e1) (subst x v e2)
   | Deref o l e => Deref o l (subst x v e)
   | CAS ot e1 e2 e3 => CAS ot (subst x v e1) (subst x v e2) (subst x v e3)
   | Concat es => Concat (subst x v <$> es)
