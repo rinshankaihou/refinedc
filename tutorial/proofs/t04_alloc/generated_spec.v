@@ -76,12 +76,14 @@ Section spec.
   Next Obligation. done. Qed.
 
   (* Definition of type [alloc_state]. *)
-  Definition alloc_state_rec : (unit -d> typeO) → (unit -d> typeO) := (λ self n,
-    tyexists (λ lid : lock_id,
-    struct struct_alloc_state [@{type}
-      (spinlock (lid)) ;
-      (spinlocked (lid) ("data") (alloc_entry_t))
-    ])
+  Definition alloc_state_rec : (() -d> typeO) → (() -d> typeO) := (λ self _,
+    (
+      tyexists (λ lid : lock_id,
+      struct struct_alloc_state [@{type}
+        (spinlock (lid)) ;
+        (spinlocked (lid) ("data") (alloc_entry_t))
+      ])
+    )
   )%I.
   Typeclasses Opaque alloc_state_rec.
 
@@ -89,39 +91,41 @@ Section spec.
   Proof. solve_type_proper. Qed.
 
   Definition alloc_state : rtype := {|
-    rty_type := unit;
+    rty_type := ();
     rty r__ := fixp alloc_state_rec r__
   |}.
 
-  Lemma alloc_state_unfold (n : unit) :
-    (n @ alloc_state)%I ≡@{type} (
-      tyexists (λ lid : lock_id,
-      struct struct_alloc_state [@{type}
-        (spinlock (lid)) ;
-        (spinlocked (lid) ("data") (alloc_entry_t))
-      ])
+  Lemma alloc_state_unfold :
+    (() @ alloc_state)%I ≡@{type} (
+      (
+        tyexists (λ lid : lock_id,
+        struct struct_alloc_state [@{type}
+          (spinlock (lid)) ;
+          (spinlocked (lid) ("data") (alloc_entry_t))
+        ])
+      )
     )%I.
   Proof. by rewrite {1}/with_refinement/=fixp_unfold. Qed.
 
 
   Global Program Instance alloc_state_rmovable : RMovable alloc_state :=
-    {| rmovable 'n := movable_eq _ _ (alloc_state_unfold n) |}.
+    {| rmovable '() := movable_eq _ _ (alloc_state_unfold) |}.
   Next Obligation. solve_ty_layout_eq. Qed.
 
-  Global Instance alloc_state_simplify_hyp_place_inst l_ β_ (n : unit) :
-    SimplifyHypPlace l_ β_ (n @ alloc_state)%I (Some 100%N) :=
-    λ T, i2p (simplify_hyp_place_eq l_ β_ _ _ T (alloc_state_unfold _)).
-  Global Instance alloc_state_simplify_goal_place_inst l_ β_ (n : unit) :
-    SimplifyGoalPlace l_ β_ (n @ alloc_state)%I (Some 100%N) :=
-    λ T, i2p (simplify_goal_place_eq l_ β_ _ _ T (alloc_state_unfold _)).
+  Global Instance alloc_state_simplify_hyp_place_inst l_ β_ :
+    SimplifyHypPlace l_ β_ (() @ alloc_state)%I (Some 100%N) :=
+    λ T, i2p (simplify_hyp_place_eq l_ β_ _ _ T (alloc_state_unfold)).
+  Global Instance alloc_state_simplify_goal_place_inst l_ β_ :
+    SimplifyGoalPlace l_ β_ (() @ alloc_state)%I (Some 100%N) :=
+    λ T, i2p (simplify_goal_place_eq l_ β_ _ _ T (alloc_state_unfold)).
 
-  Global Program Instance alloc_state_simplify_hyp_val_inst v_ (n : unit) :
-    SimplifyHypVal v_ (n @ alloc_state)%I (Some 100%N) :=
-    λ T, i2p (simplify_hyp_val_eq v_ _ _ (alloc_state_unfold _) T _).
+  Global Program Instance alloc_state_simplify_hyp_val_inst v_ :
+    SimplifyHypVal v_ (() @ alloc_state)%I (Some 100%N) :=
+    λ T, i2p (simplify_hyp_val_eq v_ _ _ (alloc_state_unfold) T _).
   Next Obligation. done. Qed.
-  Global Program Instance alloc_state_simplify_goal_val_inst v_ (n : unit) :
-    SimplifyGoalVal v_ (n @ alloc_state)%I (Some 100%N) :=
-    λ T, i2p (simplify_goal_val_eq v_ _ _ (alloc_state_unfold _) T _).
+  Global Program Instance alloc_state_simplify_goal_val_inst v_ :
+    SimplifyGoalVal v_ (() @ alloc_state)%I (Some 100%N) :=
+    λ T, i2p (simplify_goal_val_eq v_ _ _ (alloc_state_unfold) T _).
   Next Obligation. done. Qed.
 
   (* Type definitions. *)

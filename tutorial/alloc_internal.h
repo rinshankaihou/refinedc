@@ -13,7 +13,7 @@ typedef struct [[rc::refined_by("sizes : {list nat}")]]
     struct alloc_entry *next;
 }* alloc_entry_t;
 
-struct [[rc::refined_by("n : unit")]]
+struct [[rc::ptr_type("alloc_state : ...")]]
        [[rc::exists("lid: lock_id")]] alloc_state {
     [[rc::field("spinlock<lid>")]]
     struct spinlock lock;
