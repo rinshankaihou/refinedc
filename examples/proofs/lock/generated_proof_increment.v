@@ -10,10 +10,10 @@ Section proof_increment.
   Context `{!lockG Σ}.
 
   (* Typing proof for [increment]. *)
-  Lemma type_increment (sl_lock sl_unlock : loc) :
-    sl_lock ◁ᵥ sl_lock @ function_ptr type_of_sl_lock -∗
-    sl_unlock ◁ᵥ sl_unlock @ function_ptr type_of_sl_unlock -∗
-    typed_function (impl_increment sl_lock sl_unlock) type_of_increment.
+  Lemma type_increment (global_sl_lock global_sl_unlock : loc) :
+    global_sl_lock ◁ᵥ global_sl_lock @ function_ptr type_of_sl_lock -∗
+    global_sl_unlock ◁ᵥ global_sl_unlock @ function_ptr type_of_sl_unlock -∗
+    typed_function (impl_increment global_sl_lock global_sl_unlock) type_of_increment.
   Proof.
     start_function "increment" ([[[[p q] n1] n2] n3]) => arg_t local_ret.
     split_blocks ((

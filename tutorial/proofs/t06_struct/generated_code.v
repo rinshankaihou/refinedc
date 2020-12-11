@@ -167,7 +167,7 @@ Section code.
   |}.
 
   (* Definition of function [argtest]. *)
-  Definition impl_argtest (blue getblue : loc): function := {|
+  Definition impl_argtest (global_blue global_getblue : loc): function := {|
     f_args := [
     ];
     f_local_vars := [
@@ -176,10 +176,11 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_62 ;
-        "$0" <- LocInfoE loc_64 (blue) with
+        "$0" <- LocInfoE loc_64 (global_blue) with
           [ LocInfoE loc_65 (UnOp (CastOp $ IntOp u8) (IntOp i32) (LocInfoE loc_65 (i2v 5 i32))) ] ;
         locinfo: loc_59 ;
-        "$1" <- LocInfoE loc_61 (getblue) with [ LocInfoE loc_62 ("$0") ] ;
+        "$1" <- LocInfoE loc_61 (global_getblue) with
+          [ LocInfoE loc_62 ("$0") ] ;
         locinfo: loc_57 ;
         assert: (LocInfoE loc_58 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_58 ((LocInfoE loc_59 ("$1")) ={IntOp u8, IntOp u8} (LocInfoE loc_66 (UnOp (CastOp $ IntOp u8) (IntOp i32) (LocInfoE loc_67 (i2v 5 i32)))))))) ;
         Return (VOID)

@@ -8,9 +8,9 @@ Section proof_use_read_int.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [use_read_int]. *)
-  Lemma type_use_read_int (read_int : loc) :
-    read_int ◁ᵥ read_int @ function_ptr type_of_read_int -∗
-    typed_function (impl_use_read_int read_int) type_of_use_read_int.
+  Lemma type_use_read_int (global_read_int : loc) :
+    global_read_int ◁ᵥ global_read_int @ function_ptr type_of_read_int -∗
+    typed_function (impl_use_read_int global_read_int) type_of_use_read_int.
   Proof.
     start_function "use_read_int" ([]) => local_local local_read.
     split_blocks ((

@@ -183,7 +183,7 @@ Section code.
   Solve Obligations with solve_struct_obligations.
 
   (* Definition of function [init_queue]. *)
-  Definition impl_init_queue (alloc : loc): function := {|
+  Definition impl_init_queue (global_alloc : loc): function := {|
     f_args := [
     ];
     f_local_vars := [
@@ -193,7 +193,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_19 ;
-        "$0" <- LocInfoE loc_21 (alloc) with
+        "$0" <- LocInfoE loc_21 (global_alloc) with
           [ LocInfoE loc_22 (i2v (layout_of struct_queue).(ly_size) size_t) ] ;
         "queue" <-{ LPtr }
           LocInfoE loc_19 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_19 ("$0"))) ;
@@ -228,7 +228,7 @@ Section code.
   |}.
 
   (* Definition of function [enqueue]. *)
-  Definition impl_enqueue (alloc : loc): function := {|
+  Definition impl_enqueue (global_alloc : loc): function := {|
     f_args := [
       ("q", LPtr);
       ("v", LPtr)
@@ -240,7 +240,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_80 ;
-        "$0" <- LocInfoE loc_82 (alloc) with
+        "$0" <- LocInfoE loc_82 (global_alloc) with
           [ LocInfoE loc_83 (i2v (layout_of struct_queue_elem).(ly_size) size_t) ] ;
         "elem" <-{ LPtr }
           LocInfoE loc_80 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_80 ("$0"))) ;
@@ -262,7 +262,7 @@ Section code.
   |}.
 
   (* Definition of function [dequeue]. *)
-  Definition impl_dequeue (free : loc): function := {|
+  Definition impl_dequeue (global_free : loc): function := {|
     f_args := [
       ("q", LPtr)
     ];
@@ -299,7 +299,7 @@ Section code.
       ]> $
       <[ "#2" :=
         locinfo: loc_94 ;
-        "_" <- LocInfoE loc_99 (free) with
+        "_" <- LocInfoE loc_99 (global_free) with
           [ LocInfoE loc_100 (i2v (layout_of struct_queue_elem).(ly_size) size_t) ;
           LocInfoE loc_101 (use{LPtr} (LocInfoE loc_102 ("elem"))) ] ;
         locinfo: loc_95 ;

@@ -362,7 +362,7 @@ Section code.
   |}.
 
   (* Definition of function [member_rec]. *)
-  Definition impl_member_rec (member_rec : loc): function := {|
+  Definition impl_member_rec (global_member_rec : loc): function := {|
     f_args := [
       ("p", LPtr);
       ("k", it_layout size_t)
@@ -395,7 +395,7 @@ Section code.
       ]> $
       <[ "#2" :=
         locinfo: loc_62 ;
-        "$0" <- LocInfoE loc_64 (member_rec) with
+        "$0" <- LocInfoE loc_64 (global_member_rec) with
           [ LocInfoE loc_65 (&(LocInfoE loc_66 ((LocInfoE loc_67 (!{LPtr} (LocInfoE loc_69 (!{LPtr} (LocInfoE loc_70 ("p")))))) at{struct_list} "tail"))) ;
           LocInfoE loc_71 (use{it_layout size_t} (LocInfoE loc_72 ("k"))) ] ;
         locinfo: loc_61 ;
@@ -488,7 +488,7 @@ Section code.
   |}.
 
   (* Definition of function [test]. *)
-  Definition impl_test (init pop push : loc): function := {|
+  Definition impl_test (global_init global_pop global_push : loc): function := {|
     f_args := [
     ];
     f_local_vars := [
@@ -504,11 +504,11 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_220 ;
-        "$4" <- LocInfoE loc_222 (init) with [  ] ;
+        "$4" <- LocInfoE loc_222 (global_init) with [  ] ;
         "list" <-{ LPtr } LocInfoE loc_220 ("$4") ;
         "local1" <-{ it_layout i32 } LocInfoE loc_217 (i2v 0 i32) ;
         locinfo: loc_208 ;
-        "$3" <- LocInfoE loc_210 (push) with
+        "$3" <- LocInfoE loc_210 (global_push) with
           [ LocInfoE loc_211 (use{LPtr} (LocInfoE loc_212 ("list"))) ;
           LocInfoE loc_213 (&(LocInfoE loc_214 ("local1"))) ;
           LocInfoE loc_215 (&(LocInfoE loc_216 ("local1_node"))) ] ;
@@ -518,19 +518,19 @@ Section code.
         LocInfoE loc_204 ("local2") <-{ LPtr }
           LocInfoE loc_205 (&(LocInfoE loc_206 ("list"))) ;
         locinfo: loc_195 ;
-        "$2" <- LocInfoE loc_197 (push) with
+        "$2" <- LocInfoE loc_197 (global_push) with
           [ LocInfoE loc_198 (use{LPtr} (LocInfoE loc_199 ("list"))) ;
           LocInfoE loc_200 (&(LocInfoE loc_201 ("local2"))) ;
           LocInfoE loc_202 (&(LocInfoE loc_203 ("local2_node"))) ] ;
         locinfo: loc_162 ;
         LocInfoE loc_194 ("list") <-{ LPtr } LocInfoE loc_195 ("$2") ;
         locinfo: loc_189 ;
-        "$1" <- LocInfoE loc_191 (pop) with
+        "$1" <- LocInfoE loc_191 (global_pop) with
           [ LocInfoE loc_192 (&(LocInfoE loc_193 ("list"))) ] ;
         locinfo: loc_163 ;
         LocInfoE loc_188 ("local3") <-{ LPtr } LocInfoE loc_189 ("$1") ;
         locinfo: loc_179 ;
-        "$0" <- LocInfoE loc_181 (pop) with
+        "$0" <- LocInfoE loc_181 (global_pop) with
           [ LocInfoE loc_182 (&(LocInfoE loc_184 (!{LPtr} (LocInfoE loc_186 (!{LPtr} (LocInfoE loc_187 ("local3"))))))) ] ;
         locinfo: loc_164 ;
         LocInfoE loc_178 ("local4") <-{ LPtr } LocInfoE loc_179 ("$0") ;

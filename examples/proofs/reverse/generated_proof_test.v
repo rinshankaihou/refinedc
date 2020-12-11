@@ -8,11 +8,11 @@ Section proof_test.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [test]. *)
-  Lemma type_test (init pop push : loc) :
-    init ◁ᵥ init @ function_ptr type_of_init -∗
-    pop ◁ᵥ pop @ function_ptr type_of_pop -∗
-    push ◁ᵥ push @ function_ptr type_of_push -∗
-    typed_function (impl_test init pop push) type_of_test.
+  Lemma type_test (global_init global_pop global_push : loc) :
+    global_init ◁ᵥ global_init @ function_ptr type_of_init -∗
+    global_pop ◁ᵥ global_pop @ function_ptr type_of_pop -∗
+    global_push ◁ᵥ global_push @ function_ptr type_of_push -∗
+    typed_function (impl_test global_init global_pop global_push) type_of_test.
   Proof.
     start_function "test" ([]) => local_list local_local1 local_local1_node local_local3 local_local2 local_local4 local_local2_node.
     split_blocks ((

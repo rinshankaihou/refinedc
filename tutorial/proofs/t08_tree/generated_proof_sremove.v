@@ -9,9 +9,9 @@ Section proof_sremove.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [sremove]. *)
-  Lemma type_sremove (remove : loc) :
-    remove ◁ᵥ remove @ function_ptr type_of_remove -∗
-    typed_function (impl_sremove remove) type_of_sremove.
+  Lemma type_sremove (global_remove : loc) :
+    global_remove ◁ᵥ global_remove @ function_ptr type_of_remove -∗
+    typed_function (impl_sremove global_remove) type_of_sremove.
   Proof.
     start_function "sremove" ([[p s] k]) => arg_t arg_k.
     split_blocks ((

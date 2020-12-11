@@ -9,10 +9,10 @@ Section proof_insert_rec.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [insert_rec]. *)
-  Lemma type_insert_rec (insert_rec node : loc) :
-    insert_rec ◁ᵥ insert_rec @ function_ptr type_of_insert_rec -∗
-    node ◁ᵥ node @ function_ptr type_of_node -∗
-    typed_function (impl_insert_rec insert_rec node) type_of_insert_rec.
+  Lemma type_insert_rec (global_insert_rec global_node : loc) :
+    global_insert_rec ◁ᵥ global_insert_rec @ function_ptr type_of_insert_rec -∗
+    global_node ◁ᵥ global_node @ function_ptr type_of_node -∗
+    typed_function (impl_insert_rec global_insert_rec global_node) type_of_insert_rec.
   Proof.
     start_function "insert_rec" ([[p t] k]) => arg_t arg_k.
     split_blocks ((

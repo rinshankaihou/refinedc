@@ -201,7 +201,7 @@ Section code.
   |}.
 
   (* Definition of function [main]. *)
-  Definition impl_main (e1 e2 mpool_get mpool_init mpool_put : loc): function := {|
+  Definition impl_main (global_e1 global_e2 global_mpool_get global_mpool_init global_mpool_put : loc): function := {|
     f_args := [
     ];
     f_local_vars := [
@@ -213,25 +213,25 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_64 ;
-        "_" <- LocInfoE loc_106 (mpool_init) with
+        "_" <- LocInfoE loc_106 (global_mpool_init) with
           [ LocInfoE loc_107 (&(LocInfoE loc_108 ("p"))) ] ;
         locinfo: loc_65 ;
-        "_" <- LocInfoE loc_100 (mpool_put) with
+        "_" <- LocInfoE loc_100 (global_mpool_put) with
           [ LocInfoE loc_101 (&(LocInfoE loc_102 ("p"))) ;
-          LocInfoE loc_103 (&(LocInfoE loc_104 (e1))) ] ;
+          LocInfoE loc_103 (&(LocInfoE loc_104 (global_e1))) ] ;
         locinfo: loc_66 ;
-        "_" <- LocInfoE loc_94 (mpool_put) with
+        "_" <- LocInfoE loc_94 (global_mpool_put) with
           [ LocInfoE loc_95 (&(LocInfoE loc_96 ("p"))) ;
-          LocInfoE loc_97 (&(LocInfoE loc_98 (e2))) ] ;
+          LocInfoE loc_97 (&(LocInfoE loc_98 (global_e2))) ] ;
         locinfo: loc_88 ;
-        "$1" <- LocInfoE loc_90 (mpool_get) with
+        "$1" <- LocInfoE loc_90 (global_mpool_get) with
           [ LocInfoE loc_91 (&(LocInfoE loc_92 ("p"))) ] ;
         locinfo: loc_67 ;
         LocInfoE loc_87 ("p1") <-{ LPtr } LocInfoE loc_88 ("$1") ;
         locinfo: loc_68 ;
         assert: (LocInfoE loc_82 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_82 ((LocInfoE loc_83 (use{LPtr} (LocInfoE loc_84 ("p1")))) !={PtrOp, PtrOp} (LocInfoE loc_86 (NULL)))))) ;
         locinfo: loc_77 ;
-        "$0" <- LocInfoE loc_79 (mpool_get) with
+        "$0" <- LocInfoE loc_79 (global_mpool_get) with
           [ LocInfoE loc_80 (&(LocInfoE loc_81 ("p"))) ] ;
         locinfo: loc_69 ;
         LocInfoE loc_76 ("p2") <-{ LPtr } LocInfoE loc_77 ("$0") ;

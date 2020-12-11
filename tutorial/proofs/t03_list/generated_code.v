@@ -412,7 +412,7 @@ Section code.
   Solve Obligations with solve_struct_obligations.
 
   (* Definition of function [test]. *)
-  Definition impl_test (alloc free init is_empty member pop push reverse : loc): function := {|
+  Definition impl_test (global_alloc global_free global_init global_is_empty global_member global_pop global_push global_reverse : loc): function := {|
     f_args := [
     ];
     f_local_vars := [
@@ -425,25 +425,25 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_162 ;
-        "$14" <- LocInfoE loc_164 (init) with [  ] ;
+        "$14" <- LocInfoE loc_164 (global_init) with [  ] ;
         "list" <-{ LPtr } LocInfoE loc_162 ("$14") ;
         locinfo: loc_156 ;
-        "$13" <- LocInfoE loc_158 (alloc) with
+        "$13" <- LocInfoE loc_158 (global_alloc) with
           [ LocInfoE loc_159 (i2v (it_layout size_t).(ly_size) size_t) ] ;
         "elem1" <-{ LPtr }
           LocInfoE loc_156 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_156 ("$13"))) ;
         locinfo: loc_150 ;
-        "$12" <- LocInfoE loc_152 (alloc) with
+        "$12" <- LocInfoE loc_152 (global_alloc) with
           [ LocInfoE loc_153 (i2v (it_layout size_t).(ly_size) size_t) ] ;
         "elem2" <-{ LPtr }
           LocInfoE loc_150 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_150 ("$12"))) ;
         locinfo: loc_144 ;
-        "$11" <- LocInfoE loc_146 (alloc) with
+        "$11" <- LocInfoE loc_146 (global_alloc) with
           [ LocInfoE loc_147 (i2v (it_layout size_t).(ly_size) size_t) ] ;
         "elem3" <-{ LPtr }
           LocInfoE loc_144 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_144 ("$11"))) ;
         locinfo: loc_139 ;
-        "$10" <- LocInfoE loc_141 (is_empty) with
+        "$10" <- LocInfoE loc_141 (global_is_empty) with
           [ LocInfoE loc_142 (&(LocInfoE loc_143 ("list"))) ] ;
         locinfo: loc_6 ;
         assert: (LocInfoE loc_139 ("$10")) ;
@@ -457,57 +457,57 @@ Section code.
         LocInfoE loc_128 (!{LPtr} (LocInfoE loc_129 ("elem3"))) <-{ it_layout size_t }
           LocInfoE loc_130 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_130 (i2v 3 i32))) ;
         locinfo: loc_120 ;
-        "$9" <- LocInfoE loc_122 (push) with
+        "$9" <- LocInfoE loc_122 (global_push) with
           [ LocInfoE loc_123 (use{LPtr} (LocInfoE loc_124 ("list"))) ;
           LocInfoE loc_125 (use{LPtr} (LocInfoE loc_126 ("elem1"))) ] ;
         locinfo: loc_10 ;
         LocInfoE loc_119 ("list") <-{ LPtr } LocInfoE loc_120 ("$9") ;
         locinfo: loc_112 ;
-        "$8" <- LocInfoE loc_114 (push) with
+        "$8" <- LocInfoE loc_114 (global_push) with
           [ LocInfoE loc_115 (use{LPtr} (LocInfoE loc_116 ("list"))) ;
           LocInfoE loc_117 (use{LPtr} (LocInfoE loc_118 ("elem2"))) ] ;
         locinfo: loc_11 ;
         LocInfoE loc_111 ("list") <-{ LPtr } LocInfoE loc_112 ("$8") ;
         locinfo: loc_104 ;
-        "$7" <- LocInfoE loc_106 (push) with
+        "$7" <- LocInfoE loc_106 (global_push) with
           [ LocInfoE loc_107 (use{LPtr} (LocInfoE loc_108 ("list"))) ;
           LocInfoE loc_109 (use{LPtr} (LocInfoE loc_110 ("elem3"))) ] ;
         locinfo: loc_12 ;
         LocInfoE loc_103 ("list") <-{ LPtr } LocInfoE loc_104 ("$7") ;
         locinfo: loc_97 ;
-        "$6" <- LocInfoE loc_99 (member) with
+        "$6" <- LocInfoE loc_99 (global_member) with
           [ LocInfoE loc_100 (&(LocInfoE loc_101 ("list"))) ;
           LocInfoE loc_102 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_102 (i2v 1 i32))) ] ;
         locinfo: loc_13 ;
         assert: (LocInfoE loc_97 ("$6")) ;
         locinfo: loc_92 ;
-        "$5" <- LocInfoE loc_94 (reverse) with
+        "$5" <- LocInfoE loc_94 (global_reverse) with
           [ LocInfoE loc_95 (use{LPtr} (LocInfoE loc_96 ("list"))) ] ;
         locinfo: loc_14 ;
         LocInfoE loc_91 ("list") <-{ LPtr } LocInfoE loc_92 ("$5") ;
         locinfo: loc_85 ;
-        "$4" <- LocInfoE loc_87 (member) with
+        "$4" <- LocInfoE loc_87 (global_member) with
           [ LocInfoE loc_88 (&(LocInfoE loc_89 ("list"))) ;
           LocInfoE loc_90 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_90 (i2v 1 i32))) ] ;
         locinfo: loc_15 ;
         assert: (LocInfoE loc_85 ("$4")) ;
         locinfo: loc_80 ;
-        "$3" <- LocInfoE loc_82 (pop) with
+        "$3" <- LocInfoE loc_82 (global_pop) with
           [ LocInfoE loc_83 (&(LocInfoE loc_84 ("list"))) ] ;
         locinfo: loc_16 ;
         LocInfoE loc_79 ("elem1") <-{ LPtr } LocInfoE loc_80 ("$3") ;
         locinfo: loc_74 ;
-        "$2" <- LocInfoE loc_76 (pop) with
+        "$2" <- LocInfoE loc_76 (global_pop) with
           [ LocInfoE loc_77 (&(LocInfoE loc_78 ("list"))) ] ;
         locinfo: loc_17 ;
         LocInfoE loc_73 ("elem2") <-{ LPtr } LocInfoE loc_74 ("$2") ;
         locinfo: loc_68 ;
-        "$1" <- LocInfoE loc_70 (pop) with
+        "$1" <- LocInfoE loc_70 (global_pop) with
           [ LocInfoE loc_71 (&(LocInfoE loc_72 ("list"))) ] ;
         locinfo: loc_18 ;
         LocInfoE loc_67 ("elem3") <-{ LPtr } LocInfoE loc_68 ("$1") ;
         locinfo: loc_62 ;
-        "$0" <- LocInfoE loc_64 (is_empty) with
+        "$0" <- LocInfoE loc_64 (global_is_empty) with
           [ LocInfoE loc_65 (&(LocInfoE loc_66 ("list"))) ] ;
         locinfo: loc_19 ;
         assert: (LocInfoE loc_62 ("$0")) ;
@@ -518,15 +518,15 @@ Section code.
         locinfo: loc_22 ;
         assert: (LocInfoE loc_41 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_41 ((LocInfoE loc_42 (use{it_layout size_t} (LocInfoE loc_44 (!{LPtr} (LocInfoE loc_45 ("elem3")))))) ={IntOp size_t, IntOp size_t} (LocInfoE loc_46 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_47 (i2v 3 i32)))))))) ;
         locinfo: loc_23 ;
-        "_" <- LocInfoE loc_37 (free) with
+        "_" <- LocInfoE loc_37 (global_free) with
           [ LocInfoE loc_38 (i2v (it_layout size_t).(ly_size) size_t) ;
           LocInfoE loc_39 (use{LPtr} (LocInfoE loc_40 ("elem1"))) ] ;
         locinfo: loc_24 ;
-        "_" <- LocInfoE loc_32 (free) with
+        "_" <- LocInfoE loc_32 (global_free) with
           [ LocInfoE loc_33 (i2v (it_layout size_t).(ly_size) size_t) ;
           LocInfoE loc_34 (use{LPtr} (LocInfoE loc_35 ("elem2"))) ] ;
         locinfo: loc_25 ;
-        "_" <- LocInfoE loc_27 (free) with
+        "_" <- LocInfoE loc_27 (global_free) with
           [ LocInfoE loc_28 (i2v (it_layout size_t).(ly_size) size_t) ;
           LocInfoE loc_29 (use{LPtr} (LocInfoE loc_30 ("elem3"))) ] ;
         Return (VOID)
@@ -566,7 +566,7 @@ Section code.
   |}.
 
   (* Definition of function [push]. *)
-  Definition impl_push (alloc : loc): function := {|
+  Definition impl_push (global_alloc : loc): function := {|
     f_args := [
       ("p", LPtr);
       ("e", LPtr)
@@ -578,7 +578,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_198 ;
-        "$0" <- LocInfoE loc_200 (alloc) with
+        "$0" <- LocInfoE loc_200 (global_alloc) with
           [ LocInfoE loc_201 (i2v (layout_of struct_list).(ly_size) size_t) ] ;
         "node" <-{ LPtr }
           LocInfoE loc_198 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_198 ("$0"))) ;
@@ -595,7 +595,7 @@ Section code.
   |}.
 
   (* Definition of function [pop]. *)
-  Definition impl_pop (free : loc): function := {|
+  Definition impl_pop (global_free : loc): function := {|
     f_args := [
       ("p", LPtr)
     ];
@@ -623,7 +623,7 @@ Section code.
         LocInfoE loc_220 (!{LPtr} (LocInfoE loc_221 ("p"))) <-{ LPtr }
           LocInfoE loc_222 (use{LPtr} (LocInfoE loc_223 ((LocInfoE loc_224 (!{LPtr} (LocInfoE loc_225 ("node")))) at{struct_list} "tail"))) ;
         locinfo: loc_210 ;
-        "_" <- LocInfoE loc_215 (free) with
+        "_" <- LocInfoE loc_215 (global_free) with
           [ LocInfoE loc_216 (i2v (layout_of struct_list).(ly_size) size_t) ;
           LocInfoE loc_217 (use{LPtr} (LocInfoE loc_218 ("node"))) ] ;
         locinfo: loc_211 ;

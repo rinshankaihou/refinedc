@@ -9,11 +9,11 @@ Section proof_quicksort.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [quicksort]. *)
-  Lemma type_quicksort (append partition quicksort : loc) :
-    append ◁ᵥ append @ function_ptr type_of_append -∗
-    partition ◁ᵥ partition @ function_ptr type_of_partition -∗
-    quicksort ◁ᵥ quicksort @ function_ptr type_of_quicksort -∗
-    typed_function (impl_quicksort append partition quicksort) type_of_quicksort.
+  Lemma type_quicksort (global_append global_partition global_quicksort : loc) :
+    global_append ◁ᵥ global_append @ function_ptr type_of_append -∗
+    global_partition ◁ᵥ global_partition @ function_ptr type_of_partition -∗
+    global_quicksort ◁ᵥ global_quicksort @ function_ptr type_of_quicksort -∗
+    typed_function (impl_quicksort global_append global_partition global_quicksort) type_of_quicksort.
   Proof.
     start_function "quicksort" ([list_l l]) => arg_l local_pivot local_higher.
     split_blocks ((

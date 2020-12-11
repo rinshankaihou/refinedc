@@ -9,9 +9,9 @@ Section proof_member_rec.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [member_rec]. *)
-  Lemma type_member_rec (member_rec : loc) :
-    member_rec ◁ᵥ member_rec @ function_ptr type_of_member_rec -∗
-    typed_function (impl_member_rec member_rec) type_of_member_rec.
+  Lemma type_member_rec (global_member_rec : loc) :
+    global_member_rec ◁ᵥ global_member_rec @ function_ptr type_of_member_rec -∗
+    typed_function (impl_member_rec global_member_rec) type_of_member_rec.
   Proof.
     start_function "member_rec" ([[p t] k]) => arg_t arg_k.
     split_blocks ((

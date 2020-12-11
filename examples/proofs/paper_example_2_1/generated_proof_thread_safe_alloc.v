@@ -10,15 +10,15 @@ Section proof_thread_safe_alloc.
   Context `{!lockG Σ}.
 
   (* Typing proof for [thread_safe_alloc]. *)
-  Lemma type_thread_safe_alloc (data lock alloc sl_lock sl_unlock : loc) :
-    global_locs !! "data" = Some data →
-    global_locs !! "lock" = Some lock →
+  Lemma type_thread_safe_alloc (global_data global_lock global_alloc global_sl_lock global_sl_unlock : loc) :
+    global_locs !! "data" = Some global_data →
+    global_locs !! "lock" = Some global_lock →
     global_initialized_types !! "data" = Some (GT lock_id (λ 'lid, (spinlocked (lid) ("data") (mem_t)) : type)) →
     global_initialized_types !! "lock" = Some (GT lock_id (λ 'lid, (spinlock (lid)) : type)) →
-    alloc ◁ᵥ alloc @ function_ptr type_of_alloc -∗
-    sl_lock ◁ᵥ sl_lock @ function_ptr type_of_sl_lock -∗
-    sl_unlock ◁ᵥ sl_unlock @ function_ptr type_of_sl_unlock -∗
-    typed_function (impl_thread_safe_alloc data lock alloc sl_lock sl_unlock) type_of_thread_safe_alloc.
+    global_alloc ◁ᵥ global_alloc @ function_ptr type_of_alloc -∗
+    global_sl_lock ◁ᵥ global_sl_lock @ function_ptr type_of_sl_lock -∗
+    global_sl_unlock ◁ᵥ global_sl_unlock @ function_ptr type_of_sl_unlock -∗
+    typed_function (impl_thread_safe_alloc global_data global_lock global_alloc global_sl_lock global_sl_unlock) type_of_thread_safe_alloc.
   Proof.
     start_function "thread_safe_alloc" ([lid n]) => arg_size local_ret.
     split_blocks ((

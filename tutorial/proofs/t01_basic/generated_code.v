@@ -258,7 +258,7 @@ Section code.
   |}.
 
   (* Definition of function [init_int_test]. *)
-  Definition impl_init_int_test (init_int : loc): function := {|
+  Definition impl_init_int_test (global_init_int : loc): function := {|
     f_args := [
       ("out", LPtr)
     ];
@@ -269,10 +269,10 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_77 ;
-        "_" <- LocInfoE loc_84 (init_int) with
+        "_" <- LocInfoE loc_84 (global_init_int) with
           [ LocInfoE loc_85 (&(LocInfoE loc_86 ("i"))) ] ;
         locinfo: loc_78 ;
-        "_" <- LocInfoE loc_80 (init_int) with
+        "_" <- LocInfoE loc_80 (global_init_int) with
           [ LocInfoE loc_81 (&(LocInfoE loc_82 ("i"))) ] ;
         Return (VOID)
       ]> $∅

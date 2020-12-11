@@ -8,11 +8,11 @@ Section proof_hyp_early_alloc_init1.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [hyp_early_alloc_init1]. *)
-  Lemma type_hyp_early_alloc_init1 (base1 cur1 size1 : loc) :
-    global_locs !! "base1" = Some base1 →
-    global_locs !! "cur1" = Some cur1 →
-    global_locs !! "size1" = Some size1 →
-    ⊢ typed_function (impl_hyp_early_alloc_init1 base1 cur1 size1) type_of_hyp_early_alloc_init1.
+  Lemma type_hyp_early_alloc_init1 (global_base1 global_cur1 global_size1 : loc) :
+    global_locs !! "base1" = Some global_base1 →
+    global_locs !! "cur1" = Some global_cur1 →
+    global_locs !! "size1" = Some global_size1 →
+    ⊢ typed_function (impl_hyp_early_alloc_init1 global_base1 global_cur1 global_size1) type_of_hyp_early_alloc_init1.
   Proof.
     start_function "hyp_early_alloc_init1" (n) => arg_virt arg_size.
     split_blocks ((

@@ -19,7 +19,7 @@ void *alloc(size_t size) {
     [[rc::block]]
     [[rc::exists("pc : loc")]]
     [[rc::inv_vars("prev : pc @ &own<alloc_entry_t>")]]
-    [[rc::constraints("[allocator_state at{struct_alloc_state}ₗ \"data\" ◁ₗ wand (pc ◁ₗ alloc_entry_t) alloc_entry_t]")]]
+    [[rc::constraints("[global_allocator_state at{struct_alloc_state}ₗ \"data\" ◁ₗ wand (pc ◁ₗ alloc_entry_t) alloc_entry_t]")]]
     while(*prev != NULL) {
       alloc_entry_t cur = *prev;
 
@@ -67,7 +67,7 @@ void init_alloc() {
   allocator_state.data = NULL;
 
   // TODO: add a real subtyping annotation such that this hack is not neccesary
-  [[rc::constraints("allocator_state @ &own<alloc_state>")]]
+  [[rc::constraints("global_allocator_state @ &own<alloc_state>")]]
   while(0){};
 
   rc_share(allocator_state);

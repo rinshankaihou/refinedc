@@ -593,7 +593,7 @@ Section code.
   Solve Obligations with solve_struct_obligations.
 
   (* Definition of function [fsm_realloc_if_necessary]. *)
-  Definition impl_fsm_realloc_if_necessary (compute_min_count free_array fsm_init fsm_insert : loc): function := {|
+  Definition impl_fsm_realloc_if_necessary (global_compute_min_count global_free_array global_fsm_init global_fsm_insert : loc): function := {|
     f_args := [
       ("m", LPtr)
     ];
@@ -606,7 +606,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_140 ;
-        "$0" <- LocInfoE loc_142 (compute_min_count) with
+        "$0" <- LocInfoE loc_142 (global_compute_min_count) with
           [ LocInfoE loc_143 (use{it_layout size_t} (LocInfoE loc_144 ((LocInfoE loc_145 (!{LPtr} (LocInfoE loc_146 ("m")))) at{struct_fixed_size_map} "length"))) ] ;
         locinfo: loc_139 ;
         if: LocInfoE loc_139 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_139 ((LocInfoE loc_140 ("$0")) ≤{IntOp size_t, IntOp size_t} (LocInfoE loc_147 (use{it_layout size_t} (LocInfoE loc_148 ((LocInfoE loc_149 (!{LPtr} (LocInfoE loc_150 ("m")))) at{struct_fixed_size_map} "count")))))))
@@ -658,7 +658,7 @@ Section code.
         "new_len" <-{ it_layout size_t }
           LocInfoE loc_107 ((LocInfoE loc_108 (use{it_layout size_t} (LocInfoE loc_109 ((LocInfoE loc_110 (!{LPtr} (LocInfoE loc_111 ("m")))) at{struct_fixed_size_map} "length")))) ×{IntOp size_t, IntOp size_t} (LocInfoE loc_112 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_112 (i2v 2 i32))))) ;
         locinfo: loc_5 ;
-        "_" <- LocInfoE loc_102 (fsm_init) with
+        "_" <- LocInfoE loc_102 (global_fsm_init) with
           [ LocInfoE loc_103 (&(LocInfoE loc_104 ("m2"))) ;
           LocInfoE loc_105 (use{it_layout size_t} (LocInfoE loc_106 ("new_len"))) ] ;
         "i" <-{ it_layout size_t }
@@ -688,7 +688,7 @@ Section code.
       ]> $
       <[ "#5" :=
         locinfo: loc_9 ;
-        "_" <- LocInfoE loc_17 (free_array) with
+        "_" <- LocInfoE loc_17 (global_free_array) with
           [ LocInfoE loc_18 (i2v (layout_of struct_item).(ly_size) size_t) ;
           LocInfoE loc_19 (use{it_layout size_t} (LocInfoE loc_20 ((LocInfoE loc_21 (!{LPtr} (LocInfoE loc_22 ("m")))) at{struct_fixed_size_map} "length"))) ;
           LocInfoE loc_23 (use{LPtr} (LocInfoE loc_24 ((LocInfoE loc_25 (!{LPtr} (LocInfoE loc_26 ("m")))) at{struct_fixed_size_map} "items"))) ] ;
@@ -705,7 +705,7 @@ Section code.
       ]> $
       <[ "#7" :=
         locinfo: loc_42 ;
-        "_" <- LocInfoE loc_44 (fsm_insert) with
+        "_" <- LocInfoE loc_44 (global_fsm_insert) with
           [ LocInfoE loc_45 (&(LocInfoE loc_46 ("m2"))) ;
           LocInfoE loc_47 (use{it_layout size_t} (LocInfoE loc_48 ((LocInfoE loc_49 ((LocInfoE loc_50 ((LocInfoE loc_52 ((LocInfoE loc_55 (!{LPtr} (LocInfoE loc_56 ((LocInfoE loc_57 (!{LPtr} (LocInfoE loc_58 ("m")))) at{struct_fixed_size_map} "items")))) at_offset{layout_of struct_item, PtrOp, IntOp size_t} (LocInfoE loc_59 (use{it_layout size_t} (LocInfoE loc_60 ("i")))))) at{struct_item} "u")) at_union{union_item_union} "entry")) at{struct_entry} "key"))) ;
           LocInfoE loc_61 (use{LPtr} (LocInfoE loc_62 ((LocInfoE loc_63 ((LocInfoE loc_64 ((LocInfoE loc_66 ((LocInfoE loc_69 (!{LPtr} (LocInfoE loc_70 ((LocInfoE loc_71 (!{LPtr} (LocInfoE loc_72 ("m")))) at{struct_fixed_size_map} "items")))) at_offset{layout_of struct_item, PtrOp, IntOp size_t} (LocInfoE loc_73 (use{it_layout size_t} (LocInfoE loc_74 ("i")))))) at{struct_item} "u")) at_union{union_item_union} "entry")) at{struct_entry} "value"))) ] ;
@@ -733,7 +733,7 @@ Section code.
   |}.
 
   (* Definition of function [fsm_init]. *)
-  Definition impl_fsm_init (alloc_array : loc): function := {|
+  Definition impl_fsm_init (global_alloc_array : loc): function := {|
     f_args := [
       ("m", LPtr);
       ("len", it_layout size_t)
@@ -746,7 +746,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_219 ;
-        "$0" <- LocInfoE loc_221 (alloc_array) with
+        "$0" <- LocInfoE loc_221 (global_alloc_array) with
           [ LocInfoE loc_222 (i2v (layout_of struct_item).(ly_size) size_t) ;
           LocInfoE loc_223 (use{it_layout size_t} (LocInfoE loc_224 ("len"))) ] ;
         "storage" <-{ LPtr } LocInfoE loc_219 ("$0") ;
@@ -815,7 +815,7 @@ Section code.
   |}.
 
   (* Definition of function [fsm_probe]. *)
-  Definition impl_fsm_probe (fsm_slot_for_key : loc): function := {|
+  Definition impl_fsm_probe (global_fsm_slot_for_key : loc): function := {|
     f_args := [
       ("m", LPtr);
       ("key", it_layout size_t)
@@ -827,7 +827,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_357 ;
-        "$0" <- LocInfoE loc_359 (fsm_slot_for_key) with
+        "$0" <- LocInfoE loc_359 (global_fsm_slot_for_key) with
           [ LocInfoE loc_360 (use{it_layout size_t} (LocInfoE loc_361 ((LocInfoE loc_362 (!{LPtr} (LocInfoE loc_363 ("m")))) at{struct_fixed_size_map} "length"))) ;
           LocInfoE loc_364 (use{it_layout size_t} (LocInfoE loc_365 ("key"))) ] ;
         "slot_idx" <-{ it_layout size_t } LocInfoE loc_357 ("$0") ;
@@ -926,7 +926,7 @@ Section code.
   |}.
 
   (* Definition of function [fsm_insert]. *)
-  Definition impl_fsm_insert (fsm_probe fsm_realloc_if_necessary : loc): function := {|
+  Definition impl_fsm_insert (global_fsm_probe global_fsm_realloc_if_necessary : loc): function := {|
     f_args := [
       ("m", LPtr);
       ("key", it_layout size_t);
@@ -941,10 +941,10 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_370 ;
-        "_" <- LocInfoE loc_462 (fsm_realloc_if_necessary) with
+        "_" <- LocInfoE loc_462 (global_fsm_realloc_if_necessary) with
           [ LocInfoE loc_463 (use{LPtr} (LocInfoE loc_464 ("m"))) ] ;
         locinfo: loc_452 ;
-        "$0" <- LocInfoE loc_454 (fsm_probe) with
+        "$0" <- LocInfoE loc_454 (global_fsm_probe) with
           [ LocInfoE loc_455 (use{LPtr} (LocInfoE loc_456 ("m"))) ;
           LocInfoE loc_457 (use{it_layout size_t} (LocInfoE loc_458 ("key"))) ] ;
         "slot_idx" <-{ it_layout size_t } LocInfoE loc_452 ("$0") ;
@@ -1005,7 +1005,7 @@ Section code.
   |}.
 
   (* Definition of function [fsm_get]. *)
-  Definition impl_fsm_get (fsm_probe : loc): function := {|
+  Definition impl_fsm_get (global_fsm_probe : loc): function := {|
     f_args := [
       ("m", LPtr);
       ("key", it_layout size_t)
@@ -1018,7 +1018,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_503 ;
-        "$0" <- LocInfoE loc_505 (fsm_probe) with
+        "$0" <- LocInfoE loc_505 (global_fsm_probe) with
           [ LocInfoE loc_506 (use{LPtr} (LocInfoE loc_507 ("m"))) ;
           LocInfoE loc_508 (use{it_layout size_t} (LocInfoE loc_509 ("key"))) ] ;
         "slot_idx" <-{ it_layout size_t } LocInfoE loc_503 ("$0") ;
@@ -1045,7 +1045,7 @@ Section code.
   |}.
 
   (* Definition of function [fsm_remove]. *)
-  Definition impl_fsm_remove (fsm_probe : loc): function := {|
+  Definition impl_fsm_remove (global_fsm_probe : loc): function := {|
     f_args := [
       ("m", LPtr);
       ("key", it_layout size_t)
@@ -1059,7 +1059,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_566 ;
-        "$0" <- LocInfoE loc_568 (fsm_probe) with
+        "$0" <- LocInfoE loc_568 (global_fsm_probe) with
           [ LocInfoE loc_569 (use{LPtr} (LocInfoE loc_570 ("m"))) ;
           LocInfoE loc_571 (use{it_layout size_t} (LocInfoE loc_572 ("key"))) ] ;
         "slot_idx" <-{ it_layout size_t } LocInfoE loc_566 ("$0") ;

@@ -8,9 +8,9 @@ Section proof_pop.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [pop]. *)
-  Lemma type_pop (free : loc) :
-    free ◁ᵥ free @ function_ptr type_of_free -∗
-    typed_function (impl_pop free) type_of_pop.
+  Lemma type_pop (global_free : loc) :
+    global_free ◁ᵥ global_free @ function_ptr type_of_free -∗
+    typed_function (impl_pop global_free) type_of_pop.
   Proof.
     start_function "pop" ([l p]) => arg_p local_node local_ret.
     split_blocks ((

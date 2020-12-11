@@ -10,9 +10,9 @@ Section proof_new_btree.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [new_btree]. *)
-  Lemma type_new_btree (alloc : loc) :
-    alloc ◁ᵥ alloc @ function_ptr type_of_alloc -∗
-    typed_function (impl_new_btree alloc) type_of_new_btree.
+  Lemma type_new_btree (global_alloc : loc) :
+    global_alloc ◁ᵥ global_alloc @ function_ptr type_of_alloc -∗
+    typed_function (impl_new_btree global_alloc) type_of_new_btree.
   Proof.
     start_function "new_btree" ([]) => local_t.
     split_blocks ((

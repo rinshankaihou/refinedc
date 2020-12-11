@@ -9,9 +9,9 @@ Section proof_sfree_tree.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [sfree_tree]. *)
-  Lemma type_sfree_tree (free_tree : loc) :
-    free_tree ◁ᵥ free_tree @ function_ptr type_of_free_tree -∗
-    typed_function (impl_sfree_tree free_tree) type_of_sfree_tree.
+  Lemma type_sfree_tree (global_free_tree : loc) :
+    global_free_tree ◁ᵥ global_free_tree @ function_ptr type_of_free_tree -∗
+    typed_function (impl_sfree_tree global_free_tree) type_of_sfree_tree.
   Proof.
     start_function "sfree_tree" (p) => arg_t.
     split_blocks ((

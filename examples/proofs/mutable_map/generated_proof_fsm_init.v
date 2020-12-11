@@ -9,9 +9,9 @@ Section proof_fsm_init.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [fsm_init]. *)
-  Lemma type_fsm_init (alloc_array : loc) :
-    alloc_array ◁ᵥ alloc_array @ function_ptr type_of_alloc_array -∗
-    typed_function (impl_fsm_init alloc_array) type_of_fsm_init.
+  Lemma type_fsm_init (global_alloc_array : loc) :
+    global_alloc_array ◁ᵥ global_alloc_array @ function_ptr type_of_alloc_array -∗
+    typed_function (impl_fsm_init global_alloc_array) type_of_fsm_init.
   Proof.
     start_function "fsm_init" ([m len]) => arg_m arg_len local_i local_storage.
     split_blocks ((

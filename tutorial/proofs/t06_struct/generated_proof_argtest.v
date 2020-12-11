@@ -8,10 +8,10 @@ Section proof_argtest.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [argtest]. *)
-  Lemma type_argtest (blue getblue : loc) :
-    blue ◁ᵥ blue @ function_ptr type_of_blue -∗
-    getblue ◁ᵥ getblue @ function_ptr type_of_getblue -∗
-    typed_function (impl_argtest blue getblue) type_of_argtest.
+  Lemma type_argtest (global_blue global_getblue : loc) :
+    global_blue ◁ᵥ global_blue @ function_ptr type_of_blue -∗
+    global_getblue ◁ᵥ global_getblue @ function_ptr type_of_getblue -∗
+    typed_function (impl_argtest global_blue global_getblue) type_of_argtest.
   Proof.
     start_function "argtest" ([]).
     split_blocks ((

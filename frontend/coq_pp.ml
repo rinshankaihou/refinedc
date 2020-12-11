@@ -129,7 +129,7 @@ let rec pp_expr : Coq_ast.expr pp = fun ff e ->
     | Var(None   ,_)                ->
         pp "\"_\""
     | Var(Some(x),g)                ->
-        if g then pp_str ff x else fprintf ff "\"%s\"" x
+        if g then fprintf ff "global_%s" x else fprintf ff "\"%s\"" x
     | Val(Null)                     ->
         pp "NULL"
     | Val(Void)                     ->
@@ -393,7 +393,7 @@ let pp_code : import list -> Coq_ast.t pp = fun imports ff ast ->
     pp "@[<v 2>Definition impl_%s " id;
     if deps <> [] then begin
       pp "(";
-      List.iter (pp "%s ") deps;
+      List.iter (pp "global_%s ") deps;
       pp ": loc)";
     end;
     pp ": function := {|@;";
@@ -1113,6 +1113,7 @@ let pp_proof : string -> func_def -> import list -> string list -> proof_kind
     used_globals @ used_functions
   in
   let pp_args ff xs =
+    let xs = List.map (fun s -> "global_" ^ s) xs in
     match xs with
     | [] -> ()
     | _  -> fprintf ff " (%a : loc)" (pp_sep " " pp_str) xs
@@ -1124,11 +1125,11 @@ let pp_proof : string -> func_def -> import list -> string list -> proof_kind
       let wrap = used_globals <> [] || used_functions <> [] in
       if wrap then fprintf ff "(";
       fprintf ff "impl_%s" id;
-      List.iter (fprintf ff " %s") used_globals;
-      List.iter (fprintf ff " %s") used_functions;
+      List.iter (fprintf ff " global_%s") used_globals;
+      List.iter (fprintf ff " global_%s") used_functions;
       if wrap then fprintf ff ")"
     in
-    let pp_global f = pp "global_locs !! \"%s\" = Some %s →@;" f f in
+    let pp_global f = pp "global_locs !! \"%s\" = Some global_%s →@;" f f in
     List.iter pp_global used_globals;
     let pp_prod = pp_as_prod (pp_simple_coq_expr true) in
     let pp_global_type f =
@@ -1140,7 +1141,7 @@ let pp_proof : string -> func_def -> import list -> string list -> proof_kind
       | _                 -> ()
     in
     List.iter pp_global_type used_globals;
-    let pp_dep f = pp "%s ◁ᵥ %s @@ function_ptr type_of_%s -∗@;" f f f in
+    let pp_dep f = pp "global_%s ◁ᵥ global_%s @@ function_ptr type_of_%s -∗@;" f f f in
     List.iter pp_dep used_functions;
     pp "%styped_function %a type_of_%s.@]@;" prefix pp_impl
       def.func_name def.func_name

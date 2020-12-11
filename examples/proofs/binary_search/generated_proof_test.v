@@ -9,12 +9,12 @@ Section proof_test.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [test]. *)
-  Lemma type_test (alloc binary_search compare_int free : loc) :
-    alloc ◁ᵥ alloc @ function_ptr type_of_alloc -∗
-    binary_search ◁ᵥ binary_search @ function_ptr type_of_binary_search -∗
-    compare_int ◁ᵥ compare_int @ function_ptr type_of_compare_int -∗
-    free ◁ᵥ free @ function_ptr type_of_free -∗
-    typed_function (impl_test alloc binary_search compare_int free) type_of_test.
+  Lemma type_test (global_alloc global_binary_search global_compare_int global_free : loc) :
+    global_alloc ◁ᵥ global_alloc @ function_ptr type_of_alloc -∗
+    global_binary_search ◁ᵥ global_binary_search @ function_ptr type_of_binary_search -∗
+    global_compare_int ◁ᵥ global_compare_int @ function_ptr type_of_compare_int -∗
+    global_free ◁ᵥ global_free @ function_ptr type_of_free -∗
+    typed_function (impl_test global_alloc global_binary_search global_compare_int global_free) type_of_test.
   Proof.
     start_function "test" ([]) => local_res local_ptrs local_needle.
     split_blocks ((

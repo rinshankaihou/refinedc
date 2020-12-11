@@ -1573,7 +1573,7 @@ Section code.
   Solve Obligations with solve_struct_obligations.
 
   (* Definition of function [new_btree]. *)
-  Definition impl_new_btree (alloc : loc): function := {|
+  Definition impl_new_btree (global_alloc : loc): function := {|
     f_args := [
     ];
     f_local_vars := [
@@ -1583,7 +1583,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_11 ;
-        "$0" <- LocInfoE loc_13 (alloc) with
+        "$0" <- LocInfoE loc_13 (global_alloc) with
           [ LocInfoE loc_14 (i2v (LPtr).(ly_size) size_t) ] ;
         "t" <-{ LPtr }
           LocInfoE loc_11 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_11 ("$0"))) ;
@@ -1597,7 +1597,7 @@ Section code.
   |}.
 
   (* Definition of function [free_btree]. *)
-  Definition impl_free_btree (free free_btree_nodes : loc): function := {|
+  Definition impl_free_btree (global_free global_free_btree_nodes : loc): function := {|
     f_args := [
       ("t", LPtr)
     ];
@@ -1607,10 +1607,10 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_19 ;
-        "_" <- LocInfoE loc_27 (free_btree_nodes) with
+        "_" <- LocInfoE loc_27 (global_free_btree_nodes) with
           [ LocInfoE loc_28 (use{LPtr} (LocInfoE loc_29 ("t"))) ] ;
         locinfo: loc_20 ;
-        "_" <- LocInfoE loc_22 (free) with
+        "_" <- LocInfoE loc_22 (global_free) with
           [ LocInfoE loc_23 (i2v (LPtr).(ly_size) size_t) ;
           LocInfoE loc_24 (use{LPtr} (LocInfoE loc_25 ("t"))) ] ;
         Return (VOID)
@@ -1619,7 +1619,7 @@ Section code.
   |}.
 
   (* Definition of function [btree_member]. *)
-  Definition impl_btree_member (key_index : loc): function := {|
+  Definition impl_btree_member (global_key_index : loc): function := {|
     f_args := [
       ("t", LPtr);
       ("k", it_layout i32)
@@ -1650,7 +1650,7 @@ Section code.
       ]> $
       <[ "#2" :=
         locinfo: loc_84 ;
-        "$0" <- LocInfoE loc_86 (key_index) with
+        "$0" <- LocInfoE loc_86 (global_key_index) with
           [ LocInfoE loc_87 (&(LocInfoE loc_88 ((LocInfoE loc_89 (!{LPtr} (LocInfoE loc_91 (!{LPtr} (LocInfoE loc_92 ("cur")))))) at{struct_btree} "keys"))) ;
           LocInfoE loc_93 (use{it_layout i32} (LocInfoE loc_94 ((LocInfoE loc_95 (!{LPtr} (LocInfoE loc_97 (!{LPtr} (LocInfoE loc_98 ("cur")))))) at{struct_btree} "nb_keys"))) ;
           LocInfoE loc_99 (use{it_layout i32} (LocInfoE loc_100 ("k"))) ] ;
@@ -1700,7 +1700,7 @@ Section code.
   |}.
 
   (* Definition of function [btree_find]. *)
-  Definition impl_btree_find (key_index : loc): function := {|
+  Definition impl_btree_find (global_key_index : loc): function := {|
     f_args := [
       ("t", LPtr);
       ("k", it_layout i32)
@@ -1729,7 +1729,7 @@ Section code.
       ]> $
       <[ "#2" :=
         locinfo: loc_181 ;
-        "$0" <- LocInfoE loc_183 (key_index) with
+        "$0" <- LocInfoE loc_183 (global_key_index) with
           [ LocInfoE loc_184 (&(LocInfoE loc_185 ((LocInfoE loc_186 (!{LPtr} (LocInfoE loc_188 (!{LPtr} (LocInfoE loc_189 ("cur")))))) at{struct_btree} "keys"))) ;
           LocInfoE loc_190 (use{it_layout i32} (LocInfoE loc_191 ((LocInfoE loc_192 (!{LPtr} (LocInfoE loc_194 (!{LPtr} (LocInfoE loc_195 ("cur")))))) at{struct_btree} "nb_keys"))) ;
           LocInfoE loc_196 (use{it_layout i32} (LocInfoE loc_197 ("k"))) ] ;
@@ -1779,7 +1779,7 @@ Section code.
   |}.
 
   (* Definition of function [btree_insert]. *)
-  Definition impl_btree_insert (alloc btree_make_root free insert_br key_index : loc): function := {|
+  Definition impl_btree_insert (global_alloc global_btree_make_root global_free global_insert_br global_key_index : loc): function := {|
     f_args := [
       ("t", LPtr);
       ("k", it_layout i32);
@@ -1813,12 +1813,12 @@ Section code.
       ]> $
       <[ "#1" :=
         locinfo: loc_479 ;
-        "$4" <- LocInfoE loc_481 (alloc) with
+        "$4" <- LocInfoE loc_481 (global_alloc) with
           [ LocInfoE loc_482 ((LocInfoE loc_483 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_483 ((LocInfoE loc_484 (use{it_layout i32} (LocInfoE loc_485 ((LocInfoE loc_486 (!{LPtr} (LocInfoE loc_488 (!{LPtr} (LocInfoE loc_489 ("t")))))) at{struct_btree} "height")))) +{IntOp i32, IntOp i32} (LocInfoE loc_490 (i2v 1 i32)))))) ×{IntOp size_t, IntOp size_t} (LocInfoE loc_491 (i2v (LPtr).(ly_size) size_t))) ] ;
         "path_ptrs" <-{ LPtr }
           LocInfoE loc_479 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_479 ("$4"))) ;
         locinfo: loc_466 ;
-        "$3" <- LocInfoE loc_468 (alloc) with
+        "$3" <- LocInfoE loc_468 (global_alloc) with
           [ LocInfoE loc_469 ((LocInfoE loc_470 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_470 (use{it_layout i32} (LocInfoE loc_471 ((LocInfoE loc_472 (!{LPtr} (LocInfoE loc_474 (!{LPtr} (LocInfoE loc_475 ("t")))))) at{struct_btree} "height")))))) ×{IntOp size_t, IntOp size_t} (LocInfoE loc_476 (i2v (it_layout i32).(ly_size) size_t))) ] ;
         "path_keys" <-{ LPtr }
           LocInfoE loc_466 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_466 ("$3"))) ;
@@ -1869,7 +1869,7 @@ Section code.
       ]> $
       <[ "#15" :=
         locinfo: loc_501 ;
-        "$5" <- LocInfoE loc_503 (btree_make_root) with
+        "$5" <- LocInfoE loc_503 (global_btree_make_root) with
           [ LocInfoE loc_504 (NULL) ; LocInfoE loc_505 (NULL) ;
           LocInfoE loc_506 (use{it_layout i32} (LocInfoE loc_507 ("k"))) ;
           LocInfoE loc_508 (use{LPtr} (LocInfoE loc_509 ("v"))) ] ;
@@ -1895,7 +1895,7 @@ Section code.
         "cur_node" <-{ LPtr }
           LocInfoE loc_434 (use{LPtr} (LocInfoE loc_436 ((LocInfoE loc_437 (!{LPtr} (LocInfoE loc_438 ("path_ptrs")))) at_offset{LPtr, PtrOp, IntOp i32} (LocInfoE loc_439 (use{it_layout i32} (LocInfoE loc_440 ("cur"))))))) ;
         locinfo: loc_415 ;
-        "$2" <- LocInfoE loc_417 (key_index) with
+        "$2" <- LocInfoE loc_417 (global_key_index) with
           [ LocInfoE loc_418 (&(LocInfoE loc_419 ((LocInfoE loc_420 (!{LPtr} (LocInfoE loc_422 (!{LPtr} (LocInfoE loc_423 ("cur_node")))))) at{struct_btree} "keys"))) ;
           LocInfoE loc_424 (use{it_layout i32} (LocInfoE loc_425 ((LocInfoE loc_426 (!{LPtr} (LocInfoE loc_428 (!{LPtr} (LocInfoE loc_429 ("cur_node")))))) at{struct_btree} "nb_keys"))) ;
           LocInfoE loc_430 (use{it_layout i32} (LocInfoE loc_431 ("k"))) ] ;
@@ -1931,7 +1931,7 @@ Section code.
         "node" <-{ LPtr }
           LocInfoE loc_313 (use{LPtr} (LocInfoE loc_315 ((LocInfoE loc_316 (!{LPtr} (LocInfoE loc_317 ("path_ptrs")))) at_offset{LPtr, PtrOp, IntOp i32} (LocInfoE loc_318 ((LocInfoE loc_319 (use{it_layout i32} (LocInfoE loc_320 ("cur")))) -{IntOp i32, IntOp i32} (LocInfoE loc_321 (i2v 1 i32))))))) ;
         locinfo: loc_298 ;
-        "$1" <- LocInfoE loc_300 (insert_br) with
+        "$1" <- LocInfoE loc_300 (global_insert_br) with
           [ LocInfoE loc_301 (use{LPtr} (LocInfoE loc_302 ("node"))) ;
           LocInfoE loc_303 (use{it_layout i32} (LocInfoE loc_304 ("ins_k"))) ;
           LocInfoE loc_305 (use{LPtr} (LocInfoE loc_306 ("ins_v"))) ;
@@ -1951,7 +1951,7 @@ Section code.
       ]> $
       <[ "#7" :=
         locinfo: loc_257 ;
-        "$0" <- LocInfoE loc_259 (btree_make_root) with
+        "$0" <- LocInfoE loc_259 (global_btree_make_root) with
           [ LocInfoE loc_260 (use{LPtr} (LocInfoE loc_262 (!{LPtr} (LocInfoE loc_263 ("t"))))) ;
           LocInfoE loc_264 (use{LPtr} (LocInfoE loc_265 ("new"))) ;
           LocInfoE loc_266 (use{it_layout i32} (LocInfoE loc_267 ("med_k"))) ;
@@ -1992,11 +1992,11 @@ Section code.
       ]> $
       <[ "done" :=
         locinfo: loc_226 ;
-        "_" <- LocInfoE loc_241 (free) with
+        "_" <- LocInfoE loc_241 (global_free) with
           [ LocInfoE loc_242 ((LocInfoE loc_243 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_243 ((LocInfoE loc_244 (use{it_layout i32} (LocInfoE loc_245 ((LocInfoE loc_246 (!{LPtr} (LocInfoE loc_248 (!{LPtr} (LocInfoE loc_249 ("t")))))) at{struct_btree} "height")))) +{IntOp i32, IntOp i32} (LocInfoE loc_250 (i2v 1 i32)))))) ×{IntOp size_t, IntOp size_t} (LocInfoE loc_251 (i2v (LPtr).(ly_size) size_t))) ;
           LocInfoE loc_252 (use{LPtr} (LocInfoE loc_253 ("path_ptrs"))) ] ;
         locinfo: loc_227 ;
-        "_" <- LocInfoE loc_229 (free) with
+        "_" <- LocInfoE loc_229 (global_free) with
           [ LocInfoE loc_230 ((LocInfoE loc_231 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_231 (use{it_layout i32} (LocInfoE loc_232 ((LocInfoE loc_233 (!{LPtr} (LocInfoE loc_235 (!{LPtr} (LocInfoE loc_236 ("t")))))) at{struct_btree} "height")))))) ×{IntOp size_t, IntOp size_t} (LocInfoE loc_237 (i2v (it_layout i32).(ly_size) size_t))) ;
           LocInfoE loc_238 (use{LPtr} (LocInfoE loc_239 ("path_keys"))) ] ;
         Return (VOID)
@@ -2005,7 +2005,7 @@ Section code.
   |}.
 
   (* Definition of function [free_btree_nodes]. *)
-  Definition impl_free_btree_nodes (free free_btree_nodes : loc): function := {|
+  Definition impl_free_btree_nodes (global_free global_free_btree_nodes : loc): function := {|
     f_args := [
       ("t", LPtr)
     ];
@@ -2040,14 +2040,14 @@ Section code.
       ]> $
       <[ "#3" :=
         locinfo: loc_537 ;
-        "_" <- LocInfoE loc_542 (free_btree_nodes) with
+        "_" <- LocInfoE loc_542 (global_free_btree_nodes) with
           [ LocInfoE loc_543 (&(LocInfoE loc_545 ((LocInfoE loc_547 ((LocInfoE loc_548 (!{LPtr} (LocInfoE loc_550 (!{LPtr} (LocInfoE loc_551 ("t")))))) at{struct_btree} "children")) at_offset{LPtr, PtrOp, IntOp i32} (LocInfoE loc_552 (use{it_layout i32} (LocInfoE loc_553 ("i"))))))) ] ;
         locinfo: loc_538 ;
         Goto "continue4"
       ]> $
       <[ "#4" :=
         locinfo: loc_523 ;
-        "_" <- LocInfoE loc_530 (free) with
+        "_" <- LocInfoE loc_530 (global_free) with
           [ LocInfoE loc_531 (i2v (layout_of struct_btree).(ly_size) size_t) ;
           LocInfoE loc_532 (use{LPtr} (LocInfoE loc_534 (!{LPtr} (LocInfoE loc_535 ("t"))))) ] ;
         locinfo: loc_524 ;
@@ -2126,7 +2126,7 @@ Section code.
   |}.
 
   (* Definition of function [insert_br]. *)
-  Definition impl_insert_br (alloc key_index : loc): function := {|
+  Definition impl_insert_br (global_alloc global_key_index : loc): function := {|
     f_args := [
       ("node", LPtr);
       ("k", it_layout i32);
@@ -2148,7 +2148,7 @@ Section code.
         "n" <-{ it_layout i32 }
           LocInfoE loc_1530 (use{it_layout i32} (LocInfoE loc_1531 ((LocInfoE loc_1532 (!{LPtr} (LocInfoE loc_1534 (!{LPtr} (LocInfoE loc_1535 ("node")))))) at{struct_btree} "nb_keys"))) ;
         locinfo: loc_1515 ;
-        "$1" <- LocInfoE loc_1517 (key_index) with
+        "$1" <- LocInfoE loc_1517 (global_key_index) with
           [ LocInfoE loc_1518 (&(LocInfoE loc_1519 ((LocInfoE loc_1520 (!{LPtr} (LocInfoE loc_1522 (!{LPtr} (LocInfoE loc_1523 ("node")))))) at{struct_btree} "keys"))) ;
           LocInfoE loc_1524 (use{it_layout i32} (LocInfoE loc_1525 ("n"))) ;
           LocInfoE loc_1526 (use{it_layout i32} (LocInfoE loc_1527 ("k"))) ] ;
@@ -2164,7 +2164,7 @@ Section code.
       ]> $
       <[ "#1" :=
         locinfo: loc_1362 ;
-        "$0" <- LocInfoE loc_1364 (alloc) with
+        "$0" <- LocInfoE loc_1364 (global_alloc) with
           [ LocInfoE loc_1365 (i2v (layout_of struct_btree).(ly_size) size_t) ] ;
         "new_node" <-{ LPtr }
           LocInfoE loc_1362 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_1362 ("$0"))) ;
@@ -2521,7 +2521,7 @@ Section code.
   |}.
 
   (* Definition of function [btree_make_root]. *)
-  Definition impl_btree_make_root (alloc : loc): function := {|
+  Definition impl_btree_make_root (global_alloc : loc): function := {|
     f_args := [
       ("l", LPtr);
       ("r", LPtr);
@@ -2535,7 +2535,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_1621 ;
-        "$0" <- LocInfoE loc_1623 (alloc) with
+        "$0" <- LocInfoE loc_1623 (global_alloc) with
           [ LocInfoE loc_1624 (i2v (layout_of struct_btree).(ly_size) size_t) ] ;
         "root" <-{ LPtr }
           LocInfoE loc_1621 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_1621 ("$0"))) ;

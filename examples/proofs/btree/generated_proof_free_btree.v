@@ -10,10 +10,10 @@ Section proof_free_btree.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [free_btree]. *)
-  Lemma type_free_btree (free free_btree_nodes : loc) :
-    free ◁ᵥ free @ function_ptr type_of_free -∗
-    free_btree_nodes ◁ᵥ free_btree_nodes @ function_ptr type_of_free_btree_nodes -∗
-    typed_function (impl_free_btree free free_btree_nodes) type_of_free_btree.
+  Lemma type_free_btree (global_free global_free_btree_nodes : loc) :
+    global_free ◁ᵥ global_free @ function_ptr type_of_free -∗
+    global_free_btree_nodes ◁ᵥ global_free_btree_nodes @ function_ptr type_of_free_btree_nodes -∗
+    typed_function (impl_free_btree global_free global_free_btree_nodes) type_of_free_btree.
   Proof.
     start_function "free_btree" ([]) => arg_t.
     split_blocks ((

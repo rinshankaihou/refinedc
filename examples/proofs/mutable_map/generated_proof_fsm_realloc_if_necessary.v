@@ -9,12 +9,12 @@ Section proof_fsm_realloc_if_necessary.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [fsm_realloc_if_necessary]. *)
-  Lemma type_fsm_realloc_if_necessary (compute_min_count free_array fsm_init fsm_insert : loc) :
-    compute_min_count ◁ᵥ compute_min_count @ function_ptr type_of_compute_min_count -∗
-    free_array ◁ᵥ free_array @ function_ptr type_of_free_array -∗
-    fsm_init ◁ᵥ fsm_init @ function_ptr type_of_fsm_init -∗
-    fsm_insert ◁ᵥ fsm_insert @ function_ptr type_of_fsm_insert -∗
-    typed_function (impl_fsm_realloc_if_necessary compute_min_count free_array fsm_init fsm_insert) type_of_fsm_realloc_if_necessary.
+  Lemma type_fsm_realloc_if_necessary (global_compute_min_count global_free_array global_fsm_init global_fsm_insert : loc) :
+    global_compute_min_count ◁ᵥ global_compute_min_count @ function_ptr type_of_compute_min_count -∗
+    global_free_array ◁ᵥ global_free_array @ function_ptr type_of_free_array -∗
+    global_fsm_init ◁ᵥ global_fsm_init @ function_ptr type_of_fsm_init -∗
+    global_fsm_insert ◁ᵥ global_fsm_insert @ function_ptr type_of_fsm_insert -∗
+    typed_function (impl_fsm_realloc_if_necessary global_compute_min_count global_free_array global_fsm_init global_fsm_insert) type_of_fsm_realloc_if_necessary.
   Proof.
     start_function "fsm_realloc_if_necessary" ([[[m items] count] mp]) => arg_m local_i local_m2 local_new_len.
     split_blocks ((

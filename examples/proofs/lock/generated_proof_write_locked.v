@@ -10,10 +10,10 @@ Section proof_write_locked.
   Context `{!lockG Σ}.
 
   (* Typing proof for [write_locked]. *)
-  Lemma type_write_locked (sl_lock sl_unlock : loc) :
-    sl_lock ◁ᵥ sl_lock @ function_ptr type_of_sl_lock -∗
-    sl_unlock ◁ᵥ sl_unlock @ function_ptr type_of_sl_unlock -∗
-    typed_function (impl_write_locked sl_lock sl_unlock) type_of_write_locked.
+  Lemma type_write_locked (global_sl_lock global_sl_unlock : loc) :
+    global_sl_lock ◁ᵥ global_sl_lock @ function_ptr type_of_sl_lock -∗
+    global_sl_unlock ◁ᵥ global_sl_unlock @ function_ptr type_of_sl_unlock -∗
+    typed_function (impl_write_locked global_sl_lock global_sl_unlock) type_of_write_locked.
   Proof.
     start_function "write_locked" ([[[[[p n] q] n1] n2] n3]) => arg_t arg_n.
     split_blocks ((

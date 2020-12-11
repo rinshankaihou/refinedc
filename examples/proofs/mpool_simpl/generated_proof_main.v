@@ -8,13 +8,13 @@ Section proof_main.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [main]. *)
-  Lemma type_main (e1 e2 mpool_get mpool_init mpool_put : loc) :
-    global_locs !! "e1" = Some e1 →
-    global_locs !! "e2" = Some e2 →
-    mpool_get ◁ᵥ mpool_get @ function_ptr type_of_mpool_get -∗
-    mpool_init ◁ᵥ mpool_init @ function_ptr type_of_mpool_init -∗
-    mpool_put ◁ᵥ mpool_put @ function_ptr type_of_mpool_put -∗
-    typed_function (impl_main e1 e2 mpool_get mpool_init mpool_put) type_of_main.
+  Lemma type_main (global_e1 global_e2 global_mpool_get global_mpool_init global_mpool_put : loc) :
+    global_locs !! "e1" = Some global_e1 →
+    global_locs !! "e2" = Some global_e2 →
+    global_mpool_get ◁ᵥ global_mpool_get @ function_ptr type_of_mpool_get -∗
+    global_mpool_init ◁ᵥ global_mpool_init @ function_ptr type_of_mpool_init -∗
+    global_mpool_put ◁ᵥ global_mpool_put @ function_ptr type_of_mpool_put -∗
+    typed_function (impl_main global_e1 global_e2 global_mpool_get global_mpool_init global_mpool_put) type_of_main.
   Proof.
     start_function "main" ([]) => local_p1 local_p2 local_p.
     split_blocks ((

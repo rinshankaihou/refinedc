@@ -659,7 +659,7 @@ Section code.
   |}.
 
   (* Definition of function [init]. *)
-  Definition impl_init (alloc : loc): function := {|
+  Definition impl_init (global_alloc : loc): function := {|
     f_args := [
       ("key", it_layout i32)
     ];
@@ -670,7 +670,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_26 ;
-        "$0" <- LocInfoE loc_28 (alloc) with
+        "$0" <- LocInfoE loc_28 (global_alloc) with
           [ LocInfoE loc_29 (i2v (layout_of struct_tree).(ly_size) size_t) ] ;
         "node" <-{ LPtr }
           LocInfoE loc_26 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_26 ("$0"))) ;
@@ -690,7 +690,7 @@ Section code.
   |}.
 
   (* Definition of function [node]. *)
-  Definition impl_node (alloc : loc): function := {|
+  Definition impl_node (global_alloc : loc): function := {|
     f_args := [
       ("left", LPtr);
       ("key", it_layout i32);
@@ -703,7 +703,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_56 ;
-        "$0" <- LocInfoE loc_58 (alloc) with
+        "$0" <- LocInfoE loc_58 (global_alloc) with
           [ LocInfoE loc_59 (i2v (layout_of struct_tree).(ly_size) size_t) ] ;
         "node" <-{ LPtr }
           LocInfoE loc_56 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_56 ("$0"))) ;
@@ -723,7 +723,7 @@ Section code.
   |}.
 
   (* Definition of function [free_tree]. *)
-  Definition impl_free_tree (free free_tree : loc): function := {|
+  Definition impl_free_tree (global_free global_free_tree : loc): function := {|
     f_args := [
       ("t", LPtr)
     ];
@@ -742,13 +742,13 @@ Section code.
       ]> $
       <[ "#1" :=
         locinfo: loc_66 ;
-        "_" <- LocInfoE loc_85 (free_tree) with
+        "_" <- LocInfoE loc_85 (global_free_tree) with
           [ LocInfoE loc_86 (&(LocInfoE loc_87 ((LocInfoE loc_88 (!{LPtr} (LocInfoE loc_90 (!{LPtr} (LocInfoE loc_91 ("t")))))) at{struct_tree} "left"))) ] ;
         locinfo: loc_67 ;
-        "_" <- LocInfoE loc_77 (free_tree) with
+        "_" <- LocInfoE loc_77 (global_free_tree) with
           [ LocInfoE loc_78 (&(LocInfoE loc_79 ((LocInfoE loc_80 (!{LPtr} (LocInfoE loc_82 (!{LPtr} (LocInfoE loc_83 ("t")))))) at{struct_tree} "right"))) ] ;
         locinfo: loc_68 ;
-        "_" <- LocInfoE loc_70 (free) with
+        "_" <- LocInfoE loc_70 (global_free) with
           [ LocInfoE loc_71 (i2v (layout_of struct_tree).(ly_size) size_t) ;
           LocInfoE loc_72 (use{LPtr} (LocInfoE loc_74 (!{LPtr} (LocInfoE loc_75 ("t"))))) ] ;
         Return (VOID)
@@ -760,7 +760,7 @@ Section code.
   |}.
 
   (* Definition of function [member_rec]. *)
-  Definition impl_member_rec (member_rec : loc): function := {|
+  Definition impl_member_rec (global_member_rec : loc): function := {|
     f_args := [
       ("t", LPtr);
       ("k", it_layout i32)
@@ -801,7 +801,7 @@ Section code.
       ]> $
       <[ "#3" :=
         locinfo: loc_105 ;
-        "$0" <- LocInfoE loc_107 (member_rec) with
+        "$0" <- LocInfoE loc_107 (global_member_rec) with
           [ LocInfoE loc_108 (&(LocInfoE loc_109 ((LocInfoE loc_110 (!{LPtr} (LocInfoE loc_112 (!{LPtr} (LocInfoE loc_113 ("t")))))) at{struct_tree} "right"))) ;
           LocInfoE loc_114 (use{it_layout i32} (LocInfoE loc_115 ("k"))) ] ;
         locinfo: loc_104 ;
@@ -809,7 +809,7 @@ Section code.
       ]> $
       <[ "#4" :=
         locinfo: loc_117 ;
-        "$1" <- LocInfoE loc_119 (member_rec) with
+        "$1" <- LocInfoE loc_119 (global_member_rec) with
           [ LocInfoE loc_120 (&(LocInfoE loc_121 ((LocInfoE loc_122 (!{LPtr} (LocInfoE loc_124 (!{LPtr} (LocInfoE loc_125 ("t")))))) at{struct_tree} "left"))) ;
           LocInfoE loc_126 (use{it_layout i32} (LocInfoE loc_127 ("k"))) ] ;
         locinfo: loc_116 ;
@@ -923,7 +923,7 @@ Section code.
   |}.
 
   (* Definition of function [insert_rec]. *)
-  Definition impl_insert_rec (insert_rec node : loc): function := {|
+  Definition impl_insert_rec (global_insert_rec global_node : loc): function := {|
     f_args := [
       ("t", LPtr);
       ("k", it_layout i32)
@@ -944,7 +944,8 @@ Section code.
       ]> $
       <[ "#1" :=
         locinfo: loc_230 ;
-        "$0" <- LocInfoE loc_232 (node) with [ LocInfoE loc_233 (NULL) ;
+        "$0" <- LocInfoE loc_232 (global_node) with
+          [ LocInfoE loc_233 (NULL) ;
           LocInfoE loc_234 (use{it_layout i32} (LocInfoE loc_235 ("k"))) ;
           LocInfoE loc_236 (NULL) ] ;
         locinfo: loc_226 ;
@@ -974,14 +975,14 @@ Section code.
       ]> $
       <[ "#4" :=
         locinfo: loc_241 ;
-        "_" <- LocInfoE loc_243 (insert_rec) with
+        "_" <- LocInfoE loc_243 (global_insert_rec) with
           [ LocInfoE loc_244 (&(LocInfoE loc_245 ((LocInfoE loc_246 (!{LPtr} (LocInfoE loc_248 (!{LPtr} (LocInfoE loc_249 ("t")))))) at{struct_tree} "left"))) ;
           LocInfoE loc_250 (use{it_layout i32} (LocInfoE loc_251 ("k"))) ] ;
         Return (VOID)
       ]> $
       <[ "#5" :=
         locinfo: loc_253 ;
-        "_" <- LocInfoE loc_255 (insert_rec) with
+        "_" <- LocInfoE loc_255 (global_insert_rec) with
           [ LocInfoE loc_256 (&(LocInfoE loc_257 ((LocInfoE loc_258 (!{LPtr} (LocInfoE loc_260 (!{LPtr} (LocInfoE loc_261 ("t")))))) at{struct_tree} "right"))) ;
           LocInfoE loc_262 (use{it_layout i32} (LocInfoE loc_263 ("k"))) ] ;
         Return (VOID)
@@ -998,7 +999,7 @@ Section code.
   |}.
 
   (* Definition of function [insert]. *)
-  Definition impl_insert (node : loc): function := {|
+  Definition impl_insert (global_node : loc): function := {|
     f_args := [
       ("t", LPtr);
       ("k", it_layout i32)
@@ -1036,7 +1037,8 @@ Section code.
       ]> $
       <[ "#3" :=
         locinfo: loc_299 ;
-        "$0" <- LocInfoE loc_301 (node) with [ LocInfoE loc_302 (NULL) ;
+        "$0" <- LocInfoE loc_301 (global_node) with
+          [ LocInfoE loc_302 (NULL) ;
           LocInfoE loc_303 (use{it_layout i32} (LocInfoE loc_304 ("k"))) ;
           LocInfoE loc_305 (NULL) ] ;
         locinfo: loc_295 ;
@@ -1088,7 +1090,7 @@ Section code.
   |}.
 
   (* Definition of function [tree_max]. *)
-  Definition impl_tree_max (tree_max : loc): function := {|
+  Definition impl_tree_max (global_tree_max : loc): function := {|
     f_args := [
       ("t", LPtr)
     ];
@@ -1110,7 +1112,7 @@ Section code.
         locinfo: loc_366 ;
         expr: (LocInfoE loc_378 (&(LocInfoE loc_379 ((LocInfoE loc_380 (!{LPtr} (LocInfoE loc_381 ((LocInfoE loc_382 (!{LPtr} (LocInfoE loc_384 (!{LPtr} (LocInfoE loc_385 ("t")))))) at{struct_tree} "right")))) at{struct_tree} "key")))) ;
         locinfo: loc_369 ;
-        "$0" <- LocInfoE loc_371 (tree_max) with
+        "$0" <- LocInfoE loc_371 (global_tree_max) with
           [ LocInfoE loc_372 (&(LocInfoE loc_373 ((LocInfoE loc_374 (!{LPtr} (LocInfoE loc_376 (!{LPtr} (LocInfoE loc_377 ("t")))))) at{struct_tree} "right"))) ] ;
         locinfo: loc_368 ;
         Return (LocInfoE loc_369 ("$0"))
@@ -1127,7 +1129,7 @@ Section code.
   |}.
 
   (* Definition of function [remove]. *)
-  Definition impl_remove (free remove tree_max : loc): function := {|
+  Definition impl_remove (global_free global_remove global_tree_max : loc): function := {|
     f_args := [
       ("t", LPtr);
       ("k", it_layout i32)
@@ -1172,12 +1174,12 @@ Section code.
         locinfo: loc_410 ;
         expr: (LocInfoE loc_442 (&(LocInfoE loc_443 ((LocInfoE loc_444 (!{LPtr} (LocInfoE loc_445 ((LocInfoE loc_446 (!{LPtr} (LocInfoE loc_448 (!{LPtr} (LocInfoE loc_449 ("t")))))) at{struct_tree} "left")))) at{struct_tree} "key")))) ;
         locinfo: loc_433 ;
-        "$0" <- LocInfoE loc_435 (tree_max) with
+        "$0" <- LocInfoE loc_435 (global_tree_max) with
           [ LocInfoE loc_436 (&(LocInfoE loc_437 ((LocInfoE loc_438 (!{LPtr} (LocInfoE loc_440 (!{LPtr} (LocInfoE loc_441 ("t")))))) at{struct_tree} "left"))) ] ;
         locinfo: loc_412 ;
         LocInfoE loc_432 ("m") <-{ it_layout i32 } LocInfoE loc_433 ("$0") ;
         locinfo: loc_413 ;
-        "_" <- LocInfoE loc_423 (remove) with
+        "_" <- LocInfoE loc_423 (global_remove) with
           [ LocInfoE loc_424 (&(LocInfoE loc_425 ((LocInfoE loc_426 (!{LPtr} (LocInfoE loc_428 (!{LPtr} (LocInfoE loc_429 ("t")))))) at{struct_tree} "left"))) ;
           LocInfoE loc_430 (use{it_layout i32} (LocInfoE loc_431 ("m"))) ] ;
         locinfo: loc_414 ;
@@ -1190,7 +1192,7 @@ Section code.
         LocInfoE loc_466 ("tmp") <-{ LPtr }
           LocInfoE loc_467 (use{LPtr} (LocInfoE loc_468 ((LocInfoE loc_469 (!{LPtr} (LocInfoE loc_471 (!{LPtr} (LocInfoE loc_472 ("t")))))) at{struct_tree} "right"))) ;
         locinfo: loc_452 ;
-        "_" <- LocInfoE loc_460 (free) with
+        "_" <- LocInfoE loc_460 (global_free) with
           [ LocInfoE loc_461 (i2v (layout_of struct_tree).(ly_size) size_t) ;
           LocInfoE loc_462 (use{LPtr} (LocInfoE loc_464 (!{LPtr} (LocInfoE loc_465 ("t"))))) ] ;
         locinfo: loc_453 ;
@@ -1210,14 +1212,14 @@ Section code.
       ]> $
       <[ "#6" :=
         locinfo: loc_483 ;
-        "_" <- LocInfoE loc_485 (remove) with
+        "_" <- LocInfoE loc_485 (global_remove) with
           [ LocInfoE loc_486 (&(LocInfoE loc_487 ((LocInfoE loc_488 (!{LPtr} (LocInfoE loc_490 (!{LPtr} (LocInfoE loc_491 ("t")))))) at{struct_tree} "left"))) ;
           LocInfoE loc_492 (use{it_layout i32} (LocInfoE loc_493 ("k"))) ] ;
         Return (VOID)
       ]> $
       <[ "#7" :=
         locinfo: loc_495 ;
-        "_" <- LocInfoE loc_497 (remove) with
+        "_" <- LocInfoE loc_497 (global_remove) with
           [ LocInfoE loc_498 (&(LocInfoE loc_499 ((LocInfoE loc_500 (!{LPtr} (LocInfoE loc_502 (!{LPtr} (LocInfoE loc_503 ("t")))))) at{struct_tree} "right"))) ;
           LocInfoE loc_504 (use{it_layout i32} (LocInfoE loc_505 ("k"))) ] ;
         Return (VOID)
@@ -1234,7 +1236,7 @@ Section code.
   |}.
 
   (* Definition of function [sempty]. *)
-  Definition impl_sempty (empty : loc): function := {|
+  Definition impl_sempty (global_empty : loc): function := {|
     f_args := [
     ];
     f_local_vars := [
@@ -1243,7 +1245,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_537 ;
-        "$0" <- LocInfoE loc_539 (empty) with [  ] ;
+        "$0" <- LocInfoE loc_539 (global_empty) with [  ] ;
         locinfo: loc_536 ;
         Return (LocInfoE loc_537 ("$0"))
       ]> $∅
@@ -1251,7 +1253,7 @@ Section code.
   |}.
 
   (* Definition of function [sinit]. *)
-  Definition impl_sinit (init : loc): function := {|
+  Definition impl_sinit (global_init : loc): function := {|
     f_args := [
       ("key", it_layout i32)
     ];
@@ -1261,7 +1263,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_543 ;
-        "$0" <- LocInfoE loc_545 (init) with
+        "$0" <- LocInfoE loc_545 (global_init) with
           [ LocInfoE loc_546 (use{it_layout i32} (LocInfoE loc_547 ("key"))) ] ;
         locinfo: loc_542 ;
         Return (LocInfoE loc_543 ("$0"))
@@ -1270,7 +1272,7 @@ Section code.
   |}.
 
   (* Definition of function [sfree_tree]. *)
-  Definition impl_sfree_tree (free_tree : loc): function := {|
+  Definition impl_sfree_tree (global_free_tree : loc): function := {|
     f_args := [
       ("t", LPtr)
     ];
@@ -1283,7 +1285,7 @@ Section code.
         annot: (UnfoldOnceAnnot) ;
         expr: (LocInfoE loc_557 (&(LocInfoE loc_559 (!{LPtr} (LocInfoE loc_560 ("t")))))) ;
         locinfo: loc_552 ;
-        "_" <- LocInfoE loc_554 (free_tree) with
+        "_" <- LocInfoE loc_554 (global_free_tree) with
           [ LocInfoE loc_555 (use{LPtr} (LocInfoE loc_556 ("t"))) ] ;
         Return (VOID)
       ]> $∅
@@ -1291,7 +1293,7 @@ Section code.
   |}.
 
   (* Definition of function [smember]. *)
-  Definition impl_smember (member : loc): function := {|
+  Definition impl_smember (global_member : loc): function := {|
     f_args := [
       ("t", LPtr);
       ("k", it_layout i32)
@@ -1305,7 +1307,7 @@ Section code.
         annot: (UnfoldOnceAnnot) ;
         expr: (LocInfoE loc_573 (&(LocInfoE loc_575 (!{LPtr} (LocInfoE loc_576 ("t")))))) ;
         locinfo: loc_566 ;
-        "$0" <- LocInfoE loc_568 (member) with
+        "$0" <- LocInfoE loc_568 (global_member) with
           [ LocInfoE loc_569 (use{LPtr} (LocInfoE loc_570 ("t"))) ;
           LocInfoE loc_571 (use{it_layout i32} (LocInfoE loc_572 ("k"))) ] ;
         locinfo: loc_565 ;
@@ -1315,7 +1317,7 @@ Section code.
   |}.
 
   (* Definition of function [sinsert]. *)
-  Definition impl_sinsert (insert : loc): function := {|
+  Definition impl_sinsert (global_insert : loc): function := {|
     f_args := [
       ("t", LPtr);
       ("k", it_layout i32)
@@ -1329,7 +1331,7 @@ Section code.
         annot: (UnfoldOnceAnnot) ;
         expr: (LocInfoE loc_588 (&(LocInfoE loc_590 (!{LPtr} (LocInfoE loc_591 ("t")))))) ;
         locinfo: loc_581 ;
-        "_" <- LocInfoE loc_583 (insert) with
+        "_" <- LocInfoE loc_583 (global_insert) with
           [ LocInfoE loc_584 (use{LPtr} (LocInfoE loc_585 ("t"))) ;
           LocInfoE loc_586 (use{it_layout i32} (LocInfoE loc_587 ("k"))) ] ;
         Return (VOID)
@@ -1338,7 +1340,7 @@ Section code.
   |}.
 
   (* Definition of function [sremove]. *)
-  Definition impl_sremove (remove : loc): function := {|
+  Definition impl_sremove (global_remove : loc): function := {|
     f_args := [
       ("t", LPtr);
       ("k", it_layout i32)
@@ -1352,7 +1354,7 @@ Section code.
         annot: (UnfoldOnceAnnot) ;
         expr: (LocInfoE loc_603 (&(LocInfoE loc_605 (!{LPtr} (LocInfoE loc_606 ("t")))))) ;
         locinfo: loc_596 ;
-        "_" <- LocInfoE loc_598 (remove) with
+        "_" <- LocInfoE loc_598 (global_remove) with
           [ LocInfoE loc_599 (use{LPtr} (LocInfoE loc_600 ("t"))) ;
           LocInfoE loc_601 (use{it_layout i32} (LocInfoE loc_602 ("k"))) ] ;
         Return (VOID)
@@ -1361,7 +1363,7 @@ Section code.
   |}.
 
   (* Definition of function [main]. *)
-  Definition impl_main (sempty sfree_tree sinit sinsert smember sremove : loc): function := {|
+  Definition impl_main (global_sempty global_sfree_tree global_sinit global_sinsert global_smember global_sremove : loc): function := {|
     f_args := [
     ];
     f_local_vars := [
@@ -1371,49 +1373,49 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_668 ;
-        "$4" <- LocInfoE loc_670 (sempty) with [  ] ;
+        "$4" <- LocInfoE loc_670 (global_sempty) with [  ] ;
         "t" <-{ LPtr } LocInfoE loc_668 ("$4") ;
         locinfo: loc_664 ;
-        "$3" <- LocInfoE loc_666 (sinit) with
+        "$3" <- LocInfoE loc_666 (global_sinit) with
           [ LocInfoE loc_667 (i2v 3 i32) ] ;
         locinfo: loc_610 ;
         LocInfoE loc_663 ("t") <-{ LPtr } LocInfoE loc_664 ("$3") ;
         locinfo: loc_611 ;
-        "_" <- LocInfoE loc_659 (sinsert) with
+        "_" <- LocInfoE loc_659 (global_sinsert) with
           [ LocInfoE loc_660 (&(LocInfoE loc_661 ("t"))) ;
           LocInfoE loc_662 (i2v 2 i32) ] ;
         locinfo: loc_652 ;
-        "$2" <- LocInfoE loc_654 (smember) with
+        "$2" <- LocInfoE loc_654 (global_smember) with
           [ LocInfoE loc_655 (&(LocInfoE loc_656 ("t"))) ;
           LocInfoE loc_657 (i2v 2 i32) ] ;
         locinfo: loc_612 ;
         assert: (LocInfoE loc_652 ("$2")) ;
         locinfo: loc_646 ;
-        "$1" <- LocInfoE loc_648 (smember) with
+        "$1" <- LocInfoE loc_648 (global_smember) with
           [ LocInfoE loc_649 (&(LocInfoE loc_650 ("t"))) ;
           LocInfoE loc_651 (i2v 3 i32) ] ;
         locinfo: loc_613 ;
         assert: (LocInfoE loc_646 ("$1")) ;
         locinfo: loc_614 ;
-        "_" <- LocInfoE loc_642 (sremove) with
+        "_" <- LocInfoE loc_642 (global_sremove) with
           [ LocInfoE loc_643 (&(LocInfoE loc_644 ("t"))) ;
           LocInfoE loc_645 (i2v 3 i32) ] ;
         locinfo: loc_615 ;
-        "_" <- LocInfoE loc_637 (sinsert) with
+        "_" <- LocInfoE loc_637 (global_sinsert) with
           [ LocInfoE loc_638 (&(LocInfoE loc_639 ("t"))) ;
           LocInfoE loc_640 (i2v 3 i32) ] ;
         locinfo: loc_630 ;
-        "$0" <- LocInfoE loc_632 (smember) with
+        "$0" <- LocInfoE loc_632 (global_smember) with
           [ LocInfoE loc_633 (&(LocInfoE loc_634 ("t"))) ;
           LocInfoE loc_635 (i2v 2 i32) ] ;
         locinfo: loc_616 ;
         assert: (LocInfoE loc_630 ("$0")) ;
         locinfo: loc_617 ;
-        "_" <- LocInfoE loc_626 (sremove) with
+        "_" <- LocInfoE loc_626 (global_sremove) with
           [ LocInfoE loc_627 (&(LocInfoE loc_628 ("t"))) ;
           LocInfoE loc_629 (i2v 3 i32) ] ;
         locinfo: loc_618 ;
-        "_" <- LocInfoE loc_622 (sfree_tree) with
+        "_" <- LocInfoE loc_622 (global_sfree_tree) with
           [ LocInfoE loc_623 (&(LocInfoE loc_624 ("t"))) ] ;
         locinfo: loc_619 ;
         Return (LocInfoE loc_620 (i2v 0 i32))
