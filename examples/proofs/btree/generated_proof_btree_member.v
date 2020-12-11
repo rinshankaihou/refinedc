@@ -10,9 +10,9 @@ Section proof_btree_member.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [btree_member]. *)
-  Lemma type_btree_member (key_index : loc) :
-    key_index ◁ᵥ key_index @ function_ptr type_of_key_index -∗
-    typed_function (impl_btree_member key_index) type_of_btree_member.
+  Lemma type_btree_member (global_key_index : loc) :
+    global_key_index ◁ᵥ global_key_index @ function_ptr type_of_key_index -∗
+    typed_function (impl_btree_member global_key_index) type_of_btree_member.
   Proof.
     start_function "btree_member" ([[[p h] m] k]) => arg_t arg_k local_i local_cur.
     split_blocks ((

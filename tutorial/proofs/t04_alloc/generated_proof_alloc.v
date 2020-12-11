@@ -10,12 +10,12 @@ Section proof_alloc.
   Context `{!lockG Σ}.
 
   (* Typing proof for [alloc]. *)
-  Lemma type_alloc (allocator_state sl_lock sl_unlock : loc) :
-    global_locs !! "allocator_state" = Some allocator_state →
+  Lemma type_alloc (global_allocator_state global_sl_lock global_sl_unlock : loc) :
+    global_locs !! "allocator_state" = Some global_allocator_state →
     global_initialized_types !! "allocator_state" = Some (GT () (λ '(), (alloc_state) : type)) →
-    sl_lock ◁ᵥ sl_lock @ function_ptr type_of_sl_lock -∗
-    sl_unlock ◁ᵥ sl_unlock @ function_ptr type_of_sl_unlock -∗
-    typed_function (impl_alloc allocator_state sl_lock sl_unlock) type_of_alloc.
+    global_sl_lock ◁ᵥ global_sl_lock @ function_ptr type_of_sl_lock -∗
+    global_sl_unlock ◁ᵥ global_sl_unlock @ function_ptr type_of_sl_unlock -∗
+    typed_function (impl_alloc global_allocator_state global_sl_lock global_sl_unlock) type_of_alloc.
   Proof.
     start_function "alloc" (size) => arg_size local_prev local_cur local_ret.
     split_blocks ((
@@ -34,7 +34,7 @@ Section proof_alloc.
         local_cur ◁ₗ uninit LPtr ∗
         local_ret ◁ₗ uninit LPtr ∗
         local_prev ◁ₗ (pc @ (&own (alloc_entry_t))) ∗
-        (allocator_state at{struct_alloc_state}ₗ "data" ◁ₗ wand (pc ◁ₗ alloc_entry_t) alloc_entry_t)
+        (global_allocator_state at{struct_alloc_state}ₗ "data" ◁ₗ wand (pc ◁ₗ alloc_entry_t) alloc_entry_t)
     ]> $
       ∅
     )%I : gmap label (iProp Σ)).

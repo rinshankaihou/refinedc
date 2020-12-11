@@ -8,9 +8,9 @@ Section proof_tree_max.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [tree_max]. *)
-  Lemma type_tree_max (tree_max : loc) :
-    tree_max ◁ᵥ tree_max @ function_ptr type_of_tree_max -∗
-    typed_function (impl_tree_max tree_max) type_of_tree_max.
+  Lemma type_tree_max (global_tree_max : loc) :
+    global_tree_max ◁ᵥ global_tree_max @ function_ptr type_of_tree_max -∗
+    typed_function (impl_tree_max global_tree_max) type_of_tree_max.
   Proof.
     start_function "tree_max" ([p s]) => arg_t.
     split_blocks ((

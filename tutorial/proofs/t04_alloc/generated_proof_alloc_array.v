@@ -10,9 +10,9 @@ Section proof_alloc_array.
   Context `{!lockG Σ}.
 
   (* Typing proof for [alloc_array]. *)
-  Lemma type_alloc_array (alloc : loc) :
-    alloc ◁ᵥ alloc @ function_ptr type_of_alloc -∗
-    typed_function (impl_alloc_array alloc) type_of_alloc_array.
+  Lemma type_alloc_array (global_alloc : loc) :
+    global_alloc ◁ᵥ global_alloc @ function_ptr type_of_alloc -∗
+    typed_function (impl_alloc_array global_alloc) type_of_alloc_array.
   Proof.
     start_function "alloc_array" ([size n]) => arg_size arg_n.
     split_blocks ((

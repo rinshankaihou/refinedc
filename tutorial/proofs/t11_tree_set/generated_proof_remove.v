@@ -8,11 +8,11 @@ Section proof_remove.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [remove]. *)
-  Lemma type_remove (free remove tree_max : loc) :
-    free ◁ᵥ free @ function_ptr type_of_free -∗
-    remove ◁ᵥ remove @ function_ptr type_of_remove -∗
-    tree_max ◁ᵥ tree_max @ function_ptr type_of_tree_max -∗
-    typed_function (impl_remove free remove tree_max) type_of_remove.
+  Lemma type_remove (global_free global_remove global_tree_max : loc) :
+    global_free ◁ᵥ global_free @ function_ptr type_of_free -∗
+    global_remove ◁ᵥ global_remove @ function_ptr type_of_remove -∗
+    global_tree_max ◁ᵥ global_tree_max @ function_ptr type_of_tree_max -∗
+    typed_function (impl_remove global_free global_remove global_tree_max) type_of_remove.
   Proof.
     start_function "remove" ([[p s] k]) => arg_t arg_k local_m local_tmp.
     split_blocks ((

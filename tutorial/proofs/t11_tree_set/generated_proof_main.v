@@ -8,14 +8,14 @@ Section proof_main.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [main]. *)
-  Lemma type_main (empty free_tree init insert member remove : loc) :
-    empty ◁ᵥ empty @ function_ptr type_of_empty -∗
-    free_tree ◁ᵥ free_tree @ function_ptr type_of_free_tree -∗
-    init ◁ᵥ init @ function_ptr type_of_init -∗
-    insert ◁ᵥ insert @ function_ptr type_of_insert -∗
-    member ◁ᵥ member @ function_ptr type_of_member -∗
-    remove ◁ᵥ remove @ function_ptr type_of_remove -∗
-    typed_function (impl_main empty free_tree init insert member remove) type_of_main.
+  Lemma type_main (global_empty global_free_tree global_init global_insert global_member global_remove : loc) :
+    global_empty ◁ᵥ global_empty @ function_ptr type_of_empty -∗
+    global_free_tree ◁ᵥ global_free_tree @ function_ptr type_of_free_tree -∗
+    global_init ◁ᵥ global_init @ function_ptr type_of_init -∗
+    global_insert ◁ᵥ global_insert @ function_ptr type_of_insert -∗
+    global_member ◁ᵥ global_member @ function_ptr type_of_member -∗
+    global_remove ◁ᵥ global_remove @ function_ptr type_of_remove -∗
+    typed_function (impl_main global_empty global_free_tree global_init global_insert global_member global_remove) type_of_main.
   Proof.
     start_function "main" ([]) => local_t.
     split_blocks ((

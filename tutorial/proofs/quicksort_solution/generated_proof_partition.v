@@ -9,9 +9,9 @@ Section proof_partition.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [partition]. *)
-  Lemma type_partition (partition : loc) :
-    partition ◁ᵥ partition @ function_ptr type_of_partition -∗
-    typed_function (impl_partition partition) type_of_partition.
+  Lemma type_partition (global_partition : loc) :
+    global_partition ◁ᵥ global_partition @ function_ptr type_of_partition -∗
+    typed_function (impl_partition global_partition) type_of_partition.
   Proof.
     start_function "partition" ([[p xs] z]) => arg_l arg_pivot local_rest local_head.
     split_blocks ((

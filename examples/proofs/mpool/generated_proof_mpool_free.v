@@ -10,10 +10,10 @@ Section proof_mpool_free.
   Context `{!lockG Σ}.
 
   (* Typing proof for [mpool_free]. *)
-  Lemma type_mpool_free (sl_lock sl_unlock : loc) :
-    sl_lock ◁ᵥ sl_lock @ function_ptr type_of_sl_lock -∗
-    sl_unlock ◁ᵥ sl_unlock @ function_ptr type_of_sl_unlock -∗
-    typed_function (impl_mpool_free sl_lock sl_unlock) type_of_mpool_free.
+  Lemma type_mpool_free (global_sl_lock global_sl_unlock : loc) :
+    global_sl_lock ◁ᵥ global_sl_lock @ function_ptr type_of_sl_lock -∗
+    global_sl_unlock ◁ᵥ global_sl_unlock @ function_ptr type_of_sl_unlock -∗
+    typed_function (impl_mpool_free global_sl_lock global_sl_unlock) type_of_mpool_free.
   Proof.
     start_function "mpool_free" ([[[[p q] n] entry_size] ptr]) => arg_p arg_ptr local_e.
     split_blocks ((

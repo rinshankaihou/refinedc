@@ -8,16 +8,16 @@ Section proof_test.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [test]. *)
-  Lemma type_test (alloc free init is_empty member pop push reverse : loc) :
-    alloc ◁ᵥ alloc @ function_ptr type_of_alloc -∗
-    free ◁ᵥ free @ function_ptr type_of_free -∗
-    init ◁ᵥ init @ function_ptr type_of_init -∗
-    is_empty ◁ᵥ is_empty @ function_ptr type_of_is_empty -∗
-    member ◁ᵥ member @ function_ptr type_of_member -∗
-    pop ◁ᵥ pop @ function_ptr type_of_pop -∗
-    push ◁ᵥ push @ function_ptr type_of_push -∗
-    reverse ◁ᵥ reverse @ function_ptr type_of_reverse -∗
-    typed_function (impl_test alloc free init is_empty member pop push reverse) type_of_test.
+  Lemma type_test (global_alloc global_free global_init global_is_empty global_member global_pop global_push global_reverse : loc) :
+    global_alloc ◁ᵥ global_alloc @ function_ptr type_of_alloc -∗
+    global_free ◁ᵥ global_free @ function_ptr type_of_free -∗
+    global_init ◁ᵥ global_init @ function_ptr type_of_init -∗
+    global_is_empty ◁ᵥ global_is_empty @ function_ptr type_of_is_empty -∗
+    global_member ◁ᵥ global_member @ function_ptr type_of_member -∗
+    global_pop ◁ᵥ global_pop @ function_ptr type_of_pop -∗
+    global_push ◁ᵥ global_push @ function_ptr type_of_push -∗
+    global_reverse ◁ᵥ global_reverse @ function_ptr type_of_reverse -∗
+    typed_function (impl_test global_alloc global_free global_init global_is_empty global_member global_pop global_push global_reverse) type_of_test.
   Proof.
     start_function "test" ([]) => local_list local_elem2 local_elem1 local_elem3.
     split_blocks ((

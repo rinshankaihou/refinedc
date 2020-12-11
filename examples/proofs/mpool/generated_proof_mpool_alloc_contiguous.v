@@ -10,9 +10,9 @@ Section proof_mpool_alloc_contiguous.
   Context `{!lockG Σ}.
 
   (* Typing proof for [mpool_alloc_contiguous]. *)
-  Lemma type_mpool_alloc_contiguous (mpool_alloc_contiguous_no_fallback : loc) :
-    mpool_alloc_contiguous_no_fallback ◁ᵥ mpool_alloc_contiguous_no_fallback @ function_ptr type_of_mpool_alloc_contiguous_no_fallback -∗
-    typed_function (impl_mpool_alloc_contiguous mpool_alloc_contiguous_no_fallback) type_of_mpool_alloc_contiguous.
+  Lemma type_mpool_alloc_contiguous (global_mpool_alloc_contiguous_no_fallback : loc) :
+    global_mpool_alloc_contiguous_no_fallback ◁ᵥ global_mpool_alloc_contiguous_no_fallback @ function_ptr type_of_mpool_alloc_contiguous_no_fallback -∗
+    typed_function (impl_mpool_alloc_contiguous global_mpool_alloc_contiguous_no_fallback) type_of_mpool_alloc_contiguous.
   Proof.
     start_function "mpool_alloc_contiguous" ([[[[[p q] n] entry_size] count] align]) => arg_p arg_count arg_align local_ret.
     split_blocks ((

@@ -148,7 +148,7 @@ Section code.
   Solve Obligations with solve_struct_obligations.
 
   (* Definition of function [append]. *)
-  Definition impl_append (append : loc): function := {|
+  Definition impl_append (global_append : loc): function := {|
     f_args := [
       ("l", LPtr);
       ("k", LPtr)
@@ -175,7 +175,7 @@ Section code.
       ]> $
       <[ "#2" :=
         locinfo: loc_11 ;
-        "_" <- LocInfoE loc_13 (append) with
+        "_" <- LocInfoE loc_13 (global_append) with
           [ LocInfoE loc_14 (&(LocInfoE loc_15 ((LocInfoE loc_16 (!{LPtr} (LocInfoE loc_18 (!{LPtr} (LocInfoE loc_19 ("l")))))) at{struct_list_node} "next"))) ;
           LocInfoE loc_20 (use{LPtr} (LocInfoE loc_21 ("k"))) ] ;
         Return (VOID)
@@ -184,7 +184,7 @@ Section code.
   |}.
 
   (* Definition of function [partition]. *)
-  Definition impl_partition (partition : loc): function := {|
+  Definition impl_partition (global_partition : loc): function := {|
     f_args := [
       ("l", LPtr);
       ("pivot", it_layout i32)
@@ -211,7 +211,7 @@ Section code.
       ]> $
       <[ "#2" :=
         locinfo: loc_77 ;
-        "$0" <- LocInfoE loc_79 (partition) with
+        "$0" <- LocInfoE loc_79 (global_partition) with
           [ LocInfoE loc_80 (&(LocInfoE loc_81 ((LocInfoE loc_82 (!{LPtr} (LocInfoE loc_84 (!{LPtr} (LocInfoE loc_85 ("l")))))) at{struct_list_node} "next"))) ;
           LocInfoE loc_86 (use{it_layout i32} (LocInfoE loc_87 ("pivot"))) ] ;
         "rest" <-{ LPtr } LocInfoE loc_77 ("$0") ;
@@ -244,7 +244,7 @@ Section code.
   |}.
 
   (* Definition of function [quicksort]. *)
-  Definition impl_quicksort (append partition quicksort : loc): function := {|
+  Definition impl_quicksort (global_append global_partition global_quicksort : loc): function := {|
     f_args := [
       ("l", LPtr)
     ];
@@ -271,18 +271,18 @@ Section code.
         "pivot" <-{ it_layout i32 }
           LocInfoE loc_131 (use{it_layout i32} (LocInfoE loc_132 ((LocInfoE loc_133 (!{LPtr} (LocInfoE loc_135 (!{LPtr} (LocInfoE loc_136 ("l")))))) at{struct_list_node} "val"))) ;
         locinfo: loc_122 ;
-        "$0" <- LocInfoE loc_124 (partition) with
+        "$0" <- LocInfoE loc_124 (global_partition) with
           [ LocInfoE loc_125 (use{LPtr} (LocInfoE loc_126 ("l"))) ;
           LocInfoE loc_127 (use{it_layout i32} (LocInfoE loc_128 ("pivot"))) ] ;
         "higher" <-{ LPtr } LocInfoE loc_122 ("$0") ;
         locinfo: loc_105 ;
-        "_" <- LocInfoE loc_119 (quicksort) with
+        "_" <- LocInfoE loc_119 (global_quicksort) with
           [ LocInfoE loc_120 (&(LocInfoE loc_121 ("higher"))) ] ;
         locinfo: loc_106 ;
-        "_" <- LocInfoE loc_115 (quicksort) with
+        "_" <- LocInfoE loc_115 (global_quicksort) with
           [ LocInfoE loc_116 (use{LPtr} (LocInfoE loc_117 ("l"))) ] ;
         locinfo: loc_107 ;
-        "_" <- LocInfoE loc_109 (append) with
+        "_" <- LocInfoE loc_109 (global_append) with
           [ LocInfoE loc_110 (use{LPtr} (LocInfoE loc_111 ("l"))) ;
           LocInfoE loc_112 (use{LPtr} (LocInfoE loc_113 ("higher"))) ] ;
         Return (VOID)

@@ -9,9 +9,9 @@ Section proof_insert.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [insert]. *)
-  Lemma type_insert (node : loc) :
-    node ◁ᵥ node @ function_ptr type_of_node -∗
-    typed_function (impl_insert node) type_of_insert.
+  Lemma type_insert (global_node : loc) :
+    global_node ◁ᵥ global_node @ function_ptr type_of_node -∗
+    typed_function (impl_insert global_node) type_of_insert.
   Proof.
     start_function "insert" ([[p t] k]) => arg_t arg_k local_cur.
     split_blocks ((

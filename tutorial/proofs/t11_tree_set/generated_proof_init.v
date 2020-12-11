@@ -8,9 +8,9 @@ Section proof_init.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [init]. *)
-  Lemma type_init (alloc : loc) :
-    alloc ◁ᵥ alloc @ function_ptr type_of_alloc -∗
-    typed_function (impl_init alloc) type_of_init.
+  Lemma type_init (global_alloc : loc) :
+    global_alloc ◁ᵥ global_alloc @ function_ptr type_of_alloc -∗
+    typed_function (impl_init global_alloc) type_of_init.
   Proof.
     start_function "init" (k) => arg_key local_node.
     split_blocks ((

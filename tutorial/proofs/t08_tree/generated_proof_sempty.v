@@ -9,9 +9,9 @@ Section proof_sempty.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [sempty]. *)
-  Lemma type_sempty (empty : loc) :
-    empty ◁ᵥ empty @ function_ptr type_of_empty -∗
-    typed_function (impl_sempty empty) type_of_sempty.
+  Lemma type_sempty (global_empty : loc) :
+    global_empty ◁ᵥ global_empty @ function_ptr type_of_empty -∗
+    typed_function (impl_sempty global_empty) type_of_sempty.
   Proof.
     start_function "sempty" ([]).
     split_blocks ((

@@ -10,9 +10,9 @@ Section proof_mpool_alloc.
   Context `{!lockG Σ}.
 
   (* Typing proof for [mpool_alloc]. *)
-  Lemma type_mpool_alloc (mpool_alloc_no_fallback : loc) :
-    mpool_alloc_no_fallback ◁ᵥ mpool_alloc_no_fallback @ function_ptr type_of_mpool_alloc_no_fallback -∗
-    typed_function (impl_mpool_alloc mpool_alloc_no_fallback) type_of_mpool_alloc.
+  Lemma type_mpool_alloc (global_mpool_alloc_no_fallback : loc) :
+    global_mpool_alloc_no_fallback ◁ᵥ global_mpool_alloc_no_fallback @ function_ptr type_of_mpool_alloc_no_fallback -∗
+    typed_function (impl_mpool_alloc global_mpool_alloc_no_fallback) type_of_mpool_alloc.
   Proof.
     start_function "mpool_alloc" ([[[p q] n] entry_size]) => arg_p local_ret.
     split_blocks ((

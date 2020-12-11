@@ -10,10 +10,10 @@ Section proof_mpool_fini.
   Context `{!lockG Σ}.
 
   (* Typing proof for [mpool_fini]. *)
-  Lemma type_mpool_fini (mpool_add_chunk mpool_free : loc) :
-    mpool_add_chunk ◁ᵥ mpool_add_chunk @ function_ptr type_of_mpool_add_chunk -∗
-    mpool_free ◁ᵥ mpool_free @ function_ptr type_of_mpool_free -∗
-    typed_function (impl_mpool_fini mpool_add_chunk mpool_free) type_of_mpool_fini.
+  Lemma type_mpool_fini (global_mpool_add_chunk global_mpool_free : loc) :
+    global_mpool_add_chunk ◁ᵥ global_mpool_add_chunk @ function_ptr type_of_mpool_add_chunk -∗
+    global_mpool_free ◁ᵥ global_mpool_free @ function_ptr type_of_mpool_free -∗
+    typed_function (impl_mpool_fini global_mpool_add_chunk global_mpool_free) type_of_mpool_fini.
   Proof.
     start_function "mpool_fini" ([[p n] entry_size]) => arg_p local_size local_ptr1 local_ptr2 local_entry local_chunk.
     split_blocks ((

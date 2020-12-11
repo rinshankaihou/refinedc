@@ -157,7 +157,7 @@ Section code.
   |}.
 
   (* Definition of function [thread_safe_alloc]. *)
-  Definition impl_thread_safe_alloc (data lock alloc sl_lock sl_unlock : loc): function := {|
+  Definition impl_thread_safe_alloc (global_data global_lock global_alloc global_sl_lock global_sl_unlock : loc): function := {|
     f_args := [
       ("size", it_layout size_t)
     ];
@@ -168,19 +168,19 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_36 ;
-        "_" <- LocInfoE loc_60 (sl_lock) with
-          [ LocInfoE loc_61 (&(LocInfoE loc_62 (lock))) ] ;
+        "_" <- LocInfoE loc_60 (global_sl_lock) with
+          [ LocInfoE loc_61 (&(LocInfoE loc_62 (global_lock))) ] ;
         locinfo: loc_37 ;
         annot: (UnlockA) ;
-        expr: (LocInfoE loc_57 (&(LocInfoE loc_58 (data)))) ;
+        expr: (LocInfoE loc_57 (&(LocInfoE loc_58 (global_data)))) ;
         locinfo: loc_48 ;
-        "$0" <- LocInfoE loc_50 (alloc) with
-          [ LocInfoE loc_51 (&(LocInfoE loc_52 (data))) ;
+        "$0" <- LocInfoE loc_50 (global_alloc) with
+          [ LocInfoE loc_51 (&(LocInfoE loc_52 (global_data))) ;
           LocInfoE loc_53 (use{it_layout size_t} (LocInfoE loc_54 ("size"))) ] ;
         "ret" <-{ LPtr } LocInfoE loc_48 ("$0") ;
         locinfo: loc_40 ;
-        "_" <- LocInfoE loc_45 (sl_unlock) with
-          [ LocInfoE loc_46 (AnnotExpr 1%nat LockA (LocInfoE loc_46 (&(LocInfoE loc_47 (lock))))) ] ;
+        "_" <- LocInfoE loc_45 (global_sl_unlock) with
+          [ LocInfoE loc_46 (AnnotExpr 1%nat LockA (LocInfoE loc_46 (&(LocInfoE loc_47 (global_lock))))) ] ;
         locinfo: loc_41 ;
         Return (LocInfoE loc_42 (use{LPtr} (LocInfoE loc_43 ("ret"))))
       ]> $∅
@@ -207,7 +207,7 @@ Section code.
   |}.
 
   (* Definition of function [test_thread_safe_alloc_fork_fn]. *)
-  Definition impl_test_thread_safe_alloc_fork_fn (thread_safe_alloc : loc): function := {|
+  Definition impl_test_thread_safe_alloc_fork_fn (global_thread_safe_alloc : loc): function := {|
     f_args := [
       ("num", LPtr)
     ];
@@ -220,7 +220,7 @@ Section code.
         "num_int" <-{ LPtr }
           LocInfoE loc_81 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_81 (use{LPtr} (LocInfoE loc_82 ("num"))))) ;
         locinfo: loc_74 ;
-        "_" <- LocInfoE loc_76 (thread_safe_alloc) with
+        "_" <- LocInfoE loc_76 (global_thread_safe_alloc) with
           [ LocInfoE loc_77 (use{it_layout size_t} (LocInfoE loc_79 (!{LPtr} (LocInfoE loc_80 ("num_int"))))) ] ;
         Return (VOID)
       ]> $∅
@@ -228,7 +228,7 @@ Section code.
   |}.
 
   (* Definition of function [test_thread_safe_alloc]. *)
-  Definition impl_test_thread_safe_alloc (param fork test_thread_safe_alloc_fork_fn thread_safe_alloc : loc): function := {|
+  Definition impl_test_thread_safe_alloc (global_param global_fork global_test_thread_safe_alloc_fork_fn global_thread_safe_alloc : loc): function := {|
     f_args := [
     ];
     f_local_vars := [
@@ -237,14 +237,14 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_87 ;
-        LocInfoE loc_98 (param) <-{ it_layout size_t }
+        LocInfoE loc_98 (global_param) <-{ it_layout size_t }
           LocInfoE loc_99 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_99 (i2v 5 i32))) ;
         locinfo: loc_88 ;
-        "_" <- LocInfoE loc_94 (fork) with
-          [ LocInfoE loc_95 (test_thread_safe_alloc_fork_fn) ;
-          LocInfoE loc_96 (&(LocInfoE loc_97 (param))) ] ;
+        "_" <- LocInfoE loc_94 (global_fork) with
+          [ LocInfoE loc_95 (global_test_thread_safe_alloc_fork_fn) ;
+          LocInfoE loc_96 (&(LocInfoE loc_97 (global_param))) ] ;
         locinfo: loc_89 ;
-        "_" <- LocInfoE loc_91 (thread_safe_alloc) with
+        "_" <- LocInfoE loc_91 (global_thread_safe_alloc) with
           [ LocInfoE loc_92 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_92 (i2v 5 i32))) ] ;
         Return (VOID)
       ]> $∅

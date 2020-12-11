@@ -8,9 +8,9 @@ Section proof_enqueue.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [enqueue]. *)
-  Lemma type_enqueue (alloc : loc) :
-    alloc ◁ᵥ alloc @ function_ptr type_of_alloc -∗
-    typed_function (impl_enqueue alloc) type_of_enqueue.
+  Lemma type_enqueue (global_alloc : loc) :
+    global_alloc ◁ᵥ global_alloc @ function_ptr type_of_alloc -∗
+    typed_function (impl_enqueue global_alloc) type_of_enqueue.
   Proof.
     start_function "enqueue" ([[p tys] ty]) => arg_q arg_v local_elem.
     split_blocks ((

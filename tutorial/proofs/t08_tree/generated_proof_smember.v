@@ -9,9 +9,9 @@ Section proof_smember.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [smember]. *)
-  Lemma type_smember (member : loc) :
-    member ◁ᵥ member @ function_ptr type_of_member -∗
-    typed_function (impl_smember member) type_of_smember.
+  Lemma type_smember (global_member : loc) :
+    global_member ◁ᵥ global_member @ function_ptr type_of_member -∗
+    typed_function (impl_smember global_member) type_of_smember.
   Proof.
     start_function "smember" ([[p s] k]) => arg_t arg_k.
     split_blocks ((

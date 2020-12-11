@@ -10,10 +10,10 @@ Section proof_mpool_add_chunk.
   Context `{!lockG Σ}.
 
   (* Typing proof for [mpool_add_chunk]. *)
-  Lemma type_mpool_add_chunk (sl_lock sl_unlock : loc) :
-    sl_lock ◁ᵥ sl_lock @ function_ptr type_of_sl_lock -∗
-    sl_unlock ◁ᵥ sl_unlock @ function_ptr type_of_sl_unlock -∗
-    typed_function (impl_mpool_add_chunk sl_lock sl_unlock) type_of_mpool_add_chunk.
+  Lemma type_mpool_add_chunk (global_sl_lock global_sl_unlock : loc) :
+    global_sl_lock ◁ᵥ global_sl_lock @ function_ptr type_of_sl_lock -∗
+    global_sl_unlock ◁ᵥ global_sl_unlock @ function_ptr type_of_sl_unlock -∗
+    typed_function (impl_mpool_add_chunk global_sl_lock global_sl_unlock) type_of_mpool_add_chunk.
   Proof.
     start_function "mpool_add_chunk" ([[[[p q] n] entry_size] m]) => arg_p arg_begin arg_size local_chunk.
     split_blocks ((

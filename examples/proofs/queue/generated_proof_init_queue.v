@@ -8,9 +8,9 @@ Section proof_init_queue.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [init_queue]. *)
-  Lemma type_init_queue (alloc : loc) :
-    alloc ◁ᵥ alloc @ function_ptr type_of_alloc -∗
-    typed_function (impl_init_queue alloc) type_of_init_queue.
+  Lemma type_init_queue (global_alloc : loc) :
+    global_alloc ◁ᵥ global_alloc @ function_ptr type_of_alloc -∗
+    typed_function (impl_init_queue global_alloc) type_of_init_queue.
   Proof.
     start_function "init_queue" ([]) => local_queue.
     split_blocks ((

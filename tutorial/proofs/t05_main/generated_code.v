@@ -81,7 +81,7 @@ Section code.
   Solve Obligations with solve_struct_obligations.
 
   (* Definition of function [main]. *)
-  Definition impl_main (allocator_data initialized free init_alloc latch_release test : loc): function := {|
+  Definition impl_main (global_allocator_data global_initialized global_free global_init_alloc global_latch_release global_test : loc): function := {|
     f_args := [
     ];
     f_local_vars := [
@@ -90,16 +90,16 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_2 ;
-        "_" <- LocInfoE loc_20 (init_alloc) with [  ] ;
+        "_" <- LocInfoE loc_20 (global_init_alloc) with [  ] ;
         locinfo: loc_3 ;
-        "_" <- LocInfoE loc_15 (free) with
+        "_" <- LocInfoE loc_15 (global_free) with
           [ LocInfoE loc_16 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_16 (i2v 10000 i32))) ;
-          LocInfoE loc_17 (&(LocInfoE loc_18 (allocator_data))) ] ;
+          LocInfoE loc_17 (&(LocInfoE loc_18 (global_allocator_data))) ] ;
         locinfo: loc_4 ;
-        "_" <- LocInfoE loc_11 (latch_release) with
-          [ LocInfoE loc_12 (&(LocInfoE loc_13 (initialized))) ] ;
+        "_" <- LocInfoE loc_11 (global_latch_release) with
+          [ LocInfoE loc_12 (&(LocInfoE loc_13 (global_initialized))) ] ;
         locinfo: loc_5 ;
-        "_" <- LocInfoE loc_9 (test) with [  ] ;
+        "_" <- LocInfoE loc_9 (global_test) with [  ] ;
         locinfo: loc_6 ;
         Return (LocInfoE loc_7 (i2v 0 i32))
       ]> $∅
@@ -107,7 +107,7 @@ Section code.
   |}.
 
   (* Definition of function [main2]. *)
-  Definition impl_main2 (initialized latch_wait test : loc): function := {|
+  Definition impl_main2 (global_initialized global_latch_wait global_test : loc): function := {|
     f_args := [
     ];
     f_local_vars := [
@@ -116,10 +116,10 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_23 ;
-        "_" <- LocInfoE loc_30 (latch_wait) with
-          [ LocInfoE loc_31 (&(LocInfoE loc_32 (initialized))) ] ;
+        "_" <- LocInfoE loc_30 (global_latch_wait) with
+          [ LocInfoE loc_31 (&(LocInfoE loc_32 (global_initialized))) ] ;
         locinfo: loc_24 ;
-        "_" <- LocInfoE loc_28 (test) with [  ] ;
+        "_" <- LocInfoE loc_28 (global_test) with [  ] ;
         locinfo: loc_25 ;
         Return (LocInfoE loc_26 (i2v 0 i32))
       ]> $∅

@@ -8,10 +8,10 @@ Section proof_test.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [test]. *)
-  Lemma type_test (alloc append : loc) :
-    alloc ◁ᵥ alloc @ function_ptr type_of_alloc -∗
-    append ◁ᵥ append @ function_ptr type_of_append -∗
-    typed_function (impl_test alloc append) type_of_test.
+  Lemma type_test (global_alloc global_append : loc) :
+    global_alloc ◁ᵥ global_alloc @ function_ptr type_of_alloc -∗
+    global_append ◁ᵥ global_append @ function_ptr type_of_append -∗
+    typed_function (impl_test global_alloc global_append) type_of_test.
   Proof.
     start_function "test" ([]) => local_node1 local_node2.
     split_blocks ((

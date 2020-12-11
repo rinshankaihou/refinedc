@@ -8,9 +8,9 @@ Section proof_init_int_test.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [init_int_test]. *)
-  Lemma type_init_int_test (init_int : loc) :
-    init_int ◁ᵥ init_int @ function_ptr type_of_init_int -∗
-    typed_function (impl_init_int_test init_int) type_of_init_int_test.
+  Lemma type_init_int_test (global_init_int : loc) :
+    global_init_int ◁ᵥ global_init_int @ function_ptr type_of_init_int -∗
+    typed_function (impl_init_int_test global_init_int) type_of_init_int_test.
   Proof.
     start_function "init_int_test" (p) => arg_out local_i.
     split_blocks ((

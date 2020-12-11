@@ -12,8 +12,7 @@
 //@rc::inlined Definition PAGE_LAYOUT := ly_with_align (N.to_nat PAGE_SIZE) (N.to_nat PAGE_SIZE).
 
 static unsigned long base;
- // TODO: this cannot be called end because of https://gitlab.mpi-sws.org/iris/refinedc/-/issues/28
-static unsigned long _end;
+static unsigned long end;
 static unsigned long cur;
 unsigned long hyp_early_alloc_nr_pages(void)
 {
@@ -29,7 +28,7 @@ void * hyp_early_alloc_page(void *arg)
 {
 	unsigned long ret = cur;
 	cur += PAGE_SIZE;
-	if (cur > _end) {
+	if (cur > end) {
 		cur = ret;
 		return NULL;
 	}
@@ -40,7 +39,7 @@ void * hyp_early_alloc_page(void *arg)
 void hyp_early_alloc_init(unsigned long virt, unsigned long size)
 {
 	base = virt;
-	_end = virt + size;
+	end = virt + size;
 	cur = virt;
 
 	/* hyp_early_alloc_mm_ops.zalloc_page = hyp_early_alloc_page; */

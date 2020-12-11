@@ -244,7 +244,7 @@ Section code.
   Solve Obligations with solve_struct_obligations.
 
   (* Definition of function [alloc]. *)
-  Definition impl_alloc (allocator_state sl_lock sl_unlock : loc): function := {|
+  Definition impl_alloc (global_allocator_state global_sl_lock global_sl_unlock : loc): function := {|
     f_args := [
       ("size", it_layout size_t)
     ];
@@ -277,8 +277,8 @@ Section code.
         LocInfoE loc_85 (!{LPtr} (LocInfoE loc_86 ("prev"))) <-{ LPtr }
           LocInfoE loc_87 (use{LPtr} (LocInfoE loc_88 ((LocInfoE loc_89 (!{LPtr} (LocInfoE loc_90 ("cur")))) at{struct_alloc_entry} "next"))) ;
         locinfo: loc_75 ;
-        "_" <- LocInfoE loc_80 (sl_unlock) with
-          [ LocInfoE loc_81 (AnnotExpr 1%nat LockA (LocInfoE loc_81 (&(LocInfoE loc_82 ((LocInfoE loc_83 (allocator_state)) at{struct_alloc_state} "lock"))))) ] ;
+        "_" <- LocInfoE loc_80 (global_sl_unlock) with
+          [ LocInfoE loc_81 (AnnotExpr 1%nat LockA (LocInfoE loc_81 (&(LocInfoE loc_82 ((LocInfoE loc_83 (global_allocator_state)) at{struct_alloc_state} "lock"))))) ] ;
         locinfo: loc_76 ;
         Return (LocInfoE loc_77 (use{LPtr} (LocInfoE loc_78 ("cur"))))
       ]> $
@@ -288,13 +288,13 @@ Section code.
       ]> $
       <[ "#2" :=
         locinfo: loc_5 ;
-        "_" <- LocInfoE loc_120 (sl_lock) with
-          [ LocInfoE loc_121 (&(LocInfoE loc_122 ((LocInfoE loc_123 (allocator_state)) at{struct_alloc_state} "lock"))) ] ;
+        "_" <- LocInfoE loc_120 (global_sl_lock) with
+          [ LocInfoE loc_121 (&(LocInfoE loc_122 ((LocInfoE loc_123 (global_allocator_state)) at{struct_alloc_state} "lock"))) ] ;
         locinfo: loc_6 ;
         annot: (UnlockA) ;
-        expr: (LocInfoE loc_116 (&(LocInfoE loc_117 ((LocInfoE loc_118 (allocator_state)) at{struct_alloc_state} "data")))) ;
+        expr: (LocInfoE loc_116 (&(LocInfoE loc_117 ((LocInfoE loc_118 (global_allocator_state)) at{struct_alloc_state} "data")))) ;
         "prev" <-{ LPtr }
-          LocInfoE loc_111 (&(LocInfoE loc_112 ((LocInfoE loc_113 (allocator_state)) at{struct_alloc_state} "data"))) ;
+          LocInfoE loc_111 (&(LocInfoE loc_112 ((LocInfoE loc_113 (global_allocator_state)) at{struct_alloc_state} "data"))) ;
         locinfo: loc_9 ;
         Goto "#4"
       ]> $
@@ -324,8 +324,8 @@ Section code.
       ]> $
       <[ "#6" :=
         locinfo: loc_10 ;
-        "_" <- LocInfoE loc_14 (sl_unlock) with
-          [ LocInfoE loc_15 (AnnotExpr 1%nat LockA (LocInfoE loc_15 (&(LocInfoE loc_16 ((LocInfoE loc_17 (allocator_state)) at{struct_alloc_state} "lock"))))) ] ;
+        "_" <- LocInfoE loc_14 (global_sl_unlock) with
+          [ LocInfoE loc_15 (AnnotExpr 1%nat LockA (LocInfoE loc_15 (&(LocInfoE loc_16 ((LocInfoE loc_17 (global_allocator_state)) at{struct_alloc_state} "lock"))))) ] ;
         locinfo: loc_11 ;
         Goto "continue2"
       ]> $
@@ -353,8 +353,8 @@ Section code.
         "ret" <-{ LPtr }
           LocInfoE loc_43 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_43 ((LocInfoE loc_44 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_45 (use{LPtr} (LocInfoE loc_46 ("cur")))))) at_offset{it_layout u8, PtrOp, IntOp size_t} (LocInfoE loc_47 (use{it_layout size_t} (LocInfoE loc_48 ((LocInfoE loc_49 (!{LPtr} (LocInfoE loc_50 ("cur")))) at{struct_alloc_entry} "size"))))))) ;
         locinfo: loc_34 ;
-        "_" <- LocInfoE loc_39 (sl_unlock) with
-          [ LocInfoE loc_40 (AnnotExpr 1%nat LockA (LocInfoE loc_40 (&(LocInfoE loc_41 ((LocInfoE loc_42 (allocator_state)) at{struct_alloc_state} "lock"))))) ] ;
+        "_" <- LocInfoE loc_39 (global_sl_unlock) with
+          [ LocInfoE loc_40 (AnnotExpr 1%nat LockA (LocInfoE loc_40 (&(LocInfoE loc_41 ((LocInfoE loc_42 (global_allocator_state)) at{struct_alloc_state} "lock"))))) ] ;
         locinfo: loc_35 ;
         Return (LocInfoE loc_36 (use{LPtr} (LocInfoE loc_37 ("ret"))))
       ]> $
@@ -370,7 +370,7 @@ Section code.
   |}.
 
   (* Definition of function [free]. *)
-  Definition impl_free (allocator_state sl_lock sl_unlock : loc): function := {|
+  Definition impl_free (global_allocator_state global_sl_lock global_sl_unlock : loc): function := {|
     f_args := [
       ("size", it_layout size_t);
       ("ptr", LPtr)
@@ -396,20 +396,20 @@ Section code.
         LocInfoE loc_159 ((LocInfoE loc_160 (!{LPtr} (LocInfoE loc_161 ("entry")))) at{struct_alloc_entry} "size") <-{ it_layout size_t }
           LocInfoE loc_162 (use{it_layout size_t} (LocInfoE loc_163 ("size"))) ;
         locinfo: loc_130 ;
-        "_" <- LocInfoE loc_155 (sl_lock) with
-          [ LocInfoE loc_156 (&(LocInfoE loc_157 ((LocInfoE loc_158 (allocator_state)) at{struct_alloc_state} "lock"))) ] ;
+        "_" <- LocInfoE loc_155 (global_sl_lock) with
+          [ LocInfoE loc_156 (&(LocInfoE loc_157 ((LocInfoE loc_158 (global_allocator_state)) at{struct_alloc_state} "lock"))) ] ;
         locinfo: loc_131 ;
         annot: (UnlockA) ;
-        expr: (LocInfoE loc_151 (&(LocInfoE loc_152 ((LocInfoE loc_153 (allocator_state)) at{struct_alloc_state} "data")))) ;
+        expr: (LocInfoE loc_151 (&(LocInfoE loc_152 ((LocInfoE loc_153 (global_allocator_state)) at{struct_alloc_state} "data")))) ;
         locinfo: loc_133 ;
         LocInfoE loc_145 ((LocInfoE loc_146 (!{LPtr} (LocInfoE loc_147 ("entry")))) at{struct_alloc_entry} "next") <-{ LPtr }
-          LocInfoE loc_148 (use{LPtr} (LocInfoE loc_149 ((LocInfoE loc_150 (allocator_state)) at{struct_alloc_state} "data"))) ;
+          LocInfoE loc_148 (use{LPtr} (LocInfoE loc_149 ((LocInfoE loc_150 (global_allocator_state)) at{struct_alloc_state} "data"))) ;
         locinfo: loc_134 ;
-        LocInfoE loc_141 ((LocInfoE loc_142 (allocator_state)) at{struct_alloc_state} "data") <-{ LPtr }
+        LocInfoE loc_141 ((LocInfoE loc_142 (global_allocator_state)) at{struct_alloc_state} "data") <-{ LPtr }
           LocInfoE loc_143 (use{LPtr} (LocInfoE loc_144 ("entry"))) ;
         locinfo: loc_135 ;
-        "_" <- LocInfoE loc_137 (sl_unlock) with
-          [ LocInfoE loc_138 (AnnotExpr 1%nat LockA (LocInfoE loc_138 (&(LocInfoE loc_139 ((LocInfoE loc_140 (allocator_state)) at{struct_alloc_state} "lock"))))) ] ;
+        "_" <- LocInfoE loc_137 (global_sl_unlock) with
+          [ LocInfoE loc_138 (AnnotExpr 1%nat LockA (LocInfoE loc_138 (&(LocInfoE loc_139 ((LocInfoE loc_140 (global_allocator_state)) at{struct_alloc_state} "lock"))))) ] ;
         Return (VOID)
       ]> $
       <[ "#2" :=
@@ -423,7 +423,7 @@ Section code.
   |}.
 
   (* Definition of function [alloc_array]. *)
-  Definition impl_alloc_array (alloc : loc): function := {|
+  Definition impl_alloc_array (global_alloc : loc): function := {|
     f_args := [
       ("size", it_layout size_t);
       ("n", it_layout size_t)
@@ -434,7 +434,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_179 ;
-        "$0" <- LocInfoE loc_181 (alloc) with
+        "$0" <- LocInfoE loc_181 (global_alloc) with
           [ LocInfoE loc_182 ((LocInfoE loc_183 (use{it_layout size_t} (LocInfoE loc_184 ("n")))) ×{IntOp size_t, IntOp size_t} (LocInfoE loc_185 (use{it_layout size_t} (LocInfoE loc_186 ("size"))))) ] ;
         locinfo: loc_178 ;
         Return (LocInfoE loc_179 ("$0"))
@@ -443,7 +443,7 @@ Section code.
   |}.
 
   (* Definition of function [free_array]. *)
-  Definition impl_free_array (free : loc): function := {|
+  Definition impl_free_array (global_free : loc): function := {|
     f_args := [
       ("size", it_layout size_t);
       ("n", it_layout size_t);
@@ -455,7 +455,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_189 ;
-        "_" <- LocInfoE loc_191 (free) with
+        "_" <- LocInfoE loc_191 (global_free) with
           [ LocInfoE loc_192 ((LocInfoE loc_193 (use{it_layout size_t} (LocInfoE loc_194 ("n")))) ×{IntOp size_t, IntOp size_t} (LocInfoE loc_195 (use{it_layout size_t} (LocInfoE loc_196 ("size"))))) ;
           LocInfoE loc_197 (use{LPtr} (LocInfoE loc_198 ("ptr"))) ] ;
         Return (VOID)
@@ -464,7 +464,7 @@ Section code.
   |}.
 
   (* Definition of function [init_alloc]. *)
-  Definition impl_init_alloc (allocator_state sl_init : loc): function := {|
+  Definition impl_init_alloc (global_allocator_state global_sl_init : loc): function := {|
     f_args := [
     ];
     f_local_vars := [
@@ -473,10 +473,10 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_201 ;
-        "_" <- LocInfoE loc_218 (sl_init) with
-          [ LocInfoE loc_219 (&(LocInfoE loc_220 ((LocInfoE loc_221 (allocator_state)) at{struct_alloc_state} "lock"))) ] ;
+        "_" <- LocInfoE loc_218 (global_sl_init) with
+          [ LocInfoE loc_219 (&(LocInfoE loc_220 ((LocInfoE loc_221 (global_allocator_state)) at{struct_alloc_state} "lock"))) ] ;
         locinfo: loc_202 ;
-        LocInfoE loc_214 ((LocInfoE loc_215 (allocator_state)) at{struct_alloc_state} "data") <-{ LPtr }
+        LocInfoE loc_214 ((LocInfoE loc_215 (global_allocator_state)) at{struct_alloc_state} "data") <-{ LPtr }
           LocInfoE loc_216 (NULL) ;
         locinfo: loc_203 ;
         Goto "#1"
@@ -498,7 +498,7 @@ Section code.
       <[ "#3" :=
         locinfo: loc_205 ;
         annot: (ShareAnnot) ;
-        expr: (LocInfoE loc_207 (&(LocInfoE loc_208 (allocator_state)))) ;
+        expr: (LocInfoE loc_207 (&(LocInfoE loc_208 (global_allocator_state)))) ;
         Return (VOID)
       ]> $
       <[ "continue13" :=

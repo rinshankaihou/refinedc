@@ -10,9 +10,9 @@ Section proof_free_array.
   Context `{!lockG Σ}.
 
   (* Typing proof for [free_array]. *)
-  Lemma type_free_array (free : loc) :
-    free ◁ᵥ free @ function_ptr type_of_free -∗
-    typed_function (impl_free_array free) type_of_free_array.
+  Lemma type_free_array (global_free : loc) :
+    global_free ◁ᵥ global_free @ function_ptr type_of_free -∗
+    typed_function (impl_free_array global_free) type_of_free_array.
   Proof.
     start_function "free_array" ([size n]) => arg_size arg_n arg_ptr.
     split_blocks ((

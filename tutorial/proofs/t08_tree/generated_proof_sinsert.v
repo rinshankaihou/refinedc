@@ -9,9 +9,9 @@ Section proof_sinsert.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [sinsert]. *)
-  Lemma type_sinsert (insert : loc) :
-    insert ◁ᵥ insert @ function_ptr type_of_insert -∗
-    typed_function (impl_sinsert insert) type_of_sinsert.
+  Lemma type_sinsert (global_insert : loc) :
+    global_insert ◁ᵥ global_insert @ function_ptr type_of_insert -∗
+    typed_function (impl_sinsert global_insert) type_of_sinsert.
   Proof.
     start_function "sinsert" ([[p s] k]) => arg_t arg_k.
     split_blocks ((

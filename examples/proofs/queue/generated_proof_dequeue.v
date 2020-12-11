@@ -8,9 +8,9 @@ Section proof_dequeue.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [dequeue]. *)
-  Lemma type_dequeue (free : loc) :
-    free ◁ᵥ free @ function_ptr type_of_free -∗
-    typed_function (impl_dequeue free) type_of_dequeue.
+  Lemma type_dequeue (global_free : loc) :
+    global_free ◁ᵥ global_free @ function_ptr type_of_free -∗
+    typed_function (impl_dequeue global_free) type_of_dequeue.
   Proof.
     start_function "dequeue" ([p tys]) => arg_q local_elem local_ret.
     split_blocks ((

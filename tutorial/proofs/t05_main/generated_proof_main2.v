@@ -11,12 +11,12 @@ Section proof_main2.
   Context `{!lockG Σ}.
 
   (* Typing proof for [main2]. *)
-  Lemma type_main2 (initialized latch_wait test : loc) :
-    global_locs !! "initialized" = Some initialized →
+  Lemma type_main2 (global_initialized global_latch_wait global_test : loc) :
+    global_locs !! "initialized" = Some global_initialized →
     global_initialized_types !! "initialized" = Some (GT () (λ '(), (latch (alloc_initialized)) : type)) →
-    latch_wait ◁ᵥ latch_wait @ function_ptr type_of_latch_wait -∗
-    test ◁ᵥ test @ function_ptr type_of_test -∗
-    typed_function (impl_main2 initialized latch_wait test) type_of_main2.
+    global_latch_wait ◁ᵥ global_latch_wait @ function_ptr type_of_latch_wait -∗
+    global_test ◁ᵥ global_test @ function_ptr type_of_test -∗
+    typed_function (impl_main2 global_initialized global_latch_wait global_test) type_of_main2.
   Proof.
     start_function "main2" ([]).
     split_blocks ((

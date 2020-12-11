@@ -9,9 +9,9 @@ Section proof_sinit.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [sinit]. *)
-  Lemma type_sinit (init : loc) :
-    init ◁ᵥ init @ function_ptr type_of_init -∗
-    typed_function (impl_sinit init) type_of_sinit.
+  Lemma type_sinit (global_init : loc) :
+    global_init ◁ᵥ global_init @ function_ptr type_of_init -∗
+    typed_function (impl_sinit global_init) type_of_sinit.
   Proof.
     start_function "sinit" (k) => arg_key.
     split_blocks ((

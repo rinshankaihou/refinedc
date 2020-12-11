@@ -10,12 +10,12 @@ Section proof_free.
   Context `{!lockG Σ}.
 
   (* Typing proof for [free]. *)
-  Lemma type_free (allocator_state sl_lock sl_unlock : loc) :
-    global_locs !! "allocator_state" = Some allocator_state →
+  Lemma type_free (global_allocator_state global_sl_lock global_sl_unlock : loc) :
+    global_locs !! "allocator_state" = Some global_allocator_state →
     global_initialized_types !! "allocator_state" = Some (GT () (λ '(), (alloc_state) : type)) →
-    sl_lock ◁ᵥ sl_lock @ function_ptr type_of_sl_lock -∗
-    sl_unlock ◁ᵥ sl_unlock @ function_ptr type_of_sl_unlock -∗
-    typed_function (impl_free allocator_state sl_lock sl_unlock) type_of_free.
+    global_sl_lock ◁ᵥ global_sl_lock @ function_ptr type_of_sl_lock -∗
+    global_sl_unlock ◁ᵥ global_sl_unlock @ function_ptr type_of_sl_unlock -∗
+    typed_function (impl_free global_allocator_state global_sl_lock global_sl_unlock) type_of_free.
   Proof.
     start_function "free" (size) => arg_size arg_ptr local_entry.
     split_blocks ((

@@ -8,9 +8,9 @@ Section proof_push.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [push]. *)
-  Lemma type_push (alloc : loc) :
-    alloc ◁ᵥ alloc @ function_ptr type_of_alloc -∗
-    typed_function (impl_push alloc) type_of_push.
+  Lemma type_push (global_alloc : loc) :
+    global_alloc ◁ᵥ global_alloc @ function_ptr type_of_alloc -∗
+    typed_function (impl_push global_alloc) type_of_push.
   Proof.
     start_function "push" ([l ty]) => arg_p arg_e local_node.
     split_blocks ((

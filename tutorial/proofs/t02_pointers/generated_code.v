@@ -199,7 +199,7 @@ Section code.
   |}.
 
   (* Definition of function [use_read_int]. *)
-  Definition impl_use_read_int (read_int : loc): function := {|
+  Definition impl_use_read_int (global_read_int : loc): function := {|
     f_args := [
     ];
     f_local_vars := [
@@ -211,7 +211,7 @@ Section code.
       <[ "#0" :=
         "local" <-{ it_layout i32 } LocInfoE loc_29 (i2v 1 i32) ;
         locinfo: loc_22 ;
-        "$0" <- LocInfoE loc_24 (read_int) with
+        "$0" <- LocInfoE loc_24 (global_read_int) with
           [ LocInfoE loc_25 (&(LocInfoE loc_26 ("local"))) ] ;
         "read" <-{ it_layout i32 } LocInfoE loc_22 ("$0") ;
         locinfo: loc_11 ;

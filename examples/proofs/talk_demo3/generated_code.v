@@ -94,7 +94,7 @@ Section code.
   Solve Obligations with solve_struct_obligations.
 
   (* Definition of function [append]. *)
-  Definition impl_append (append : loc): function := {|
+  Definition impl_append (global_append : loc): function := {|
     f_args := [
       ("l", LPtr);
       ("k", LPtr)
@@ -121,7 +121,7 @@ Section code.
       ]> $
       <[ "#2" :=
         locinfo: loc_11 ;
-        "_" <- LocInfoE loc_13 (append) with
+        "_" <- LocInfoE loc_13 (global_append) with
           [ LocInfoE loc_14 (&(LocInfoE loc_15 ((LocInfoE loc_16 (!{LPtr} (LocInfoE loc_18 (!{LPtr} (LocInfoE loc_19 ("l")))))) at{struct_list_node} "next"))) ;
           LocInfoE loc_20 (use{LPtr} (LocInfoE loc_21 ("k"))) ] ;
         Return (VOID)
@@ -130,7 +130,7 @@ Section code.
   |}.
 
   (* Definition of function [test]. *)
-  Definition impl_test (alloc append : loc): function := {|
+  Definition impl_test (global_alloc global_append : loc): function := {|
     f_args := [
     ];
     f_local_vars := [
@@ -141,7 +141,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_79 ;
-        "$1" <- LocInfoE loc_81 (alloc) with
+        "$1" <- LocInfoE loc_81 (global_alloc) with
           [ LocInfoE loc_82 (i2v (layout_of struct_list_node).(ly_size) size_t) ] ;
         "node1" <-{ LPtr }
           LocInfoE loc_79 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_79 ("$1"))) ;
@@ -152,7 +152,7 @@ Section code.
         LocInfoE loc_71 ((LocInfoE loc_72 (!{LPtr} (LocInfoE loc_73 ("node1")))) at{struct_list_node} "next") <-{ LPtr }
           LocInfoE loc_74 (NULL) ;
         locinfo: loc_65 ;
-        "$0" <- LocInfoE loc_67 (alloc) with
+        "$0" <- LocInfoE loc_67 (global_alloc) with
           [ LocInfoE loc_68 (i2v (layout_of struct_list_node).(ly_size) size_t) ] ;
         "node2" <-{ LPtr }
           LocInfoE loc_65 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_65 ("$0"))) ;
@@ -163,7 +163,7 @@ Section code.
         LocInfoE loc_57 ((LocInfoE loc_58 (!{LPtr} (LocInfoE loc_59 ("node2")))) at{struct_list_node} "next") <-{ LPtr }
           LocInfoE loc_60 (NULL) ;
         locinfo: loc_36 ;
-        "_" <- LocInfoE loc_52 (append) with
+        "_" <- LocInfoE loc_52 (global_append) with
           [ LocInfoE loc_53 (&(LocInfoE loc_54 ("node1"))) ;
           LocInfoE loc_55 (use{LPtr} (LocInfoE loc_56 ("node2"))) ] ;
         locinfo: loc_47 ;
