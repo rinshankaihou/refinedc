@@ -191,7 +191,7 @@ Section spec.
 
   (* Specifications for function [main]. *)
   Definition type_of_main :=
-    fn(∀ () : (); (initialized "initialized" ()) ∗ (global_with_type "allocator_state" Own (uninit struct_alloc_state)) ∗ (global_with_type "allocator_data" Own (uninit (Layout (Z.to_nat 10000) 3))))
+    fn(∀ () : (); (initialized "initialized" ()) ∗ (global_with_type "allocator_state" Own (uninit (struct_alloc_state))) ∗ (global_with_type "allocator_data" Own (uninit (Layout (Z.to_nat 10000) 3))))
       → ∃ () : (), (int (i32)); True.
 
   (* Specifications for function [main2]. *)

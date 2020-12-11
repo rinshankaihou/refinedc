@@ -119,7 +119,7 @@ Section spec.
 
   (* Specifications for function [main]. *)
   Definition type_of_main :=
-    fn(∀ () : (); (global_with_type "e1" Own (uninit ENTRY_LAYOUT)) ∗ (global_with_type "e2" Own (uninit ENTRY_LAYOUT)))
+    fn(∀ () : (); (global_with_type "e1" Own (uninit (ENTRY_LAYOUT))) ∗ (global_with_type "e2" Own (uninit (ENTRY_LAYOUT))))
       → ∃ () : (), (void); True.
 End spec.
 

@@ -520,12 +520,14 @@ The syntax of constraints is defined below.
   | <pure_term (as Coq proposition)>
   | "∃" <ident (as variable name)> {":" <coq_expr (as Coq type)>}? "." <constr>
   | <ident (as variable name)> "@" <ptr_type>
+  | "global" <ident (as C global variable name> ":" <type_expr>
 ```
 A constraint can be formed using either:
  - a (quoted) Iris proposition,
  - a (quoted) Coq proposition,
  - an existential quantifier,
- - a pointer type ownership statement.
+ - a pointer type ownership statement,
+ - a typing constraint for a global variable.
 
 **Remark:** a constraint of the form `{...}` is a short-hand for `[⌜...⌝]`, in
 which `⌜...⌝` is the notation used to inject Coq proposition into `iProp` (the

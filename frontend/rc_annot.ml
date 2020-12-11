@@ -103,6 +103,7 @@ and constr =
   | Constr_exist of string * coq_expr option * constr
   | Constr_own   of string * ptr_kind * type_expr
   | Constr_Coq   of coq_expr
+  | Constr_glob  of string * type_expr
 
 and ptr_kind = Own | Shr | Frac of coq_expr
 
@@ -164,6 +165,7 @@ and parser constr =
   | "∃" x:ident a:{":" coq_expr}? "." c:constr    -> Constr_exist(x,a,c)
   | x:ident "@" (k,ty):ptr_type                   -> Constr_own(x,k,ty)
   | c:coq_expr                                    -> Constr_Coq(c)
+  | "global" x:ident ':' ty:(type_expr `Full)     -> Constr_glob(x,ty)
 
 and parser ptr_type =
   | "&own<" ty:(type_expr `Full) ">"                 -> (Own    , ty)

@@ -502,6 +502,8 @@ and pp_constr_guard : unit pp option -> guard_mode -> bool -> constr pp =
       fprintf ff "∃ %s%a, %a" x (pp_type_annot pp_ty) a (pp_constr false) c
   | Constr_own(x,k,ty)  ->
       fprintf ff "%s %a %a" x pp_kind k pp_ty ty
+  | Constr_glob(x,ty)   ->
+      fprintf ff "global_with_type %S Own %a" x pp_ty ty
 
 and pp_type_expr_guard : unit pp option -> guard_mode -> type_expr pp =
     fun pp_dots guard ff ty ->

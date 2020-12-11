@@ -63,12 +63,12 @@ static unsigned char * cur1;
 
 [[rc::parameters("n : nat")]]
 [[rc::args("ptr")]]
-[[rc::requires("[global_with_type \"cur1\" Own (&own (uninit (ly_set_size PAGE_LAYOUT n)))]")]]
-[[rc::requires("[global_with_type \"size1\" Own (n @ int u64)]")]]
+[[rc::requires("global cur1 : &own<uninit<{ly_set_size PAGE_LAYOUT n}>>")]]
+[[rc::requires("global size1 : n @ int<u64>")]]
 [[rc::exists("m : nat")]]
 [[rc::returns("optional<&own<zeroed<PAGE_LAYOUT>>, null>")]]
-[[rc::ensures("[global_with_type \"size1\" Own (m @ int u64)]")]]
-[[rc::ensures("[global_with_type \"cur1\" Own (&own (uninit (ly_set_size PAGE_LAYOUT m)))]")]]
+[[rc::ensures("global size1 : m @ int<u64>")]]
+[[rc::ensures("global cur1 : &own<uninit<{ly_set_size PAGE_LAYOUT m}>>")]]
 void * hyp_early_alloc_page1(void *arg)
 {
 	if (size1 <= (unsigned long) PAGE_SIZE) {
@@ -83,14 +83,14 @@ void * hyp_early_alloc_page1(void *arg)
 }
 
 [[rc::parameters("n : nat")]]
-[[rc::requires("[global_with_type \"cur1\" Own (uninit LPtr)]")]]
-[[rc::requires("[global_with_type \"size1\" Own (uninit u64)]")]]
-[[rc::requires("[global_with_type \"base1\" Own (uninit LPtr)]")]]
+[[rc::requires("global cur1  : uninit<LPtr>")]]
+[[rc::requires("global size1 : uninit<u64>")]]
+[[rc::requires("global base1 : uninit<LPtr>")]]
 [[rc::args("&own<uninit<{ly_set_size PAGE_LAYOUT n}>>", "n @ int<u64>")]]
 [[rc::exists("m : nat")]]
-[[rc::ensures("[global_with_type \"size1\" Own (m @ int u64)]")]]
-[[rc::ensures("[global_with_type \"cur1\" Own (&own (uninit (ly_set_size PAGE_LAYOUT m)))]")]]
-[[rc::ensures("[global_with_type \"base1\" Own (uninit LPtr)]")]]
+[[rc::ensures("global size1 : m @ int<u64>")]]
+[[rc::ensures("global cur1  : &own<uninit<{ly_set_size PAGE_LAYOUT m}>>")]]
+[[rc::ensures("global base1 : uninit<LPtr>")]]
 void hyp_early_alloc_init1(unsigned char *virt, unsigned long size)
 {
 	base1 = virt;

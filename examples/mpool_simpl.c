@@ -53,8 +53,8 @@ void mpool_put(struct mpool *p, void *ptr) {
 }
 
 void* e1, *e2;
-[[rc::requires("[global_with_type \"e1\" Own (uninit ENTRY_LAYOUT)]",
-               "[global_with_type \"e2\" Own (uninit ENTRY_LAYOUT)]")]]
+[[rc::requires("global e1 : uninit<ENTRY_LAYOUT>")]]
+[[rc::requires("global e2 : uninit<ENTRY_LAYOUT>")]]
 int main(void) {
     struct mpool p;
     void * p1, *p2;
