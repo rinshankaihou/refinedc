@@ -1117,7 +1117,9 @@ Section guarded.
     SimpleSubsumePlace ty1 (guarded n ty2) P.
   Proof. iIntros (l β) "HP Hl". iApply guarded_intro. iApply (@simple_subsume_place with "HP Hl"). Qed.
 
-  (* E1: elements needed in the mask, E2: elements needed in the mask and removed during the step.
+  (*
+    This class should be implemented but not directly be used as a premise.
+   E1: elements needed in the mask, E2: elements needed in the mask and removed during the step.
    E1, E2, ty2 are outputs. *)
   Class StripGuarded (β : own_state) (E1 E2 : coPset) (ty1 ty2 : type) : Prop :=
     strip_guarded l E : E1 ⊆ E → E2 ⊆ E → l ◁ₗ{β} ty1 ={E}[E ∖ E2]▷=∗ l ◁ₗ{β} ty2.
@@ -1179,11 +1181,24 @@ Section guarded.
     iIntros (ls E HE1 HE2) "Hls". destruct ls => //=. iApply step_fupd_intro => //. solve_ndisj.
   Qed.
 
+  (* Another layer for performance *)
+  Class DoStripGuarded (β : own_state) (E1 E2 : coPset) (ty1 ty2 : type) : Prop :=
+    do_strip_guarded : StripGuarded β E1 E2 ty1 ty2.
+
 End guarded.
 
 Hint Mode StripGuarded + + + - - + - : typeclass_instances.
+Hint Mode DoStripGuarded + + + - - + - : typeclass_instances.
 Hint Mode StripGuardedLst + + + - - + - : typeclass_instances.
 Typeclasses Opaque typed_block.
+
+Hint Extern 0 (DoStripGuarded ?β ?E1 ?E2 ?ty1 ?ty2) =>
+  change (StripGuarded β E1 E2 ty1 ty2);
+  lazymatch ty1 with
+  | context [guarded _ _] => idtac
+  | _ => notypeclasses refine (strip_guarded_id β ty1)
+  end
+  : typeclass_instances.
 
 (* Low priority since types might want to have a special form of this
    instance, e.g. optional. The lazymatch is necessary since refine

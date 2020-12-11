@@ -186,7 +186,7 @@ Section struct.
     SubsumePlace l β (struct sl tys1) (struct sl tys2) | 10 :=
     λ T, i2p (struct_mono sl tys1 tys2 l β T).
 
-  Lemma type_place_struct K β1 T tys tys' sl n l E1 E2 `{!StripGuarded β1 E1 E2 (struct sl tys) (struct sl tys')}:
+  Lemma type_place_struct K β1 T tys tys' sl n l E1 E2 `{!DoStripGuarded β1 E1 E2 (struct sl tys) (struct sl tys')}:
     (∃ i ty1, ⌜field_index_of sl.(sl_members) n = Some i⌝ ∗
     ⌜tys' !! i = Some ty1⌝ ∗
     typed_place K (l at{sl}ₗ n) β1 ty1 (λ l2 β ty2 typ, T l2 β ty2 (λ t, struct sl (<[i := (typ t)]> tys')))) -∗
@@ -196,7 +196,7 @@ Section struct.
     move: (Hi) => /field_index_of_to_index_of[? Hi2].
     iIntros (Φ) "Hs HΦ" => /=.
     (* TODO: why does iMod not work here? *)
-    iApply (@wp_step_fupd expr_lang with "[Hs]"). done. 2: by iApply (strip_guarded with "Hs"). solve_ndisj.
+    iApply (@wp_step_fupd expr_lang with "[Hs]"). done. 2: by iApply (do_strip_guarded with "Hs"). solve_ndisj.
     iApply wp_get_member. by apply val_to_of_loc. by eauto.
     iIntros "!# [% [% [#Hb Hs]]] !#". iExists _. iSplit => //.
     iDestruct (big_sepL_insert_acc with "Hs") as "[Hl Hs]" => //=. by eapply pad_struct_lookup_field.
@@ -207,7 +207,7 @@ Section struct.
     iDestruct ("Hs" with "Hty") as "Hs". iSplitR => //. iSplitR; first by rewrite insert_length.
     iFrame "Hb". erewrite pad_struct_insert_field => //. have := field_index_of_leq _ _ _ Hi. lia.
   Qed.
-  Global Instance type_place_struct_inst K β1 tys tys' sl n l E1 E2 `{!StripGuarded β1 E1 E2 (struct sl tys) (struct sl tys')} :
+  Global Instance type_place_struct_inst K β1 tys tys' sl n l E1 E2 `{!DoStripGuarded β1 E1 E2 (struct sl tys) (struct sl tys')} :
     TypedPlace (GetMemberPCtx sl n :: K) l β1 (struct sl tys) | 10 :=
     λ T, i2p (type_place_struct K β1 T tys tys' sl n l E1 E2).
 
