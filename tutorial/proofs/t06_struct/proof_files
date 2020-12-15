@@ -4,3 +4,6 @@ generated_proof_getblue.v
 generated_proof_green.v
 generated_proof_red.v
 generated_proof_rgb.v
+generated_proof_set_blue.v
+generated_proof_set_green.v
+generated_proof_set_red.v

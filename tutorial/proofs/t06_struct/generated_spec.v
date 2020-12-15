@@ -85,6 +85,21 @@ Section spec.
     fn(∀ (r, g, b) : nat * nat * nat; (((r, g, b)) @ (color)); True)
       → ∃ () : (), ((b) @ (int (u8))); True.
 
+  (* Specifications for function [set_red]. *)
+  Definition type_of_set_red :=
+    fn(∀ (p, c, r) : loc * (nat * nat * nat) * nat; (p @ (&own (c @ (color)))), (r @ (int (u8))); True)
+      → ∃ () : (), (void); (p ◁ₗ (((r, c.1.2, c.2)) @ (color))).
+
+  (* Specifications for function [set_green]. *)
+  Definition type_of_set_green :=
+    fn(∀ (p, c, g) : loc * (nat * nat * nat) * nat; (p @ (&own (c @ (color)))), (g @ (int (u8))); True)
+      → ∃ () : (), (void); (p ◁ₗ (((c.1.1, g, c.2)) @ (color))).
+
+  (* Specifications for function [set_blue]. *)
+  Definition type_of_set_blue :=
+    fn(∀ (p, c, b) : loc * (nat * nat * nat) * nat; (p @ (&own (c @ (color)))), (b @ (int (u8))); True)
+      → ∃ () : (), (void); (p ◁ₗ (((c.1, b)) @ (color))).
+
   (* Specifications for function [argtest]. *)
   Definition type_of_argtest :=
     fn(∀ () : (); True) → ∃ () : (), (void); ⌜True⌝.

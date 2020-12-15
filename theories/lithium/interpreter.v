@@ -525,6 +525,7 @@ Ltac liForall :=
        dependent variables to distinguish between dependent and non dependent forall *)
     | |- ?P -> ?Q => fail "implication, not forall"
     | |- forall _ : ?P, _ =>
+      (* When changing this, also change [prepare_initial_coq_context] in automation.v *)
       lazymatch P with
       | (prod _ _) => case
       | unit => case

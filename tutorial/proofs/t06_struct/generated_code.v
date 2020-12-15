@@ -39,17 +39,38 @@ Section code.
   Definition loc_52 : location_info := LocationInfo file_0 49 9 49 12.
   Definition loc_53 : location_info := LocationInfo file_0 49 9 49 12.
   Definition loc_54 : location_info := LocationInfo file_0 49 9 49 10.
-  Definition loc_57 : location_info := LocationInfo file_0 54 2 54 41.
-  Definition loc_58 : location_info := LocationInfo file_0 54 9 54 39.
-  Definition loc_59 : location_info := LocationInfo file_0 54 9 54 25.
-  Definition loc_60 : location_info := LocationInfo file_0 54 9 54 16.
-  Definition loc_61 : location_info := LocationInfo file_0 54 9 54 16.
-  Definition loc_62 : location_info := LocationInfo file_0 54 17 54 24.
-  Definition loc_63 : location_info := LocationInfo file_0 54 17 54 21.
-  Definition loc_64 : location_info := LocationInfo file_0 54 17 54 21.
-  Definition loc_65 : location_info := LocationInfo file_0 54 22 54 23.
-  Definition loc_66 : location_info := LocationInfo file_0 54 29 54 39.
-  Definition loc_67 : location_info := LocationInfo file_0 54 38 54 39.
+  Definition loc_57 : location_info := LocationInfo file_0 56 2 56 13.
+  Definition loc_58 : location_info := LocationInfo file_0 56 2 56 8.
+  Definition loc_59 : location_info := LocationInfo file_0 56 2 56 6.
+  Definition loc_60 : location_info := LocationInfo file_0 56 4 56 5.
+  Definition loc_61 : location_info := LocationInfo file_0 56 4 56 5.
+  Definition loc_62 : location_info := LocationInfo file_0 56 11 56 12.
+  Definition loc_63 : location_info := LocationInfo file_0 56 11 56 12.
+  Definition loc_66 : location_info := LocationInfo file_0 63 2 63 13.
+  Definition loc_67 : location_info := LocationInfo file_0 63 2 63 8.
+  Definition loc_68 : location_info := LocationInfo file_0 63 2 63 6.
+  Definition loc_69 : location_info := LocationInfo file_0 63 4 63 5.
+  Definition loc_70 : location_info := LocationInfo file_0 63 4 63 5.
+  Definition loc_71 : location_info := LocationInfo file_0 63 11 63 12.
+  Definition loc_72 : location_info := LocationInfo file_0 63 11 63 12.
+  Definition loc_75 : location_info := LocationInfo file_0 70 2 70 13.
+  Definition loc_76 : location_info := LocationInfo file_0 70 2 70 8.
+  Definition loc_77 : location_info := LocationInfo file_0 70 2 70 6.
+  Definition loc_78 : location_info := LocationInfo file_0 70 4 70 5.
+  Definition loc_79 : location_info := LocationInfo file_0 70 4 70 5.
+  Definition loc_80 : location_info := LocationInfo file_0 70 11 70 12.
+  Definition loc_81 : location_info := LocationInfo file_0 70 11 70 12.
+  Definition loc_84 : location_info := LocationInfo file_0 75 2 75 41.
+  Definition loc_85 : location_info := LocationInfo file_0 75 9 75 39.
+  Definition loc_86 : location_info := LocationInfo file_0 75 9 75 25.
+  Definition loc_87 : location_info := LocationInfo file_0 75 9 75 16.
+  Definition loc_88 : location_info := LocationInfo file_0 75 9 75 16.
+  Definition loc_89 : location_info := LocationInfo file_0 75 17 75 24.
+  Definition loc_90 : location_info := LocationInfo file_0 75 17 75 21.
+  Definition loc_91 : location_info := LocationInfo file_0 75 17 75 21.
+  Definition loc_92 : location_info := LocationInfo file_0 75 22 75 23.
+  Definition loc_93 : location_info := LocationInfo file_0 75 29 75 39.
+  Definition loc_94 : location_info := LocationInfo file_0 75 38 75 39.
 
   (* Definition of struct [color]. *)
   Program Definition struct_color := {|
@@ -166,6 +187,63 @@ Section code.
     )%E
   |}.
 
+  (* Definition of function [set_red]. *)
+  Definition impl_set_red : function := {|
+    f_args := [
+      ("c", LPtr);
+      ("r", it_layout u8)
+    ];
+    f_local_vars := [
+    ];
+    f_init := "#0";
+    f_code := (
+      <[ "#0" :=
+        locinfo: loc_57 ;
+        LocInfoE loc_58 ((LocInfoE loc_60 (!{LPtr} (LocInfoE loc_61 ("c")))) at{struct_color} "r") <-{ it_layout u8 }
+          LocInfoE loc_62 (use{it_layout u8} (LocInfoE loc_63 ("r"))) ;
+        Return (VOID)
+      ]> $∅
+    )%E
+  |}.
+
+  (* Definition of function [set_green]. *)
+  Definition impl_set_green : function := {|
+    f_args := [
+      ("c", LPtr);
+      ("g", it_layout u8)
+    ];
+    f_local_vars := [
+    ];
+    f_init := "#0";
+    f_code := (
+      <[ "#0" :=
+        locinfo: loc_66 ;
+        LocInfoE loc_67 ((LocInfoE loc_69 (!{LPtr} (LocInfoE loc_70 ("c")))) at{struct_color} "g") <-{ it_layout u8 }
+          LocInfoE loc_71 (use{it_layout u8} (LocInfoE loc_72 ("g"))) ;
+        Return (VOID)
+      ]> $∅
+    )%E
+  |}.
+
+  (* Definition of function [set_blue]. *)
+  Definition impl_set_blue : function := {|
+    f_args := [
+      ("c", LPtr);
+      ("b", it_layout u8)
+    ];
+    f_local_vars := [
+    ];
+    f_init := "#0";
+    f_code := (
+      <[ "#0" :=
+        locinfo: loc_75 ;
+        LocInfoE loc_76 ((LocInfoE loc_78 (!{LPtr} (LocInfoE loc_79 ("c")))) at{struct_color} "b") <-{ it_layout u8 }
+          LocInfoE loc_80 (use{it_layout u8} (LocInfoE loc_81 ("b"))) ;
+        Return (VOID)
+      ]> $∅
+    )%E
+  |}.
+
   (* Definition of function [argtest]. *)
   Definition impl_argtest (global_blue global_getblue : loc): function := {|
     f_args := [
@@ -175,14 +253,14 @@ Section code.
     f_init := "#0";
     f_code := (
       <[ "#0" :=
-        locinfo: loc_62 ;
-        "$0" <- LocInfoE loc_64 (global_blue) with
-          [ LocInfoE loc_65 (UnOp (CastOp $ IntOp u8) (IntOp i32) (LocInfoE loc_65 (i2v 5 i32))) ] ;
-        locinfo: loc_59 ;
-        "$1" <- LocInfoE loc_61 (global_getblue) with
-          [ LocInfoE loc_62 ("$0") ] ;
-        locinfo: loc_57 ;
-        assert: (LocInfoE loc_58 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_58 ((LocInfoE loc_59 ("$1")) ={IntOp u8, IntOp u8} (LocInfoE loc_66 (UnOp (CastOp $ IntOp u8) (IntOp i32) (LocInfoE loc_67 (i2v 5 i32)))))))) ;
+        locinfo: loc_89 ;
+        "$0" <- LocInfoE loc_91 (global_blue) with
+          [ LocInfoE loc_92 (UnOp (CastOp $ IntOp u8) (IntOp i32) (LocInfoE loc_92 (i2v 5 i32))) ] ;
+        locinfo: loc_86 ;
+        "$1" <- LocInfoE loc_88 (global_getblue) with
+          [ LocInfoE loc_89 ("$0") ] ;
+        locinfo: loc_84 ;
+        assert: (LocInfoE loc_85 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_85 ((LocInfoE loc_86 ("$1")) ={IntOp u8, IntOp u8} (LocInfoE loc_93 (UnOp (CastOp $ IntOp u8) (IntOp i32) (LocInfoE loc_94 (i2v 5 i32)))))))) ;
         Return (VOID)
       ]> $∅
     )%E
