@@ -6,163 +6,163 @@ Set Default Proof Using "Type".
 (* Generated from [tutorial/t03_list.c]. *)
 Section code.
   Definition file_0 : string := "tutorial/t03_list.c".
-  Definition loc_2 : location_info := LocationInfo file_0 141 4 141 25.
-  Definition loc_3 : location_info := LocationInfo file_0 142 4 142 42.
-  Definition loc_4 : location_info := LocationInfo file_0 143 4 143 42.
-  Definition loc_5 : location_info := LocationInfo file_0 144 4 144 42.
-  Definition loc_6 : location_info := LocationInfo file_0 146 4 146 28.
-  Definition loc_7 : location_info := LocationInfo file_0 148 4 148 15.
-  Definition loc_8 : location_info := LocationInfo file_0 149 4 149 15.
-  Definition loc_9 : location_info := LocationInfo file_0 150 4 150 15.
-  Definition loc_10 : location_info := LocationInfo file_0 152 4 152 29.
-  Definition loc_11 : location_info := LocationInfo file_0 153 4 153 29.
-  Definition loc_12 : location_info := LocationInfo file_0 154 4 154 29.
-  Definition loc_13 : location_info := LocationInfo file_0 156 4 156 29.
-  Definition loc_14 : location_info := LocationInfo file_0 158 4 158 25.
-  Definition loc_15 : location_info := LocationInfo file_0 160 4 160 29.
-  Definition loc_16 : location_info := LocationInfo file_0 162 4 162 23.
-  Definition loc_17 : location_info := LocationInfo file_0 163 4 163 23.
-  Definition loc_18 : location_info := LocationInfo file_0 164 4 164 23.
-  Definition loc_19 : location_info := LocationInfo file_0 166 4 166 28.
-  Definition loc_20 : location_info := LocationInfo file_0 168 4 168 32.
-  Definition loc_21 : location_info := LocationInfo file_0 169 4 169 32.
-  Definition loc_22 : location_info := LocationInfo file_0 170 4 170 32.
-  Definition loc_23 : location_info := LocationInfo file_0 172 4 172 32.
-  Definition loc_24 : location_info := LocationInfo file_0 173 4 173 32.
-  Definition loc_25 : location_info := LocationInfo file_0 174 4 174 32.
-  Definition loc_26 : location_info := LocationInfo file_0 174 4 174 8.
-  Definition loc_27 : location_info := LocationInfo file_0 174 4 174 8.
-  Definition loc_28 : location_info := LocationInfo file_0 174 9 174 23.
-  Definition loc_29 : location_info := LocationInfo file_0 174 25 174 30.
-  Definition loc_30 : location_info := LocationInfo file_0 174 25 174 30.
-  Definition loc_31 : location_info := LocationInfo file_0 173 4 173 8.
-  Definition loc_32 : location_info := LocationInfo file_0 173 4 173 8.
-  Definition loc_33 : location_info := LocationInfo file_0 173 9 173 23.
-  Definition loc_34 : location_info := LocationInfo file_0 173 25 173 30.
-  Definition loc_35 : location_info := LocationInfo file_0 173 25 173 30.
-  Definition loc_36 : location_info := LocationInfo file_0 172 4 172 8.
-  Definition loc_37 : location_info := LocationInfo file_0 172 4 172 8.
-  Definition loc_38 : location_info := LocationInfo file_0 172 9 172 23.
-  Definition loc_39 : location_info := LocationInfo file_0 172 25 172 30.
-  Definition loc_40 : location_info := LocationInfo file_0 172 25 172 30.
-  Definition loc_41 : location_info := LocationInfo file_0 170 11 170 30.
-  Definition loc_42 : location_info := LocationInfo file_0 170 11 170 17.
-  Definition loc_43 : location_info := LocationInfo file_0 170 11 170 17.
-  Definition loc_44 : location_info := LocationInfo file_0 170 12 170 17.
-  Definition loc_45 : location_info := LocationInfo file_0 170 12 170 17.
-  Definition loc_46 : location_info := LocationInfo file_0 170 21 170 30.
-  Definition loc_47 : location_info := LocationInfo file_0 170 29 170 30.
-  Definition loc_48 : location_info := LocationInfo file_0 169 11 169 30.
-  Definition loc_49 : location_info := LocationInfo file_0 169 11 169 17.
-  Definition loc_50 : location_info := LocationInfo file_0 169 11 169 17.
-  Definition loc_51 : location_info := LocationInfo file_0 169 12 169 17.
-  Definition loc_52 : location_info := LocationInfo file_0 169 12 169 17.
-  Definition loc_53 : location_info := LocationInfo file_0 169 21 169 30.
-  Definition loc_54 : location_info := LocationInfo file_0 169 29 169 30.
-  Definition loc_55 : location_info := LocationInfo file_0 168 11 168 30.
-  Definition loc_56 : location_info := LocationInfo file_0 168 11 168 17.
-  Definition loc_57 : location_info := LocationInfo file_0 168 11 168 17.
-  Definition loc_58 : location_info := LocationInfo file_0 168 12 168 17.
-  Definition loc_59 : location_info := LocationInfo file_0 168 12 168 17.
-  Definition loc_60 : location_info := LocationInfo file_0 168 21 168 30.
-  Definition loc_61 : location_info := LocationInfo file_0 168 29 168 30.
-  Definition loc_62 : location_info := LocationInfo file_0 166 11 166 26.
-  Definition loc_63 : location_info := LocationInfo file_0 166 11 166 19.
-  Definition loc_64 : location_info := LocationInfo file_0 166 11 166 19.
-  Definition loc_65 : location_info := LocationInfo file_0 166 20 166 25.
-  Definition loc_66 : location_info := LocationInfo file_0 166 21 166 25.
-  Definition loc_67 : location_info := LocationInfo file_0 164 4 164 9.
-  Definition loc_68 : location_info := LocationInfo file_0 164 12 164 22.
-  Definition loc_69 : location_info := LocationInfo file_0 164 12 164 15.
-  Definition loc_70 : location_info := LocationInfo file_0 164 12 164 15.
-  Definition loc_71 : location_info := LocationInfo file_0 164 16 164 21.
-  Definition loc_72 : location_info := LocationInfo file_0 164 17 164 21.
-  Definition loc_73 : location_info := LocationInfo file_0 163 4 163 9.
-  Definition loc_74 : location_info := LocationInfo file_0 163 12 163 22.
-  Definition loc_75 : location_info := LocationInfo file_0 163 12 163 15.
-  Definition loc_76 : location_info := LocationInfo file_0 163 12 163 15.
-  Definition loc_77 : location_info := LocationInfo file_0 163 16 163 21.
-  Definition loc_78 : location_info := LocationInfo file_0 163 17 163 21.
-  Definition loc_79 : location_info := LocationInfo file_0 162 4 162 9.
-  Definition loc_80 : location_info := LocationInfo file_0 162 12 162 22.
-  Definition loc_81 : location_info := LocationInfo file_0 162 12 162 15.
-  Definition loc_82 : location_info := LocationInfo file_0 162 12 162 15.
-  Definition loc_83 : location_info := LocationInfo file_0 162 16 162 21.
-  Definition loc_84 : location_info := LocationInfo file_0 162 17 162 21.
-  Definition loc_85 : location_info := LocationInfo file_0 160 11 160 27.
-  Definition loc_86 : location_info := LocationInfo file_0 160 11 160 17.
-  Definition loc_87 : location_info := LocationInfo file_0 160 11 160 17.
-  Definition loc_88 : location_info := LocationInfo file_0 160 18 160 23.
-  Definition loc_89 : location_info := LocationInfo file_0 160 19 160 23.
-  Definition loc_90 : location_info := LocationInfo file_0 160 25 160 26.
-  Definition loc_91 : location_info := LocationInfo file_0 158 4 158 8.
-  Definition loc_92 : location_info := LocationInfo file_0 158 11 158 24.
-  Definition loc_93 : location_info := LocationInfo file_0 158 11 158 18.
-  Definition loc_94 : location_info := LocationInfo file_0 158 11 158 18.
-  Definition loc_95 : location_info := LocationInfo file_0 158 19 158 23.
-  Definition loc_96 : location_info := LocationInfo file_0 158 19 158 23.
-  Definition loc_97 : location_info := LocationInfo file_0 156 11 156 27.
-  Definition loc_98 : location_info := LocationInfo file_0 156 11 156 17.
-  Definition loc_99 : location_info := LocationInfo file_0 156 11 156 17.
-  Definition loc_100 : location_info := LocationInfo file_0 156 18 156 23.
-  Definition loc_101 : location_info := LocationInfo file_0 156 19 156 23.
-  Definition loc_102 : location_info := LocationInfo file_0 156 25 156 26.
-  Definition loc_103 : location_info := LocationInfo file_0 154 4 154 8.
-  Definition loc_104 : location_info := LocationInfo file_0 154 11 154 28.
-  Definition loc_105 : location_info := LocationInfo file_0 154 11 154 15.
-  Definition loc_106 : location_info := LocationInfo file_0 154 11 154 15.
-  Definition loc_107 : location_info := LocationInfo file_0 154 16 154 20.
-  Definition loc_108 : location_info := LocationInfo file_0 154 16 154 20.
-  Definition loc_109 : location_info := LocationInfo file_0 154 22 154 27.
-  Definition loc_110 : location_info := LocationInfo file_0 154 22 154 27.
-  Definition loc_111 : location_info := LocationInfo file_0 153 4 153 8.
-  Definition loc_112 : location_info := LocationInfo file_0 153 11 153 28.
-  Definition loc_113 : location_info := LocationInfo file_0 153 11 153 15.
-  Definition loc_114 : location_info := LocationInfo file_0 153 11 153 15.
-  Definition loc_115 : location_info := LocationInfo file_0 153 16 153 20.
-  Definition loc_116 : location_info := LocationInfo file_0 153 16 153 20.
-  Definition loc_117 : location_info := LocationInfo file_0 153 22 153 27.
-  Definition loc_118 : location_info := LocationInfo file_0 153 22 153 27.
-  Definition loc_119 : location_info := LocationInfo file_0 152 4 152 8.
-  Definition loc_120 : location_info := LocationInfo file_0 152 11 152 28.
-  Definition loc_121 : location_info := LocationInfo file_0 152 11 152 15.
-  Definition loc_122 : location_info := LocationInfo file_0 152 11 152 15.
-  Definition loc_123 : location_info := LocationInfo file_0 152 16 152 20.
-  Definition loc_124 : location_info := LocationInfo file_0 152 16 152 20.
-  Definition loc_125 : location_info := LocationInfo file_0 152 22 152 27.
-  Definition loc_126 : location_info := LocationInfo file_0 152 22 152 27.
-  Definition loc_127 : location_info := LocationInfo file_0 150 4 150 10.
-  Definition loc_128 : location_info := LocationInfo file_0 150 5 150 10.
-  Definition loc_129 : location_info := LocationInfo file_0 150 5 150 10.
-  Definition loc_130 : location_info := LocationInfo file_0 150 13 150 14.
-  Definition loc_131 : location_info := LocationInfo file_0 149 4 149 10.
-  Definition loc_132 : location_info := LocationInfo file_0 149 5 149 10.
-  Definition loc_133 : location_info := LocationInfo file_0 149 5 149 10.
-  Definition loc_134 : location_info := LocationInfo file_0 149 13 149 14.
-  Definition loc_135 : location_info := LocationInfo file_0 148 4 148 10.
-  Definition loc_136 : location_info := LocationInfo file_0 148 5 148 10.
-  Definition loc_137 : location_info := LocationInfo file_0 148 5 148 10.
-  Definition loc_138 : location_info := LocationInfo file_0 148 13 148 14.
-  Definition loc_139 : location_info := LocationInfo file_0 146 11 146 26.
-  Definition loc_140 : location_info := LocationInfo file_0 146 11 146 19.
-  Definition loc_141 : location_info := LocationInfo file_0 146 11 146 19.
-  Definition loc_142 : location_info := LocationInfo file_0 146 20 146 25.
-  Definition loc_143 : location_info := LocationInfo file_0 146 21 146 25.
-  Definition loc_144 : location_info := LocationInfo file_0 144 20 144 41.
-  Definition loc_145 : location_info := LocationInfo file_0 144 20 144 25.
-  Definition loc_146 : location_info := LocationInfo file_0 144 20 144 25.
-  Definition loc_147 : location_info := LocationInfo file_0 144 26 144 40.
-  Definition loc_150 : location_info := LocationInfo file_0 143 20 143 41.
-  Definition loc_151 : location_info := LocationInfo file_0 143 20 143 25.
-  Definition loc_152 : location_info := LocationInfo file_0 143 20 143 25.
-  Definition loc_153 : location_info := LocationInfo file_0 143 26 143 40.
-  Definition loc_156 : location_info := LocationInfo file_0 142 20 142 41.
-  Definition loc_157 : location_info := LocationInfo file_0 142 20 142 25.
-  Definition loc_158 : location_info := LocationInfo file_0 142 20 142 25.
-  Definition loc_159 : location_info := LocationInfo file_0 142 26 142 40.
-  Definition loc_162 : location_info := LocationInfo file_0 141 18 141 24.
-  Definition loc_163 : location_info := LocationInfo file_0 141 18 141 22.
-  Definition loc_164 : location_info := LocationInfo file_0 141 18 141 22.
+  Definition loc_2 : location_info := LocationInfo file_0 154 4 154 25.
+  Definition loc_3 : location_info := LocationInfo file_0 155 4 155 42.
+  Definition loc_4 : location_info := LocationInfo file_0 156 4 156 42.
+  Definition loc_5 : location_info := LocationInfo file_0 157 4 157 42.
+  Definition loc_6 : location_info := LocationInfo file_0 159 4 159 28.
+  Definition loc_7 : location_info := LocationInfo file_0 161 4 161 15.
+  Definition loc_8 : location_info := LocationInfo file_0 162 4 162 15.
+  Definition loc_9 : location_info := LocationInfo file_0 163 4 163 15.
+  Definition loc_10 : location_info := LocationInfo file_0 165 4 165 29.
+  Definition loc_11 : location_info := LocationInfo file_0 166 4 166 29.
+  Definition loc_12 : location_info := LocationInfo file_0 167 4 167 29.
+  Definition loc_13 : location_info := LocationInfo file_0 169 4 169 29.
+  Definition loc_14 : location_info := LocationInfo file_0 171 4 171 25.
+  Definition loc_15 : location_info := LocationInfo file_0 173 4 173 29.
+  Definition loc_16 : location_info := LocationInfo file_0 175 4 175 23.
+  Definition loc_17 : location_info := LocationInfo file_0 176 4 176 23.
+  Definition loc_18 : location_info := LocationInfo file_0 177 4 177 23.
+  Definition loc_19 : location_info := LocationInfo file_0 179 4 179 28.
+  Definition loc_20 : location_info := LocationInfo file_0 181 4 181 32.
+  Definition loc_21 : location_info := LocationInfo file_0 182 4 182 32.
+  Definition loc_22 : location_info := LocationInfo file_0 183 4 183 32.
+  Definition loc_23 : location_info := LocationInfo file_0 185 4 185 32.
+  Definition loc_24 : location_info := LocationInfo file_0 186 4 186 32.
+  Definition loc_25 : location_info := LocationInfo file_0 187 4 187 32.
+  Definition loc_26 : location_info := LocationInfo file_0 187 4 187 8.
+  Definition loc_27 : location_info := LocationInfo file_0 187 4 187 8.
+  Definition loc_28 : location_info := LocationInfo file_0 187 9 187 23.
+  Definition loc_29 : location_info := LocationInfo file_0 187 25 187 30.
+  Definition loc_30 : location_info := LocationInfo file_0 187 25 187 30.
+  Definition loc_31 : location_info := LocationInfo file_0 186 4 186 8.
+  Definition loc_32 : location_info := LocationInfo file_0 186 4 186 8.
+  Definition loc_33 : location_info := LocationInfo file_0 186 9 186 23.
+  Definition loc_34 : location_info := LocationInfo file_0 186 25 186 30.
+  Definition loc_35 : location_info := LocationInfo file_0 186 25 186 30.
+  Definition loc_36 : location_info := LocationInfo file_0 185 4 185 8.
+  Definition loc_37 : location_info := LocationInfo file_0 185 4 185 8.
+  Definition loc_38 : location_info := LocationInfo file_0 185 9 185 23.
+  Definition loc_39 : location_info := LocationInfo file_0 185 25 185 30.
+  Definition loc_40 : location_info := LocationInfo file_0 185 25 185 30.
+  Definition loc_41 : location_info := LocationInfo file_0 183 11 183 30.
+  Definition loc_42 : location_info := LocationInfo file_0 183 11 183 17.
+  Definition loc_43 : location_info := LocationInfo file_0 183 11 183 17.
+  Definition loc_44 : location_info := LocationInfo file_0 183 12 183 17.
+  Definition loc_45 : location_info := LocationInfo file_0 183 12 183 17.
+  Definition loc_46 : location_info := LocationInfo file_0 183 21 183 30.
+  Definition loc_47 : location_info := LocationInfo file_0 183 29 183 30.
+  Definition loc_48 : location_info := LocationInfo file_0 182 11 182 30.
+  Definition loc_49 : location_info := LocationInfo file_0 182 11 182 17.
+  Definition loc_50 : location_info := LocationInfo file_0 182 11 182 17.
+  Definition loc_51 : location_info := LocationInfo file_0 182 12 182 17.
+  Definition loc_52 : location_info := LocationInfo file_0 182 12 182 17.
+  Definition loc_53 : location_info := LocationInfo file_0 182 21 182 30.
+  Definition loc_54 : location_info := LocationInfo file_0 182 29 182 30.
+  Definition loc_55 : location_info := LocationInfo file_0 181 11 181 30.
+  Definition loc_56 : location_info := LocationInfo file_0 181 11 181 17.
+  Definition loc_57 : location_info := LocationInfo file_0 181 11 181 17.
+  Definition loc_58 : location_info := LocationInfo file_0 181 12 181 17.
+  Definition loc_59 : location_info := LocationInfo file_0 181 12 181 17.
+  Definition loc_60 : location_info := LocationInfo file_0 181 21 181 30.
+  Definition loc_61 : location_info := LocationInfo file_0 181 29 181 30.
+  Definition loc_62 : location_info := LocationInfo file_0 179 11 179 26.
+  Definition loc_63 : location_info := LocationInfo file_0 179 11 179 19.
+  Definition loc_64 : location_info := LocationInfo file_0 179 11 179 19.
+  Definition loc_65 : location_info := LocationInfo file_0 179 20 179 25.
+  Definition loc_66 : location_info := LocationInfo file_0 179 21 179 25.
+  Definition loc_67 : location_info := LocationInfo file_0 177 4 177 9.
+  Definition loc_68 : location_info := LocationInfo file_0 177 12 177 22.
+  Definition loc_69 : location_info := LocationInfo file_0 177 12 177 15.
+  Definition loc_70 : location_info := LocationInfo file_0 177 12 177 15.
+  Definition loc_71 : location_info := LocationInfo file_0 177 16 177 21.
+  Definition loc_72 : location_info := LocationInfo file_0 177 17 177 21.
+  Definition loc_73 : location_info := LocationInfo file_0 176 4 176 9.
+  Definition loc_74 : location_info := LocationInfo file_0 176 12 176 22.
+  Definition loc_75 : location_info := LocationInfo file_0 176 12 176 15.
+  Definition loc_76 : location_info := LocationInfo file_0 176 12 176 15.
+  Definition loc_77 : location_info := LocationInfo file_0 176 16 176 21.
+  Definition loc_78 : location_info := LocationInfo file_0 176 17 176 21.
+  Definition loc_79 : location_info := LocationInfo file_0 175 4 175 9.
+  Definition loc_80 : location_info := LocationInfo file_0 175 12 175 22.
+  Definition loc_81 : location_info := LocationInfo file_0 175 12 175 15.
+  Definition loc_82 : location_info := LocationInfo file_0 175 12 175 15.
+  Definition loc_83 : location_info := LocationInfo file_0 175 16 175 21.
+  Definition loc_84 : location_info := LocationInfo file_0 175 17 175 21.
+  Definition loc_85 : location_info := LocationInfo file_0 173 11 173 27.
+  Definition loc_86 : location_info := LocationInfo file_0 173 11 173 17.
+  Definition loc_87 : location_info := LocationInfo file_0 173 11 173 17.
+  Definition loc_88 : location_info := LocationInfo file_0 173 18 173 23.
+  Definition loc_89 : location_info := LocationInfo file_0 173 19 173 23.
+  Definition loc_90 : location_info := LocationInfo file_0 173 25 173 26.
+  Definition loc_91 : location_info := LocationInfo file_0 171 4 171 8.
+  Definition loc_92 : location_info := LocationInfo file_0 171 11 171 24.
+  Definition loc_93 : location_info := LocationInfo file_0 171 11 171 18.
+  Definition loc_94 : location_info := LocationInfo file_0 171 11 171 18.
+  Definition loc_95 : location_info := LocationInfo file_0 171 19 171 23.
+  Definition loc_96 : location_info := LocationInfo file_0 171 19 171 23.
+  Definition loc_97 : location_info := LocationInfo file_0 169 11 169 27.
+  Definition loc_98 : location_info := LocationInfo file_0 169 11 169 17.
+  Definition loc_99 : location_info := LocationInfo file_0 169 11 169 17.
+  Definition loc_100 : location_info := LocationInfo file_0 169 18 169 23.
+  Definition loc_101 : location_info := LocationInfo file_0 169 19 169 23.
+  Definition loc_102 : location_info := LocationInfo file_0 169 25 169 26.
+  Definition loc_103 : location_info := LocationInfo file_0 167 4 167 8.
+  Definition loc_104 : location_info := LocationInfo file_0 167 11 167 28.
+  Definition loc_105 : location_info := LocationInfo file_0 167 11 167 15.
+  Definition loc_106 : location_info := LocationInfo file_0 167 11 167 15.
+  Definition loc_107 : location_info := LocationInfo file_0 167 16 167 20.
+  Definition loc_108 : location_info := LocationInfo file_0 167 16 167 20.
+  Definition loc_109 : location_info := LocationInfo file_0 167 22 167 27.
+  Definition loc_110 : location_info := LocationInfo file_0 167 22 167 27.
+  Definition loc_111 : location_info := LocationInfo file_0 166 4 166 8.
+  Definition loc_112 : location_info := LocationInfo file_0 166 11 166 28.
+  Definition loc_113 : location_info := LocationInfo file_0 166 11 166 15.
+  Definition loc_114 : location_info := LocationInfo file_0 166 11 166 15.
+  Definition loc_115 : location_info := LocationInfo file_0 166 16 166 20.
+  Definition loc_116 : location_info := LocationInfo file_0 166 16 166 20.
+  Definition loc_117 : location_info := LocationInfo file_0 166 22 166 27.
+  Definition loc_118 : location_info := LocationInfo file_0 166 22 166 27.
+  Definition loc_119 : location_info := LocationInfo file_0 165 4 165 8.
+  Definition loc_120 : location_info := LocationInfo file_0 165 11 165 28.
+  Definition loc_121 : location_info := LocationInfo file_0 165 11 165 15.
+  Definition loc_122 : location_info := LocationInfo file_0 165 11 165 15.
+  Definition loc_123 : location_info := LocationInfo file_0 165 16 165 20.
+  Definition loc_124 : location_info := LocationInfo file_0 165 16 165 20.
+  Definition loc_125 : location_info := LocationInfo file_0 165 22 165 27.
+  Definition loc_126 : location_info := LocationInfo file_0 165 22 165 27.
+  Definition loc_127 : location_info := LocationInfo file_0 163 4 163 10.
+  Definition loc_128 : location_info := LocationInfo file_0 163 5 163 10.
+  Definition loc_129 : location_info := LocationInfo file_0 163 5 163 10.
+  Definition loc_130 : location_info := LocationInfo file_0 163 13 163 14.
+  Definition loc_131 : location_info := LocationInfo file_0 162 4 162 10.
+  Definition loc_132 : location_info := LocationInfo file_0 162 5 162 10.
+  Definition loc_133 : location_info := LocationInfo file_0 162 5 162 10.
+  Definition loc_134 : location_info := LocationInfo file_0 162 13 162 14.
+  Definition loc_135 : location_info := LocationInfo file_0 161 4 161 10.
+  Definition loc_136 : location_info := LocationInfo file_0 161 5 161 10.
+  Definition loc_137 : location_info := LocationInfo file_0 161 5 161 10.
+  Definition loc_138 : location_info := LocationInfo file_0 161 13 161 14.
+  Definition loc_139 : location_info := LocationInfo file_0 159 11 159 26.
+  Definition loc_140 : location_info := LocationInfo file_0 159 11 159 19.
+  Definition loc_141 : location_info := LocationInfo file_0 159 11 159 19.
+  Definition loc_142 : location_info := LocationInfo file_0 159 20 159 25.
+  Definition loc_143 : location_info := LocationInfo file_0 159 21 159 25.
+  Definition loc_144 : location_info := LocationInfo file_0 157 20 157 41.
+  Definition loc_145 : location_info := LocationInfo file_0 157 20 157 25.
+  Definition loc_146 : location_info := LocationInfo file_0 157 20 157 25.
+  Definition loc_147 : location_info := LocationInfo file_0 157 26 157 40.
+  Definition loc_150 : location_info := LocationInfo file_0 156 20 156 41.
+  Definition loc_151 : location_info := LocationInfo file_0 156 20 156 25.
+  Definition loc_152 : location_info := LocationInfo file_0 156 20 156 25.
+  Definition loc_153 : location_info := LocationInfo file_0 156 26 156 40.
+  Definition loc_156 : location_info := LocationInfo file_0 155 20 155 41.
+  Definition loc_157 : location_info := LocationInfo file_0 155 20 155 25.
+  Definition loc_158 : location_info := LocationInfo file_0 155 20 155 25.
+  Definition loc_159 : location_info := LocationInfo file_0 155 26 155 40.
+  Definition loc_162 : location_info := LocationInfo file_0 154 18 154 24.
+  Definition loc_163 : location_info := LocationInfo file_0 154 18 154 22.
+  Definition loc_164 : location_info := LocationInfo file_0 154 18 154 22.
   Definition loc_169 : location_info := LocationInfo file_0 27 4 27 26.
   Definition loc_170 : location_info := LocationInfo file_0 27 11 27 25.
   Definition loc_173 : location_info := LocationInfo file_0 35 4 35 32.
@@ -294,113 +294,131 @@ Section code.
   Definition loc_314 : location_info := LocationInfo file_0 93 10 93 11.
   Definition loc_315 : location_info := LocationInfo file_0 93 15 93 29.
   Definition loc_316 : location_info := LocationInfo file_0 89 15 89 16.
-  Definition loc_321 : location_info := LocationInfo file_0 104 2 104 19.
-  Definition loc_322 : location_info := LocationInfo file_0 108 2 110 3.
-  Definition loc_323 : location_info := LocationInfo file_0 111 2 111 12.
-  Definition loc_324 : location_info := LocationInfo file_0 111 2 111 6.
-  Definition loc_325 : location_info := LocationInfo file_0 111 3 111 6.
-  Definition loc_326 : location_info := LocationInfo file_0 111 3 111 6.
-  Definition loc_327 : location_info := LocationInfo file_0 111 9 111 11.
-  Definition loc_328 : location_info := LocationInfo file_0 111 9 111 11.
-  Definition loc_329 : location_info := LocationInfo file_0 108 2 110 3.
-  Definition loc_330 : location_info := LocationInfo file_0 108 31 110 3.
-  Definition loc_331 : location_info := LocationInfo file_0 109 4 109 26.
-  Definition loc_332 : location_info := LocationInfo file_0 108 2 110 3.
-  Definition loc_333 : location_info := LocationInfo file_0 108 2 110 3.
-  Definition loc_334 : location_info := LocationInfo file_0 109 4 109 7.
-  Definition loc_335 : location_info := LocationInfo file_0 109 10 109 25.
-  Definition loc_336 : location_info := LocationInfo file_0 109 11 109 25.
-  Definition loc_337 : location_info := LocationInfo file_0 109 12 109 18.
-  Definition loc_338 : location_info := LocationInfo file_0 109 12 109 18.
-  Definition loc_339 : location_info := LocationInfo file_0 109 14 109 17.
-  Definition loc_340 : location_info := LocationInfo file_0 109 14 109 17.
-  Definition loc_341 : location_info := LocationInfo file_0 108 8 108 30.
-  Definition loc_342 : location_info := LocationInfo file_0 108 8 108 12.
-  Definition loc_343 : location_info := LocationInfo file_0 108 8 108 12.
-  Definition loc_344 : location_info := LocationInfo file_0 108 9 108 12.
-  Definition loc_345 : location_info := LocationInfo file_0 108 9 108 12.
-  Definition loc_346 : location_info := LocationInfo file_0 108 16 108 30.
-  Definition loc_347 : location_info := LocationInfo file_0 104 16 104 18.
-  Definition loc_348 : location_info := LocationInfo file_0 104 16 104 18.
-  Definition loc_353 : location_info := LocationInfo file_0 121 4 121 21.
-  Definition loc_354 : location_info := LocationInfo file_0 126 4 135 5.
-  Definition loc_355 : location_info := LocationInfo file_0 136 4 136 13.
-  Definition loc_356 : location_info := LocationInfo file_0 136 11 136 12.
-  Definition loc_357 : location_info := LocationInfo file_0 126 4 135 5.
-  Definition loc_358 : location_info := LocationInfo file_0 126 35 135 5.
-  Definition loc_359 : location_info := LocationInfo file_0 127 8 127 27.
-  Definition loc_360 : location_info := LocationInfo file_0 129 8 129 33.
-  Definition loc_361 : location_info := LocationInfo file_0 130 8 132 9.
-  Definition loc_362 : location_info := LocationInfo file_0 134 8 134 26.
-  Definition loc_363 : location_info := LocationInfo file_0 126 4 135 5.
-  Definition loc_364 : location_info := LocationInfo file_0 126 4 135 5.
-  Definition loc_365 : location_info := LocationInfo file_0 134 8 134 12.
-  Definition loc_366 : location_info := LocationInfo file_0 134 15 134 25.
-  Definition loc_367 : location_info := LocationInfo file_0 134 16 134 25.
-  Definition loc_368 : location_info := LocationInfo file_0 134 16 134 19.
-  Definition loc_369 : location_info := LocationInfo file_0 134 16 134 19.
-  Definition loc_370 : location_info := LocationInfo file_0 130 23 132 9.
-  Definition loc_371 : location_info := LocationInfo file_0 131 12 131 21.
-  Definition loc_372 : location_info := LocationInfo file_0 131 19 131 20.
-  Definition loc_374 : location_info := LocationInfo file_0 130 11 130 21.
-  Definition loc_375 : location_info := LocationInfo file_0 130 11 130 16.
-  Definition loc_376 : location_info := LocationInfo file_0 130 11 130 16.
-  Definition loc_377 : location_info := LocationInfo file_0 130 12 130 16.
-  Definition loc_378 : location_info := LocationInfo file_0 130 12 130 16.
-  Definition loc_379 : location_info := LocationInfo file_0 130 20 130 21.
-  Definition loc_380 : location_info := LocationInfo file_0 130 20 130 21.
-  Definition loc_381 : location_info := LocationInfo file_0 129 23 129 32.
-  Definition loc_382 : location_info := LocationInfo file_0 129 23 129 32.
-  Definition loc_383 : location_info := LocationInfo file_0 129 23 129 26.
-  Definition loc_384 : location_info := LocationInfo file_0 129 23 129 26.
-  Definition loc_387 : location_info := LocationInfo file_0 127 21 127 26.
-  Definition loc_388 : location_info := LocationInfo file_0 127 21 127 26.
-  Definition loc_389 : location_info := LocationInfo file_0 127 22 127 26.
-  Definition loc_390 : location_info := LocationInfo file_0 127 22 127 26.
-  Definition loc_393 : location_info := LocationInfo file_0 126 10 126 33.
-  Definition loc_394 : location_info := LocationInfo file_0 126 10 126 15.
-  Definition loc_395 : location_info := LocationInfo file_0 126 10 126 15.
-  Definition loc_396 : location_info := LocationInfo file_0 126 11 126 15.
-  Definition loc_397 : location_info := LocationInfo file_0 126 11 126 15.
-  Definition loc_398 : location_info := LocationInfo file_0 126 19 126 33.
-  Definition loc_399 : location_info := LocationInfo file_0 121 19 121 20.
-  Definition loc_400 : location_info := LocationInfo file_0 121 19 121 20.
-  Definition loc_405 : location_info := LocationInfo file_0 181 2 181 18.
-  Definition loc_406 : location_info := LocationInfo file_0 191 2 196 3.
-  Definition loc_407 : location_info := LocationInfo file_0 191 2 196 3.
-  Definition loc_408 : location_info := LocationInfo file_0 191 31 196 3.
-  Definition loc_409 : location_info := LocationInfo file_0 192 4 192 25.
-  Definition loc_410 : location_info := LocationInfo file_0 193 4 193 20.
-  Definition loc_411 : location_info := LocationInfo file_0 194 4 194 14.
-  Definition loc_412 : location_info := LocationInfo file_0 195 4 195 19.
-  Definition loc_413 : location_info := LocationInfo file_0 191 2 196 3.
-  Definition loc_414 : location_info := LocationInfo file_0 191 2 196 3.
-  Definition loc_415 : location_info := LocationInfo file_0 195 4 195 7.
-  Definition loc_416 : location_info := LocationInfo file_0 195 10 195 18.
-  Definition loc_417 : location_info := LocationInfo file_0 195 10 195 18.
-  Definition loc_418 : location_info := LocationInfo file_0 194 4 194 7.
-  Definition loc_419 : location_info := LocationInfo file_0 194 5 194 7.
-  Definition loc_420 : location_info := LocationInfo file_0 194 5 194 7.
-  Definition loc_421 : location_info := LocationInfo file_0 194 10 194 13.
-  Definition loc_422 : location_info := LocationInfo file_0 194 10 194 13.
-  Definition loc_423 : location_info := LocationInfo file_0 193 4 193 13.
-  Definition loc_424 : location_info := LocationInfo file_0 193 4 193 7.
-  Definition loc_425 : location_info := LocationInfo file_0 193 4 193 7.
-  Definition loc_426 : location_info := LocationInfo file_0 193 16 193 19.
-  Definition loc_427 : location_info := LocationInfo file_0 193 16 193 19.
-  Definition loc_428 : location_info := LocationInfo file_0 193 17 193 19.
-  Definition loc_429 : location_info := LocationInfo file_0 193 17 193 19.
-  Definition loc_430 : location_info := LocationInfo file_0 192 4 192 12.
-  Definition loc_431 : location_info := LocationInfo file_0 192 15 192 24.
-  Definition loc_432 : location_info := LocationInfo file_0 192 15 192 24.
-  Definition loc_433 : location_info := LocationInfo file_0 192 15 192 18.
-  Definition loc_434 : location_info := LocationInfo file_0 192 15 192 18.
-  Definition loc_435 : location_info := LocationInfo file_0 191 8 191 29.
-  Definition loc_436 : location_info := LocationInfo file_0 191 8 191 11.
-  Definition loc_437 : location_info := LocationInfo file_0 191 8 191 11.
-  Definition loc_438 : location_info := LocationInfo file_0 191 15 191 29.
-  Definition loc_439 : location_info := LocationInfo file_0 181 15 181 17.
-  Definition loc_440 : location_info := LocationInfo file_0 181 15 181 17.
+  Definition loc_321 : location_info := LocationInfo file_0 107 2 109 3.
+  Definition loc_322 : location_info := LocationInfo file_0 110 2 110 37.
+  Definition loc_323 : location_info := LocationInfo file_0 110 9 110 36.
+  Definition loc_324 : location_info := LocationInfo file_0 110 9 110 32.
+  Definition loc_325 : location_info := LocationInfo file_0 110 9 110 23.
+  Definition loc_326 : location_info := LocationInfo file_0 110 9 110 23.
+  Definition loc_327 : location_info := LocationInfo file_0 110 24 110 31.
+  Definition loc_328 : location_info := LocationInfo file_0 110 24 110 31.
+  Definition loc_329 : location_info := LocationInfo file_0 110 24 110 25.
+  Definition loc_330 : location_info := LocationInfo file_0 110 24 110 25.
+  Definition loc_331 : location_info := LocationInfo file_0 110 35 110 36.
+  Definition loc_332 : location_info := LocationInfo file_0 107 26 109 3.
+  Definition loc_333 : location_info := LocationInfo file_0 108 4 108 13.
+  Definition loc_334 : location_info := LocationInfo file_0 108 11 108 12.
+  Definition loc_336 : location_info := LocationInfo file_0 107 5 107 24.
+  Definition loc_337 : location_info := LocationInfo file_0 107 5 107 6.
+  Definition loc_338 : location_info := LocationInfo file_0 107 5 107 6.
+  Definition loc_339 : location_info := LocationInfo file_0 107 10 107 24.
+  Definition loc_342 : location_info := LocationInfo file_0 117 2 117 19.
+  Definition loc_343 : location_info := LocationInfo file_0 121 2 123 3.
+  Definition loc_344 : location_info := LocationInfo file_0 124 2 124 12.
+  Definition loc_345 : location_info := LocationInfo file_0 124 2 124 6.
+  Definition loc_346 : location_info := LocationInfo file_0 124 3 124 6.
+  Definition loc_347 : location_info := LocationInfo file_0 124 3 124 6.
+  Definition loc_348 : location_info := LocationInfo file_0 124 9 124 11.
+  Definition loc_349 : location_info := LocationInfo file_0 124 9 124 11.
+  Definition loc_350 : location_info := LocationInfo file_0 121 2 123 3.
+  Definition loc_351 : location_info := LocationInfo file_0 121 31 123 3.
+  Definition loc_352 : location_info := LocationInfo file_0 122 4 122 26.
+  Definition loc_353 : location_info := LocationInfo file_0 121 2 123 3.
+  Definition loc_354 : location_info := LocationInfo file_0 121 2 123 3.
+  Definition loc_355 : location_info := LocationInfo file_0 122 4 122 7.
+  Definition loc_356 : location_info := LocationInfo file_0 122 10 122 25.
+  Definition loc_357 : location_info := LocationInfo file_0 122 11 122 25.
+  Definition loc_358 : location_info := LocationInfo file_0 122 12 122 18.
+  Definition loc_359 : location_info := LocationInfo file_0 122 12 122 18.
+  Definition loc_360 : location_info := LocationInfo file_0 122 14 122 17.
+  Definition loc_361 : location_info := LocationInfo file_0 122 14 122 17.
+  Definition loc_362 : location_info := LocationInfo file_0 121 8 121 30.
+  Definition loc_363 : location_info := LocationInfo file_0 121 8 121 12.
+  Definition loc_364 : location_info := LocationInfo file_0 121 8 121 12.
+  Definition loc_365 : location_info := LocationInfo file_0 121 9 121 12.
+  Definition loc_366 : location_info := LocationInfo file_0 121 9 121 12.
+  Definition loc_367 : location_info := LocationInfo file_0 121 16 121 30.
+  Definition loc_368 : location_info := LocationInfo file_0 117 16 117 18.
+  Definition loc_369 : location_info := LocationInfo file_0 117 16 117 18.
+  Definition loc_374 : location_info := LocationInfo file_0 134 4 134 21.
+  Definition loc_375 : location_info := LocationInfo file_0 139 4 148 5.
+  Definition loc_376 : location_info := LocationInfo file_0 149 4 149 13.
+  Definition loc_377 : location_info := LocationInfo file_0 149 11 149 12.
+  Definition loc_378 : location_info := LocationInfo file_0 139 4 148 5.
+  Definition loc_379 : location_info := LocationInfo file_0 139 35 148 5.
+  Definition loc_380 : location_info := LocationInfo file_0 140 8 140 27.
+  Definition loc_381 : location_info := LocationInfo file_0 142 8 142 33.
+  Definition loc_382 : location_info := LocationInfo file_0 143 8 145 9.
+  Definition loc_383 : location_info := LocationInfo file_0 147 8 147 26.
+  Definition loc_384 : location_info := LocationInfo file_0 139 4 148 5.
+  Definition loc_385 : location_info := LocationInfo file_0 139 4 148 5.
+  Definition loc_386 : location_info := LocationInfo file_0 147 8 147 12.
+  Definition loc_387 : location_info := LocationInfo file_0 147 15 147 25.
+  Definition loc_388 : location_info := LocationInfo file_0 147 16 147 25.
+  Definition loc_389 : location_info := LocationInfo file_0 147 16 147 19.
+  Definition loc_390 : location_info := LocationInfo file_0 147 16 147 19.
+  Definition loc_391 : location_info := LocationInfo file_0 143 23 145 9.
+  Definition loc_392 : location_info := LocationInfo file_0 144 12 144 21.
+  Definition loc_393 : location_info := LocationInfo file_0 144 19 144 20.
+  Definition loc_395 : location_info := LocationInfo file_0 143 11 143 21.
+  Definition loc_396 : location_info := LocationInfo file_0 143 11 143 16.
+  Definition loc_397 : location_info := LocationInfo file_0 143 11 143 16.
+  Definition loc_398 : location_info := LocationInfo file_0 143 12 143 16.
+  Definition loc_399 : location_info := LocationInfo file_0 143 12 143 16.
+  Definition loc_400 : location_info := LocationInfo file_0 143 20 143 21.
+  Definition loc_401 : location_info := LocationInfo file_0 143 20 143 21.
+  Definition loc_402 : location_info := LocationInfo file_0 142 23 142 32.
+  Definition loc_403 : location_info := LocationInfo file_0 142 23 142 32.
+  Definition loc_404 : location_info := LocationInfo file_0 142 23 142 26.
+  Definition loc_405 : location_info := LocationInfo file_0 142 23 142 26.
+  Definition loc_408 : location_info := LocationInfo file_0 140 21 140 26.
+  Definition loc_409 : location_info := LocationInfo file_0 140 21 140 26.
+  Definition loc_410 : location_info := LocationInfo file_0 140 22 140 26.
+  Definition loc_411 : location_info := LocationInfo file_0 140 22 140 26.
+  Definition loc_414 : location_info := LocationInfo file_0 139 10 139 33.
+  Definition loc_415 : location_info := LocationInfo file_0 139 10 139 15.
+  Definition loc_416 : location_info := LocationInfo file_0 139 10 139 15.
+  Definition loc_417 : location_info := LocationInfo file_0 139 11 139 15.
+  Definition loc_418 : location_info := LocationInfo file_0 139 11 139 15.
+  Definition loc_419 : location_info := LocationInfo file_0 139 19 139 33.
+  Definition loc_420 : location_info := LocationInfo file_0 134 19 134 20.
+  Definition loc_421 : location_info := LocationInfo file_0 134 19 134 20.
+  Definition loc_426 : location_info := LocationInfo file_0 194 2 194 18.
+  Definition loc_427 : location_info := LocationInfo file_0 204 2 209 3.
+  Definition loc_428 : location_info := LocationInfo file_0 204 2 209 3.
+  Definition loc_429 : location_info := LocationInfo file_0 204 31 209 3.
+  Definition loc_430 : location_info := LocationInfo file_0 205 4 205 25.
+  Definition loc_431 : location_info := LocationInfo file_0 206 4 206 20.
+  Definition loc_432 : location_info := LocationInfo file_0 207 4 207 14.
+  Definition loc_433 : location_info := LocationInfo file_0 208 4 208 19.
+  Definition loc_434 : location_info := LocationInfo file_0 204 2 209 3.
+  Definition loc_435 : location_info := LocationInfo file_0 204 2 209 3.
+  Definition loc_436 : location_info := LocationInfo file_0 208 4 208 7.
+  Definition loc_437 : location_info := LocationInfo file_0 208 10 208 18.
+  Definition loc_438 : location_info := LocationInfo file_0 208 10 208 18.
+  Definition loc_439 : location_info := LocationInfo file_0 207 4 207 7.
+  Definition loc_440 : location_info := LocationInfo file_0 207 5 207 7.
+  Definition loc_441 : location_info := LocationInfo file_0 207 5 207 7.
+  Definition loc_442 : location_info := LocationInfo file_0 207 10 207 13.
+  Definition loc_443 : location_info := LocationInfo file_0 207 10 207 13.
+  Definition loc_444 : location_info := LocationInfo file_0 206 4 206 13.
+  Definition loc_445 : location_info := LocationInfo file_0 206 4 206 7.
+  Definition loc_446 : location_info := LocationInfo file_0 206 4 206 7.
+  Definition loc_447 : location_info := LocationInfo file_0 206 16 206 19.
+  Definition loc_448 : location_info := LocationInfo file_0 206 16 206 19.
+  Definition loc_449 : location_info := LocationInfo file_0 206 17 206 19.
+  Definition loc_450 : location_info := LocationInfo file_0 206 17 206 19.
+  Definition loc_451 : location_info := LocationInfo file_0 205 4 205 12.
+  Definition loc_452 : location_info := LocationInfo file_0 205 15 205 24.
+  Definition loc_453 : location_info := LocationInfo file_0 205 15 205 24.
+  Definition loc_454 : location_info := LocationInfo file_0 205 15 205 18.
+  Definition loc_455 : location_info := LocationInfo file_0 205 15 205 18.
+  Definition loc_456 : location_info := LocationInfo file_0 204 8 204 29.
+  Definition loc_457 : location_info := LocationInfo file_0 204 8 204 11.
+  Definition loc_458 : location_info := LocationInfo file_0 204 8 204 11.
+  Definition loc_459 : location_info := LocationInfo file_0 204 15 204 29.
+  Definition loc_460 : location_info := LocationInfo file_0 194 15 194 17.
+  Definition loc_461 : location_info := LocationInfo file_0 194 15 194 17.
 
   (* Definition of struct [list]. *)
   Program Definition struct_list := {|
@@ -740,6 +758,43 @@ Section code.
     )%E
   |}.
 
+  (* Definition of function [length_val_rec]. *)
+  Definition impl_length_val_rec (global_length_val_rec : loc): function := {|
+    f_args := [
+      ("p", LPtr)
+    ];
+    f_local_vars := [
+    ];
+    f_init := "#0";
+    f_code := (
+      <[ "#0" :=
+        locinfo: loc_336 ;
+        if: LocInfoE loc_336 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_336 ((LocInfoE loc_337 (use{LPtr} (LocInfoE loc_338 ("p")))) ={PtrOp, PtrOp} (LocInfoE loc_339 (NULL)))))
+        then
+        locinfo: loc_333 ;
+          Goto "#2"
+        else
+        locinfo: loc_324 ;
+          Goto "#3"
+      ]> $
+      <[ "#1" :=
+        locinfo: loc_324 ;
+        "$0" <- LocInfoE loc_326 (global_length_val_rec) with
+          [ LocInfoE loc_327 (use{LPtr} (LocInfoE loc_328 ((LocInfoE loc_329 (!{LPtr} (LocInfoE loc_330 ("p")))) at{struct_list} "tail"))) ] ;
+        locinfo: loc_322 ;
+        Return (LocInfoE loc_323 ((LocInfoE loc_324 ("$0")) +{IntOp size_t, IntOp size_t} (LocInfoE loc_331 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_331 (i2v 1 i32))))))
+      ]> $
+      <[ "#2" :=
+        locinfo: loc_333 ;
+        Return (LocInfoE loc_334 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_334 (i2v 0 i32))))
+      ]> $
+      <[ "#3" :=
+        locinfo: loc_324 ;
+        Goto "#1"
+      ]> $∅
+    )%E
+  |}.
+
   (* Definition of function [append]. *)
   Definition impl_append : function := {|
     f_args := [
@@ -753,35 +808,35 @@ Section code.
     f_code := (
       <[ "#0" :=
         "end" <-{ LPtr }
-          LocInfoE loc_347 (use{LPtr} (LocInfoE loc_348 ("l1"))) ;
-        locinfo: loc_322 ;
+          LocInfoE loc_368 (use{LPtr} (LocInfoE loc_369 ("l1"))) ;
+        locinfo: loc_343 ;
         Goto "#1"
       ]> $
       <[ "#1" :=
-        locinfo: loc_341 ;
-        if: LocInfoE loc_341 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_341 ((LocInfoE loc_342 (use{LPtr} (LocInfoE loc_344 (!{LPtr} (LocInfoE loc_345 ("end")))))) !={PtrOp, PtrOp} (LocInfoE loc_346 (NULL)))))
+        locinfo: loc_362 ;
+        if: LocInfoE loc_362 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_362 ((LocInfoE loc_363 (use{LPtr} (LocInfoE loc_365 (!{LPtr} (LocInfoE loc_366 ("end")))))) !={PtrOp, PtrOp} (LocInfoE loc_367 (NULL)))))
         then
-        locinfo: loc_331 ;
+        locinfo: loc_352 ;
           Goto "#2"
         else
-        locinfo: loc_323 ;
+        locinfo: loc_344 ;
           Goto "#3"
       ]> $
       <[ "#2" :=
-        locinfo: loc_331 ;
-        LocInfoE loc_334 ("end") <-{ LPtr }
-          LocInfoE loc_335 (&(LocInfoE loc_336 ((LocInfoE loc_337 (!{LPtr} (LocInfoE loc_339 (!{LPtr} (LocInfoE loc_340 ("end")))))) at{struct_list} "tail"))) ;
-        locinfo: loc_332 ;
-        Goto "continue19"
+        locinfo: loc_352 ;
+        LocInfoE loc_355 ("end") <-{ LPtr }
+          LocInfoE loc_356 (&(LocInfoE loc_357 ((LocInfoE loc_358 (!{LPtr} (LocInfoE loc_360 (!{LPtr} (LocInfoE loc_361 ("end")))))) at{struct_list} "tail"))) ;
+        locinfo: loc_353 ;
+        Goto "continue22"
       ]> $
       <[ "#3" :=
-        locinfo: loc_323 ;
-        LocInfoE loc_325 (!{LPtr} (LocInfoE loc_326 ("end"))) <-{ LPtr }
-          LocInfoE loc_327 (use{LPtr} (LocInfoE loc_328 ("l2"))) ;
+        locinfo: loc_344 ;
+        LocInfoE loc_346 (!{LPtr} (LocInfoE loc_347 ("end"))) <-{ LPtr }
+          LocInfoE loc_348 (use{LPtr} (LocInfoE loc_349 ("l2"))) ;
         Return (VOID)
       ]> $
-      <[ "continue19" :=
-        locinfo: loc_322 ;
+      <[ "continue22" :=
+        locinfo: loc_343 ;
         Goto "#1"
       ]> $∅
     )%E
@@ -802,54 +857,54 @@ Section code.
     f_code := (
       <[ "#0" :=
         "prev" <-{ LPtr }
-          LocInfoE loc_399 (use{LPtr} (LocInfoE loc_400 ("p"))) ;
-        locinfo: loc_354 ;
+          LocInfoE loc_420 (use{LPtr} (LocInfoE loc_421 ("p"))) ;
+        locinfo: loc_375 ;
         Goto "#1"
       ]> $
       <[ "#1" :=
-        locinfo: loc_393 ;
-        if: LocInfoE loc_393 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_393 ((LocInfoE loc_394 (use{LPtr} (LocInfoE loc_396 (!{LPtr} (LocInfoE loc_397 ("prev")))))) !={PtrOp, PtrOp} (LocInfoE loc_398 (NULL)))))
+        locinfo: loc_414 ;
+        if: LocInfoE loc_414 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_414 ((LocInfoE loc_415 (use{LPtr} (LocInfoE loc_417 (!{LPtr} (LocInfoE loc_418 ("prev")))))) !={PtrOp, PtrOp} (LocInfoE loc_419 (NULL)))))
         then
         Goto "#2"
         else
-        locinfo: loc_355 ;
+        locinfo: loc_376 ;
           Goto "#3"
       ]> $
       <[ "#2" :=
         "cur" <-{ LPtr }
-          LocInfoE loc_387 (use{LPtr} (LocInfoE loc_389 (!{LPtr} (LocInfoE loc_390 ("prev"))))) ;
+          LocInfoE loc_408 (use{LPtr} (LocInfoE loc_410 (!{LPtr} (LocInfoE loc_411 ("prev"))))) ;
         "head" <-{ LPtr }
-          LocInfoE loc_381 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_381 (use{LPtr} (LocInfoE loc_382 ((LocInfoE loc_383 (!{LPtr} (LocInfoE loc_384 ("cur")))) at{struct_list} "head"))))) ;
-        locinfo: loc_374 ;
-        if: LocInfoE loc_374 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_374 ((LocInfoE loc_375 (use{it_layout size_t} (LocInfoE loc_377 (!{LPtr} (LocInfoE loc_378 ("head")))))) ={IntOp size_t, IntOp size_t} (LocInfoE loc_379 (use{it_layout size_t} (LocInfoE loc_380 ("k")))))))
+          LocInfoE loc_402 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_402 (use{LPtr} (LocInfoE loc_403 ((LocInfoE loc_404 (!{LPtr} (LocInfoE loc_405 ("cur")))) at{struct_list} "head"))))) ;
+        locinfo: loc_395 ;
+        if: LocInfoE loc_395 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_395 ((LocInfoE loc_396 (use{it_layout size_t} (LocInfoE loc_398 (!{LPtr} (LocInfoE loc_399 ("head")))))) ={IntOp size_t, IntOp size_t} (LocInfoE loc_400 (use{it_layout size_t} (LocInfoE loc_401 ("k")))))))
         then
-        locinfo: loc_371 ;
+        locinfo: loc_392 ;
           Goto "#5"
         else
-        locinfo: loc_362 ;
+        locinfo: loc_383 ;
           Goto "#6"
       ]> $
       <[ "#3" :=
-        locinfo: loc_355 ;
-        Return (LocInfoE loc_356 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_356 (i2v 0 i32))))
+        locinfo: loc_376 ;
+        Return (LocInfoE loc_377 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_377 (i2v 0 i32))))
       ]> $
       <[ "#4" :=
-        locinfo: loc_362 ;
-        LocInfoE loc_365 ("prev") <-{ LPtr }
-          LocInfoE loc_366 (&(LocInfoE loc_367 ((LocInfoE loc_368 (!{LPtr} (LocInfoE loc_369 ("cur")))) at{struct_list} "tail"))) ;
-        locinfo: loc_363 ;
-        Goto "continue23"
+        locinfo: loc_383 ;
+        LocInfoE loc_386 ("prev") <-{ LPtr }
+          LocInfoE loc_387 (&(LocInfoE loc_388 ((LocInfoE loc_389 (!{LPtr} (LocInfoE loc_390 ("cur")))) at{struct_list} "tail"))) ;
+        locinfo: loc_384 ;
+        Goto "continue26"
       ]> $
       <[ "#5" :=
-        locinfo: loc_371 ;
-        Return (LocInfoE loc_372 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_372 (i2v 1 i32))))
+        locinfo: loc_392 ;
+        Return (LocInfoE loc_393 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_393 (i2v 1 i32))))
       ]> $
       <[ "#6" :=
-        locinfo: loc_362 ;
+        locinfo: loc_383 ;
         Goto "#4"
       ]> $
-      <[ "continue23" :=
-        locinfo: loc_354 ;
+      <[ "continue26" :=
+        locinfo: loc_375 ;
         Goto "#1"
       ]> $∅
     )%E
@@ -869,40 +924,40 @@ Section code.
     f_code := (
       <[ "#0" :=
         "cur" <-{ LPtr }
-          LocInfoE loc_439 (use{LPtr} (LocInfoE loc_440 ("l1"))) ;
-        locinfo: loc_406 ;
+          LocInfoE loc_460 (use{LPtr} (LocInfoE loc_461 ("l1"))) ;
+        locinfo: loc_427 ;
         Goto "#1"
       ]> $
       <[ "#1" :=
-        locinfo: loc_435 ;
-        if: LocInfoE loc_435 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_435 ((LocInfoE loc_436 (use{LPtr} (LocInfoE loc_437 ("cur")))) !={PtrOp, PtrOp} (LocInfoE loc_438 (NULL)))))
+        locinfo: loc_456 ;
+        if: LocInfoE loc_456 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_456 ((LocInfoE loc_457 (use{LPtr} (LocInfoE loc_458 ("cur")))) !={PtrOp, PtrOp} (LocInfoE loc_459 (NULL)))))
         then
-        locinfo: loc_409 ;
+        locinfo: loc_430 ;
           Goto "#2"
         else
         Goto "#3"
       ]> $
       <[ "#2" :=
-        locinfo: loc_409 ;
-        LocInfoE loc_430 ("cur_tail") <-{ LPtr }
-          LocInfoE loc_431 (use{LPtr} (LocInfoE loc_432 ((LocInfoE loc_433 (!{LPtr} (LocInfoE loc_434 ("cur")))) at{struct_list} "tail"))) ;
-        locinfo: loc_410 ;
-        LocInfoE loc_423 ((LocInfoE loc_424 (!{LPtr} (LocInfoE loc_425 ("cur")))) at{struct_list} "tail") <-{ LPtr }
-          LocInfoE loc_426 (use{LPtr} (LocInfoE loc_428 (!{LPtr} (LocInfoE loc_429 ("l2"))))) ;
-        locinfo: loc_411 ;
-        LocInfoE loc_419 (!{LPtr} (LocInfoE loc_420 ("l2"))) <-{ LPtr }
-          LocInfoE loc_421 (use{LPtr} (LocInfoE loc_422 ("cur"))) ;
-        locinfo: loc_412 ;
-        LocInfoE loc_415 ("cur") <-{ LPtr }
-          LocInfoE loc_416 (use{LPtr} (LocInfoE loc_417 ("cur_tail"))) ;
-        locinfo: loc_413 ;
-        Goto "continue30"
+        locinfo: loc_430 ;
+        LocInfoE loc_451 ("cur_tail") <-{ LPtr }
+          LocInfoE loc_452 (use{LPtr} (LocInfoE loc_453 ((LocInfoE loc_454 (!{LPtr} (LocInfoE loc_455 ("cur")))) at{struct_list} "tail"))) ;
+        locinfo: loc_431 ;
+        LocInfoE loc_444 ((LocInfoE loc_445 (!{LPtr} (LocInfoE loc_446 ("cur")))) at{struct_list} "tail") <-{ LPtr }
+          LocInfoE loc_447 (use{LPtr} (LocInfoE loc_449 (!{LPtr} (LocInfoE loc_450 ("l2"))))) ;
+        locinfo: loc_432 ;
+        LocInfoE loc_440 (!{LPtr} (LocInfoE loc_441 ("l2"))) <-{ LPtr }
+          LocInfoE loc_442 (use{LPtr} (LocInfoE loc_443 ("cur"))) ;
+        locinfo: loc_433 ;
+        LocInfoE loc_436 ("cur") <-{ LPtr }
+          LocInfoE loc_437 (use{LPtr} (LocInfoE loc_438 ("cur_tail"))) ;
+        locinfo: loc_434 ;
+        Goto "continue33"
       ]> $
       <[ "#3" :=
         Return (VOID)
       ]> $
-      <[ "continue30" :=
-        locinfo: loc_406 ;
+      <[ "continue33" :=
+        locinfo: loc_427 ;
         Goto "#1"
       ]> $∅
     )%E

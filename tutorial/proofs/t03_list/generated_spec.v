@@ -127,6 +127,11 @@ Section spec.
     fn(∀ (p, l) : loc * (list type); (p @ (&own (l @ (list_t)))); ⌜length l <= max_int size_t⌝)
       → ∃ () : (), ((length l) @ (int (size_t))); (p ◁ₗ (l @ (list_t))).
 
+  (* Specifications for function [length_val_rec]. *)
+  Definition type_of_length_val_rec :=
+    fn(∀ (v, l) : val * (list type); (singleton_val (LPtr) (v)); (v ◁ᵥ l @ list_t) ∗ ⌜length l <= max_int size_t⌝)
+      → ∃ () : (), ((length l) @ (int (size_t))); (v ◁ᵥ l @ list_t).
+
   (* Specifications for function [append]. *)
   Definition type_of_append :=
     fn(∀ (p, l1, l2) : loc * (list type) * (list type); (p @ (&own (l1 @ (list_t)))), (l2 @ (list_t)); True)

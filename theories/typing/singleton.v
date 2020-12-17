@@ -27,6 +27,17 @@ Section singleton_val.
     SimplifyHypVal v (singleton_val ly p) (Some 0%N) :=
     λ T, i2p (singleton_val_simplify v T ly p).
 
+  Lemma singleton_val_subsume_goal v v' ly ty `{!Movable ty} T:
+    (v ◁ᵥ ty -∗ ⌜ty.(ty_layout) = ly⌝ ∗ ⌜v = v'⌝ ∗ T) -∗
+    subsume (v ◁ᵥ ty) (v ◁ᵥ singleton_val ly v') T.
+  Proof.
+    iIntros "HT Hty". iDestruct (ty_size_eq with "Hty") as %Hly.
+    by iDestruct ("HT" with "Hty") as (<- ->) "$".
+  Qed.
+  Global Instance singleton_val_subsume_goal_inst v v' ly ty `{!Movable ty}:
+    SubsumeVal v ty (singleton_val ly v') :=
+    λ T, i2p (singleton_val_subsume_goal v v' ly ty T).
+
   Lemma singleton_val_merge v l ly T:
     (find_in_context (FindVal v) (λ ty:mtype, ⌜ty.(ty_layout) = ly⌝ ∗ (l ◁ₗ ty -∗ T))) -∗
       simplify_hyp (l ◁ₗ singleton_val ly v) T.

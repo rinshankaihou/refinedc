@@ -97,6 +97,19 @@ size_t length (list_t *p) {
   return len;
 }
 
+[[rc::parameters("v : val", "l : {list type}")]]
+[[rc::args("singleton_val<LPtr, v>")]]
+[[rc::requires("[v ◁ᵥ l @ list_t]")]]
+[[rc::requires("{length l <= max_int size_t}")]]
+[[rc::returns("{length l} @ int<size_t>")]]
+[[rc::ensures("[v ◁ᵥ l @ list_t]")]]  // TODO: there should be nicer syntax for this
+size_t length_val_rec (list_t p) {
+  if(p == NULL) {
+    return 0;
+  }
+  return length_val_rec(p->tail) + 1;
+}
+
 [[rc::parameters("p : loc", "l1 : {list type}", "l2 : {list type}")]]
 [[rc::args("p @ &own<l1 @ list_t>", "l2 @ list_t")]]
 [[rc::ensures("p @ &own<{l1 ++ l2} @ list_t>")]]
