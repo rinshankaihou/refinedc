@@ -32,4 +32,14 @@ Section spec.
   Definition type_of_roundtrip_and_read :=
     fn(∀ (p, n) : loc * Z; (p @ (&own (n @ (int (i32))))); True)
       → ∃ () : (), (n @ (int (i32))); (p ◁ₗ (n @ (int (i32)))).
+
+  (* Specifications for function [roundtrip_and_read2]. *)
+  Definition type_of_roundtrip_and_read2 :=
+    fn(∀ (p, n) : loc * Z; (p @ (&own (n @ (int (i32))))); True)
+      → ∃ () : (), (n @ (int (i32))); (p ◁ₗ (n @ (int (i32)))).
+
+  (* Specifications for function [roundtrip_and_read3]. *)
+  Definition type_of_roundtrip_and_read3 :=
+    fn(∀ (p, n) : loc * Z; (p @ (&own (n @ (int (i32))))); True)
+      → ∃ () : (), (n @ (int (i32))); (p ◁ₗ (n @ (int (i32)))).
 End spec.

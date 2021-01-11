@@ -78,6 +78,38 @@ Section code.
   Definition loc_98 : location_info := LocationInfo file_0 48 13 48 23.
   Definition loc_99 : location_info := LocationInfo file_0 48 22 48 23.
   Definition loc_100 : location_info := LocationInfo file_0 48 22 48 23.
+  Definition loc_105 : location_info := LocationInfo file_0 59 2 59 24.
+  Definition loc_106 : location_info := LocationInfo file_0 60 2 60 56.
+  Definition loc_107 : location_info := LocationInfo file_0 61 2 61 12.
+  Definition loc_108 : location_info := LocationInfo file_0 61 9 61 11.
+  Definition loc_109 : location_info := LocationInfo file_0 61 9 61 11.
+  Definition loc_110 : location_info := LocationInfo file_0 61 10 61 11.
+  Definition loc_111 : location_info := LocationInfo file_0 61 10 61 11.
+  Definition loc_112 : location_info := LocationInfo file_0 60 11 60 55.
+  Definition loc_113 : location_info := LocationInfo file_0 60 37 60 40.
+  Definition loc_114 : location_info := LocationInfo file_0 60 37 60 40.
+  Definition loc_115 : location_info := LocationInfo file_0 60 44 60 54.
+  Definition loc_116 : location_info := LocationInfo file_0 60 52 60 53.
+  Definition loc_117 : location_info := LocationInfo file_0 60 52 60 53.
+  Definition loc_120 : location_info := LocationInfo file_0 59 13 59 23.
+  Definition loc_121 : location_info := LocationInfo file_0 59 22 59 23.
+  Definition loc_122 : location_info := LocationInfo file_0 59 22 59 23.
+  Definition loc_127 : location_info := LocationInfo file_0 70 2 70 24.
+  Definition loc_128 : location_info := LocationInfo file_0 71 2 71 20.
+  Definition loc_129 : location_info := LocationInfo file_0 72 2 72 50.
+  Definition loc_130 : location_info := LocationInfo file_0 72 9 72 49.
+  Definition loc_131 : location_info := LocationInfo file_0 72 9 72 49.
+  Definition loc_132 : location_info := LocationInfo file_0 72 10 72 49.
+  Definition loc_133 : location_info := LocationInfo file_0 72 37 72 40.
+  Definition loc_134 : location_info := LocationInfo file_0 72 37 72 40.
+  Definition loc_135 : location_info := LocationInfo file_0 72 44 72 47.
+  Definition loc_136 : location_info := LocationInfo file_0 72 44 72 47.
+  Definition loc_137 : location_info := LocationInfo file_0 71 11 71 19.
+  Definition loc_138 : location_info := LocationInfo file_0 71 18 71 19.
+  Definition loc_139 : location_info := LocationInfo file_0 71 18 71 19.
+  Definition loc_142 : location_info := LocationInfo file_0 70 13 70 23.
+  Definition loc_143 : location_info := LocationInfo file_0 70 22 70 23.
+  Definition loc_144 : location_info := LocationInfo file_0 70 22 70 23.
 
   (* Definition of function [int_ptr]. *)
   Definition impl_int_ptr : function := {|
@@ -204,6 +236,50 @@ Section code.
           LocInfoE loc_86 (CopyAllocId (LocInfoE loc_89 (use{LPtr} (LocInfoE loc_90 ("q")))) (LocInfoE loc_87 (use{LPtr} (LocInfoE loc_88 ("p"))))) ;
         locinfo: loc_81 ;
         Return (LocInfoE loc_82 (use{it_layout i32} (LocInfoE loc_84 (!{LPtr} (LocInfoE loc_85 ("r"))))))
+      ]> $∅
+    )%E
+  |}.
+
+  (* Definition of function [roundtrip_and_read2]. *)
+  Definition impl_roundtrip_and_read2 : function := {|
+    f_args := [
+      ("p", LPtr)
+    ];
+    f_local_vars := [
+      ("i", it_layout size_t);
+      ("q", LPtr)
+    ];
+    f_init := "#0";
+    f_code := (
+      <[ "#0" :=
+        "i" <-{ it_layout size_t }
+          LocInfoE loc_120 (UnOp (CastOp $ IntOp size_t) (PtrOp) (LocInfoE loc_121 (use{LPtr} (LocInfoE loc_122 ("p"))))) ;
+        "q" <-{ LPtr }
+          LocInfoE loc_112 (CopyAllocId (LocInfoE loc_115 (UnOp (CastOp $ PtrOp) (IntOp size_t) (LocInfoE loc_116 (use{it_layout size_t} (LocInfoE loc_117 ("i")))))) (LocInfoE loc_113 (use{LPtr} (LocInfoE loc_114 ("p"))))) ;
+        locinfo: loc_107 ;
+        Return (LocInfoE loc_108 (use{it_layout i32} (LocInfoE loc_110 (!{LPtr} (LocInfoE loc_111 ("q"))))))
+      ]> $∅
+    )%E
+  |}.
+
+  (* Definition of function [roundtrip_and_read3]. *)
+  Definition impl_roundtrip_and_read3 : function := {|
+    f_args := [
+      ("p", LPtr)
+    ];
+    f_local_vars := [
+      ("i", it_layout size_t);
+      ("q", LPtr)
+    ];
+    f_init := "#0";
+    f_code := (
+      <[ "#0" :=
+        "i" <-{ it_layout size_t }
+          LocInfoE loc_142 (UnOp (CastOp $ IntOp size_t) (PtrOp) (LocInfoE loc_143 (use{LPtr} (LocInfoE loc_144 ("p"))))) ;
+        "q" <-{ LPtr }
+          LocInfoE loc_137 (UnOp (CastOp $ PtrOp) (IntOp size_t) (LocInfoE loc_138 (use{it_layout size_t} (LocInfoE loc_139 ("i"))))) ;
+        locinfo: loc_129 ;
+        Return (LocInfoE loc_130 (use{it_layout i32} (LocInfoE loc_132 (CopyAllocId (LocInfoE loc_135 (!{LPtr} (LocInfoE loc_136 ("q")))) (LocInfoE loc_133 (!{LPtr} (LocInfoE loc_134 ("p"))))))))
       ]> $∅
     )%E
   |}.

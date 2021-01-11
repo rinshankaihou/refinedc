@@ -50,3 +50,24 @@ int roundtrip_and_read(int* p){
   int *r = rc_copy_alloc_id(q, p);
   return *r;
 }
+
+[[rc::parameters("p : loc", "n : Z")]]
+[[rc::args("p @ &own<n @ int<i32>>")]]
+[[rc::returns("n @ int<i32>")]]
+[[rc::ensures("p @ &own<n @ int<i32>>")]]
+int roundtrip_and_read2(int* p){
+  size_t i = (size_t) p;
+  int *q = rc_copy_alloc_id((int*) i, p);
+  return *q;
+}
+
+[[rc::parameters("p : loc", "n : Z")]]
+[[rc::args("p @ &own<n @ int<i32>>")]]
+[[rc::returns("n @ int<i32>")]]
+[[rc::ensures("p @ &own<n @ int<i32>>")]]
+[[rc::trust_me]] // FIXME
+int roundtrip_and_read3(int* p){
+  size_t i = (size_t) p;
+  int *q = (int*) i;
+  return *(rc_copy_alloc_id(q, p));
+}

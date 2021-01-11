@@ -3,3 +3,5 @@ generated_proof_min_ptr_val.v
 generated_proof_roundtrip1.v
 generated_proof_roundtrip2.v
 generated_proof_roundtrip_and_read.v
+generated_proof_roundtrip_and_read2.v
+generated_proof_roundtrip_and_read3.v
