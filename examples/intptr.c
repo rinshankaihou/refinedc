@@ -1,4 +1,5 @@
 #include <refinedc.h>
+#include <stdint.h>
 #include <stddef.h>
 
 [[rc::args("&own<int<i32>>")]]
@@ -56,7 +57,7 @@ int roundtrip_and_read(int* p){
 [[rc::returns("n @ int<i32>")]]
 [[rc::ensures("p @ &own<n @ int<i32>>")]]
 int roundtrip_and_read2(int* p){
-  size_t i = (size_t) p;
+  uintptr_t i = (uintptr_t) p;
   int *q = rc_copy_alloc_id((int*) i, p);
   return *q;
 }
