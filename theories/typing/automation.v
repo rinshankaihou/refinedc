@@ -201,7 +201,7 @@ Ltac liRJudgement :=
 
 (* This does everything *)
 Ltac liRStep :=
- try liEnforceInvariant;
+ liEnforceInvariantAndUnfoldInstantiatedEvars;
  try liRIntroduceLetInGoal;
  first [
    liRInstantiateEvars (* must be before do_side_cond and do_extensible_judgement *)
@@ -247,7 +247,7 @@ Tactic Notation "start_function" constr(fnname) "(" simple_intropattern(x) ")" :
 
 Ltac liRSplitBlocksIntro :=
   repeat (
-      try liEnforceInvariant;
+      liEnforceInvariantAndUnfoldInstantiatedEvars;
       first [
           liSep
         | liWand

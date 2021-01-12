@@ -235,7 +235,7 @@ Local Tactic Notation "liChangeState" hyp(H) constr(Δ) :=
     rename H' into H
   end.
 
-Tactic Notation "liEnforceInvariant" :=
+Ltac liEnforceInvariant :=
   lazymatch goal with
   | |- @envs_entails ?PROP ?Δ ?P =>
     let with_H tac :=
@@ -258,6 +258,7 @@ Tactic Notation "liEnforceInvariant" :=
                    change_no_check (envs_entails H P)
                 )
   end.
+
 Ltac liFresh :=
   lazymatch goal with
   | [ H : IPM_STATE ?n |- _ ] =>
@@ -384,6 +385,9 @@ Ltac solve_protected_eq :=
   intros; repeat rewrite protected_eq;
   try ( liUnfoldAllEvars; match goal with |- ?a = ?b => unify a b with typeclass_instances end );
   exact: eq_refl.
+
+Ltac liEnforceInvariantAndUnfoldInstantiatedEvars :=
+  unfold_instantiated_evars; try liEnforceInvariant.
 
 (** * Main lithium tactics *)
 Ltac convert_to_i2p_tac P := fail "No convert_to_i2p_tac provided!".
