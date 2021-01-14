@@ -11,7 +11,7 @@ Section learnable.
   }.
   Next Obligation.
     iIntros (r l β) "Hl". rewrite btree_t_unfold /ty_own /=.
-    iDestruct "Hl" as ([[[n ks] vs] cs]) "Hl". rewrite tyexists_eq /=.
+    iDestruct "Hl" as ([[[n ks] vs] cs]) "Hl". rewrite tyexists_eq /persistent_own_constraint /=.
     rewrite /ty_own /=. iDestruct "Hl" as "[_ %]". iPureIntro. naive_solver.
   Qed.
 End learnable.

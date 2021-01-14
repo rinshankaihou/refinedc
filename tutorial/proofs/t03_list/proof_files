@@ -6,6 +6,7 @@ generated_proof_free_array.v
 generated_proof_init.v
 generated_proof_is_empty.v
 generated_proof_length.v
+generated_proof_length_val.v
 generated_proof_length_val_rec.v
 generated_proof_member.v
 generated_proof_pop.v

@@ -5,15 +5,16 @@ Set Default Proof Using "Type".
 Section wand.
   Context `{!typeG Σ}.
 
-  Program Definition wand_ex {A} (P : A → iProp Σ) (ty : A → type) : type := {|
+  Context {A : Type}.
+  Implicit Types (P : A → iProp Σ).
+
+  Program Definition wand_ex P (ty : A → type) : type := {|
     ty_own β l := match β return _ with
                   | Own => ∀ x, P x -∗ l ◁ₗ (ty x)
                   | Shr => True
                   end
   |}%I.
-  Next Obligation. by iIntros (??????) "?". Qed.
-
-  Context {A : Type}. Implicit Types (P : A → iProp Σ).
+  Next Obligation. by iIntros (?????) "?". Qed.
 
   Lemma subsume_wand l P1 P2 ty1 ty2 T:
     (* The trick is that we prove the wand at the very end so it can
@@ -59,3 +60,89 @@ Section wand.
 
 End wand.
 Notation wand P ty := (wand_ex (A:=unit) (λ _, P) (λ _, ty)).
+
+Section wand_val.
+  Context `{!typeG Σ}.
+
+  Context {A : Type}.
+  Implicit Types (P : A → iProp Σ).
+
+  Program Definition wand_val_ex ly P (ty : A → type) `{!∀ x, Movable (ty x)} : type := {|
+    ty_own β l :=
+      ∃ v,  ⌜l `has_layout_loc` ly⌝ ∗ ⌜v `has_layout_val` ly⌝ ∗ l ↦[β] v ∗
+        match β return _ with
+        | Own => ∀ x, P x -∗ v ◁ᵥ (ty x)
+        | Shr => True
+        end
+  |}%I.
+  Next Obligation.
+    iIntros (???????) "H". iDestruct "H" as (v) "(Hly1&Hly2&Hl&_)".
+    iMod (heap_mapsto_own_state_share with "Hl") as "Hl". eauto with iFrame.
+  Qed.
+
+  Global Program Instance wand_val_movable P ly ty
+         `{!∀ x, Movable (ty x)} : Movable (wand_val_ex ly P ty) := {|
+     ty_layout := ly;
+     ty_own_val v := (⌜v `has_layout_val` ly⌝ ∗ ∀ x, P x -∗ v ◁ᵥ (ty x))%I;
+  |}.
+  Next Obligation. iIntros (?????) "Hl". iDestruct "Hl" as (?) "[$ _]". Qed.
+  Next Obligation. iIntros (?????) "[$ _]". Qed.
+  Next Obligation. iIntros (?????) "Hl". iDestruct "Hl" as (v) "(?&?&?&?)". eauto with iFrame. Qed.
+  Next Obligation. iIntros (????? v) "??[??]". iExists v. iFrame. Qed.
+
+  Global Instance wand_val_loc_in_bounds P ly (ty : A → type)
+         `{!∀ x, Movable (ty x)} `{!∀ x, LocInBounds (ty x) β}:
+    LocInBounds (wand_val_ex ly P ty) β.
+  Proof.
+    constructor. iIntros (l) "Hl". iDestruct "Hl" as (?) "(_&_&Hl&_)".
+    iDestruct (heap_mapsto_own_state_loc_in_bounds with "Hl") as "H".
+    iApply (loc_in_bounds_shorten with "H"). lia.
+  Qed.
+
+  Lemma subsume_wand_val v ly1 ly2 P1 P2 ty1 ty2 T `{!∀ x, Movable (ty1 x)} `{!∀ x, Movable (ty2 x)}:
+    (* The trick is that we prove the wand at the very end so it can
+    use all leftover resources. This only works if there is at most
+    one wand per block (but this is enough for iterating over linked
+    lists). *)
+    ⌜ly1 = ly2⌝ ∗ T ∗ (∀ x, P2 x -∗ ∃ y, P1 y ∗ (v ◁ᵥ ty1 y -∗ v ◁ᵥ ty2 x ∗ True)) -∗
+    subsume (v ◁ᵥ wand_val_ex ly1 P1 ty1) (v ◁ᵥ wand_val_ex ly2 P2 ty2) T.
+  Proof.
+    iIntros "(->&$&Hwand) ($&Hty1)" (x) "HP2".
+    iDestruct ("Hwand" with "HP2") as (y) "[HP1 Hwand]".
+    iDestruct ("Hty1" with "HP1") as "Hty1". iDestruct ("Hwand" with "Hty1") as "[$_]".
+  Qed.
+  Global Instance subsume_wand_val_inst v ly1 ly2 P1 P2 ty1 ty2 `{!∀ x, Movable (ty1 x)} `{!∀ x, Movable (ty2 x)}:
+    SubsumeVal v (wand_val_ex ly1 P1 ty1)%I (wand_val_ex ly2 P2 ty2)%I :=
+    λ T, i2p (subsume_wand_val v ly1 ly2 P1 P2 ty1 ty2 T).
+
+  Lemma simplify_hyp_resolve_wand_val v ly P ty T `{!∀ x, Movable (ty x)}:
+    (∃ x, P x ∗ (v ◁ᵥ ty x -∗ T)) -∗
+    simplify_hyp (v ◁ᵥ wand_val_ex ly P ty) T.
+  Proof.
+    iDestruct 1 as (x) "[HP HT]". iIntros "[_ Hwand]".
+    iApply "HT". by iApply "Hwand".
+  Qed.
+  (* must be before [simplify_goal_place_refine_r] *)
+  Global Instance simplify_hyp_resolve_wand_val_inst v ly P ty `{!∀ x, Movable (ty x)}:
+    SimplifyHypVal v (wand_val_ex ly P ty) (Some 9%N) :=
+    λ T, i2p (simplify_hyp_resolve_wand_val v ly P ty T).
+
+  Lemma simplify_goal_wand_val_eq v ly (ty : A → type) T `{!∀ x, Movable (ty x)}:
+    ⌜v `has_layout_val` ly⌝ ∗ T True -∗
+    simplify_goal (v ◁ᵥ wand_val_ex ly (λ x, v ◁ᵥ (ty x)) ty) T.
+  Proof. iIntros "[??]". iExists _. iFrame. by eauto. Qed.
+  Global Instance simplify_goal_wand_val_eq_inst v ly ty `{!∀ x, Movable (ty x)}:
+    SimplifyGoalVal v (wand_val_ex ly (λ x, v ◁ᵥ (ty x)) ty)%I (Some 0%N) :=
+    λ T, i2p (simplify_goal_wand_val_eq v ly ty T).
+
+  (* TODO: make this more general, maybe with a SimpleSubsume
+  judgement, which does not have a continutation?*)
+  Lemma simplify_goal_wand_val_eq_ref v ly ty (x1 x2 : A → _) T `{!RMovable ty}:
+    ⌜v `has_layout_val` ly⌝ ∗ T ⌜∀ x, x1 x = x2 x⌝ -∗
+    simplify_goal (v ◁ᵥ wand_val_ex ly (λ x, v ◁ᵥ (x1 x) @ ty) (λ x, (x2 x) @ ty)) T.
+  Proof. iIntros "[??]". iExists _. iFrame. iIntros (Heq x) "?". by rewrite Heq. Qed.
+  Global Instance simplify_goal_wand_val_eq_ref_inst v ly ty x1 x2 `{!RMovable ty}:
+    SimplifyGoalVal v (wand_val_ex ly (λ x, v ◁ᵥ (x1 x) @ ty) (λ x, (x2 x) @ ty))%I (Some 0%N) :=
+    λ T, i2p (simplify_goal_wand_val_eq_ref v ly ty x1 x2 T).
+End wand_val.
+Notation wand_val ly P ty := (wand_val_ex (A:=unit) ly (λ _, P) (λ _, ty)).

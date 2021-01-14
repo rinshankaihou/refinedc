@@ -24,12 +24,11 @@ Section tyfold.
     rty := tyfold_type tys base
   |}.
 
-  Typeclasses Transparent own_constrained constrained.
+  Typeclasses Transparent own_constrained persistent_own_constraint.
   Lemma simplify_hyp_place_tyfold_optional l β ls tys b T:
     (l ◁ₗ{β} (maybe2 cons tys) @ optionalO (λ '(ty, tys), tyexists (λ l2, tyexists (λ ls2,
        constrained (
-       own_constrained (ty (singleton_place l2))
-         (tyown_constraint l2 (ls2 @ tyfold tys b))) (⌜ls = l2::ls2⌝)))) b -∗ T) -∗
+       own_constrained (tyown_constraint l2 (ls2 @ tyfold tys b)) (ty (singleton_place l2))) (⌜ls = l2::ls2⌝)))) b -∗ T) -∗
     simplify_hyp (l◁ₗ{β} ls @ tyfold tys b) T.
   Proof.
     iIntros "HT Hl". iApply "HT". iDestruct "Hl" as (Hlen) "[Htys Hb]".

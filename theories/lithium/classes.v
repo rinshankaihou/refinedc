@@ -100,6 +100,28 @@ Global Instance simplify_goal_id_inst {Σ} (P : iProp Σ):
   SimplifyGoal P None | 100 :=
   λ T, i2p (simplify_goal_id P T).
 
+(* TODO: Is the following useful? *)
+(* Lemma simplify_persistent_pure_goal {Σ} (Φ : Prop) T: *)
+(*   T ⌜Φ⌝ -∗ simplify_goal (Σ := Σ) (□ ⌜Φ⌝) T. *)
+(* Proof. iIntros "HT". iExists _. iFrame. by iIntros (?). Qed. *)
+(* Global Instance simplify_persistent_pure_goal_id {Σ} (Φ : Prop): *)
+(*   SimplifyGoal (Σ:=Σ) (□ ⌜Φ⌝) (Some 0%N) := *)
+(*   λ T, i2p (simplify_persistent_pure_goal Φ T). *)
+
+(* Lemma simplify_persistent_pure_hyp {Σ} (Φ : Prop) T: *)
+(*   (⌜Φ⌝ -∗ T) -∗ simplify_hyp (Σ := Σ) (□ ⌜Φ⌝) T. *)
+(* Proof. iIntros "HT" (?). by iApply "HT". Qed. *)
+(* Global Instance simplify_persistent_pure_hyp_inst {Σ} (Φ : Prop): *)
+(*   SimplifyHyp (Σ:=Σ) (□ ⌜Φ⌝) (Some 0%N) := *)
+(*   λ T, i2p (simplify_persistent_pure_hyp Φ T). *)
+
+(* Lemma simplify_persistent_sep_hyp {Σ} (P Q : iProp Σ) T: *)
+(*   (□ P -∗ □ Q -∗ T) -∗ simplify_hyp (Σ := Σ) (□ (P ∗ Q)) T. *)
+(* Proof. iIntros "HT [HP HQ]". iApply ("HT" with "HP HQ"). Qed. *)
+(* Global Instance simplify_persistent_sep_hyp_inst {Σ} (P Q : iProp Σ): *)
+(*   SimplifyHyp (Σ:=Σ) (□ (P ∗ Q)) (Some 0%N) := *)
+(*   λ T, i2p (simplify_persistent_sep_hyp P Q T). *)
+
 (** * Subsumption *)
 (** ** Definition *)
 Definition subsume {Σ} (P1 P2 T : iProp Σ) : iProp Σ :=

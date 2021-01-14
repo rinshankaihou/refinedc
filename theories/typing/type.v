@@ -544,6 +544,10 @@ Ltac f_equiv' :=
      destruct H
   | |- _ = _ => reflexivity
 
+  | |- ?R (?f _) _ => simple apply (_ : Proper (R ==> R) f)
+  | |- ?R (?f _ _) _ => simple apply (_ : Proper (R ==> R ==> R) f)
+  | |- ?R (?f _ _ _) _ => simple apply (_ : Proper (R ==> R ==> R ==> R) f)
+  | |- ?R (?f _ _ _ _) _ => simple apply (_ : Proper (R ==> R ==> R ==> R ==> R) f)
   | |- ?R (?f _ _ _ _) _ => simple apply (_ : Proper (_ ==> _ ==> _ ==> _ ==> R) f)
   | |- ?R (?f _ _ _) _ => simple apply (_ : Proper (_ ==> _ ==> _ ==> R) f)
   | |- ?R (?f _ _) _ => simple apply (_ : Proper (_ ==> _ ==> R) f)

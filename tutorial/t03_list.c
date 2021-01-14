@@ -110,6 +110,25 @@ size_t length_val_rec (list_t p) {
   return length_val_rec(p->tail) + 1;
 }
 
+[[rc::parameters("v : val", "l : {list type}")]]
+[[rc::args("singleton_val<LPtr, v>")]]
+[[rc::requires("[v ◁ᵥ l @ list_t]")]]
+[[rc::requires("{length l <= max_int size_t}")]]
+[[rc::returns("{length l} @ int<size_t>")]]
+[[rc::ensures("[v ◁ᵥ l @ list_t]")]]  // TODO: there should be nicer syntax for this
+size_t length_val (list_t p) {
+  size_t len = 0;
+  [[rc::exists("v2 : val", "l1 : {list type}")]]
+  [[rc::inv_vars("p : own_constrained<nonshr_constraint<{v2 ◁ᵥ l1 @ list_t}>, singleton_val<LPtr, v2>>",
+                 "len : {length l - length l1} @ int<size_t>")]]
+  [[rc::constraints("[v ◁ᵥ wand_val LPtr (v2 ◁ᵥ l1 @ list_t) (l @ list_t)]")]]
+  while (p != NULL) {
+    p = p->tail;
+    len += 1;
+  }
+  return len;
+}
+
 [[rc::parameters("p : loc", "l1 : {list type}", "l2 : {list type}")]]
 [[rc::args("p @ &own<l1 @ list_t>", "l2 @ list_t")]]
 [[rc::ensures("p @ &own<{l1 ++ l2} @ list_t>")]]

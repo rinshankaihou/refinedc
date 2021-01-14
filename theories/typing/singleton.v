@@ -38,6 +38,21 @@ Section singleton_val.
     SubsumeVal v ty (singleton_val ly v') :=
     λ T, i2p (singleton_val_subsume_goal v v' ly ty T).
 
+  Lemma singleton_val_subsume_goal_loc l v' ly ty `{!Movable ty} T:
+    (∀ v, v ◁ᵥ ty -∗ ⌜ty.(ty_layout) = ly⌝ ∗ ⌜v = v'⌝ ∗ T) -∗
+    subsume (l ◁ₗ ty) (l ◁ₗ singleton_val ly v') T.
+  Proof.
+    iIntros "HT Hty".
+    iDestruct (ty_aligned with "Hty") as %Hal.
+    iDestruct (ty_deref with "Hty") as (v) "[Hmt Hty]".
+    iDestruct (ty_size_eq with "Hty") as %Hly.
+    iDestruct ("HT" with "Hty") as (<- ->) "$".
+    by iFrame.
+  Qed.
+  Global Instance singleton_val_subsume_goal_loc_inst l v' ly ty `{!Movable ty}:
+    SubsumePlace l Own ty (singleton_val ly v') :=
+    λ T, i2p (singleton_val_subsume_goal_loc l v' ly ty T).
+
   Lemma singleton_val_merge v l ly T:
     (find_in_context (FindVal v) (λ ty:mtype, ⌜ty.(ty_layout) = ly⌝ ∗ (l ◁ₗ ty -∗ T))) -∗
       simplify_hyp (l ◁ₗ singleton_val ly v) T.
