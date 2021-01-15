@@ -516,9 +516,11 @@ let rec translate_expr : bool -> op_type option -> ail_expr -> expr * calls =
          | [_; MacroExpr(e2)] -> e2
          | _                  -> not_impl loc "wrong copy alloc id annotation"
        in
-       let (e2, l2) = translate_expr lval None e2 in
-       let (e3, l3) = translate_expr lval None e3 in
-       (locate (CopyAID(e3, e2)), l2 @ l3)
+       let (e2, l2) = translate_expr false None e2 in
+       let (e3, l3) = translate_expr false None e3 in
+       let e = locate (CopyAID(e3, e2)) in
+       let e = if lval then locate (LValue(e)) else e in
+       (e, l2 @ l3)
     | AilEcond(e1,e2,e3)           -> not_impl loc "expr cond"
     | AilEcast(q,c_ty,e)           ->
         begin

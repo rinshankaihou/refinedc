@@ -66,7 +66,6 @@ int roundtrip_and_read2(int* p){
 [[rc::args("p @ &own<n @ int<i32>>")]]
 [[rc::returns("n @ int<i32>")]]
 [[rc::ensures("p @ &own<n @ int<i32>>")]]
-[[rc::trust_me]] // FIXME
 int roundtrip_and_read3(int* p){
   size_t i = (size_t) p;
   int *q = (int*) i;

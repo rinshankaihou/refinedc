@@ -191,6 +191,8 @@ Section judgements.
   | AnnotExprPCtx (n : nat) {A} (x : A)
     (* for PtrOffsetOp, second ot must be PtrOp *)
   | BinOpPCtx (op : bin_op) (ot : op_type) (v : val) (ty : mtype)
+    (* for ptr-to-ptr casts, ot must be PtrOp *)
+  | UnOpPCtx (op : un_op)
   .
 
   (* Computes the WP one has to prove for the place ectx_item Ki
@@ -203,6 +205,7 @@ Section judgements.
     | AnnotExprPCtx n x => WP AnnotExpr n x l {{ v, ∃ l' : loc, ⌜v = val_of_loc l'⌝ ∗ Φ l' }}
     (* we have proved typed_val_expr e1 before so we can use v ◁ᵥ ty here *)
     | BinOpPCtx op ot v ty => v ◁ᵥ ty -∗ WP BinOp op ot PtrOp v l {{ v, ∃ l' : loc, ⌜v = val_of_loc l'⌝ ∗ Φ l' }}
+    | UnOpPCtx op => WP UnOp op PtrOp l {{ v, ∃ l' : loc, ⌜v = val_of_loc l'⌝ ∗ Φ l' }}
     end%I.
   Definition place_to_wp (K : list place_ectx_item) (Φ : loc → iProp Σ) : (loc → iProp Σ) := foldr place_item_to_wp Φ K.
   Lemma place_to_wp_app (K1 K2 : list place_ectx_item) Φ : place_to_wp (K1 ++ K2) Φ = place_to_wp K1 (place_to_wp K2 Φ).
@@ -211,10 +214,10 @@ Section judgements.
   Lemma place_item_to_wp_mono K Φ1 Φ2 l:
     place_item_to_wp K Φ1 l -∗ (∀ l, Φ1 l -∗ Φ2 l) -∗ place_item_to_wp K Φ2 l.
   Proof.
-    iIntros "HP HΦ". move: K => [o ly|sl m|ul m|n A x|op ot v ty]//=.
+    iIntros "HP HΦ". move: K => [o ly|sl m|ul m|n A x|op ot v ty|op]//=.
     5: iIntros "Hv".
-    1-4: iApply (@wp_wand with "HP").
-    5: iApply (@wp_wand with "[Hv HP]"); first by iApply "HP".
+    1-4,6: iApply (@wp_wand with "HP").
+    6: iApply (@wp_wand with "[Hv HP]"); first by iApply "HP".
     all: iIntros (?); iDestruct 1 as (l' ->) "HΦ1".
     all: iExists _; iSplit => //; by iApply "HΦ".
   Qed.
@@ -242,6 +245,9 @@ Section judgements.
     root of the place expression once we hit it. This allows us to
     support e.g. a[a[0]]. *)
     | W.BinOp op ot PtrOp e1 e2 => T' ← find_place_ctx e2; Some (λ T, typed_val_expr (W.to_expr e1) (λ v ty, T' (λ K l, T (K ++ [BinOpPCtx op ot v ty]) l)))
+    | W.UnOp op PtrOp e => T' ← find_place_ctx e; Some (λ T, T' (λ K l, T (K ++ [UnOpPCtx op]) l))
+    (* TODO: Is the existential quantifier here a good idea or should this be a fullblown judgment? *)
+    | W.LValue e => Some (λ T, typed_val_expr (W.to_expr e) (λ v ty, ∃ l, ⌜v = val_of_loc l⌝ ∗ (v ◁ᵥ ty -∗ T [] l))%I)
     | _ => None
     end.
 
@@ -256,7 +262,7 @@ Section judgements.
   Proof.
     elim: e T => //= *.
     all: iIntros (Φ Φ') "HT HΦ'".
-    2: case_match.
+    2,3: case_match.
     all: try match goal with
     |  H : ?x ≫= _ = Some _ |- _ => destruct x as [?|] eqn:Hsome
     end; simplify_eq/=.
@@ -264,16 +270,21 @@ Section judgements.
     |  H : context [IntoPlaceCtx _ _] |- _ => rename H into IH
     end.
     1: iApply @wp_value; by iApply ("HΦ'" with "HT").
-    1: wp_bind; rewrite -!/(W.to_expr _).
-    1: iApply "HT"; iIntros (v ty) "Hv HT".
-    1: iDestruct (IH with "HT") as "HT" => //.
-    2-5: iDestruct (IH with "HT") as " HT" => //.
+    4: {
+      rewrite /LValue. iApply "HT". iIntros (v ty) "Hv HT".
+      iDestruct "HT" as (l ?) "HT". subst.
+      iApply ("HΦ'" $! []). by iApply "HT".
+    }
+    2: wp_bind; rewrite -!/(W.to_expr _).
+    2: iApply "HT"; iIntros (v ty) "Hv HT".
+    2: iDestruct (IH with "HT") as "HT" => //.
+    1, 3-6: iDestruct (IH with "HT") as " HT" => //.
     all: wp_bind; iApply "HT".
     all: iIntros (K l) "HT" => /=.
     all: iDestruct ("HΦ'" with "HT") as "HΦ"; rewrite place_to_wp_app /=.
     all: iApply (place_to_wp_mono with "HΦ"); iIntros (l') "HWP" => /=.
-    1: iApply (@wp_wand with "[Hv HWP]"); first by iApply "HWP".
-    2-5: iApply (@wp_wand with "HWP").
+    6: iApply (@wp_wand with "[Hv HWP]"); first by iApply "HWP".
+    1-5: iApply (@wp_wand with "HWP").
     all: iIntros (?); by iDestruct 1 as (? ->) "$".
   Qed.
   End find_place_ctx_correct.

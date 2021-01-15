@@ -39,10 +39,8 @@ void local_vars(bool b) {
     if(b) {
         dummy = var;
         dummy = *p;
-        rc_unfold(*p);
     } else {
         dummy = *p;
-        rc_unfold(*p);
         dummy = var;
     }
 }
@@ -55,11 +53,9 @@ void ptrs(bool b, int *p) {
     p2 = p;
     if(b) {
         *p1;
-        rc_unfold(*p1);
         *p2;
     } else {
         *p2;
-        rc_unfold(*p2);
         *p1;
     }
 }
@@ -71,11 +67,22 @@ void ptrs2(bool b, int *p) {
     p1 = &p;
     if(b) {
         **p1;
-        rc_unfold(*p1);
         *p;
     } else {
         *p;
         **p1;
-        rc_unfold(*p1);
     }
+}
+
+[[rc::parameters("p : loc", "ty : type")]]
+[[rc::args("p @ &own<ty>", "int<i32>")]]
+[[rc::returns("p @ &own<ty>")]]
+void* ptr_id(void *p, int x) {
+  return p;
+}
+
+[[rc::ensures("True")]]
+void ptr_id_test() {
+  int x = 1;
+  assert(*(int *)ptr_id(&x, 1 + 1) == 1);
 }

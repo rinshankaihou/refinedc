@@ -35,4 +35,13 @@ Section spec.
   Definition type_of_ptrs2 :=
     fn(∀ p : loc; (boolean (bool_it)), (p @ (&own (int (i32)))); True)
       → ∃ () : (), (void); True.
+
+  (* Specifications for function [ptr_id]. *)
+  Definition type_of_ptr_id :=
+    fn(∀ (p, ty) : loc * type; (p @ (&own (ty))), (int (i32)); True)
+      → ∃ () : (), (p @ (&own (ty))); True.
+
+  (* Specifications for function [ptr_id_test]. *)
+  Definition type_of_ptr_id_test :=
+    fn(∀ () : (); True) → ∃ () : (), (void); ⌜True⌝.
 End spec.

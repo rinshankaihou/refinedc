@@ -80,6 +80,10 @@ Notation "& e" := (AddrOf e%E) (at level 9, format "& e") : expr_scope.
 Arguments AddrOf : simpl never.
 Typeclasses Opaque AddrOf.
 
+Definition LValue (e : expr) := e.
+Arguments LValue : simpl never.
+Typeclasses Opaque LValue.
+
 Definition AnnotExpr (n : nat) {A} (a : A) (e : expr) := Nat.iter n SkipE e.
 Arguments AnnotExpr : simpl never.
 Typeclasses Opaque AnnotExpr.

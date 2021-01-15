@@ -94,22 +94,22 @@ Section code.
   Definition loc_120 : location_info := LocationInfo file_0 60 16 60 29.
   Definition loc_121 : location_info := LocationInfo file_0 60 28 60 29.
   Definition loc_122 : location_info := LocationInfo file_0 60 28 60 29.
-  Definition loc_127 : location_info := LocationInfo file_0 71 2 71 24.
-  Definition loc_128 : location_info := LocationInfo file_0 72 2 72 20.
-  Definition loc_129 : location_info := LocationInfo file_0 73 2 73 50.
-  Definition loc_130 : location_info := LocationInfo file_0 73 9 73 49.
-  Definition loc_131 : location_info := LocationInfo file_0 73 9 73 49.
-  Definition loc_132 : location_info := LocationInfo file_0 73 10 73 49.
-  Definition loc_133 : location_info := LocationInfo file_0 73 37 73 40.
-  Definition loc_134 : location_info := LocationInfo file_0 73 37 73 40.
-  Definition loc_135 : location_info := LocationInfo file_0 73 44 73 47.
-  Definition loc_136 : location_info := LocationInfo file_0 73 44 73 47.
-  Definition loc_137 : location_info := LocationInfo file_0 72 11 72 19.
-  Definition loc_138 : location_info := LocationInfo file_0 72 18 72 19.
-  Definition loc_139 : location_info := LocationInfo file_0 72 18 72 19.
-  Definition loc_142 : location_info := LocationInfo file_0 71 13 71 23.
-  Definition loc_143 : location_info := LocationInfo file_0 71 22 71 23.
-  Definition loc_144 : location_info := LocationInfo file_0 71 22 71 23.
+  Definition loc_127 : location_info := LocationInfo file_0 70 2 70 24.
+  Definition loc_128 : location_info := LocationInfo file_0 71 2 71 20.
+  Definition loc_129 : location_info := LocationInfo file_0 72 2 72 50.
+  Definition loc_130 : location_info := LocationInfo file_0 72 9 72 49.
+  Definition loc_131 : location_info := LocationInfo file_0 72 9 72 49.
+  Definition loc_132 : location_info := LocationInfo file_0 72 10 72 49.
+  Definition loc_133 : location_info := LocationInfo file_0 72 37 72 40.
+  Definition loc_134 : location_info := LocationInfo file_0 72 37 72 40.
+  Definition loc_135 : location_info := LocationInfo file_0 72 44 72 47.
+  Definition loc_136 : location_info := LocationInfo file_0 72 44 72 47.
+  Definition loc_137 : location_info := LocationInfo file_0 71 11 71 19.
+  Definition loc_138 : location_info := LocationInfo file_0 71 18 71 19.
+  Definition loc_139 : location_info := LocationInfo file_0 71 18 71 19.
+  Definition loc_142 : location_info := LocationInfo file_0 70 13 70 23.
+  Definition loc_143 : location_info := LocationInfo file_0 70 22 70 23.
+  Definition loc_144 : location_info := LocationInfo file_0 70 22 70 23.
 
   (* Definition of function [int_ptr]. *)
   Definition impl_int_ptr : function := {|
@@ -279,7 +279,7 @@ Section code.
         "q" <-{ LPtr }
           LocInfoE loc_137 (UnOp (CastOp $ PtrOp) (IntOp size_t) (LocInfoE loc_138 (use{it_layout size_t} (LocInfoE loc_139 ("i"))))) ;
         locinfo: loc_129 ;
-        Return (LocInfoE loc_130 (use{it_layout i32} (LocInfoE loc_132 (CopyAllocId (LocInfoE loc_135 (!{LPtr} (LocInfoE loc_136 ("q")))) (LocInfoE loc_133 (!{LPtr} (LocInfoE loc_134 ("p"))))))))
+        Return (LocInfoE loc_130 (use{it_layout i32} (LocInfoE loc_132 (LValue (LocInfoE loc_132 (CopyAllocId (LocInfoE loc_135 (use{LPtr} (LocInfoE loc_136 ("q")))) (LocInfoE loc_133 (use{LPtr} (LocInfoE loc_134 ("p"))))))))))
       ]> $∅
     )%E
   |}.

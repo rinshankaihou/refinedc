@@ -21,6 +21,7 @@ Inductive expr :=
 (* new constructors *)
 | Use (o : order) (ly : layout) (e : expr)
 | AddrOf (e : expr)
+| LValue (e : expr)
 | GetMember (e : expr) (s : struct_layout) (m : var_name)
 | GetMemberUnion (e : expr) (ul : union_layout) (m : var_name)
 | OffsetOf (s : struct_layout) (m : var_name)
@@ -48,6 +49,7 @@ Lemma expr_ind (P : expr → Prop) :
   (P StuckE) →
   (∀ (o : order) (ly : layout) (e : expr), P e → P (Use o ly e)) →
   (∀ (e : expr), P e → P (AddrOf e)) →
+  (∀ (e : expr), P e → P (LValue e)) →
   (∀ (e : expr) (s : struct_layout) (m : var_name), P e → P (GetMember e s m)) →
   (∀ (e : expr) (ul : union_layout) (m : var_name), P e → P (GetMemberUnion e ul m)) →
   (∀ (s : struct_layout) (m : var_name), P (OffsetOf s m)) →
@@ -59,14 +61,14 @@ Lemma expr_ind (P : expr → Prop) :
   (∀ (e : lang.expr), P (Expr e)) → ∀ (e : expr), P e.
 Proof.
   move => *. generalize dependent P => P. match goal with | e : expr |- _ => revert e end.
-  fix FIX 1. move => [ ^e] => ???????? Hconcat ?????????? Hstruct Hmacro ?.
+  fix FIX 1. move => [ ^e] => ???????? Hconcat ??????????? Hstruct Hmacro ?.
   9: {
     apply Hconcat. apply Forall_true => ?. by apply: FIX.
   }
-  19: {
+  20: {
     apply Hstruct. apply Forall_fmap. apply Forall_true => ?. by apply: FIX.
   }
-  19: {
+  20: {
     apply Hmacro. apply Forall_true => ?. by apply: FIX.
   }
   all: auto.
@@ -87,6 +89,7 @@ Fixpoint to_expr (e : expr) : lang.expr :=
   | StuckE => lang.StuckE
   | Use o ly e => notation.Use o ly (to_expr e)
   | AddrOf e => notation.AddrOf (to_expr e)
+  | LValue e => notation.LValue (to_expr e)
   | AnnotExpr n a e => notation.AnnotExpr n a (to_expr e)
   | LocInfoE a e => notation.LocInfo a (to_expr e)
   | StructInit ly fs => notation.StructInit ly (prod_map id to_expr <$> fs)
@@ -109,6 +112,8 @@ Ltac of_expr e :=
   | lang.Val (lang.val_of_loc ?l) => constr:(Loc l)
   | notation.AddrOf ?e =>
     let e := of_expr e in constr:(AddrOf e)
+  | notation.LValue ?e =>
+    let e := of_expr e in constr:(LValue e)
   | notation.AnnotExpr ?n ?a ?e =>
     let e := of_expr e in constr:(AnnotExpr n a e)
   | notation.MacroE ?m ?es =>
@@ -168,6 +173,7 @@ Inductive ectx_item :=
 (* new constructors *)
 | UseCtx (o : order) (ly : layout)
 | AddrOfCtx
+| LValueCtx
 | AnnotExprCtx (n : nat) {A} (a : A)
 | LocInfoECtx (a : location_info)
 (* the following would not work, thus we don't have a context, but prove a specialized bind rule*)
@@ -191,6 +197,7 @@ Definition fill_item (Ki : ectx_item) (e : expr) : expr :=
   | SkipECtx => SkipE e
   | UseCtx o l => Use o l e
   | AddrOfCtx => AddrOf e
+  | LValueCtx => LValue e
   | AnnotExprCtx n a => AnnotExpr n a e
   | LocInfoECtx a => LocInfoE a e
   | GetMemberCtx s m => GetMember e s m
@@ -241,6 +248,8 @@ Fixpoint find_expr_fill (e : expr) (bind_val : bool) : option (list ectx_item * 
       Some (Ks ++ [UseCtx o ly], e') else Some ([], e)
   | AddrOf e1 => if find_expr_fill e1 bind_val is Some (Ks, e') then
       Some (Ks ++ [AddrOfCtx], e') else Some ([], e)
+  | LValue e1 => if find_expr_fill e1 bind_val is Some (Ks, e') then
+      Some (Ks ++ [LValueCtx], e') else Some ([], e)
   | AnnotExpr n a e1 => if find_expr_fill e1 bind_val is Some (Ks, e') then
       Some (Ks ++ [AnnotExprCtx n a], e') else Some ([], e)
   | LocInfoE a e1 => if find_expr_fill e1 bind_val is Some (Ks, e') then
@@ -265,7 +274,7 @@ Lemma ectx_item_correct Ks:
 Proof.
   elim/rev_ind: Ks. by exists [].
   move => K Ks [Ks' IH].
-  move: K => [|||||||||||||n|||] *; [
+  move: K => [||||||||||||||n|||] *; [
     eexists (_ ++ [lang.UnOpCtx _ _])|
     eexists (_ ++ [lang.BinOpLCtx _ _ _ _])|
     eexists (_ ++ [lang.BinOpRCtx _ _ _ _])|
@@ -278,6 +287,7 @@ Proof.
     eexists (_ ++ [lang.ConcatCtx _ _])|
     eexists (_ ++ [lang.SkipECtx])|
     eexists (_ ++ [lang.DerefCtx _ _])|
+    eexists (_)|
     eexists (_)|
     eexists (_ ++ replicate n lang.SkipECtx )|
     eexists (_)|
@@ -491,6 +501,7 @@ Fixpoint subst (x : var_name) (v : val) (e : expr)  : expr :=
   | StuckE => StuckE
   | Use o ly e => Use o ly (subst x v e)
   | AddrOf e => AddrOf (subst x v e)
+  | LValue e => LValue (subst x v e)
   | AnnotExpr n a e => AnnotExpr n a (subst x v e)
   | LocInfoE a e => LocInfoE a (subst x v e)
   | StructInit ly fs => StructInit ly (prod_map id (subst x v) <$> fs)

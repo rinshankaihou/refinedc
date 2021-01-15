@@ -180,6 +180,21 @@ Section own.
     TypedUnOp p (p ◁ₗ{β} ty)%I (CastOp PtrOp) PtrOp :=
     λ T, i2p (type_cast_ptr_ptr p β ty T).
 
+  Lemma type_place_cast_ptr_ptr K l ty β T:
+    typed_place K l β ty T -∗
+    typed_place (UnOpPCtx (CastOp PtrOp) :: K) l β ty T.
+  Proof.
+    iIntros "HP" (Φ) "Hl HΦ" => /=.
+    iApply wp_cast_loc. { by apply val_to_of_loc. }
+    iIntros "!#". iExists _. iSplit => //.
+    iApply ("HP" with "Hl"). iIntros (l' ty2 β2 typ R) "Hl' Htyp HT".
+    iApply ("HΦ" with "Hl' [-HT] HT"). iIntros (ty') "Hl'".
+    iMod ("Htyp" with "Hl'") as "[? $]". by iFrame.
+  Qed.
+  Global Instance type_place_cast_ptr_ptr_inst K l ty β:
+    TypedPlace (UnOpPCtx (CastOp PtrOp) :: K) l β ty :=
+    λ T, i2p (type_place_cast_ptr_ptr K l ty β T).
+
   (* Allow direct casts to other integer types. *)
   Lemma type_cast_ptr_int (p : loc) β ty T:
     ((p ◁ₗ{β} ty -∗ loc_in_bounds p 0 ∗ True) ∧ (p ◁ₗ{β} ty -∗ T (i2v p.2 size_t) (t2mt (p.2 @ int size_t)))) -∗

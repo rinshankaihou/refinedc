@@ -177,6 +177,8 @@ let rec pp_expr : Coq_ast.expr pp = fun ff e ->
           pp "use{%a} (%a)" (pp_layout false) lay pp_expr e
     | AddrOf(e)                     ->
         pp "&(%a)" pp_expr e
+    | LValue(e)                     ->
+        pp "LValue (%a)" pp_expr e
     | GetMember(e,name,false,field) ->
         pp "(%a) at{struct_%s} %S" pp_expr e name field
     | GetMember(e,name,true ,field) ->

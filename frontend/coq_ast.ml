@@ -49,6 +49,7 @@ and expr_aux =
   | SkipE     of expr
   | Use       of bool (* Atomic? *) * layout * expr
   | AddrOf    of expr
+  | LValue    of expr
   | GetMember of expr * string * bool (* From_union? *) * string
   | OffsetOf  of string * bool (* From_union? *) * string
   | AnnotExpr of int * coq_expr * expr
