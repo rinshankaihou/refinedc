@@ -15,6 +15,7 @@ Section proof_mpool_alloc_no_fallback.
     global_sl_unlock ◁ᵥ global_sl_unlock @ function_ptr type_of_sl_unlock -∗
     typed_function (impl_mpool_alloc_no_fallback global_sl_lock global_sl_unlock) type_of_mpool_alloc_no_fallback.
   Proof.
+    Open Scope printing_sugar.
     start_function "mpool_alloc_no_fallback" ([[[p q] n] entry_size]) => arg_p local_new_chunk local_entry local_ret local_chunk.
     split_blocks ((
       ∅

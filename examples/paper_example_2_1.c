@@ -24,7 +24,7 @@ struct [[rc::refined_by("a : nat")]] mem_t {
 [[rc::parameters("a : nat", "n : nat", "p : loc")]]
 [[rc::args   ("p @ &own<a @ mem_t>", "n @ int<size_t>")]]
 [[rc::returns("{n ≤ a} @ optional<&own<uninit<n>>, null>")]]
-[[rc::ensures("p @ &own<{n ≤ a ? a - n : a} @ mem_t>")]]
+[[rc::ensures("own p : {n ≤ a ? a - n : a} @ mem_t")]]
 void *alloc(struct mem_t *d, size_t size) {
   if(size > d->len) return NULL;
   d->len -= size;

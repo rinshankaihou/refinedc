@@ -88,7 +88,7 @@ Section code.
     sl_members := [
       (Some "val", it_layout i32);
       (None, Layout 4%nat 0%nat);
-      (Some "next", LPtr)
+      (Some "next", void*)
     ];
   |}.
   Solve Obligations with solve_struct_obligations.
@@ -96,8 +96,8 @@ Section code.
   (* Definition of function [append]. *)
   Definition impl_append (global_append : loc): function := {|
     f_args := [
-      ("l", LPtr);
-      ("k", LPtr)
+      ("l", void*);
+      ("k", void*)
     ];
     f_local_vars := [
     ];
@@ -105,7 +105,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_22 ;
-        if: LocInfoE loc_22 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_22 ((LocInfoE loc_23 (use{LPtr} (LocInfoE loc_25 (!{LPtr} (LocInfoE loc_26 ("l")))))) ={PtrOp, PtrOp} (LocInfoE loc_27 (NULL)))))
+        if: LocInfoE loc_22 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_22 ((LocInfoE loc_23 (use{void*} (LocInfoE loc_25 (!{void*} (LocInfoE loc_26 ("l")))))) ={PtrOp, PtrOp} (LocInfoE loc_27 (NULL)))))
         then
         locinfo: loc_4 ;
           Goto "#1"
@@ -115,15 +115,15 @@ Section code.
       ]> $
       <[ "#1" :=
         locinfo: loc_4 ;
-        LocInfoE loc_6 (!{LPtr} (LocInfoE loc_7 ("l"))) <-{ LPtr }
-          LocInfoE loc_8 (use{LPtr} (LocInfoE loc_9 ("k"))) ;
+        LocInfoE loc_6 (!{void*} (LocInfoE loc_7 ("l"))) <-{ void* }
+          LocInfoE loc_8 (use{void*} (LocInfoE loc_9 ("k"))) ;
         Return (VOID)
       ]> $
       <[ "#2" :=
         locinfo: loc_11 ;
         "_" <- LocInfoE loc_13 (global_append) with
-          [ LocInfoE loc_14 (&(LocInfoE loc_15 ((LocInfoE loc_16 (!{LPtr} (LocInfoE loc_18 (!{LPtr} (LocInfoE loc_19 ("l")))))) at{struct_list_node} "next"))) ;
-          LocInfoE loc_20 (use{LPtr} (LocInfoE loc_21 ("k"))) ] ;
+          [ LocInfoE loc_14 (&(LocInfoE loc_15 ((LocInfoE loc_16 (!{void*} (LocInfoE loc_18 (!{void*} (LocInfoE loc_19 ("l")))))) at{struct_list_node} "next"))) ;
+          LocInfoE loc_20 (use{void*} (LocInfoE loc_21 ("k"))) ] ;
         Return (VOID)
       ]> $∅
     )%E
@@ -134,8 +134,8 @@ Section code.
     f_args := [
     ];
     f_local_vars := [
-      ("node1", LPtr);
-      ("node2", LPtr)
+      ("node1", void*);
+      ("node2", void*)
     ];
     f_init := "#0";
     f_code := (
@@ -143,31 +143,31 @@ Section code.
         locinfo: loc_79 ;
         "$1" <- LocInfoE loc_81 (global_alloc) with
           [ LocInfoE loc_82 (i2v (layout_of struct_list_node).(ly_size) size_t) ] ;
-        "node1" <-{ LPtr }
+        "node1" <-{ void* }
           LocInfoE loc_79 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_79 ("$1"))) ;
         locinfo: loc_31 ;
-        LocInfoE loc_75 ((LocInfoE loc_76 (!{LPtr} (LocInfoE loc_77 ("node1")))) at{struct_list_node} "val") <-{ it_layout i32 }
+        LocInfoE loc_75 ((LocInfoE loc_76 (!{void*} (LocInfoE loc_77 ("node1")))) at{struct_list_node} "val") <-{ it_layout i32 }
           LocInfoE loc_78 (i2v 1 i32) ;
         locinfo: loc_32 ;
-        LocInfoE loc_71 ((LocInfoE loc_72 (!{LPtr} (LocInfoE loc_73 ("node1")))) at{struct_list_node} "next") <-{ LPtr }
+        LocInfoE loc_71 ((LocInfoE loc_72 (!{void*} (LocInfoE loc_73 ("node1")))) at{struct_list_node} "next") <-{ void* }
           LocInfoE loc_74 (NULL) ;
         locinfo: loc_65 ;
         "$0" <- LocInfoE loc_67 (global_alloc) with
           [ LocInfoE loc_68 (i2v (layout_of struct_list_node).(ly_size) size_t) ] ;
-        "node2" <-{ LPtr }
+        "node2" <-{ void* }
           LocInfoE loc_65 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_65 ("$0"))) ;
         locinfo: loc_34 ;
-        LocInfoE loc_61 ((LocInfoE loc_62 (!{LPtr} (LocInfoE loc_63 ("node2")))) at{struct_list_node} "val") <-{ it_layout i32 }
+        LocInfoE loc_61 ((LocInfoE loc_62 (!{void*} (LocInfoE loc_63 ("node2")))) at{struct_list_node} "val") <-{ it_layout i32 }
           LocInfoE loc_64 (i2v 2 i32) ;
         locinfo: loc_35 ;
-        LocInfoE loc_57 ((LocInfoE loc_58 (!{LPtr} (LocInfoE loc_59 ("node2")))) at{struct_list_node} "next") <-{ LPtr }
+        LocInfoE loc_57 ((LocInfoE loc_58 (!{void*} (LocInfoE loc_59 ("node2")))) at{struct_list_node} "next") <-{ void* }
           LocInfoE loc_60 (NULL) ;
         locinfo: loc_36 ;
         "_" <- LocInfoE loc_52 (global_append) with
           [ LocInfoE loc_53 (&(LocInfoE loc_54 ("node1"))) ;
-          LocInfoE loc_55 (use{LPtr} (LocInfoE loc_56 ("node2"))) ] ;
+          LocInfoE loc_55 (use{void*} (LocInfoE loc_56 ("node2"))) ] ;
         locinfo: loc_47 ;
-        if: LocInfoE loc_47 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_47 ((LocInfoE loc_48 (use{LPtr} (LocInfoE loc_49 ("node1")))) !={PtrOp, PtrOp} (LocInfoE loc_50 (NULL)))))
+        if: LocInfoE loc_47 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_47 ((LocInfoE loc_48 (use{void*} (LocInfoE loc_49 ("node1")))) !={PtrOp, PtrOp} (LocInfoE loc_50 (NULL)))))
         then
         locinfo: loc_39 ;
           Goto "#1"
@@ -176,7 +176,7 @@ Section code.
       ]> $
       <[ "#1" :=
         locinfo: loc_39 ;
-        assert: (LocInfoE loc_40 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_40 ((LocInfoE loc_41 (use{it_layout i32} (LocInfoE loc_42 ((LocInfoE loc_43 (!{LPtr} (LocInfoE loc_44 ("node1")))) at{struct_list_node} "val")))) ={IntOp i32, IntOp i32} (LocInfoE loc_45 (i2v 1 i32)))))) ;
+        assert: (LocInfoE loc_40 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_40 ((LocInfoE loc_41 (use{it_layout i32} (LocInfoE loc_42 ((LocInfoE loc_43 (!{void*} (LocInfoE loc_44 ("node1")))) at{struct_list_node} "val")))) ={IntOp i32, IntOp i32} (LocInfoE loc_45 (i2v 1 i32)))))) ;
         Return (VOID)
       ]> $
       <[ "#2" :=

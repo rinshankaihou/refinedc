@@ -12,6 +12,7 @@ Section proof_binary_search.
   Lemma type_binary_search :
     ⊢ typed_function impl_binary_search type_of_binary_search.
   Proof.
+    Open Scope printing_sugar.
     start_function "binary_search" ([[ls x] p]) => arg_xs arg_n arg_x local_r local_l local_k.
     split_blocks ((
       <[ "#1" :=

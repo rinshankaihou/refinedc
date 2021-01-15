@@ -142,7 +142,7 @@ Section code.
     sl_members := [
       (Some "val", it_layout i32);
       (None, Layout 4%nat 0%nat);
-      (Some "next", LPtr)
+      (Some "next", void*)
     ];
   |}.
   Solve Obligations with solve_struct_obligations.
@@ -150,8 +150,8 @@ Section code.
   (* Definition of function [append]. *)
   Definition impl_append (global_append : loc): function := {|
     f_args := [
-      ("l", LPtr);
-      ("k", LPtr)
+      ("l", void*);
+      ("k", void*)
     ];
     f_local_vars := [
     ];
@@ -159,7 +159,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_22 ;
-        if: LocInfoE loc_22 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_22 ((LocInfoE loc_23 (use{LPtr} (LocInfoE loc_25 (!{LPtr} (LocInfoE loc_26 ("l")))))) ={PtrOp, PtrOp} (LocInfoE loc_27 (NULL)))))
+        if: LocInfoE loc_22 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_22 ((LocInfoE loc_23 (use{void*} (LocInfoE loc_25 (!{void*} (LocInfoE loc_26 ("l")))))) ={PtrOp, PtrOp} (LocInfoE loc_27 (NULL)))))
         then
         locinfo: loc_4 ;
           Goto "#1"
@@ -169,15 +169,15 @@ Section code.
       ]> $
       <[ "#1" :=
         locinfo: loc_4 ;
-        LocInfoE loc_6 (!{LPtr} (LocInfoE loc_7 ("l"))) <-{ LPtr }
-          LocInfoE loc_8 (use{LPtr} (LocInfoE loc_9 ("k"))) ;
+        LocInfoE loc_6 (!{void*} (LocInfoE loc_7 ("l"))) <-{ void* }
+          LocInfoE loc_8 (use{void*} (LocInfoE loc_9 ("k"))) ;
         Return (VOID)
       ]> $
       <[ "#2" :=
         locinfo: loc_11 ;
         "_" <- LocInfoE loc_13 (global_append) with
-          [ LocInfoE loc_14 (&(LocInfoE loc_15 ((LocInfoE loc_16 (!{LPtr} (LocInfoE loc_18 (!{LPtr} (LocInfoE loc_19 ("l")))))) at{struct_list_node} "next"))) ;
-          LocInfoE loc_20 (use{LPtr} (LocInfoE loc_21 ("k"))) ] ;
+          [ LocInfoE loc_14 (&(LocInfoE loc_15 ((LocInfoE loc_16 (!{void*} (LocInfoE loc_18 (!{void*} (LocInfoE loc_19 ("l")))))) at{struct_list_node} "next"))) ;
+          LocInfoE loc_20 (use{void*} (LocInfoE loc_21 ("k"))) ] ;
         Return (VOID)
       ]> $∅
     )%E
@@ -186,18 +186,18 @@ Section code.
   (* Definition of function [partition]. *)
   Definition impl_partition (global_partition : loc): function := {|
     f_args := [
-      ("l", LPtr);
+      ("l", void*);
       ("pivot", it_layout i32)
     ];
     f_local_vars := [
-      ("rest", LPtr);
-      ("head", LPtr)
+      ("rest", void*);
+      ("head", void*)
     ];
     f_init := "#0";
     f_code := (
       <[ "#0" :=
         locinfo: loc_90 ;
-        if: LocInfoE loc_90 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_90 ((LocInfoE loc_91 (use{LPtr} (LocInfoE loc_93 (!{LPtr} (LocInfoE loc_94 ("l")))))) ={PtrOp, PtrOp} (LocInfoE loc_95 (NULL)))))
+        if: LocInfoE loc_90 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_90 ((LocInfoE loc_91 (use{void*} (LocInfoE loc_93 (!{void*} (LocInfoE loc_94 ("l")))))) ={PtrOp, PtrOp} (LocInfoE loc_95 (NULL)))))
         then
         locinfo: loc_32 ;
           Goto "#1"
@@ -212,13 +212,13 @@ Section code.
       <[ "#2" :=
         locinfo: loc_77 ;
         "$0" <- LocInfoE loc_79 (global_partition) with
-          [ LocInfoE loc_80 (&(LocInfoE loc_81 ((LocInfoE loc_82 (!{LPtr} (LocInfoE loc_84 (!{LPtr} (LocInfoE loc_85 ("l")))))) at{struct_list_node} "next"))) ;
+          [ LocInfoE loc_80 (&(LocInfoE loc_81 ((LocInfoE loc_82 (!{void*} (LocInfoE loc_84 (!{void*} (LocInfoE loc_85 ("l")))))) at{struct_list_node} "next"))) ;
           LocInfoE loc_86 (use{it_layout i32} (LocInfoE loc_87 ("pivot"))) ] ;
-        "rest" <-{ LPtr } LocInfoE loc_77 ("$0") ;
-        "head" <-{ LPtr }
-          LocInfoE loc_71 (use{LPtr} (LocInfoE loc_73 (!{LPtr} (LocInfoE loc_74 ("l"))))) ;
+        "rest" <-{ void* } LocInfoE loc_77 ("$0") ;
+        "head" <-{ void* }
+          LocInfoE loc_71 (use{void*} (LocInfoE loc_73 (!{void*} (LocInfoE loc_74 ("l"))))) ;
         locinfo: loc_62 ;
-        if: LocInfoE loc_62 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_62 ((LocInfoE loc_63 (use{it_layout i32} (LocInfoE loc_64 ("pivot")))) ≤{IntOp i32, IntOp i32} (LocInfoE loc_65 (use{it_layout i32} (LocInfoE loc_66 ((LocInfoE loc_67 (!{LPtr} (LocInfoE loc_69 (!{LPtr} (LocInfoE loc_70 ("l")))))) at{struct_list_node} "val")))))))
+        if: LocInfoE loc_62 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_62 ((LocInfoE loc_63 (use{it_layout i32} (LocInfoE loc_64 ("pivot")))) ≤{IntOp i32, IntOp i32} (LocInfoE loc_65 (use{it_layout i32} (LocInfoE loc_66 ((LocInfoE loc_67 (!{void*} (LocInfoE loc_69 (!{void*} (LocInfoE loc_70 ("l")))))) at{struct_list_node} "val")))))))
         then
         locinfo: loc_39 ;
           Goto "#3"
@@ -228,17 +228,17 @@ Section code.
       ]> $
       <[ "#3" :=
         locinfo: loc_39 ;
-        LocInfoE loc_50 (!{LPtr} (LocInfoE loc_51 ("l"))) <-{ LPtr }
-          LocInfoE loc_52 (use{LPtr} (LocInfoE loc_53 ((LocInfoE loc_54 (!{LPtr} (LocInfoE loc_56 (!{LPtr} (LocInfoE loc_57 ("l")))))) at{struct_list_node} "next"))) ;
+        LocInfoE loc_50 (!{void*} (LocInfoE loc_51 ("l"))) <-{ void* }
+          LocInfoE loc_52 (use{void*} (LocInfoE loc_53 ((LocInfoE loc_54 (!{void*} (LocInfoE loc_56 (!{void*} (LocInfoE loc_57 ("l")))))) at{struct_list_node} "next"))) ;
         locinfo: loc_40 ;
-        LocInfoE loc_44 ((LocInfoE loc_45 (!{LPtr} (LocInfoE loc_46 ("head")))) at{struct_list_node} "next") <-{ LPtr }
-          LocInfoE loc_47 (use{LPtr} (LocInfoE loc_48 ("rest"))) ;
+        LocInfoE loc_44 ((LocInfoE loc_45 (!{void*} (LocInfoE loc_46 ("head")))) at{struct_list_node} "next") <-{ void* }
+          LocInfoE loc_47 (use{void*} (LocInfoE loc_48 ("rest"))) ;
         locinfo: loc_41 ;
-        Return (LocInfoE loc_42 (use{LPtr} (LocInfoE loc_43 ("head"))))
+        Return (LocInfoE loc_42 (use{void*} (LocInfoE loc_43 ("head"))))
       ]> $
       <[ "#4" :=
         locinfo: loc_59 ;
-        Return (LocInfoE loc_60 (use{LPtr} (LocInfoE loc_61 ("rest"))))
+        Return (LocInfoE loc_60 (use{void*} (LocInfoE loc_61 ("rest"))))
       ]> $∅
     )%E
   |}.
@@ -246,17 +246,17 @@ Section code.
   (* Definition of function [quicksort]. *)
   Definition impl_quicksort (global_append global_partition global_quicksort : loc): function := {|
     f_args := [
-      ("l", LPtr)
+      ("l", void*)
     ];
     f_local_vars := [
       ("pivot", it_layout i32);
-      ("higher", LPtr)
+      ("higher", void*)
     ];
     f_init := "#0";
     f_code := (
       <[ "#0" :=
         locinfo: loc_139 ;
-        if: LocInfoE loc_139 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_139 ((LocInfoE loc_140 (use{LPtr} (LocInfoE loc_142 (!{LPtr} (LocInfoE loc_143 ("l")))))) ={PtrOp, PtrOp} (LocInfoE loc_144 (NULL)))))
+        if: LocInfoE loc_139 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_139 ((LocInfoE loc_140 (use{void*} (LocInfoE loc_142 (!{void*} (LocInfoE loc_143 ("l")))))) ={PtrOp, PtrOp} (LocInfoE loc_144 (NULL)))))
         then
         locinfo: loc_100 ;
           Goto "#1"
@@ -269,22 +269,22 @@ Section code.
       ]> $
       <[ "#2" :=
         "pivot" <-{ it_layout i32 }
-          LocInfoE loc_131 (use{it_layout i32} (LocInfoE loc_132 ((LocInfoE loc_133 (!{LPtr} (LocInfoE loc_135 (!{LPtr} (LocInfoE loc_136 ("l")))))) at{struct_list_node} "val"))) ;
+          LocInfoE loc_131 (use{it_layout i32} (LocInfoE loc_132 ((LocInfoE loc_133 (!{void*} (LocInfoE loc_135 (!{void*} (LocInfoE loc_136 ("l")))))) at{struct_list_node} "val"))) ;
         locinfo: loc_122 ;
         "$0" <- LocInfoE loc_124 (global_partition) with
-          [ LocInfoE loc_125 (use{LPtr} (LocInfoE loc_126 ("l"))) ;
+          [ LocInfoE loc_125 (use{void*} (LocInfoE loc_126 ("l"))) ;
           LocInfoE loc_127 (use{it_layout i32} (LocInfoE loc_128 ("pivot"))) ] ;
-        "higher" <-{ LPtr } LocInfoE loc_122 ("$0") ;
+        "higher" <-{ void* } LocInfoE loc_122 ("$0") ;
         locinfo: loc_105 ;
         "_" <- LocInfoE loc_119 (global_quicksort) with
           [ LocInfoE loc_120 (&(LocInfoE loc_121 ("higher"))) ] ;
         locinfo: loc_106 ;
         "_" <- LocInfoE loc_115 (global_quicksort) with
-          [ LocInfoE loc_116 (use{LPtr} (LocInfoE loc_117 ("l"))) ] ;
+          [ LocInfoE loc_116 (use{void*} (LocInfoE loc_117 ("l"))) ] ;
         locinfo: loc_107 ;
         "_" <- LocInfoE loc_109 (global_append) with
-          [ LocInfoE loc_110 (use{LPtr} (LocInfoE loc_111 ("l"))) ;
-          LocInfoE loc_112 (use{LPtr} (LocInfoE loc_113 ("higher"))) ] ;
+          [ LocInfoE loc_110 (use{void*} (LocInfoE loc_111 ("l"))) ;
+          LocInfoE loc_112 (use{void*} (LocInfoE loc_113 ("higher"))) ] ;
         Return (VOID)
       ]> $∅
     )%E

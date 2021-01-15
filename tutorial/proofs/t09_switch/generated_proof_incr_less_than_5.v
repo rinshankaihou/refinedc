@@ -11,6 +11,7 @@ Section proof_incr_less_than_5.
   Lemma type_incr_less_than_5 :
     ⊢ typed_function impl_incr_less_than_5 type_of_incr_less_than_5.
   Proof.
+    Open Scope printing_sugar.
     start_function "incr_less_than_5" (i) => arg_i local_o.
     split_blocks ((
       ∅

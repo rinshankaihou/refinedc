@@ -14,6 +14,7 @@ Section proof_new_btree.
     global_alloc ◁ᵥ global_alloc @ function_ptr type_of_alloc -∗
     typed_function (impl_new_btree global_alloc) type_of_new_btree.
   Proof.
+    Open Scope printing_sugar.
     start_function "new_btree" ([]) => local_t.
     split_blocks ((
       ∅

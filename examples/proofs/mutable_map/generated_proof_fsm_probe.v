@@ -13,6 +13,7 @@ Section proof_fsm_probe.
     global_fsm_slot_for_key ◁ᵥ global_fsm_slot_for_key @ function_ptr type_of_fsm_slot_for_key -∗
     typed_function (impl_fsm_probe global_fsm_slot_for_key) type_of_fsm_probe.
   Proof.
+    Open Scope printing_sugar.
     start_function "fsm_probe" ([[[[m mp] items] key] count]) => arg_m arg_key local_slot_idx.
     split_blocks ((
       <[ "#1" :=

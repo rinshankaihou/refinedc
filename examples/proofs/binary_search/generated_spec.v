@@ -35,8 +35,8 @@ Section spec.
 
   (* Specifications for function [binary_search]. *)
   Definition type_of_binary_search :=
-    fn(∀ (R, ls, x, p, ty, px) : (Z → Z → Prop) * (list Z) * Z * loc * (Z → type) * loc; (function_ptr (fn(∀ (x, y, px, py) : (Z * Z * loc * loc); px @ &own (ty x), py @ &own (ty y); True) → ∃ (b) : (bool), b @ boolean bool_it; px ◁ₗ ty x ∗ py ◁ₗ ty y ∗ ⌜b ↔ R x y⌝)), (p @ (&own (array (LPtr) ((fun x => &own (ty x) : type) <$> ls)))), ((length ls) @ (int (i32))), (px @ (&own (ty x))); ⌜StronglySorted R ls⌝ ∗ ⌜Transitive R⌝)
-      → ∃ n : nat, (n @ (int (i32))); ⌜∀ i y, (i < n)%nat → ls !! i = Some y → R y x⌝ ∗ ⌜∀ i y, (n ≤ i)%nat → ls !! i = Some y → ¬ R y x⌝ ∗ (p ◁ₗ (array (LPtr) ((fun x => &own (ty x) : type) <$> ls))) ∗ (px ◁ₗ (ty x)).
+    fn(∀ (R, ls, x, p, ty, px) : (Z → Z → Prop) * (list Z) * Z * loc * (Z → type) * loc; (function_ptr (fn(∀ (x, y, px, py) : (Z * Z * loc * loc); px @ &own (ty x), py @ &own (ty y); True) → ∃ (b) : (bool), b @ boolean bool_it; px ◁ₗ ty x ∗ py ◁ₗ ty y ∗ ⌜b ↔ R x y⌝)), (p @ (&own (array (void*) ((fun x => &own (ty x) : type) <$> ls)))), ((length ls) @ (int (i32))), (px @ (&own (ty x))); ⌜StronglySorted R ls⌝ ∗ ⌜Transitive R⌝)
+      → ∃ n : nat, (n @ (int (i32))); ⌜∀ i y, (i < n)%nat → ls !! i = Some y → R y x⌝ ∗ ⌜∀ i y, (n ≤ i)%nat → ls !! i = Some y → ¬ R y x⌝ ∗ (p ◁ₗ (array (void*) ((fun x => &own (ty x) : type) <$> ls))) ∗ (px ◁ₗ (ty (x))).
 
   (* Specifications for function [compare_int]. *)
   Definition type_of_compare_int :=

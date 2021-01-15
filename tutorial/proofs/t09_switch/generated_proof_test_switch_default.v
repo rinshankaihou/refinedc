@@ -11,6 +11,7 @@ Section proof_test_switch_default.
   Lemma type_test_switch_default :
     ⊢ typed_function impl_test_switch_default type_of_test_switch_default.
   Proof.
+    Open Scope printing_sugar.
     start_function "test_switch_default" (i) => arg_i local_o.
     split_blocks ((
       ∅

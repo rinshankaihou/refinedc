@@ -13,6 +13,7 @@ Section proof_test.
     global_append ◁ᵥ global_append @ function_ptr type_of_append -∗
     typed_function (impl_test global_alloc global_append) type_of_test.
   Proof.
+    Open Scope printing_sugar.
     start_function "test" ([]) => local_node1 local_node2.
     split_blocks ((
       ∅

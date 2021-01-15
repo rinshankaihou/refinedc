@@ -23,8 +23,8 @@ Section spec.
       constrained (struct struct_btree [@{type}
         (n @ (int (i32))) ;
         (array_p (i32) (ks `at_type` int i32) ((ORDER-1-n)%nat)) ;
-        (array_p (LPtr) ((λ ty, (&own ty : type)) <$> vs) ((ORDER-1-n)%nat)) ;
-        (guarded "btree_t_0" (array_p (LPtr) (cs `at_type`  (tyexists (λ rfmt__, apply_dfun self (rfmt__))) ) ((ORDER-1-n)%nat))) ;
+        (array_p (void*) ((λ ty, (&own ty : type)) <$> vs) ((ORDER-1-n)%nat)) ;
+        (guarded "btree_t_0" (array_p (void*) (cs `at_type`  (tyexists (λ rfmt__, apply_dfun self (rfmt__))) ) ((ORDER-1-n)%nat))) ;
         ((br_height r) @ (int (i32)))
       ]) (
         ⌜length ks = n⌝ ∗
@@ -53,8 +53,8 @@ Section spec.
         constrained (struct struct_btree [@{type}
           (n @ (int (i32))) ;
           (array_p (i32) (ks `at_type` int i32) ((ORDER-1-n)%nat)) ;
-          (array_p (LPtr) ((λ ty, (&own ty : type)) <$> vs) ((ORDER-1-n)%nat)) ;
-          (guarded "btree_t_0" (array_p (LPtr) (cs `at_type`  (tyexists (λ rfmt__, rfmt__ @ btree_t)) ) ((ORDER-1-n)%nat))) ;
+          (array_p (void*) ((λ ty, (&own ty : type)) <$> vs) ((ORDER-1-n)%nat)) ;
+          (guarded "btree_t_0" (array_p (void*) (cs `at_type`  (tyexists (λ rfmt__, rfmt__ @ btree_t)) ) ((ORDER-1-n)%nat))) ;
           ((br_height r) @ (int (i32)))
         ]) (
           ⌜length ks = n⌝ ∗

@@ -79,8 +79,8 @@ let pp_int_type : Coq_ast.int_type pp = fun ff it ->
 let rec pp_layout : bool -> Coq_ast.layout pp = fun wrap ff layout ->
   let pp fmt = Format.fprintf ff fmt in
   match layout with
-  | LVoid              -> pp "LVoid"
-  | LPtr               -> pp "LPtr"
+  | LVoid              -> pp "void_layout"
+  | LPtr               -> pp "void*"
   | _ when wrap        -> pp "(%a)" (pp_layout false) layout
   | LStruct(id, false) -> pp "layout_of struct_%s" id
   | LStruct(id, true ) -> pp "ul_layout union_%s" id
@@ -504,6 +504,8 @@ and pp_constr_guard : unit pp option -> guard_mode -> bool -> constr pp =
       fprintf ff "∃ %s%a, %a" x (pp_type_annot pp_ty) a (pp_constr false) c
   | Constr_own(x,k,ty)  ->
       fprintf ff "%s %a %a" x pp_kind k pp_ty ty
+  | Constr_val(x, ty)   ->
+      fprintf ff "%s ◁ᵥ %a" x pp_ty ty
   | Constr_glob(x,ty)   ->
       fprintf ff "global_with_type %S Own %a" x pp_ty ty
 
@@ -777,6 +779,9 @@ let pp_spec : string -> import list -> string list -> typedef list ->
   if inlined <> [] then pp "\n@;(* Inlined code. *)\n";
   List.iter (fun s -> if s = "" then pp "\n" else pp "@;%s" s) inlined;
 
+  (* [Notation] data for printing sugar. *)
+  let sugar = ref [] in
+
   (* [Typeclass Opaque] stuff that needs to be repeated after the section. *)
   let opaque = ref [] in
 
@@ -809,6 +814,7 @@ let pp_spec : string -> import list -> string list -> typedef list ->
     let guard = Guard_in_def(id) in
     pp_struct_def_np ast.structs guard annot fields ff struct_id;
     pp "@]@;)%%I.@;Typeclasses Opaque %s_rec.\n" id;
+    if par_names <> [] then sugar := !sugar @ [(id, par_names)];
     opaque := !opaque @ [id ^ "_rec"];
 
     pp "@;Global Instance %s_rec_ne : Contractive %s_rec." id id;
@@ -1062,6 +1068,16 @@ let pp_spec : string -> import list -> string list -> typedef list ->
   (* Closing the section. *)
   pp "@]@;End spec.";
 
+  (* [Notation] stuff (printing sugar). *)
+  if !sugar <> [] then pp "@;";
+  let pp_sugar (id, params) =
+    pp "@;Notation \"%s< %a >\"" id (pp_sep " , " pp_print_string) params;
+    pp " := (%s %a)@;  " id (pp_sep " " pp_print_string) params;
+    pp "(only printing, format \"'%s<' %a '>'\") : printing_sugar." id
+      (pp_sep " ,  " pp_print_string) params
+  in
+  List.iter pp_sugar !sugar;
+
   (* [Typeclass Opaque] stuff. *)
   if !opaque <> [] then pp "@;";
   let pp_opaque = pp "@;Typeclasses Opaque %s." in
@@ -1169,6 +1185,7 @@ let pp_proof : string -> func_def -> import list -> string list -> proof_kind
                  List.iter (fprintf ff " %a]" pp_intro) xs
   in
   pp "@[<v 2>Proof.@;";
+  pp "Open Scope printing_sugar.@;";
   pp "start_function \"%s\" (%a)" def.func_name
     pp_intros func_annot.fa_parameters;
   if def.func_vars <> [] || def.func_args <> [] then

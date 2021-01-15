@@ -11,12 +11,13 @@ Section proof_reverse.
   Lemma type_reverse :
     ⊢ typed_function impl_reverse type_of_reverse.
   Proof.
+    Open Scope printing_sugar.
     start_function "reverse" (l) => arg_p local_w local_t.
     split_blocks ((
       <[ "#1" :=
         ∃ l1 : list type,
         ∃ l2 : list type,
-        local_t ◁ₗ uninit LPtr ∗
+        local_t ◁ₗ uninit void* ∗
         local_w ◁ₗ (l1 @ (list_t)) ∗
         arg_p ◁ₗ (l2 @ (list_t)) ∗
         ⌜l = rev l1 ++ l2⌝

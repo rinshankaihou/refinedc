@@ -7,7 +7,7 @@ Import uPred.
 Section fixpoint.
   Context `{!typeG Σ}.
 
-  Global Instance type_inhabited : Inhabited type := populate (uninit LVoid).
+  Global Instance type_inhabited : Inhabited type := populate (uninit void_layout).
 
   Context {A : Type} (T : (A -d> typeO) → (A -d> typeO)) {HT: Contractive T}.
 

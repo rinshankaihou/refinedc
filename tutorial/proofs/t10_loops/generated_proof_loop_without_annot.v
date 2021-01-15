@@ -11,6 +11,7 @@ Section proof_loop_without_annot.
   Lemma type_loop_without_annot :
     ⊢ typed_function impl_loop_without_annot type_of_loop_without_annot.
   Proof.
+    Open Scope printing_sugar.
     start_function "loop_without_annot" ([]) => arg_a.
     split_blocks ((
       <[ "#7" :=

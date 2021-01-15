@@ -15,6 +15,7 @@ Section proof_quicksort.
     global_quicksort ◁ᵥ global_quicksort @ function_ptr type_of_quicksort -∗
     typed_function (impl_quicksort global_append global_partition global_quicksort) type_of_quicksort.
   Proof.
+    Open Scope printing_sugar.
     start_function "quicksort" ([list_l l]) => arg_l local_pivot local_higher.
     split_blocks ((
       ∅

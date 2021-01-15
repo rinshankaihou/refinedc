@@ -14,6 +14,7 @@ Section proof_sl_lock.
   Lemma type_sl_lock :
     ⊢ typed_function impl_sl_lock type_of_sl_lock.
   Proof.
+    Open Scope printing_sugar.
     start_function "sl_lock" ([[p gamma] beta]) => arg_lock local_expected.
     split_blocks ((
       <[ "#1" :=

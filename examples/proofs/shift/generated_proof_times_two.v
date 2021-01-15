@@ -11,6 +11,7 @@ Section proof_times_two.
   Lemma type_times_two :
     ⊢ typed_function impl_times_two type_of_times_two.
   Proof.
+    Open Scope printing_sugar.
     start_function "times_two" (x) => arg_x.
     split_blocks ((
       ∅

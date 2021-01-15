@@ -11,6 +11,7 @@ Section proof_test_item_modify_entry.
   Lemma type_test_item_modify_entry :
     ⊢ typed_function impl_test_item_modify_entry type_of_test_item_modify_entry.
   Proof.
+    Open Scope printing_sugar.
     start_function "test_item_modify_entry" ([[i x] k]) => arg_i arg_key local_old_key.
     split_blocks ((
       ∅

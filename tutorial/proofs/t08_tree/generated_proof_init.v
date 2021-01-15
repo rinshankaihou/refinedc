@@ -13,6 +13,7 @@ Section proof_init.
     global_alloc ◁ᵥ global_alloc @ function_ptr type_of_alloc -∗
     typed_function (impl_init global_alloc) type_of_init.
   Proof.
+    Open Scope printing_sugar.
     start_function "init" (k) => arg_key local_node.
     split_blocks ((
       ∅

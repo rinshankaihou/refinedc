@@ -12,6 +12,7 @@ Section proof_init_queue.
     global_alloc ◁ᵥ global_alloc @ function_ptr type_of_alloc -∗
     typed_function (impl_init_queue global_alloc) type_of_init_queue.
   Proof.
+    Open Scope printing_sugar.
     start_function "init_queue" ([]) => local_queue.
     split_blocks ((
       ∅

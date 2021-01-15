@@ -12,6 +12,7 @@ Section proof_init_int_test.
     global_init_int ◁ᵥ global_init_int @ function_ptr type_of_init_int -∗
     typed_function (impl_init_int_test global_init_int) type_of_init_int_test.
   Proof.
+    Open Scope printing_sugar.
     start_function "init_int_test" (p) => arg_out local_i.
     split_blocks ((
       ∅

@@ -14,6 +14,7 @@ Section proof_fsm_insert.
     global_fsm_realloc_if_necessary ◁ᵥ global_fsm_realloc_if_necessary @ function_ptr type_of_fsm_realloc_if_necessary -∗
     typed_function (impl_fsm_insert global_fsm_probe global_fsm_realloc_if_necessary) type_of_fsm_insert.
   Proof.
+    Open Scope printing_sugar.
     start_function "fsm_insert" ([[[[[m mp] items] count] key] ty]) => arg_m arg_key arg_value local_item local_replaced local_slot_idx.
     split_blocks ((
       ∅

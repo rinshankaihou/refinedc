@@ -167,8 +167,8 @@ Section code.
   (* Definition of struct [queue_elem]. *)
   Program Definition struct_queue_elem := {|
     sl_members := [
-      (Some "elem", LPtr);
-      (Some "next", LPtr)
+      (Some "elem", void*);
+      (Some "next", void*)
     ];
   |}.
   Solve Obligations with solve_struct_obligations.
@@ -176,8 +176,8 @@ Section code.
   (* Definition of struct [queue]. *)
   Program Definition struct_queue := {|
     sl_members := [
-      (Some "head", LPtr);
-      (Some "tail", LPtr)
+      (Some "head", void*);
+      (Some "tail", void*)
     ];
   |}.
   Solve Obligations with solve_struct_obligations.
@@ -187,7 +187,7 @@ Section code.
     f_args := [
     ];
     f_local_vars := [
-      ("queue", LPtr)
+      ("queue", void*)
     ];
     f_init := "#0";
     f_code := (
@@ -195,16 +195,16 @@ Section code.
         locinfo: loc_19 ;
         "$0" <- LocInfoE loc_21 (global_alloc) with
           [ LocInfoE loc_22 (i2v (layout_of struct_queue).(ly_size) size_t) ] ;
-        "queue" <-{ LPtr }
+        "queue" <-{ void* }
           LocInfoE loc_19 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_19 ("$0"))) ;
         locinfo: loc_3 ;
-        LocInfoE loc_15 ((LocInfoE loc_16 (!{LPtr} (LocInfoE loc_17 ("queue")))) at{struct_queue} "head") <-{ LPtr }
+        LocInfoE loc_15 ((LocInfoE loc_16 (!{void*} (LocInfoE loc_17 ("queue")))) at{struct_queue} "head") <-{ void* }
           LocInfoE loc_18 (NULL) ;
         locinfo: loc_4 ;
-        LocInfoE loc_8 ((LocInfoE loc_9 (!{LPtr} (LocInfoE loc_10 ("queue")))) at{struct_queue} "tail") <-{ LPtr }
-          LocInfoE loc_11 (&(LocInfoE loc_12 ((LocInfoE loc_13 (!{LPtr} (LocInfoE loc_14 ("queue")))) at{struct_queue} "head"))) ;
+        LocInfoE loc_8 ((LocInfoE loc_9 (!{void*} (LocInfoE loc_10 ("queue")))) at{struct_queue} "tail") <-{ void* }
+          LocInfoE loc_11 (&(LocInfoE loc_12 ((LocInfoE loc_13 (!{void*} (LocInfoE loc_14 ("queue")))) at{struct_queue} "head"))) ;
         locinfo: loc_5 ;
-        Return (LocInfoE loc_6 (use{LPtr} (LocInfoE loc_7 ("queue"))))
+        Return (LocInfoE loc_6 (use{void*} (LocInfoE loc_7 ("queue"))))
       ]> $∅
     )%E
   |}.
@@ -212,7 +212,7 @@ Section code.
   (* Definition of function [is_empty]. *)
   Definition impl_is_empty : function := {|
     f_args := [
-      ("q", LPtr)
+      ("q", void*)
     ];
     f_local_vars := [
     ];
@@ -220,9 +220,9 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_27 ;
-        expr: (LocInfoE loc_38 (&(LocInfoE loc_40 (!{LPtr} (LocInfoE loc_41 ((LocInfoE loc_42 (!{LPtr} (LocInfoE loc_44 (!{LPtr} (LocInfoE loc_45 ("q")))))) at{struct_queue} "tail")))))) ;
+        expr: (LocInfoE loc_38 (&(LocInfoE loc_40 (!{void*} (LocInfoE loc_41 ((LocInfoE loc_42 (!{void*} (LocInfoE loc_44 (!{void*} (LocInfoE loc_45 ("q")))))) at{struct_queue} "tail")))))) ;
         locinfo: loc_29 ;
-        Return (LocInfoE loc_30 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_30 ((LocInfoE loc_31 (use{LPtr} (LocInfoE loc_32 ((LocInfoE loc_33 (!{LPtr} (LocInfoE loc_35 (!{LPtr} (LocInfoE loc_36 ("q")))))) at{struct_queue} "head")))) !={PtrOp, PtrOp} (LocInfoE loc_37 (NULL))))))
+        Return (LocInfoE loc_30 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_30 ((LocInfoE loc_31 (use{void*} (LocInfoE loc_32 ((LocInfoE loc_33 (!{void*} (LocInfoE loc_35 (!{void*} (LocInfoE loc_36 ("q")))))) at{struct_queue} "head")))) !={PtrOp, PtrOp} (LocInfoE loc_37 (NULL))))))
       ]> $∅
     )%E
   |}.
@@ -230,11 +230,11 @@ Section code.
   (* Definition of function [enqueue]. *)
   Definition impl_enqueue (global_alloc : loc): function := {|
     f_args := [
-      ("q", LPtr);
-      ("v", LPtr)
+      ("q", void*);
+      ("v", void*)
     ];
     f_local_vars := [
-      ("elem", LPtr)
+      ("elem", void*)
     ];
     f_init := "#0";
     f_code := (
@@ -242,20 +242,20 @@ Section code.
         locinfo: loc_80 ;
         "$0" <- LocInfoE loc_82 (global_alloc) with
           [ LocInfoE loc_83 (i2v (layout_of struct_queue_elem).(ly_size) size_t) ] ;
-        "elem" <-{ LPtr }
+        "elem" <-{ void* }
           LocInfoE loc_80 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_80 ("$0"))) ;
         locinfo: loc_49 ;
-        LocInfoE loc_75 ((LocInfoE loc_76 (!{LPtr} (LocInfoE loc_77 ("elem")))) at{struct_queue_elem} "elem") <-{ LPtr }
-          LocInfoE loc_78 (use{LPtr} (LocInfoE loc_79 ("v"))) ;
+        LocInfoE loc_75 ((LocInfoE loc_76 (!{void*} (LocInfoE loc_77 ("elem")))) at{struct_queue_elem} "elem") <-{ void* }
+          LocInfoE loc_78 (use{void*} (LocInfoE loc_79 ("v"))) ;
         locinfo: loc_50 ;
-        LocInfoE loc_71 ((LocInfoE loc_72 (!{LPtr} (LocInfoE loc_73 ("elem")))) at{struct_queue_elem} "next") <-{ LPtr }
+        LocInfoE loc_71 ((LocInfoE loc_72 (!{void*} (LocInfoE loc_73 ("elem")))) at{struct_queue_elem} "next") <-{ void* }
           LocInfoE loc_74 (NULL) ;
         locinfo: loc_51 ;
-        LocInfoE loc_63 (!{LPtr} (LocInfoE loc_64 ((LocInfoE loc_65 (!{LPtr} (LocInfoE loc_67 (!{LPtr} (LocInfoE loc_68 ("q")))))) at{struct_queue} "tail"))) <-{ LPtr }
-          LocInfoE loc_69 (use{LPtr} (LocInfoE loc_70 ("elem"))) ;
+        LocInfoE loc_63 (!{void*} (LocInfoE loc_64 ((LocInfoE loc_65 (!{void*} (LocInfoE loc_67 (!{void*} (LocInfoE loc_68 ("q")))))) at{struct_queue} "tail"))) <-{ void* }
+          LocInfoE loc_69 (use{void*} (LocInfoE loc_70 ("elem"))) ;
         locinfo: loc_52 ;
-        LocInfoE loc_53 ((LocInfoE loc_54 (!{LPtr} (LocInfoE loc_56 (!{LPtr} (LocInfoE loc_57 ("q")))))) at{struct_queue} "tail") <-{ LPtr }
-          LocInfoE loc_58 (&(LocInfoE loc_59 ((LocInfoE loc_60 (!{LPtr} (LocInfoE loc_61 ("elem")))) at{struct_queue_elem} "next"))) ;
+        LocInfoE loc_53 ((LocInfoE loc_54 (!{void*} (LocInfoE loc_56 (!{void*} (LocInfoE loc_57 ("q")))))) at{struct_queue} "tail") <-{ void* }
+          LocInfoE loc_58 (&(LocInfoE loc_59 ((LocInfoE loc_60 (!{void*} (LocInfoE loc_61 ("elem")))) at{struct_queue_elem} "next"))) ;
         Return (VOID)
       ]> $∅
     )%E
@@ -264,19 +264,19 @@ Section code.
   (* Definition of function [dequeue]. *)
   Definition impl_dequeue (global_free : loc): function := {|
     f_args := [
-      ("q", LPtr)
+      ("q", void*)
     ];
     f_local_vars := [
-      ("elem", LPtr);
-      ("ret", LPtr)
+      ("elem", void*);
+      ("ret", void*)
     ];
     f_init := "#0";
     f_code := (
       <[ "#0" :=
         locinfo: loc_88 ;
-        expr: (LocInfoE loc_166 (&(LocInfoE loc_168 (!{LPtr} (LocInfoE loc_169 ((LocInfoE loc_170 (!{LPtr} (LocInfoE loc_172 (!{LPtr} (LocInfoE loc_173 ("q")))))) at{struct_queue} "tail")))))) ;
+        expr: (LocInfoE loc_166 (&(LocInfoE loc_168 (!{void*} (LocInfoE loc_169 ((LocInfoE loc_170 (!{void*} (LocInfoE loc_172 (!{void*} (LocInfoE loc_173 ("q")))))) at{struct_queue} "tail")))))) ;
         locinfo: loc_158 ;
-        if: LocInfoE loc_158 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_158 ((LocInfoE loc_159 (use{LPtr} (LocInfoE loc_160 ((LocInfoE loc_161 (!{LPtr} (LocInfoE loc_163 (!{LPtr} (LocInfoE loc_164 ("q")))))) at{struct_queue} "head")))) ={PtrOp, PtrOp} (LocInfoE loc_165 (NULL)))))
+        if: LocInfoE loc_158 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_158 ((LocInfoE loc_159 (use{void*} (LocInfoE loc_160 ((LocInfoE loc_161 (!{void*} (LocInfoE loc_163 (!{void*} (LocInfoE loc_164 ("q")))))) at{struct_queue} "head")))) ={PtrOp, PtrOp} (LocInfoE loc_165 (NULL)))))
         then
         locinfo: loc_155 ;
           Goto "#5"
@@ -284,12 +284,12 @@ Section code.
         Goto "#6"
       ]> $
       <[ "#1" :=
-        "elem" <-{ LPtr }
-          LocInfoE loc_146 (use{LPtr} (LocInfoE loc_147 ((LocInfoE loc_148 (!{LPtr} (LocInfoE loc_150 (!{LPtr} (LocInfoE loc_151 ("q")))))) at{struct_queue} "head"))) ;
-        "ret" <-{ LPtr }
-          LocInfoE loc_140 (use{LPtr} (LocInfoE loc_141 ((LocInfoE loc_142 (!{LPtr} (LocInfoE loc_143 ("elem")))) at{struct_queue_elem} "elem"))) ;
+        "elem" <-{ void* }
+          LocInfoE loc_146 (use{void*} (LocInfoE loc_147 ((LocInfoE loc_148 (!{void*} (LocInfoE loc_150 (!{void*} (LocInfoE loc_151 ("q")))))) at{struct_queue} "head"))) ;
+        "ret" <-{ void* }
+          LocInfoE loc_140 (use{void*} (LocInfoE loc_141 ((LocInfoE loc_142 (!{void*} (LocInfoE loc_143 ("elem")))) at{struct_queue_elem} "elem"))) ;
         locinfo: loc_134 ;
-        if: LocInfoE loc_134 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_134 ((LocInfoE loc_135 (use{LPtr} (LocInfoE loc_136 ((LocInfoE loc_137 (!{LPtr} (LocInfoE loc_138 ("elem")))) at{struct_queue_elem} "next")))) ={PtrOp, PtrOp} (LocInfoE loc_139 (NULL)))))
+        if: LocInfoE loc_134 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_134 ((LocInfoE loc_135 (use{void*} (LocInfoE loc_136 ((LocInfoE loc_137 (!{void*} (LocInfoE loc_138 ("elem")))) at{struct_queue_elem} "next")))) ={PtrOp, PtrOp} (LocInfoE loc_139 (NULL)))))
         then
         locinfo: loc_104 ;
           Goto "#3"
@@ -301,24 +301,24 @@ Section code.
         locinfo: loc_94 ;
         "_" <- LocInfoE loc_99 (global_free) with
           [ LocInfoE loc_100 (i2v (layout_of struct_queue_elem).(ly_size) size_t) ;
-          LocInfoE loc_101 (use{LPtr} (LocInfoE loc_102 ("elem"))) ] ;
+          LocInfoE loc_101 (use{void*} (LocInfoE loc_102 ("elem"))) ] ;
         locinfo: loc_95 ;
-        Return (LocInfoE loc_96 (use{LPtr} (LocInfoE loc_97 ("ret"))))
+        Return (LocInfoE loc_96 (use{void*} (LocInfoE loc_97 ("ret"))))
       ]> $
       <[ "#3" :=
         locinfo: loc_104 ;
-        LocInfoE loc_117 ((LocInfoE loc_118 (!{LPtr} (LocInfoE loc_120 (!{LPtr} (LocInfoE loc_121 ("q")))))) at{struct_queue} "head") <-{ LPtr }
+        LocInfoE loc_117 ((LocInfoE loc_118 (!{void*} (LocInfoE loc_120 (!{void*} (LocInfoE loc_121 ("q")))))) at{struct_queue} "head") <-{ void* }
           LocInfoE loc_122 (NULL) ;
         locinfo: loc_105 ;
-        LocInfoE loc_106 ((LocInfoE loc_107 (!{LPtr} (LocInfoE loc_109 (!{LPtr} (LocInfoE loc_110 ("q")))))) at{struct_queue} "tail") <-{ LPtr }
-          LocInfoE loc_111 (&(LocInfoE loc_112 ((LocInfoE loc_113 (!{LPtr} (LocInfoE loc_115 (!{LPtr} (LocInfoE loc_116 ("q")))))) at{struct_queue} "head"))) ;
+        LocInfoE loc_106 ((LocInfoE loc_107 (!{void*} (LocInfoE loc_109 (!{void*} (LocInfoE loc_110 ("q")))))) at{struct_queue} "tail") <-{ void* }
+          LocInfoE loc_111 (&(LocInfoE loc_112 ((LocInfoE loc_113 (!{void*} (LocInfoE loc_115 (!{void*} (LocInfoE loc_116 ("q")))))) at{struct_queue} "head"))) ;
         locinfo: loc_94 ;
         Goto "#2"
       ]> $
       <[ "#4" :=
         locinfo: loc_124 ;
-        LocInfoE loc_125 ((LocInfoE loc_126 (!{LPtr} (LocInfoE loc_128 (!{LPtr} (LocInfoE loc_129 ("q")))))) at{struct_queue} "head") <-{ LPtr }
-          LocInfoE loc_130 (use{LPtr} (LocInfoE loc_131 ((LocInfoE loc_132 (!{LPtr} (LocInfoE loc_133 ("elem")))) at{struct_queue_elem} "next"))) ;
+        LocInfoE loc_125 ((LocInfoE loc_126 (!{void*} (LocInfoE loc_128 (!{void*} (LocInfoE loc_129 ("q")))))) at{struct_queue} "head") <-{ void* }
+          LocInfoE loc_130 (use{void*} (LocInfoE loc_131 ((LocInfoE loc_132 (!{void*} (LocInfoE loc_133 ("elem")))) at{struct_queue_elem} "next"))) ;
         locinfo: loc_94 ;
         Goto "#2"
       ]> $

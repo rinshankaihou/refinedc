@@ -129,12 +129,12 @@ Section spec.
 
   (* Specifications for function [length_val_rec]. *)
   Definition type_of_length_val_rec :=
-    fn(∀ (v, l) : val * (list type); (singleton_val (LPtr) (v)); (v ◁ᵥ l @ list_t) ∗ ⌜length l <= max_int size_t⌝)
-      → ∃ () : (), ((length l) @ (int (size_t))); (v ◁ᵥ l @ list_t).
+    fn(∀ (v, l) : val * (list type); (value (void*) (v)); (v ◁ᵥ (l @ (list_t))) ∗ ⌜length l <= max_int size_t⌝)
+      → ∃ () : (), ((length l) @ (int (size_t))); (v ◁ᵥ (l @ (list_t))).
 
   (* Specifications for function [length_val]. *)
   Definition type_of_length_val :=
-    fn(∀ (v, l) : val * (list type); (singleton_val (LPtr) (v)); (v ◁ᵥ l @ list_t) ∗ ⌜length l <= max_int size_t⌝)
+    fn(∀ (v, l) : val * (list type); (value (void*) (v)); (v ◁ᵥ l @ list_t) ∗ ⌜length l <= max_int size_t⌝)
       → ∃ () : (), ((length l) @ (int (size_t))); (v ◁ᵥ l @ list_t).
 
   (* Specifications for function [append]. *)

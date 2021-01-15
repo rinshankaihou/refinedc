@@ -11,6 +11,7 @@ Section proof_set_blue.
   Lemma type_set_blue :
     ⊢ typed_function impl_set_blue type_of_set_blue.
   Proof.
+    Open Scope printing_sugar.
     start_function "set_blue" ([[p c] b]) => arg_c arg_b.
     split_blocks ((
       ∅

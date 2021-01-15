@@ -21,7 +21,7 @@ list_node {
 
 [[rc::parameters("p : loc", "xs : {list Z}", "ys : {list Z}")]]
 [[rc::args("p @ &own<xs @ list_t>", "ys @ list_t")]]
-[[rc::ensures("p @ &own<{xs ++ ys} @ list_t>")]]
+[[rc::ensures("own p : {xs ++ ys} @ list_t")]]
 void append(list_t *l, list_t k) {
   if(*l == NULL) {
     *l = k;
@@ -35,7 +35,7 @@ void append(list_t *l, list_t k) {
 [[rc::parameters("p : loc", "xs : {list Z}", "z : Z")]]
 [[rc::args("p @ &own<xs @ list_t>", "z @ int<i32>")]]
 [[rc::returns("{filter (λ v, z <= v) xs} @ list_t")]]
-[[rc::ensures("p @ &own<{filter (λ v, v < z) xs} @ list_t>")]]
+[[rc::ensures("own p : {filter (λ v, v < z) xs} @ list_t")]]
 [[rc::tactics("all: try by rewrite filter_cons; solve_goal.")]]
 list_t partition(list_t *l, int pivot) {
   if(*l == NULL) {
@@ -56,7 +56,7 @@ list_t partition(list_t *l, int pivot) {
 [[rc::parameters  ("list_l : {list Z}", "l : loc")]]
 [[rc::args        ("l @ &own<list_l @ list_t>")]]
 [[rc::exists      ("sorted_l : {list Z}")]]
-[[rc::ensures     ("l @ &own<sorted_l @ list_t>", "{Permutation list_l sorted_l}", "{Sorted Z.le sorted_l}")]]
+[[rc::ensures     ("own l : sorted_l @ list_t", "{Permutation list_l sorted_l}", "{Sorted Z.le sorted_l}")]]
 [[rc::tactics     ("all: try (eapply sorted_append_middle_el => //; [ apply _ | | ]; last first).")]]
 [[rc::tactics     ("all: repeat list_perm_subst; eauto using filter_permutation, Forall_filter with lia.")]]
 void quicksort(list_t* l) {

@@ -16,13 +16,13 @@ struct latch {
 
 [[rc::parameters("p : loc", "beta : own_state", "P : {iProp Σ}")]]
 [[rc::args("p @ &frac<beta, latch<P>>")]]
-[[rc::ensures("p @ &frac<beta, latch<P>>", "[P]")]]
+[[rc::ensures("frac beta p : latch<P>", "[P]")]]
 void latch_wait(struct latch* latch);
 
 [[rc::parameters("p : loc", "beta : own_state", "P : {iProp Σ}")]]
 [[rc::args("p @ &frac<beta, latch<P>>")]]
 [[rc::requires("[□ P]")]]
-[[rc::ensures("p @ &frac<beta, latch<P>>")]]
+[[rc::ensures("frac beta p : latch<P>")]]
 void latch_release(struct latch* latch);
 
 #endif

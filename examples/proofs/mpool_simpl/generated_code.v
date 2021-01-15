@@ -106,7 +106,7 @@ Section code.
   (* Definition of struct [mpool_entry]. *)
   Program Definition struct_mpool_entry := {|
     sl_members := [
-      (Some "next", LPtr)
+      (Some "next", void*)
     ];
   |}.
   Solve Obligations with solve_struct_obligations.
@@ -114,7 +114,7 @@ Section code.
   (* Definition of struct [mpool]. *)
   Program Definition struct_mpool := {|
     sl_members := [
-      (Some "entry_list", LPtr)
+      (Some "entry_list", void*)
     ];
   |}.
   Solve Obligations with solve_struct_obligations.
@@ -122,7 +122,7 @@ Section code.
   (* Definition of function [mpool_init]. *)
   Definition impl_mpool_init : function := {|
     f_args := [
-      ("p", LPtr)
+      ("p", void*)
     ];
     f_local_vars := [
     ];
@@ -130,7 +130,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_2 ;
-        LocInfoE loc_3 ((LocInfoE loc_4 (!{LPtr} (LocInfoE loc_5 ("p")))) at{struct_mpool} "entry_list") <-{ LPtr }
+        LocInfoE loc_3 ((LocInfoE loc_4 (!{void*} (LocInfoE loc_5 ("p")))) at{struct_mpool} "entry_list") <-{ void* }
           LocInfoE loc_7 (NULL) ;
         Return (VOID)
       ]> $∅
@@ -140,16 +140,16 @@ Section code.
   (* Definition of function [mpool_get]. *)
   Definition impl_mpool_get : function := {|
     f_args := [
-      ("p", LPtr)
+      ("p", void*)
     ];
     f_local_vars := [
-      ("entry", LPtr)
+      ("entry", void*)
     ];
     f_init := "#0";
     f_code := (
       <[ "#0" :=
         locinfo: loc_34 ;
-        if: LocInfoE loc_34 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_34 ((LocInfoE loc_35 (use{LPtr} (LocInfoE loc_36 ((LocInfoE loc_37 (!{LPtr} (LocInfoE loc_38 ("p")))) at{struct_mpool} "entry_list")))) ={PtrOp, PtrOp} (LocInfoE loc_40 (NULL)))))
+        if: LocInfoE loc_34 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_34 ((LocInfoE loc_35 (use{void*} (LocInfoE loc_36 ((LocInfoE loc_37 (!{void*} (LocInfoE loc_38 ("p")))) at{struct_mpool} "entry_list")))) ={PtrOp, PtrOp} (LocInfoE loc_40 (NULL)))))
         then
         locinfo: loc_30 ;
           Goto "#2"
@@ -157,13 +157,13 @@ Section code.
         Goto "#3"
       ]> $
       <[ "#1" :=
-        "entry" <-{ LPtr }
-          LocInfoE loc_23 (use{LPtr} (LocInfoE loc_24 ((LocInfoE loc_25 (!{LPtr} (LocInfoE loc_26 ("p")))) at{struct_mpool} "entry_list"))) ;
+        "entry" <-{ void* }
+          LocInfoE loc_23 (use{void*} (LocInfoE loc_24 ((LocInfoE loc_25 (!{void*} (LocInfoE loc_26 ("p")))) at{struct_mpool} "entry_list"))) ;
         locinfo: loc_12 ;
-        LocInfoE loc_16 ((LocInfoE loc_17 (!{LPtr} (LocInfoE loc_18 ("p")))) at{struct_mpool} "entry_list") <-{ LPtr }
-          LocInfoE loc_19 (use{LPtr} (LocInfoE loc_20 ((LocInfoE loc_21 (!{LPtr} (LocInfoE loc_22 ("entry")))) at{struct_mpool_entry} "next"))) ;
+        LocInfoE loc_16 ((LocInfoE loc_17 (!{void*} (LocInfoE loc_18 ("p")))) at{struct_mpool} "entry_list") <-{ void* }
+          LocInfoE loc_19 (use{void*} (LocInfoE loc_20 ((LocInfoE loc_21 (!{void*} (LocInfoE loc_22 ("entry")))) at{struct_mpool_entry} "next"))) ;
         locinfo: loc_13 ;
-        Return (LocInfoE loc_14 (use{LPtr} (LocInfoE loc_15 ("entry"))))
+        Return (LocInfoE loc_14 (use{void*} (LocInfoE loc_15 ("entry"))))
       ]> $
       <[ "#2" :=
         locinfo: loc_30 ;
@@ -178,23 +178,23 @@ Section code.
   (* Definition of function [mpool_put]. *)
   Definition impl_mpool_put : function := {|
     f_args := [
-      ("p", LPtr);
-      ("ptr", LPtr)
+      ("p", void*);
+      ("ptr", void*)
     ];
     f_local_vars := [
-      ("e", LPtr)
+      ("e", void*)
     ];
     f_init := "#0";
     f_code := (
       <[ "#0" :=
-        "e" <-{ LPtr }
-          LocInfoE loc_58 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_58 (use{LPtr} (LocInfoE loc_59 ("ptr"))))) ;
+        "e" <-{ void* }
+          LocInfoE loc_58 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_58 (use{void*} (LocInfoE loc_59 ("ptr"))))) ;
         locinfo: loc_44 ;
-        LocInfoE loc_51 ((LocInfoE loc_52 (!{LPtr} (LocInfoE loc_53 ("e")))) at{struct_mpool_entry} "next") <-{ LPtr }
-          LocInfoE loc_54 (use{LPtr} (LocInfoE loc_55 ((LocInfoE loc_56 (!{LPtr} (LocInfoE loc_57 ("p")))) at{struct_mpool} "entry_list"))) ;
+        LocInfoE loc_51 ((LocInfoE loc_52 (!{void*} (LocInfoE loc_53 ("e")))) at{struct_mpool_entry} "next") <-{ void* }
+          LocInfoE loc_54 (use{void*} (LocInfoE loc_55 ((LocInfoE loc_56 (!{void*} (LocInfoE loc_57 ("p")))) at{struct_mpool} "entry_list"))) ;
         locinfo: loc_45 ;
-        LocInfoE loc_46 ((LocInfoE loc_47 (!{LPtr} (LocInfoE loc_48 ("p")))) at{struct_mpool} "entry_list") <-{ LPtr }
-          LocInfoE loc_49 (use{LPtr} (LocInfoE loc_50 ("e"))) ;
+        LocInfoE loc_46 ((LocInfoE loc_47 (!{void*} (LocInfoE loc_48 ("p")))) at{struct_mpool} "entry_list") <-{ void* }
+          LocInfoE loc_49 (use{void*} (LocInfoE loc_50 ("e"))) ;
         Return (VOID)
       ]> $∅
     )%E
@@ -205,8 +205,8 @@ Section code.
     f_args := [
     ];
     f_local_vars := [
-      ("p1", LPtr);
-      ("p2", LPtr);
+      ("p1", void*);
+      ("p2", void*);
       ("p", layout_of struct_mpool)
     ];
     f_init := "#0";
@@ -227,16 +227,16 @@ Section code.
         "$1" <- LocInfoE loc_90 (global_mpool_get) with
           [ LocInfoE loc_91 (&(LocInfoE loc_92 ("p"))) ] ;
         locinfo: loc_67 ;
-        LocInfoE loc_87 ("p1") <-{ LPtr } LocInfoE loc_88 ("$1") ;
+        LocInfoE loc_87 ("p1") <-{ void* } LocInfoE loc_88 ("$1") ;
         locinfo: loc_68 ;
-        assert: (LocInfoE loc_82 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_82 ((LocInfoE loc_83 (use{LPtr} (LocInfoE loc_84 ("p1")))) !={PtrOp, PtrOp} (LocInfoE loc_86 (NULL)))))) ;
+        assert: (LocInfoE loc_82 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_82 ((LocInfoE loc_83 (use{void*} (LocInfoE loc_84 ("p1")))) !={PtrOp, PtrOp} (LocInfoE loc_86 (NULL)))))) ;
         locinfo: loc_77 ;
         "$0" <- LocInfoE loc_79 (global_mpool_get) with
           [ LocInfoE loc_80 (&(LocInfoE loc_81 ("p"))) ] ;
         locinfo: loc_69 ;
-        LocInfoE loc_76 ("p2") <-{ LPtr } LocInfoE loc_77 ("$0") ;
+        LocInfoE loc_76 ("p2") <-{ void* } LocInfoE loc_77 ("$0") ;
         locinfo: loc_70 ;
-        assert: (LocInfoE loc_71 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_71 ((LocInfoE loc_72 (use{LPtr} (LocInfoE loc_73 ("p2")))) !={PtrOp, PtrOp} (LocInfoE loc_75 (NULL)))))) ;
+        assert: (LocInfoE loc_71 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_71 ((LocInfoE loc_72 (use{void*} (LocInfoE loc_73 ("p2")))) !={PtrOp, PtrOp} (LocInfoE loc_75 (NULL)))))) ;
         Return (VOID)
       ]> $∅
     )%E

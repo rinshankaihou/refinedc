@@ -377,7 +377,7 @@ syntactic constructs will be presented here along with their semantics.
 Our syntax makes use of the following regular expressions.
 
 ```
-<ident>   ::= Regexp([A-Za-z_][A-Za-z_0-9]+)
+<ident>   ::= Regexp([A-Za-z_][A-Za-z_0-9]+) | "void*"
 <integer> ::= Regexp([0-9]+)
 ```
 They range over general-purpose identifiers (for `<ident>`), and over positive
@@ -435,7 +435,9 @@ in annotations. They are defined as follows.
 <type_expr> ::=
   | <ident (as type name)> {"<" ">"}?
   | <ident (as type name)> "<" <type_expr_arg> {"," <type_expr_arg>}* ">"
-  | <ptr_type>
+  | "&own<" <type_expr> ">"
+  | "&shr<" <type_expr> ">"
+  | "&frac<" <coq_expr (as fraction)> "," <type_expr> ">"
   | <coq_expr (as Coq value)> "@" <type_expr>
   | "∃" <ident (as variable name)> {":" <coq_expr (as Coq type)>}? "." <type_expr>
   | <type_expr> "&" <constr>
@@ -443,6 +445,12 @@ in annotations. They are defined as follows.
   | "..."
   | "(" <tupe_expr> ")"
 ```
+
+Pointer types are built-in type constructors related to ownership. There are
+three forms of pointer types:
+ - owned pointers (of the form `&own<T>`),
+ - shared pointers (of the form `&shr<T>`),
+ - and fractional pointer (of the form `&frac<q, T>`).
 
 ### Type constuctor application
 
@@ -463,21 +471,6 @@ expressions, built using a λ-abstraction.
 
 **Remark:** there is some special support for certain type constructors. There
 is some discussion on that in a further section.
-
-### Pointer types
-
-The third type constructor for type expressions contains a pointer type.
-```
-<ptr_type> ::=
-  | "&own<" <type_expr> ">"
-  | "&shr<" <type_expr> ">"
-  | "&frac<" <coq_expr (as fraction)> "," <type_expr> ">"
-```
-Pointer types are built-in type constructors related to ownership (this is why
-they are treated specially). There are three forms of pointer types:
- - owned pointers (of the form `&own<T>`),
- - shared pointers (of the form `&shr<T>`),
- - and fractional pointer (of the form `&frac<q, T>`).
 
 ### Refinements
 
@@ -519,14 +512,21 @@ The syntax of constraints is defined below.
   | <iris_term (as Iris proposition)>
   | <pure_term (as Coq proposition)>
   | "∃" <ident (as variable name)> {":" <coq_expr (as Coq type)>}? "." <constr>
-  | <ident (as variable name)> "@" <ptr_type>
+  | "own" <ident (as variable name)> ":" <type_expr>
+  | "shr" <ident (as variable name)> ":" <type_expr>
+  | "frac" <coq_expr (as ownstate)> <ident (as variable name)> ":" <type_expr>
+  | <ident (as variable name)> ":" <type_expr>
   | "global" <ident (as C global variable name> ":" <type_expr>
 ```
 A constraint can be formed using either:
  - a (quoted) Iris proposition,
  - a (quoted) Coq proposition,
  - an existential quantifier,
- - a pointer type ownership statement,
+ - a pointer ownership statement (translated to a location type assignment),
+ - a location type assignment for an owned location,
+ - a location type assignment for a shared location,
+ - a location type assignment for a frac location,
+ - a value type assignment,
  - a typing constraint for a global variable.
 
 **Remark:** a constraint of the form `{...}` is a short-hand for `[⌜...⌝]`, in
@@ -545,7 +545,6 @@ There is some special support for predefined type constructors:
    does not have to deal with this directly, but there are cases where this is
    necessary. For example, when recursive occurences of a type appear undear
    an `array` type.
-
 
 # Annotations using macros
 

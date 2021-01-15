@@ -11,6 +11,7 @@ Section proof_int_id.
   Lemma type_int_id :
     ⊢ typed_function impl_int_id type_of_int_id.
   Proof.
+    Open Scope printing_sugar.
     start_function "int_id" ([]) => arg_a.
     split_blocks ((
       ∅

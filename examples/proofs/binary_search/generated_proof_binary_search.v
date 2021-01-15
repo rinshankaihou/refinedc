@@ -12,13 +12,14 @@ Section proof_binary_search.
   Lemma type_binary_search :
     ⊢ typed_function impl_binary_search type_of_binary_search.
   Proof.
+    Open Scope printing_sugar.
     start_function "binary_search" ([[[[[R ls] x] p] ty] px]) => arg_comp arg_xs arg_n arg_x local_r local_l local_k.
     split_blocks ((
       <[ "#1" :=
         ∃ vl : nat,
         ∃ vr : nat,
         arg_comp ◁ₗ (function_ptr (fn(∀ (x, y, px, py) : (Z * Z * loc * loc); px @ &own (ty x), py @ &own (ty y); True) → ∃ (b) : (bool), b @ boolean bool_it; px ◁ₗ ty x ∗ py ◁ₗ ty y ∗ ⌜b ↔ R x y⌝)) ∗
-        arg_xs ◁ₗ (p @ (&own (array (LPtr) ((fun x => &own (ty x) : type) <$> ls)))) ∗
+        arg_xs ◁ₗ (p @ (&own (array (void*) ((fun x => &own (ty x) : type) <$> ls)))) ∗
         arg_n ◁ₗ ((length ls) @ (int (i32))) ∗
         arg_x ◁ₗ (px @ (&own (ty x))) ∗
         local_k ◁ₗ uninit (it_layout i32) ∗

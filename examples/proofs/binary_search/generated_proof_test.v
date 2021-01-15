@@ -16,6 +16,7 @@ Section proof_test.
     global_free ◁ᵥ global_free @ function_ptr type_of_free -∗
     typed_function (impl_test global_alloc global_binary_search global_compare_int global_free) type_of_test.
   Proof.
+    Open Scope printing_sugar.
     start_function "test" ([]) => local_res local_ptrs local_needle.
     split_blocks ((
       ∅

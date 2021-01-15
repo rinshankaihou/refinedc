@@ -11,6 +11,7 @@ Section proof_test_item_set_entry.
   Lemma type_test_item_set_entry :
     ⊢ typed_function impl_test_item_set_entry type_of_test_item_set_entry.
   Proof.
+    Open Scope printing_sugar.
     start_function "test_item_set_entry" ([[i k] ty]) => arg_i arg_key arg_val.
     split_blocks ((
       ∅

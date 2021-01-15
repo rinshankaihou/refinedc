@@ -11,14 +11,15 @@ Section proof_length_val.
   Lemma type_length_val :
     ⊢ typed_function impl_length_val type_of_length_val.
   Proof.
+    Open Scope printing_sugar.
     start_function "length_val" ([v l]) => arg_p local_len.
     split_blocks ((
       <[ "#1" :=
         ∃ v2 : val,
         ∃ l1 : list type,
-        arg_p ◁ₗ (own_constrained (nonshr_constraint (v2 ◁ᵥ l1 @ list_t)) (singleton_val (LPtr) (v2))) ∗
+        arg_p ◁ₗ (own_constrained (nonshr_constraint (v2 ◁ᵥ l1 @ list_t)) (value (void*) (v2))) ∗
         local_len ◁ₗ ((length l - length l1) @ (int (size_t))) ∗
-        (v ◁ᵥ wand_val LPtr (v2 ◁ᵥ l1 @ list_t) (l @ list_t))
+        (v ◁ᵥ (wand_val (void*) (v2 ◁ᵥ l1 @ list_t) (l @ (list_t))))
     ]> $
       ∅
     )%I : gmap label (iProp Σ)) ((

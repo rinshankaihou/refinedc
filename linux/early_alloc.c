@@ -21,7 +21,7 @@ unsigned long hyp_early_alloc_nr_pages(void)
 
 [[rc::parameters("p : loc")]]
 [[rc::args("p @ &own<uninit<PAGE_LAYOUT>>")]]
-[[rc::ensures("p @ &own<zeroed<PAGE_LAYOUT>>")]]
+[[rc::ensures("own p : zeroed<PAGE_LAYOUT>")]]
 extern void clear_page(void *to);
 
 void * hyp_early_alloc_page(void *arg)
@@ -83,14 +83,14 @@ void * hyp_early_alloc_page1(void *arg)
 }
 
 [[rc::parameters("n : nat")]]
-[[rc::requires("global cur1  : uninit<LPtr>")]]
+[[rc::requires("global cur1  : uninit<void*>")]]
 [[rc::requires("global size1 : uninit<u64>")]]
-[[rc::requires("global base1 : uninit<LPtr>")]]
+[[rc::requires("global base1 : uninit<void*>")]]
 [[rc::args("&own<uninit<{ly_set_size PAGE_LAYOUT n}>>", "n @ int<u64>")]]
 [[rc::exists("m : nat")]]
 [[rc::ensures("global size1 : m @ int<u64>")]]
 [[rc::ensures("global cur1  : &own<uninit<{ly_set_size PAGE_LAYOUT m}>>")]]
-[[rc::ensures("global base1 : uninit<LPtr>")]]
+[[rc::ensures("global base1 : uninit<void*>")]]
 void hyp_early_alloc_init1(unsigned char *virt, unsigned long size)
 {
 	base1 = virt;

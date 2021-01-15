@@ -30,7 +30,7 @@ list_t init () {
 [[rc::parameters("p : loc", "l : {list type}")]]
 [[rc::args("p @ &own<l @ list_t>")]]
 [[rc::returns("{bool_decide (l = [])} @ boolean<bool_it>")]]
-[[rc::ensures("p @ &own<l @ list_t>")]]
+[[rc::ensures("own p : l @ list_t")]]
 bool is_empty (list_t *l) {
     return *l == NULL;
 }
@@ -50,7 +50,7 @@ list_t push (list_t p, void *e) {
 [[rc::args("p @ &own<l @ list_t>")]]
 [[rc::requires("[alloc_initialized]")]]
 [[rc::returns("{maybe2 cons l} @ optionalO<λ (ty, l). &own<ty>>")]]
-[[rc::ensures("p @ &own<{tail l} @ list_t>")]]
+[[rc::ensures("own p : {tail l} @ list_t")]]
 void *pop (list_t *p) {
   if (*p == NULL) {
       return NULL;
@@ -84,12 +84,12 @@ list_t reverse (list_t p) {
 [[rc::args("p @ &own<l @ list_t>")]]
 [[rc::requires("{length l <= max_int size_t}")]]
 [[rc::returns("{length l} @ int<size_t>")]]
-[[rc::ensures("p @ &own<l @ list_t>")]]
+[[rc::ensures("own p : l @ list_t")]]
 size_t length (list_t *p) {
   size_t len = 0;
   [[rc::exists("q : loc", "l1 : {list type}")]]
   [[rc::inv_vars("p : q @ &own<l1 @ list_t>", "len : {length l - length l1} @ int<size_t>")]]
-  [[rc::constraints("p @ &own<wand<{q ◁ₗ l1 @ list_t}, l @ list_t>>")]]
+  [[rc::constraints("own p : wand<{q ◁ₗ l1 @ list_t}, l @ list_t>")]]
   while (*p != NULL) {
     p = &(*p)->tail;
     len += 1;
@@ -98,11 +98,11 @@ size_t length (list_t *p) {
 }
 
 [[rc::parameters("v : val", "l : {list type}")]]
-[[rc::args("singleton_val<LPtr, v>")]]
-[[rc::requires("[v ◁ᵥ l @ list_t]")]]
+[[rc::args("value<void*,v>")]]
+[[rc::requires("v : l @ list_t")]]
 [[rc::requires("{length l <= max_int size_t}")]]
 [[rc::returns("{length l} @ int<size_t>")]]
-[[rc::ensures("[v ◁ᵥ l @ list_t]")]]  // TODO: there should be nicer syntax for this
+[[rc::ensures("v : l @ list_t")]]
 size_t length_val_rec (list_t p) {
   if(p == NULL) {
     return 0;
@@ -111,7 +111,7 @@ size_t length_val_rec (list_t p) {
 }
 
 [[rc::parameters("v : val", "l : {list type}")]]
-[[rc::args("singleton_val<LPtr, v>")]]
+[[rc::args("value<void*,v>")]]
 [[rc::requires("[v ◁ᵥ l @ list_t]")]]
 [[rc::requires("{length l <= max_int size_t}")]]
 [[rc::returns("{length l} @ int<size_t>")]]
@@ -119,9 +119,9 @@ size_t length_val_rec (list_t p) {
 size_t length_val (list_t p) {
   size_t len = 0;
   [[rc::exists("v2 : val", "l1 : {list type}")]]
-  [[rc::inv_vars("p : own_constrained<nonshr_constraint<{v2 ◁ᵥ l1 @ list_t}>, singleton_val<LPtr, v2>>",
+  [[rc::inv_vars("p : own_constrained<nonshr_constraint<{v2 ◁ᵥ l1 @ list_t}>, value<void*,v2>>",
                  "len : {length l - length l1} @ int<size_t>")]]
-  [[rc::constraints("[v ◁ᵥ wand_val LPtr (v2 ◁ᵥ l1 @ list_t) (l @ list_t)]")]]
+  [[rc::constraints("v : wand_val<void*, {v2 ◁ᵥ l1 @ list_t}, l @ list_t>")]]
   while (p != NULL) {
     p = p->tail;
     len += 1;
@@ -131,7 +131,7 @@ size_t length_val (list_t p) {
 
 [[rc::parameters("p : loc", "l1 : {list type}", "l2 : {list type}")]]
 [[rc::args("p @ &own<l1 @ list_t>", "l2 @ list_t")]]
-[[rc::ensures("p @ &own<{l1 ++ l2} @ list_t>")]]
+[[rc::ensures("own p : {l1 ++ l2} @ list_t")]]
 void append(list_t *l1, list_t l2) {
   list_t *end = l1;
   [[rc::exists("pl : loc", "l1_suffix : {list type}")]]
@@ -147,7 +147,7 @@ void append(list_t *l1, list_t l2) {
 [[rc::args("p @ &own<{l `at_type` int size_t} @ list_t>", "n @ int<size_t>")]]
 [[rc::exists("b : bool")]]
 [[rc::returns("b @ boolean<bool_it>")]]
-[[rc::ensures("p @ &own<{l `at_type` int size_t} @ list_t>", "{b ↔ n ∈ l}")]]
+[[rc::ensures("own p : {l `at_type` int size_t} @ list_t", "{b ↔ n ∈ l}")]]
  [[rc::tactics("all: try set_unfold; refined_solver.")]]
 bool member (list_t *p, size_t k) {
     list_t *prev = p;
@@ -208,7 +208,7 @@ void test() {
 
 [[rc::parameters("p : loc", "l1 : {list type}", "l2 : {list type}")]]
 [[rc::args("l1 @ list_t", "p @ &own<l2 @ list_t>")]]
-[[rc::ensures("p @ &own<{(rev l1) ++ l2} @ list_t>")]]
+[[rc::ensures("own p : {(rev l1) ++ l2} @ list_t")]]
 void rev_append(list_t l1, list_t *l2) {
   list_t cur = l1;
   list_t cur_tail;
@@ -217,7 +217,7 @@ void rev_append(list_t l1, list_t *l2) {
   [[rc::exists("cur_l2 : {list type}")]]
   [[rc::inv_vars("cur : l1_suffix @ list_t")]]
   [[rc::inv_vars("l2 : p @ &own<cur_l2 @ list_t>")]]
-  [[rc::inv_vars("l1 : uninit<LPtr>")]]
+  [[rc::inv_vars("l1 : uninit<void*>")]]
   [[rc::constraints("{cur_l2 = l1_prefix ++ l2}")]]
   [[rc::constraints("{l1 = rev l1_prefix ++ l1_suffix}")]]
   while(cur != NULL) {

@@ -50,9 +50,9 @@ Section code.
     f_args := [
     ];
     f_local_vars := [
-      ("b", LPtr);
+      ("b", void*);
       ("t", layout_of struct_test);
-      ("pt", LPtr)
+      ("pt", void*)
     ];
     f_init := "#0";
     f_code := (
@@ -62,18 +62,18 @@ Section code.
             ("a", LocInfoE loc_35 (i2v 1 i32) : expr) ;
             ("b", LocInfoE loc_34 (i2v 2 i32) : expr)
           ] ;
-        "b" <-{ LPtr }
+        "b" <-{ void* }
           LocInfoE loc_28 (&(LocInfoE loc_29 ((LocInfoE loc_30 ("t")) at{struct_test} "b"))) ;
         locinfo: loc_4 ;
-        LocInfoE loc_25 (!{LPtr} (LocInfoE loc_26 ("b"))) <-{ it_layout i32 }
+        LocInfoE loc_25 (!{void*} (LocInfoE loc_26 ("b"))) <-{ it_layout i32 }
           LocInfoE loc_27 (i2v 3 i32) ;
-        "pt" <-{ LPtr }
-          LocInfoE loc_16 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_17 ((LocInfoE loc_18 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_19 (use{LPtr} (LocInfoE loc_20 ("b")))))) at_neg_offset{it_layout u8, PtrOp, IntOp size_t} (LocInfoE loc_21 ((OffsetOf (struct_test) ("b"))))))) ;
+        "pt" <-{ void* }
+          LocInfoE loc_16 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_17 ((LocInfoE loc_18 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_19 (use{void*} (LocInfoE loc_20 ("b")))))) at_neg_offset{it_layout u8, PtrOp, IntOp size_t} (LocInfoE loc_21 ((OffsetOf (struct_test) ("b"))))))) ;
         locinfo: loc_6 ;
-        LocInfoE loc_12 ((LocInfoE loc_13 (!{LPtr} (LocInfoE loc_14 ("pt")))) at{struct_test} "a") <-{ it_layout i32 }
+        LocInfoE loc_12 ((LocInfoE loc_13 (!{void*} (LocInfoE loc_14 ("pt")))) at{struct_test} "a") <-{ it_layout i32 }
           LocInfoE loc_15 (i2v 4 i32) ;
         locinfo: loc_7 ;
-        Return (LocInfoE loc_8 (use{it_layout i32} (LocInfoE loc_9 ((LocInfoE loc_10 (!{LPtr} (LocInfoE loc_11 ("pt")))) at{struct_test} "a"))))
+        Return (LocInfoE loc_8 (use{it_layout i32} (LocInfoE loc_9 ((LocInfoE loc_10 (!{void*} (LocInfoE loc_11 ("pt")))) at{struct_test} "a"))))
       ]> $∅
     )%E
   |}.

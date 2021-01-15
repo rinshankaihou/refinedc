@@ -14,10 +14,11 @@ Section proof_mpool_alloc.
     global_mpool_alloc_no_fallback ◁ᵥ global_mpool_alloc_no_fallback @ function_ptr type_of_mpool_alloc_no_fallback -∗
     typed_function (impl_mpool_alloc global_mpool_alloc_no_fallback) type_of_mpool_alloc.
   Proof.
+    Open Scope printing_sugar.
     start_function "mpool_alloc" ([[[p q] n] entry_size]) => arg_p local_ret.
     split_blocks ((
       <[ "#2" :=
-        local_ret ◁ₗ uninit LPtr ∗
+        local_ret ◁ₗ uninit void* ∗
         arg_p ◁ₗ (optionalO (λ _ : unit,
           &shr (mpool (entry_size))
         ) null) ∗

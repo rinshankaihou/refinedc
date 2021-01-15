@@ -242,7 +242,7 @@ Section code.
   (* Definition of function [init_int]. *)
   Definition impl_init_int : function := {|
     f_args := [
-      ("out", LPtr)
+      ("out", void*)
     ];
     f_local_vars := [
     ];
@@ -250,7 +250,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_70 ;
-        LocInfoE loc_72 (!{LPtr} (LocInfoE loc_73 ("out"))) <-{ it_layout i32 }
+        LocInfoE loc_72 (!{void*} (LocInfoE loc_73 ("out"))) <-{ it_layout i32 }
           LocInfoE loc_74 (i2v 1 i32) ;
         Return (VOID)
       ]> $∅
@@ -260,7 +260,7 @@ Section code.
   (* Definition of function [init_int_test]. *)
   Definition impl_init_int_test (global_init_int : loc): function := {|
     f_args := [
-      ("out", LPtr)
+      ("out", void*)
     ];
     f_local_vars := [
       ("i", it_layout i32)
@@ -282,7 +282,7 @@ Section code.
   (* Definition of function [struct_test]. *)
   Definition impl_struct_test : function := {|
     f_args := [
-      ("out", LPtr)
+      ("out", void*)
     ];
     f_local_vars := [
     ];
@@ -290,14 +290,14 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_89 ;
-        LocInfoE loc_95 (!{LPtr} (LocInfoE loc_96 ("out"))) <-{ layout_of struct_basic }
+        LocInfoE loc_95 (!{void*} (LocInfoE loc_96 ("out"))) <-{ layout_of struct_basic }
           StructInit struct_basic [
             ("a", LocInfoE loc_101 (i2v 1 i32) : expr) ;
             ("b", i2v 0 i32 : expr)
           ] ;
         locinfo: loc_90 ;
-        LocInfoE loc_91 ((LocInfoE loc_92 (!{LPtr} (LocInfoE loc_93 ("out")))) at{struct_basic} "a") <-{ it_layout i32 }
-          LocInfoE loc_90 ((LocInfoE loc_90 (use{it_layout i32} (LocInfoE loc_91 ((LocInfoE loc_92 (!{LPtr} (LocInfoE loc_93 ("out")))) at{struct_basic} "a")))) +{IntOp i32, IntOp i32} (LocInfoE loc_90 (i2v 1 i32))) ;
+        LocInfoE loc_91 ((LocInfoE loc_92 (!{void*} (LocInfoE loc_93 ("out")))) at{struct_basic} "a") <-{ it_layout i32 }
+          LocInfoE loc_90 ((LocInfoE loc_90 (use{it_layout i32} (LocInfoE loc_91 ((LocInfoE loc_92 (!{void*} (LocInfoE loc_93 ("out")))) at{struct_basic} "a")))) +{IntOp i32, IntOp i32} (LocInfoE loc_90 (i2v 1 i32))) ;
         Return (VOID)
       ]> $∅
     )%E

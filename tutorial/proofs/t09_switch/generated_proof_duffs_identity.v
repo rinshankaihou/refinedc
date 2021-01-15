@@ -11,6 +11,7 @@ Section proof_duffs_identity.
   Lemma type_duffs_identity :
     ⊢ typed_function impl_duffs_identity type_of_duffs_identity.
   Proof.
+    Open Scope printing_sugar.
     start_function "duffs_identity" (i) => arg_i local_o local_n.
     split_blocks ((
       <[ "#5" :=

@@ -14,6 +14,7 @@ Section proof_test.
     global_push ◁ᵥ global_push @ function_ptr type_of_push -∗
     typed_function (impl_test global_init global_pop global_push) type_of_test.
   Proof.
+    Open Scope printing_sugar.
     start_function "test" ([]) => local_list local_local1 local_local1_node local_local3 local_local2 local_local4 local_local2_node.
     split_blocks ((
       <[ "#1" :=
@@ -21,13 +22,13 @@ Section proof_test.
         ∃ l2 : loc,
         ∃ l3 : loc,
         ∃ l4 : loc,
-        local_list ◁ₗ uninit LPtr ∗
-        local_local3 ◁ₗ uninit LPtr ∗
-        local_local4 ◁ₗ uninit LPtr ∗
-        local_local1 ◁ₗ (singleton_place (l1)) ∗
-        local_local1_node ◁ₗ (singleton_place (l2)) ∗
-        local_local2 ◁ₗ (singleton_place (l3)) ∗
-        local_local2_node ◁ₗ (singleton_place (l4))
+        local_list ◁ₗ uninit void* ∗
+        local_local3 ◁ₗ uninit void* ∗
+        local_local4 ◁ₗ uninit void* ∗
+        local_local1 ◁ₗ (place (l1)) ∗
+        local_local1_node ◁ₗ (place (l2)) ∗
+        local_local2 ◁ₗ (place (l3)) ∗
+        local_local2_node ◁ₗ (place (l4))
     ]> $
       ∅
     )%I : gmap label (iProp Σ)) ((

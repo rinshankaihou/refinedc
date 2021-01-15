@@ -12,6 +12,7 @@ Section proof_append.
     global_append ◁ᵥ global_append @ function_ptr type_of_append -∗
     typed_function (impl_append global_append) type_of_append.
   Proof.
+    Open Scope printing_sugar.
     start_function "append" ([[p xs] ys]) => arg_l arg_k.
     split_blocks ((
       ∅

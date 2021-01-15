@@ -11,6 +11,7 @@ Section proof_slab_free.
   Lemma type_slab_free :
     ⊢ typed_function impl_slab_free type_of_slab_free.
   Proof.
+    Open Scope printing_sugar.
     start_function "slab_free" ([[[p fp] n] entry_size]) => arg_s arg_x local_f.
     split_blocks ((
       ∅

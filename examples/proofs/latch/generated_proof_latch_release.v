@@ -12,6 +12,7 @@ Section proof_latch_release.
   Lemma type_latch_release :
     ⊢ typed_function impl_latch_release type_of_latch_release.
   Proof.
+    Open Scope printing_sugar.
     start_function "latch_release" ([[p beta] P]) => arg_latch.
     split_blocks ((
       ∅

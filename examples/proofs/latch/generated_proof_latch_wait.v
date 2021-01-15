@@ -12,6 +12,7 @@ Section proof_latch_wait.
   Lemma type_latch_wait :
     ⊢ typed_function impl_latch_wait type_of_latch_wait.
   Proof.
+    Open Scope printing_sugar.
     start_function "latch_wait" ([[p beta] P]) => arg_latch.
     split_blocks ((
       <[ "#1" :=

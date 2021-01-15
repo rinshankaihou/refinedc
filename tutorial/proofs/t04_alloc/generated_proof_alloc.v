@@ -17,13 +17,14 @@ Section proof_alloc.
     global_sl_unlock ◁ᵥ global_sl_unlock @ function_ptr type_of_sl_unlock -∗
     typed_function (impl_alloc global_allocator_state global_sl_lock global_sl_unlock) type_of_alloc.
   Proof.
+    Open Scope printing_sugar.
     start_function "alloc" (size) => arg_size local_prev local_cur local_ret.
     split_blocks ((
       <[ "#1" :=
         arg_size ◁ₗ (size @ (int (size_t))) ∗
-        local_prev ◁ₗ uninit LPtr ∗
-        local_cur ◁ₗ uninit LPtr ∗
-        local_ret ◁ₗ uninit LPtr ∗
+        local_prev ◁ₗ uninit void* ∗
+        local_cur ◁ₗ uninit void* ∗
+        local_ret ◁ₗ uninit void* ∗
         (initialized "allocator_state" ())
     ]> $
       ∅
@@ -31,8 +32,8 @@ Section proof_alloc.
       <[ "#4" :=
         ∃ pc : loc,
         arg_size ◁ₗ (size @ (int (size_t))) ∗
-        local_cur ◁ₗ uninit LPtr ∗
-        local_ret ◁ₗ uninit LPtr ∗
+        local_cur ◁ₗ uninit void* ∗
+        local_ret ◁ₗ uninit void* ∗
         local_prev ◁ₗ (pc @ (&own (alloc_entry_t))) ∗
         (global_allocator_state at{struct_alloc_state}ₗ "data" ◁ₗ wand (pc ◁ₗ alloc_entry_t) alloc_entry_t)
     ]> $

@@ -16,6 +16,7 @@ Section proof_main.
     global_mpool_put ◁ᵥ global_mpool_put @ function_ptr type_of_mpool_put -∗
     typed_function (impl_main global_e1 global_e2 global_mpool_get global_mpool_init global_mpool_put) type_of_main.
   Proof.
+    Open Scope printing_sugar.
     start_function "main" ([]) => local_p1 local_p2 local_p.
     split_blocks ((
       ∅

@@ -16,20 +16,20 @@ struct spinlock {
 [[rc::parameters("p : loc")]]
 [[rc::args("p @ &own<uninit<struct_spinlock>>")]]
 [[rc::exists("gamma : lock_id")]]
-[[rc::ensures("p @ &own<spinlock<gamma>>")]]
+[[rc::ensures("own p : spinlock<gamma>")]]
 void sl_init(struct spinlock* lock);
 
 
 [[rc::parameters("p : loc", "gamma : lock_id", "beta : own_state")]]
 [[rc::args("p @ &frac<beta, spinlock<gamma>>")]]
-[[rc::ensures("p @ &frac<beta, spinlock<gamma>>", "[spinlock_token gamma []]")]]
+[[rc::ensures("frac beta p : spinlock<gamma>", "[spinlock_token gamma []]")]]
 void sl_lock(struct spinlock* lock);
 
 
 [[rc::parameters("p : loc", "gamma : lock_id", "beta : own_state")]]
 [[rc::args("p @ &frac<beta, spinlock<gamma>>")]]
 [[rc::requires("[spinlock_token gamma []]")]]
-[[rc::ensures("p @ &frac<beta, spinlock<gamma>>")]]
+[[rc::ensures("frac beta p : spinlock<gamma>")]]
 [[rc::annot_args("0 : 1 LockA")]]
 void sl_unlock(struct spinlock* lock);
 

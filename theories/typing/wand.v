@@ -60,6 +60,8 @@ Section wand.
 
 End wand.
 Notation wand P ty := (wand_ex (A:=unit) (λ _, P) (λ _, ty)).
+Notation "wand< P , ty >" := (wand P ty)
+  (only printing, format "'wand<' P ,  ty '>'") : printing_sugar.
 
 Section wand_val.
   Context `{!typeG Σ}.
@@ -146,3 +148,5 @@ Section wand_val.
     λ T, i2p (simplify_goal_wand_val_eq_ref v ly ty x1 x2 T).
 End wand_val.
 Notation wand_val ly P ty := (wand_val_ex (A:=unit) ly (λ _, P) (λ _, ty)).
+Notation "wand_val< ly , P , ty >" := (wand_val ly P ty)
+  (only printing, format "'wand_val<' ly ,  P ,  ty '>'") : printing_sugar.

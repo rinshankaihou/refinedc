@@ -15,6 +15,7 @@ Section proof_write_locked.
     global_sl_unlock ◁ᵥ global_sl_unlock @ function_ptr type_of_sl_unlock -∗
     typed_function (impl_write_locked global_sl_lock global_sl_unlock) type_of_write_locked.
   Proof.
+    Open Scope printing_sugar.
     start_function "write_locked" ([[[[[p n] q] n1] n2] n3]) => arg_t arg_n.
     split_blocks ((
       ∅

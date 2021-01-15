@@ -14,6 +14,7 @@ Section proof_sl_unlock.
   Lemma type_sl_unlock :
     ⊢ typed_function impl_sl_unlock type_of_sl_unlock.
   Proof.
+    Open Scope printing_sugar.
     start_function "sl_unlock" ([[p gamma] beta]) => arg_lock.
     split_blocks ((
       ∅

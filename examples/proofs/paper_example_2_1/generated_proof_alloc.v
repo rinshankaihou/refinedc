@@ -13,6 +13,7 @@ Section proof_alloc.
   Lemma type_alloc :
     ⊢ typed_function impl_alloc type_of_alloc.
   Proof.
+    Open Scope printing_sugar.
     start_function "alloc" ([[a n] p]) => arg_d arg_size.
     split_blocks ((
       ∅

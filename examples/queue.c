@@ -16,7 +16,7 @@ typedef struct [[rc::refined_by("tys: {list type}")]]
                [[rc::ptr_type("queue : &own<...>")]]
                [[rc::exists("p : loc")]]
 queue {
-  [[rc::field("tyfold<{(λ ty x, ty @ queue_elem x) <$> tys}, singleton_place<p>>")]]
+  [[rc::field("tyfold<{(λ ty x, ty @ queue_elem x) <$> tys}, place<p>>")]]
   queue_elem_t head;
   [[rc::field("p @ &own<null>")]]
   queue_elem_t *tail;
@@ -34,7 +34,7 @@ queue_t init_queue() {
 [[rc::parameters("p : loc", "tys : {list type}")]]
 [[rc::args("p @ &own<{tys} @ queue>")]]
 [[rc::returns("{bool_decide (tys ≠ [])} @ boolean<bool_it>")]]
-[[rc::ensures("p @ &own<{tys} @ queue>")]]
+[[rc::ensures("own p : {tys} @ queue")]]
 bool is_empty(queue_t *q) {
   rc_unfold(*(*q)->tail);
   return (*q)->head != NULL;
@@ -43,7 +43,7 @@ bool is_empty(queue_t *q) {
 [[rc::parameters("p : loc", "tys : {list type}", "ty : type")]]
 [[rc::args("p @ &own<{tys} @ queue>", "&own<ty>")]]
 [[rc::requires("[alloc_initialized]")]]
-[[rc::ensures("p @ &own<{tys ++ [ty]} @ queue>")]]
+[[rc::ensures("own p : {tys ++ [ty]} @ queue")]]
 void enqueue(queue_t *q, void *v) {
   queue_elem_t elem = alloc(sizeof(struct queue_elem));
   elem->elem = v;
@@ -56,7 +56,7 @@ void enqueue(queue_t *q, void *v) {
 [[rc::args("p @ &own<{tys} @ queue>")]]
 [[rc::requires("[alloc_initialized]")]]
 [[rc::returns("{maybe2 cons tys} @ optionalO<λ (ty, _). &own<ty>>")]]
-[[rc::ensures("p @ &own<{tail tys} @ queue>")]]
+[[rc::ensures("own p : {tail tys} @ queue")]]
 void *dequeue(queue_t *q) {
   rc_unfold(*(*q)->tail);
   if ((*q)->head == NULL) {

@@ -13,6 +13,7 @@ Section proof_fork.
   Lemma type_fork :
     ⊢ typed_function impl_fork type_of_fork.
   Proof.
+    Open Scope printing_sugar.
     start_function "fork" ([ty P]) => arg_fn arg_arg.
     split_blocks ((
       ∅

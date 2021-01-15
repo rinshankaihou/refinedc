@@ -126,7 +126,7 @@ Section code.
   (* Definition of function [hyp_early_alloc_page]. *)
   Definition impl_hyp_early_alloc_page (global_cur global_end global_clear_page : loc): function := {|
     f_args := [
-      ("arg", LPtr)
+      ("arg", void*)
     ];
     f_local_vars := [
       ("ret", it_layout u64)
@@ -197,10 +197,10 @@ Section code.
   (* Definition of function [hyp_early_alloc_page1]. *)
   Definition impl_hyp_early_alloc_page1 (global_cur1 global_size1 global_clear_page : loc): function := {|
     f_args := [
-      ("arg", LPtr)
+      ("arg", void*)
     ];
     f_local_vars := [
-      ("ret", LPtr)
+      ("ret", void*)
     ];
     f_init := "#0";
     f_code := (
@@ -214,19 +214,19 @@ Section code.
         Goto "#3"
       ]> $
       <[ "#1" :=
-        "ret" <-{ LPtr }
-          LocInfoE loc_90 (use{LPtr} (LocInfoE loc_91 (global_cur1))) ;
+        "ret" <-{ void* }
+          LocInfoE loc_90 (use{void*} (LocInfoE loc_91 (global_cur1))) ;
         locinfo: loc_68 ;
-        LocInfoE loc_85 (global_cur1) <-{ LPtr }
-          LocInfoE loc_86 ((LocInfoE loc_87 (use{LPtr} (LocInfoE loc_88 (global_cur1)))) at_offset{it_layout u8, PtrOp, IntOp i32} (LocInfoE loc_89 (i2v 4096 i32))) ;
+        LocInfoE loc_85 (global_cur1) <-{ void* }
+          LocInfoE loc_86 ((LocInfoE loc_87 (use{void*} (LocInfoE loc_88 (global_cur1)))) at_offset{it_layout u8, PtrOp, IntOp i32} (LocInfoE loc_89 (i2v 4096 i32))) ;
         locinfo: loc_69 ;
         LocInfoE loc_80 (global_size1) <-{ it_layout u64 }
           LocInfoE loc_81 ((LocInfoE loc_82 (use{it_layout u64} (LocInfoE loc_83 (global_size1)))) -{IntOp u64, IntOp u64} (LocInfoE loc_84 (UnOp (CastOp $ IntOp u64) (IntOp i32) (LocInfoE loc_84 (i2v 4096 i32))))) ;
         locinfo: loc_70 ;
         "_" <- LocInfoE loc_76 (global_clear_page) with
-          [ LocInfoE loc_77 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_78 (use{LPtr} (LocInfoE loc_79 ("ret"))))) ] ;
+          [ LocInfoE loc_77 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_78 (use{void*} (LocInfoE loc_79 ("ret"))))) ] ;
         locinfo: loc_71 ;
-        Return (LocInfoE loc_72 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_73 (use{LPtr} (LocInfoE loc_74 ("ret"))))))
+        Return (LocInfoE loc_72 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_73 (use{void*} (LocInfoE loc_74 ("ret"))))))
       ]> $
       <[ "#2" :=
         locinfo: loc_95 ;
@@ -241,7 +241,7 @@ Section code.
   (* Definition of function [hyp_early_alloc_init1]. *)
   Definition impl_hyp_early_alloc_init1 (global_base1 global_cur1 global_size1 : loc): function := {|
     f_args := [
-      ("virt", LPtr);
+      ("virt", void*);
       ("size", it_layout u64)
     ];
     f_local_vars := [
@@ -250,14 +250,14 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_105 ;
-        LocInfoE loc_114 (global_base1) <-{ LPtr }
-          LocInfoE loc_115 (use{LPtr} (LocInfoE loc_116 ("virt"))) ;
+        LocInfoE loc_114 (global_base1) <-{ void* }
+          LocInfoE loc_115 (use{void*} (LocInfoE loc_116 ("virt"))) ;
         locinfo: loc_106 ;
         LocInfoE loc_111 (global_size1) <-{ it_layout u64 }
           LocInfoE loc_112 (use{it_layout u64} (LocInfoE loc_113 ("size"))) ;
         locinfo: loc_107 ;
-        LocInfoE loc_108 (global_cur1) <-{ LPtr }
-          LocInfoE loc_109 (use{LPtr} (LocInfoE loc_110 ("virt"))) ;
+        LocInfoE loc_108 (global_cur1) <-{ void* }
+          LocInfoE loc_109 (use{void*} (LocInfoE loc_110 ("virt"))) ;
         Return (VOID)
       ]> $∅
     )%E

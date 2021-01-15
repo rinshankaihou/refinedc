@@ -13,6 +13,7 @@ Section proof_sempty.
     global_empty ◁ᵥ global_empty @ function_ptr type_of_empty -∗
     typed_function (impl_sempty global_empty) type_of_sempty.
   Proof.
+    Open Scope printing_sugar.
     start_function "sempty" ([]).
     split_blocks ((
       ∅

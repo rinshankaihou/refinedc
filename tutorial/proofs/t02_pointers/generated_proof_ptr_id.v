@@ -11,6 +11,7 @@ Section proof_ptr_id.
   Lemma type_ptr_id :
     ⊢ typed_function impl_ptr_id type_of_ptr_id.
   Proof.
+    Open Scope printing_sugar.
     start_function "ptr_id" ([p ty]) => arg_p arg_x.
     split_blocks ((
       ∅

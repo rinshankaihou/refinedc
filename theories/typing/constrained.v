@@ -101,6 +101,8 @@ Section own_constrained.
     SimplifyGoal (tyown_constraint l ty β) (Some 0%N) :=
     λ T, i2p (simplify_goal_place_tyown_constrained l β ty T).
 End own_constrained.
+Notation "own_constrained< P , ty >" := (own_constrained P ty)
+  (only printing, format "'own_constrained<' P ,  ty '>'") : printing_sugar.
 
 Typeclasses Opaque own_constrained tyown_constraint.
 Arguments tyown_constraint : simpl never.
@@ -133,6 +135,9 @@ Arguments persistent_own_constraint : simpl never.
 
 Notation constrained ty P := (own_constrained (persistent_own_constraint P) ty).
 
+Notation "constrained< ty , P >" := (constrained ty P)
+  (only printing, format "'constrained<' ty ,  P '>'") : printing_sugar.
+
 Section nonshr_constrained.
   Context `{!typeG Σ}.
 
@@ -157,6 +162,8 @@ Section nonshr_constrained.
     λ T, i2p (simplify_goal_place_nonshr_constrained P T).
 
 End nonshr_constrained.
+Notation "nonshr_constraint< P , β >" := (nonshr_constraint P β)
+  (only printing, format "'nonshr_constraint<' P ,  β '>'") : printing_sugar.
 
 Typeclasses Opaque nonshr_constraint.
 Arguments nonshr_constraint : simpl never.

@@ -17,6 +17,7 @@ Section proof_test_thread_safe_alloc.
     global_thread_safe_alloc ◁ᵥ global_thread_safe_alloc @ function_ptr type_of_thread_safe_alloc -∗
     typed_function (impl_test_thread_safe_alloc global_param global_fork global_test_thread_safe_alloc_fork_fn global_thread_safe_alloc) type_of_test_thread_safe_alloc.
   Proof.
+    Open Scope printing_sugar.
     start_function "test_thread_safe_alloc" (lid).
     split_blocks ((
       ∅

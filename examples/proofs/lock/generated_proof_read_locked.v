@@ -15,6 +15,7 @@ Section proof_read_locked.
     global_sl_unlock ◁ᵥ global_sl_unlock @ function_ptr type_of_sl_unlock -∗
     typed_function (impl_read_locked global_sl_lock global_sl_unlock) type_of_read_locked.
   Proof.
+    Open Scope printing_sugar.
     start_function "read_locked" ([[[[p q] n1] n2] n3]) => arg_t local_ret.
     split_blocks ((
       ∅

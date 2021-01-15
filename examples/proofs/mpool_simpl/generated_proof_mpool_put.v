@@ -11,6 +11,7 @@ Section proof_mpool_put.
   Lemma type_mpool_put :
     ⊢ typed_function impl_mpool_put type_of_mpool_put.
   Proof.
+    Open Scope printing_sugar.
     start_function "mpool_put" ([p n]) => arg_p arg_ptr local_e.
     split_blocks ((
       ∅

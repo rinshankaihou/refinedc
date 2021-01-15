@@ -12,6 +12,7 @@ Section proof_compare_int.
   Lemma type_compare_int :
     ⊢ typed_function impl_compare_int type_of_compare_int.
   Proof.
+    Open Scope printing_sugar.
     start_function "compare_int" ([[[x y] px] py]) => arg_x arg_y local_xi local_yi.
     split_blocks ((
       ∅

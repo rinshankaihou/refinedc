@@ -18,6 +18,7 @@ Section proof_main2.
     global_test ◁ᵥ global_test @ function_ptr type_of_test -∗
     typed_function (impl_main2 global_initialized global_latch_wait global_test) type_of_main2.
   Proof.
+    Open Scope printing_sugar.
     start_function "main2" ([]).
     split_blocks ((
       ∅

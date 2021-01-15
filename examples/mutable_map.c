@@ -58,7 +58,7 @@ fixed_size_map {
 [[rc::args("m @ &own<{mp, items, count} @ fixed_size_map>")]]
 [[rc::requires("[alloc_initialized]")]]
 [[rc::exists("items2 : {list item_ref}", "count2: nat")]]
-[[rc::ensures("m @ &own<{mp, items2, count2} @ fixed_size_map>", "{count <= count2}", "{1 < count2}",
+[[rc::ensures("own m : {mp, items2, count2} @ fixed_size_map", "{count <= count2}", "{1 < count2}",
               "{length items <= length items2}")]]
 void fsm_realloc_if_necessary(struct fixed_size_map *m);
 
@@ -68,7 +68,7 @@ void fsm_realloc_if_necessary(struct fixed_size_map *m);
 [[rc::args("len @ int<size_t>")]]
 [[rc::requires("{1 < len}", "{struct_item.(ly_size) * len + 16 ≤ max_int size_t}")]]
 [[rc::requires("[alloc_initialized]")]]
-[[rc::ensures("m @ &own<{∅, replicate len Empty, len} @ fixed_size_map> ")]]
+[[rc::ensures("own m : {∅, replicate len Empty, len} @ fixed_size_map")]]
  [[rc::lemmas("fsm_invariant_init")]]
  [[rc::tactics("all: try by apply/list_subequiv_split; solve_goal.")]]
  [[rc::tactics("all: try by rewrite length_filter_replicate_True; solve_goal.")]]
@@ -107,7 +107,7 @@ size_t fsm_slot_for_key(size_t len, size_t key) {
 [[rc::args("m @ &own<{mp, items, count} @ fixed_size_map>", "key @ int<size_t>")]]
 [[rc::exists("n : nat")]]
 [[rc::returns("n @ int<size_t>")]]
-[[rc::ensures("m @ &own<{mp, items, count} @ fixed_size_map>")]]
+[[rc::ensures("own m : {mp, items, count} @ fixed_size_map")]]
 [[rc::ensures("{∃ x, items !! n = Some x ∧ probe_ref key items = Some (n, x)}")]]
  [[rc::lemmas("lookup_lt_is_Some_2")]]
  [[rc::tactics("all: try by eexists _; split => //; apply probe_ref_take_Some; naive_solver.")]]
@@ -136,7 +136,7 @@ size_t fsm_probe(struct fixed_size_map *m, size_t key) {
 [[rc::requires("[alloc_initialized]")]]
 [[rc::exists("items2 : {list item_ref}", "count2 : nat")]]
 [[rc::returns("{mp !! key} @ optionalO<λ ty. &own<ty>>")]]
-[[rc::ensures("m @ &own<{<[key:=ty]>mp, items2, count2} @ fixed_size_map>")]]
+[[rc::ensures("own m : {<[key:=ty]>mp, items2, count2} @ fixed_size_map")]]
 [[rc::ensures("{count - 1 <= count2}", "{length items <= length items2}")]]
  [[rc::lemmas("fsm_invariant_insert")]]
  [[rc::tactics("all: try by erewrite length_filter_insert => //; solve_goal.")]]
@@ -162,7 +162,7 @@ void *fsm_insert(struct fixed_size_map *m, size_t key, void *value) {
 [[rc::args("m @ &own<{mp, items, count} @ fixed_size_map>", "key @ int<size_t>")]]
 [[rc::exists("p : loc", "items2 : {list item_ref}")]]
 [[rc::returns("{mp !! key} @ optionalO<λ ty. p @ &own<ty>>")]]
-[[rc::ensures("m @ &own<{alter (λ _, singleton_place p) key mp, items2, count} @ fixed_size_map>")]]
+[[rc::ensures("own m : {alter (λ _, place p) key mp, items2, count} @ fixed_size_map")]]
  [[rc::lemmas("fsm_invariant_alter")]]
  [[rc::tactics("all: try by erewrite length_filter_insert => //; solve_goal.")]]
  [[rc::tactics("all: try by apply inhabitant.")]]
@@ -181,7 +181,7 @@ void *fsm_get(struct fixed_size_map *m, size_t key) {
 [[rc::args("m @ &own<{mp, items, count} @ fixed_size_map>", "key @ int<size_t>")]]
 [[rc::exists("items2 : {list item_ref}")]]
 [[rc::returns("{mp !! key} @ optionalO<λ ty. &own<ty>>")]]
-[[rc::ensures("m @ &own<{delete key mp, items2, count} @ fixed_size_map>")]]
+[[rc::ensures("own m : {delete key mp, items2, count} @ fixed_size_map")]]
  [[rc::lemmas("fsm_invariant_delete")]]
  [[rc::tactics("all: try by erewrite length_filter_insert => //; solve_goal.")]]
 void *fsm_remove(struct fixed_size_map *m, size_t key) {

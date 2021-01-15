@@ -11,7 +11,8 @@ Section proof_roundtrip_and_read.
   Lemma type_roundtrip_and_read :
     ⊢ typed_function impl_roundtrip_and_read type_of_roundtrip_and_read.
   Proof.
-    start_function "roundtrip_and_read" ([p n]) => arg_p local_i local_r local_q.
+    Open Scope printing_sugar.
+    start_function "roundtrip_and_read" ([l n]) => arg_p local_i local_r local_q.
     split_blocks ((
       ∅
     )%I : gmap label (iProp Σ)) ((

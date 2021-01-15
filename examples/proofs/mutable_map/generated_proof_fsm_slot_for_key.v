@@ -12,6 +12,7 @@ Section proof_fsm_slot_for_key.
   Lemma type_fsm_slot_for_key :
     ⊢ typed_function impl_fsm_slot_for_key type_of_fsm_slot_for_key.
   Proof.
+    Open Scope printing_sugar.
     start_function "fsm_slot_for_key" ([len key]) => arg_len arg_key.
     split_blocks ((
       ∅

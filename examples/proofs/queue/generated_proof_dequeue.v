@@ -12,6 +12,7 @@ Section proof_dequeue.
     global_free ◁ᵥ global_free @ function_ptr type_of_free -∗
     typed_function (impl_dequeue global_free) type_of_dequeue.
   Proof.
+    Open Scope printing_sugar.
     start_function "dequeue" ([p tys]) => arg_q local_elem local_ret.
     split_blocks ((
       ∅

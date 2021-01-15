@@ -91,7 +91,7 @@ Section code.
   Program Definition struct_entry := {|
     sl_members := [
       (Some "key", it_layout size_t);
-      (Some "value", LPtr)
+      (Some "value", void*)
     ];
   |}.
   Solve Obligations with solve_struct_obligations.
@@ -126,7 +126,7 @@ Section code.
   (* Definition of function [test_item_set_empty]. *)
   Definition impl_test_item_set_empty : function := {|
     f_args := [
-      ("i", LPtr)
+      ("i", void*)
     ];
     f_local_vars := [
     ];
@@ -134,10 +134,10 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_2 ;
-        LocInfoE loc_10 ((LocInfoE loc_11 (!{LPtr} (LocInfoE loc_12 ("i")))) at{struct_item} "tag") <-{ it_layout size_t }
+        LocInfoE loc_10 ((LocInfoE loc_11 (!{void*} (LocInfoE loc_12 ("i")))) at{struct_item} "tag") <-{ it_layout size_t }
           LocInfoE loc_13 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_14 (i2v 0 i32))) ;
         locinfo: loc_3 ;
-        LocInfoE loc_4 ((LocInfoE loc_5 ((LocInfoE loc_6 ((LocInfoE loc_7 (!{LPtr} (LocInfoE loc_8 ("i")))) at{struct_item} "u")) at_union{union_item_union} "empty")) at{struct_empty} "dummy") <-{ it_layout size_t }
+        LocInfoE loc_4 ((LocInfoE loc_5 ((LocInfoE loc_6 ((LocInfoE loc_7 (!{void*} (LocInfoE loc_8 ("i")))) at{struct_item} "u")) at_union{union_item_union} "empty")) at{struct_empty} "dummy") <-{ it_layout size_t }
           LocInfoE loc_9 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_9 (i2v 0 i32))) ;
         Return (VOID)
       ]> $∅
@@ -147,9 +147,9 @@ Section code.
   (* Definition of function [test_item_set_entry]. *)
   Definition impl_test_item_set_entry : function := {|
     f_args := [
-      ("i", LPtr);
+      ("i", void*);
       ("key", it_layout size_t);
-      ("val", LPtr)
+      ("val", void*)
     ];
     f_local_vars := [
     ];
@@ -157,14 +157,14 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_17 ;
-        LocInfoE loc_34 ((LocInfoE loc_35 (!{LPtr} (LocInfoE loc_36 ("i")))) at{struct_item} "tag") <-{ it_layout size_t }
+        LocInfoE loc_34 ((LocInfoE loc_35 (!{void*} (LocInfoE loc_36 ("i")))) at{struct_item} "tag") <-{ it_layout size_t }
           LocInfoE loc_37 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_38 (i2v 1 i32))) ;
         locinfo: loc_18 ;
-        LocInfoE loc_27 ((LocInfoE loc_28 ((LocInfoE loc_29 ((LocInfoE loc_30 (!{LPtr} (LocInfoE loc_31 ("i")))) at{struct_item} "u")) at_union{union_item_union} "entry")) at{struct_entry} "key") <-{ it_layout size_t }
+        LocInfoE loc_27 ((LocInfoE loc_28 ((LocInfoE loc_29 ((LocInfoE loc_30 (!{void*} (LocInfoE loc_31 ("i")))) at{struct_item} "u")) at_union{union_item_union} "entry")) at{struct_entry} "key") <-{ it_layout size_t }
           LocInfoE loc_32 (use{it_layout size_t} (LocInfoE loc_33 ("key"))) ;
         locinfo: loc_19 ;
-        LocInfoE loc_20 ((LocInfoE loc_21 ((LocInfoE loc_22 ((LocInfoE loc_23 (!{LPtr} (LocInfoE loc_24 ("i")))) at{struct_item} "u")) at_union{union_item_union} "entry")) at{struct_entry} "value") <-{ LPtr }
-          LocInfoE loc_25 (use{LPtr} (LocInfoE loc_26 ("val"))) ;
+        LocInfoE loc_20 ((LocInfoE loc_21 ((LocInfoE loc_22 ((LocInfoE loc_23 (!{void*} (LocInfoE loc_24 ("i")))) at{struct_item} "u")) at_union{union_item_union} "entry")) at{struct_entry} "value") <-{ void* }
+          LocInfoE loc_25 (use{void*} (LocInfoE loc_26 ("val"))) ;
         Return (VOID)
       ]> $∅
     )%E
@@ -173,7 +173,7 @@ Section code.
   (* Definition of function [test_item_modify_entry]. *)
   Definition impl_test_item_modify_entry : function := {|
     f_args := [
-      ("i", LPtr);
+      ("i", void*);
       ("key", it_layout size_t)
     ];
     f_local_vars := [
@@ -183,7 +183,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_72 ;
-        if: LocInfoE loc_72 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_72 ((LocInfoE loc_73 (use{it_layout size_t} (LocInfoE loc_74 ((LocInfoE loc_75 (!{LPtr} (LocInfoE loc_76 ("i")))) at{struct_item} "tag")))) ={IntOp size_t, IntOp size_t} (LocInfoE loc_77 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_78 (i2v 1 i32)))))))
+        if: LocInfoE loc_72 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_72 ((LocInfoE loc_73 (use{it_layout size_t} (LocInfoE loc_74 ((LocInfoE loc_75 (!{void*} (LocInfoE loc_76 ("i")))) at{struct_item} "tag")))) ={IntOp size_t, IntOp size_t} (LocInfoE loc_77 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_78 (i2v 1 i32)))))))
         then
         locinfo: loc_46 ;
           Goto "#2"
@@ -198,12 +198,12 @@ Section code.
       <[ "#2" :=
         locinfo: loc_46 ;
         LocInfoE loc_64 ("old_key") <-{ it_layout size_t }
-          LocInfoE loc_65 (use{it_layout size_t} (LocInfoE loc_66 ((LocInfoE loc_67 ((LocInfoE loc_68 ((LocInfoE loc_69 (!{LPtr} (LocInfoE loc_70 ("i")))) at{struct_item} "u")) at_union{union_item_union} "entry")) at{struct_entry} "key"))) ;
+          LocInfoE loc_65 (use{it_layout size_t} (LocInfoE loc_66 ((LocInfoE loc_67 ((LocInfoE loc_68 ((LocInfoE loc_69 (!{void*} (LocInfoE loc_70 ("i")))) at{struct_item} "u")) at_union{union_item_union} "entry")) at{struct_entry} "key"))) ;
         locinfo: loc_47 ;
-        LocInfoE loc_59 ((LocInfoE loc_60 (!{LPtr} (LocInfoE loc_61 ("i")))) at{struct_item} "tag") <-{ it_layout size_t }
+        LocInfoE loc_59 ((LocInfoE loc_60 (!{void*} (LocInfoE loc_61 ("i")))) at{struct_item} "tag") <-{ it_layout size_t }
           LocInfoE loc_62 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_63 (i2v 2 i32))) ;
         locinfo: loc_48 ;
-        LocInfoE loc_52 ((LocInfoE loc_53 ((LocInfoE loc_54 ((LocInfoE loc_55 (!{LPtr} (LocInfoE loc_56 ("i")))) at{struct_item} "u")) at_union{union_item_union} "tombstone")) at{struct_tombstone} "key") <-{ it_layout size_t }
+        LocInfoE loc_52 ((LocInfoE loc_53 ((LocInfoE loc_54 ((LocInfoE loc_55 (!{void*} (LocInfoE loc_56 ("i")))) at{struct_item} "u")) at_union{union_item_union} "tombstone")) at{struct_tombstone} "key") <-{ it_layout size_t }
           LocInfoE loc_57 (use{it_layout size_t} (LocInfoE loc_58 ("key"))) ;
         locinfo: loc_49 ;
         Return (LocInfoE loc_50 (use{it_layout size_t} (LocInfoE loc_51 ("old_key"))))

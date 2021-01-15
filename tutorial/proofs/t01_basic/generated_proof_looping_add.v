@@ -11,6 +11,7 @@ Section proof_looping_add.
   Lemma type_looping_add :
     ⊢ typed_function impl_looping_add type_of_looping_add.
   Proof.
+    Open Scope printing_sugar.
     start_function "looping_add" ([va vb]) => arg_a arg_b.
     split_blocks ((
       <[ "#1" :=

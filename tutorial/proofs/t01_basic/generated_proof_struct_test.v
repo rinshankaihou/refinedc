@@ -11,6 +11,7 @@ Section proof_struct_test.
   Lemma type_struct_test :
     ⊢ typed_function impl_struct_test type_of_struct_test.
   Proof.
+    Open Scope printing_sugar.
     start_function "struct_test" (p) => arg_out.
     split_blocks ((
       ∅

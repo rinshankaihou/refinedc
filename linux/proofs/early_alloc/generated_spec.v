@@ -32,6 +32,6 @@ Section spec.
 
   (* Specifications for function [hyp_early_alloc_init1]. *)
   Definition type_of_hyp_early_alloc_init1 :=
-    fn(∀ n : nat; (&own (uninit (ly_set_size PAGE_LAYOUT n))), (n @ (int (u64))); (global_with_type "cur1" Own (uninit (LPtr))) ∗ (global_with_type "size1" Own (uninit (u64))) ∗ (global_with_type "base1" Own (uninit (LPtr))))
-      → ∃ m : nat, (void); (global_with_type "size1" Own (m @ (int (u64)))) ∗ (global_with_type "cur1" Own (&own (uninit (ly_set_size PAGE_LAYOUT m)))) ∗ (global_with_type "base1" Own (uninit (LPtr))).
+    fn(∀ n : nat; (&own (uninit (ly_set_size PAGE_LAYOUT n))), (n @ (int (u64))); (global_with_type "cur1" Own (uninit (void*))) ∗ (global_with_type "size1" Own (uninit (u64))) ∗ (global_with_type "base1" Own (uninit (void*))))
+      → ∃ m : nat, (void); (global_with_type "size1" Own (m @ (int (u64)))) ∗ (global_with_type "cur1" Own (&own (uninit (ly_set_size PAGE_LAYOUT m)))) ∗ (global_with_type "base1" Own (uninit (void*))).
 End spec.

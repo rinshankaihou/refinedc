@@ -11,6 +11,7 @@ Section proof_slab_alloc.
   Lemma type_slab_alloc :
     ⊢ typed_function impl_slab_alloc type_of_slab_alloc.
   Proof.
+    Open Scope printing_sugar.
     start_function "slab_alloc" ([[p n] entry_size]) => arg_s local_r local_f.
     split_blocks ((
       ∅

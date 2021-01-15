@@ -13,6 +13,7 @@ Section proof_insert_rec.
     global_node ◁ᵥ global_node @ function_ptr type_of_node -∗
     typed_function (impl_insert_rec global_insert_rec global_node) type_of_insert_rec.
   Proof.
+    Open Scope printing_sugar.
     start_function "insert_rec" ([[p s] k]) => arg_t arg_k.
     split_blocks ((
       ∅

@@ -11,6 +11,7 @@ Section proof_append.
   Lemma type_append :
     ⊢ typed_function impl_append type_of_append.
   Proof.
+    Open Scope printing_sugar.
     start_function "append" ([[p l1] l2]) => arg_l1 arg_l2 local_end.
     split_blocks ((
       <[ "#1" :=

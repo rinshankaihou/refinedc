@@ -12,6 +12,7 @@ Section proof_wrapping_add.
   Lemma type_wrapping_add :
     ⊢ typed_function impl_wrapping_add type_of_wrapping_add.
   Proof.
+    Open Scope printing_sugar.
     start_function "wrapping_add" ([[a b] c]) => arg_a arg_b arg_c.
     split_blocks ((
       ∅

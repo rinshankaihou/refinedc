@@ -13,6 +13,7 @@ Section proof_smember.
     global_member ◁ᵥ global_member @ function_ptr type_of_member -∗
     typed_function (impl_smember global_member) type_of_smember.
   Proof.
+    Open Scope printing_sugar.
     start_function "smember" ([[p s] k]) => arg_t arg_k.
     split_blocks ((
       ∅

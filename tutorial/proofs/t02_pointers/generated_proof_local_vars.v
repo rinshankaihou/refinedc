@@ -11,6 +11,7 @@ Section proof_local_vars.
   Lemma type_local_vars :
     ⊢ typed_function impl_local_vars type_of_local_vars.
   Proof.
+    Open Scope printing_sugar.
     start_function "local_vars" ([]) => arg_b local_var local_dummy local_p.
     split_blocks ((
       ∅

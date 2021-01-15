@@ -13,12 +13,13 @@ Section proof_fsm_init.
     global_alloc_array ◁ᵥ global_alloc_array @ function_ptr type_of_alloc_array -∗
     typed_function (impl_fsm_init global_alloc_array) type_of_fsm_init.
   Proof.
+    Open Scope printing_sugar.
     start_function "fsm_init" ([m len]) => arg_m arg_len local_i local_storage.
     split_blocks ((
       <[ "#1" :=
         ∃ i : nat,
         arg_len ◁ₗ (len @ (int (size_t))) ∗
-        local_storage ◁ₗ uninit LPtr ∗
+        local_storage ◁ₗ uninit void* ∗
         local_i ◁ₗ (i @ (int (size_t))) ∗
         arg_m ◁ₗ (m @ (&own (struct (struct_fixed_size_map) [@{type} &own (array (struct_item) (replicate i Empty `at_type` item ++ replicate (len - i)%nat (uninit (struct_item)))) ; len @ (int (size_t)) ; len @ (int (size_t)) ]))) ∗
         ⌜i <= len⌝

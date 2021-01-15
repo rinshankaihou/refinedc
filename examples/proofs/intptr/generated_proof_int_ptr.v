@@ -11,6 +11,7 @@ Section proof_int_ptr.
   Lemma type_int_ptr :
     ⊢ typed_function impl_int_ptr type_of_int_ptr.
   Proof.
+    Open Scope printing_sugar.
     start_function "int_ptr" ([]) => arg_p local_i.
     split_blocks ((
       ∅

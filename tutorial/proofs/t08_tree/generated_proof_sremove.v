@@ -13,6 +13,7 @@ Section proof_sremove.
     global_remove ◁ᵥ global_remove @ function_ptr type_of_remove -∗
     typed_function (impl_sremove global_remove) type_of_sremove.
   Proof.
+    Open Scope printing_sugar.
     start_function "sremove" ([[p s] k]) => arg_t arg_k.
     split_blocks ((
       ∅

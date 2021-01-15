@@ -14,6 +14,7 @@ Section proof_remove.
     global_tree_max ◁ᵥ global_tree_max @ function_ptr type_of_tree_max -∗
     typed_function (impl_remove global_free global_remove global_tree_max) type_of_remove.
   Proof.
+    Open Scope printing_sugar.
     start_function "remove" ([[p s] k]) => arg_t arg_k local_m local_tmp.
     split_blocks ((
       ∅

@@ -11,6 +11,7 @@ Section proof_is_empty.
   Lemma type_is_empty :
     ⊢ typed_function impl_is_empty type_of_is_empty.
   Proof.
+    Open Scope printing_sugar.
     start_function "is_empty" ([p tys]) => arg_q.
     split_blocks ((
       ∅

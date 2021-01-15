@@ -64,7 +64,7 @@ Section function.
   }.
 
   Definition ti_member (ti : tunion_info) (r : ti.(ti_rtype)) :=
-    (default ("", LVoid) (ti.(ti_union_layout).(ul_members) !! ti.(ti_tag) r)).
+    (default ("", void_layout) (ti.(ti_union_layout).(ul_members) !! ti.(ti_tag) r)).
 
   Lemma index_of_ti_member ti x:
     index_of_union (ti_member ti x).1 (ti_union_layout ti) = Some (ti.(ti_tag) x).

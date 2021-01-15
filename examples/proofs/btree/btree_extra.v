@@ -468,7 +468,7 @@ Section defs.
   |}.
 
   Definition make_sp (p : loc) (k : Z) (m : gmap Z type) :=
-    alter (λ _, singleton_place p)%I k m.
+    alter (λ _, place p)%I k m.
 End defs.
 
 Typeclasses Opaque btree_invariant.

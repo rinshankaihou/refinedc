@@ -11,6 +11,7 @@ Section proof_set_green.
   Lemma type_set_green :
     ⊢ typed_function impl_set_green type_of_set_green.
   Proof.
+    Open Scope printing_sugar.
     start_function "set_green" ([[p c] g]) => arg_c arg_g.
     split_blocks ((
       ∅

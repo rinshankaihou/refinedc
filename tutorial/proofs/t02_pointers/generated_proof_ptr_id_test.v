@@ -12,6 +12,7 @@ Section proof_ptr_id_test.
     global_ptr_id ◁ᵥ global_ptr_id @ function_ptr type_of_ptr_id -∗
     typed_function (impl_ptr_id_test global_ptr_id) type_of_ptr_id_test.
   Proof.
+    Open Scope printing_sugar.
     start_function "ptr_id_test" ([]) => local_x.
     split_blocks ((
       ∅

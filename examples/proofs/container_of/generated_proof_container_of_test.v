@@ -11,6 +11,7 @@ Section proof_container_of_test.
   Lemma type_container_of_test :
     ⊢ typed_function impl_container_of_test type_of_container_of_test.
   Proof.
+    Open Scope printing_sugar.
     start_function "container_of_test" ([]) => local_b local_t local_pt.
     split_blocks ((
       ∅

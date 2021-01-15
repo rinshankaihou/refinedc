@@ -11,6 +11,7 @@ Section proof_no_alias.
   Lemma type_no_alias :
     ⊢ typed_function impl_no_alias type_of_no_alias.
   Proof.
+    Open Scope printing_sugar.
     start_function "no_alias" ([p q]) => arg_a arg_b local_old_b.
     split_blocks ((
       ∅

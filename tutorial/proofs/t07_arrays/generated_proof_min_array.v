@@ -12,6 +12,7 @@ Section proof_min_array.
   Lemma type_min_array :
     ⊢ typed_function impl_min_array type_of_min_array.
   Proof.
+    Open Scope printing_sugar.
     start_function "min_array" ([[ar elts] n]) => arg_ar arg_n local_i local_res.
     split_blocks ((
       <[ "#2" :=

@@ -16,6 +16,7 @@ Section proof_init_alloc.
     global_sl_init ◁ᵥ global_sl_init @ function_ptr type_of_sl_init -∗
     typed_function (impl_init_alloc global_allocator_state global_sl_init) type_of_init_alloc.
   Proof.
+    Open Scope printing_sugar.
     start_function "init_alloc" ([]).
     split_blocks ((
       <[ "#1" :=

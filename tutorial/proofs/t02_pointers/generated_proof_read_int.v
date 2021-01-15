@@ -11,6 +11,7 @@ Section proof_read_int.
   Lemma type_read_int :
     ⊢ typed_function impl_read_int type_of_read_int.
   Proof.
+    Open Scope printing_sugar.
     start_function "read_int" ([p n]) => arg_a.
     split_blocks ((
       ∅

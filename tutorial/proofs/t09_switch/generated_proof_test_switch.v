@@ -11,6 +11,7 @@ Section proof_test_switch.
   Lemma type_test_switch :
     ⊢ typed_function impl_test_switch type_of_test_switch.
   Proof.
+    Open Scope printing_sugar.
     start_function "test_switch" (i) => arg_i local_o.
     split_blocks ((
       ∅

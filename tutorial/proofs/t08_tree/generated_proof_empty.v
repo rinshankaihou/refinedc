@@ -12,6 +12,7 @@ Section proof_empty.
   Lemma type_empty :
     ⊢ typed_function impl_empty type_of_empty.
   Proof.
+    Open Scope printing_sugar.
     start_function "empty" ([]).
     split_blocks ((
       ∅

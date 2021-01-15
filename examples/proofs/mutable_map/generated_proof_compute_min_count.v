@@ -12,6 +12,7 @@ Section proof_compute_min_count.
   Lemma type_compute_min_count :
     ⊢ typed_function impl_compute_min_count type_of_compute_min_count.
   Proof.
+    Open Scope printing_sugar.
     start_function "compute_min_count" (n) => arg_len.
     split_blocks ((
       ∅

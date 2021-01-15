@@ -17,6 +17,7 @@ Section proof_main.
     global_remove ◁ᵥ global_remove @ function_ptr type_of_remove -∗
     typed_function (impl_main global_empty global_free_tree global_init global_insert global_member global_remove) type_of_main.
   Proof.
+    Open Scope printing_sugar.
     start_function "main" ([]) => local_t.
     split_blocks ((
       ∅

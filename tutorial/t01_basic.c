@@ -393,7 +393,7 @@ int looping_add(int a, int b) {
 
 [[rc::parameters("p : loc")]]
 [[rc::args("p @ &own<uninit<i32>>")]]
-[[rc::ensures("p @ &own<{1} @ int<i32>>")]]
+[[rc::ensures("own p : {1} @ int<i32>")]]
 void init_int(int* out) {
     *out = 1;
 }
@@ -424,7 +424,7 @@ void init_int_test(int* out) {
 struct basic { int a, b; };
 [[rc::parameters("p : loc")]]
 [[rc::args("p @ &own<uninit<struct_basic>>")]]
-[[rc::ensures("p @ &own<struct<struct_basic, {2} @ int<i32>, {0} @ int<i32>>>")]]
+[[rc::ensures("own p : struct<struct_basic, {2} @ int<i32>, {0} @ int<i32>>")]]
 void struct_test(struct basic* out) {
     // C guarantees that b is initialized to 0
     *out = (struct basic){.a = 1};

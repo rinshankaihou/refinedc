@@ -68,7 +68,7 @@ Section spec.
     (&own (
       tyexists (λ p : loc,
       struct struct_queue [@{type}
-        (tyfold ((λ ty x, ty @ queue_elem x) <$> tys) (singleton_place (p))) ;
+        (tyfold ((λ ty x, ty @ queue_elem x) <$> tys) (place (p))) ;
         (p @ (&own (null)))
       ])
     ))
@@ -88,7 +88,7 @@ Section spec.
       (&own (
         tyexists (λ p : loc,
         struct struct_queue [@{type}
-          (tyfold ((λ ty x, ty @ queue_elem x) <$> tys) (singleton_place (p))) ;
+          (tyfold ((λ ty x, ty @ queue_elem x) <$> tys) (place (p))) ;
           (p @ (&own (null)))
         ])
       ))
@@ -161,6 +161,9 @@ Section spec.
         let _ := patt__.2 in
         &own (ty) ) null)); (p ◁ₗ ((tail tys) @ (queue))).
 End spec.
+
+Notation "queue_elem< cont >" := (queue_elem cont)
+  (only printing, format "'queue_elem<' cont '>'") : printing_sugar.
 
 Typeclasses Opaque queue_elem_rec.
 Typeclasses Opaque queue_rec.

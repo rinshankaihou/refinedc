@@ -67,7 +67,7 @@ void init_alloc() {
   allocator_state.data = NULL;
 
   // TODO: add a real subtyping annotation such that this hack is not neccesary
-  [[rc::constraints("global_allocator_state @ &own<alloc_state>")]]
+  [[rc::constraints("own global_allocator_state : alloc_state")]]
   while(0){};
 
   rc_share(allocator_state);

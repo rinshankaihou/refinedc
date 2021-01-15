@@ -11,6 +11,7 @@ Section proof_push.
   Lemma type_push :
     ⊢ typed_function impl_push type_of_push.
   Proof.
+    Open Scope printing_sugar.
     start_function "push" ([l ty]) => arg_p arg_e arg_node.
     split_blocks ((
       ∅

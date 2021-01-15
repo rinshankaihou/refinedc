@@ -11,12 +11,13 @@ Section proof_forward.
   Lemma type_forward :
     ⊢ typed_function impl_forward type_of_forward.
   Proof.
+    Open Scope printing_sugar.
     start_function "forward" (l) => arg_p local_prev local_cur.
     split_blocks ((
       <[ "#1" :=
         ∃ l1 : list type,
         ∃ pc : loc,
-        local_cur ◁ₗ uninit LPtr ∗
+        local_cur ◁ₗ uninit void* ∗
         local_prev ◁ₗ (pc @ (&own (l1 @ (list_t)))) ∗
         arg_p ◁ₗ (wand (pc ◁ₗ l1 @ list_t) (l @ (list_t)))
     ]> $

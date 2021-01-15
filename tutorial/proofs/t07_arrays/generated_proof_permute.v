@@ -12,6 +12,7 @@ Section proof_permute.
   Lemma type_permute :
     ⊢ typed_function impl_permute type_of_permute.
   Proof.
+    Open Scope printing_sugar.
     start_function "permute" ([[[[[ar elts] i] j] v1] v2]) => arg_ar arg_i arg_j local_k.
     split_blocks ((
       ∅

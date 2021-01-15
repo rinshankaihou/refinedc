@@ -13,6 +13,7 @@ Section proof_sinsert.
     global_insert ◁ᵥ global_insert @ function_ptr type_of_insert -∗
     typed_function (impl_sinsert global_insert) type_of_sinsert.
   Proof.
+    Open Scope printing_sugar.
     start_function "sinsert" ([[p s] k]) => arg_t arg_k.
     split_blocks ((
       ∅

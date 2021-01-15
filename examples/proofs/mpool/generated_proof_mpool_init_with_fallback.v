@@ -14,6 +14,7 @@ Section proof_mpool_init_with_fallback.
     global_mpool_init ◁ᵥ global_mpool_init @ function_ptr type_of_mpool_init -∗
     typed_function (impl_mpool_init_with_fallback global_mpool_init) type_of_mpool_init_with_fallback.
   Proof.
+    Open Scope printing_sugar.
     start_function "mpool_init_with_fallback" ([[[[p entry_size] q] entries] fallback]) => arg_p arg_fallback.
     split_blocks ((
       ∅

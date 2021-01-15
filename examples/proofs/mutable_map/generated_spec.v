@@ -179,7 +179,7 @@ Section spec.
     fn(∀ (m, mp, items, count, key) : loc * (gmap Z type) * (list item_ref) * nat * Z; (m @ (&own ((mp, items, count) @ (fixed_size_map)))), (key @ (int (size_t))); True)
       → ∃ (p, items2) : loc * (list item_ref), ((mp !! key) @ (optionalO (λ ty,
         p @ (&own (ty))
-      ) null)); (m ◁ₗ ((alter (λ _, singleton_place p) key mp, items2, count) @ (fixed_size_map))).
+      ) null)); (m ◁ₗ ((alter (λ _, place p) key mp, items2, count) @ (fixed_size_map))).
 
   (* Specifications for function [fsm_remove]. *)
   Definition type_of_fsm_remove :=

@@ -292,6 +292,13 @@ Section spec.
       ) null); (p ◁ₗ{q} (n2 @ (mpool (entry_size)))) ∗ ⌜q = Own → n2 <= n⌝.
 End spec.
 
+Notation "mpool_chunk_t< entry_size >" := (mpool_chunk_t entry_size)
+  (only printing, format "'mpool_chunk_t<' entry_size '>'") : printing_sugar.
+Notation "mpool_entry_t< entry_size >" := (mpool_entry_t entry_size)
+  (only printing, format "'mpool_entry_t<' entry_size '>'") : printing_sugar.
+Notation "mpool< entry_size >" := (mpool entry_size)
+  (only printing, format "'mpool<' entry_size '>'") : printing_sugar.
+
 Typeclasses Opaque mpool_chunk_t_rec.
 Typeclasses Opaque mpool_entry_t_rec.
 Typeclasses Opaque mpool_rec.

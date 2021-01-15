@@ -41,10 +41,10 @@ btree {
   [[rc::field("array_p<i32, {ks `at_type` int i32}, {(ORDER-1-n)%nat}>")]]
   int keys[ORDER - 1];
 
-  [[rc::field("array_p<LPtr, {(λ ty, (&own ty : type)) <$> vs}, {(ORDER-1-n)%nat}>")]]
+  [[rc::field("array_p<void*, {(λ ty, (&own ty : type)) <$> vs}, {(ORDER-1-n)%nat}>")]]
   void* vals[ORDER - 1];
 
-  [[rc::field("guarded<array_p<LPtr, {cs `at_type` !{btree_t<>}}, {(ORDER-1-n)%nat}>>")]]
+  [[rc::field("guarded<array_p<void*, {cs `at_type` !{btree_t<>}}, {(ORDER-1-n)%nat}>>")]]
   struct btree* children[ORDER];
 
   [[rc::field("{br_height r} @ int<i32>")]]
@@ -65,7 +65,7 @@ void free_btree(btree_t* t);
 [[rc::parameters("p : loc", "h : nat", "m : {gmap Z type}", "k : Z")]]
 [[rc::args("p @ &own<{BRroot h m} @ btree_t>", "k @ int<i32>")]]
 [[rc::returns("{bool_decide (m !! k ≠ None)} @ boolean<bool_it>")]]
-[[rc::ensures("p @ &own<{BRroot h m} @ btree_t>")]]
+[[rc::ensures("own p : {BRroot h m} @ btree_t")]]
 bool btree_member(btree_t* t, int k);
 
 // Find the value associated to the key k in the B-tree t. If the key k is not
@@ -74,7 +74,7 @@ bool btree_member(btree_t* t, int k);
 [[rc::args("p @ &own<{BRroot h m} @ btree_t>", "k @ int<i32>")]]
 [[rc::exists("v : loc")]]
 [[rc::returns("{m !! k} @ optionalO<λ ty. v @ &own<ty>>")]]
-[[rc::ensures("p @ &own<{BRroot h (make_sp v k m)} @ btree_t>")]]
+[[rc::ensures("own p : {BRroot h (make_sp v k m)} @ btree_t")]]
 void** btree_find(btree_t* t, int k);
 
 // Insert the key k with value v in the B-tree t. If the key is already mapped
@@ -85,5 +85,5 @@ void** btree_find(btree_t* t, int k);
 [[rc::args("k @ int<i32>", "v @ &own<ty>")]]
 [[rc::requires("[alloc_initialized]")]]
 [[rc::exists("new_h : nat")]]
-[[rc::ensures("p @ &own<{BRroot new_h (<[k := ty]> m)} @ btree_t>")]]
+[[rc::ensures("own p : {BRroot new_h (<[k := ty]> m)} @ btree_t")]]
 void btree_insert(btree_t* t, int k, void* v);

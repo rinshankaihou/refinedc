@@ -12,6 +12,7 @@ Section proof_pop.
     global_free ◁ᵥ global_free @ function_ptr type_of_free -∗
     typed_function (impl_pop global_free) type_of_pop.
   Proof.
+    Open Scope printing_sugar.
     start_function "pop" ([l p]) => arg_p local_node local_ret.
     split_blocks ((
       ∅

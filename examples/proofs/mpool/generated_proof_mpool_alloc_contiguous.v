@@ -14,13 +14,14 @@ Section proof_mpool_alloc_contiguous.
     global_mpool_alloc_contiguous_no_fallback ◁ᵥ global_mpool_alloc_contiguous_no_fallback @ function_ptr type_of_mpool_alloc_contiguous_no_fallback -∗
     typed_function (impl_mpool_alloc_contiguous global_mpool_alloc_contiguous_no_fallback) type_of_mpool_alloc_contiguous.
   Proof.
+    Open Scope printing_sugar.
     start_function "mpool_alloc_contiguous" ([[[[[p q] n] entry_size] count] align]) => arg_p arg_count arg_align local_ret.
     split_blocks ((
       <[ "#2" :=
         ∃ n2 : nat,
         arg_count ◁ₗ (count @ (int (size_t))) ∗
         arg_align ◁ₗ (align @ (int (size_t))) ∗
-        local_ret ◁ₗ uninit LPtr ∗
+        local_ret ◁ₗ uninit void* ∗
         arg_p ◁ₗ (optionalO (λ _ : unit,
           &shr (mpool (entry_size))
         ) null) ∗

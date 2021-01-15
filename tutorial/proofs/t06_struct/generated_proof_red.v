@@ -11,6 +11,7 @@ Section proof_red.
   Lemma type_red :
     ⊢ typed_function impl_red type_of_red.
   Proof.
+    Open Scope printing_sugar.
     start_function "red" (r) => arg_r local_c.
     split_blocks ((
       ∅

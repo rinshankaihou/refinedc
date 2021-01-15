@@ -38,6 +38,8 @@ Section atomic_bool.
   Qed.
 
 End atomic_bool.
+Notation "atomic_bool< it , PT , PF >" := (atomic_bool it PT PF)
+  (only printing, format "'atomic_bool<' it ,  PT ,  PF '>'") : printing_sugar.
 
 Section programs.
   Context `{!typeG Σ}.

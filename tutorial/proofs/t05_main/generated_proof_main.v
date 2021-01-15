@@ -21,6 +21,7 @@ Section proof_main.
     global_test ◁ᵥ global_test @ function_ptr type_of_test -∗
     typed_function (impl_main global_allocator_data global_initialized global_free global_init_alloc global_latch_release global_test) type_of_main.
   Proof.
+    Open Scope printing_sugar.
     start_function "main" ([]).
     split_blocks ((
       ∅

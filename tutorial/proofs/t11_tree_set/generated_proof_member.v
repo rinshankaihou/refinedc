@@ -11,6 +11,7 @@ Section proof_member.
   Lemma type_member :
     ⊢ typed_function impl_member type_of_member.
   Proof.
+    Open Scope printing_sugar.
     start_function "member" ([[p s] k]) => arg_t arg_k local_cur.
     split_blocks ((
       <[ "#1" :=

@@ -8,7 +8,7 @@ Section own.
 
   (* Separate definition such that we can make it typeclasses opaque later. *)
   Program Definition frac_ptr_type (β : own_state) (ty : type) (l' : loc) : type := {|
-    ty_own β' l := (⌜l `has_layout_loc` LPtr⌝ ∗ l ↦[β'] l' ∗ (l' ◁ₗ{own_state_min β' β} ty))%I;
+    ty_own β' l := (⌜l `has_layout_loc` void*⌝ ∗ l ↦[β'] l' ∗ (l' ◁ₗ{own_state_min β' β} ty))%I;
   |}.
   Next Obligation.
     iIntros (β ?????) "($&Hl&H)". rewrite left_id.
@@ -28,7 +28,7 @@ Section own.
 
   Global Program Instance rmovable_frac_ptr β ty : RMovable (frac_ptr β ty) := {|
     rmovable l := {|
-      ty_layout := LPtr;
+      ty_layout := void*;
       ty_own_val v := (⌜v = val_of_loc l⌝ ∗ l ◁ₗ{β} ty)%I;
   |} |}.
   Next Obligation. iIntros (β ty l l'). by iDestruct 1 as (?) "_". Qed.
@@ -58,7 +58,7 @@ Section own.
 
   Lemma type_place_frac p β K β1 ty1 T l:
     typed_place K p (own_state_min β1 β) ty1 (λ l2 β2 ty2 typ, T l2 β2 ty2 (λ t, (p @ (frac_ptr β (typ t))))) -∗
-    typed_place (DerefPCtx Na1Ord LPtr :: K) l β1 (p @ (frac_ptr β ty1)) T.
+    typed_place (DerefPCtx Na1Ord void* :: K) l β1 (p @ (frac_ptr β ty1)) T.
   Proof.
     iIntros "HP" (Φ) "(%&Hm&Hl) HΦ" => /=.
     iApply @fupd_wp. iMod (heap_mapsto_own_state_to_mt with "Hm") as (q Hq) "Hm" => //.
@@ -70,7 +70,7 @@ Section own.
     by iApply heap_mapsto_own_state_from_mt.
   Qed.
   Global Instance type_place_frac_inst p β K β1 ty1 l :
-    TypedPlace (DerefPCtx Na1Ord LPtr :: K) l β1 (p @ (frac_ptr β ty1)) :=
+    TypedPlace (DerefPCtx Na1Ord void* :: K) l β1 (p @ (frac_ptr β ty1)) :=
     λ T, i2p (type_place_frac _ _ _ _ _ _ _).
 
   Lemma type_addr_of (T : val → _) e:
@@ -110,13 +110,13 @@ Section own.
     SimplifyGoalVal v (frac_ptr β ty) (Some 0%N) :=
     λ T, i2p (simplify_goal_frac_ptr_val_unrefined ty v β T).
 
-  Lemma simplify_frac_ptr_singleton_place_shr_to_own l p1 p2 β T:
-    (⌜p1 = p2⌝ -∗ l ◁ₗ{β} p1 @ frac_ptr Own (singleton_place p2) -∗ T) -∗
-    simplify_hyp (l ◁ₗ{β} p1 @ frac_ptr Shr (singleton_place p2)) T.
+  Lemma simplify_frac_ptr_place_shr_to_own l p1 p2 β T:
+    (⌜p1 = p2⌝ -∗ l ◁ₗ{β} p1 @ frac_ptr Own (place p2) -∗ T) -∗
+    simplify_hyp (l ◁ₗ{β} p1 @ frac_ptr Shr (place p2)) T.
   Proof. iIntros "HT (%&Hl&%)". subst. iApply "HT" => //. by iFrame. Qed.
-  Global Instance simplify_frac_ptr_singleton_place_inst l p1 p2 β:
-    SimplifyHypPlace l β (p1 @ frac_ptr Shr (singleton_place p2)) (Some 50%N) :=
-    λ T, i2p (simplify_frac_ptr_singleton_place_shr_to_own l p1 p2 β T).
+  Global Instance simplify_frac_ptr_place_inst l p1 p2 β:
+    SimplifyHypPlace l β (p1 @ frac_ptr Shr (place p2)) (Some 50%N) :=
+    λ T, i2p (simplify_frac_ptr_place_shr_to_own l p1 p2 β T).
 
   (* Ideally we would like to have this version:
   Lemma own_val_to_own_place v l ty β T:
@@ -136,7 +136,7 @@ Section own.
 
   Lemma own_val_to_own_place_singleton (l : loc) β T:
     T -∗
-    l ◁ᵥ l @ frac_ptr β (singleton_place l) ∗ T.
+    l ◁ᵥ l @ frac_ptr β (place l) ∗ T.
   Proof. by iIntros "$". Qed.
 
 
@@ -156,7 +156,7 @@ Section own.
   Qed.
 
   Lemma type_offset_of_sub v1 l s m P ly T:
-    ⌜ly_size ly = 1%nat⌝ ∗ (P -∗ T (val_of_loc l) (t2mt (l @ frac_ptr Own (singleton_place l)))) -∗
+    ⌜ly_size ly = 1%nat⌝ ∗ (P -∗ T (val_of_loc l) (t2mt (l @ frac_ptr Own (place l)))) -∗
     typed_bin_op v1 (v1 ◁ᵥ offsetof s m) (l at{s}ₗ m) P (PtrNegOffsetOp ly) (IntOp size_t) PtrOp T.
   Proof.
     iDestruct 1 as (Hly) "HT". iIntros ([n [Ho Hi%val_to_of_int]]) "HP". iIntros (Φ) "HΦ".
@@ -213,7 +213,7 @@ Section own.
     λ T, i2p (type_cast_ptr_int p β ty T).
 
   Lemma type_cast_int_ptr n v it T:
-    (⌜n ∈ it⌝ -∗ T (val_of_loc (None, n)) (t2mt ((None, n) @ frac_ptr Own (singleton_place (None, n))))) -∗
+    (⌜n ∈ it⌝ -∗ T (val_of_loc (None, n)) (t2mt ((None, n) @ frac_ptr Own (place (None, n))))) -∗
     typed_un_op v (v ◁ᵥ n @ int it) (CastOp PtrOp) (IntOp it) T.
   Proof.
     iIntros "HT" (Hn Φ) "HΦ".
@@ -226,10 +226,10 @@ Section own.
     λ T, i2p (type_cast_int_ptr n v it T).
 
   Lemma type_copy_aid v1 v2 P1 P2 T:
-    (∃ p1 p2, subsume P1 (v1 ◁ᵥ p1 @ frac_ptr Own (singleton_place p1)) (
-              subsume P2 (v2 ◁ᵥ p2 @ frac_ptr Own (singleton_place p2)) (
+    (∃ p1 p2, subsume P1 (v1 ◁ᵥ p1 @ frac_ptr Own (place p1)) (
+              subsume P2 (v2 ◁ᵥ p2 @ frac_ptr Own (place p2)) (
               ∃ p, ⌜normalize_loc (p2.1, p1.2) p⌝ ∗
-                   T (val_of_loc p) (t2mt (singleton_val LPtr (val_of_loc p)))))) -∗
+                   T (val_of_loc p) (t2mt (value void* (val_of_loc p)))))) -∗
     typed_copy_alloc_id v1 P1 v2 P2 T.
   Proof.
     iIntros "HT Hp1 Hp2" (Φ) "HΦ". iDestruct "HT" as (p1 p2) "HT".
@@ -286,7 +286,7 @@ Section own.
     λ T, i2p (find_in_context_type_val_own l T).
 
   Lemma find_in_context_type_val_own_singleton (l : loc) T:
-    (True ∗ T (t2mt (l @ frac_ptr Own (singleton_place l)))) -∗
+    (True ∗ T (t2mt (l @ frac_ptr Own (place l)))) -∗
     find_in_context (FindVal l) T.
   Proof. iIntros "[_ HT]". iExists _ => /=. iFrame "HT". simpl. done. Qed.
   Global Instance find_in_context_type_val_own_singleton_inst (l : loc):
@@ -294,7 +294,7 @@ Section own.
     λ T, i2p (find_in_context_type_val_own_singleton l T).
 
   Lemma find_in_context_type_val_P_own_singleton (l : loc) T:
-    (True ∗ T (l ◁ₗ singleton_place l)) -∗
+    (True ∗ T (l ◁ₗ place l)) -∗
     find_in_context (FindValP l) T.
   Proof. iIntros "[_ HT]". iExists _. iFrame "HT" => //=. Qed.
   Global Instance find_in_context_type_val_P_own_singleton_inst (l : loc):
@@ -306,19 +306,23 @@ Notation "&frac{ β }" := (frac_ptr β) (format "&frac{ β }") : bi_scope.
 Notation "&own" := (frac_ptr Own) (format "&own") : bi_scope.
 Notation "&shr" := (frac_ptr Shr) (format "&shr") : bi_scope.
 
+Notation "&frac< β , ty >" := (frac_ptr β ty) (only printing, format "'&frac<' β ,  ty '>'") : printing_sugar.
+Notation "&own< ty >" := (frac_ptr Own ty) (only printing, format "'&own<' ty '>'") : printing_sugar.
+Notation "&shr< ty >" := (frac_ptr Shr ty) (only printing, format "'&shr<' ty '>'") : printing_sugar.
+
 Section ptr.
   Context `{!typeG Σ}.
 
   Program Definition ptr : rtype := {|
     rty_type := loc;
     rty l' := {|
-      ty_own β l := (⌜l `has_layout_loc` LPtr⌝ ∗ l ↦[β] l')%I;
+      ty_own β l := (⌜l `has_layout_loc` void*⌝ ∗ l ↦[β] l')%I;
   |} |}.
   Next Obligation. iIntros (????). iDestruct 1 as "[$ ?]". by iApply heap_mapsto_own_state_share. Qed.
 
   Global Program Instance rmovable_ptr : RMovable ptr := {|
     rmovable l := {|
-      ty_layout := LPtr;
+      ty_layout := void*;
       ty_own_val v := (⌜v = val_of_loc l⌝)%I;
   |} |}.
   Next Obligation. iIntros (l l'). by iDestruct 1 as (?) "_". Qed.
@@ -370,7 +374,7 @@ Section ptr.
   (*   i2p (type_rounddown_ptr v1 v2 P2 T p). *)
 
   Lemma simplify_ptr_hyp_place (p:loc) l T:
-    (l ◁ₗ singleton_val LPtr (val_of_loc p) -∗ T) -∗
+    (l ◁ₗ value void* (val_of_loc p) -∗ T) -∗
       simplify_hyp (l ◁ₗ p @ ptr) T.
   Proof.
     iIntros "HT [% Hl]". iApply "HT". by repeat iSplit.
@@ -399,7 +403,7 @@ Section ptr.
     λ T, i2p (simplify_ptr_goal_val p l T).
 
   Lemma find_in_context_type_loc_own l T:
-    (∃ l1 β1 β ty, l1 ◁ₗ{β1} (l @ &frac{β} ty) ∗ (l1 ◁ₗ{β1} (l @ &frac{β} (singleton_place l)) -∗ T (own_state_min β1 β, ty))) -∗
+    (∃ l1 β1 β ty, l1 ◁ₗ{β1} (l @ &frac{β} ty) ∗ (l1 ◁ₗ{β1} (l @ &frac{β} (place l)) -∗ T (own_state_min β1 β, ty))) -∗
     find_in_context (FindLoc l) T.
   Proof.
     iDestruct 1 as (l1 β1 β ty) "[[% [Hmt Hl]] HT]".
@@ -414,12 +418,12 @@ End ptr.
 Section null.
   Context `{!typeG Σ}.
   Program Definition null : type := {|
-    ty_own β l := (⌜l `has_layout_loc` LPtr⌝ ∗ l ↦[β] NULL)%I;
+    ty_own β l := (⌜l `has_layout_loc` void*⌝ ∗ l ↦[β] NULL)%I;
   |}.
   Next Obligation. iIntros (???). iDestruct 1 as "[$ ?]". by iApply heap_mapsto_own_state_share. Qed.
 
   Global Program Instance movable_null : Movable null := {|
-    ty_layout := LPtr;
+    ty_layout := void*;
     ty_own_val v := ⌜v = NULL⌝%I;
   |}.
   Next Obligation. by iIntros (?) "[% _]". Qed.

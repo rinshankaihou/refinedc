@@ -13,6 +13,7 @@ Section proof_argtest.
     global_getblue ◁ᵥ global_getblue @ function_ptr type_of_getblue -∗
     typed_function (impl_argtest global_blue global_getblue) type_of_argtest.
   Proof.
+    Open Scope printing_sugar.
     start_function "argtest" ([]).
     split_blocks ((
       ∅

@@ -116,7 +116,7 @@ Section spec.
   (* Specifications for function [free_tree]. *)
   Definition type_of_free_tree :=
     fn(∀ p : loc; (p @ (&own (tree_t))); (alloc_initialized))
-      → ∃ () : (), (void); (p ◁ₗ (uninit (LPtr))).
+      → ∃ () : (), (void); (p ◁ₗ (uninit (void*))).
 
   (* Specifications for function [member_rec]. *)
   Definition type_of_member_rec :=

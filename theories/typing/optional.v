@@ -239,6 +239,8 @@ Section optional.
 
 End optional.
 Typeclasses Opaque optional_type.
+Notation "optional< ty , optty >" := (optional ty optty)
+  (only printing, format "'optional<' ty ,  optty '>'") : printing_sugar.
 
 Section optionalO.
   Context `{!typeG Σ}.
@@ -416,7 +418,8 @@ Section optionalO.
     all: iExists _, _; iFrame.
   Qed.
 End optionalO.
-
+Notation "optionalO< ty , optty >" := (optional ty optty)
+  (only printing, format "'optionalO<' ty ,  optty '>'") : printing_sugar.
 
 Section int_optional.
   Context `{!typeG Σ}.

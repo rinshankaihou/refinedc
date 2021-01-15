@@ -13,6 +13,7 @@ Section proof_sinit.
     global_init ◁ᵥ global_init @ function_ptr type_of_init -∗
     typed_function (impl_sinit global_init) type_of_sinit.
   Proof.
+    Open Scope printing_sugar.
     start_function "sinit" (k) => arg_key.
     split_blocks ((
       ∅

@@ -11,6 +11,7 @@ Section proof_rgb.
   Lemma type_rgb :
     ⊢ typed_function impl_rgb type_of_rgb.
   Proof.
+    Open Scope printing_sugar.
     start_function "rgb" ([[r g] b]) => arg_r arg_g arg_b.
     split_blocks ((
       ∅

@@ -30,7 +30,7 @@ chunk {
 [[rc::args      ("p @ &own<s @ chunks_t>", "q @ &own<uninit<n>>",
                  "n @ int<size_t>")]]
 [[rc::requires  ("{sizeof struct_chunk ≤ n}")]]
-[[rc::ensures   ("p @ &own<{{[n]} ⊎ s} @ chunks_t>")]]
+[[rc::ensures   ("own p : {{[n]} ⊎ s} @ chunks_t")]]
 [[rc::tactics   ("all: multiset_solver.")]]
 void free(chunks_t* list, void *data, size_t size) {
   chunks_t *cur = list;

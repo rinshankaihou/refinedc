@@ -21,7 +21,7 @@ Section spec.
   (* Specifications for function [roundtrip1]. *)
   Definition type_of_roundtrip1 :=
     fn(∀ p : loc; (p @ (&own (int (i32)))); True)
-      → ∃ () : (), (((None, p.2)) @ (&own (singleton_place ((None, p.2))))); True.
+      → ∃ () : (), (((None, p.2)) @ (&own (place ((None, p.2))))); True.
 
   (* Specifications for function [roundtrip2]. *)
   Definition type_of_roundtrip2 :=
@@ -30,8 +30,8 @@ Section spec.
 
   (* Specifications for function [roundtrip_and_read]. *)
   Definition type_of_roundtrip_and_read :=
-    fn(∀ (p, n) : loc * Z; (p @ (&own (n @ (int (i32))))); True)
-      → ∃ () : (), (n @ (int (i32))); (p ◁ₗ (n @ (int (i32)))).
+    fn(∀ (l, n) : loc * Z; (l @ (&own (n @ (int (i32))))); True)
+      → ∃ () : (), (n @ (int (i32))); (l ◁ₗ (n @ (int (i32)))).
 
   (* Specifications for function [roundtrip_and_read2]. *)
   Definition type_of_roundtrip_and_read2 :=

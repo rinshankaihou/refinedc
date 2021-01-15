@@ -11,6 +11,7 @@ Section proof_roundtrip1.
   Lemma type_roundtrip1 :
     ⊢ typed_function impl_roundtrip1 type_of_roundtrip1.
   Proof.
+    Open Scope printing_sugar.
     start_function "roundtrip1" (p) => arg_p local_i local_q.
     split_blocks ((
       ∅

@@ -11,6 +11,7 @@ Section proof_ptrs.
   Lemma type_ptrs :
     ⊢ typed_function impl_ptrs type_of_ptrs.
   Proof.
+    Open Scope printing_sugar.
     start_function "ptrs" (p) => arg_b arg_p local_p1 local_p2.
     split_blocks ((
       ∅

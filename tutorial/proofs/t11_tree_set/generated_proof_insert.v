@@ -12,6 +12,7 @@ Section proof_insert.
     global_node ◁ᵥ global_node @ function_ptr type_of_node -∗
     typed_function (impl_insert global_node) type_of_insert.
   Proof.
+    Open Scope printing_sugar.
     start_function "insert" ([[p s] k]) => arg_t arg_k local_cur.
     split_blocks ((
       <[ "#1" :=

@@ -9,7 +9,7 @@
 [[rc::parameters("p : loc", "n : Z")]]
 [[rc::args("p @ &own<n @ int<i32>>")]]
 [[rc::returns("n @ int<i32>")]]
-[[rc::ensures("p @ &own<n @ int<i32>>")]]
+[[rc::ensures("own p : n @ int<i32>")]]
 int read_int(int *a) {
     return *a;
 }
@@ -24,7 +24,7 @@ void use_read_int() {
 
 [[rc::parameters("p : loc", "q : loc")]]
 [[rc::args("p @ &own<int<i32>>", "q @ &own<int<i32>>")]]
-[[rc::ensures("p @ &own<{1} @ int<i32>>", "q @ &own<int<i32>>")]]
+[[rc::ensures("own p : {1} @ int<i32>", "own q : int<i32>")]]
 void no_alias(int *a, int *b) {
     int old_b = *b;
     *a = 1;

@@ -102,6 +102,7 @@ and constr =
   | Constr_Iris  of iris_term
   | Constr_exist of string * coq_expr option * constr
   | Constr_own   of string * ptr_kind * type_expr
+  | Constr_val   of string * type_expr
   | Constr_Coq   of coq_expr
   | Constr_glob  of string * type_expr
 
@@ -125,7 +126,7 @@ type annot_arg = int * int * coq_expr
 (** {3 Main grammar defintions} *)
 
 (** Identifier token (regexp ["[A-Za-z_]+"]). *)
-let ident : ident Earley.grammar =
+let base_ident : ident Earley.grammar =
   let cs_first = Charset.from_string "A-Za-z_" in
   let cs = Charset.from_string "A-Za-z_0-9" in
   let fn buf pos =
@@ -134,6 +135,14 @@ let ident : ident Earley.grammar =
     (String.sub (Input.line buf) pos !nb, buf, pos + !nb)
   in
   Earley.black_box fn cs_first false "<ident>"
+
+let no_star =
+  let fn buf pos = ((), Input.get buf pos <> '*') in
+  Earley.test Charset.full fn
+
+let parser ident =
+  | id:base_ident no_star -> id
+  | "void*"               -> "void*"
 
 (** Integer token (regexp ["[0-9]+"]). *)
 let integer : int Earley.grammar =
@@ -163,9 +172,15 @@ and parser coq_expr =
 and parser constr =
   | s:iris_term                                   -> Constr_Iris(s)
   | "∃" x:ident a:{":" coq_expr}? "." c:constr    -> Constr_exist(x,a,c)
-  | x:ident "@" (k,ty):ptr_type                   -> Constr_own(x,k,ty)
   | c:coq_expr                                    -> Constr_Coq(c)
   | "global" x:ident ':' ty:(type_expr `Full)     -> Constr_glob(x,ty)
+  | k:ptr_kind x:ident ':' ty:(type_expr `Full)   -> Constr_own(x, k ,ty)
+  | x:ident ':' ty:(type_expr `Full)              -> Constr_val(x, ty)
+
+and parser ptr_kind =
+  | "own"             -> Own
+  | "shr"             -> Shr
+  | "frac" e:coq_expr -> Frac(e)
 
 and parser ptr_type =
   | "&own<" ty:(type_expr `Full) ">"                 -> (Own    , ty)

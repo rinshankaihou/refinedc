@@ -113,7 +113,7 @@ Section code.
   Program Definition struct_mem_t := {|
     sl_members := [
       (Some "len", it_layout size_t);
-      (Some "buffer", LPtr)
+      (Some "buffer", void*)
     ];
   |}.
   Solve Obligations with solve_struct_obligations.
@@ -121,7 +121,7 @@ Section code.
   (* Definition of function [alloc]. *)
   Definition impl_alloc : function := {|
     f_args := [
-      ("d", LPtr);
+      ("d", void*);
       ("size", it_layout size_t)
     ];
     f_local_vars := [
@@ -130,7 +130,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_27 ;
-        if: LocInfoE loc_27 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_27 ((LocInfoE loc_28 (use{it_layout size_t} (LocInfoE loc_29 ("size")))) >{IntOp size_t, IntOp size_t} (LocInfoE loc_30 (use{it_layout size_t} (LocInfoE loc_31 ((LocInfoE loc_32 (!{LPtr} (LocInfoE loc_33 ("d")))) at{struct_mem_t} "len")))))))
+        if: LocInfoE loc_27 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_27 ((LocInfoE loc_28 (use{it_layout size_t} (LocInfoE loc_29 ("size")))) >{IntOp size_t, IntOp size_t} (LocInfoE loc_30 (use{it_layout size_t} (LocInfoE loc_31 ((LocInfoE loc_32 (!{void*} (LocInfoE loc_33 ("d")))) at{struct_mem_t} "len")))))))
         then
         locinfo: loc_24 ;
           Goto "#2"
@@ -140,10 +140,10 @@ Section code.
       ]> $
       <[ "#1" :=
         locinfo: loc_3 ;
-        LocInfoE loc_14 ((LocInfoE loc_15 (!{LPtr} (LocInfoE loc_16 ("d")))) at{struct_mem_t} "len") <-{ it_layout size_t }
-          LocInfoE loc_17 ((LocInfoE loc_18 (use{it_layout size_t} (LocInfoE loc_19 ((LocInfoE loc_20 (!{LPtr} (LocInfoE loc_21 ("d")))) at{struct_mem_t} "len")))) -{IntOp size_t, IntOp size_t} (LocInfoE loc_22 (use{it_layout size_t} (LocInfoE loc_23 ("size"))))) ;
+        LocInfoE loc_14 ((LocInfoE loc_15 (!{void*} (LocInfoE loc_16 ("d")))) at{struct_mem_t} "len") <-{ it_layout size_t }
+          LocInfoE loc_17 ((LocInfoE loc_18 (use{it_layout size_t} (LocInfoE loc_19 ((LocInfoE loc_20 (!{void*} (LocInfoE loc_21 ("d")))) at{struct_mem_t} "len")))) -{IntOp size_t, IntOp size_t} (LocInfoE loc_22 (use{it_layout size_t} (LocInfoE loc_23 ("size"))))) ;
         locinfo: loc_4 ;
-        Return (LocInfoE loc_5 ((LocInfoE loc_6 (use{LPtr} (LocInfoE loc_7 ((LocInfoE loc_8 (!{LPtr} (LocInfoE loc_9 ("d")))) at{struct_mem_t} "buffer")))) at_offset{it_layout u8, PtrOp, IntOp size_t} (LocInfoE loc_10 (use{it_layout size_t} (LocInfoE loc_11 ((LocInfoE loc_12 (!{LPtr} (LocInfoE loc_13 ("d")))) at{struct_mem_t} "len"))))))
+        Return (LocInfoE loc_5 ((LocInfoE loc_6 (use{void*} (LocInfoE loc_7 ((LocInfoE loc_8 (!{void*} (LocInfoE loc_9 ("d")))) at{struct_mem_t} "buffer")))) at_offset{it_layout u8, PtrOp, IntOp size_t} (LocInfoE loc_10 (use{it_layout size_t} (LocInfoE loc_11 ((LocInfoE loc_12 (!{void*} (LocInfoE loc_13 ("d")))) at{struct_mem_t} "len"))))))
       ]> $
       <[ "#2" :=
         locinfo: loc_24 ;
@@ -162,7 +162,7 @@ Section code.
       ("size", it_layout size_t)
     ];
     f_local_vars := [
-      ("ret", LPtr)
+      ("ret", void*)
     ];
     f_init := "#0";
     f_code := (
@@ -177,12 +177,12 @@ Section code.
         "$0" <- LocInfoE loc_50 (global_alloc) with
           [ LocInfoE loc_51 (&(LocInfoE loc_52 (global_data))) ;
           LocInfoE loc_53 (use{it_layout size_t} (LocInfoE loc_54 ("size"))) ] ;
-        "ret" <-{ LPtr } LocInfoE loc_48 ("$0") ;
+        "ret" <-{ void* } LocInfoE loc_48 ("$0") ;
         locinfo: loc_40 ;
         "_" <- LocInfoE loc_45 (global_sl_unlock) with
           [ LocInfoE loc_46 (AnnotExpr 1%nat LockA (LocInfoE loc_46 (&(LocInfoE loc_47 (global_lock))))) ] ;
         locinfo: loc_41 ;
-        Return (LocInfoE loc_42 (use{LPtr} (LocInfoE loc_43 ("ret"))))
+        Return (LocInfoE loc_42 (use{void*} (LocInfoE loc_43 ("ret"))))
       ]> $∅
     )%E
   |}.
@@ -190,8 +190,8 @@ Section code.
   (* Definition of function [fork]. *)
   Definition impl_fork : function := {|
     f_args := [
-      ("fn", LPtr);
-      ("arg", LPtr)
+      ("fn", void*);
+      ("arg", void*)
     ];
     f_local_vars := [
     ];
@@ -199,8 +199,8 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_65 ;
-        "_" <- LocInfoE loc_67 (use{LPtr} (LocInfoE loc_68 ("fn"))) with
-          [ LocInfoE loc_69 (use{LPtr} (LocInfoE loc_70 ("arg"))) ] ;
+        "_" <- LocInfoE loc_67 (use{void*} (LocInfoE loc_68 ("fn"))) with
+          [ LocInfoE loc_69 (use{void*} (LocInfoE loc_70 ("arg"))) ] ;
         Return (VOID)
       ]> $∅
     )%E
@@ -209,19 +209,19 @@ Section code.
   (* Definition of function [test_thread_safe_alloc_fork_fn]. *)
   Definition impl_test_thread_safe_alloc_fork_fn (global_thread_safe_alloc : loc): function := {|
     f_args := [
-      ("num", LPtr)
+      ("num", void*)
     ];
     f_local_vars := [
-      ("num_int", LPtr)
+      ("num_int", void*)
     ];
     f_init := "#0";
     f_code := (
       <[ "#0" :=
-        "num_int" <-{ LPtr }
-          LocInfoE loc_81 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_81 (use{LPtr} (LocInfoE loc_82 ("num"))))) ;
+        "num_int" <-{ void* }
+          LocInfoE loc_81 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_81 (use{void*} (LocInfoE loc_82 ("num"))))) ;
         locinfo: loc_74 ;
         "_" <- LocInfoE loc_76 (global_thread_safe_alloc) with
-          [ LocInfoE loc_77 (use{it_layout size_t} (LocInfoE loc_79 (!{LPtr} (LocInfoE loc_80 ("num_int"))))) ] ;
+          [ LocInfoE loc_77 (use{it_layout size_t} (LocInfoE loc_79 (!{void*} (LocInfoE loc_80 ("num_int"))))) ] ;
         Return (VOID)
       ]> $∅
     )%E

@@ -12,6 +12,7 @@ Section proof_enqueue.
     global_alloc ◁ᵥ global_alloc @ function_ptr type_of_alloc -∗
     typed_function (impl_enqueue global_alloc) type_of_enqueue.
   Proof.
+    Open Scope printing_sugar.
     start_function "enqueue" ([[p tys] ty]) => arg_q arg_v local_elem.
     split_blocks ((
       ∅

@@ -8,7 +8,7 @@ Section tyfold.
   Program Definition tyfold_type (tys : list (type → type)) (base : type) (ls : list loc) : type := {|
     ty_own β l := ⌜length ls = length tys⌝ ∗
             ([∗ list] i ↦ ty ∈ tys, ∃ l1 l2, ⌜(l::ls) !! i = Some l1⌝ ∗ ⌜ls !! i = Some l2⌝ ∗
-           l1 ◁ₗ{β} ty (singleton_place l2)) ∗ (default l (last ls)) ◁ₗ{β} base
+           l1 ◁ₗ{β} ty (place l2)) ∗ (default l (last ls)) ◁ₗ{β} base
   |}%I.
   Next Obligation.
     iIntros (tys base ls l E ?). iDestruct 1 as (Hlen) "(Htys&Hb)".
@@ -28,7 +28,7 @@ Section tyfold.
   Lemma simplify_hyp_place_tyfold_optional l β ls tys b T:
     (l ◁ₗ{β} (maybe2 cons tys) @ optionalO (λ '(ty, tys), tyexists (λ l2, tyexists (λ ls2,
        constrained (
-       own_constrained (tyown_constraint l2 (ls2 @ tyfold tys b)) (ty (singleton_place l2))) (⌜ls = l2::ls2⌝)))) b -∗ T) -∗
+       own_constrained (tyown_constraint l2 (ls2 @ tyfold tys b)) (ty (place l2))) (⌜ls = l2::ls2⌝)))) b -∗ T) -∗
     simplify_hyp (l◁ₗ{β} ls @ tyfold tys b) T.
   Proof.
     iIntros "HT Hl". iApply "HT". iDestruct "Hl" as (Hlen) "[Htys Hb]".
@@ -50,7 +50,7 @@ Section tyfold.
     λ T, i2p (simplify_goal_place_tyfold_nil l β ls b T).
 
   Lemma simplify_goal_place_tyfold_cons l β ls ty tys b T:
-    T (∃ l2 ls2, ⌜ls = l2::ls2⌝ ∗ l ◁ₗ{β} (ty (singleton_place l2)) ∗ (l2 ◁ₗ{β} ls2 @ tyfold tys b)) -∗
+    T (∃ l2 ls2, ⌜ls = l2::ls2⌝ ∗ l ◁ₗ{β} (ty (place l2)) ∗ (l2 ◁ₗ{β} ls2 @ tyfold tys b)) -∗
       simplify_goal (l◁ₗ{β} ls @ tyfold (ty :: tys) b) T.
   Proof.
     iIntros "HT". iExists _. iFrame. iDestruct 1 as (l2 ls2 ->) "[Hl [% [Htys Hb]]]".
@@ -72,7 +72,7 @@ Section tyfold.
 
   Lemma subsume_tyfold_snoc A l β f ls1 ls2 tys (ty : A) b1 b2 T :
     (∃ l2, ⌜ls2 = ls1 ++ [l2]⌝ ∗ (default l (last ls1) ◁ₗ{β} b1 -∗
-        default l (last ls1) ◁ₗ{β} f ty (singleton_place l2) ∗ l2 ◁ₗ{β} b2 ∗ T)) -∗
+        default l (last ls1) ◁ₗ{β} f ty (place l2) ∗ l2 ◁ₗ{β} b2 ∗ T)) -∗
     subsume (l ◁ₗ{β} ls1 @ tyfold (f <$> tys) b1) (l ◁ₗ{β} ls2 @ tyfold (f <$> (tys ++ [ty])) b2) T.
   Proof.
     iDestruct 1 as (l2 ->) "Hd". iDestruct 1 as (Hlen) "(Htys&Hb)". rewrite fmap_app.

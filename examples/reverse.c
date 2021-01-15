@@ -28,7 +28,7 @@ list_t push (list_t p, void *e, struct list *node) {
 [[rc::parameters("l : {list type}", "p : loc")]]
 [[rc::args("p @ &own<{l} @ list_t>")]]
 [[rc::returns("{maybe2 cons l} @ optionalO<λ (ty, l). &own<ty>>")]]
-[[rc::ensures("p @ &own<{tail l} @ list_t>")]]
+[[rc::ensures("own p : {tail l} @ list_t")]]
 void *pop (list_t *p) {
   if (*p == NULL) {
       return NULL;
@@ -42,7 +42,7 @@ void *pop (list_t *p) {
 [[rc::args("p @ &own<{l `at_type` int size_t} @ list_t>", "n @ int<size_t>")]]
 [[rc::exists("b : bool")]]
 [[rc::returns("b @ boolean<bool_it>")]]
-[[rc::ensures("p @ &own<{l `at_type` int size_t} @ list_t>", "{b ↔ n ∈ l}")]]
+[[rc::ensures("own p : {l `at_type` int size_t} @ list_t", "{b ↔ n ∈ l}")]]
 [[rc::tactics("all: try set_solver.")]]
 bool member_rec (list_t *p, size_t k) {
   if (*p == NULL) {
@@ -59,7 +59,7 @@ bool member_rec (list_t *p, size_t k) {
 [[rc::args("p @ &own<{l `at_type` int size_t} @ list_t>", "n @ int<size_t>")]]
 [[rc::exists("b : bool")]]
 [[rc::returns("b @ boolean<bool_it>")]]
-[[rc::ensures("p @ &own<{l `at_type` int size_t} @ list_t>", "{b ↔ n ∈ l}")]]
+[[rc::ensures("own p : {l `at_type` int size_t} @ list_t", "{b ↔ n ∈ l}")]]
 [[rc::tactics("all: try set_solver.")]]
 bool member (list_t *p, size_t k) {
     list_t *prev = &*p;
@@ -95,7 +95,7 @@ void test() {
     assert(*local4 == 0);
 
     [[rc::exists("l1 :loc", "l2:loc", "l3:loc", "l4:loc")]]
-    [[rc::inv_vars("local1 : singleton_place<l1>", "local1_node : singleton_place<l2>", "local2 : singleton_place<l3>", "local2_node : singleton_place<l4>")]]
+    [[rc::inv_vars("local1 : place<l1>", "local1_node : place<l2>", "local2 : place<l3>", "local2_node : place<l4>")]]
     while(1);
 }
 
@@ -108,7 +108,7 @@ struct list *reverse (struct list *p) {
   w = NULL;
   v = p;
   [[rc::exists("l1 : {list type}", "l2 : {list type}")]]
-  [[rc::inv_vars("w : l1 @ list_t", "v : l2 @ list_t", "p : uninit<{LPtr}>")]]
+  [[rc::inv_vars("w : l1 @ list_t", "v : l2 @ list_t", "p : uninit<void*>")]]
   [[rc::constraints("{l = rev l1 ++ l2}")]]
   while (v != NULL) {
     t = v->tail;

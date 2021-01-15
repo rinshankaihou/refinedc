@@ -16,6 +16,7 @@ Section proof_mpool_init_from.
     global_sl_unlock ◁ᵥ global_sl_unlock @ function_ptr type_of_sl_unlock -∗
     typed_function (impl_mpool_init_from global_mpool_init global_sl_lock global_sl_unlock) type_of_mpool_init_from.
   Proof.
+    Open Scope printing_sugar.
     start_function "mpool_init_from" ([[[[p entry_size] q] entries] from]) => arg_p arg_from.
     split_blocks ((
       ∅

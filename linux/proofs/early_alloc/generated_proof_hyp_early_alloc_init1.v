@@ -14,6 +14,7 @@ Section proof_hyp_early_alloc_init1.
     global_locs !! "size1" = Some global_size1 →
     ⊢ typed_function (impl_hyp_early_alloc_init1 global_base1 global_cur1 global_size1) type_of_hyp_early_alloc_init1.
   Proof.
+    Open Scope printing_sugar.
     start_function "hyp_early_alloc_init1" (n) => arg_virt arg_size.
     split_blocks ((
       ∅

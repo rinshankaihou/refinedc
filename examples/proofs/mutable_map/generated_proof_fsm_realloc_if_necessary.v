@@ -16,6 +16,7 @@ Section proof_fsm_realloc_if_necessary.
     global_fsm_insert ◁ᵥ global_fsm_insert @ function_ptr type_of_fsm_insert -∗
     typed_function (impl_fsm_realloc_if_necessary global_compute_min_count global_free_array global_fsm_init global_fsm_insert) type_of_fsm_realloc_if_necessary.
   Proof.
+    Open Scope printing_sugar.
     start_function "fsm_realloc_if_necessary" ([[[m items] count] mp]) => arg_m local_i local_m2 local_new_len.
     split_blocks ((
       <[ "#3" :=

@@ -144,8 +144,10 @@ Lemma annot_stmt_S_r {A} n (a : A) s:
 Proof. by rewrite /AnnotStmt Nat_iter_S_r. Qed.
 
 (*** Layouts and structs *)
-Definition LPtr : layout := {| ly_size := bytes_per_addr; ly_align_log := bytes_per_addr_log |}.
-Definition LVoid : layout := {| ly_size := 0; ly_align_log := 0 |}.
+Definition void_layout : layout := {| ly_size := 0; ly_align_log := 0 |}.
+
+Definition void_ptr : layout := {| ly_size := bytes_per_addr; ly_align_log := bytes_per_addr_log |}.
+Notation "'void*'" := (void_ptr).
 
 Definition NULL : val := i2v 0 size_t.
 Definition VOID : val := [].

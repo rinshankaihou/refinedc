@@ -24,7 +24,7 @@
 [[rc::args("p @ ptr", "align @ int<size_t>", "size @ &own<uninit<size_t>>")]]
 [[rc::exists("diff : nat")]]
 [[rc::returns("{p +ₗ diff} @ ptr")]]
-[[rc::ensures("size @ &own<diff @ int<size_t>>", "{(p +ₗ diff) `aligned_to` align}", "{diff < align}")]]
+[[rc::ensures("own size : diff @ int<size_t>", "{(p +ₗ diff) `aligned_to` align}", "{diff < align}")]]
 unsigned char * round_pointer_up(unsigned char *p, size_t align, size_t *size);
 
 
@@ -104,7 +104,7 @@ void mpool_free(struct mpool *p, void *ptr);
 [[rc::requires("{layout_of struct_mpool_entry ⊑ ly_with_align entry_size entry_size}",
                "{layout_of struct_mpool_chunk ⊑ ly_with_align entry_size entry_size}",
                "{is_power_of_two entry_size}")]]
-[[rc::ensures("p @ &own<{0%nat} @ mpool<entry_size>>")]]
+[[rc::ensures("own p : {0%nat} @ mpool<entry_size>")]]
 void mpool_init(struct mpool *p, size_t entry_size)
 {
   p->entry_size = entry_size;
@@ -122,7 +122,7 @@ void mpool_init(struct mpool *p, size_t entry_size)
 [[rc::parameters("p : loc", "entry_size : nat", "q : own_state", "entries : nat", "from : loc")]]
 [[rc::args("p @ &own<uninit<struct_mpool>>", "from @ &frac<q, entries @ mpool<entry_size>>")]]
 [[rc::exists("rentries : nat")]]
-[[rc::ensures("p @ &own<rentries @ mpool<entry_size>>", "from @ &frac<q, {0%nat} @ mpool<entry_size>>",
+[[rc::ensures("own p : rentries @ mpool<entry_size>", "frac q from : {0%nat} @ mpool<entry_size>",
               "{q = Own → rentries = entries}")]]
 void mpool_init_from(struct mpool *p, struct mpool *from)
 {
@@ -148,7 +148,7 @@ void mpool_init_from(struct mpool *p, struct mpool *from)
  */
 [[rc::parameters("p : loc", "entry_size : nat", "q : own_state", "entries : nat", "fallback : loc")]]
 [[rc::args("p @ &own<uninit<struct_mpool>>", "fallback @ &shr<entries @ mpool<entry_size>>")]]
-[[rc::ensures("p @ &own<{0%nat} @ mpool<entry_size>>")]]
+[[rc::ensures("own p : {0%nat} @ mpool<entry_size>")]]
 void mpool_init_with_fallback(struct mpool *p, struct mpool *fallback)
 {
   mpool_init(p, fallback->entry_size);
@@ -161,7 +161,7 @@ void mpool_init_with_fallback(struct mpool *p, struct mpool *fallback)
  */
 [[rc::parameters("p : loc", "n : nat", "entry_size : nat")]]
 [[rc::args("p @ &own<n @ mpool<entry_size>>")]]
-[[rc::ensures("p @ &own<uninit<struct_mpool>>")]]
+[[rc::ensures("own p : uninit<struct_mpool>")]]
 void mpool_fini(struct mpool *p) {
   struct mpool_entry *entry;
   struct mpool_chunk *chunk;
@@ -214,7 +214,7 @@ void mpool_fini(struct mpool *p) {
            "&own<uninit<{ly_with_align (m * entry_size) entry_size}>>",
            "{m * entry_size} @ int<size_t>")]]
 [[rc::returns("{Z_of_bool (bool_decide (0 < m)%nat)} @ int<bool_it>")]]
-[[rc::ensures("p @ &frac<q, {(n + m)%nat} @ mpool<entry_size>>")]]
+[[rc::ensures("frac q p : {(n + m)%nat} @ mpool<entry_size>")]]
   [[rc::tactics("all: try by destruct m => //=; solve_goal.")]]
 bool mpool_add_chunk(struct mpool *p, void *begin, size_t size)
 {
@@ -247,7 +247,7 @@ bool mpool_add_chunk(struct mpool *p, void *begin, size_t size)
 [[rc::args("p @ &frac<q, n @ mpool<entry_size>>")]]
 [[rc::exists("b : bool")]]
 [[rc::returns("b @ optional<&own<uninit<{ly_with_align entry_size entry_size}>>>")]]
-[[rc::ensures("p @ &frac<q, {(n-1)%nat} @ mpool<entry_size>>", "{q = Own → b ↔ (0 < n)%nat}")]]
+[[rc::ensures("frac q p : {(n-1)%nat} @ mpool<entry_size>", "{q = Own → b ↔ (0 < n)%nat}")]]
   [[rc::tactics("all: try by destruct x1 as [|[]]; try solve_goal; zify; ring_simplify; solve_goal.")]]
 static void *mpool_alloc_no_fallback(struct mpool *p)
 {
@@ -299,7 +299,7 @@ exit:
 [[rc::args("p @ &frac<q, n @ mpool<entry_size>>")]]
 [[rc::exists("b : bool")]]
 [[rc::returns("b @ optional<&own<uninit<{ly_with_align entry_size entry_size}>>>")]]
-[[rc::ensures("p @ &frac<q, {(n-1)%nat} @ mpool<entry_size>>", "{q = Own → (0 < n)%nat → b}")]]
+[[rc::ensures("frac q p : {(n-1)%nat} @ mpool<entry_size>", "{q = Own → (0 < n)%nat → b}")]]
 void *mpool_alloc(struct mpool *p) {
   void *ret = mpool_alloc_no_fallback(p);
   if (ret != NULL) {
@@ -308,7 +308,7 @@ void *mpool_alloc(struct mpool *p) {
   p = p->fallback;
 
   [[rc::inv_vars("p : optional<&shr<mpool<entry_size>>>")]]
-  [[rc::constraints("p @ &frac<q, {(n - 1)%nat} @ mpool<entry_size>>", "{q = Own → n = 0%nat}")]]
+  [[rc::constraints("frac q p : {(n - 1)%nat} @ mpool<entry_size>", "{q = Own → n = 0%nat}")]]
   while (p != NULL) {
     ret = mpool_alloc_no_fallback(p);
     if (ret != NULL) {
@@ -328,7 +328,7 @@ void *mpool_alloc(struct mpool *p) {
  */
 [[rc::parameters("p : loc", "q : own_state", "n : nat", "entry_size : nat", "ptr : loc")]]
 [[rc::args("p @ &frac<q, n @ mpool<entry_size>>", "ptr @ &own<uninit<{ly_with_align entry_size entry_size}>>")]]
-[[rc::ensures("p @ &frac<q, {(n + 1)%nat} @ mpool<entry_size>>")]]
+[[rc::ensures("frac q p : {(n + 1)%nat} @ mpool<entry_size>")]]
 void mpool_free(struct mpool *p, void *ptr) {
   struct mpool_entry *e = ptr;
 
@@ -350,7 +350,7 @@ void mpool_free(struct mpool *p, void *ptr) {
 [[rc::requires("{(align * entry_size + count * entry_size)%Z ∈ size_t}", "{is_power_of_two align}")]]
 [[rc::exists("n2 : nat")]]
 [[rc::returns("optional<&own<uninit<{ly_with_align (count * entry_size) (align * entry_size)}>>>")]]
-[[rc::ensures("p @ &frac<q, n2 @ mpool<entry_size>>", "{q = Own → n2 <= n}")]]
+[[rc::ensures("frac q p : n2 @ mpool<entry_size>", "{q = Own → n2 <= n}")]]
   [[rc::tactics("all: try by destruct o'; solve_goal.")]]
   [[rc::tactics("all: try by apply mult_le_compat_r; solve_goal.")]]
   [[rc::tactics("all: try by repeat progress rewrite /ly_size/=; have : (x4 - Z.to_nat o' - count > 0)%nat; solve_goal.")]]
@@ -374,7 +374,7 @@ void *mpool_alloc_contiguous_no_fallback(struct mpool *p, size_t count, size_t a
   [[rc::exists("pc : loc",
                "entries_in_chunks1 : nat", "entries_in_chunks2 : nat",
                "entries_in_entry_list : nat")]]
-  [[rc::inv_vars("align : {align * entry_size} @ int<size_t>", "ret : null", "p : ∃ l. singleton_place<l>",
+  [[rc::inv_vars("align : {align * entry_size} @ int<size_t>", "ret : null", "p : ∃ l. place<l>",
                  "prev : pc @ &own<entries_in_chunks2 @ mpool_chunk_t<entry_size>>")]]
   [[rc::constraints("[p at{struct_mpool}ₗ \"locked\" ◁ₗ struct struct_mpool_locked_inner [wand_ex (λ x, pc ◁ₗ x @ mpool_chunk_t entry_size) (λ x, (entries_in_chunks1 + x)%nat @ mpool_chunk_t entry_size) ; entries_in_entry_list @ mpool_entry_t entry_size]]",
                     "{shelve_hint (q = Own → n = (entries_in_chunks1 + entries_in_chunks2 + entries_in_entry_list)%nat)}")]]
@@ -447,7 +447,7 @@ void *mpool_alloc_contiguous_no_fallback(struct mpool *p, size_t count, size_t a
 [[rc::requires("{(align * entry_size + count * entry_size)%Z ∈ size_t}", "{is_power_of_two align}")]]
 [[rc::exists("n2 : nat")]]
 [[rc::returns("optional<&own<uninit<{ly_with_align (count * entry_size) (align * entry_size)}>>>")]]
-[[rc::ensures("p @ &frac<q, n2 @ mpool<entry_size>>", "{q = Own → n2 <= n}")]]
+[[rc::ensures("frac q p : n2 @ mpool<entry_size>", "{q = Own → n2 <= n}")]]
 void *mpool_alloc_contiguous(struct mpool *p, size_t count, size_t align)
 {
   void *ret = mpool_alloc_contiguous_no_fallback(p, count, align);
@@ -459,7 +459,7 @@ void *mpool_alloc_contiguous(struct mpool *p, size_t count, size_t align)
   p = p->fallback;
   [[rc::exists("n2 : nat")]]
   [[rc::inv_vars("p : optional<&shr<mpool<entry_size>>>")]]
-  [[rc::constraints("p @ &frac<q, n2 @ mpool<entry_size>>", "{q = Own → n2 <= n}")]]
+  [[rc::constraints("frac q p : n2 @ mpool<entry_size>", "{q = Own → n2 <= n}")]]
   while (p != NULL) {
     ret = mpool_alloc_contiguous_no_fallback(p, count, align);
 

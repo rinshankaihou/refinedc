@@ -14,6 +14,7 @@ Section proof_hyp_early_alloc_page1.
     global_clear_page ◁ᵥ global_clear_page @ function_ptr type_of_clear_page -∗
     typed_function (impl_hyp_early_alloc_page1 global_cur1 global_size1 global_clear_page) type_of_hyp_early_alloc_page1.
   Proof.
+    Open Scope printing_sugar.
     start_function "hyp_early_alloc_page1" (n) => arg_arg local_ret.
     split_blocks ((
       ∅

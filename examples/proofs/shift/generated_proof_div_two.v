@@ -11,6 +11,7 @@ Section proof_div_two.
   Lemma type_div_two :
     ⊢ typed_function impl_div_two type_of_div_two.
   Proof.
+    Open Scope printing_sugar.
     start_function "div_two" (x) => arg_x.
     split_blocks ((
       ∅

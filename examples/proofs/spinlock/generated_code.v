@@ -61,7 +61,7 @@ Section code.
   (* Definition of function [sl_init]. *)
   Definition impl_sl_init : function := {|
     f_args := [
-      ("lock", LPtr)
+      ("lock", void*)
     ];
     f_local_vars := [
     ];
@@ -69,7 +69,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_2 ;
-        LocInfoE loc_3 ((LocInfoE loc_4 (!{LPtr} (LocInfoE loc_5 ("lock")))) at{struct_spinlock} "lock") <-{ it_layout bool_it, ScOrd }
+        LocInfoE loc_3 ((LocInfoE loc_4 (!{void*} (LocInfoE loc_5 ("lock")))) at{struct_spinlock} "lock") <-{ it_layout bool_it, ScOrd }
           LocInfoE loc_6 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_6 (i2v 0 i32))) ;
         Return (VOID)
       ]> $∅
@@ -79,7 +79,7 @@ Section code.
   (* Definition of function [sl_lock]. *)
   Definition impl_sl_lock : function := {|
     f_args := [
-      ("lock", LPtr)
+      ("lock", void*)
     ];
     f_local_vars := [
       ("expected", it_layout bool_it)
@@ -96,7 +96,7 @@ Section code.
         locinfo: loc_18 ;
         if: LocInfoE loc_18 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_18 ((LocInfoE loc_19 (CAS
             (IntOp bool_it)
-            (LocInfoE loc_21 (&(LocInfoE loc_22 ((LocInfoE loc_23 (!{LPtr} (LocInfoE loc_24 ("lock")))) at{struct_spinlock} "lock"))))
+            (LocInfoE loc_21 (&(LocInfoE loc_22 ((LocInfoE loc_23 (!{void*} (LocInfoE loc_24 ("lock")))) at{struct_spinlock} "lock"))))
             (LocInfoE loc_25 (&(LocInfoE loc_26 ("expected"))))
             (LocInfoE loc_27 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_27 (i2v 1 i32)))))) ={IntOp bool_it, IntOp bool_it} (LocInfoE loc_28 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_29 (i2v 0 i32)))))))
         then
@@ -125,7 +125,7 @@ Section code.
   (* Definition of function [sl_unlock]. *)
   Definition impl_sl_unlock : function := {|
     f_args := [
-      ("lock", LPtr)
+      ("lock", void*)
     ];
     f_local_vars := [
     ];
@@ -133,7 +133,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_35 ;
-        LocInfoE loc_38 ((LocInfoE loc_39 (!{LPtr} (LocInfoE loc_40 ("lock")))) at{struct_spinlock} "lock") <-{ it_layout bool_it, ScOrd }
+        LocInfoE loc_38 ((LocInfoE loc_39 (!{void*} (LocInfoE loc_40 ("lock")))) at{struct_spinlock} "lock") <-{ it_layout bool_it, ScOrd }
           LocInfoE loc_41 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_41 (i2v 0 i32))) ;
         Return (VOID)
       ]> $∅

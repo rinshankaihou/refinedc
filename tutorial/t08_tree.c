@@ -52,7 +52,7 @@ tree_t node(tree_t left, int key, tree_t right){
 [[rc::parameters("p : loc")]]
 [[rc::args("p @ &own<tree_t>")]]
 [[rc::requires("[alloc_initialized]")]]
-[[rc::ensures("p @ &own<uninit<LPtr>>")]]
+[[rc::ensures("own p : uninit<void*>")]]
 void free_tree(tree_t* t){
   if(*t != NULL){
     free_tree(&((*t)->left));
@@ -65,7 +65,7 @@ void free_tree(tree_t* t){
 [[rc::args("p @ &own<t @ tree_t>", "k @ int<i32>")]]
 [[rc::exists("b : bool")]]
 [[rc::returns("b @ boolean<bool_it>")]]
-[[rc::ensures("p @ &own<t @ tree_t>", "{b ↔ tree_member k t}")]]
+[[rc::ensures("own p : t @ tree_t", "{b ↔ tree_member k t}")]]
 bool member_rec(tree_t* t, int k){
   if(*t == NULL) return false;
   if((*t)->key == k) return true;
@@ -77,7 +77,7 @@ bool member_rec(tree_t* t, int k){
 [[rc::args("p @ &own<t @ tree_t>", "k @ int<i32>")]]
 [[rc::exists("b : bool")]]
 [[rc::returns("b @ boolean<bool_it>")]]
-[[rc::ensures("p @ &own<t @ tree_t>", "{b ↔ tree_member k t}")]]
+[[rc::ensures("own p : t @ tree_t", "{b ↔ tree_member k t}")]]
 bool member(tree_t* t, int k){
   tree_t* cur = &*t;
 
@@ -99,7 +99,7 @@ bool member(tree_t* t, int k){
 [[rc::parameters("p : loc", "t : {tree Z}", "k : Z")]]
 [[rc::args("p @ &own<t @ tree_t>", "k @ int<i32>")]]
 [[rc::requires("[alloc_initialized]")]]
-[[rc::ensures("p @ &own<{tree_insert k t} @ tree_t>")]]
+[[rc::ensures("own p : {tree_insert k t} @ tree_t")]]
 void insert_rec(tree_t* t, int k){
   if(*t == NULL){
     *t = node(NULL, k, NULL);
@@ -116,7 +116,7 @@ void insert_rec(tree_t* t, int k){
 [[rc::parameters("p : loc", "t : {tree Z}", "k : Z")]]
 [[rc::args("p @ &own<t @ tree_t>", "k @ int<i32>")]]
 [[rc::requires("[alloc_initialized]")]]
-[[rc::ensures("p @ &own<{tree_insert k t} @ tree_t>")]]
+[[rc::ensures("own p : {tree_insert k t} @ tree_t")]]
 void insert(tree_t* t, int k){
   tree_t* cur = &*t;
 
@@ -140,7 +140,7 @@ void insert(tree_t* t, int k){
 [[rc::exists("res : Z")]]
 [[rc::returns("res @ int<i32>")]]
 [[rc::ensures("{tree_max (node l k r) = Some res}")]]
-[[rc::ensures("p @ &own<{node l k r} @ tree_t>")]]
+[[rc::ensures("own p : {node l k r} @ tree_t")]]
 int tree_max(tree_t* t){
     if((*t)->right == NULL) {
         return (*t)->key;
@@ -152,7 +152,7 @@ int tree_max(tree_t* t){
 [[rc::parameters("p : loc", "t : {tree Z}", "k : Z")]]
 [[rc::args("p @ &own<t @ tree_t>", "k @ int<i32>")]]
 [[rc::requires("[alloc_initialized]")]]
-[[rc::ensures("p @ &own<{tree_remove k t} @ tree_t>")]]
+[[rc::ensures("own p : {tree_remove k t} @ tree_t")]]
  [[rc::tactics("all: try by case_bool_decide => //; simplify_eq.")]]
 void remove(tree_t* t, int k){
   tree_t tmp;
@@ -201,7 +201,7 @@ tree_t sinit(int key){
 [[rc::parameters("p : loc")]]
 [[rc::args("p @ &own<stree_t>")]]
 [[rc::requires("[alloc_initialized]")]]
-[[rc::ensures("p @ &own<uninit<LPtr>>")]]
+[[rc::ensures("own p : uninit<void*>")]]
 void sfree_tree(tree_t* t){
   rc_unfold_once(*t);
   free_tree(t);
@@ -211,7 +211,7 @@ void sfree_tree(tree_t* t){
 [[rc::args("p @ &own<s @ stree_t>", "k @ int<i32>")]]
 [[rc::exists("b : bool")]]
 [[rc::returns("b @ boolean<bool_it>")]]
-[[rc::ensures("p @ &own<s @ stree_t>", "{b ↔ k ∈ s}")]]
+[[rc::ensures("own p : s @ stree_t", "{b ↔ k ∈ s}")]]
  [[rc::tactics("all: try by etrans; [done|]; symmetry; apply tree_rel_member.")]]
 bool smember(tree_t* t, int k){
   rc_unfold_once(*t);
@@ -221,7 +221,7 @@ bool smember(tree_t* t, int k){
 [[rc::parameters("p : loc", "s : {gset Z}", "k : Z")]]
 [[rc::args("p @ &own<s @ stree_t>", "k @ int<i32>")]]
 [[rc::requires("[alloc_initialized]")]]
-[[rc::ensures("p @ &own<{{[k]} ∪ s} @ stree_t>")]]
+[[rc::ensures("own p : {{[k]} ∪ s} @ stree_t")]]
  [[rc::lemmas("tree_rel_insert")]]
 void sinsert(tree_t* t, int k){
   rc_unfold_once(*t);
@@ -231,7 +231,7 @@ void sinsert(tree_t* t, int k){
 [[rc::parameters("p : loc", "s : {gset Z}", "k : Z")]]
 [[rc::args("p @ &own<s @ stree_t>", "k @ int<i32>")]]
 [[rc::requires("[alloc_initialized]")]]
-[[rc::ensures("p @ &own<{s ∖ {[k]}} @ stree_t>")]]
+[[rc::ensures("own p : {s ∖ {[k]}} @ stree_t")]]
  [[rc::lemmas("tree_rel_remove")]]
 void sremove(tree_t* t, int k){
   rc_unfold_once(*t);

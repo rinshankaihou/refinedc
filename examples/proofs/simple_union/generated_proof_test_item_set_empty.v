@@ -11,6 +11,7 @@ Section proof_test_item_set_empty.
   Lemma type_test_item_set_empty :
     ⊢ typed_function impl_test_item_set_empty type_of_test_item_set_empty.
   Proof.
+    Open Scope printing_sugar.
     start_function "test_item_set_empty" (i) => arg_i.
     split_blocks ((
       ∅

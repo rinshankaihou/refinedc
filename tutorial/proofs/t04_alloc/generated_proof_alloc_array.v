@@ -14,6 +14,7 @@ Section proof_alloc_array.
     global_alloc ◁ᵥ global_alloc @ function_ptr type_of_alloc -∗
     typed_function (impl_alloc_array global_alloc) type_of_alloc_array.
   Proof.
+    Open Scope printing_sugar.
     start_function "alloc_array" ([size n]) => arg_size arg_n.
     split_blocks ((
       ∅

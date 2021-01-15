@@ -11,6 +11,7 @@ Section proof_mpool_get.
   Lemma type_mpool_get :
     ⊢ typed_function impl_mpool_get type_of_mpool_get.
   Proof.
+    Open Scope printing_sugar.
     start_function "mpool_get" ([p n]) => arg_p local_entry.
     split_blocks ((
       ∅

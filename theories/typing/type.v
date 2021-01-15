@@ -321,6 +321,12 @@ Notation "l ◁ₗ{ β } ty" := (ty_own ty β l) (at level 15, format "l  ◁ₗ
 Notation "l ◁ₗ ty" := (ty_own ty Own l) (at level 15) : bi_scope.
 Notation "v ◁ᵥ ty" := (ty_own_val ty v) (at level 15) : bi_scope.
 
+Declare Scope printing_sugar.
+Notation "'frac' { β } l ∶ ty" := (ty_own ty β l) (at level 100, only printing) : printing_sugar.
+Notation "'own' l ∶ ty" := (ty_own ty Own l) (at level 100, only printing) : printing_sugar.
+Notation "'shr' l ∶ ty" := (ty_own ty Shr l) (at level 100, only printing) : printing_sugar.
+Notation "v ∶ ty" := (ty_own_val ty v) (at level 200, only printing) : printing_sugar.
+
 (*** refinement types *)
 Record rtype `{!typeG Σ} := {
   rty_type : Type;

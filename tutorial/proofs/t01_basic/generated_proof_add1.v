@@ -11,6 +11,7 @@ Section proof_add1.
   Lemma type_add1 :
     ⊢ typed_function impl_add1 type_of_add1.
   Proof.
+    Open Scope printing_sugar.
     start_function "add1" (n) => arg_a.
     split_blocks ((
       ∅

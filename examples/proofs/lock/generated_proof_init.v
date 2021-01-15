@@ -14,6 +14,7 @@ Section proof_init.
     global_sl_init ◁ᵥ global_sl_init @ function_ptr type_of_sl_init -∗
     typed_function (impl_init global_sl_init) type_of_init.
   Proof.
+    Open Scope printing_sugar.
     start_function "init" (p) => arg_t.
     split_blocks ((
       ∅

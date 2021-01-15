@@ -11,6 +11,7 @@ Section proof_mpool_init.
   Lemma type_mpool_init :
     ⊢ typed_function impl_mpool_init type_of_mpool_init.
   Proof.
+    Open Scope printing_sugar.
     start_function "mpool_init" (p) => arg_p.
     split_blocks ((
       ∅

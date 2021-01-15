@@ -13,6 +13,7 @@ Section proof_write_outside.
   Lemma type_write_outside :
     ⊢ typed_function impl_write_outside type_of_write_outside.
   Proof.
+    Open Scope printing_sugar.
     start_function "write_outside" ([[[[p n] n1] n2] n3]) => arg_t arg_n.
     split_blocks ((
       ∅

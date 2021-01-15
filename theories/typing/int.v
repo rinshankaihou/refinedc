@@ -58,9 +58,10 @@ Section int.
 
 End int.
 (* Typeclasses Opaque int. *)
+Notation "int< it >" := (int it) (only printing, format "'int<' it '>'") : printing_sugar.
 
 (* TODO: move this to an extra file? *)
-Section bool.
+Section boolean.
   Context `{!typeG Σ}.
 
   (* Separate definition such that we can make it typeclasses opaque later. *)
@@ -85,7 +86,8 @@ Section bool.
   Next Obligation. iIntros (it n l v ?) "Hl". iIntros (?). iExists _. by iFrame. Qed.
   Next Obligation. iIntros (it x1 x2). done. Qed.
 
-End bool.
+End boolean.
+Notation "boolean< it >" := (boolean it) (only printing, format "'boolean<' it '>'") : printing_sugar.
 
 Section programs.
   Context `{!typeG Σ}.

@@ -76,7 +76,7 @@ Section adequate.
     ∅.
 
   Lemma tutorial_adequate n κs t2 σ2 σ:
-    loc_allocator_data `has_layout_loc` LPtr →
+    loc_allocator_data `has_layout_loc` void_ptr →
     loc_allocator_state `has_layout_loc` struct_alloc_state →
     loc_initialized `has_layout_loc` struct_latch →
     (* TODO: Should we try to show that this assumption is provable? *)

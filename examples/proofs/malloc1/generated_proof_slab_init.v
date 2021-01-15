@@ -11,6 +11,7 @@ Section proof_slab_init.
   Lemma type_slab_init :
     ⊢ typed_function impl_slab_init type_of_slab_init.
   Proof.
+    Open Scope printing_sugar.
     start_function "slab_init" ([[[p chunk_p] n] entry_size]) => arg_s arg_p arg_chunksize arg_entry_size.
     split_blocks ((
       ∅

@@ -76,7 +76,7 @@ Section code.
   (* Definition of function [binary_search]. *)
   Definition impl_binary_search : function := {|
     f_args := [
-      ("xs", LPtr);
+      ("xs", void*);
       ("n", it_layout i32);
       ("x", it_layout i32)
     ];
@@ -107,7 +107,7 @@ Section code.
         "k" <-{ it_layout i32 }
           LocInfoE loc_50 ((LocInfoE loc_51 (use{it_layout i32} (LocInfoE loc_52 ("l")))) +{IntOp i32, IntOp i32} (LocInfoE loc_53 ((LocInfoE loc_54 ((LocInfoE loc_55 (use{it_layout i32} (LocInfoE loc_56 ("r")))) -{IntOp i32, IntOp i32} (LocInfoE loc_57 (use{it_layout i32} (LocInfoE loc_58 ("l")))))) /{IntOp i32, IntOp i32} (LocInfoE loc_59 (i2v 2 i32))))) ;
         locinfo: loc_40 ;
-        if: LocInfoE loc_40 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_40 ((LocInfoE loc_41 (use{it_layout i32} (LocInfoE loc_43 ((LocInfoE loc_44 (!{LPtr} (LocInfoE loc_45 ("xs")))) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_46 (use{it_layout i32} (LocInfoE loc_47 ("k")))))))) ={IntOp i32, IntOp i32} (LocInfoE loc_48 (use{it_layout i32} (LocInfoE loc_49 ("x")))))))
+        if: LocInfoE loc_40 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_40 ((LocInfoE loc_41 (use{it_layout i32} (LocInfoE loc_43 ((LocInfoE loc_44 (!{void*} (LocInfoE loc_45 ("xs")))) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_46 (use{it_layout i32} (LocInfoE loc_47 ("k")))))))) ={IntOp i32, IntOp i32} (LocInfoE loc_48 (use{it_layout i32} (LocInfoE loc_49 ("x")))))))
         then
         locinfo: loc_14 ;
           Goto "#5"
@@ -129,7 +129,7 @@ Section code.
       ]> $
       <[ "#6" :=
         locinfo: loc_30 ;
-        if: LocInfoE loc_30 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_30 ((LocInfoE loc_31 (use{it_layout i32} (LocInfoE loc_33 ((LocInfoE loc_34 (!{LPtr} (LocInfoE loc_35 ("xs")))) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_36 (use{it_layout i32} (LocInfoE loc_37 ("k")))))))) <{IntOp i32, IntOp i32} (LocInfoE loc_38 (use{it_layout i32} (LocInfoE loc_39 ("x")))))))
+        if: LocInfoE loc_30 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_30 ((LocInfoE loc_31 (use{it_layout i32} (LocInfoE loc_33 ((LocInfoE loc_34 (!{void*} (LocInfoE loc_35 ("xs")))) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_36 (use{it_layout i32} (LocInfoE loc_37 ("k")))))))) <{IntOp i32, IntOp i32} (LocInfoE loc_38 (use{it_layout i32} (LocInfoE loc_39 ("x")))))))
         then
         locinfo: loc_19 ;
           Goto "#7"

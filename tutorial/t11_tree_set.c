@@ -56,7 +56,7 @@ tree_t node(tree_t left, size_t key, tree_t right){
 [[rc::parameters("p : loc")]]
 [[rc::args("p @ &own<tree_t>")]]
 [[rc::requires("[alloc_initialized]")]]
-[[rc::ensures("p @ &own<uninit<LPtr>>")]]
+[[rc::ensures("own p : uninit<void*>")]]
 void free_tree(tree_t* t){
   if(*t != NULL){
     free_tree(&((*t)->left));
@@ -68,7 +68,7 @@ void free_tree(tree_t* t){
 [[rc::parameters("p : loc", "s : {gset Z}", "k : Z")]]
 [[rc::args("p @ &own<s @ tree_t>", "k @ int<size_t>")]]
 [[rc::returns("{bool_decide (k ∈ s)} @ boolean<bool_it>")]]
-[[rc::ensures("p @ &own<s @ tree_t>")]]
+[[rc::ensures("own p : s @ tree_t")]]
  [[rc::tactics("all: try by set_unfold; naive_solver lia.")]]
 bool member_rec(tree_t* t, size_t k){
   if(*t == NULL) return false;
@@ -80,7 +80,7 @@ bool member_rec(tree_t* t, size_t k){
 [[rc::parameters("p : loc", "s : {gset Z}", "k : Z")]]
 [[rc::args("p @ &own<s @ tree_t>", "k @ int<size_t>")]]
 [[rc::returns("{bool_decide (k ∈ s)} @ boolean<bool_it>")]]
-[[rc::ensures("p @ &own<s @ tree_t>")]]
+[[rc::ensures("own p : s @ tree_t")]]
  [[rc::tactics("all: try by set_unfold; naive_solver lia.")]]
 bool member(tree_t* t, size_t k){
   tree_t* cur = &*t;
@@ -103,7 +103,7 @@ bool member(tree_t* t, size_t k){
 [[rc::parameters("p : loc", "s : {gset Z}", "k : Z")]]
 [[rc::args("p @ &own<s @ tree_t>", "k @ int<size_t>")]]
 [[rc::requires("[alloc_initialized]")]]
-[[rc::ensures("p @ &own<{{[k]} ∪ s} @ tree_t>")]]
+[[rc::ensures("own p : {{[k]} ∪ s} @ tree_t")]]
  [[rc::tactics("all: try by set_unfold; solve_goal.")]]
 void insert_rec(tree_t* t, size_t k){
   if(*t == NULL){
@@ -121,7 +121,7 @@ void insert_rec(tree_t* t, size_t k){
 [[rc::parameters("p : loc", "s : {gset Z}", "k : Z")]]
 [[rc::args("p @ &own<s @ tree_t>", "k @ int<size_t>")]]
 [[rc::requires("[alloc_initialized]")]]
-[[rc::ensures("p @ &own<{{[k]} ∪ s} @ tree_t>")]]
+[[rc::ensures("own p : {{[k]} ∪ s} @ tree_t")]]
  [[rc::tactics("all: try by set_unfold; solve_goal.")]]
 void insert(tree_t* t, size_t k){
   tree_t* cur = &*t;
@@ -147,7 +147,7 @@ void insert(tree_t* t, size_t k){
 [[rc::exists("m : Z")]]
 [[rc::returns("m @ int<size_t>")]]
 [[rc::ensures("{m ∈ s}", "{∀ i, i ∈ s → i ≤ m}")]]
-[[rc::ensures("p @ &own<s @ tree_t>")]]
+[[rc::ensures("own p : s @ tree_t")]]
  [[rc::tactics("all: by set_unfold; naive_solver lia.")]]
 size_t tree_max(tree_t* t){
   if((*t)->right == NULL) {
@@ -160,7 +160,7 @@ size_t tree_max(tree_t* t){
 [[rc::parameters("p : loc", "s : {gset Z}", "k : Z")]]
 [[rc::args("p @ &own<s @ tree_t>", "k @ int<size_t>")]]
 [[rc::requires("[alloc_initialized]")]]
-[[rc::ensures("p @ &own<{s ∖ {[k]}} @ tree_t>")]]
+[[rc::ensures("own p : {s ∖ {[k]}} @ tree_t")]]
  [[rc::tactics("all: try apply Z.le_neq.")]]
  [[rc::tactics("all: try (rewrite difference_union_L !difference_union_distr_l_L !difference_diag_L !difference_disjoint_L; move: (H0 x2) (H1 x2); clear -H9).")]]
  [[rc::tactics("all: try by set_unfold; naive_solver lia.")]]

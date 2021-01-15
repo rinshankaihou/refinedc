@@ -11,6 +11,7 @@ Section proof_init_int.
   Lemma type_init_int :
     ⊢ typed_function impl_init_int type_of_init_int.
   Proof.
+    Open Scope printing_sugar.
     start_function "init_int" (p) => arg_out.
     split_blocks ((
       ∅

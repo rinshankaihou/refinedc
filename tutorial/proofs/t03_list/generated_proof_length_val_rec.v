@@ -12,6 +12,7 @@ Section proof_length_val_rec.
     global_length_val_rec ◁ᵥ global_length_val_rec @ function_ptr type_of_length_val_rec -∗
     typed_function (impl_length_val_rec global_length_val_rec) type_of_length_val_rec.
   Proof.
+    Open Scope printing_sugar.
     start_function "length_val_rec" ([v l]) => arg_p.
     split_blocks ((
       ∅

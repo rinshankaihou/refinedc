@@ -9,7 +9,7 @@
 [[rc::args("ar @&own<array<i32, {elts `at_type` (int i32)}>>")]]
 [[rc::args("i @ int<i32>", "j @ int<i32>")]]
 [[rc::requires("{elts !! i = Some v1}", "{elts !! j = Some v2}", "{i ≠ j}")]]
-[[rc::ensures("ar @&own<array<i32, {<[j:=v1]>(<[i:=v2]>elts) `at_type` (int i32)}>>")]]
+[[rc::ensures("own ar : array<i32, {<[j:=v1]>(<[i:=v2]>elts) `at_type` (int i32)}>")]]
 void permute(int* ar, int i, int j){
   int k = ar[i];
   ar[i] = ar[j];
@@ -23,6 +23,7 @@ void permute(int* ar, int i, int j){
 [[rc::returns("{n ≠ 0%nat} @ optional<\
                ∃ i : nat. i @ int<i32> & {index_of_min_list_Z (take n elts) i}, \
                {-1} @ int<i32>>")]]
+[[rc::ensures("own ar : array<i32, {elts `at_type` (int i32)}>")]] // NEW
 [[rc::lemmas("index_of_min_list_Z_take_1")]]
 [[rc::lemmas("index_of_min_list_Z_take_last")]]
 [[rc::lemmas("index_of_min_list_Z_take_not_last")]]

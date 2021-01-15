@@ -30,13 +30,13 @@ Section function.
   Program Definition function_ptr (fp : A → fn_params) : rtype := {|
     rty_type := loc;
     rty f := {|
-      ty_own β l := (∃ fn, ⌜l `has_layout_loc` LPtr⌝ ∗ l ↦[β] val_of_loc f ∗ fntbl_entry f fn ∗ ▷ typed_function fn fp)%I;
+      ty_own β l := (∃ fn, ⌜l `has_layout_loc` void*⌝ ∗ l ↦[β] val_of_loc f ∗ fntbl_entry f fn ∗ ▷ typed_function fn fp)%I;
   |} |}.
   Next Obligation. iDestruct 1 as (fn) "[? [H [? ?]]]". iExists _. iFrame. by iApply heap_mapsto_own_state_share. Qed.
 
   Global Program Instance rmovable_function_ptr fp : RMovable (function_ptr fp) := {|
     rmovable f := {|
-      ty_layout := LPtr;
+      ty_layout := void*;
       ty_own_val v := (∃ fn, ⌜v = val_of_loc f⌝  ∗ fntbl_entry f fn ∗ ▷ typed_function fn fp)%I;
   |} |}.
   Next Obligation. iIntros (? f l). by iDestruct 1 as (??) "?". Qed.

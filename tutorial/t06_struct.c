@@ -51,21 +51,21 @@ uint8_t getblue(struct color b) {
 
 [[rc::parameters("p : loc", "c : {nat * nat * nat}", "r : nat")]]
 [[rc::args("p @ &own<c @ color>", "r @ int<u8>")]]
-[[rc::ensures("p @ &own<{(r, c.1.2, c.2)} @ color>")]]
+[[rc::ensures("own p : {(r, c.1.2, c.2)} @ color")]]
 void set_red(struct color *c, uint8_t r){
   (*c).r = r;
 }
 
 [[rc::parameters("p : loc", "c : {nat * nat * nat}", "g : nat")]]
 [[rc::args("p @ &own<c @ color>", "g @ int<u8>")]]
-[[rc::ensures("p @ &own<{(c.1.1, g, c.2)} @ color>")]]
+[[rc::ensures("own p : {(c.1.1, g, c.2)} @ color")]]
 void set_green(struct color *c, uint8_t g){
   (*c).g = g;
 }
 
 [[rc::parameters("p : loc", "c : {nat * nat * nat}", "b : nat")]]
 [[rc::args("p @ &own<c @ color>", "b @ int<u8>")]]
-[[rc::ensures("p @ &own<{(c.1, b)} @ color>")]]
+[[rc::ensures("own p : {(c.1, b)} @ color")]]
 void set_blue(struct color *c, uint8_t b){
   (*c).b = b;
 }

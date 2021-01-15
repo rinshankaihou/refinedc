@@ -48,7 +48,7 @@ item {
 
 [[rc::parameters("i : loc")]]
 [[rc::args("i @ &own<uninit<struct_item>>")]]
-[[rc::ensures("i @ &own<Empty @ item>")]]
+[[rc::ensures("own i : Empty @ item")]]
 void test_item_set_empty(struct item *i) {
     i->tag = ITEM_EMPTY;
     i->u.empty.dummy = 0;
@@ -56,7 +56,7 @@ void test_item_set_empty(struct item *i) {
 
 [[rc::parameters("i : loc", "k : Z", "ty : type")]]
 [[rc::args("i @ &own<uninit<struct_item>>", "k @ int<size_t>", "&own<ty>")]]
-[[rc::ensures("i @ &own<{Entry k ty} @ item>")]]
+[[rc::ensures("own i : {Entry k ty} @ item")]]
 void test_item_set_entry(struct item *i, size_t key, void *val) {
     i->tag = ITEM_ENTRY;
     i->u.entry.key = key;
@@ -66,7 +66,7 @@ void test_item_set_entry(struct item *i, size_t key, void *val) {
 [[rc::parameters("i : loc", "x : {item_ref type}", "k : Z")]]
 [[rc::args("i @ &own<x @ item>", "k @ int<size_t>")]]
 [[rc::returns("int<size_t>")]]
-[[rc::ensures("i @ &own<item>")]]
+[[rc::ensures("own i : item")]]
 size_t test_item_modify_entry(struct item *i, size_t key) {
     size_t old_key;
 

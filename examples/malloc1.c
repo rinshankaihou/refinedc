@@ -39,7 +39,7 @@ struct [[rc::parameters("entry_size: nat")]]
            "{n * entry_size} @ int<size_t>",
            "entry_size @ int<size_t>")]]
 [[rc::requires("{(layout_of struct_freelist) ⊑ ly_with_align entry_size entry_size}")]]
-[[rc::ensures("p @ &own<n @ slab<entry_size>>")]]
+[[rc::ensures("own p : slab<entry_size>")]]
 void slab_init(struct slab *s, unsigned char *p, size_t chunksize, size_t entry_size)
 {
     s->chunk = p;
@@ -51,7 +51,7 @@ void slab_init(struct slab *s, unsigned char *p, size_t chunksize, size_t entry_
 [[rc::parameters("p : loc", "n : nat", "entry_size : nat")]]
 [[rc::args("p @ &own<n @ slab<entry_size>>")]]
 [[rc::returns("{(0 < n)%nat} @ optional<&own<uninit<{ly_with_align entry_size entry_size}>>>")]]
-[[rc::ensures("p @ &own<{(n - 1)%nat} @ slab<entry_size>>")]]
+[[rc::ensures("own p : {(n - 1)%nat} @ slab<entry_size>")]]
 void* slab_alloc(struct slab *s)
 {
     struct freelist *f;
@@ -75,7 +75,7 @@ void* slab_alloc(struct slab *s)
 
 [[rc::parameters("p : loc", "fp : loc", "n : nat", "entry_size : nat")]]
 [[rc::args("p @ &own<n @ slab<entry_size>>", "fp @ &own<uninit<{ly_with_align entry_size entry_size}>>")]]
-[[rc::ensures("p @ &own<{(n + 1)%nat} @ slab<entry_size>>")]]
+[[rc::ensures("own p : {(n + 1)%nat} @ slab<entry_size>")]]
 void slab_free(struct slab *s, void* x)
 {
     struct freelist* f = x;

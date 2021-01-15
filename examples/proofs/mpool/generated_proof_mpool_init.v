@@ -14,6 +14,7 @@ Section proof_mpool_init.
     global_sl_init ◁ᵥ global_sl_init @ function_ptr type_of_sl_init -∗
     typed_function (impl_mpool_init global_sl_init) type_of_mpool_init.
   Proof.
+    Open Scope printing_sugar.
     start_function "mpool_init" ([p entry_size]) => arg_p arg_entry_size.
     split_blocks ((
       ∅

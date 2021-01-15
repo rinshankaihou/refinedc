@@ -11,6 +11,7 @@ Section proof_min.
   Lemma type_min :
     ⊢ typed_function impl_min type_of_min.
   Proof.
+    Open Scope printing_sugar.
     start_function "min" ([a b]) => arg_a arg_b local_r.
     split_blocks ((
       ∅

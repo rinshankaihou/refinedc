@@ -15,6 +15,7 @@ Section proof_free_btree.
     global_free_btree_nodes ◁ᵥ global_free_btree_nodes @ function_ptr type_of_free_btree_nodes -∗
     typed_function (impl_free_btree global_free global_free_btree_nodes) type_of_free_btree.
   Proof.
+    Open Scope printing_sugar.
     start_function "free_btree" ([]) => arg_t.
     split_blocks ((
       ∅

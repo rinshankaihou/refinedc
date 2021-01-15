@@ -16,7 +16,7 @@ list_node {
 
 [[rc::parameters("p : loc", "xs : {list Z}","ys : {list Z}")]]
 [[rc::args("p @ &own<xs @ list_t>", "ys @ list_t")]]
-[[rc::ensures("p @ &own<{xs ++ ys} @ list_t>")]]
+[[rc::ensures("own p : {xs ++ ys} @ list_t")]]
 void append(list_t *l, list_t k) {
   if(*l == NULL) {
     *l = k;
@@ -63,7 +63,7 @@ void append(list_t *l, list_t k) {
 /*
 [[rc::parameters("p : loc")]]
 [[rc::args("p @ &own<list_t>", "list_t")]]
-[[rc::ensures("p @ &own<list_t>")]]
+[[rc::ensures("own p : list_t")]]
 void append(list_t *l, list_t k) {
   if(*l == NULL) {
     *l = k;
@@ -90,7 +90,7 @@ list_node {
 /*
 [[rc::parameters("p : loc", "xs : {list Z}", "ys : {list Z}")]]
 [[rc::args("p @ &own<xs @ list_t>", "ys @ list_t")]]
-[[rc::ensures("p @ &own<{xs ++ ys} @ list_t>")]]
+[[rc::ensures("own p : {xs ++ ys} @ list_t")]]
 void append(list_t *l, list_t k) {
   if(*l == NULL) {
     *l = k;
@@ -130,7 +130,7 @@ list_node {
 
 [[rc::parameters("p : loc", "xs : {list Z}", "ys : {list Z}")]]
 [[rc::args("p @ &own<xs @ list_t>", "ys @ list_t")]]
-[[rc::ensures("p @ &own<{xs ++ ys} @ list_t>")]]
+[[rc::ensures("own p : {xs ++ ys} @ list_t")]]
 void append(list_t *l, list_t k) {
   if(*l == NULL) {
     *l = k;

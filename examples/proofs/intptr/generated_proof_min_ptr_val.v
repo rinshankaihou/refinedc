@@ -11,6 +11,7 @@ Section proof_min_ptr_val.
   Lemma type_min_ptr_val :
     ⊢ typed_function impl_min_ptr_val type_of_min_ptr_val.
   Proof.
+    Open Scope printing_sugar.
     start_function "min_ptr_val" ([p1 p2]) => arg_p1 arg_p2 local_i2 local_i1.
     split_blocks ((
       ∅

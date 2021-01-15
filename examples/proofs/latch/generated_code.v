@@ -47,7 +47,7 @@ Section code.
   (* Definition of function [latch_wait]. *)
   Definition impl_latch_wait : function := {|
     f_args := [
-      ("latch", LPtr)
+      ("latch", void*)
     ];
     f_local_vars := [
     ];
@@ -59,7 +59,7 @@ Section code.
       ]> $
       <[ "#1" :=
         locinfo: loc_7 ;
-        if: LocInfoE loc_7 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_7 ((LocInfoE loc_8 (use{it_layout bool_it, ScOrd} (LocInfoE loc_11 ((LocInfoE loc_12 (!{LPtr} (LocInfoE loc_13 ("latch")))) at{struct_latch} "released")))) ={IntOp bool_it, IntOp bool_it} (LocInfoE loc_14 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_15 (i2v 0 i32)))))))
+        if: LocInfoE loc_7 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_7 ((LocInfoE loc_8 (use{it_layout bool_it, ScOrd} (LocInfoE loc_11 ((LocInfoE loc_12 (!{void*} (LocInfoE loc_13 ("latch")))) at{struct_latch} "released")))) ={IntOp bool_it, IntOp bool_it} (LocInfoE loc_14 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_15 (i2v 0 i32)))))))
         then
         locinfo: loc_5 ;
           Goto "#2"
@@ -83,7 +83,7 @@ Section code.
   (* Definition of function [latch_release]. *)
   Definition impl_latch_release : function := {|
     f_args := [
-      ("latch", LPtr)
+      ("latch", void*)
     ];
     f_local_vars := [
     ];
@@ -91,7 +91,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_18 ;
-        LocInfoE loc_21 ((LocInfoE loc_22 (!{LPtr} (LocInfoE loc_23 ("latch")))) at{struct_latch} "released") <-{ it_layout bool_it, ScOrd }
+        LocInfoE loc_21 ((LocInfoE loc_22 (!{void*} (LocInfoE loc_23 ("latch")))) at{struct_latch} "released") <-{ it_layout bool_it, ScOrd }
           LocInfoE loc_24 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_24 (i2v 1 i32))) ;
         Return (VOID)
       ]> $∅

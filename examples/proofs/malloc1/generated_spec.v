@@ -127,7 +127,7 @@ Section spec.
   (* Specifications for function [slab_init]. *)
   Definition type_of_slab_init :=
     fn(∀ (p, chunk_p, n, entry_size) : loc * loc * nat * nat; (p @ (&own (uninit (struct_slab)))), (chunk_p @ (&own (uninit (ly_with_align (n * entry_size) entry_size)))), ((n * entry_size) @ (int (size_t))), (entry_size @ (int (size_t))); ⌜(layout_of struct_freelist) ⊑ ly_with_align entry_size entry_size⌝)
-      → ∃ () : (), (void); (p ◁ₗ (n @ (slab (entry_size)))).
+      → ∃ () : (), (void); (p ◁ₗ (slab (entry_size))).
 
   (* Specifications for function [slab_alloc]. *)
   Definition type_of_slab_alloc :=
@@ -139,6 +139,11 @@ Section spec.
     fn(∀ (p, fp, n, entry_size) : loc * loc * nat * nat; (p @ (&own (n @ (slab (entry_size))))), (fp @ (&own (uninit (ly_with_align entry_size entry_size)))); True)
       → ∃ () : (), (void); (p ◁ₗ (((n + 1)%nat) @ (slab (entry_size)))).
 End spec.
+
+Notation "freelist_t< entry_size >" := (freelist_t entry_size)
+  (only printing, format "'freelist_t<' entry_size '>'") : printing_sugar.
+Notation "slab< entry_size >" := (slab entry_size)
+  (only printing, format "'slab<' entry_size '>'") : printing_sugar.
 
 Typeclasses Opaque freelist_t_rec.
 Typeclasses Opaque slab_rec.

@@ -190,7 +190,7 @@ Section code.
   (* Definition of function [set_red]. *)
   Definition impl_set_red : function := {|
     f_args := [
-      ("c", LPtr);
+      ("c", void*);
       ("r", it_layout u8)
     ];
     f_local_vars := [
@@ -199,7 +199,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_57 ;
-        LocInfoE loc_58 ((LocInfoE loc_60 (!{LPtr} (LocInfoE loc_61 ("c")))) at{struct_color} "r") <-{ it_layout u8 }
+        LocInfoE loc_58 ((LocInfoE loc_60 (!{void*} (LocInfoE loc_61 ("c")))) at{struct_color} "r") <-{ it_layout u8 }
           LocInfoE loc_62 (use{it_layout u8} (LocInfoE loc_63 ("r"))) ;
         Return (VOID)
       ]> $∅
@@ -209,7 +209,7 @@ Section code.
   (* Definition of function [set_green]. *)
   Definition impl_set_green : function := {|
     f_args := [
-      ("c", LPtr);
+      ("c", void*);
       ("g", it_layout u8)
     ];
     f_local_vars := [
@@ -218,7 +218,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_66 ;
-        LocInfoE loc_67 ((LocInfoE loc_69 (!{LPtr} (LocInfoE loc_70 ("c")))) at{struct_color} "g") <-{ it_layout u8 }
+        LocInfoE loc_67 ((LocInfoE loc_69 (!{void*} (LocInfoE loc_70 ("c")))) at{struct_color} "g") <-{ it_layout u8 }
           LocInfoE loc_71 (use{it_layout u8} (LocInfoE loc_72 ("g"))) ;
         Return (VOID)
       ]> $∅
@@ -228,7 +228,7 @@ Section code.
   (* Definition of function [set_blue]. *)
   Definition impl_set_blue : function := {|
     f_args := [
-      ("c", LPtr);
+      ("c", void*);
       ("b", it_layout u8)
     ];
     f_local_vars := [
@@ -237,7 +237,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_75 ;
-        LocInfoE loc_76 ((LocInfoE loc_78 (!{LPtr} (LocInfoE loc_79 ("c")))) at{struct_color} "b") <-{ it_layout u8 }
+        LocInfoE loc_76 ((LocInfoE loc_78 (!{void*} (LocInfoE loc_79 ("c")))) at{struct_color} "b") <-{ it_layout u8 }
           LocInfoE loc_80 (use{it_layout u8} (LocInfoE loc_81 ("b"))) ;
         Return (VOID)
       ]> $∅

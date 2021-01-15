@@ -14,6 +14,7 @@ Section proof_free_array.
     global_free ◁ᵥ global_free @ function_ptr type_of_free -∗
     typed_function (impl_free_array global_free) type_of_free_array.
   Proof.
+    Open Scope printing_sugar.
     start_function "free_array" ([size n]) => arg_size arg_n arg_ptr.
     split_blocks ((
       ∅

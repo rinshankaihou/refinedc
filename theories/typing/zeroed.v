@@ -33,3 +33,5 @@ Section zeroed.
     iApply loc_in_bounds_shorten; last done. lia.
   Qed.
 End zeroed.
+Notation "zeroed< ly >" := (zeroed ly)
+  (only printing, format "'zeroed<' ly '>'") : printing_sugar.

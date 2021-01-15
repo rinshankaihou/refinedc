@@ -13,6 +13,7 @@ Section proof_read_outside.
   Lemma type_read_outside :
     ⊢ typed_function impl_read_outside type_of_read_outside.
   Proof.
+    Open Scope printing_sugar.
     start_function "read_outside" ([[[p n1] n2] n3]) => arg_t.
     split_blocks ((
       ∅

@@ -11,6 +11,7 @@ Section proof_blue.
   Lemma type_blue :
     ⊢ typed_function impl_blue type_of_blue.
   Proof.
+    Open Scope printing_sugar.
     start_function "blue" (b) => arg_b local_c.
     split_blocks ((
       ∅

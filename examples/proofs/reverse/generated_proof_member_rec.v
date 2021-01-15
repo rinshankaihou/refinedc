@@ -12,6 +12,7 @@ Section proof_member_rec.
     global_member_rec ◁ᵥ global_member_rec @ function_ptr type_of_member_rec -∗
     typed_function (impl_member_rec global_member_rec) type_of_member_rec.
   Proof.
+    Open Scope printing_sugar.
     start_function "member_rec" ([[l p] n]) => arg_p arg_k local_head.
     split_blocks ((
       ∅

@@ -13,6 +13,7 @@ Section proof_key_index.
   Lemma type_key_index :
     ⊢ typed_function impl_key_index type_of_key_index.
   Proof.
+    Open Scope printing_sugar.
     start_function "key_index" ([[[[p l] n] k] sz]) => arg_ar arg_n arg_k local_slot.
     split_blocks ((
       <[ "#1" :=

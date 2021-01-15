@@ -25,7 +25,7 @@ size_t min_ptr_val(int *p1, int *p2){
 
 [[rc::parameters("p : loc")]]
 [[rc::args("p @ &own<int<i32>>")]]
-[[rc::returns("{(None, p.2)} @ &own<singleton_place<{(None, p.2)}>>")]]
+[[rc::returns("{(None, p.2)} @ &own<place<{(None, p.2)}>>")]]
 int* roundtrip1(int* p){
   size_t i = (size_t) p;
   void *q = (void*) i;
@@ -41,21 +41,22 @@ int* roundtrip2(int* p){
   return rc_copy_alloc_id(q, p);
 }
 
-[[rc::parameters("p : loc", "n : Z")]]
-[[rc::args("p @ &own<n @ int<i32>>")]]
+[[rc::parameters("l : loc", "n : Z")]]
+[[rc::args("l @ &own<n @ int<i32>>")]]
 [[rc::returns("n @ int<i32>")]]
-[[rc::ensures("p @ &own<n @ int<i32>>")]]
+[[rc::ensures("own l : n @ int<i32>")]]
 int roundtrip_and_read(int* p){
   size_t i = (size_t) p;
   int *q = (int*) i;
-  int *r = rc_copy_alloc_id(q, p);
-  return *r;
+  q = rc_copy_alloc_id(q, p);
+  int r = *q;
+  return r;
 }
 
 [[rc::parameters("p : loc", "n : Z")]]
 [[rc::args("p @ &own<n @ int<i32>>")]]
 [[rc::returns("n @ int<i32>")]]
-[[rc::ensures("p @ &own<n @ int<i32>>")]]
+[[rc::ensures("own p : n @ int<i32>")]]
 int roundtrip_and_read2(int* p){
   uintptr_t i = (uintptr_t) p;
   int *q = rc_copy_alloc_id((int*) i, p);
@@ -65,7 +66,7 @@ int roundtrip_and_read2(int* p){
 [[rc::parameters("p : loc", "n : Z")]]
 [[rc::args("p @ &own<n @ int<i32>>")]]
 [[rc::returns("n @ int<i32>")]]
-[[rc::ensures("p @ &own<n @ int<i32>>")]]
+[[rc::ensures("own p : n @ int<i32>")]]
 int roundtrip_and_read3(int* p){
   size_t i = (size_t) p;
   int *q = (int*) i;

@@ -17,5 +17,5 @@ Section spec.
   (* Specifications for function [min_array]. *)
   Definition type_of_min_array :=
     fn(∀ (ar, elts, n) : loc * (list Z) * nat; (ar @ (&own (array (i32) (elts `at_type` (int i32))))), (n @ (int (i32))); ⌜(n ≤ length elts)%nat⌝)
-      → ∃ () : (), ((n ≠ 0%nat) @ (optional (tyexists (λ i : nat, constrained (i @ (int (i32))) ⌜index_of_min_list_Z (take n elts) i⌝)) ((-1) @ (int (i32))))); True.
+      → ∃ () : (), ((n ≠ 0%nat) @ (optional (tyexists (λ i : nat, constrained (i @ (int (i32))) ⌜index_of_min_list_Z (take n elts) i⌝)) ((-1) @ (int (i32))))); (ar ◁ₗ (array (i32) (elts `at_type` (int i32)))).
 End spec.

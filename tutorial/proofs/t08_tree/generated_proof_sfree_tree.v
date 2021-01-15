@@ -13,6 +13,7 @@ Section proof_sfree_tree.
     global_free_tree ◁ᵥ global_free_tree @ function_ptr type_of_free_tree -∗
     typed_function (impl_sfree_tree global_free_tree) type_of_sfree_tree.
   Proof.
+    Open Scope printing_sugar.
     start_function "sfree_tree" (p) => arg_t.
     split_blocks ((
       ∅

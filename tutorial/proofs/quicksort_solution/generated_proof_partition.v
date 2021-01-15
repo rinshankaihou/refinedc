@@ -13,6 +13,7 @@ Section proof_partition.
     global_partition ◁ᵥ global_partition @ function_ptr type_of_partition -∗
     typed_function (impl_partition global_partition) type_of_partition.
   Proof.
+    Open Scope printing_sugar.
     start_function "partition" ([[p xs] z]) => arg_l arg_pivot local_rest local_head.
     split_blocks ((
       ∅

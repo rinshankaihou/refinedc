@@ -65,7 +65,7 @@ Section code.
   Program Definition struct_alloc_entry := {|
     sl_members := [
       (Some "size", it_layout size_t);
-      (Some "next", LPtr)
+      (Some "next", void*)
     ];
   |}.
   Solve Obligations with solve_struct_obligations.
@@ -75,7 +75,7 @@ Section code.
     sl_members := [
       (Some "lock", layout_of struct_spinlock);
       (None, Layout 7%nat 0%nat);
-      (Some "data", LPtr)
+      (Some "data", void*)
     ];
   |}.
   Solve Obligations with solve_struct_obligations.

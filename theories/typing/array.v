@@ -3,7 +3,7 @@ From refinedc.typing Require Export type.
 From refinedc.typing Require Import programs singleton uninit int.
 Set Default Proof Using "Type".
 
-Section type.
+Section array.
   Context `{typeG Σ}.
   (*** arrays *)
   Program Definition array (ly : layout) (tys : list type) : type := {|
@@ -88,7 +88,7 @@ Section type.
 
   Lemma array_get_type (i : nat) ly tys ty l β:
     tys !! i = Some ty →
-    l ◁ₗ{β} array ly tys -∗ (l offset{ly}ₗ i) ◁ₗ{β} ty ∗ l ◁ₗ{β} array ly (<[ i := singleton_place (l offset{ly}ₗ i)]>tys).
+    l ◁ₗ{β} array ly tys -∗ (l offset{ly}ₗ i) ◁ₗ{β} ty ∗ l ◁ₗ{β} array ly (<[ i := place (l offset{ly}ₗ i)]>tys).
   Proof.
     rewrite !/(ty_own (array _ _))/=. iIntros (Hi) "($&Hb&Ha)".
     iInduction (i) as [|i] "IH" forall (l tys Hi);
@@ -242,4 +242,6 @@ Section type.
   Global Instance type_place_array_inst l β ly1 it v (tyv : mtype) tys ly2 K:
     TypedPlace (BinOpPCtx (PtrOffsetOp ly1) (IntOp it) v tyv :: K) l β (array ly2 tys):=
     λ T, i2p (type_place_array l β T ly1 it v tyv tys ly2 K).
-End type.
+End array.
+Notation "array< ty , tys >" := (array ty tys)
+  (only printing, format "'array<' ty ,  tys '>'") : printing_sugar.

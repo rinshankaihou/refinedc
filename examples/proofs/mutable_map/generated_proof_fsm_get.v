@@ -13,6 +13,7 @@ Section proof_fsm_get.
     global_fsm_probe ◁ᵥ global_fsm_probe @ function_ptr type_of_fsm_probe -∗
     typed_function (impl_fsm_get global_fsm_probe) type_of_fsm_get.
   Proof.
+    Open Scope printing_sugar.
     start_function "fsm_get" ([[[[m mp] items] count] key]) => arg_m arg_key local_item local_slot_idx.
     split_blocks ((
       ∅

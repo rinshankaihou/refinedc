@@ -11,6 +11,7 @@ Section proof_pop.
   Lemma type_pop :
     ⊢ typed_function impl_pop type_of_pop.
   Proof.
+    Open Scope printing_sugar.
     start_function "pop" ([l p]) => arg_p local_ret.
     split_blocks ((
       ∅

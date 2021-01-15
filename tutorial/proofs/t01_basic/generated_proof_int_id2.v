@@ -11,6 +11,7 @@ Section proof_int_id2.
   Lemma type_int_id2 :
     ⊢ typed_function impl_int_id2 type_of_int_id2.
   Proof.
+    Open Scope printing_sugar.
     start_function "int_id2" (n) => arg_a.
     split_blocks ((
       ∅

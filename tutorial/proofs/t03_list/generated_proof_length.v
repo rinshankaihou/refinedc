@@ -11,6 +11,7 @@ Section proof_length.
   Lemma type_length :
     ⊢ typed_function impl_length type_of_length.
   Proof.
+    Open Scope printing_sugar.
     start_function "length" ([p l]) => arg_p local_len.
     split_blocks ((
       <[ "#1" :=

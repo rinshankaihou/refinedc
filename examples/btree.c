@@ -13,7 +13,7 @@ btree_t* new_btree(){
 [[rc::parameters("p : loc")]]
 [[rc::args("p @ &own<btree_t>")]]
 [[rc::requires("[alloc_initialized]")]]
-[[rc::ensures("p @ &own<null>")]]
+[[rc::ensures("own p : null")]]
 [[rc::trust_me]] // FIXME
 void free_btree_nodes(btree_t* t){
   if(*t == NULL) return;
@@ -43,8 +43,8 @@ void free_btree(btree_t* t){
 [[rc::ensures("{s ≤ n}")]]
 [[rc::ensures("{k ∈ l → l !! s = Some k}")]]
 [[rc::ensures("{¬ k ∈ l → StronglySorted (<) (take s l ++ k :: drop s l)}")]]
-[[rc::ensures("p @ &own<array<{it_layout i32}, {(l `at_type` int i32) ++ "
-                        "replicate (sz - n)%nat (uninit i32 : type)}>>")]]
+[[rc::ensures("own p : array<{it_layout i32}, {(l `at_type` int i32) ++ "
+                        "replicate (sz - n)%nat (uninit i32 : type)}>")]]
 [[rc::tactics("destruct (decide (i = s)); by naive_solver lia.")]]
 [[rc::tactics(// FIXME
   "move: (elem_of_list_lookup_1 _ _ H14) => [i Hi]. "

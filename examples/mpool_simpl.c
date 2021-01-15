@@ -16,7 +16,7 @@ struct [[rc::refined_by("n : nat")]] mpool {
 
 [[rc::parameters("p : loc")]]
 [[rc::args("p @ &own<uninit<struct_mpool>>")]]
-[[rc::ensures("p @ &own<{0%nat} @ mpool>")]]
+[[rc::ensures("own p : {0%nat} @ mpool")]]
 void mpool_init(struct mpool *p) {
     p->entry_list = NULL;
 }
@@ -24,7 +24,7 @@ void mpool_init(struct mpool *p) {
 [[rc::parameters("p : loc", "n : nat")]]
 [[rc::args("p @ &own<n @ mpool>")]]
 [[rc::returns("{(0 < n)%nat} @ optional<&own<uninit<ENTRY_LAYOUT>>>")]]
-[[rc::ensures("p @ &own<{(n - 1)%nat} @ mpool>")]]
+[[rc::ensures("own p : {(n - 1)%nat} @ mpool")]]
 void *mpool_get(struct mpool *p) {
     if (p->entry_list == NULL) {
         return NULL;
@@ -36,18 +36,18 @@ void *mpool_get(struct mpool *p) {
 
 [[rc::parameters("p : loc", "n : nat")]]
 [[rc::args("p @ &own<n @ mpool>", "&own<uninit<ENTRY_LAYOUT>>")]]
-[[rc::ensures("p @ &own<{(n + 1)%nat} @ mpool>")]]
+[[rc::ensures("own p : {(n + 1)%nat} @ mpool")]]
 void mpool_put(struct mpool *p, void *ptr) {
     // ptr : &own<uninit<ENTRY_LAYOUT>>
     struct mpool_entry *e = ptr;
     // e: &own<uninit<ENTRY_LAYOUT>>
 
     // e: &own<padded<uninit<struct_mpool_entry>, struct_mpool_entry, ENTRY_LAYOUT>>
-    // e: &own<padded<struct<struct_mpool_entry, [uninit LPtr]>, struct_mpool_entry, ENTRY_LAYOUT>>
+    // e: &own<padded<struct<struct_mpool_entry, uninit<void*>, struct_mpool_entry, ENTRY_LAYOUT>>
     // p: &own<struct<struct_mpool, [{n > 0} @ optional<&own<{n - 1} @ mpool_entry>>]>>
     e->next = p->entry_list;
     // e: &own<padded<struct<struct_mpool_entry, [{n > 0} @ optional<&own<{n - 1} @ mpool_entry>>]>, struct_mpool_entry, ENTRY_LAYOUT>>
-    // p: &own<struct<struct_mpool, [uninit<LPtr>]>>
+    // p: &own<struct<struct_mpool, [uninit<void*>]>>
     p->entry_list = e;
     // p: &own<struct<struct_mpool, [&own<padded<struct<struct_mpool_entry, [{n > 0} @ optional<&own<{n - 1} @ mpool_entry>>]>, struct_mpool_entry, ENTRY_LAYOUT>>]>>
 }

@@ -17,6 +17,7 @@ Section proof_free.
     global_sl_unlock ◁ᵥ global_sl_unlock @ function_ptr type_of_sl_unlock -∗
     typed_function (impl_free global_allocator_state global_sl_lock global_sl_unlock) type_of_free.
   Proof.
+    Open Scope printing_sugar.
     start_function "free" (size) => arg_size arg_ptr local_entry.
     split_blocks ((
       ∅

@@ -20,6 +20,7 @@ Section proof_thread_safe_alloc.
     global_sl_unlock ◁ᵥ global_sl_unlock @ function_ptr type_of_sl_unlock -∗
     typed_function (impl_thread_safe_alloc global_data global_lock global_alloc global_sl_lock global_sl_unlock) type_of_thread_safe_alloc.
   Proof.
+    Open Scope printing_sugar.
     start_function "thread_safe_alloc" ([lid n]) => arg_size local_ret.
     split_blocks ((
       ∅

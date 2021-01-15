@@ -133,11 +133,12 @@ Section uninit.
     λ T, i2p (annot_uninit_strengthen_align l β ly T).
 
 End uninit.
+Notation "uninit< ly >" := (uninit ly) (only printing, format "'uninit<' ly '>'") : printing_sugar.
 
 Section void.
   Context `{!typeG Σ}.
 
-  Definition void : type := uninit LVoid.
+  Definition void : type := uninit void_layout.
 
   Lemma type_void T:
     T (t2mt void) -∗ typed_value VOID T.

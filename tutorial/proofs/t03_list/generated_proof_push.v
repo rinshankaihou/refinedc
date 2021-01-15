@@ -12,6 +12,7 @@ Section proof_push.
     global_alloc ◁ᵥ global_alloc @ function_ptr type_of_alloc -∗
     typed_function (impl_push global_alloc) type_of_push.
   Proof.
+    Open Scope printing_sugar.
     start_function "push" ([l ty]) => arg_p arg_e local_node.
     split_blocks ((
       ∅

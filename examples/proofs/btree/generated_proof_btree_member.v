@@ -14,6 +14,7 @@ Section proof_btree_member.
     global_key_index ◁ᵥ global_key_index @ function_ptr type_of_key_index -∗
     typed_function (impl_btree_member global_key_index) type_of_btree_member.
   Proof.
+    Open Scope printing_sugar.
     start_function "btree_member" ([[[p h] m] k]) => arg_t arg_k local_i local_cur.
     split_blocks ((
       <[ "#1" :=

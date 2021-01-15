@@ -19,6 +19,7 @@ Section proof_test.
     global_reverse ◁ᵥ global_reverse @ function_ptr type_of_reverse -∗
     typed_function (impl_test global_alloc global_free global_init global_is_empty global_member global_pop global_push global_reverse) type_of_test.
   Proof.
+    Open Scope printing_sugar.
     start_function "test" ([]) => local_list local_elem2 local_elem1 local_elem3.
     split_blocks ((
       ∅

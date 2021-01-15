@@ -15,6 +15,7 @@ Section proof_mpool_add_chunk.
     global_sl_unlock ◁ᵥ global_sl_unlock @ function_ptr type_of_sl_unlock -∗
     typed_function (impl_mpool_add_chunk global_sl_lock global_sl_unlock) type_of_mpool_add_chunk.
   Proof.
+    Open Scope printing_sugar.
     start_function "mpool_add_chunk" ([[[[p q] n] entry_size] m]) => arg_p arg_begin arg_size local_chunk.
     split_blocks ((
       ∅

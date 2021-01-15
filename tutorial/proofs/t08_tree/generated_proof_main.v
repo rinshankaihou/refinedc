@@ -18,6 +18,7 @@ Section proof_main.
     global_sremove ◁ᵥ global_sremove @ function_ptr type_of_sremove -∗
     typed_function (impl_main global_sempty global_sfree_tree global_sinit global_sinsert global_smember global_sremove) type_of_main.
   Proof.
+    Open Scope printing_sugar.
     start_function "main" ([]) => local_t.
     split_blocks ((
       ∅

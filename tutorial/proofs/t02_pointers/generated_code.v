@@ -168,7 +168,7 @@ Section code.
   (* Definition of function [read_int]. *)
   Definition impl_read_int : function := {|
     f_args := [
-      ("a", LPtr)
+      ("a", void*)
     ];
     f_local_vars := [
     ];
@@ -176,7 +176,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_2 ;
-        Return (LocInfoE loc_3 (use{it_layout i32} (LocInfoE loc_5 (!{LPtr} (LocInfoE loc_6 ("a"))))))
+        Return (LocInfoE loc_3 (use{it_layout i32} (LocInfoE loc_5 (!{void*} (LocInfoE loc_6 ("a"))))))
       ]> $∅
     )%E
   |}.
@@ -209,8 +209,8 @@ Section code.
   (* Definition of function [no_alias]. *)
   Definition impl_no_alias : function := {|
     f_args := [
-      ("a", LPtr);
-      ("b", LPtr)
+      ("a", void*);
+      ("b", void*)
     ];
     f_local_vars := [
       ("old_b", it_layout i32)
@@ -219,12 +219,12 @@ Section code.
     f_code := (
       <[ "#0" :=
         "old_b" <-{ it_layout i32 }
-          LocInfoE loc_48 (use{it_layout i32} (LocInfoE loc_50 (!{LPtr} (LocInfoE loc_51 ("b"))))) ;
+          LocInfoE loc_48 (use{it_layout i32} (LocInfoE loc_50 (!{void*} (LocInfoE loc_51 ("b"))))) ;
         locinfo: loc_35 ;
-        LocInfoE loc_45 (!{LPtr} (LocInfoE loc_46 ("a"))) <-{ it_layout i32 }
+        LocInfoE loc_45 (!{void*} (LocInfoE loc_46 ("a"))) <-{ it_layout i32 }
           LocInfoE loc_47 (i2v 1 i32) ;
         locinfo: loc_36 ;
-        assert: (LocInfoE loc_37 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_37 ((LocInfoE loc_38 (use{it_layout i32} (LocInfoE loc_40 (!{LPtr} (LocInfoE loc_41 ("b")))))) ={IntOp i32, IntOp i32} (LocInfoE loc_42 (use{it_layout i32} (LocInfoE loc_43 ("old_b")))))))) ;
+        assert: (LocInfoE loc_37 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_37 ((LocInfoE loc_38 (use{it_layout i32} (LocInfoE loc_40 (!{void*} (LocInfoE loc_41 ("b")))))) ={IntOp i32, IntOp i32} (LocInfoE loc_42 (use{it_layout i32} (LocInfoE loc_43 ("old_b")))))))) ;
         Return (VOID)
       ]> $∅
     )%E
@@ -238,14 +238,14 @@ Section code.
     f_local_vars := [
       ("var", it_layout i32);
       ("dummy", it_layout i32);
-      ("p", LPtr)
+      ("p", void*)
     ];
     f_init := "#0";
     f_code := (
       <[ "#0" :=
         "var" <-{ it_layout i32 } LocInfoE loc_86 (i2v 1 i32) ;
         locinfo: loc_57 ;
-        LocInfoE loc_83 ("p") <-{ LPtr }
+        LocInfoE loc_83 ("p") <-{ void* }
           LocInfoE loc_84 (&(LocInfoE loc_85 ("var"))) ;
         locinfo: loc_81 ;
         if: LocInfoE loc_81 (use{it_layout bool_it} (LocInfoE loc_82 ("b")))
@@ -262,13 +262,13 @@ Section code.
           LocInfoE loc_68 (use{it_layout i32} (LocInfoE loc_69 ("var"))) ;
         locinfo: loc_61 ;
         LocInfoE loc_62 ("dummy") <-{ it_layout i32 }
-          LocInfoE loc_63 (use{it_layout i32} (LocInfoE loc_65 (!{LPtr} (LocInfoE loc_66 ("p"))))) ;
+          LocInfoE loc_63 (use{it_layout i32} (LocInfoE loc_65 (!{void*} (LocInfoE loc_66 ("p"))))) ;
         Return (VOID)
       ]> $
       <[ "#2" :=
         locinfo: loc_71 ;
         LocInfoE loc_76 ("dummy") <-{ it_layout i32 }
-          LocInfoE loc_77 (use{it_layout i32} (LocInfoE loc_79 (!{LPtr} (LocInfoE loc_80 ("p"))))) ;
+          LocInfoE loc_77 (use{it_layout i32} (LocInfoE loc_79 (!{void*} (LocInfoE loc_80 ("p"))))) ;
         locinfo: loc_72 ;
         LocInfoE loc_73 ("dummy") <-{ it_layout i32 }
           LocInfoE loc_74 (use{it_layout i32} (LocInfoE loc_75 ("var"))) ;
@@ -281,21 +281,21 @@ Section code.
   Definition impl_ptrs : function := {|
     f_args := [
       ("b", it_layout bool_it);
-      ("p", LPtr)
+      ("p", void*)
     ];
     f_local_vars := [
-      ("p1", LPtr);
-      ("p2", LPtr)
+      ("p1", void*);
+      ("p2", void*)
     ];
     f_init := "#0";
     f_code := (
       <[ "#0" :=
         locinfo: loc_91 ;
-        LocInfoE loc_121 ("p1") <-{ LPtr }
-          LocInfoE loc_122 (use{LPtr} (LocInfoE loc_123 ("p"))) ;
+        LocInfoE loc_121 ("p1") <-{ void* }
+          LocInfoE loc_122 (use{void*} (LocInfoE loc_123 ("p"))) ;
         locinfo: loc_92 ;
-        LocInfoE loc_118 ("p2") <-{ LPtr }
-          LocInfoE loc_119 (use{LPtr} (LocInfoE loc_120 ("p"))) ;
+        LocInfoE loc_118 ("p2") <-{ void* }
+          LocInfoE loc_119 (use{void*} (LocInfoE loc_120 ("p"))) ;
         locinfo: loc_116 ;
         if: LocInfoE loc_116 (use{it_layout bool_it} (LocInfoE loc_117 ("b")))
         then
@@ -307,16 +307,16 @@ Section code.
       ]> $
       <[ "#1" :=
         locinfo: loc_95 ;
-        expr: (LocInfoE loc_101 (use{it_layout i32} (LocInfoE loc_103 (!{LPtr} (LocInfoE loc_104 ("p1")))))) ;
+        expr: (LocInfoE loc_101 (use{it_layout i32} (LocInfoE loc_103 (!{void*} (LocInfoE loc_104 ("p1")))))) ;
         locinfo: loc_96 ;
-        expr: (LocInfoE loc_97 (use{it_layout i32} (LocInfoE loc_99 (!{LPtr} (LocInfoE loc_100 ("p2")))))) ;
+        expr: (LocInfoE loc_97 (use{it_layout i32} (LocInfoE loc_99 (!{void*} (LocInfoE loc_100 ("p2")))))) ;
         Return (VOID)
       ]> $
       <[ "#2" :=
         locinfo: loc_106 ;
-        expr: (LocInfoE loc_112 (use{it_layout i32} (LocInfoE loc_114 (!{LPtr} (LocInfoE loc_115 ("p2")))))) ;
+        expr: (LocInfoE loc_112 (use{it_layout i32} (LocInfoE loc_114 (!{void*} (LocInfoE loc_115 ("p2")))))) ;
         locinfo: loc_107 ;
-        expr: (LocInfoE loc_108 (use{it_layout i32} (LocInfoE loc_110 (!{LPtr} (LocInfoE loc_111 ("p1")))))) ;
+        expr: (LocInfoE loc_108 (use{it_layout i32} (LocInfoE loc_110 (!{void*} (LocInfoE loc_111 ("p1")))))) ;
         Return (VOID)
       ]> $∅
     )%E
@@ -326,16 +326,16 @@ Section code.
   Definition impl_ptrs2 : function := {|
     f_args := [
       ("b", it_layout bool_it);
-      ("p", LPtr)
+      ("p", void*)
     ];
     f_local_vars := [
-      ("p1", LPtr)
+      ("p1", void*)
     ];
     f_init := "#0";
     f_code := (
       <[ "#0" :=
         locinfo: loc_126 ;
-        LocInfoE loc_156 ("p1") <-{ LPtr }
+        LocInfoE loc_156 ("p1") <-{ void* }
           LocInfoE loc_157 (&(LocInfoE loc_158 ("p"))) ;
         locinfo: loc_154 ;
         if: LocInfoE loc_154 (use{it_layout bool_it} (LocInfoE loc_155 ("b")))
@@ -348,16 +348,16 @@ Section code.
       ]> $
       <[ "#1" :=
         locinfo: loc_129 ;
-        expr: (LocInfoE loc_135 (use{it_layout i32} (LocInfoE loc_137 (!{LPtr} (LocInfoE loc_139 (!{LPtr} (LocInfoE loc_140 ("p1")))))))) ;
+        expr: (LocInfoE loc_135 (use{it_layout i32} (LocInfoE loc_137 (!{void*} (LocInfoE loc_139 (!{void*} (LocInfoE loc_140 ("p1")))))))) ;
         locinfo: loc_130 ;
-        expr: (LocInfoE loc_131 (use{it_layout i32} (LocInfoE loc_133 (!{LPtr} (LocInfoE loc_134 ("p")))))) ;
+        expr: (LocInfoE loc_131 (use{it_layout i32} (LocInfoE loc_133 (!{void*} (LocInfoE loc_134 ("p")))))) ;
         Return (VOID)
       ]> $
       <[ "#2" :=
         locinfo: loc_142 ;
-        expr: (LocInfoE loc_150 (use{it_layout i32} (LocInfoE loc_152 (!{LPtr} (LocInfoE loc_153 ("p")))))) ;
+        expr: (LocInfoE loc_150 (use{it_layout i32} (LocInfoE loc_152 (!{void*} (LocInfoE loc_153 ("p")))))) ;
         locinfo: loc_143 ;
-        expr: (LocInfoE loc_144 (use{it_layout i32} (LocInfoE loc_146 (!{LPtr} (LocInfoE loc_148 (!{LPtr} (LocInfoE loc_149 ("p1")))))))) ;
+        expr: (LocInfoE loc_144 (use{it_layout i32} (LocInfoE loc_146 (!{void*} (LocInfoE loc_148 (!{void*} (LocInfoE loc_149 ("p1")))))))) ;
         Return (VOID)
       ]> $∅
     )%E
@@ -366,7 +366,7 @@ Section code.
   (* Definition of function [ptr_id]. *)
   Definition impl_ptr_id : function := {|
     f_args := [
-      ("p", LPtr);
+      ("p", void*);
       ("x", it_layout i32)
     ];
     f_local_vars := [
@@ -375,7 +375,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_161 ;
-        Return (LocInfoE loc_162 (use{LPtr} (LocInfoE loc_163 ("p"))))
+        Return (LocInfoE loc_162 (use{void*} (LocInfoE loc_163 ("p"))))
       ]> $∅
     )%E
   |}.

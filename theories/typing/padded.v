@@ -86,7 +86,7 @@ Section padded.
 
   (* we deliberately introduce a fresh location l because otherwise l
   and l' could get confused and we might have two l ◁ₗ ... for the
-  same l in the context. (one with padded (l @ singleton_place) ...
+  same l in the context. (one with padded (l @ place) ...
   and one with the type in the padded *)
   Lemma type_place_padded K l β1 ty T lyty ly:
     (∀ l', typed_place K l' β1 ty (λ l2 ty2 β typ, T l2 ty2 β (λ t, padded (typ t) lyty ly))) -∗
@@ -208,6 +208,8 @@ Section padded.
 
 
 End padded.
+Notation "padded< ty , lyty , ly >" := (padded ty lyty ly)
+  (only printing, format "'padded<' ty ,  lyty ,  ly '>'") : printing_sugar.
 
 Hint Extern 1 (Movable (padded ?ty ?lyty ?ly)) => simple apply (movable_padded ty lyty ly) : typeclass_instances.
 Typeclasses Opaque padded.

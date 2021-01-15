@@ -12,6 +12,7 @@ Section proof_tree_max.
     global_tree_max ◁ᵥ global_tree_max @ function_ptr type_of_tree_max -∗
     typed_function (impl_tree_max global_tree_max) type_of_tree_max.
   Proof.
+    Open Scope printing_sugar.
     start_function "tree_max" ([p s]) => arg_t.
     split_blocks ((
       ∅

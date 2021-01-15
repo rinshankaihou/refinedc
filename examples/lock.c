@@ -28,7 +28,7 @@ struct [[rc::refined_by("n1 : Z", "n2 : Z", "n3 : Z")]]
 
 [[rc::parameters("p : loc")]]
 [[rc::args("p @ &own<uninit<struct_lock_test>>")]]
-[[rc::ensures("p @ &own<{0, 0, 10} @ lock_test>")]]
+[[rc::ensures("own p : {0, 0, 10} @ lock_test")]]
 void init(struct lock_test* t) {
     t->outside = 0;
     t->locked_int = 0;
@@ -39,7 +39,7 @@ void init(struct lock_test* t) {
 
 [[rc::parameters("p : loc", "n : Z", "n1 : Z", "n2 : Z", "n3 : Z")]]
 [[rc::args("p @ &own<{n1, n2, n3} @ lock_test>", "n @ int<size_t>")]]
-[[rc::ensures("p @ &own<{n, n2, n3} @ lock_test>")]]
+[[rc::ensures("own p : {n, n2, n3} @ lock_test")]]
 void write_outside(struct lock_test* t, size_t n) {
     t->outside = n;
 }
@@ -47,14 +47,14 @@ void write_outside(struct lock_test* t, size_t n) {
 [[rc::parameters("p : loc", "n1 : Z", "n2 : Z", "n3 : Z")]]
 [[rc::args("p @ &own<{n1, n2, n3} @ lock_test>")]]
 [[rc::returns("n1 @ int<size_t>")]]
-[[rc::ensures("p @ &own<{n1, n2, n3} @ lock_test>")]]
+[[rc::ensures("own p : {n1, n2, n3} @ lock_test")]]
 size_t read_outside(struct lock_test* t) {
     return t->outside;
 }
 
 [[rc::parameters("p : loc", "n : Z", "q : own_state", "n1 : Z", "n2 : Z", "n3 : Z")]]
 [[rc::args("p @ &frac<q, {n1, n2, n3} @ lock_test>", "n @ int<size_t>")]]
-[[rc::ensures("p @ &frac<q, {n1, n, n3} @ lock_test>")]]
+[[rc::ensures("frac q p : {n1, n, n3} @ lock_test")]]
 void write_locked(struct lock_test* t, size_t n) {
     sl_lock(&t->lock);
 
@@ -68,7 +68,7 @@ void write_locked(struct lock_test* t, size_t n) {
 [[rc::args("p @ &frac<q, {n1, n2, n3} @ lock_test>")]]
 [[rc::exists("n : Z")]]
 [[rc::returns("n @ int<size_t>")]]
-[[rc::ensures("p @ &frac<q, {n1, n2, n3} @ lock_test>", "{q = Own → n = n2}")]]
+[[rc::ensures("frac q p : {n1, n2, n3} @ lock_test", "{q = Own → n = n2}")]]
 size_t read_locked(struct lock_test* t) {
     sl_lock(&t->lock);
     rc_unlock(t->locked_int);
@@ -83,7 +83,7 @@ size_t read_locked(struct lock_test* t) {
 [[rc::args("p @ &frac<q, {n1, n2, n3} @ lock_test>")]]
 [[rc::exists("n : Z")]]
 [[rc::returns("n @ int<size_t>")]]
-[[rc::ensures("p @ &frac<q, {n1, n2, n3} @ lock_test>", "{q = Own → n ≤ n3}")]]
+[[rc::ensures("frac q p : {n1, n2, n3} @ lock_test", "{q = Own → n ≤ n3}")]]
 size_t increment(struct lock_test* t) {
     sl_lock(&t->lock);
     rc_unlock(t->locked_struct);

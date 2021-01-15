@@ -13,6 +13,7 @@ Section proof_node.
     global_alloc ◁ᵥ global_alloc @ function_ptr type_of_alloc -∗
     typed_function (impl_node global_alloc) type_of_node.
   Proof.
+    Open Scope printing_sugar.
     start_function "node" ([[l k] r]) => arg_left arg_key arg_right local_node.
     split_blocks ((
       ∅
