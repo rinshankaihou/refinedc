@@ -82,7 +82,7 @@ list_t reverse (list_t p) {
 
 [[rc::parameters("p : loc", "l : {list type}")]]
 [[rc::args("p @ &own<l @ list_t>")]]
-[[rc::requires("{length l <= max_int size_t}")]]
+[[rc::requires("{length l ≤ max_int size_t}")]]
 [[rc::returns("{length l} @ int<size_t>")]]
 [[rc::ensures("own p : l @ list_t")]]
 size_t length (list_t *p) {
@@ -100,7 +100,7 @@ size_t length (list_t *p) {
 [[rc::parameters("v : val", "l : {list type}")]]
 [[rc::args("value<void*,v>")]]
 [[rc::requires("v : l @ list_t")]]
-[[rc::requires("{length l <= max_int size_t}")]]
+[[rc::requires("{length l ≤ max_int size_t}")]]
 [[rc::returns("{length l} @ int<size_t>")]]
 [[rc::ensures("v : l @ list_t")]]
 size_t length_val_rec (list_t p) {
@@ -112,10 +112,10 @@ size_t length_val_rec (list_t p) {
 
 [[rc::parameters("v : val", "l : {list type}")]]
 [[rc::args("value<void*,v>")]]
-[[rc::requires("[v ◁ᵥ l @ list_t]")]]
-[[rc::requires("{length l <= max_int size_t}")]]
+[[rc::requires("v : l @ list_t")]]
+[[rc::requires("{length l ≤ max_int size_t}")]]
 [[rc::returns("{length l} @ int<size_t>")]]
-[[rc::ensures("[v ◁ᵥ l @ list_t]")]]  // TODO: there should be nicer syntax for this
+[[rc::ensures("v : l @ list_t")]]
 size_t length_val (list_t p) {
   size_t len = 0;
   [[rc::exists("v2 : val", "l1 : {list type}")]]
