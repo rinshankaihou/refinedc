@@ -24,6 +24,14 @@ let to_type_cat : GenTypes.genTypeCategory -> type_cat = fun tc ->
   | Either.Right(tc) -> tc
   | Either.Left(_,_) -> assert false (* FIXME possible here? *)
 
+let gen_type_to_c_type : GenTypes.genType -> c_type = fun gt ->
+  let loc = Location_ocaml.unknown in
+  let impl = Ocaml_implementation.hafniumIntImpl in
+  let m_c_ty = GenTypesAux.interpret_genType loc impl gt in
+  match ErrorMonad.runErrorMonad m_c_ty with
+  | Either.Right(c_ty) -> c_ty
+  | Either.Left(_,_)   -> assert false (* FIXME possible here? *)
+
 let tc_of : ail_expr -> type_cat = fun e ->
   let AilSyntax.AnnotatedExpression(ty,_,_,_) = e in to_type_cat ty
 
@@ -480,7 +488,17 @@ let rec translate_expr : bool -> op_type option -> ail_expr -> expr * calls =
           | (OpInt(_), OpInt(_), Some((OpInt(_) as res_ty))) ->
               if !arith_op then (Some(res_ty), res_ty, res_ty) else
               if ty1 = ty2 then (None, ty1, ty2) else
-              not_impl loc "Operand types not uniform for comparing operator."
+              (* We build a type both operands can be casted to. *)
+              let ty =
+                let c_ty1 = c_type_of_type_cat (tc_of e1) in
+                let c_ty2 = c_type_of_type_cat (tc_of e2) in
+                let ty1 = GenTypes.inject_type c_ty1 in
+                let ty2 = GenTypes.inject_type c_ty2 in
+                let gt = GenTypesAux.usual_arithmetic ty1 ty2 in
+                let c_ty = gen_type_to_c_type gt in
+                op_type_of loc c_ty
+              in
+              (None, ty, ty)
           | (_       , _       , _                         ) ->
               (None        , ty1   , ty2   )
         in
