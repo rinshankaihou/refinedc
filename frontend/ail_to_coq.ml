@@ -156,12 +156,6 @@ let used_globals = Hashtbl.create 5
 (* Hashtable of used function. *)
 let used_functions = Hashtbl.create 5
 
-let (fresh_ret_id, reset_ret_id) =
-  let counter = ref (-1) in
-  let fresh () = incr counter; Printf.sprintf "$%i" !counter in
-  let reset () = counter := -1 in
-  (fresh, reset)
-
 let (fresh_block_id, reset_block_id) =
   let counter = ref (-1) in
   let fresh () = incr counter; Printf.sprintf "#%i" !counter in
@@ -419,10 +413,6 @@ let integer_constant_to_string loc i =
       Format.(fprintf str_formatter) "(min_int %a)" Coq_pp.pp_int_type it;
       (Format.flush_str_formatter (), Some(it))
 
-(* Calls accumulated while translating expressions. *)
-type call = Location.t * string option * expr * expr list
-type calls = call list
-
 type _ call_place =
   | In_Expr : expr call_place (* Nested call in expression. *)
   | In_Stmt : stmt call_place (* Call at the top level. *)
@@ -432,7 +422,7 @@ type _ call_res =
   | Call_atomic_expr  : expr_aux             -> 'a   call_place call_res
   | Call_atomic_store : layout * expr * expr -> stmt call_place call_res
 
-let rec translate_expr : bool -> op_type option -> ail_expr -> expr * calls =
+let rec translate_expr : bool -> op_type option -> ail_expr -> expr =
   fun lval goal_ty e ->
   let open AilSyntax in
   let res_ty = op_type_tc_opt (loc_of e) (tc_of e) in
@@ -440,16 +430,16 @@ let rec translate_expr : bool -> op_type option -> ail_expr -> expr * calls =
   let coq_loc = register_loc coq_locs loc in
   let locate e = mkloc e coq_loc in
   let translate = translate_expr lval None in
-  let (e, l) as res =
+  let e =
     match e with
     | AilEunary(Address,e)         ->
-        let (e, l) = translate_expr true None e in
-        (locate (AddrOf(e)), l)
+        let e = translate_expr true None e in
+        locate (AddrOf(e))
     | AilEunary(Indirection,e)     -> translate e
     | AilEunary(Plus,e)            -> translate e
     | AilEunary(op,e)              ->
         let ty = op_type_of_tc (loc_of e) (tc_of e) in
-        let (e, l) = translate e in
+        let e = translate e in
         let op =
           match op with
           | Address     -> assert false (* Handled above. *)
@@ -460,7 +450,7 @@ let rec translate_expr : bool -> op_type option -> ail_expr -> expr * calls =
           | PostfixIncr -> forbidden loc "nested postfix increment"
           | PostfixDecr -> forbidden loc "nested postfix decrement"
         in
-        (locate (UnOp(op, ty, e)), l)
+        locate (UnOp(op, ty, e))
     | AilEbinary(e1,op,e2)         ->
         let ty1 = op_type_of_tc (loc_of e1) (tc_of e1) in
         let ty2 = op_type_of_tc (loc_of e2) (tc_of e2) in
@@ -502,9 +492,9 @@ let rec translate_expr : bool -> op_type option -> ail_expr -> expr * calls =
           | (_       , _       , _                         ) ->
               (None        , ty1   , ty2   )
         in
-        let (e1, l1) = translate_expr lval  goal_ty e1 in
-        let (e2, l2) = translate_expr false goal_ty e2 in
-        (locate (BinOp(op, ty1, ty2, e1, e2)), l1 @ l2)
+        let e1 = translate_expr lval  goal_ty e1 in
+        let e2 = translate_expr false goal_ty e2 in
+        locate (BinOp(op, ty1, ty2, e1, e2))
     | AilEassign(e1,e2)            -> forbidden loc "nested assignment"
     | AilEcompoundAssign(e1,op,e2) -> not_impl loc "expr compound assign"
     | AilEcond(e1,e2,e3) when is_const_0 e1 && is_macro_annot e2 ->
@@ -519,13 +509,13 @@ let rec translate_expr : bool -> op_type option -> ail_expr -> expr * calls =
                (s :: args, es)
             | MacroString("EXPR") :: MacroExpr(e) :: rest ->
                let (args, es) = process_rest rest in
-               let (e, l) = translate e in
+               let e = translate e in
                (args, e :: es)
             | _ -> not_impl loc "wrong macro args"
           in
           let (args, es) = process_rest rest in
-          let (e3, l) = translate e3 in
-          (locate (Macro(name, args, es, e3)), l)
+          let e3 = translate e3 in
+          locate (Macro(name, args, es, e3))
        | _ -> not_impl loc "wrong macro"
        end
     | AilEcond(e1,e2,e3) when is_const_0 e1 && is_copy_alloc_id_annot e2 ->
@@ -534,37 +524,36 @@ let rec translate_expr : bool -> op_type option -> ail_expr -> expr * calls =
          | [_; MacroExpr(e2)] -> e2
          | _                  -> not_impl loc "wrong copy alloc id annotation"
        in
-       let (e2, l2) = translate_expr false None e2 in
-       let (e3, l3) = translate_expr false None e3 in
+       let e2 = translate_expr false None e2 in
+       let e3 = translate_expr false None e3 in
        let e = locate (CopyAID(e3, e2)) in
-       let e = if lval then locate (LValue(e)) else e in
-       (e, l2 @ l3)
+       if lval then locate (LValue(e)) else e
     | AilEcond(e1,e2,e3)           -> not_impl loc "expr cond"
     | AilEcast(q,c_ty,e)           ->
         begin
           match c_ty with
           | Ctype(_,Pointer(_,Ctype(_,Void))) when is_const_0 e ->
               let AnnotatedExpression(_, _, loc, _) = e in
-              ({ elt = Val(Null) ; loc = register_loc coq_locs loc }, [])
+              { elt = Val(Null) ; loc = register_loc coq_locs loc }
           | _                                                   ->
           let ty = op_type_of_tc (loc_of e) (tc_of e) in
           let op_ty = op_type_of loc c_ty in
-          let (e, l) = translate e in
-          (locate (UnOp(CastOp(op_ty), ty, e)), l)
+          let e = translate e in
+          locate (UnOp(CastOp(op_ty), ty, e))
         end
     | AilEcall(e,es)               ->
-        let (call, l) = translate_call In_Expr loc lval e es in
+        let call = translate_call In_Expr loc lval e es in
         begin
           match call with
-          | Call_atomic_expr(e) -> (locate e, l)
+          | Call_atomic_expr(e) -> locate e
           | Call_simple(e, es)  ->
-              let ret_id = Some(fresh_ret_id ()) in
-              (locate (Var(ret_id, false)), l @ [(coq_loc, ret_id, e, es)])
+             let e = locate (Call(e, es)) in
+             if lval then locate (LValue(e)) else e
         end
     | AilEassert(e)                -> not_impl loc "expr assert nested"
     | AilEoffsetof(c_ty,is)        ->
        let (struct_name, from_union) = struct_data_of_type c_ty in
-       (locate (OffsetOf(struct_name,from_union, id_to_str is)), [])
+       locate (OffsetOf(struct_name,from_union, id_to_str is))
     | AilEgeneric(e,gas)           -> not_impl loc "expr generic"
     | AilEarray(b,c_ty,oes)        -> not_impl loc "expr array"
     | AilEstruct(sym,fs) when lval -> not_impl loc "Struct initializer not supported in lvalue context"
@@ -576,26 +565,25 @@ let rec translate_expr : bool -> op_type option -> ail_expr -> expr * calls =
           let fn (id, eo) = Option.map (fun e -> (id_to_str id, e)) eo in
           List.filter_map fn fs
         in
-        let (fs, l) =
-          let fn (id, e) (fs, l) =
+        let fs =
+          let fn (id, e) =
             let ty = try List.assoc id map with Not_found -> assert false in
-            let (e, l_e) = translate_expr lval (Some(ty)) e in
-            ((id, e) :: fs, l_e @ l)
+            (id, translate_expr lval (Some(ty)) e)
           in
-          List.fold_right fn fs ([], [])
+          List.map fn fs
         in
-        (locate (Struct(st_id, fs)), l)
+        locate (Struct(st_id, fs))
     | AilEunion(sym,id,eo)         -> not_impl loc "expr union"
     | AilEcompound(q,c_ty,e)       -> translate e (* FIXME? *)
     | AilEmemberof(e,id)           ->
         if not lval then assert false;
         let (struct_name, from_union) = struct_data e in
-        let (e, l) = translate e in
-        (locate (GetMember(e, struct_name, from_union, id_to_str id)), l)
+        let e = translate e in
+        locate (GetMember(e, struct_name, from_union, id_to_str id))
     | AilEmemberofptr(e,id)        ->
         let (struct_name, from_union) = struct_data e in
-        let (e, l) = translate e in
-        (locate (GetMember(e, struct_name, from_union, id_to_str id)), l)
+        let e = translate e in
+        locate (GetMember(e, struct_name, from_union, id_to_str id))
     | AilEbuiltin(b)               -> not_impl loc "expr builtin"
     | AilEstr(s)                   -> not_impl loc "expr str"
     | AilEconst(c)                 ->
@@ -621,14 +609,14 @@ let rec translate_expr : bool -> op_type option -> ail_expr -> expr * calls =
           | ConstantStruct(_,_)         -> not_impl loc "constant struct"
           | ConstantUnion(_,_,_)        -> not_impl loc "constant union"
         in
-        (locate (Val(c)), [])
+        locate (Val(c))
     | AilEident(sym)               ->
         let id = sym_to_str sym in
         let global = not (Hashtbl.mem local_vars id) in
         if global then Hashtbl.add used_globals id ();
-        (locate (Var(Some(id), global)), [])
+        locate (Var(Some(id), global))
     | AilEsizeof(q,c_ty)           ->
-        (locate (Val(SizeOf(layout_of false c_ty))), [])
+        locate (Val(SizeOf(layout_of false c_ty)))
     | AilEsizeof_expr(e)           -> not_impl loc "expr sizeof_expr"
     | AilEalignof(q,c_ty)          -> not_impl loc "expr alignof"
     | AilEannot(c_ty,e)            -> not_impl loc "expr annot"
@@ -647,37 +635,37 @@ let rec translate_expr : bool -> op_type option -> ail_expr -> expr * calls =
           | _                                                   ->
           let layout = layout_of_tc (tc_of e) in
           let atomic = is_atomic_tc (tc_of e) in
-          let (e, l) = translate_expr true None e in
+          let e = translate_expr true None e in
           let gen =
             if lval then Deref(atomic, layout, e)
             else Use(atomic, layout, e)
           in
-          (locate gen, l)
+          locate gen
         in res
     | AilEarray_decay(e) when lval -> translate e
     | AilEarray_decay(e)           ->
-        let (e, l) = translate_expr true None e in
-        (locate (AddrOf(e)), l)
+        let e = translate_expr true None e in
+        locate (AddrOf(e))
     | AilEfunction_decay(e)        ->
         let res =
           match e with
           | AnnotatedExpression(_, _, _, AilEident(sym)) ->
               let fun_id = sym_to_str sym in
               Hashtbl.add used_functions fun_id ();
-              (locate (Var(Some(fun_id), true)), [])
+              locate (Var(Some(fun_id), true))
           | _                                            ->
               not_impl loc "expr function_decay (not an ident)"
         in res
   in
   match (goal_ty, res_ty) with
   | (None         , _           )
-  | (_            , None        ) -> res
-  | (Some(goal_ty), Some(res_ty)) ->
-      if goal_ty = res_ty then res
-      else (mkloc (UnOp(CastOp(goal_ty), res_ty, e)) e.loc, l)
+  | (_            , None        )                       -> e
+  | (Some(goal_ty), Some(res_ty)) when goal_ty = res_ty -> e
+  | (Some(goal_ty), Some(res_ty))                       ->
+      mkloc (UnOp(CastOp(goal_ty), res_ty, e)) e.loc
 
 and translate_call : type a. a call_place -> loc -> bool -> ail_expr
-    -> ail_expr list -> a call_place call_res * calls =
+    -> ail_expr list -> a call_place call_res =
   fun place loc lval e es ->
   let loc_e = register_loc coq_locs (loc_of e) in
   match strip_expr e with
@@ -698,22 +686,21 @@ and translate_call : type a. a call_place -> loc -> bool -> ail_expr
             "Argument annotation not usable (not enough arguments)."
       in
       List.iter check_useful annot_args;
-      let (es, l) =
+      let es =
         let fn i e =
           let (_, ty, _) = List.nth args i in
           match op_type_opt Location_ocaml.unknown ty with
           | Some(OpInt(_)) as goal_ty -> translate_expr false goal_ty e
           | _                         -> translate_expr false None e
         in
-        let es_ls = List.mapi fn es in
-        (List.map fst es_ls, List.concat (List.map snd es_ls))
+        List.mapi fn es
       in
       let annotate i e =
         let annot_args = List.filter (fun (n, _, _) -> n = i) annot_args in
         let fn (_, k, coq_e) acc = mkloc (AnnotExpr(k, coq_e, e)) e.loc in
         List.fold_right fn annot_args e
       in
-      (Call_simple(e, List.mapi annotate es), l)
+      Call_simple(e, List.mapi annotate es)
   | AilEbuiltin(b)        ->
       begin
         match b with
@@ -727,8 +714,8 @@ and translate_call : type a. a call_place -> loc -> bool -> ail_expr
             in
             let layout = ptr_layout_of e1 in
             let op_type = ptr_op_type_of e1 in
-            let (e1, l1) = translate_expr true None e1 in
-            let (e2, l2) = translate_expr false (Some(op_type)) e2 in
+            let e1 = translate_expr true None e1 in
+            let e2 = translate_expr false (Some(op_type)) e2 in
             let mo = memory_order_of_expr e3 in
             if mo <> Cmm_csem.Seq_cst then
               Panic.panic loc "Only the Seq_cst memory order is supported.";
@@ -743,7 +730,7 @@ and translate_call : type a. a call_place -> loc -> bool -> ail_expr
                     | _         -> forbidden loc "atomic store whose LHS is \
                                      not of the form [&e]"
                   in
-                  (Call_atomic_store(layout, e1, e2), List.concat [l1; l2])
+                  Call_atomic_store(layout, e1, e2)
             end
         | AilBatomic(AilBAload)                    ->
             let (e1, e2) =
@@ -752,12 +739,12 @@ and translate_call : type a. a call_place -> loc -> bool -> ail_expr
               | _        -> assert false
             in
             let layout = ptr_layout_of e1 in
-            let (e1, l1) = translate_expr true None e1 in
+            let e1 = translate_expr true None e1 in
             let mo = memory_order_of_expr e2 in
             if mo <> Cmm_csem.Seq_cst then
               Panic.panic loc "Only the Seq_cst memory order is supported.";
             begin
-              ignore (e1, l1, layout);
+              ignore (e1, layout);
               match place with
               | In_Expr ->
                  let e1 =
@@ -770,7 +757,7 @@ and translate_call : type a. a call_place -> loc -> bool -> ail_expr
                    if lval then Deref(true, layout, e1)
                    else Use(true, layout, e1)
                  in
-                 (Call_atomic_expr(gen), l1)
+                 Call_atomic_expr(gen)
               | In_Stmt -> not_impl loc "call to builtin atomic (load)"
             end
         | AilBatomic(AilBAexchange)                ->
@@ -782,15 +769,15 @@ and translate_call : type a. a call_place -> loc -> bool -> ail_expr
               | _                    -> assert false
             in
             let op_type = ptr_op_type_of e1 in
-            let (e1, l1) = translate_expr lval None e1 in
-            let (e2, l2) = translate_expr lval None e2 in
-            let (e3, l3) = translate_expr lval (Some(op_type)) e3 in
+            let e1 = translate_expr lval None e1 in
+            let e2 = translate_expr lval None e2 in
+            let e3 = translate_expr lval (Some(op_type)) e3 in
             let mo1 = memory_order_of_expr e4 in
             let mo2 = memory_order_of_expr e4 in
             if mo1 <> Cmm_csem.Seq_cst || mo2 <> Cmm_csem.Seq_cst then
               Panic.panic loc "Only the Seq_cst memory order is supported.";
             let cas = CAS(op_type, e1, e2, e3) in
-            (Call_atomic_expr(cas), List.concat [l1; l2; l3])
+            Call_atomic_expr(cas)
         | AilBatomic(AilBAcompare_exchange_weak)   ->
             not_impl loc "call to builtin atomic (compare_exchange_weak)"
         | AilBatomic(AilBAfetch_key)               ->
@@ -808,18 +795,17 @@ and translate_call : type a. a call_place -> loc -> bool -> ail_expr
       let (_, arg_tys) =
         get_function_type (loc_of e) (c_type_of_type_cat (tc_of e))
       in
-      let (e, l) = translate_expr false None e in
-      let (es, l) =
+      let e = translate_expr false None e in
+      let es =
         let fn i e =
           let ty = List.nth arg_tys i in
           match op_type_opt Location_ocaml.unknown ty with
           | Some(OpInt(_)) as goal_ty -> translate_expr false goal_ty e
           | _                         -> translate_expr false None e
         in
-        let es_ls = List.mapi fn es in
-        (List.map fst es_ls, List.concat (l :: List.map snd es_ls))
+        List.mapi fn es
       in
-      (Call_simple(e, es), l)
+      Call_simple(e, es)
 
 type bool_expr =
   | BE_leaf of ail_expr
@@ -854,25 +840,12 @@ let add_block ?annots id s blocks =
   in
   SMap.add id (annots, s) blocks
 
-type op_ty_opt = Coq_ast.op_type option
-
-let trans_expr : ail_expr -> op_ty_opt -> (expr -> stmt) -> stmt =
-    fun e goal_ty e_stmt ->
-  let (e, calls) = translate_expr false goal_ty e in
-  let fn (loc, id, e, es) stmt =
-    mkloc (Call(id, e, es, stmt)) loc
-  in
-  List.fold_right fn calls (e_stmt e)
-
-let trans_bool_expr : ail_expr -> (expr -> stmt) -> stmt = fun e e_stmt ->
-  trans_expr e (Some(OpInt(ItBool))) e_stmt
-
 let translate_bool_expr then_goto else_goto blocks e =
   let rec translate then_goto else_goto blocks be =
     match be with
     | BE_leaf(e)      ->
-        let fn e = mkloc (If(e, then_goto, else_goto)) e.loc in
-        (trans_bool_expr e fn, blocks)
+        let e = translate_expr false (Some(OpInt(ItBool))) e in
+        (mkloc (If(e, then_goto, else_goto)) e.loc, blocks)
     | BE_neg(be)      ->
         translate else_goto then_goto blocks be
     | BE_and(be1,be2) ->
@@ -895,10 +868,6 @@ let translate_bool_expr then_goto else_goto blocks e =
         (s, blocks)
   in
   translate then_goto else_goto blocks (bool_expr e)
-
-let trans_lval e : expr =
-  let (e, calls) = translate_expr true None e in
-  if calls <> [] then assert false; e
 
 (* Insert local variables. *)
 let insert_bindings bindings =
@@ -1058,7 +1027,8 @@ let translate_block stmts blocks ret_ty =
             | Some(OpInt(_)) -> ret_ty
             | _              -> None
           in
-          (trans_expr e goal_ty (fun e -> locate (Return(e))), blocks)
+          let e = translate_expr false goal_ty e in
+          (locate (Return(e)), blocks)
       (* All the other constructors. *)
       | AilSskip            ->
           trans extra_attrs swstk ks stmts blocks
@@ -1074,10 +1044,11 @@ let translate_block stmts blocks ret_ty =
             let loc_full = loc_of e in
             match strip_expr e with
             | AilEassert(e)                        ->
-                trans_bool_expr e (fun e -> locate (Assert(e, stmt)))
+                let e = translate_expr false (Some(OpInt(ItBool))) e in
+                locate (Assert(e, stmt))
             | AilEassign(e1,e2)                    ->
                 let atomic = is_atomic_tc (tc_of e1) in
-                let e1 = trans_lval e1 in
+                let e1 = translate_expr true None e1 in
                 let layout = layout_of_tc (tc_of e) in
                 let goal_ty =
                   let ty_opt = op_type_tc_opt (loc_of e) (tc_of e) in
@@ -1085,8 +1056,8 @@ let translate_block stmts blocks ret_ty =
                   | Some(OpInt(_)) -> ty_opt
                   | _              -> None
                 in
-                let fn e2 = locate (Assign(atomic, layout, e1, e2, stmt)) in
-                trans_expr e2 goal_ty fn
+                let e2 = translate_expr false goal_ty e2 in
+                locate (Assign(atomic, layout, e1, e2, stmt))
             | AilEunary(op,e) when incr_or_decr op ->
                 let atomic = is_atomic_tc (tc_of e) in
                 let layout = layout_of_tc (tc_of e) in
@@ -1097,7 +1068,7 @@ let translate_block stmts blocks ret_ty =
                   | _                   -> assert false (* Badly typed. *)
                 in
                 let op = match op with PostfixIncr -> AddOp | _ -> SubOp in
-                let e1 = trans_lval e in
+                let e1 = translate_expr true None e in
                 let e2 =
                   let one = locate (Val(Int("1", int_ty))) in
                   let use = locate (Use(atomic, layout, e1)) in
@@ -1105,26 +1076,23 @@ let translate_block stmts blocks ret_ty =
                 in
                 locate (Assign(atomic, layout, e1, e2, stmt))
             | AilEcall(e,es)                       ->
-                let (call, calls) =
-                  translate_call In_Stmt loc_full false e es
-                in
+                let call = translate_call In_Stmt loc_full false e es in
                 let stmt =
                   match call with
                   | Call_atomic_expr(e)             ->
                       let annots = use_annots () in
                       locate (ExprS(annots, locate e, stmt))
                   | Call_simple(e,es)               ->
-                      locate (Call(None, e, es, stmt))
+                      let annots = use_annots () in
+                      locate (ExprS(annots, locate(Call(e, es)), stmt))
                   | Call_atomic_store(layout,e1,e2) ->
                       locate (Assign(true, layout, e1, e2, stmt))
                 in
-                let fn (loc, id, e, es) stmt =
-                  mkloc (Call(id, e, es, stmt)) loc
-                in
-                List.fold_right fn calls stmt
+                stmt
             | _                                    ->
                 let annots = use_annots () in
-                trans_expr e None (fun e -> locate (ExprS(annots, e, stmt)))
+                let e = translate_expr false None e in
+                locate (ExprS(annots, e, stmt))
           in
           (stmt, blocks)
       | AilSif(e,s1,s2)     ->
@@ -1270,8 +1238,8 @@ let translate_block stmts blocks ret_ty =
             (map, bs, def, blocks)
           in
           (* Put everything together. *)
-          let fn e = locate (Switch(it, e, map, bs, def)) in
-          (trans_expr e None fn, blocks)
+          let e = translate_expr false None e in
+          (locate (Switch(it, e, map, bs, def)), blocks)
       | AilScase(i,s)       ->
           warn_ignored_attrs None extra_attrs;
           (* Get the value of the current case. *)
@@ -1340,11 +1308,9 @@ let translate_block stmts blocks ret_ty =
             let layout = layout_of false ty in
             let atomic = is_atomic ty in
             let goal_ty = op_type_opt Location_ocaml.unknown ty in
-            let fn e =
-              let var = noloc (Var(Some(id), false)) in
-              noloc (Assign(atomic, layout, var, e, stmt))
-            in
-            trans_expr e goal_ty fn
+            let e = translate_expr false goal_ty e in
+            let var = noloc (Var(Some(id), false)) in
+            noloc (Assign(atomic, layout, var, e, stmt))
           in
           (List.fold_right add_decl ls stmt, blocks)
       | AilSpar(_)          -> not_impl loc "statement par"
@@ -1453,7 +1419,7 @@ let translate : string -> typed_ail -> Coq_ast.t = fun source_file ail ->
     let open AilSyntax in
     let build (func_name, (ret_ty, args_decl, attrs)) =
       (* Initialise all state. *)
-      Hashtbl.reset local_vars; reset_ret_id (); reset_block_id ();
+      Hashtbl.reset local_vars; reset_block_id ();
       Hashtbl.reset used_globals; Hashtbl.reset used_functions;
       (* Fist parse that annotations. *)
       let func_annot =

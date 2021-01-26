@@ -11,19 +11,14 @@ Class refinedcG Σ := RefinedCG {
   refinedcG_gen_heapG :> heapG Σ
 }.
 
-Instance expr_irisG `{!refinedcG Σ} : irisG expr_lang Σ := {
-  iris_invG := refinedcG_invG;
-  state_interp σ κs _ := state_ctx σ;
-  fork_post _ := True%I;
-}.
-Instance stmt_irisG `{!refinedcG Σ} : irisG stmt_lang Σ := {
+Instance c_irisG `{!refinedcG Σ} : irisG c_lang Σ := {
   iris_invG := refinedcG_invG;
   state_interp σ κs _ := state_ctx σ;
   fork_post _ := True%I;
 }.
 Global Opaque iris_invG.
 
-Instance into_val_val v : IntoVal (Val v) v.
+Instance into_val_val v : IntoVal (to_rtexpr (Val v)) v.
 Proof. done. Qed.
 
 Local Hint Extern 0 (reducible _ _) => eexists _, _, _, _; simpl : core.
@@ -33,20 +28,112 @@ Local Hint Unfold heap_at : core.
 
 Local Ltac solve_atomic :=
   apply strongly_atomic_atomic, ectx_language_atomic;
-    [inversion 1; naive_solver
-    |apply ectxi_language_sub_redexes_are_values; intros [] **; naive_solver].
+    [inversion 1; unfold coerce_rtexpr in *; simplify_eq; inv_expr_step; naive_solver
+    |unfold coerce_rtexpr in *;apply ectxi_language_sub_redexes_are_values; intros [[]|[]] **; naive_solver].
 
-Instance cas_atomic s ot (v1 v2 v3 : val) : Atomic s (CAS ot v1 v2 v3).
+Instance cas_atomic s ot (v1 v2 v3 : val) : Atomic s (coerce_rtexpr (CAS ot v1 v2 v3)).
 Proof. solve_atomic. Qed.
-Instance skipe_atomic s (v : val) : Atomic s (SkipE v).
+Instance skipe_atomic s (v : val) : Atomic s (coerce_rtexpr (SkipE v)).
 Proof. solve_atomic. Qed.
-Instance deref_atomic s (l : loc) ly : Atomic s (Deref ScOrd ly l).
+Instance deref_atomic s (l : loc) ly : Atomic s (coerce_rtexpr (Deref ScOrd ly l)).
 Proof. solve_atomic. Qed.
-Instance use_atomic s (l : loc) ly : Atomic s (Use ScOrd ly l).
-Proof. rewrite /Use. solve_atomic. Qed.
+Instance use_atomic s (l : loc) ly : Atomic s (coerce_rtexpr (Use ScOrd ly l)).
+Proof. solve_atomic. Qed.
+
+(*** General lifting lemmas *)
+
+Section lifting.
+  Context `{!refinedcG Σ}.
+  Lemma wp_alloc_failed E Φ:
+    ⊢ WP AllocFailed @ E {{ Φ }}.
+  Proof.
+    iLöb as "IH".
+    iApply wp_lift_pure_det_head_step_no_fork' => //; first by eauto using AllocFailedStep.
+    move => ????? . inversion 1; simplify_eq => //.
+    match goal with | H: to_rtexpr ?e = AllocFailed |- _ => destruct e; discriminate end.
+  Qed.
+
+  Lemma wp_c_lift_step_fupd E e step_rel Φ:
+    ((∃ e', e = to_rtexpr e' ∧ step_rel = expr_step e') ∨
+     (∃ rf s, e = to_rtstmt rf s ∧ step_rel = stmt_step s rf)) →
+    to_val e = None →
+    (∀ (σ1 : state), state_ctx σ1 ={E,∅}=∗
+       ⌜∃ os e2 σ2 tsl, step_rel σ1 os e2 σ2 tsl⌝ ∗
+        (∀ os e2 σ2 tsl, ⌜step_rel σ1 os e2 σ2 tsl⌝
+          ={∅}=∗ ▷ (|={∅,E}=> ⌜tsl = []⌝ ∗ state_ctx σ2 ∗ WP e2 @ E {{ Φ }})))
+      -∗ WP e @ E {{ Φ }}.
+  Proof.
+    iIntros (He ?) "HWP".
+    iApply wp_lift_head_step_fupd => //.
+    iIntros (σ1 κ κs n) "Hσ".
+    iMod ("HWP" $! σ1 with "Hσ") as (Hstep) "HWP".
+    iModIntro. iSplit. {
+      iPureIntro. destruct Hstep as (?&?&?&?&?).
+      naive_solver eauto using ExprStep, StmtStep.
+    }
+    clear Hstep. iIntros (??? Hstep).
+    destruct He as [[e' [??]]|[? [s [??]]]]; inversion Hstep; simplify_eq.
+    all: try by [destruct e'; discriminate].
+    all: try match goal with | H : to_rtexpr ?e = to_rtstmt _ _ |- _ => destruct e; discriminate end.
+    all: iMod ("HWP" with "[//]") as "HWP".
+    all: do 2 iModIntro.
+    all: iMod "HWP" as (->) "[$ HWP]"; iModIntro => /=; by rewrite right_id.
+  Qed.
+
+  Lemma wp_lift_expr_step_fupd E (e : expr) Φ:
+    to_val e = None →
+    (∀ (σ1 : state), state_ctx σ1 ={E,∅}=∗
+       ⌜∃ os e2 σ2 tsl, expr_step e σ1 os e2 σ2 tsl⌝ ∗
+        (∀ os e2 σ2 tsl, ⌜expr_step e σ1 os e2 σ2 tsl⌝
+          ={∅}=∗ ▷ (|={∅,E}=> ⌜tsl = []⌝ ∗ state_ctx σ2 ∗ WP e2 @ E {{ Φ }})))
+      -∗ WP e @ E {{ Φ }}.
+  Proof. iIntros (?) "HWP". iApply wp_c_lift_step_fupd => //. naive_solver. Qed.
+
+  Lemma wp_lift_stmt_step_fupd E s rf Φ:
+    (∀ (σ1 : state), state_ctx σ1 ={E,∅}=∗
+       ⌜∃ os e2 σ2 tsl, stmt_step s rf σ1 os e2 σ2 tsl⌝ ∗
+        (∀ os e2 σ2 tsl, ⌜stmt_step s rf σ1 os e2 σ2 tsl⌝
+          ={∅}=∗ ▷ (|={∅,E}=> ⌜tsl = []⌝ ∗ state_ctx σ2 ∗ WP e2 @ E {{ Φ }})))
+      -∗ WP to_rtstmt rf s @ E {{ Φ }}.
+  Proof. iIntros "HWP". iApply wp_c_lift_step_fupd => //. naive_solver. Qed.
+
+  Lemma wp_c_lift_step E e step_rel Φ:
+    ((∃ e', e = to_rtexpr e' ∧ step_rel = expr_step e') ∨
+     (∃ rf s, e = to_rtstmt rf s ∧ step_rel = stmt_step s rf)) →
+    to_val e = None →
+    (∀ (σ1 : state), state_ctx σ1 ={E}=∗
+       ⌜∃ os e2 σ2 tsl, step_rel σ1 os e2 σ2 tsl⌝ ∗
+        ▷ (∀ os e2 σ2 tsl, ⌜step_rel σ1 os e2 σ2 tsl⌝
+          ={E}=∗ ⌜tsl = []⌝ ∗ state_ctx σ2 ∗ WP e2 @ E {{ Φ }}))
+      -∗ WP e @ E {{ Φ }}.
+  Proof.
+    iIntros (??) "HWP".
+    iApply wp_c_lift_step_fupd => //.
+    iIntros (?) "Hσ". iMod ("HWP" with "Hσ") as "[$ HWP]".
+    iMod (fupd_intro_mask' _ ∅) as "HE"; first set_solver.
+    iIntros "!>" (?????) "!> !>". iMod "HE". by iMod ("HWP" with "[//]") as "$".
+  Qed.
+
+  Lemma wp_lift_expr_step E (e : expr) Φ:
+    to_val e = None →
+    (∀ (σ1 : state), state_ctx σ1 ={E}=∗
+       ⌜∃ os e2 σ2 tsl, expr_step e σ1 os e2 σ2 tsl⌝ ∗
+        ▷ (∀ os e2 σ2 tsl, ⌜expr_step e σ1 os e2 σ2 tsl⌝
+          ={E}=∗ ⌜tsl = []⌝ ∗ state_ctx σ2 ∗ WP e2 @ E {{ Φ }}))
+      -∗ WP e @ E {{ Φ }}.
+  Proof. iIntros (?) "HWP". iApply wp_c_lift_step => //. naive_solver. Qed.
+
+  Lemma wp_lift_stmt_step E s rf Φ:
+    (∀ (σ1 : state), state_ctx σ1 ={E}=∗
+       ⌜∃ os e2 σ2 tsl, stmt_step s rf σ1 os e2 σ2 tsl⌝ ∗
+        ▷ (∀ os e2 σ2 tsl, ⌜stmt_step s rf σ1 os e2 σ2 tsl⌝
+          ={E}=∗ ⌜tsl = []⌝ ∗ state_ctx σ2 ∗ WP e2 @ E {{ Φ }}))
+      -∗ WP to_rtstmt rf s @ E {{ Φ }}.
+  Proof. iIntros "HWP". iApply wp_c_lift_step => //. naive_solver. Qed.
+
+End lifting.
 
 (*** Lifting of expressions *)
-
 Section expr_lifting.
 Context `{!refinedcG Σ}.
 
@@ -57,12 +144,13 @@ Lemma wp_binop v1 v2 Φ op E ot1 ot2:
   WP BinOp op ot1 ot2 (Val v1) (Val v2) @ E {{ Φ }}.
 Proof.
   iIntros "HΦ".
-  iApply wp_lift_atomic_head_step; auto.
-  iIntros (σ1 ???) "Hctx !>".
+  iApply wp_lift_expr_step; auto.
+  iIntros (σ1) "Hctx !>".
   iDestruct ("HΦ" with "Hctx") as ([v' Heval]) "HΦ".
-  iSplit; first by eauto using BinOpS.
-  iIntros "!#" (e2 σ2 efs Hst). inv_expr_step.
-  iModIntro. rewrite right_id. by iApply "HΦ".
+  iSplit; first by eauto 8 using BinOpS.
+  iIntros "!#" (? e2 σ2 efs Hst). inv_expr_step.
+  iDestruct ("HΦ" with "[//]") as "[$ HΦ]".
+  iModIntro. iSplit => //. by iApply wp_value.
 Qed.
 
 Lemma wp_binop_det v' v1 v2 Φ op E ot1 ot2:
@@ -85,12 +173,13 @@ Lemma wp_unop v1 Φ op E ot:
    WP UnOp op ot (Val v1) @ E {{ Φ }}.
 Proof.
   iIntros "HΦ".
-  iApply wp_lift_atomic_head_step; auto.
-  iIntros (σ1 ???) "Hctx !>".
+  iApply wp_lift_expr_step; auto.
+  iIntros (σ1) "Hctx !>".
   iDestruct ("HΦ" with "Hctx") as ([v' Heval]) "HΦ".
-  iSplit; first by eauto using UnOpS.
-  iIntros "!#" (e2 σ2 efs Hst). inv_expr_step.
-  iModIntro. rewrite right_id. by iApply "HΦ".
+  iSplit; first by eauto 8 using UnOpS.
+  iIntros "!#" (? e2 σ2 efs Hst). inv_expr_step.
+  iDestruct ("HΦ" with "[//]") as "[$ HΦ]".
+  iModIntro. iSplit => //. by iApply wp_value.
 Qed.
 
 Lemma wp_unop_det v' v1 Φ op E ot:
@@ -114,30 +203,49 @@ Lemma wp_deref v Φ vl l ly q E o:
   l↦{q}v -∗ ▷ (l ↦{q} v -∗ Φ v) -∗ WP !{ly, o} (Val vl) @ E {{ Φ }}.
 Proof.
   iIntros (Ho Hl Hll Hlv) "Hmt HΦ".
-  iApply wp_lift_head_step; auto.
-  iIntros ([h ub fn] ???) "(%&Hhctx&Hfctx)".
+  iApply wp_lift_expr_step; auto.
+  iIntros ([h ub fn]) "(%&Hhctx&Hactx&Hfctx)/=".
   iDestruct (heap_mapsto_has_alloc_id with "Hmt") as %Haid.
   destruct o; try by destruct Ho.
-  - iMod (fupd_intro_mask' _ ∅) as "Hclose"; first set_solver. iModIntro.
-    iDestruct (heap_mapsto_lookup_q (λ st, ∃ n, st = RSt n) with "Hhctx Hmt") as %Hat. naive_solver.
-    iSplit; first by eauto 8 using DerefS.
-    iIntros "!#" (e2 σ2 efs Hst). inv_expr_step. iMod "Hclose" as "$". iModIntro. unfold end_st, end_expr.
+  - iModIntro. iDestruct (heap_mapsto_lookup_q (λ st, ∃ n, st = RSt n) with "Hhctx Hmt") as %Hat. naive_solver.
+    iSplit; first by eauto 11 using DerefS.
+    iIntros (? e2 σ2 efs Hst) "!> !>". inv_expr_step.
+    iSplit => //. unfold end_st, end_expr.
     have <- : (v = v') by apply: heap_at_inj_val.
     rewrite /heap_fmap/=. erewrite heap_upd_heap_at_id => //.
-    iFrame. iSplit => //. iApply @wp_value. by iApply "HΦ".
-  - iMod (heap_read_na with "Hhctx Hmt") as "(% & Hσ & Hσclose)" => //.
-    iMod (fupd_intro_mask' _ ∅) as "Hclose"; first set_solver. iModIntro.
-    iSplit; first by eauto 8 using DerefS.
-    iIntros "!#" (e2 σ2 efs Hst). inv_expr_step. iMod "Hclose" as "$". iModIntro. unfold end_st, end_expr.
+    iFrame. iApply wp_value. by iApply "HΦ".
+  - iMod (heap_read_na with "Hhctx Hmt") as "(% & Hσ & Hσclose)" => //. iModIntro.
+    iSplit; first by eauto 11 using DerefS.
+    iIntros (? e2 σ2 efs Hst) "!> !>". inv_expr_step.
+    iSplit => //. unfold end_st, end_expr.
     have <- : (v = v') by apply: heap_at_inj_val.
-    iFrame => /=. iSplit => //.
-    iApply wp_lift_atomic_head_step_no_fork; auto.
-    iIntros ([h2 fn2] ???) "(%&Hhctx&Hfctx)". iMod ("Hσclose" with "Hhctx") as (?) "(Hσ & Hv)".
-    iModIntro; iSplit; first by eauto 8 using DerefS.
-    iIntros "!#" (e2 σ2 efs Hst) "!#". inv_expr_step.
-    have <- : (v = v'0) by apply: heap_at_inj_val.
-    iFrame. iSplitR => //=. by iApply "HΦ".
+    iFrame => /=.
+
+    iApply wp_lift_expr_step; auto.
+    iIntros ([h2 ub2 fn2]) "(%&Hhctx&Hactx&Hfctx)/=".
+    iMod ("Hσclose" with "Hhctx") as (?) "(Hσ & Hv)".
+    iModIntro; iSplit; first by eauto 11 using DerefS.
+    iIntros "!#" (? e2 σ2 efs Hst) "!#". inv_expr_step. iSplit => //.
+    have ? : (v = v'0) by apply: heap_at_inj_val. subst.
+    iFrame. iApply wp_value. by iApply "HΦ".
 Qed.
+
+(*
+  Alternative version of the CAS rule which does not rely on the Atomic infrastructure:
+  Lemma wp_cas vl1 vl2 vd Φ l1 l2 it E:
+  val_to_loc vl1 = Some l1 →
+  val_to_loc vl2 = Some l2 →
+  (bytes_per_int it ≤ bytes_per_addr)%nat →
+  (|={E, ∅}=> ∃ (q1 q2 : Qp) vo ve z1 z2,
+     ⌜val_to_int vo it = Some z1⌝ ∗ ⌜val_to_int ve it = Some z2⌝ ∗
+     ⌜l1 `has_layout_loc` it_layout it⌝ ∗ ⌜l2 `has_layout_loc` it_layout it⌝ ∗
+     ⌜length vd = bytes_per_int it⌝ ∗ ⌜if bool_decide (z1 = z2) then q1 = 1%Qp else q2 = 1%Qp⌝ ∗
+     l1↦{q1}vo ∗ l2↦{q2}ve ∗ ▷ (
+       l1↦{q1} (if bool_decide (z1 = z2) then vd else vo) -∗
+       l2↦{q2} (if bool_decide (z1 = z2) then ve else vo)
+       ={∅, E}=∗ Φ (val_of_bool (bool_decide (z1 = z2))))) -∗
+   WP CAS (IntOp it) (Val vl1) (Val vl2) (Val vd) @ E {{ Φ }}.
+*)
 
 Lemma wp_cas_fail vl1 vl2 vd vo ve z1 z2 Φ l1 l2 it q E:
   val_to_loc vl1 = Some l1 →
@@ -153,21 +261,20 @@ Lemma wp_cas_fail vl1 vl2 vd vo ve z1 z2 Φ l1 l2 it q E:
    WP CAS (IntOp it) (Val vl1) (Val vl2) (Val vd) @ E {{ Φ }}.
 Proof.
   iIntros (Hl1 Hl2 Hly1 Hly2 Hvo Hve Hlen1 Hlen2 Hneq) "Hl1 Hl2 HΦ".
+  iApply wp_lift_expr_step; auto.
+  iIntros (σ1) "(%&Hhctx&Hfctx)".
   iDestruct (heap_mapsto_has_alloc_id with "Hl1") as %Haid1.
   iDestruct (heap_mapsto_has_alloc_id with "Hl2") as %Haid2.
   move: (Hvo) (Hve) => /val_to_int_length ? /val_to_int_length ?.
-  iApply wp_lift_atomic_head_step; auto.
-  iIntros (σ1 ???) "(%&Hhctx&Hfctx)".
   iDestruct (heap_mapsto_lookup_q (λ st : lock_state, ∃ n : nat, st = RSt n) with "Hhctx Hl1") as %? => //. { naive_solver. }
   iDestruct (heap_mapsto_lookup_1 (λ st : lock_state, st = RSt 0%nat) with "Hhctx Hl2") as %? => //.
-  iModIntro. iSplit; first by eauto 12 using CasFailS.
-  iIntros "!#" (e2 σ2 efs Hst). inv_expr_step;
-  have ? : (vo = vo0) by [apply: heap_at_go_inj_val' => //; congruence];
-  have ? : (ve = ve0) by [apply: heap_at_go_inj_val' => //; congruence]; simplify_eq.
+  iModIntro. iSplit; first by eauto 15 using CasFailS.
+  iIntros (? e2 σ2 efs Hst) "!>". inv_expr_step;
+    have ? : (vo = vo0) by [apply: heap_at_go_inj_val' => //; congruence];
+    have ? : (ve = ve0) by [apply: heap_at_go_inj_val' => //; congruence]; simplify_eq.
   have ? : (length ve0 = length vo0) by congruence.
-  iMod (heap_write with "Hhctx Hl2") as "[$ Hl2]" => //.
-  iFrame. iModIntro. rewrite right_id /=.
-  by iApply ("HΦ" with "Hl1").
+  iMod (heap_write with "Hhctx Hl2") as "[$ Hl2]" => //. iModIntro.
+  iFrame. iSplit => //. iApply wp_value. by iApply ("HΦ" with "[$]").
 Qed.
 
 Lemma wp_cas_suc vl1 vl2 vd vo ve z1 z2 Φ l1 l2 it E q:
@@ -181,24 +288,23 @@ Lemma wp_cas_suc vl1 vl2 vd vo ve z1 z2 Φ l1 l2 it E q:
   (bytes_per_int it ≤ bytes_per_addr)%nat →
   z1 = z2 →
   l1↦vo -∗ l2↦{q}ve -∗ ▷ (l1 ↦ vd -∗ l2↦{q}ve -∗ Φ (val_of_bool true)) -∗
-   WP CAS (IntOp it) (Val vl1) (Val vl2) (Val vd) @ E {{ Φ }}.
+  WP CAS (IntOp it) (Val vl1) (Val vl2) (Val vd) @ E {{ Φ }}.
 Proof.
-  iIntros (Hl1 Hl2 Hly1 Hly2 Hvo Hve Hlen1 Hlen2 Heq) "Hl1 Hl2 HΦ".
+  iIntros (Hl1 Hl2 Hly1 Hly2 Hvo Hve Hlen1 Hlen2 Hneq) "Hl1 Hl2 HΦ".
+  iApply wp_lift_expr_step; auto.
+  iIntros (σ1) "(%&Hhctx&Hfctx)".
   iDestruct (heap_mapsto_has_alloc_id with "Hl1") as %Haid1.
   iDestruct (heap_mapsto_has_alloc_id with "Hl2") as %Haid2.
   move: (Hvo) (Hve) => /val_to_int_length ? /val_to_int_length ?.
-  iApply wp_lift_atomic_head_step; auto.
-  iIntros (σ1 ???) "(%&Hhctx&Hfctx)".
   iDestruct (heap_mapsto_lookup_1 (λ st : lock_state, st = RSt 0%nat) with "Hhctx Hl1") as %? => //.
   iDestruct (heap_mapsto_lookup_q (λ st : lock_state, ∃ n : nat, st = RSt n) with "Hhctx Hl2") as %? => //. { naive_solver. }
-  iModIntro. iSplit; first by eauto 12 using CasSucS.
-  iIntros "!#" (e2 σ2 efs Hst). inv_expr_step;
-  have ? : (ve = ve0) by [apply: heap_at_go_inj_val' => //; congruence];
-  have ? : (vo = vo0) by [apply: heap_at_go_inj_val' => //; congruence]; simplify_eq.
+  iModIntro. iSplit; first by eauto 15 using CasSucS.
+  iIntros (? e2 σ2 efs Hst) "!>". inv_expr_step;
+      have ? : (ve = ve0) by [apply: heap_at_go_inj_val' => //; congruence];
+      have ? : (vo = vo0) by [apply: heap_at_go_inj_val' => //; congruence]; simplify_eq.
   have ? : (length vo0 = length vd) by congruence.
-  iMod (heap_write with "Hhctx Hl1") as "[$ Hmt]" => //.
-  iFrame. iModIntro. rewrite right_id /=.
-  by iApply ("HΦ" with "Hmt").
+  iMod (heap_write with "Hhctx Hl1") as "[$ Hmt]" => //. iModIntro.
+  iFrame. iSplit => //. iApply wp_value. by iApply ("HΦ" with "[$]").
 Qed.
 
 Lemma wp_neg_int Φ v v' n E it:
@@ -264,11 +370,10 @@ Lemma wp_copy_alloc_id Φ l1 l2 v1 v2 E:
   val_to_loc v2 = Some l2 →
   ▷ Φ (val_of_loc (l2.1, l1.2)) -∗ WP CopyAllocId (Val v1) (Val v2) @ E {{ Φ }}.
 Proof.
-  iIntros (Hl1 Hl2) "HΦ". iApply wp_lift_atomic_head_step => //.
-  iIntros (σ1 ???) "Hctx !>". iSplit; first by eauto using CopyAllocIdS.
-  iIntros "!>" (??? Hstep) "!>".
-  inversion_clear Hstep. rewrite /=. simplify_eq.
-  by iFrame.
+  iIntros (Hl1 Hl2) "HΦ". iApply wp_lift_expr_step => //.
+  iIntros (σ1) "Hctx !>". iSplit; first by eauto 8 using CopyAllocIdS.
+  iIntros "!>" (???? Hstep) "!>". inv_expr_step. iSplit => //. iFrame.
+  by iApply wp_value.
 Qed.
 
 Lemma wp_ptr_offset Φ vl l E it o ly vo:
@@ -330,7 +435,7 @@ Proof.
     move: Ho => /fmap_Some[?[?->]].
     by apply offset_of_bound.
   }
-  rewrite Ho /= Hs /=. iApply @wp_value.
+  rewrite Ho /= Hs /=. iApply wp_value.
   by iApply "HΦ".
 Qed.
 
@@ -342,26 +447,25 @@ Lemma wp_skip Φ v E:
   ▷ Φ v -∗ WP SkipE (Val v) @ E {{ Φ }}.
 Proof.
   iIntros "HΦ".
-  iApply wp_lift_atomic_head_step; auto.
-  iIntros (σ1 ???) "[Hhctx Hfctx]".
-  iModIntro. iSplit; first by eauto using SkipES.
-  iIntros "!#" (e2 σ2 efs Hst). inv_expr_step.
-    by iFrame.
+  iApply wp_lift_expr_step; auto.
+  iIntros (σ1) "?". iModIntro. iSplit; first by eauto 8 using SkipES.
+  iIntros (? e2 σ2 efs Hst) "!> !>". inv_expr_step.
+  iSplit => //. iFrame. by iApply wp_value.
 Qed.
 
 Lemma wp_concat E Φ vs:
   Φ (mjoin vs) -∗ WP Concat (Val <$> vs) @ E {{ Φ }}.
 Proof.
   iIntros "HΦ".
-  iApply wp_lift_atomic_head_step; auto.
-  iIntros (σ1 ???) "[Hhctx Hfctx]".
-  iModIntro. iSplit; first by eauto using ConcatS.
-  iIntros "!#" (e2 σ2 efs Hst). inv_expr_step.
-  by iFrame.
+  iApply wp_lift_expr_step; auto.
+  iIntros (σ1) "?".
+  iModIntro. iSplit; first by eauto 8 using ConcatS.
+  iIntros "!#" (? e2 σ2 efs Hst). inv_expr_step.
+  iModIntro. iSplit => //. iFrame. by iApply wp_value.
 Qed.
 
 Lemma wps_concat_bind_ind vs E Φ es:
-  foldr (λ e f, (λ vl, WP e @ E {{ v, f (vl ++ [v]) }}))
+  foldr (λ e f, (λ vl, WP coerce_rtexpr e @ E {{ v, f (vl ++ [v]) }}))
         (λ vl, WP Concat (Val <$> (vs ++ vl)) @ E {{ Φ }}) es [] -∗
   WP Concat ((Val <$> vs) ++ es) @ E {{ Φ }}.
 Proof.
@@ -370,21 +474,25 @@ Proof.
   elim: es vs vl2 => /=.
   - iIntros (vs vl2) "He". by rewrite !app_nil_r.
   - iIntros (e el IH vs vl2) "Hf".
-    change (Concat ((Val <$> vs ++ vl2) ++ e :: el))%E with (fill [(ConcatCtx (vs ++ vl2) el)] e).
-    iApply @wp_bind. iApply (wp_wand with "Hf").
-    iIntros (v) "Hf" => /=. rewrite (cons_middle _ _ el) (assoc app) -(fmap_app _ _ [v]) -(assoc app).
-    by iApply IH.
+    have -> : (coerce_rtexpr (Concat ((Val <$> vs ++ vl2) ++ e :: el)))%E = (fill [ExprCtx (ConcatCtx (vs ++ vl2) (to_rtexpr <$> el))] (to_rtexpr e)). {
+        by rewrite /coerce_rtexpr/= fmap_app fmap_cons -!list_fmap_compose.
+    }
+    iApply wp_bind. iApply (wp_wand with "Hf").
+    iIntros (v) "Hf" => /=.
+    have -> : Expr (RTConcat ((Expr <$> (RTVal <$> vs ++ vl2)) ++ of_val v :: (to_rtexpr <$> el)))
+             = Concat ((Val <$> vs ++ (vl2 ++ [v])) ++ el). 2: by iApply IH.
+    by rewrite /coerce_rtexpr /= !fmap_app /= (cons_middle (of_val v)) !app_assoc -!list_fmap_compose.
 Qed.
 
 Lemma wp_concat_bind E Φ es:
-  foldr (λ e f, (λ vl, WP e @ E {{ v, f (vl ++ [v]) }}))
+  foldr (λ e f, (λ vl, WP coerce_rtexpr e @ E {{ v, f (vl ++ [v]) }}))
         (λ vl, WP Concat (Val <$> vl) @ E {{ Φ }}) es [] -∗
   WP Concat es @ E {{ Φ }}.
 Proof. by iApply (wps_concat_bind_ind []). Qed.
 
 Lemma wp_struct_init E Φ sl fs:
   foldr (λ '(n, ly) f, (λ vl,
-     WP default (Val (replicate (ly_size ly) MPoison)) (n' ← n; (list_to_map fs : gmap _ _) !! n')
+     WP coerce_rtexpr (default (Val (replicate (ly_size ly) MPoison)) (n' ← n; (list_to_map fs : gmap _ _) !! n'))
         @ E {{ v, f (vl ++ [v]) }}))
     (λ vl, Φ (mjoin vl)) sl.(sl_members) [] -∗
   WP StructInit sl fs @ E {{ Φ }}.
@@ -395,13 +503,44 @@ Proof.
   iApply (wp_wand with "He"). iIntros (v') "Hfold". by iApply "IH".
 Qed.
 
+Lemma wp_call_bind_ind vs E Φ vf el:
+  foldr (λ e f, (λ vl, WP coerce_rtexpr e @ E {{ v, f (vl ++ [v]) }}))
+        (λ vl, WP (Call (Val vf) (Val <$> (vs ++ vl))) @ E {{ Φ }}) el [] -∗
+  WP (Call (Val vf) ((Val <$> vs) ++ el)) @ E {{ Φ}}.
+Proof.
+  rewrite -{2}(app_nil_r vs).
+  move: {2 3}[] => vl2.
+  elim: el vs vl2 => /=.
+  - iIntros (vs vl2) "He". by rewrite !app_nil_r.
+  - iIntros (e el IH vs vl2) "Hf".
+    have -> : (coerce_rtexpr (Call (Val vf) ((Val <$> vs ++ vl2) ++ e :: el)))%E = (fill [ExprCtx (CallRCtx vf (vs ++ vl2) (to_rtexpr <$> el))] (to_rtexpr e)). {
+        by rewrite /coerce_rtexpr/= fmap_app fmap_cons -!list_fmap_compose.
+    }
+    iApply wp_bind. iApply (wp_wand with "Hf").
+    iIntros (v) "Hf" => /=.
+    have -> : Expr (RTCall vf ((Expr <$> (RTVal <$> vs ++ vl2)) ++ of_val v :: (to_rtexpr <$> el)))
+             = Call vf ((Val <$> vs ++ (vl2 ++ [v])) ++ el). 2: by iApply IH.
+    by rewrite /coerce_rtexpr /= !fmap_app /= (cons_middle (of_val v)) !app_assoc -!list_fmap_compose.
+Qed.
+
+Lemma wp_call_bind E Φ el ef:
+  WP (coerce_rtexpr ef) @ E {{ vf, foldr (λ e f, (λ vl, WP coerce_rtexpr e @ E {{ v, f (vl ++ [v]) }}))
+        (λ vl, WP (Call (Val vf) (Val <$> vl)) @ E {{ Φ }}) el [] }} -∗
+  WP (Call ef el) @ E {{ Φ }}.
+Proof.
+  iIntros "HWP".
+  have -> : coerce_rtexpr (Call ef el) = fill [ExprCtx $ CallLCtx (coerce_rtexpr <$> el)] (coerce_rtexpr ef) by [].
+  iApply wp_bind.
+  iApply (wp_wand with "HWP"). iIntros (vf) "HWP".
+  by iApply (wp_call_bind_ind []).
+Qed.
+
 End expr_lifting.
 
 (*** Lifting of statements *)
 Definition stmt_wp_def `{!refinedcG Σ} (E : coPset) (Q : gmap label stmt) (Ψ : val → iProp Σ) (s : stmt) : iProp Σ :=
-  (∀ ts, ⌜ts.(ts_alloc_failure) = false⌝ -∗ ⌜Q = ts.(ts_rfn).(rf_fn).(f_code)⌝ -∗
-           (∀ v, Ψ v -∗ WP (update_stmt ts (Return v)) {{ _, True }}) -∗
-    WP (update_stmt ts s) @ E {{ _, True }}).
+  (∀ Φ rf, ⌜Q = rf.(rf_fn).(f_code)⌝ -∗ (∀ v, Ψ v -∗ WP to_rtstmt rf (Return v) {{ Φ }}) -∗
+    WP to_rtstmt rf s @ E {{ Φ }}).
 Definition stmt_wp_aux `{!refinedcG Σ} (E : coPset) (Q : gmap label stmt) (Ψ : val → iProp Σ) : seal (@stmt_wp_def Σ _ E Q Ψ). by eexists. Qed.
 Definition stmt_wp `{!refinedcG Σ} (E : coPset) (Q : gmap label stmt) (Ψ : val → iProp Σ) :
   stmt → iProp Σ := (stmt_wp_aux E Q Ψ).(unseal).
@@ -423,7 +562,7 @@ Proof. by rewrite stmt_wp_eq. Qed.
 Lemma fupd_wps s E Q Ψ :
   (|={E}=> WPs s @ E {{ Q, Ψ }}) -∗ WPs s @ E{{ Q, Ψ }}.
 Proof.
-  rewrite stmt_wp_unfold. iIntros "Hs" (ts Hts HQ) "HΨ".
+  rewrite stmt_wp_unfold. iIntros "Hs" (? rf HQ) "HΨ".
   iApply fupd_wp. by iApply "Hs".
 Qed.
 
@@ -431,150 +570,11 @@ Lemma wps_wand s E Q Φ Ψ:
   WPs s @ E {{ Q , Φ }} -∗ (∀ v, Φ v -∗ Ψ v) -∗ WPs s @ E {{ Q , Ψ }}.
 Proof.
   rewrite !stmt_wp_unfold. iIntros "HΦ H" (???) "HΨ".
-  iApply "HΦ"; [done | done | ..]. iIntros (v) "Hv".
+  iApply "HΦ"; [ done | ..]. iIntros (v) "Hv".
   iApply "HΨ". iApply "H". iApply "Hv".
 Qed.
 
-Lemma wp_lift_stmt_step E s ts1:
-  ((∀ (v : val), s ≠ Return v) ∨ ts1.(ts_conts) ≠ []) →
-  (ts1.(ts_alloc_failure) = false) →
-  (∀ (σ1 : state), state_ctx σ1 ={E,∅}=∗
-     ⌜∃ os ts2 σ2 tsl, simple_stmt_step (update_stmt ts1 s) σ1 os ts2 σ2 tsl ∧
-                       (σ1.(st_alloc_failure) = true → σ2.(st_alloc_failure) = true)⌝ ∗
-     (∀ os ts2 σ2 tsl, ⌜simple_stmt_step (update_stmt ts1 s) σ1 os ts2 σ2 tsl⌝
-        ={∅}=∗ ▷ (|={∅,E}=> ⌜tsl = []⌝ ∗ state_ctx σ2 ∗
-                  (⌜ts2.(ts_alloc_failure) = false⌝ -∗ WP ts2 @ E {{ _, True }}))))
-    -∗ WP update_stmt ts1 s @ E {{ _, True }}.
-Proof.
-  iIntros (Hnoret ?) "HWP".
-  iApply wp_lift_step_fupd. {
-    destruct s; destruct ts1 as [??[]] => //.
-    destruct e, ts_conts => //. naive_solver.
-  }
-  iIntros (σ1 κ κs n) "Hσ".
-  iMod ("HWP" $! σ1 with "Hσ") as (Hstep) "HWP".
-  iModIntro. iSplit. {
-    iPureIntro. destruct Hstep as (?&?&?&?&?&?).
-    destruct σ1.(st_alloc_failure) eqn:?; eauto using SStep_fail, SStep_ok.
-  }
-  clear Hstep. iIntros (??? Hstep). inversion Hstep; simplify_eq; simpl.
-  all: iMod ("HWP" with "[//]") as "HWP".
-  all: do 2 iModIntro.
-  all: iMod "HWP" as (->) "[$ HWP]"; iModIntro => /=; rewrite right_id.
-  - destruct (ts_alloc_failure e2) eqn:Hfail; last by iApply "HWP".
-    iApply wp_value; last done. rewrite /IntoVal /=.
-    apply language.of_to_val. by destruct e2 as [??[]].
-  - iApply wp_value; last done. rewrite /IntoVal /=.
-    apply language.of_to_val. by destruct ts' as [???].
-Qed.
-
-Lemma wps_lift_stmt_step E Q Φ s:
-  (∀ ts1, ⌜ts1.(ts_alloc_failure) = false⌝ -∗ ⌜Q = ts1.(ts_rfn).(rf_fn).(f_code)⌝ -∗
-    ⌜∀ (v : val), s ≠ Return v⌝ ∗
-    (∀ (σ1 : state),
-      state_ctx σ1 ={E,∅}=∗
-        ⌜∃ os ts2 σ2 tsl, simple_stmt_step (update_stmt ts1 s) σ1 os ts2 σ2 tsl ∧
-                       (σ1.(st_alloc_failure) = true → σ2.(st_alloc_failure) = true)⌝ ∗
-        (∀ os ts2 σ2 tsl, ⌜simple_stmt_step (update_stmt ts1 s) σ1 os ts2 σ2 tsl⌝ ={∅}=∗
-           ▷ (|={∅,E}=> ⌜tsl = []⌝ ∗ state_ctx σ2 ∗
-              (⌜ts2.(ts_alloc_failure) = false⌝ -∗
-               WPs ts2.(ts_rfn).(rf_stmt) @ E {{ ts2.(ts_rfn).(rf_fn).(f_code), (λ v,
-                 (∀ v0 : val, Φ v0 -∗ WP update_stmt ts1 (Return v0) {{ _, True }}) -∗
-             WP update_stmt ts2 (Return v) {{ _, True }} ) }})))))
-    -∗ WPs s @ E {{ Q , Φ }}.
-Proof.
-  iIntros "HWP". rewrite stmt_wp_unfold. iIntros (ts ? ->) "HΦ".
-  iDestruct ("HWP" $! ts with "[//] [//]") as (Hnoretval) "HWP".
-  iApply wp_lift_stmt_step => //; first by left. iIntros (σ1) "Hσ".
-  iMod ("HWP" with "Hσ") as (?) "HWP". iModIntro. iSplit => //.
-  iIntros (os ts2 σ2 tsl Hstep). iMod ("HWP" with "[//]") as "HWP".
-  iIntros "!> !>". iMod "HWP" as (?) "[Hσ HWP]".
-  iModIntro. iFrame. iSplit => //. iIntros (?).
-  rewrite stmt_wp_unfold -(update_stmt_id ts2). iApply "HWP" => //.
-  iIntros (v) "HRet". rewrite update_stmt_update. by iApply "HRet".
-Qed.
-
-Lemma wps_bind Q Ψ Ks e E:
-  WP e @ E {{ v, WPs stmt_fill Ks (Val v) @ E {{ Q , Ψ }} }} -∗
-     WPs stmt_fill Ks e @ E {{ Q , Ψ }}.
-Proof.
-  iIntros "He". iLöb as "IH" forall (e).
-  move Hv: (to_val e) => [|]. {
-    move => /of_to_val <-. rewrite wp_value_fupd'. by iApply fupd_wps.
-  }
-  iApply wps_lift_stmt_step.
-  iIntros (?? ->). iSplit. {
-    iPureIntro. move => v. destruct Ks; try done. simpl. move => [Heq]. subst.
-    by rewrite to_of_val in Hv.
-  }
-  iIntros (σ1) "Hctx".
-  (* TODO: figure out if there is a nice lemma such that the unfolding of wp is not needed (similar to wp_val_inv?)*)
-  rewrite wp_unfold /wp_pre /= Hv.
-  iMod ("He" $! _ [] [] 0%nat with "Hctx") as (Hred) "He".
-  iModIntro. iSplit; first iPureIntro. {
-    move: Hred => [?[?[?[? Hstep]]]]. eexists _, _, _, _. split; first by eauto 10 using StmtExprS.
-    destruct Hstep as [? e1]; simplify_eq/=.
-    by destruct e1; inv_expr_step.
-  }
-  iIntros ([] σ2 efs Hs) => //. iIntros (Hstep). inv_stmt_step.
-  iMod ("He" $! _ _ _ with "[//]") as "He".
-  iModIntro. iNext. iMod "He" as "($ & He & _)". iModIntro.
-  iSplit; first done. iIntros (?). iDestruct ("IH" with "He") as "H".
-  iApply (wps_wand with "H").
-  iIntros (v) "HΨ HWP". rewrite !update_stmt_update. by iApply "HWP".
-Qed.
-
-Lemma wps_return Q Ψ v:
-  Ψ v -∗ WPs (Return (Val v)) {{ Q , Ψ }}.
-Proof. rewrite stmt_wp_unfold. iIntros "Hb" (ts Φ) "HQ HΨ". by iApply "HΨ". Qed.
-
-Lemma wps_goto Q Ψ b s:
-  Q !! b = Some s →
-  ▷ WPs s {{ Q, Ψ }} -∗ WPs Goto b {{ Q , Ψ }}.
-Proof.
-  iIntros (Hs) "HWP". iApply wps_lift_stmt_step. iIntros (?? ->).
-  iSplit; first done. iIntros (?) "Hσ".
-  iMod (fupd_intro_mask' _ ∅) as "HE"; first by set_solver. iModIntro.
-  iSplit; first by eauto 10 using GotoS.
-  iIntros (???? Hstep). inv_stmt_step. iModIntro. iNext.
-  iMod "HE" as "_". iModIntro. iSplit; first done. iFrame.
-  iIntros (?). iApply (wps_wand with "HWP").
-  iIntros (v) "HΨ HWP". rewrite !update_stmt_update. by iApply "HWP".
-Qed.
-
-Lemma wps_skip Q Ψ s:
-  (|={⊤}[∅]▷=> WPs s {{ Q, Ψ }}) -∗ WPs SkipS s {{ Q , Ψ }}.
-Proof.
-  iIntros "HWP". iApply wps_lift_stmt_step. iIntros (?? ->).
-  iSplit; first done. iIntros (?) "Hσ". iMod "HWP". iModIntro.
-  iSplit; first by eauto 10 using SkipSS.
-  iIntros (???? Hstep). inv_stmt_step. iModIntro. iNext.
-  iMod "HWP". iModIntro. iSplit; first done. iFrame.
-  iIntros (?). iApply (wps_wand with "HWP").
-  iIntros (v) "HΨ HWP". rewrite !update_stmt_update. by iApply "HWP".
-Qed.
-
-Lemma wps_exprs Q Ψ s v:
-  (|={⊤}[∅]▷=> WPs s {{ Q, Ψ }}) -∗ WPs ExprS (Val v) s {{ Q , Ψ }}.
-Proof.
-  iIntros "HWP". iApply wps_lift_stmt_step. iIntros (?? ->).
-  iSplit; first done. iIntros (?) "Hσ". iMod "HWP". iModIntro.
-  iSplit; first by eauto 10 using ExprSS.
-  iIntros (???? Hstep). inv_stmt_step. iModIntro. iNext.
-  iMod "HWP". iModIntro. iSplit; first done. iFrame.
-  iIntros (?). iApply (wps_wand with "HWP").
-  iIntros (v) "HΨ HWP". rewrite !update_stmt_update. by iApply "HWP".
-Qed.
-
-Lemma wps_annot n A (a : A) Q Ψ s:
-  (|={⊤}[∅]▷=>^n WPs s {{ Q, Ψ }}) -∗ WPs AnnotStmt n a s {{ Q , Ψ }}.
-Proof.
-  iIntros "Hs". iInduction n as [|n] "IH" => /=. by iApply "Hs".
-  rewrite /AnnotStmt. iApply wps_skip. by iApply (step_fupd_wand with "Hs IH").
-Qed.
-
-(* TODO: extract a funspec similar to typed_function *)
-Lemma wps_call Q Ψ r vf vl s f fn:
+Lemma wp_call vf vl f fn Φ:
   val_to_loc vf = Some f →
   Forall2 has_layout_val vl (f_args fn).*2 →
   fntbl_entry f fn -∗ ▷(∀ lsa lsv, ⌜Forall2 has_layout_loc lsa (f_args fn).*2⌝ -∗
@@ -584,47 +584,87 @@ Lemma wps_call Q Ψ r vf vl s f fn:
          (∀ v, Ψ' v -∗
                   ([∗ list] l; v ∈ lsa; fn.(f_args), l↦|v.2|) ∗
                   ([∗ list] l; v ∈ lsv; fn.(f_local_vars), l↦|v.2|) ∗
-                  (WPs subst_stmt [r] [v] s {{ Q , Ψ }}))
+                  Φ v)
    ) -∗
-   WPs (r <- Val vf with Val <$> vl; s) {{ Q , Ψ }}.
+   WP (Call (Val vf) (Val <$> vl)) {{ Φ }}.
 Proof.
   move => Hf Hly. move: (Hly) => /Forall2_length. rewrite fmap_length => Hlen_vs.
-  iIntros "Hf HWP". iApply wps_lift_stmt_step. iIntros (?? ->). iSplit; first done.
-  iIntros (σ1) "(H&Hhctx&Hbctx&Hfctx)". iDestruct "H" as %Hub.
-  iDestruct (fntbl_entry_lookup with "Hfctx Hf") as %Hfn.
-  iMod (fupd_intro_mask' _ ∅) as "HE"; first set_solver. iModIntro.
-  iSplit. { eauto 8 using CallFailS. }
-  iIntros (???? Hstep). inv_stmt_step; last first. {
+  iIntros "Hf HWP". iApply wp_lift_expr_step; auto.
+  iIntros (σ1) "(%&Hhctx&Hbctx&Hfctx)".
+  iDestruct (fntbl_entry_lookup with "Hfctx Hf") as %Hfn. iModIntro.
+  iSplit; first by eauto 10 using CallFailS.
+  iIntros (???? Hstep) "!>". inv_expr_step; last first. {
     (* Alloc failure case. *)
-    iIntros "!> !>". iMod "HE" as "_". iIntros "!>". iSplit; first done.
-    rewrite /state_ctx. iFrame. by iIntros (?).
+    iModIntro. iSplit; first done. rewrite /state_ctx. iFrame. iApply wp_alloc_failed.
   }
   iMod (heap_alloc_new_blocks_upd with "[$Hhctx $Hbctx $Hfctx]") as "[Hctx Hlv]" => //.
   iMod (heap_alloc_new_blocks_upd with "Hctx") as "[Hctx Hla]" => //.
-  iModIntro. iNext.
+  iModIntro. iSplit => //.
 
   iDestruct ("HWP" $! lsa lsv with "[//] Hla [Hlv]") as (Ψ') "(HQinit & HΨ')". {
     rewrite big_sepL2_fmap_r. iApply (big_sepL2_mono with "Hlv") => ??? ?? /=.
     iIntros "?". iExists _. iFrame. iPureIntro. split; first by apply replicate_length.
     apply: Forall2_lookup_lr. 2: done. done. rewrite list_lookup_fmap. apply fmap_Some. naive_solver.
   }
-  iMod "HE" as "_". iModIntro. iSplit; first done. iFrame. iIntros (_).
-  iApply (wps_wand with "HQinit").
+  iFrame. rewrite stmt_wp_eq. iApply "HQinit" => //.
+
   (** prove Return *)
-  iIntros (v) "Hv HWP". iDestruct ("HΨ'" with "Hv") as "(Ha & Hv & Hs)".
-  iApply wp_lift_stmt_step => //; first by right.
-  iIntros (σ3) "(%&Hhctx&Hfctx)".
-  iMod (fupd_intro_mask' _ ∅) as "HE"; first set_solver. iModIntro.
+  iIntros (v) "Hv". iDestruct ("HΨ'" with "Hv") as "(Ha & Hv & Hs)".
+  iApply wp_lift_stmt_step => //.
+  iIntros (σ3) "(%&Hhctx&Hrest) !>".
   iSplit; first by eauto 8 using ReturnS.
-  iIntros (os ts3 σ2' ? Hst). inv_stmt_step. iIntros "!> !>".
-  iMod "HE" as "$". iFrame. rewrite /heap_fmap/= heap_free_list_app /=.
+  iIntros (os ts3 σ2' ? Hst). inv_stmt_step. iIntros "!>". iSplitR => //.
+  iFrame. rewrite /heap_fmap/= heap_free_list_app /=.
   rewrite -!(big_sepL2_fmap_r snd (λ _ l ly, l↦|ly|)%I).
   iMod (heap_free_list_free with "Hhctx Hv") as "Hhctx".
   iMod (heap_free_list_free with "Hhctx Ha") as "$".
-  iModIntro.
-  rewrite stmt_wp_unfold. iSplit => //.
-  iIntros "_". iApply "Hs" => //. iIntros (v) "HΨ".
-  destruct ts1 as [??[]] => //. by iApply "HWP".
+  iModIntro. by iApply wp_value.
+Qed.
+
+Lemma wps_return Q Ψ v:
+  Ψ v -∗ WPs (Return (Val v)) {{ Q , Ψ }}.
+Proof. rewrite stmt_wp_unfold. iIntros "Hb" (? rf ?) "HΨ". by iApply "HΨ". Qed.
+
+Lemma wps_goto Q Ψ b s:
+  Q !! b = Some s →
+  ▷ WPs s {{ Q, Ψ }} -∗ WPs Goto b {{ Q , Ψ }}.
+Proof.
+  iIntros (Hs) "HWP". rewrite !stmt_wp_unfold. iIntros (???) "?". subst.
+  iApply wp_lift_stmt_step. iIntros (?) "Hσ !>".
+  iSplit; first by eauto 10 using GotoS.
+  iIntros (???? Hstep) "!> !>". inv_stmt_step.
+  iSplit; first done. iFrame. by iApply "HWP".
+Qed.
+
+Lemma wps_skip Q Ψ s:
+  (|={⊤}[∅]▷=> WPs s {{ Q, Ψ }}) -∗ WPs SkipS s {{ Q , Ψ }}.
+Proof.
+  iIntros "HWP". rewrite !stmt_wp_unfold. iIntros (???) "?". subst.
+  iApply wp_lift_stmt_step_fupd. iIntros (?) "Hσ".
+  iMod "HWP" as "HWP". iModIntro.
+  iSplit; first by eauto 10 using SkipSS.
+  iIntros (???? Hstep). inv_stmt_step. iModIntro. iNext.
+  iMod "HWP". iModIntro. iSplit; first done. iFrame.
+  by iApply "HWP".
+Qed.
+
+Lemma wps_exprs Q Ψ s v:
+  (|={⊤}[∅]▷=> WPs s {{ Q, Ψ }}) -∗ WPs ExprS (Val v) s {{ Q , Ψ }}.
+Proof.
+  iIntros "HWP". rewrite !stmt_wp_unfold. iIntros (???) "?". subst.
+  iApply wp_lift_stmt_step_fupd. iIntros (?) "Hσ".
+  iMod "HWP" as "HWP". iModIntro.
+  iSplit; first by eauto 10 using ExprSS.
+  iIntros (???? Hstep). inv_stmt_step. iModIntro. iNext.
+  iMod "HWP". iModIntro. iSplit; first done. iFrame.
+  by iApply "HWP".
+Qed.
+
+Lemma wps_annot n A (a : A) Q Ψ s:
+  (|={⊤}[∅]▷=>^n WPs s {{ Q, Ψ }}) -∗ WPs AnnotStmt n a s {{ Q , Ψ }}.
+Proof.
+  iIntros "Hs". iInduction n as [|n] "IH" => /=. by iApply "Hs".
+  rewrite /AnnotStmt. iApply wps_skip. by iApply (step_fupd_wand with "Hs IH").
 Qed.
 
 Lemma wps_assign Q Ψ vl ly vr s l o:
@@ -635,8 +675,8 @@ Lemma wps_assign Q Ψ vl ly vr s l o:
   (|={⊤,E}=> l↦|ly| ∗ ▷ (l↦vr ={E,⊤}=∗ WPs s {{Q, Ψ}}))
     -∗ WPs (Val vl <-{ly, o} Val vr; s) {{ Q , Ψ }}.
 Proof.
-  iIntros (E Ho Hvl Hly) "HWP". iApply wps_lift_stmt_step. iIntros (ts ? ->).
-  iSplit; first done. iIntros ([h1 ?]) "(%&Hhctx&Hfctx)". iMod "HWP" as "[Hl HWP]".
+  iIntros (E Ho Hvl Hly) "HWP". rewrite !stmt_wp_eq. iIntros (?? ->) "?".
+  iApply wp_lift_stmt_step_fupd. iIntros ([h1 ?]) "(%&Hhctx&Hfctx)/=". iMod "HWP" as "[Hl HWP]".
   iMod (fupd_intro_mask' _ ∅) as "HE"; first set_solver.
   iDestruct "Hl" as (v' ? ?) "Hl".
   iDestruct (heap_mapsto_has_alloc_id with "Hl") as %Haid.
@@ -644,33 +684,26 @@ Proof.
   - iModIntro.
     iDestruct (heap_mapsto_lookup_1 (λ st : lock_state, st = RSt 0%nat) with "Hhctx Hl") as %? => //.
     iSplit; first by eauto 12 using AssignS.
-    iIntros (? e2 σ2 efs Hstep). inv_stmt_step. unfold end_val.
-    have ? : (length v' = length v2) by congruence.
-    iMod (heap_write with "Hhctx Hl") as "[$ Hl]" => //.
-    iIntros "!> !>". iMod ("HWP" with "Hl") as "HWP".
-    iModIntro => /=. iSplit; first done. iFrame. iIntros (?).
-    rewrite update_stmt_update /=. iApply (wps_wand with "HWP").
-    iIntros (v) "HΨ HWP". rewrite update_stmt_update. by iApply "HWP".
+    iIntros (? e2 σ2 efs Hstep) "!> !>". inv_stmt_step. unfold end_val.
+    iMod (heap_write with "Hhctx Hl") as "[$ Hl]" => //. congruence.
+    iMod ("HWP" with "Hl") as "HWP".
+    iModIntro => /=. iSplit; first done. iFrame. by iApply "HWP".
   - iMod (heap_write_na _ _ _ vr with "Hhctx Hl") as (?) "[Hhctx Hc]" => //; first by congruence.
     iModIntro. iSplit; first by eauto 12 using AssignS.
-    iIntros (? e2 σ2 efs Hst). inv_stmt_step.
+    iIntros (? e2 σ2 efs Hst) "!> !>". inv_stmt_step.
     have ? : (v' = v'0) by [apply: heap_at_inj_val]; subst v'0.
-    iFrame => /=. iModIntro. iNext. iMod "HE" as "_". iModIntro. iSplit; first done.
-    rewrite update_stmt_update.
+    iFrame => /=. iMod "HE" as "_". iModIntro. iSplit; first done.
 
-    iIntros (?). iApply wps_lift_stmt_step. iIntros (???). iSplit; first done.
+    (* second step *)
+    iApply wp_lift_stmt_step.
     iIntros ([h2 ?]) "(%&Hhctx&Hfctx)" => /=.
-    iMod (fupd_intro_mask' _ ∅) as "HE"; first set_solver.
     iMod ("Hc" with "Hhctx") as (?) "[Hhctx Hmt]".
     iModIntro. iSplit; first by eauto 12 using AssignS. unfold end_stmt.
-    iIntros (? e2 σ2 efs Hst). inv_stmt_step. iModIntro. iNext. iMod "HE" as "_".
+    iIntros (? e2 σ2 efs Hst) "!>". inv_stmt_step.
     have ? : (v' = v'0) by [apply: heap_at_go_inj_val']; subst v'0.
     iFrame => /=. iMod ("HWP" with "Hmt") as "HWP".
-    iModIntro. rewrite update_stmt_update. iSplit; first done.
-    have ? : (length v' = length v3) by congruence.
-    iIntros (?). subst end_stmt0. rewrite H8. iApply (wps_wand with "HWP").
-    iIntros (v) "HΨ HWP". rewrite update_stmt_update. iApply "HWP".
-    iIntros "HWP". rewrite update_stmt_update. by iApply "HWP".
+    iModIntro. iSplit; first done.
+    by iApply "HWP".
 Qed.
 
 Lemma wps_switch Q Ψ v n ss def m it:
@@ -678,14 +711,11 @@ Lemma wps_switch Q Ψ v n ss def m it:
   (∀ i, m !! n = Some i → is_Some (ss !! i)) →
   WPs default def (i ← m !! n; ss !! i) {{ Q, Ψ }} -∗ WPs (Switch it (Val v) m ss def) {{ Q , Ψ }}.
 Proof.
-  iIntros (Hv Hm) "HWP". iApply wps_lift_stmt_step. iIntros (?? ->).
-  iSplit; first done. iIntros (?) "Hσ".
-  iMod (fupd_intro_mask' _ ∅) as "HE"; first set_solver.
+  iIntros (Hv Hm) "HWP". rewrite !stmt_wp_eq. iIntros (?? ->) "?".
+  iApply wp_lift_stmt_step. iIntros (?) "Hσ".
   iModIntro. iSplit; first by eauto 8 using SwitchS.
-  iIntros (???? Hstep). inv_stmt_step. iModIntro. iNext. iMod "HE" as "_".
-  iModIntro. iSplit; first done. iFrame "Hσ". iIntros (_).
-  iApply (wps_wand with "HWP"). iIntros (v) "HΨ HWP".
-  rewrite !update_stmt_update. by iApply "HWP".
+  iIntros (???? Hstep) "!> !>". inv_stmt_step. iSplit; first done.
+  iFrame "Hσ". by iApply "HWP".
 Qed.
 
 (** a version of wps_switch which is directed by ss instead of n *)
@@ -722,35 +752,6 @@ Proof.
   iIntros (Hv Hn) "Hs". rewrite /notation.Assert.
   iApply wps_if => //. by case_decide.
 Qed.
-
-Lemma wps_call_bind_ind vs E Q Ψ r vf el s:
-  foldr (λ e f, (λ vl, WP e @ E {{ v, f (vl ++ [v]) }}))
-  (λ vl, WPs (r <- Val vf with Val <$> (vs ++ vl) ; s) @ E {{ Q , Ψ }}) el [] -∗
-  WPs (r <- Val vf with (Val <$> vs) ++ el; s) @ E{{ Q , Ψ }}.
-Proof.
-  rewrite -{2}(app_nil_r vs).
-  move: {2 3}[] => vl2.
-  elim: el vs vl2 => /=.
-  - iIntros (vs vl2) "He". by rewrite !app_nil_r.
-  - iIntros (e el IH vs vl2) "Hf".
-    change (r <- vf with (Val <$> vs ++ vl2) ++ e :: el; s)%E with (stmt_fill (CallRCtx r vf (vs ++ vl2) el s) e).
-    iApply wps_bind. iApply (wp_wand with "Hf").
-    iIntros (v) "Hf" => /=.
-    rewrite (cons_middle _ _ el) (assoc app) -(fmap_app _ _ [v]) -(assoc app).
-    by iApply IH.
-Qed.
-
-Lemma wps_call_bind E Q Ψ r ef el s:
-  WP ef @ E {{ vf, foldr (λ e f, (λ vl, WP e @ E {{ v, f (vl ++ [v]) }}))
-                         (λ vl, WPs (r <- Val vf with Val <$> vl ; s) @ E {{ Q , Ψ }}) el [] }} -∗
-  WPs (r <- ef with el; s) @ E{{ Q , Ψ }}.
-Proof.
-  iIntros "He".
-  change (r <- ef with el; s)%E with (stmt_fill (CallLCtx r el s) ef).
-  iApply wps_bind. iApply (wp_wand with "He").
-  iIntros (v). by iApply (wps_call_bind_ind []).
-Qed.
-
 
 Definition wps_block (P : iProp Σ) (b : label) (Q : gmap label stmt) (Ψ : val → iProp Σ) : iProp Σ :=
   (□ (P -∗ WPs Goto b {{ Q, Ψ }})).

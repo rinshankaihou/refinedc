@@ -168,6 +168,15 @@ let rec pp_expr : Coq_ast.expr pp = fun ff e ->
     | CAS(ty,e1,e2,e3)              ->
         pp "CAS@ (%a)@ (%a)@ (%a)@ (%a)" pp_op_type ty
           pp_expr e1 pp_expr e2 pp_expr e3
+    | Call(e,es)        ->
+      let pp_args _ es =
+        let n = List.length es in
+        let fn i e =
+          pp (if i = n - 1 then "%a" else "%a ;@;") pp_expr e
+        in
+        List.iteri fn es
+      in
+      pp "Call (%a) [@@{expr} %a ]" pp_expr e pp_args es
     | SkipE(e)                      ->
         pp "SkipE (%a)" pp_expr e
     | Use(atomic,lay,e)             ->
@@ -252,16 +261,6 @@ let rec pp_stmt : Coq_ast.stmt pp = fun ff stmt ->
       let order = if atomic then ", ScOrd" else "" in
       pp "@[<hov 2>%a <-{ %a%s }@ %a ;@]@;%a"
         pp_expr e1 (pp_layout false) lay order pp_expr e2 pp_stmt stmt
-  | Call(ret_id,e,es,stmt)        ->
-      let pp_args _ es =
-        let n = List.length es in
-        let fn i e =
-          pp (if i = n - 1 then "%a" else "%a ;@;") pp_expr e
-        in
-        List.iteri fn es
-      in
-      pp "@[<hov 2>%S <- %a with@ [ %a ] ;@]@;%a"
-        (Option.get "_" ret_id) pp_expr e pp_args es pp_stmt stmt
   | SkipS(stmt)                   ->
       pp_stmt ff stmt
   | If(e,stmt1,stmt2)             ->

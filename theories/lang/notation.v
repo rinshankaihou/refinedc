@@ -56,8 +56,6 @@ Notation "e1 <-{ ly , o } e2 ; s" := (Assign o ly e1%E e2%E s%E)
   (at level 80, s at level 200, format "e1  <-{ ly ,  o }  e2 ;  s") : expr_scope.
 Notation "e1 <-{ ly } e2 ; s" := (Assign Na1Ord ly e1%E e2%E s%E)
   (at level 80, s at level 200, format "e1  <-{ ly }  e2 ;  s") : expr_scope.
-Notation "e1 <- e2 'with' el ; s" := (Call e1 e2%E el%L%E s%E)
-  (at level 80, s at level 200) : expr_scope.
 Notation "'if:' e1 'then' s1 'else' s2" := (Switch bool_it e1%E {[ 0 := 0%nat ]} [s2%E] s1%E)
   (at level 102, e1, s1, s2 at level 150) : expr_scope.
 Notation "'expr:' e ; s" := (ExprS e%E s%E)
@@ -383,9 +381,9 @@ Typeclasses Opaque mk_array_layout.
 
 (*** Tests *)
 Example test1 (l : loc) ly :
-  (l <-{ly} use{ly}(&l +{PtrOp, IntOp size_t} (l ={PtrOp, PtrOp} l)); "x" <- l with [ (l : expr); (l : expr)]; l <-{ly, ScOrd} l; Goto "a")%E =
+  (l <-{ly} use{ly}(&l +{PtrOp, IntOp size_t} (l ={PtrOp, PtrOp} l)); ExprS (Call l [ (l : expr); (l : expr)]) (l <-{ly, ScOrd} l; Goto "a"))%E =
   (Assign Na1Ord ly l (Use Na1Ord ly (BinOp AddOp PtrOp (IntOp size_t) (AddrOf l) (BinOp EqOp PtrOp PtrOp l l))))
-      ((Call "x" l [ Val (val_of_loc l); Val (val_of_loc l)]) ((Assign ScOrd ly l l) (Goto "a"))).
+      (ExprS (Call l [ Val (val_of_loc l); Val (val_of_loc l)]) ((Assign ScOrd ly l l) (Goto "a"))).
 Proof. simpl. reflexivity. Abort.
 
 Example test_if (l : loc) :

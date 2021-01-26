@@ -247,7 +247,7 @@ Section judgements.
     | W.BinOp op ot PtrOp e1 e2 => T' ← find_place_ctx e2; Some (λ T, typed_val_expr (W.to_expr e1) (λ v ty, T' (λ K l, T (K ++ [BinOpPCtx op ot v ty]) l)))
     | W.UnOp op PtrOp e => T' ← find_place_ctx e; Some (λ T, T' (λ K l, T (K ++ [UnOpPCtx op]) l))
     (* TODO: Is the existential quantifier here a good idea or should this be a fullblown judgment? *)
-    | W.LValue e => Some (λ T, typed_val_expr (W.to_expr e) (λ v ty, ∃ l, ⌜v = val_of_loc l⌝ ∗ (v ◁ᵥ ty -∗ T [] l))%I)
+    | W.LValue e => Some (λ T, typed_val_expr (W.to_expr e) (λ v ty, v ◁ᵥ ty -∗ ∃ l, ⌜v = val_of_loc l⌝ ∗ T [] l)%I)
     | _ => None
     end.
 
@@ -272,8 +272,8 @@ Section judgements.
     1: iApply @wp_value; by iApply ("HΦ'" with "HT").
     4: {
       rewrite /LValue. iApply "HT". iIntros (v ty) "Hv HT".
-      iDestruct "HT" as (l ?) "HT". subst.
-      iApply ("HΦ'" $! []). by iApply "HT".
+      iDestruct ("HT" with "Hv") as (l ?) "HT". subst.
+      by iApply ("HΦ'" $! []).
     }
     2: wp_bind; rewrite -!/(W.to_expr _).
     2: iApply "HT"; iIntros (v ty) "Hv HT".
@@ -717,14 +717,17 @@ Section typing.
     typed_stmt (Switch it e m ss def) fn ls fr Q.
   Proof.
     iIntros "He" (Hls).
-    have -> : Switch it e m ss def = stmt_fill (SwitchCtx it m ss def) e by done.
-    iApply wps_bind.
+    have -> : (Switch it e m ss def) = (W.to_stmt (W.Switch it (W.Expr e) m (W.Stmt <$> ss) (W.Stmt def)))
+      by rewrite /W.to_stmt/= -!list_fmap_compose list_fmap_id.
+    iApply tac_wps_bind; first done.
+    rewrite /W.to_expr /W.to_stmt /= -list_fmap_compose list_fmap_id.
+
     iApply "He". iIntros (v ty) "Hv Hs".
     iDestruct ("Hs" with "Hv") as (z Hn) "Hs".
     iAssert (⌜∀ i : nat, m !! z = Some i → is_Some (ss !! i)⌝%I) as %?. {
       iIntros (i ->). iDestruct "Hs" as (s ->) "_"; by eauto.
     }
-    iApply wps_switch => //.
+    iApply wps_switch; [done..|].
     destruct (m !! z) => /=.
     - iDestruct "Hs" as (s ->) "Hs". by iApply "Hs".
     - by iApply "Hs".
@@ -799,7 +802,7 @@ Section typing.
   Proof.
     iIntros "HP" (Φ) "HΦ".
     iDestruct "HP" as (ty) "[Hv HT]".
-    iApply @wp_value. iApply ("HΦ" with "Hv HT").
+    iApply wp_value. iApply ("HΦ" with "Hv HT").
   Qed.
 
   Lemma type_bin_op o e1 e2 ot1 ot2 T:
@@ -847,8 +850,8 @@ Section typing.
   Proof.
     iIntros "He" (Φ) "HΦ".
     wp_bind. iApply "He". iIntros (v ty) "Hv HT".
-    iApply @wp_atomic. iMod "HT". iModIntro.
-    iApply wp_skip. iModIntro. iMod "HT".
+    iApply (wp_step_fupd with "HT") => //.
+    iApply wp_skip. iIntros "!> HT !>".
     by iApply ("HΦ" with "Hv HT").
   Qed.
 
@@ -857,7 +860,7 @@ Section typing.
   Proof.
     iIntros "He" (Φ) "HΦ".
     wp_bind. iApply "He". iIntros (v ty) "Hv HT".
-    iApply wp_skip. iModIntro. by iApply ("HΦ" with "Hv HT").
+    iApply wp_skip. by iApply ("HΦ" with "Hv HT").
   Qed.
 
   Lemma type_annot_expr n {A} (a : A) e T:
@@ -867,12 +870,13 @@ Section typing.
     wp_bind. iApply "He". iIntros (v ty) "Hv HT". iDestruct ("HT" with "Hv") as "HT".
     iInduction n as [|n] "IH" forall (Φ). {
       rewrite /AnnotExpr/=.
-      iApply @fupd_wp.
-      iMod "HT" as "[HT ?]". iApply @wp_value.
+      iApply fupd_wp.
+      iMod "HT" as "[HT ?]". iApply wp_value.
       iApply ("HΦ" with "[$] [$]").
     }
-    rewrite annot_expr_S_r. wp_bind. iApply @wp_atomic.
-    iMod "HT". iModIntro. iApply wp_skip. iModIntro. iMod "HT". iModIntro.
+    rewrite annot_expr_S_r. wp_bind.
+    iApply (wp_step_fupd with "HT") => //.
+    iApply wp_skip. iIntros "!> HT !>".
     by iApply ("IH" with "HΦ HT").
   Qed.
 
@@ -889,8 +893,8 @@ Section typing.
     wp_bind. iApply "Hread".
     iIntros (l) "Hl". rewrite /Use.
     destruct o => //.
-    1: iApply @wp_atomic.
-    2: iApply @fupd_wp; iApply @wp_fupd.
+    1: iApply wp_atomic.
+    2: iApply fupd_wp; iApply wp_fupd.
     all: iMod "Hl" as (v q ty Hly Hv) "(Hl&Hv&HT)"; iModIntro.
     all: iDestruct (ty_size_eq with "Hv") as "#>%".
     all: iApply (wp_deref with "Hl") => //; try by eauto using val_to_of_loc.

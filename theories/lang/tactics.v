@@ -15,6 +15,7 @@ Inductive expr :=
 | CopyAllocId (e1 e2 : expr)
 | Deref (o : order) (ly : layout) (e : expr)
 | CAS (ot : op_type) (e1 e2 e3 : expr)
+| Call (f : expr) (args : list expr)
 | Concat (es : list expr)
 | SkipE (e : expr)
 | StuckE
@@ -44,6 +45,7 @@ Lemma expr_ind (P : expr → Prop) :
   (∀ (e1 e2 : expr), P e1 → P e2 → P (CopyAllocId e1 e2)) →
   (∀ (o : order) (ly : layout) (e : expr), P e → P (Deref o ly e)) →
   (∀ (ot : op_type) (e1 e2 e3 : expr), P e1 → P e2 → P e3 → P (CAS ot e1 e2 e3)) →
+  (∀ (f : expr) (args : list expr), P f → Forall P args → P (Call f args)) →
   (∀ (es : list expr), Forall P es → P (Concat es)) →
   (∀ (e : expr), P e → P (SkipE e)) →
   (P StuckE) →
@@ -61,7 +63,10 @@ Lemma expr_ind (P : expr → Prop) :
   (∀ (e : lang.expr), P (Expr e)) → ∀ (e : expr), P e.
 Proof.
   move => *. generalize dependent P => P. match goal with | e : expr |- _ => revert e end.
-  fix FIX 1. move => [ ^e] => ???????? Hconcat ??????????? Hstruct Hmacro ?.
+  fix FIX 1. move => [ ^e] => ???????? Hcall Hconcat ??????????? Hstruct Hmacro ?.
+  9: {
+    apply Hcall; [ |apply Forall_true => ?]; by apply: FIX.
+  }
   9: {
     apply Hconcat. apply Forall_true => ?. by apply: FIX.
   }
@@ -84,6 +89,7 @@ Fixpoint to_expr (e : expr) : lang.expr :=
   | CopyAllocId e1 e2 => lang.CopyAllocId (to_expr e1) (to_expr e2)
   | Deref o ly e => lang.Deref o ly (to_expr e)
   | CAS ot e1 e2 e3 => lang.CAS ot (to_expr e1) (to_expr e2) (to_expr e3)
+  | Call f args => lang.Call (to_expr f) (to_expr <$> args)
   | Concat es => lang.Concat (to_expr <$> es)
   | SkipE e => lang.SkipE (to_expr e)
   | StuckE => lang.StuckE
@@ -142,6 +148,9 @@ Ltac of_expr e :=
     let e := of_expr e in constr:(Deref o ly e)
   | lang.CAS ?ot ?e1 ?e2 ?e3 =>
     let e1 := of_expr e1 in let e2 := of_expr e2 in let e3 := of_expr e3 in constr:(CAS ot e1 e2 e3)
+  | lang.Call ?f ?args =>
+    let f := of_expr f in
+    let args := of_expr args in constr:(Call f args)
   | lang.Concat ?es =>
     let es := of_expr es in constr:(Concat es)
   | lang.SkipE ?e =>
@@ -168,6 +177,8 @@ Inductive ectx_item :=
 | CASLCtx (ot : op_type) (e2 e3 : expr)
 | CASMCtx (ot : op_type) (v1 : val) (e3 : expr)
 | CASRCtx (ot : op_type) (v1 v2 : val)
+| CallLCtx (args : list expr)
+| CallRCtx (f : val) (vl : list val) (el : list expr)
 | ConcatCtx (vs : list val) (es : list expr)
 | SkipECtx
 (* new constructors *)
@@ -193,6 +204,8 @@ Definition fill_item (Ki : ectx_item) (e : expr) : expr :=
   | CASLCtx ot e2 e3 => CAS ot e e2 e3
   | CASMCtx ot v1 e3 => CAS ot (Val v1) e e3
   | CASRCtx ot v1 v2 => CAS ot (Val v1) (Val v2) e
+  | CallLCtx args => Call e args
+  | CallRCtx f vl el => Call (Val f) ((Val <$> vl) ++ e :: el)
   | ConcatCtx vs es => Concat ((Val <$> vs) ++ e :: es)
   | SkipECtx => SkipE e
   | UseCtx o l => Use o l e
@@ -238,6 +251,10 @@ Fixpoint find_expr_fill (e : expr) (bind_val : bool) : option (list ectx_item * 
     else if find_expr_fill e3 bind_val is Some (Ks, e') then
       if e1 is Val v1 then if e2 is Val v2 then Some (Ks ++ [CASRCtx ot v1 v2], e') else None else None
     else Some ([], e)
+  | Call f args =>
+    if find_expr_fill f bind_val is Some (Ks, e') then
+      Some (Ks ++ [CallLCtx args], e') else
+      (* TODO: handle arguments? *) None
   | Concat _ | MacroE _ _ _ | OffsetOf _ _ | OffsetOfUnion _ _ => None
   | SkipE e1 =>
     if find_expr_fill e1 bind_val is Some (Ks, e') then
@@ -270,36 +287,45 @@ Proof.
 Qed.
 
 Lemma ectx_item_correct Ks:
-  ∃ Ks', ∀ e, to_expr (fill Ks e) = ectxi_language.fill Ks' (to_expr e).
+  ∃ Ks', ∀ e, to_rtexpr (to_expr (fill Ks e)) = ectxi_language.fill Ks' (to_rtexpr (to_expr e)).
 Proof.
   elim/rev_ind: Ks. by exists [].
   move => K Ks [Ks' IH].
-  move: K => [||||||||||||||n|||] *; [
-    eexists (_ ++ [lang.UnOpCtx _ _])|
-    eexists (_ ++ [lang.BinOpLCtx _ _ _ _])|
-    eexists (_ ++ [lang.BinOpRCtx _ _ _ _])|
-    eexists (_ ++ [lang.CopyAllocIdLCtx _])|
-    eexists (_ ++ [lang.CopyAllocIdRCtx _])|
-    eexists (_ ++ [lang.DerefCtx _ _])|
-    eexists (_ ++ [lang.CASLCtx _ _ _])|
-    eexists (_ ++ [lang.CASMCtx _ _ _])|
-    eexists (_ ++ [lang.CASRCtx _ _ _])|
-    eexists (_ ++ [lang.ConcatCtx _ _])|
-    eexists (_ ++ [lang.SkipECtx])|
-    eexists (_ ++ [lang.DerefCtx _ _])|
-    eexists (_)|
-    eexists (_)|
-    eexists (_ ++ replicate n lang.SkipECtx )|
-    eexists (_)|
-    eexists (_ ++ [lang.BinOpRCtx _ _ _ _])|
-    eexists (_)|
-    ..] => ?; rewrite fill_app ?ectxi_language.fill_app /= /notation.GetMember; f_equal; eauto.
+  eexists (Ks' ++ (ExprCtx <$> ?[K])) => ?. rewrite fill_app ectxi_language.fill_app /= -IH.
+  only [K]: (destruct K; [
+    apply: [lang.UnOpCtx _ _]|
+    apply: [lang.BinOpLCtx _ _ _ _]|
+    apply: [lang.BinOpRCtx _ _ _ _]|
+    apply: [lang.CopyAllocIdLCtx _]|
+    apply: [lang.CopyAllocIdRCtx _]|
+    apply: [lang.DerefCtx _ _]|
+    apply: [lang.CASLCtx _ _ _]|
+    apply: [lang.CASMCtx _ _ _]|
+    apply: [lang.CASRCtx _ _ _]|
+    apply: [lang.CallLCtx _]|
+    apply: [lang.CallRCtx _ _ _]|
+    apply: [lang.ConcatCtx _ _]|
+    apply: [lang.SkipECtx]|
+    apply: [lang.DerefCtx _ _]|
+    apply: []|
+    apply: []|
+    apply: (replicate n lang.SkipECtx)|
+    apply: []|
+    apply: [lang.BinOpRCtx _ _ _ _]|
+    apply: []|..
+  ]).
+  move: K => [||||||||||||||||n|||] * //=.
+  - (** Call *)
+    do 2 f_equal.
+    rewrite !fmap_app !fmap_cons. repeat f_equal; eauto.
+    rewrite -!list_fmap_compose. by apply: list_fmap_ext.
   - (** Concat *)
-    rewrite fmap_app fmap_cons. repeat f_equal; eauto.
-    rewrite -list_fmap_compose. by apply: list_fmap_ext.
+    do 2 f_equal.
+    rewrite !fmap_app !fmap_cons. repeat f_equal; eauto.
+    rewrite -!list_fmap_compose. by apply: list_fmap_ext.
   - (** AnnotExpr *)
-    elim: n. by simpl; eauto.
-    move => n. by rewrite /notation.AnnotExpr replicate_S_end ectxi_language.fill_app /= => ->.
+    elim: n; eauto.
+    move => n. by rewrite /notation.AnnotExpr replicate_S_end fmap_app ectxi_language.fill_app /= => ->.
 Qed.
 
 Lemma to_expr_val_list (vl : list val) :
@@ -315,7 +341,6 @@ Inductive stmt :=
 | Return (e : expr)
 | Switch (it : int_type) (e : expr) (m : gmap Z nat) (bs : list stmt) (def : stmt)
 | Assign (o : order) (ly : layout) (e1 e2 : expr) (s : stmt)
-| Call (ret : var_name) (f : expr) (args : list expr) (s : stmt)
 | SkipS (s : stmt)
 | StuckS
 | ExprS (e : expr) (s : stmt)
@@ -333,7 +358,6 @@ Lemma stmt_ind (P : stmt → Prop):
   (∀ e : expr, P (Return e)) →
   (∀ (it : int_type) (e : expr) (m : gmap Z nat) (bs : list stmt) (def : stmt), P def → Forall P bs → P (Switch it e m bs def)) →
   (∀ (o : order) (ly : layout) (e1 e2 : expr) (s : stmt), P s → P (Assign o ly e1 e2 s)) →
-  (∀ (ret : var_name) (f3 : expr) (args : list expr) (s : stmt), P s → P (Call ret f3 args s)) →
   (∀ s : stmt, P s → P (SkipS s)) →
   (P StuckS) →
   (∀ (e : expr) (s : stmt), P s → P (ExprS e s)) →
@@ -357,7 +381,6 @@ Fixpoint to_stmt (s : stmt) : lang.stmt :=
   | Return e => lang.Return (to_expr e)
   | Switch it e m bs def => lang.Switch it (to_expr e) m (to_stmt <$> bs) (to_stmt def)
   | Assign o ly e1 e2 s => lang.Assign o ly (to_expr e1) (to_expr e2) (to_stmt s)
-  | Call ret f args s => lang.Call ret (to_expr f) (to_expr <$> args) (to_stmt s)
   | SkipS s => lang.SkipS (to_stmt s)
   | StuckS => lang.StuckS
   | ExprS e s => lang.ExprS (to_expr e) (to_stmt s)
@@ -404,11 +427,6 @@ Ltac of_stmt s :=
     let e2 := of_expr e2 in
     let s := of_stmt s in
     constr:(Assign o ly e1 e2 s)
-  | lang.Call ?r ?f ?args ?s =>
-    let f := of_expr f in
-    let args := of_expr args in
-    let s := of_stmt s in
-    constr:(Call r f args s)
   | lang.SkipS ?s =>
     let s := of_stmt s in
     constr:(SkipS s)
@@ -425,8 +443,6 @@ Inductive stmt_ectx :=
 | AssignLCtx (o : order) (ly : layout) (v2 : val) (s : stmt)
 | ReturnCtx
 | SwitchCtx (it : int_type) (m: gmap Z nat) (bs : list stmt) (def : stmt)
-| CallLCtx (r : var_name) (args : list expr) (s : stmt)
-| CallRCtx (r : var_name) (f : val) (vl : list val) (el : list expr) (s : stmt)
 | ExprSCtx (s : stmt)
 | IfCtx (s1 s2 : stmt)
 | AssertCtx (s : stmt)
@@ -439,8 +455,6 @@ Definition stmt_fill (Ki : stmt_ectx) (e : expr) : stmt :=
   | ReturnCtx => Return e
   | ExprSCtx s => ExprS e s
   | SwitchCtx it m bs def => Switch it e m bs def
-  | CallLCtx r args s => Call r e args s
-  | CallRCtx r f vl el s => Call r (Val f) ((Val <$> vl) ++ e :: el) s
   | IfCtx s1 s2 => If e s1 s2
   | AssertCtx s => Assert e s
   end.
@@ -452,12 +466,6 @@ Definition find_stmt_fill (s : stmt) : option (stmt_ectx * expr) :=
   | ExprS e s => if e is (Val v) then None else Some (ExprSCtx s, e)
   | Switch it e m bs def => if e is (Val v) then None else Some (SwitchCtx it m bs def, e)
   | Assign o ly e1 e2 s => if e2 is (Val v) then if e1 is (Val v) then None else Some (AssignLCtx o ly v s, e1) else Some (AssignRCtx o ly e1 s, e2)
-  | Call ret f args s =>
-    if f is (Val vf) then
-      (* TODO: handle arguments here? Is a bit tricky since arguments are a list *)
-      None
-    else
-      Some (CallLCtx ret args s, f)
   | If e s1 s2 => if e is (Val v) then None else Some (IfCtx s1 s2, e)
   | Assert e s => if e is (Val v) then None else Some (AssertCtx s, e)
   end.
@@ -468,21 +476,18 @@ Proof.
   destruct s => *; repeat (try case_match; simpl in *; simplify_eq => //).
 Qed.
 
-Lemma stmt_fill_correct Ks:
-  ∃ Ks', ∀ e, to_stmt (stmt_fill Ks e) = lang.stmt_fill Ks' (to_expr e).
+Lemma stmt_fill_correct Ks rf:
+  ∃ Ks', ∀ e, to_rtstmt rf (to_stmt (stmt_fill Ks e)) = ectxi_language.fill Ks' (to_rtexpr (to_expr e)).
 Proof.
   move: Ks => [] *; [
-               eexists (lang.AssignRCtx _ _ _ _)|
-               eexists (lang.AssignLCtx _ _ _ _)|
-               eexists (lang.ReturnCtx)|
-               eexists (lang.SwitchCtx _ _ _ _)|
-               eexists (lang.CallLCtx _ _ _)|
-               eexists (lang.CallRCtx _ _ _ _ _)|
-               eexists (lang.ExprSCtx _)|
-               eexists (lang.SwitchCtx _ _ _ _)|
-               eexists (lang.SwitchCtx _ _ _ _)|
-               ..] => //= ?; f_equal;
-                       by rewrite ?fmap_app to_expr_val_list.
+  eexists ([StmtCtx (lang.AssignRCtx _ _ _ _) rf])|
+  eexists ([StmtCtx (lang.AssignLCtx _ _ _ _) rf])|
+  eexists ([StmtCtx (lang.ReturnCtx) rf])|
+  eexists ([StmtCtx (lang.SwitchCtx _ _ _ _) rf])|
+  eexists ([StmtCtx (lang.ExprSCtx _) rf])|
+  eexists ([StmtCtx (lang.SwitchCtx _ _ _ _) rf])|
+  eexists ([StmtCtx (lang.SwitchCtx _ _ _ _) rf])|
+..] => //=.
 Qed.
 
 (*** Substitution *)
@@ -496,6 +501,7 @@ Fixpoint subst (x : var_name) (v : val) (e : expr)  : expr :=
   | CopyAllocId e1 e2 => CopyAllocId (subst x v e1) (subst x v e2)
   | Deref o l e => Deref o l (subst x v e)
   | CAS ot e1 e2 e3 => CAS ot (subst x v e1) (subst x v e2) (subst x v e3)
+  | Call f args => Call (subst x v f) (subst x v <$> args)
   | Concat es => Concat (subst x v <$> es)
   | SkipE e => SkipE (subst x v e)
   | StuckE => StuckE
@@ -524,6 +530,8 @@ Lemma to_expr_subst x v e :
   to_expr (subst x v e) = lang.subst x v (to_expr e).
 Proof.
   elim: e => *//; cbn -[notation.GetMember]; (repeat case_bool_decide) => //=; f_equal; eauto.
+  - (** Call *)
+    rewrite -!list_fmap_compose. apply list_fmap_ext' => //. by apply Forall_forall.
   - (** Concat *)
     rewrite -!list_fmap_compose. apply list_fmap_ext' => //. by apply Forall_forall.
   - (** GetMember *)
@@ -564,9 +572,6 @@ Fixpoint subst_stmt (xs : list var_name) (vs : list val) (s : stmt) : stmt :=
   | Return e => Return (subst_l xs vs e)
   | Switch it e m' bs def => Switch it (subst_l xs vs e) m' (subst_stmt xs vs <$> bs) (subst_stmt xs vs def)
   | Assign o ly e1 e2 s => Assign o ly (subst_l xs vs e1) (subst_l xs vs e2) (subst_stmt xs vs s)
-  | Call ret f args s =>
-    (* TODO: remove ret from xs*)
-    Call ret (subst_l xs vs f) (subst_l xs vs <$> args) (subst_stmt xs vs s)
   | SkipS s => SkipS (subst_stmt xs vs s)
   | StuckS => StuckS
   | ExprS e s => ExprS (subst_l xs vs e) (subst_stmt xs vs s)
@@ -582,7 +587,6 @@ Lemma to_stmt_subst xs vs s :
 Proof.
   elim: s => * //=; repeat rewrite to_expr_subst_l //; repeat f_equal => //; repeat rewrite -list_fmap_compose.
   - by apply Forall_fmap_ext_1.
-  - apply list_fmap_ext => // ? /=. apply to_expr_subst_l.
   - match goal with
     | |- notation.AnnotStmt ?n _ _ = _ => generalize dependent n
     end.
@@ -606,41 +610,16 @@ Arguments subst : simpl never.
 Arguments subst_l : simpl never.
 Arguments subst_stmt : simpl never.
 
-Lemma stmt_fill_call_inv Ks e r vf vs s :
-  stmt_fill Ks e = (r <- Val vf with Val <$> vs; s)%E → ∃ v, e = Val v.
-Proof.
-  destruct Ks; simpl => Heq; simplify_eq; eauto.
-  generalize dependent vl => vl.
-  elim: vl vs; csimpl. 1: by destruct vs => //= [[]]; eauto.
-  move => ?? IH [|??] //; csimpl => [[]]. eauto.
-Qed.
-
-
 Ltac inv_stmt_step :=
-   match goal with
-  | H : simple_stmt_step (update_stmt _ ?st) _ _ _ _ _ |- _ =>
-    inversion H; subst; clear H; simplify_map_eq/=;
-      match goal with
-      | H2 : st = ?e2 |- _ =>
-         match st with
-         | stmt_fill ?Ks ?e =>
-               try by [destruct (stmt_fill_call_inv _ _ _ _ _ _ H2); simplify_eq];
-               try by [destruct Ks; simpl in *; simplify_eq];
-               have [||??]:= (stmt_fill_inj _ _ _ _ _ _ H2); eauto using language.val_stuck; subst
-         | _ =>
-           try (destruct (stmt_fill_call_inv _ _ _ _ _ _ (eq_sym H2)); simplify_eq);
-           try (match e2 with
-                  | stmt_fill ?Ks ?e => destruct Ks; simpl in *; simplify_eq
-                end
-             );
-           try (match goal with
-                  | H : prim_step (Val _) _ _ _ _ _ |- _ => exfalso; eapply (val_irreducible); [| apply H]; eauto
-                end
-             )
-         end
-      | |- _ => idtac
-      end
-   end.
+  repeat match goal with
+  | _ => progress simplify_map_eq/= (* simplify memory stuff *)
+  | H : to_val _ = Some _ |- _ => apply of_to_val in H
+  | H : context [to_val (of_val _)] |- _ => rewrite to_of_val in H
+  | H : stmt_step ?e _ _ _ _ _ _ |- _ =>
+     try (is_var e; fail 1); (* inversion yields many goals if [e] is a variable *)
+(*      and can thus better be avoided. *)
+     inversion H; subst; clear H
+  end.
 
 Ltac inv_expr_step :=
   repeat match goal with
@@ -648,8 +627,8 @@ Ltac inv_expr_step :=
   | H : to_val _ = Some _ |- _ => apply of_to_val in H
   | H : context [to_val (of_val _)] |- _ => rewrite to_of_val in H
   | H : expr_step ?e _ _ _ _ _ |- _ =>
-     try (is_var e; fail 1); (* inversion yields many goals if [e] is a variable
-     and can thus better be avoided. *)
+     try (is_var e; fail 1); (* inversion yields many goals if [e] is a variable *)
+(*      and can thus better be avoided. *)
      inversion H; subst; clear H
   end.
 

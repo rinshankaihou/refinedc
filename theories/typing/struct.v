@@ -6,7 +6,12 @@ Set Default Proof Using "Type".
 Section struct.
   Context `{!typeG Σ}.
 
-  (* We cannot only allow mtypes in structs as we want to be able to borrow from fields *)
+  (* We cannot only allow mtypes in structs as we want to be able to
+   borrow from fields.
+
+   Should we have a later in here to avoid the use of guarded in most
+   cases? Probably not because subtyping would break (later in the
+   goal would be only around the struct, not the whole goal. ). *)
   Program Definition struct (sl : struct_layout) (tys : list type) : type := {|
     ty_own β l :=
       ⌜l `has_layout_loc` sl⌝ ∗ ⌜length (field_names sl.(sl_members)) = length tys⌝ ∗
@@ -195,8 +200,7 @@ Section struct.
     iDestruct 1 as (i ty1 Hi Hn) "HP".
     move: (Hi) => /field_index_of_to_index_of[? Hi2].
     iIntros (Φ) "Hs HΦ" => /=.
-    (* TODO: why does iMod not work here? *)
-    iApply (@wp_step_fupd expr_lang with "[Hs]"). done. 2: by iApply (do_strip_guarded with "Hs"). solve_ndisj.
+    iApply (wp_step_fupd with "[Hs]"). done. 2: by iApply (do_strip_guarded with "Hs"). solve_ndisj.
     iApply wp_get_member. by apply val_to_of_loc. by eauto.
     iIntros "!# [% [% [#Hb Hs]]] !#". iExists _. iSplit => //.
     iDestruct (big_sepL_insert_acc with "Hs") as "[Hl Hs]" => //=. by eapply pad_struct_lookup_field.

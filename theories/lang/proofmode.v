@@ -12,10 +12,11 @@ Lemma tac_wps_bind `{refinedcG Σ} e Ks Q Ψ E s:
   WPs (W.to_stmt s) @ E {{ Q, Ψ }}.
 Proof.
   move => /W.find_stmt_fill_correct ->. iIntros "He".
-  have [Ks' HKs']:= W.stmt_fill_correct Ks. rewrite HKs'.
-  iApply wps_bind.
-  iApply (wp_wand with "He"). iIntros (v).
-  rewrite HKs' /W.to_expr. by iIntros "?".
+  rewrite stmt_wp_eq. iIntros (? rf ->) "?".
+  have [Ks' HKs']:= W.stmt_fill_correct Ks rf. rewrite HKs'.
+  iApply wp_bind.
+  iApply (wp_wand with "He"). iIntros (v) "HWP".
+  rewrite -(HKs' (W.Val _)) /W.to_expr. by iApply "HWP".
 Qed.
 
 Tactic Notation "wps_bind" :=
@@ -32,18 +33,11 @@ Lemma tac_wp_bind' `{refinedcG Σ} e Ks Φ E:
   WP (W.to_expr e) @ E {{ v, WP (W.to_expr (W.fill Ks (W.Val v))) @ E{{ Φ }} }} -∗
   WP (W.to_expr (W.fill Ks e)) @ E {{ Φ }}.
 Proof.
-  move: Ks Φ => /=. elim/rev_ind. {
-    iIntros (Φ) "He". iApply @wp_fupd.
-    iApply (wp_wand with "He") => /=. iIntros (v). rewrite wp_value_fupd. by iIntros "$".
-  }
-  move => K Ks IH Φ.
-  have [Ks' HKs']:= W.ectx_item_correct [K].
-  rewrite W.fill_app HKs'.
-  iIntros "He". iApply @wp_bind.
-  iApply IH. iApply (wp_wand with "He").
-  iIntros (v) "He".
-  rewrite W.fill_app HKs'.
-  by iApply @wp_bind_inv.
+  iIntros "HWP".
+  have [Ks' HKs']:= W.ectx_item_correct Ks.
+  rewrite /coerce_rtexpr HKs'. iApply wp_bind.
+  iApply (wp_wand with "HWP"). iIntros (v) "HWP".
+  by rewrite HKs'.
 Qed.
 
 Lemma tac_wp_bind `{refinedcG Σ} e Ks e' Φ E:
@@ -58,8 +52,8 @@ Qed.
 Tactic Notation "wp_bind" :=
   iStartProof;
   lazymatch goal with
-  | |- envs_entails _ (wp ?s ?E ?e ?Φ) =>
-    let e' := W.of_expr e in change (wp s E e Φ) with (wp s E (W.to_expr e') Φ);
+  | |- envs_entails _ (wp ?s ?E (coerce_rtexpr ?e) ?Φ) =>
+    let e' := W.of_expr e in change (wp s E (coerce_rtexpr e) Φ) with (wp s E (coerce_rtexpr (W.to_expr e')) Φ);
     iApply tac_wp_bind; [done |];
     unfold W.to_expr; simpl
   | _ => fail "wp_bind: not a 'wp'"

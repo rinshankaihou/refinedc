@@ -9,18 +9,18 @@ Section code.
   Definition loc_2 : location_info := LocationInfo file_0 18 2 18 50.
   Definition loc_3 : location_info := LocationInfo file_0 18 9 18 49.
   Definition loc_4 : location_info := LocationInfo file_0 18 9 18 49.
-  Definition loc_6 : location_info := LocationInfo file_0 18 46 18 47.
-  Definition loc_7 : location_info := LocationInfo file_0 18 46 18 47.
+  Definition loc_6 : location_info := LocationInfo file_0 18 30 18 31.
+  Definition loc_7 : location_info := LocationInfo file_0 18 30 18 31.
   Definition loc_8 : location_info := LocationInfo file_0 18 38 18 39.
   Definition loc_9 : location_info := LocationInfo file_0 18 38 18 39.
-  Definition loc_10 : location_info := LocationInfo file_0 18 30 18 31.
-  Definition loc_11 : location_info := LocationInfo file_0 18 30 18 31.
+  Definition loc_10 : location_info := LocationInfo file_0 18 46 18 47.
+  Definition loc_11 : location_info := LocationInfo file_0 18 46 18 47.
   Definition loc_14 : location_info := LocationInfo file_0 25 2 25 30.
   Definition loc_15 : location_info := LocationInfo file_0 26 2 26 11.
   Definition loc_16 : location_info := LocationInfo file_0 26 9 26 10.
   Definition loc_17 : location_info := LocationInfo file_0 26 9 26 10.
-  Definition loc_21 : location_info := LocationInfo file_0 25 26 25 27.
-  Definition loc_22 : location_info := LocationInfo file_0 25 26 25 27.
+  Definition loc_19 : location_info := LocationInfo file_0 25 26 25 27.
+  Definition loc_20 : location_info := LocationInfo file_0 25 26 25 27.
   Definition loc_27 : location_info := LocationInfo file_0 33 2 33 35.
   Definition loc_28 : location_info := LocationInfo file_0 33 9 33 34.
   Definition loc_29 : location_info := LocationInfo file_0 33 9 33 34.
@@ -33,8 +33,8 @@ Section code.
   Definition loc_41 : location_info := LocationInfo file_0 41 2 41 3.
   Definition loc_42 : location_info := LocationInfo file_0 41 6 41 30.
   Definition loc_43 : location_info := LocationInfo file_0 41 6 41 30.
-  Definition loc_45 : location_info := LocationInfo file_0 41 27 41 28.
-  Definition loc_46 : location_info := LocationInfo file_0 41 27 41 28.
+  Definition loc_47 : location_info := LocationInfo file_0 41 27 41 28.
+  Definition loc_48 : location_info := LocationInfo file_0 41 27 41 28.
   Definition loc_51 : location_info := LocationInfo file_0 49 2 49 13.
   Definition loc_52 : location_info := LocationInfo file_0 49 9 49 12.
   Definition loc_53 : location_info := LocationInfo file_0 49 9 49 12.
@@ -96,9 +96,9 @@ Section code.
       <[ "#0" :=
         locinfo: loc_2 ;
         Return (StructInit struct_color [
-                  ("r", LocInfoE loc_10 (use{it_layout u8} (LocInfoE loc_11 ("r"))) : expr) ;
+                  ("r", LocInfoE loc_6 (use{it_layout u8} (LocInfoE loc_7 ("r"))) : expr) ;
                   ("g", LocInfoE loc_8 (use{it_layout u8} (LocInfoE loc_9 ("g"))) : expr) ;
-                  ("b", LocInfoE loc_6 (use{it_layout u8} (LocInfoE loc_7 ("b"))) : expr)
+                  ("b", LocInfoE loc_10 (use{it_layout u8} (LocInfoE loc_11 ("b"))) : expr)
                 ])
       ]> $∅
     )%E
@@ -117,7 +117,7 @@ Section code.
       <[ "#0" :=
         "c" <-{ layout_of struct_color }
           StructInit struct_color [
-            ("r", LocInfoE loc_21 (use{it_layout u8} (LocInfoE loc_22 ("r"))) : expr) ;
+            ("r", LocInfoE loc_19 (use{it_layout u8} (LocInfoE loc_20 ("r"))) : expr) ;
             ("g", UnOp (CastOp $ IntOp u8) (IntOp i32) (i2v 0 i32) : expr) ;
             ("b", UnOp (CastOp $ IntOp u8) (IntOp i32) (i2v 0 i32) : expr)
           ] ;
@@ -163,7 +163,7 @@ Section code.
           StructInit struct_color [
             ("r", UnOp (CastOp $ IntOp u8) (IntOp i32) (i2v 0 i32) : expr) ;
             ("g", UnOp (CastOp $ IntOp u8) (IntOp i32) (i2v 0 i32) : expr) ;
-            ("b", LocInfoE loc_45 (use{it_layout u8} (LocInfoE loc_46 ("b"))) : expr)
+            ("b", LocInfoE loc_47 (use{it_layout u8} (LocInfoE loc_48 ("b"))) : expr)
           ] ;
         locinfo: loc_38 ;
         Return (LocInfoE loc_39 (use{layout_of struct_color} (LocInfoE loc_40 ("c"))))
@@ -253,14 +253,8 @@ Section code.
     f_init := "#0";
     f_code := (
       <[ "#0" :=
-        locinfo: loc_89 ;
-        "$0" <- LocInfoE loc_91 (global_blue) with
-          [ LocInfoE loc_92 (UnOp (CastOp $ IntOp u8) (IntOp i32) (LocInfoE loc_92 (i2v 5 i32))) ] ;
-        locinfo: loc_86 ;
-        "$1" <- LocInfoE loc_88 (global_getblue) with
-          [ LocInfoE loc_89 ("$0") ] ;
         locinfo: loc_84 ;
-        assert: (LocInfoE loc_85 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_85 ((LocInfoE loc_86 ("$1")) ={IntOp u8, IntOp u8} (LocInfoE loc_93 (UnOp (CastOp $ IntOp u8) (IntOp i32) (LocInfoE loc_94 (i2v 5 i32)))))))) ;
+        assert: (LocInfoE loc_85 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_85 ((LocInfoE loc_86 (Call (LocInfoE loc_88 (global_getblue)) [@{expr} LocInfoE loc_89 (Call (LocInfoE loc_91 (global_blue)) [@{expr} LocInfoE loc_92 (UnOp (CastOp $ IntOp u8) (IntOp i32) (LocInfoE loc_92 (i2v 5 i32))) ]) ])) ={IntOp u8, IntOp u8} (LocInfoE loc_93 (UnOp (CastOp $ IntOp u8) (IntOp i32) (LocInfoE loc_94 (i2v 5 i32)))))))) ;
         Return (VOID)
       ]> $∅
     )%E

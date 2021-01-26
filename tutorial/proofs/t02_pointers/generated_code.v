@@ -193,10 +193,8 @@ Section code.
     f_code := (
       <[ "#0" :=
         "local" <-{ it_layout i32 } LocInfoE loc_29 (i2v 1 i32) ;
-        locinfo: loc_22 ;
-        "$0" <- LocInfoE loc_24 (global_read_int) with
-          [ LocInfoE loc_25 (&(LocInfoE loc_26 ("local"))) ] ;
-        "read" <-{ it_layout i32 } LocInfoE loc_22 ("$0") ;
+        "read" <-{ it_layout i32 }
+          LocInfoE loc_22 (Call (LocInfoE loc_24 (global_read_int)) [@{expr} LocInfoE loc_25 (&(LocInfoE loc_26 ("local"))) ]) ;
         locinfo: loc_11 ;
         assert: (LocInfoE loc_17 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_17 ((LocInfoE loc_18 (use{it_layout i32} (LocInfoE loc_19 ("local")))) ={IntOp i32, IntOp i32} (LocInfoE loc_20 (use{it_layout i32} (LocInfoE loc_21 ("read")))))))) ;
         locinfo: loc_12 ;
@@ -391,12 +389,9 @@ Section code.
     f_code := (
       <[ "#0" :=
         "x" <-{ it_layout i32 } LocInfoE loc_181 (i2v 1 i32) ;
-        locinfo: loc_172 ;
-        "$0" <- LocInfoE loc_174 (global_ptr_id) with
-          [ LocInfoE loc_175 (&(LocInfoE loc_176 ("x"))) ;
-          LocInfoE loc_177 ((LocInfoE loc_178 (i2v 1 i32)) +{IntOp i32, IntOp i32} (LocInfoE loc_179 (i2v 1 i32))) ] ;
         locinfo: loc_167 ;
-        assert: (LocInfoE loc_168 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_168 ((LocInfoE loc_169 (use{it_layout i32} (LocInfoE loc_171 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_172 ("$0")))))) ={IntOp i32, IntOp i32} (LocInfoE loc_180 (i2v 1 i32)))))) ;
+        assert: (LocInfoE loc_168 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_168 ((LocInfoE loc_169 (use{it_layout i32} (LocInfoE loc_171 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_172 (LValue (LocInfoE loc_172 (Call (LocInfoE loc_174 (global_ptr_id)) [@{expr} LocInfoE loc_175 (&(LocInfoE loc_176 ("x"))) ;
+        LocInfoE loc_177 ((LocInfoE loc_178 (i2v 1 i32)) +{IntOp i32, IntOp i32} (LocInfoE loc_179 (i2v 1 i32))) ])))))))) ={IntOp i32, IntOp i32} (LocInfoE loc_180 (i2v 1 i32)))))) ;
         Return (VOID)
       ]> $∅
     )%E

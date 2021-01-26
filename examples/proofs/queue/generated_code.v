@@ -192,11 +192,8 @@ Section code.
     f_init := "#0";
     f_code := (
       <[ "#0" :=
-        locinfo: loc_19 ;
-        "$0" <- LocInfoE loc_21 (global_alloc) with
-          [ LocInfoE loc_22 (i2v (layout_of struct_queue).(ly_size) size_t) ] ;
         "queue" <-{ void* }
-          LocInfoE loc_19 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_19 ("$0"))) ;
+          LocInfoE loc_19 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_19 (Call (LocInfoE loc_21 (global_alloc)) [@{expr} LocInfoE loc_22 (i2v (layout_of struct_queue).(ly_size) size_t) ]))) ;
         locinfo: loc_3 ;
         LocInfoE loc_15 ((LocInfoE loc_16 (!{void*} (LocInfoE loc_17 ("queue")))) at{struct_queue} "head") <-{ void* }
           LocInfoE loc_18 (NULL) ;
@@ -239,11 +236,8 @@ Section code.
     f_init := "#0";
     f_code := (
       <[ "#0" :=
-        locinfo: loc_80 ;
-        "$0" <- LocInfoE loc_82 (global_alloc) with
-          [ LocInfoE loc_83 (i2v (layout_of struct_queue_elem).(ly_size) size_t) ] ;
         "elem" <-{ void* }
-          LocInfoE loc_80 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_80 ("$0"))) ;
+          LocInfoE loc_80 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_80 (Call (LocInfoE loc_82 (global_alloc)) [@{expr} LocInfoE loc_83 (i2v (layout_of struct_queue_elem).(ly_size) size_t) ]))) ;
         locinfo: loc_49 ;
         LocInfoE loc_75 ((LocInfoE loc_76 (!{void*} (LocInfoE loc_77 ("elem")))) at{struct_queue_elem} "elem") <-{ void* }
           LocInfoE loc_78 (use{void*} (LocInfoE loc_79 ("v"))) ;
@@ -299,9 +293,8 @@ Section code.
       ]> $
       <[ "#2" :=
         locinfo: loc_94 ;
-        "_" <- LocInfoE loc_99 (global_free) with
-          [ LocInfoE loc_100 (i2v (layout_of struct_queue_elem).(ly_size) size_t) ;
-          LocInfoE loc_101 (use{void*} (LocInfoE loc_102 ("elem"))) ] ;
+        expr: (LocInfoE loc_94 (Call (LocInfoE loc_99 (global_free)) [@{expr} LocInfoE loc_100 (i2v (layout_of struct_queue_elem).(ly_size) size_t) ;
+        LocInfoE loc_101 (use{void*} (LocInfoE loc_102 ("elem"))) ])) ;
         locinfo: loc_95 ;
         Return (LocInfoE loc_96 (use{void*} (LocInfoE loc_97 ("ret"))))
       ]> $

@@ -89,7 +89,7 @@ Section code.
   Definition loc_96 : location_info := LocationInfo file_0 430 5 430 8.
   Definition loc_97 : location_info := LocationInfo file_0 430 11 430 33.
   Definition loc_98 : location_info := LocationInfo file_0 430 11 430 33.
-  Definition loc_101 : location_info := LocationInfo file_0 430 31 430 32.
+  Definition loc_100 : location_info := LocationInfo file_0 430 31 430 32.
 
   (* Definition of struct [basic]. *)
   Program Definition struct_basic := {|
@@ -269,11 +269,9 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_77 ;
-        "_" <- LocInfoE loc_84 (global_init_int) with
-          [ LocInfoE loc_85 (&(LocInfoE loc_86 ("i"))) ] ;
+        expr: (LocInfoE loc_77 (Call (LocInfoE loc_84 (global_init_int)) [@{expr} LocInfoE loc_85 (&(LocInfoE loc_86 ("i"))) ])) ;
         locinfo: loc_78 ;
-        "_" <- LocInfoE loc_80 (global_init_int) with
-          [ LocInfoE loc_81 (&(LocInfoE loc_82 ("i"))) ] ;
+        expr: (LocInfoE loc_78 (Call (LocInfoE loc_80 (global_init_int)) [@{expr} LocInfoE loc_81 (&(LocInfoE loc_82 ("i"))) ])) ;
         Return (VOID)
       ]> $∅
     )%E
@@ -292,7 +290,7 @@ Section code.
         locinfo: loc_89 ;
         LocInfoE loc_95 (!{void*} (LocInfoE loc_96 ("out"))) <-{ layout_of struct_basic }
           StructInit struct_basic [
-            ("a", LocInfoE loc_101 (i2v 1 i32) : expr) ;
+            ("a", LocInfoE loc_100 (i2v 1 i32) : expr) ;
             ("b", i2v 0 i32 : expr)
           ] ;
         locinfo: loc_90 ;

@@ -90,16 +90,14 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_2 ;
-        "_" <- LocInfoE loc_20 (global_init_alloc) with [  ] ;
+        expr: (LocInfoE loc_2 (Call (LocInfoE loc_20 (global_init_alloc)) [@{expr}  ])) ;
         locinfo: loc_3 ;
-        "_" <- LocInfoE loc_15 (global_free) with
-          [ LocInfoE loc_16 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_16 (i2v 10000 i32))) ;
-          LocInfoE loc_17 (&(LocInfoE loc_18 (global_allocator_data))) ] ;
+        expr: (LocInfoE loc_3 (Call (LocInfoE loc_15 (global_free)) [@{expr} LocInfoE loc_16 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_16 (i2v 10000 i32))) ;
+        LocInfoE loc_17 (&(LocInfoE loc_18 (global_allocator_data))) ])) ;
         locinfo: loc_4 ;
-        "_" <- LocInfoE loc_11 (global_latch_release) with
-          [ LocInfoE loc_12 (&(LocInfoE loc_13 (global_initialized))) ] ;
+        expr: (LocInfoE loc_4 (Call (LocInfoE loc_11 (global_latch_release)) [@{expr} LocInfoE loc_12 (&(LocInfoE loc_13 (global_initialized))) ])) ;
         locinfo: loc_5 ;
-        "_" <- LocInfoE loc_9 (global_test) with [  ] ;
+        expr: (LocInfoE loc_5 (Call (LocInfoE loc_9 (global_test)) [@{expr}  ])) ;
         locinfo: loc_6 ;
         Return (LocInfoE loc_7 (i2v 0 i32))
       ]> $∅
@@ -116,10 +114,9 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_23 ;
-        "_" <- LocInfoE loc_30 (global_latch_wait) with
-          [ LocInfoE loc_31 (&(LocInfoE loc_32 (global_initialized))) ] ;
+        expr: (LocInfoE loc_23 (Call (LocInfoE loc_30 (global_latch_wait)) [@{expr} LocInfoE loc_31 (&(LocInfoE loc_32 (global_initialized))) ])) ;
         locinfo: loc_24 ;
-        "_" <- LocInfoE loc_28 (global_test) with [  ] ;
+        expr: (LocInfoE loc_24 (Call (LocInfoE loc_28 (global_test)) [@{expr}  ])) ;
         locinfo: loc_25 ;
         Return (LocInfoE loc_26 (i2v 0 i32))
       ]> $∅

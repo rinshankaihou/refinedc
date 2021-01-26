@@ -390,23 +390,20 @@ Section code.
         locinfo: loc_74 ;
           Goto "#3"
         else
-        locinfo: loc_62 ;
+        locinfo: loc_61 ;
           Goto "#4"
       ]> $
       <[ "#2" :=
-        locinfo: loc_62 ;
-        "$0" <- LocInfoE loc_64 (global_member_rec) with
-          [ LocInfoE loc_65 (&(LocInfoE loc_66 ((LocInfoE loc_67 (!{void*} (LocInfoE loc_69 (!{void*} (LocInfoE loc_70 ("p")))))) at{struct_list} "tail"))) ;
-          LocInfoE loc_71 (use{it_layout size_t} (LocInfoE loc_72 ("k"))) ] ;
         locinfo: loc_61 ;
-        Return (LocInfoE loc_62 ("$0"))
+        Return (LocInfoE loc_62 (Call (LocInfoE loc_64 (global_member_rec)) [@{expr} LocInfoE loc_65 (&(LocInfoE loc_66 ((LocInfoE loc_67 (!{void*} (LocInfoE loc_69 (!{void*} (LocInfoE loc_70 ("p")))))) at{struct_list} "tail"))) ;
+               LocInfoE loc_71 (use{it_layout size_t} (LocInfoE loc_72 ("k"))) ]))
       ]> $
       <[ "#3" :=
         locinfo: loc_74 ;
         Return (LocInfoE loc_75 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_75 (i2v 1 i32))))
       ]> $
       <[ "#4" :=
-        locinfo: loc_62 ;
+        locinfo: loc_61 ;
         Goto "#2"
       ]> $
       <[ "#5" :=
@@ -503,37 +500,28 @@ Section code.
     f_init := "#0";
     f_code := (
       <[ "#0" :=
-        locinfo: loc_220 ;
-        "$4" <- LocInfoE loc_222 (global_init) with [  ] ;
-        "list" <-{ void* } LocInfoE loc_220 ("$4") ;
+        "list" <-{ void* }
+          LocInfoE loc_220 (Call (LocInfoE loc_222 (global_init)) [@{expr}  ]) ;
         "local1" <-{ it_layout i32 } LocInfoE loc_217 (i2v 0 i32) ;
-        locinfo: loc_208 ;
-        "$3" <- LocInfoE loc_210 (global_push) with
-          [ LocInfoE loc_211 (use{void*} (LocInfoE loc_212 ("list"))) ;
-          LocInfoE loc_213 (&(LocInfoE loc_214 ("local1"))) ;
-          LocInfoE loc_215 (&(LocInfoE loc_216 ("local1_node"))) ] ;
         locinfo: loc_160 ;
-        LocInfoE loc_207 ("list") <-{ void* } LocInfoE loc_208 ("$3") ;
+        LocInfoE loc_207 ("list") <-{ void* }
+          LocInfoE loc_208 (Call (LocInfoE loc_210 (global_push)) [@{expr} LocInfoE loc_211 (use{void*} (LocInfoE loc_212 ("list"))) ;
+          LocInfoE loc_213 (&(LocInfoE loc_214 ("local1"))) ;
+          LocInfoE loc_215 (&(LocInfoE loc_216 ("local1_node"))) ]) ;
         locinfo: loc_161 ;
         LocInfoE loc_204 ("local2") <-{ void* }
           LocInfoE loc_205 (&(LocInfoE loc_206 ("list"))) ;
-        locinfo: loc_195 ;
-        "$2" <- LocInfoE loc_197 (global_push) with
-          [ LocInfoE loc_198 (use{void*} (LocInfoE loc_199 ("list"))) ;
-          LocInfoE loc_200 (&(LocInfoE loc_201 ("local2"))) ;
-          LocInfoE loc_202 (&(LocInfoE loc_203 ("local2_node"))) ] ;
         locinfo: loc_162 ;
-        LocInfoE loc_194 ("list") <-{ void* } LocInfoE loc_195 ("$2") ;
-        locinfo: loc_189 ;
-        "$1" <- LocInfoE loc_191 (global_pop) with
-          [ LocInfoE loc_192 (&(LocInfoE loc_193 ("list"))) ] ;
+        LocInfoE loc_194 ("list") <-{ void* }
+          LocInfoE loc_195 (Call (LocInfoE loc_197 (global_push)) [@{expr} LocInfoE loc_198 (use{void*} (LocInfoE loc_199 ("list"))) ;
+          LocInfoE loc_200 (&(LocInfoE loc_201 ("local2"))) ;
+          LocInfoE loc_202 (&(LocInfoE loc_203 ("local2_node"))) ]) ;
         locinfo: loc_163 ;
-        LocInfoE loc_188 ("local3") <-{ void* } LocInfoE loc_189 ("$1") ;
-        locinfo: loc_179 ;
-        "$0" <- LocInfoE loc_181 (global_pop) with
-          [ LocInfoE loc_182 (&(LocInfoE loc_184 (!{void*} (LocInfoE loc_186 (!{void*} (LocInfoE loc_187 ("local3"))))))) ] ;
+        LocInfoE loc_188 ("local3") <-{ void* }
+          LocInfoE loc_189 (Call (LocInfoE loc_191 (global_pop)) [@{expr} LocInfoE loc_192 (&(LocInfoE loc_193 ("list"))) ]) ;
         locinfo: loc_164 ;
-        LocInfoE loc_178 ("local4") <-{ void* } LocInfoE loc_179 ("$0") ;
+        LocInfoE loc_178 ("local4") <-{ void* }
+          LocInfoE loc_179 (Call (LocInfoE loc_181 (global_pop)) [@{expr} LocInfoE loc_182 (&(LocInfoE loc_184 (!{void*} (LocInfoE loc_186 (!{void*} (LocInfoE loc_187 ("local3"))))))) ]) ;
         locinfo: loc_165 ;
         assert: (LocInfoE loc_172 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_172 ((LocInfoE loc_173 (use{it_layout i32} (LocInfoE loc_175 (!{void*} (LocInfoE loc_176 ("local4")))))) ={IntOp i32, IntOp i32} (LocInfoE loc_177 (i2v 0 i32)))))) ;
         locinfo: loc_166 ;

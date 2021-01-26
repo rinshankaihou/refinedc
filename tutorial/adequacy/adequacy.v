@@ -83,7 +83,7 @@ Section adequate.
     alloc_new_blocks (initial_state (fn_lists_to_fns function_locs functions))
                      initial_heap_locs initial_heap_values σ →
     NoDup function_locs →
-    nsteps (Λ := stmt_lang) n (initial_thread_state <$> [loc_main; loc_main2], σ) κs (t2, σ2) →
+    nsteps (Λ := c_lang) n (initial_prog <$> [loc_main; loc_main2], σ) κs (t2, σ2) →
     ∀ e2, e2 ∈ t2 → not_stuck e2 σ2.
   Proof.
     move => Hly1 Hly2 Hly3 Halloc HNDfns.

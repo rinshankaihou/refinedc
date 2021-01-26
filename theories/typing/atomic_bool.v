@@ -154,21 +154,20 @@ Section programs.
         * iExists b. iFrame "Hif". iExists _. by iFrame.
         * iExists _. iFrame. by destruct b, bexp.
     - iDestruct "Hl" as (?) "#Hinv".
-      iApply (@wp_atomic).
-      iMod (inv_acc with "Hinv") as "[Hb Hc]" => //. iModIntro.
+      iInv "Hinv" as "Hb".
       iDestruct "Hb" as (b) "[>Hmt Hif]".
       destruct (decide (b = bexp)); subst.
       + iApply (wp_cas_suc with "Hmt He") => //; try by [apply val_to_of_loc]; try by [apply val_to_of_int]; try by [apply: val_of_int_length]; try by [apply i2v_bool_Some].
         iIntros "!# Hb Hexp".
         iDestruct "Hsub" as "[Hsub _]". iDestruct ("Hsub" with "Hif") as "[Hif HT]".
-        iMod ("Hc" with "[Hb Hif]") as "_"; iModIntro. by iExists bnew; iFrame; rewrite /i2v Hvnew.
+        iModIntro. iSplitL "Hb Hif". { by iExists bnew; iFrame; rewrite /i2v Hvnew. }
         iApply "HΦ". 2: iApply ("HT" with "[]"). done.
         * by iSplit.
         * iExists _. by iFrame.
       + iApply (wp_cas_fail with "Hmt He") => //; try by [apply val_to_of_loc]; try by [apply val_to_of_int]; try by [apply i2v_bool_Some]; try by [apply: val_of_int_length]; try by [destruct b,bexp].
         iIntros "!# Hb Hexp".
         iDestruct "Hsub" as "[_ HT]".
-        iMod ("Hc" with "[Hb Hif]") as "_"; iModIntro. by iExists b; iFrame; rewrite /i2v Hvnew.
+        iModIntro. iSplitL "Hb Hif". { by iExists b; iFrame; rewrite /i2v Hvnew. }
         iApply "HΦ". 2: iApply ("HT" with "[]"). done.
         * by iSplit.
         * iExists _. iFrame. rewrite val_of_int_bool. by destruct b, bexp.

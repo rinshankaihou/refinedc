@@ -880,8 +880,7 @@ Section code.
         LocInfoE loc_45 ((LocInfoE loc_46 (!{void*} (LocInfoE loc_47 ("chunk")))) at{struct_mpool_chunk} "size") <-{ it_layout size_t }
           LocInfoE loc_48 (use{it_layout size_t} (LocInfoE loc_49 ("size"))) ;
         locinfo: loc_7 ;
-        "_" <- LocInfoE loc_40 (global_sl_lock) with
-          [ LocInfoE loc_41 (&(LocInfoE loc_42 ((LocInfoE loc_43 (!{void*} (LocInfoE loc_44 ("p")))) at{struct_mpool} "lock"))) ] ;
+        expr: (LocInfoE loc_7 (Call (LocInfoE loc_40 (global_sl_lock)) [@{expr} LocInfoE loc_41 (&(LocInfoE loc_42 ((LocInfoE loc_43 (!{void*} (LocInfoE loc_44 ("p")))) at{struct_mpool} "lock"))) ])) ;
         locinfo: loc_8 ;
         annot: (UnlockA) ;
         expr: (LocInfoE loc_35 (&(LocInfoE loc_36 ((LocInfoE loc_37 (!{void*} (LocInfoE loc_38 ("p")))) at{struct_mpool} "locked")))) ;
@@ -892,8 +891,7 @@ Section code.
         LocInfoE loc_21 ((LocInfoE loc_22 ((LocInfoE loc_23 (!{void*} (LocInfoE loc_24 ("p")))) at{struct_mpool} "locked")) at{struct_mpool_locked_inner} "chunk_list") <-{ void* }
           LocInfoE loc_25 (use{void*} (LocInfoE loc_26 ("chunk"))) ;
         locinfo: loc_12 ;
-        "_" <- LocInfoE loc_16 (global_sl_unlock) with
-          [ LocInfoE loc_17 (AnnotExpr 1%nat LockA (LocInfoE loc_17 (&(LocInfoE loc_18 ((LocInfoE loc_19 (!{void*} (LocInfoE loc_20 ("p")))) at{struct_mpool} "lock"))))) ] ;
+        expr: (LocInfoE loc_12 (Call (LocInfoE loc_16 (global_sl_unlock)) [@{expr} LocInfoE loc_17 (AnnotExpr 1%nat LockA (LocInfoE loc_17 (&(LocInfoE loc_18 ((LocInfoE loc_19 (!{void*} (LocInfoE loc_20 ("p")))) at{struct_mpool} "lock"))))) ])) ;
         locinfo: loc_13 ;
         Return (LocInfoE loc_14 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_14 (i2v 1 i32))))
       ]> $
@@ -923,8 +921,7 @@ Section code.
         "e" <-{ void* }
           LocInfoE loc_105 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_105 (use{void*} (LocInfoE loc_106 ("ptr"))))) ;
         locinfo: loc_69 ;
-        "_" <- LocInfoE loc_100 (global_sl_lock) with
-          [ LocInfoE loc_101 (&(LocInfoE loc_102 ((LocInfoE loc_103 (!{void*} (LocInfoE loc_104 ("p")))) at{struct_mpool} "lock"))) ] ;
+        expr: (LocInfoE loc_69 (Call (LocInfoE loc_100 (global_sl_lock)) [@{expr} LocInfoE loc_101 (&(LocInfoE loc_102 ((LocInfoE loc_103 (!{void*} (LocInfoE loc_104 ("p")))) at{struct_mpool} "lock"))) ])) ;
         locinfo: loc_70 ;
         annot: (UnlockA) ;
         expr: (LocInfoE loc_95 (&(LocInfoE loc_96 ((LocInfoE loc_97 (!{void*} (LocInfoE loc_98 ("p")))) at{struct_mpool} "locked")))) ;
@@ -935,8 +932,7 @@ Section code.
         LocInfoE loc_81 ((LocInfoE loc_82 ((LocInfoE loc_83 (!{void*} (LocInfoE loc_84 ("p")))) at{struct_mpool} "locked")) at{struct_mpool_locked_inner} "entry_list") <-{ void* }
           LocInfoE loc_85 (use{void*} (LocInfoE loc_86 ("e"))) ;
         locinfo: loc_74 ;
-        "_" <- LocInfoE loc_76 (global_sl_unlock) with
-          [ LocInfoE loc_77 (AnnotExpr 1%nat LockA (LocInfoE loc_77 (&(LocInfoE loc_78 ((LocInfoE loc_79 (!{void*} (LocInfoE loc_80 ("p")))) at{struct_mpool} "lock"))))) ] ;
+        expr: (LocInfoE loc_74 (Call (LocInfoE loc_76 (global_sl_unlock)) [@{expr} LocInfoE loc_77 (AnnotExpr 1%nat LockA (LocInfoE loc_77 (&(LocInfoE loc_78 ((LocInfoE loc_79 (!{void*} (LocInfoE loc_80 ("p")))) at{struct_mpool} "lock"))))) ])) ;
         Return (VOID)
       ]> $∅
     )%E
@@ -966,8 +962,7 @@ Section code.
         LocInfoE loc_122 ((LocInfoE loc_123 (!{void*} (LocInfoE loc_124 ("p")))) at{struct_mpool} "fallback") <-{ void* }
           LocInfoE loc_125 (NULL) ;
         locinfo: loc_115 ;
-        "_" <- LocInfoE loc_117 (global_sl_init) with
-          [ LocInfoE loc_118 (&(LocInfoE loc_119 ((LocInfoE loc_120 (!{void*} (LocInfoE loc_121 ("p")))) at{struct_mpool} "lock"))) ] ;
+        expr: (LocInfoE loc_115 (Call (LocInfoE loc_117 (global_sl_init)) [@{expr} LocInfoE loc_118 (&(LocInfoE loc_119 ((LocInfoE loc_120 (!{void*} (LocInfoE loc_121 ("p")))) at{struct_mpool} "lock"))) ])) ;
         Return (VOID)
       ]> $∅
     )%E
@@ -985,12 +980,10 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_143 ;
-        "_" <- LocInfoE loc_205 (global_mpool_init) with
-          [ LocInfoE loc_206 (use{void*} (LocInfoE loc_207 ("p"))) ;
-          LocInfoE loc_208 (use{it_layout size_t} (LocInfoE loc_209 ((LocInfoE loc_210 (!{void*} (LocInfoE loc_211 ("from")))) at{struct_mpool} "entry_size"))) ] ;
+        expr: (LocInfoE loc_143 (Call (LocInfoE loc_205 (global_mpool_init)) [@{expr} LocInfoE loc_206 (use{void*} (LocInfoE loc_207 ("p"))) ;
+        LocInfoE loc_208 (use{it_layout size_t} (LocInfoE loc_209 ((LocInfoE loc_210 (!{void*} (LocInfoE loc_211 ("from")))) at{struct_mpool} "entry_size"))) ])) ;
         locinfo: loc_144 ;
-        "_" <- LocInfoE loc_199 (global_sl_lock) with
-          [ LocInfoE loc_200 (&(LocInfoE loc_201 ((LocInfoE loc_202 (!{void*} (LocInfoE loc_203 ("from")))) at{struct_mpool} "lock"))) ] ;
+        expr: (LocInfoE loc_144 (Call (LocInfoE loc_199 (global_sl_lock)) [@{expr} LocInfoE loc_200 (&(LocInfoE loc_201 ((LocInfoE loc_202 (!{void*} (LocInfoE loc_203 ("from")))) at{struct_mpool} "lock"))) ])) ;
         locinfo: loc_145 ;
         annot: (UnlockA) ;
         expr: (LocInfoE loc_194 (&(LocInfoE loc_195 ((LocInfoE loc_196 (!{void*} (LocInfoE loc_197 ("from")))) at{struct_mpool} "locked")))) ;
@@ -1010,8 +1003,7 @@ Section code.
         LocInfoE loc_159 ((LocInfoE loc_160 ((LocInfoE loc_161 (!{void*} (LocInfoE loc_162 ("from")))) at{struct_mpool} "locked")) at{struct_mpool_locked_inner} "entry_list") <-{ void* }
           LocInfoE loc_163 (NULL) ;
         locinfo: loc_152 ;
-        "_" <- LocInfoE loc_154 (global_sl_unlock) with
-          [ LocInfoE loc_155 (AnnotExpr 1%nat LockA (LocInfoE loc_155 (&(LocInfoE loc_156 ((LocInfoE loc_157 (!{void*} (LocInfoE loc_158 ("from")))) at{struct_mpool} "lock"))))) ] ;
+        expr: (LocInfoE loc_152 (Call (LocInfoE loc_154 (global_sl_unlock)) [@{expr} LocInfoE loc_155 (AnnotExpr 1%nat LockA (LocInfoE loc_155 (&(LocInfoE loc_156 ((LocInfoE loc_157 (!{void*} (LocInfoE loc_158 ("from")))) at{struct_mpool} "lock"))))) ])) ;
         Return (VOID)
       ]> $∅
     )%E
@@ -1029,9 +1021,8 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_214 ;
-        "_" <- LocInfoE loc_222 (global_mpool_init) with
-          [ LocInfoE loc_223 (use{void*} (LocInfoE loc_224 ("p"))) ;
-          LocInfoE loc_225 (use{it_layout size_t} (LocInfoE loc_226 ((LocInfoE loc_227 (!{void*} (LocInfoE loc_228 ("fallback")))) at{struct_mpool} "entry_size"))) ] ;
+        expr: (LocInfoE loc_214 (Call (LocInfoE loc_222 (global_mpool_init)) [@{expr} LocInfoE loc_223 (use{void*} (LocInfoE loc_224 ("p"))) ;
+        LocInfoE loc_225 (use{it_layout size_t} (LocInfoE loc_226 ((LocInfoE loc_227 (!{void*} (LocInfoE loc_228 ("fallback")))) at{struct_mpool} "entry_size"))) ])) ;
         locinfo: loc_215 ;
         LocInfoE loc_216 ((LocInfoE loc_217 (!{void*} (LocInfoE loc_218 ("p")))) at{struct_mpool} "fallback") <-{ void* }
           LocInfoE loc_219 (use{void*} (LocInfoE loc_220 ("fallback"))) ;
@@ -1090,9 +1081,8 @@ Section code.
         LocInfoE loc_305 ("entry") <-{ void* }
           LocInfoE loc_306 (use{void*} (LocInfoE loc_307 ((LocInfoE loc_308 (!{void*} (LocInfoE loc_309 ("entry")))) at{struct_mpool_entry} "next"))) ;
         locinfo: loc_294 ;
-        "_" <- LocInfoE loc_298 (global_mpool_free) with
-          [ LocInfoE loc_299 (use{void*} (LocInfoE loc_300 ((LocInfoE loc_301 (!{void*} (LocInfoE loc_302 ("p")))) at{struct_mpool} "fallback"))) ;
-          LocInfoE loc_303 (use{void*} (LocInfoE loc_304 ("ptr1"))) ] ;
+        expr: (LocInfoE loc_294 (Call (LocInfoE loc_298 (global_mpool_free)) [@{expr} LocInfoE loc_299 (use{void*} (LocInfoE loc_300 ((LocInfoE loc_301 (!{void*} (LocInfoE loc_302 ("p")))) at{struct_mpool} "fallback"))) ;
+        LocInfoE loc_303 (use{void*} (LocInfoE loc_304 ("ptr1"))) ])) ;
         locinfo: loc_295 ;
         Goto "continue9"
       ]> $
@@ -1118,10 +1108,9 @@ Section code.
         LocInfoE loc_271 ("chunk") <-{ void* }
           LocInfoE loc_272 (use{void*} (LocInfoE loc_273 ((LocInfoE loc_274 (!{void*} (LocInfoE loc_275 ("chunk")))) at{struct_mpool_chunk} "next_chunk"))) ;
         locinfo: loc_258 ;
-        "_" <- LocInfoE loc_262 (global_mpool_add_chunk) with
-          [ LocInfoE loc_263 (use{void*} (LocInfoE loc_264 ((LocInfoE loc_265 (!{void*} (LocInfoE loc_266 ("p")))) at{struct_mpool} "fallback"))) ;
-          LocInfoE loc_267 (use{void*} (LocInfoE loc_268 ("ptr2"))) ;
-          LocInfoE loc_269 (use{it_layout size_t} (LocInfoE loc_270 ("size"))) ] ;
+        expr: (LocInfoE loc_258 (Call (LocInfoE loc_262 (global_mpool_add_chunk)) [@{expr} LocInfoE loc_263 (use{void*} (LocInfoE loc_264 ((LocInfoE loc_265 (!{void*} (LocInfoE loc_266 ("p")))) at{struct_mpool} "fallback"))) ;
+        LocInfoE loc_267 (use{void*} (LocInfoE loc_268 ("ptr2"))) ;
+        LocInfoE loc_269 (use{it_layout size_t} (LocInfoE loc_270 ("size"))) ])) ;
         locinfo: loc_259 ;
         Goto "continue11"
       ]> $
@@ -1171,8 +1160,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_342 ;
-        "_" <- LocInfoE loc_475 (global_sl_lock) with
-          [ LocInfoE loc_476 (&(LocInfoE loc_477 ((LocInfoE loc_478 (!{void*} (LocInfoE loc_479 ("p")))) at{struct_mpool} "lock"))) ] ;
+        expr: (LocInfoE loc_342 (Call (LocInfoE loc_475 (global_sl_lock)) [@{expr} LocInfoE loc_476 (&(LocInfoE loc_477 ((LocInfoE loc_478 (!{void*} (LocInfoE loc_479 ("p")))) at{struct_mpool} "lock"))) ])) ;
         locinfo: loc_343 ;
         annot: (UnlockA) ;
         expr: (LocInfoE loc_470 (&(LocInfoE loc_471 ((LocInfoE loc_472 (!{void*} (LocInfoE loc_473 ("p")))) at{struct_mpool} "locked")))) ;
@@ -1265,8 +1253,7 @@ Section code.
       ]> $
       <[ "exit" :=
         locinfo: loc_351 ;
-        "_" <- LocInfoE loc_356 (global_sl_unlock) with
-          [ LocInfoE loc_357 (AnnotExpr 1%nat LockA (LocInfoE loc_357 (&(LocInfoE loc_358 ((LocInfoE loc_359 (!{void*} (LocInfoE loc_360 ("p")))) at{struct_mpool} "lock"))))) ] ;
+        expr: (LocInfoE loc_351 (Call (LocInfoE loc_356 (global_sl_unlock)) [@{expr} LocInfoE loc_357 (AnnotExpr 1%nat LockA (LocInfoE loc_357 (&(LocInfoE loc_358 ((LocInfoE loc_359 (!{void*} (LocInfoE loc_360 ("p")))) at{struct_mpool} "lock"))))) ])) ;
         locinfo: loc_352 ;
         Return (LocInfoE loc_353 (use{void*} (LocInfoE loc_354 ("ret"))))
       ]> $∅
@@ -1284,10 +1271,8 @@ Section code.
     f_init := "#0";
     f_code := (
       <[ "#0" :=
-        locinfo: loc_533 ;
-        "$1" <- LocInfoE loc_535 (global_mpool_alloc_no_fallback) with
-          [ LocInfoE loc_536 (use{void*} (LocInfoE loc_537 ("p"))) ] ;
-        "ret" <-{ void* } LocInfoE loc_533 ("$1") ;
+        "ret" <-{ void* }
+          LocInfoE loc_533 (Call (LocInfoE loc_535 (global_mpool_alloc_no_fallback)) [@{expr} LocInfoE loc_536 (use{void*} (LocInfoE loc_537 ("p"))) ]) ;
         locinfo: loc_529 ;
         if: LocInfoE loc_529 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_529 ((LocInfoE loc_530 (use{void*} (LocInfoE loc_531 ("ret")))) !={PtrOp, PtrOp} (LocInfoE loc_532 (NULL)))))
         then
@@ -1308,18 +1293,16 @@ Section code.
         locinfo: loc_515 ;
         if: LocInfoE loc_515 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_515 ((LocInfoE loc_516 (use{void*} (LocInfoE loc_517 ("p")))) !={PtrOp, PtrOp} (LocInfoE loc_518 (NULL)))))
         then
-        locinfo: loc_510 ;
+        locinfo: loc_490 ;
           Goto "#3"
         else
         locinfo: loc_486 ;
           Goto "#4"
       ]> $
       <[ "#3" :=
-        locinfo: loc_510 ;
-        "$0" <- LocInfoE loc_512 (global_mpool_alloc_no_fallback) with
-          [ LocInfoE loc_513 (use{void*} (LocInfoE loc_514 ("p"))) ] ;
         locinfo: loc_490 ;
-        LocInfoE loc_509 ("ret") <-{ void* } LocInfoE loc_510 ("$0") ;
+        LocInfoE loc_509 ("ret") <-{ void* }
+          LocInfoE loc_510 (Call (LocInfoE loc_512 (global_mpool_alloc_no_fallback)) [@{expr} LocInfoE loc_513 (use{void*} (LocInfoE loc_514 ("p"))) ]) ;
         locinfo: loc_505 ;
         if: LocInfoE loc_505 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_505 ((LocInfoE loc_506 (use{void*} (LocInfoE loc_507 ("ret")))) !={PtrOp, PtrOp} (LocInfoE loc_508 (NULL)))))
         then
@@ -1388,8 +1371,7 @@ Section code.
         LocInfoE loc_760 ("align") <-{ it_layout size_t }
           LocInfoE loc_761 ((LocInfoE loc_762 (use{it_layout size_t} (LocInfoE loc_763 ("align")))) ×{IntOp size_t, IntOp size_t} (LocInfoE loc_764 (use{it_layout size_t} (LocInfoE loc_765 ((LocInfoE loc_766 (!{void*} (LocInfoE loc_767 ("p")))) at{struct_mpool} "entry_size"))))) ;
         locinfo: loc_544 ;
-        "_" <- LocInfoE loc_755 (global_sl_lock) with
-          [ LocInfoE loc_756 (&(LocInfoE loc_757 ((LocInfoE loc_758 (!{void*} (LocInfoE loc_759 ("p")))) at{struct_mpool} "lock"))) ] ;
+        expr: (LocInfoE loc_544 (Call (LocInfoE loc_755 (global_sl_lock)) [@{expr} LocInfoE loc_756 (&(LocInfoE loc_757 ((LocInfoE loc_758 (!{void*} (LocInfoE loc_759 ("p")))) at{struct_mpool} "lock"))) ])) ;
         locinfo: loc_545 ;
         annot: (UnlockA) ;
         expr: (LocInfoE loc_750 (&(LocInfoE loc_751 ((LocInfoE loc_752 (!{void*} (LocInfoE loc_753 ("p")))) at{struct_mpool} "locked")))) ;
@@ -1439,10 +1421,9 @@ Section code.
         "chunk" <-{ void* }
           LocInfoE loc_732 (use{void*} (LocInfoE loc_734 (!{void*} (LocInfoE loc_735 ("prev"))))) ;
         locinfo: loc_562 ;
-        "_" <- LocInfoE loc_724 (global_round_pointer_up) with
-          [ LocInfoE loc_725 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_726 (use{void*} (LocInfoE loc_727 ("chunk"))))) ;
-          LocInfoE loc_728 (use{it_layout size_t} (LocInfoE loc_729 ("align"))) ;
-          LocInfoE loc_730 (&(LocInfoE loc_731 ("before_start"))) ] ;
+        expr: (LocInfoE loc_562 (Call (LocInfoE loc_724 (global_round_pointer_up)) [@{expr} LocInfoE loc_725 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_726 (use{void*} (LocInfoE loc_727 ("chunk"))))) ;
+        LocInfoE loc_728 (use{it_layout size_t} (LocInfoE loc_729 ("align"))) ;
+        LocInfoE loc_730 (&(LocInfoE loc_731 ("before_start"))) ])) ;
         locinfo: loc_708 ;
         if: LocInfoE loc_708 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_708 ((LocInfoE loc_709 ((LocInfoE loc_710 (use{it_layout size_t} (LocInfoE loc_711 ("before_start")))) +{IntOp size_t, IntOp size_t} (LocInfoE loc_712 ((LocInfoE loc_713 (use{it_layout size_t} (LocInfoE loc_714 ("count")))) ×{IntOp size_t, IntOp size_t} (LocInfoE loc_715 (use{it_layout size_t} (LocInfoE loc_716 ((LocInfoE loc_717 (!{void*} (LocInfoE loc_718 ("p")))) at{struct_mpool} "entry_size")))))))) ≤{IntOp size_t, IntOp size_t} (LocInfoE loc_719 (use{it_layout size_t} (LocInfoE loc_720 ((LocInfoE loc_721 (!{void*} (LocInfoE loc_722 ("chunk")))) at{struct_mpool_chunk} "size")))))))
         then
@@ -1453,8 +1434,7 @@ Section code.
       ]> $
       <[ "#3" :=
         locinfo: loc_549 ;
-        "_" <- LocInfoE loc_554 (global_sl_unlock) with
-          [ LocInfoE loc_555 (AnnotExpr 1%nat LockA (LocInfoE loc_555 (&(LocInfoE loc_556 ((LocInfoE loc_557 (!{void*} (LocInfoE loc_558 ("p")))) at{struct_mpool} "lock"))))) ] ;
+        expr: (LocInfoE loc_549 (Call (LocInfoE loc_554 (global_sl_unlock)) [@{expr} LocInfoE loc_555 (AnnotExpr 1%nat LockA (LocInfoE loc_555 (&(LocInfoE loc_556 ((LocInfoE loc_557 (!{void*} (LocInfoE loc_558 ("p")))) at{struct_mpool} "lock"))))) ])) ;
         locinfo: loc_550 ;
         Return (LocInfoE loc_551 (use{void*} (LocInfoE loc_552 ("ret"))))
       ]> $
@@ -1542,12 +1522,10 @@ Section code.
     f_init := "#0";
     f_code := (
       <[ "#0" :=
-        locinfo: loc_828 ;
-        "$1" <- LocInfoE loc_830 (global_mpool_alloc_contiguous_no_fallback) with
-          [ LocInfoE loc_831 (use{void*} (LocInfoE loc_832 ("p"))) ;
+        "ret" <-{ void* }
+          LocInfoE loc_828 (Call (LocInfoE loc_830 (global_mpool_alloc_contiguous_no_fallback)) [@{expr} LocInfoE loc_831 (use{void*} (LocInfoE loc_832 ("p"))) ;
           LocInfoE loc_833 (use{it_layout size_t} (LocInfoE loc_834 ("count"))) ;
-          LocInfoE loc_835 (use{it_layout size_t} (LocInfoE loc_836 ("align"))) ] ;
-        "ret" <-{ void* } LocInfoE loc_828 ("$1") ;
+          LocInfoE loc_835 (use{it_layout size_t} (LocInfoE loc_836 ("align"))) ]) ;
         locinfo: loc_824 ;
         if: LocInfoE loc_824 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_824 ((LocInfoE loc_825 (use{void*} (LocInfoE loc_826 ("ret")))) !={PtrOp, PtrOp} (LocInfoE loc_827 (NULL)))))
         then
@@ -1568,20 +1546,18 @@ Section code.
         locinfo: loc_810 ;
         if: LocInfoE loc_810 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_810 ((LocInfoE loc_811 (use{void*} (LocInfoE loc_812 ("p")))) !={PtrOp, PtrOp} (LocInfoE loc_813 (NULL)))))
         then
-        locinfo: loc_801 ;
+        locinfo: loc_781 ;
           Goto "#3"
         else
         locinfo: loc_777 ;
           Goto "#4"
       ]> $
       <[ "#3" :=
-        locinfo: loc_801 ;
-        "$0" <- LocInfoE loc_803 (global_mpool_alloc_contiguous_no_fallback) with
-          [ LocInfoE loc_804 (use{void*} (LocInfoE loc_805 ("p"))) ;
-          LocInfoE loc_806 (use{it_layout size_t} (LocInfoE loc_807 ("count"))) ;
-          LocInfoE loc_808 (use{it_layout size_t} (LocInfoE loc_809 ("align"))) ] ;
         locinfo: loc_781 ;
-        LocInfoE loc_800 ("ret") <-{ void* } LocInfoE loc_801 ("$0") ;
+        LocInfoE loc_800 ("ret") <-{ void* }
+          LocInfoE loc_801 (Call (LocInfoE loc_803 (global_mpool_alloc_contiguous_no_fallback)) [@{expr} LocInfoE loc_804 (use{void*} (LocInfoE loc_805 ("p"))) ;
+          LocInfoE loc_806 (use{it_layout size_t} (LocInfoE loc_807 ("count"))) ;
+          LocInfoE loc_808 (use{it_layout size_t} (LocInfoE loc_809 ("align"))) ]) ;
         locinfo: loc_796 ;
         if: LocInfoE loc_796 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_796 ((LocInfoE loc_797 (use{void*} (LocInfoE loc_798 ("ret")))) !={PtrOp, PtrOp} (LocInfoE loc_799 (NULL)))))
         then

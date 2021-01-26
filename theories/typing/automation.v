@@ -135,7 +135,6 @@ Ltac liRStmt :=
       | W.If _ _ _ => notypeclasses refine (tac_fast_apply (type_if _ _ _ _ _ _ _) _)
       | W.Switch _ _ _ _ _ => notypeclasses refine (tac_fast_apply (type_switch _ _ _ _ _ _ _ _ _) _)
       | W.Assert _ _ => notypeclasses refine (tac_fast_apply (type_assert _ _ _ _ _ _) _)
-      | W.Call _ _ _ _ => notypeclasses refine (tac_fast_apply (type_call _ _ _ _ _ _ _ _) _)
       | W.Goto ?bid => first [
          notypeclasses refine (tac_fast_apply (type_goto_precond _ _ _ _ _ _) _); progress liFindHyp
        | lazymatch goal with
@@ -182,6 +181,7 @@ Ltac liRExpr :=
     | W.CopyAllocId _ _ => notypeclasses refine (tac_fast_apply (type_copy_alloc_id _ _ _) _)
     | W.UnOp _ _ _ => notypeclasses refine (tac_fast_apply (type_un_op _ _ _ _) _)
     | W.CAS _ _ _ _ => notypeclasses refine (tac_fast_apply (type_cas _ _ _ _ _) _)
+    | W.Call _ _ => notypeclasses refine (tac_fast_apply (type_call _ _ _) _)
     | W.OffsetOf _ _ => notypeclasses refine (tac_fast_apply (type_offset_of _ _ _) _)
     | W.AnnotExpr _ ?a _ => notypeclasses refine (tac_fast_apply (type_annot_expr _ _ _ _) _)
     | W.StructInit _ _ => notypeclasses refine (tac_fast_apply (type_struct_init _ _ _) _)

@@ -33,8 +33,8 @@ Section code.
   Definition loc_28 : location_info := LocationInfo file_0 12 11 12 15.
   Definition loc_29 : location_info := LocationInfo file_0 12 12 12 15.
   Definition loc_30 : location_info := LocationInfo file_0 12 12 12 13.
-  Definition loc_34 : location_info := LocationInfo file_0 11 32 11 33.
-  Definition loc_35 : location_info := LocationInfo file_0 11 24 11 25.
+  Definition loc_34 : location_info := LocationInfo file_0 11 24 11 25.
+  Definition loc_35 : location_info := LocationInfo file_0 11 32 11 33.
 
   (* Definition of struct [test]. *)
   Program Definition struct_test := {|
@@ -59,8 +59,8 @@ Section code.
       <[ "#0" :=
         "t" <-{ layout_of struct_test }
           StructInit struct_test [
-            ("a", LocInfoE loc_35 (i2v 1 i32) : expr) ;
-            ("b", LocInfoE loc_34 (i2v 2 i32) : expr)
+            ("a", LocInfoE loc_34 (i2v 1 i32) : expr) ;
+            ("b", LocInfoE loc_35 (i2v 2 i32) : expr)
           ] ;
         "b" <-{ void* }
           LocInfoE loc_28 (&(LocInfoE loc_29 ((LocInfoE loc_30 ("t")) at{struct_test} "b"))) ;

@@ -65,7 +65,7 @@ Section function.
   Qed.
 
 
-  Lemma type_call {B} r ef es s Q fn' ls (fr : B → _):
+  Lemma type_call T ef es:
     typed_val_expr ef (λ vf tyf,
       typed_callable vf tyf (λ fp,
         (* we need to write this lemma in this funky style to ensure
@@ -77,22 +77,22 @@ Section function.
               (λ vl, ∃ x,
                   ([∗ list] v;ty∈vl; (fp x).(fp_atys), v ◁ᵥ (ty : mtype)) ∗
                   (fp x).(fp_Pa) ∗ ∀ v x',
-                  v ◁ᵥ ((fp x).(fp_fr) x').(fr_rty) -∗ ((fp x).(fp_fr) x').(fr_R)  -∗
-                   typed_stmt (subst_stmt [r] [v] s) fn' ls fr Q
+                  ((fp x).(fp_fr) x').(fr_R) -∗
+                  T v ((fp x).(fp_fr) x').(fr_rty)
               )
               es [])) -∗
-    typed_stmt (r <- ef with es; s) fn' ls fr Q.
+    typed_val_expr (Call ef es) T.
   Proof.
-    iIntros "He". iIntros (Hls).
-    iApply wps_call_bind. iApply "He". iIntros (vf tyf) "Hvf He".
+    iIntros "He". iIntros (Φ) "HΦ".
+    iApply wp_call_bind. iApply "He". iIntros (vf tyf) "Hvf He".
     iDestruct ("He" with "Hvf") as (f fn fp ->) "(#? & Hfn & He)" => /=.
-    move: {3 5}[] => vl.
+    move: {2 4}[] => vl.
     iInduction es as [|e es] "IH" forall (vl) => /=. 2: {
-      iApply "He". iIntros (v ty) "Hv Hnext". iApply ("IH" with "Hfn"). by iApply "Hnext".
+      iApply "He". iIntros (v ty) "Hv Hnext". iApply ("IH" with "HΦ Hfn"). by iApply "Hnext".
     }
     iDestruct "He" as (x) "(Hvl&HPa&Hr)".
     iDestruct ("Hfn" $! x) as "[Hl #Hfn]".
-    iApply fupd_wps. iMod "Hl" as %Hl. iModIntro.
+    iApply fupd_wp. iMod "Hl" as %Hl. iModIntro.
     iAssert ⌜Forall2 has_layout_val vl (f_args fn).*2⌝%I as %Hall. {
       iClear "Hfn HPa Hr".
       move: Hl. move: (fp_atys (fp x)) => atys Hl.
@@ -100,11 +100,11 @@ Section function.
       { move: Hl => /Forall2_nil_inv_r ->. destruct vl => //=. }
       move: Hl. intros (?&?&Heq&?&->)%Forall2_cons_inv_r.
       destruct vl => //=. iDestruct "Hvl" as "[Hv Hvl]".
-      iDestruct ("IH" with "[//] Hvl") as %?.
+      iDestruct ("IH" with "[//] HΦ Hvl") as %?.
       iDestruct (ty_size_eq with "Hv") as %?.
       iPureIntro. constructor => //. by rewrite -Heq.
     }
-    iApply (wps_call with "[//]") => //. by apply val_to_of_loc.
+    iApply (wp_call with "[//]") => //. by apply val_to_of_loc.
     iIntros "!#" (lsa lsv Hly) "Ha Hv".
     iDestruct (big_sepL2_length with "Ha") as %Hlen1.
     iDestruct (big_sepL2_length with "Hv") as %Hlen2.
@@ -113,7 +113,7 @@ Section function.
     have [lsv' ?]: (∃ (ls : vec loc (length (f_local_vars fn))), lsv = ls) by rewrite -Hlen2; eexists (list_to_vec _); symmetry; apply vec_to_list_to_vec. subst.
 
     iDestruct ("Hfn" $! lsa' lsv') as "#Hm". iClear "Hfn".
-    iExists _. iSplitR "Hr" => /=.
+    iExists _. iSplitR "Hr HΦ" => /=.
     - iFrame. iApply ("Hm" with "[-]"). 2:{
         iPureIntro. rewrite !app_length. f_equal => //. rewrite Hlen1 Hlen3. by eapply Forall2_length.
       } iClear "Hm". iFrame.
@@ -131,8 +131,8 @@ Section function.
     - iIntros (v). iDestruct 1 as (x') "[Hv [Hls HPr]]".
       iDestruct (big_sepL2_app_inv with "Hls") as "[$ $]".
       { rewrite Hlen1 Hlen3. by eapply Forall2_length. }
-      iApply fupd_wps.
-      by iApply ("Hr" with "Hv HPr").
+      iApply ("HΦ" with "Hv").
+      by iApply ("Hr" with "HPr").
   Qed.
 
 

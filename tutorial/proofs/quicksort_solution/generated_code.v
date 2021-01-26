@@ -175,9 +175,8 @@ Section code.
       ]> $
       <[ "#2" :=
         locinfo: loc_11 ;
-        "_" <- LocInfoE loc_13 (global_append) with
-          [ LocInfoE loc_14 (&(LocInfoE loc_15 ((LocInfoE loc_16 (!{void*} (LocInfoE loc_18 (!{void*} (LocInfoE loc_19 ("l")))))) at{struct_list_node} "next"))) ;
-          LocInfoE loc_20 (use{void*} (LocInfoE loc_21 ("k"))) ] ;
+        expr: (LocInfoE loc_11 (Call (LocInfoE loc_13 (global_append)) [@{expr} LocInfoE loc_14 (&(LocInfoE loc_15 ((LocInfoE loc_16 (!{void*} (LocInfoE loc_18 (!{void*} (LocInfoE loc_19 ("l")))))) at{struct_list_node} "next"))) ;
+        LocInfoE loc_20 (use{void*} (LocInfoE loc_21 ("k"))) ])) ;
         Return (VOID)
       ]> $∅
     )%E
@@ -202,19 +201,16 @@ Section code.
         locinfo: loc_32 ;
           Goto "#1"
         else
-        locinfo: loc_77 ;
-          Goto "#2"
+        Goto "#2"
       ]> $
       <[ "#1" :=
         locinfo: loc_32 ;
         Return (LocInfoE loc_33 (NULL))
       ]> $
       <[ "#2" :=
-        locinfo: loc_77 ;
-        "$0" <- LocInfoE loc_79 (global_partition) with
-          [ LocInfoE loc_80 (&(LocInfoE loc_81 ((LocInfoE loc_82 (!{void*} (LocInfoE loc_84 (!{void*} (LocInfoE loc_85 ("l")))))) at{struct_list_node} "next"))) ;
-          LocInfoE loc_86 (use{it_layout i32} (LocInfoE loc_87 ("pivot"))) ] ;
-        "rest" <-{ void* } LocInfoE loc_77 ("$0") ;
+        "rest" <-{ void* }
+          LocInfoE loc_77 (Call (LocInfoE loc_79 (global_partition)) [@{expr} LocInfoE loc_80 (&(LocInfoE loc_81 ((LocInfoE loc_82 (!{void*} (LocInfoE loc_84 (!{void*} (LocInfoE loc_85 ("l")))))) at{struct_list_node} "next"))) ;
+          LocInfoE loc_86 (use{it_layout i32} (LocInfoE loc_87 ("pivot"))) ]) ;
         "head" <-{ void* }
           LocInfoE loc_71 (use{void*} (LocInfoE loc_73 (!{void*} (LocInfoE loc_74 ("l"))))) ;
         locinfo: loc_62 ;
@@ -270,21 +266,16 @@ Section code.
       <[ "#2" :=
         "pivot" <-{ it_layout i32 }
           LocInfoE loc_131 (use{it_layout i32} (LocInfoE loc_132 ((LocInfoE loc_133 (!{void*} (LocInfoE loc_135 (!{void*} (LocInfoE loc_136 ("l")))))) at{struct_list_node} "val"))) ;
-        locinfo: loc_122 ;
-        "$0" <- LocInfoE loc_124 (global_partition) with
-          [ LocInfoE loc_125 (use{void*} (LocInfoE loc_126 ("l"))) ;
-          LocInfoE loc_127 (use{it_layout i32} (LocInfoE loc_128 ("pivot"))) ] ;
-        "higher" <-{ void* } LocInfoE loc_122 ("$0") ;
+        "higher" <-{ void* }
+          LocInfoE loc_122 (Call (LocInfoE loc_124 (global_partition)) [@{expr} LocInfoE loc_125 (use{void*} (LocInfoE loc_126 ("l"))) ;
+          LocInfoE loc_127 (use{it_layout i32} (LocInfoE loc_128 ("pivot"))) ]) ;
         locinfo: loc_105 ;
-        "_" <- LocInfoE loc_119 (global_quicksort) with
-          [ LocInfoE loc_120 (&(LocInfoE loc_121 ("higher"))) ] ;
+        expr: (LocInfoE loc_105 (Call (LocInfoE loc_119 (global_quicksort)) [@{expr} LocInfoE loc_120 (&(LocInfoE loc_121 ("higher"))) ])) ;
         locinfo: loc_106 ;
-        "_" <- LocInfoE loc_115 (global_quicksort) with
-          [ LocInfoE loc_116 (use{void*} (LocInfoE loc_117 ("l"))) ] ;
+        expr: (LocInfoE loc_106 (Call (LocInfoE loc_115 (global_quicksort)) [@{expr} LocInfoE loc_116 (use{void*} (LocInfoE loc_117 ("l"))) ])) ;
         locinfo: loc_107 ;
-        "_" <- LocInfoE loc_109 (global_append) with
-          [ LocInfoE loc_110 (use{void*} (LocInfoE loc_111 ("l"))) ;
-          LocInfoE loc_112 (use{void*} (LocInfoE loc_113 ("higher"))) ] ;
+        expr: (LocInfoE loc_107 (Call (LocInfoE loc_109 (global_append)) [@{expr} LocInfoE loc_110 (use{void*} (LocInfoE loc_111 ("l"))) ;
+        LocInfoE loc_112 (use{void*} (LocInfoE loc_113 ("higher"))) ])) ;
         Return (VOID)
       ]> $∅
     )%E

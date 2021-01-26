@@ -298,9 +298,12 @@ Section programs.
     λ T, i2p (type_cast_int n it1 it2 v T).
 
   (*** bool *)
+  Lemma type_val_bool' b:
+    ⊢ (val_of_bool b) ◁ᵥ (b @ boolean bool_it).
+  Proof. iIntros. by destruct b. Qed.
   Lemma type_val_bool b T:
     (T (t2mt (b @ boolean bool_it))) -∗ typed_value (val_of_bool b) T.
-  Proof. iIntros "HT". iExists _. iFrame. by destruct b. Qed.
+  Proof. iIntros "HT". iExists _. iFrame. iApply type_val_bool'. Qed.
   Global Instance type_val_bool_inst b : TypedValue (val_of_bool b) :=
     λ T, i2p (type_val_bool b T).
 

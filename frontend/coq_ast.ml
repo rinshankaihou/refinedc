@@ -46,6 +46,7 @@ and expr_aux =
   | BinOp     of bin_op * op_type * op_type * expr * expr
   | Deref     of bool (* Atomic? *) * layout * expr
   | CAS       of op_type * expr * expr * expr
+  | Call      of expr * expr list
   | SkipE     of expr
   | Use       of bool (* Atomic? *) * layout * expr
   | AddrOf    of expr
@@ -63,7 +64,6 @@ and stmt_aux =
   | Return of expr
   | Switch of int_type * expr * (string * int) list * stmt list * stmt
   | Assign of bool (* Atomic? *) * layout * expr * expr * stmt
-  | Call   of string option * expr * expr list * stmt
   | SkipS  of stmt
   | If     of expr * stmt * stmt
   | Assert of expr * stmt

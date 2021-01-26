@@ -150,8 +150,7 @@ Section code.
       ]> $
       <[ "#1" :=
         locinfo: loc_15 ;
-        "_" <- LocInfoE loc_21 (global_clear_page) with
-          [ LocInfoE loc_22 (UnOp (CastOp $ PtrOp) (IntOp u64) (LocInfoE loc_23 (use{it_layout u64} (LocInfoE loc_24 ("ret"))))) ] ;
+        expr: (LocInfoE loc_15 (Call (LocInfoE loc_21 (global_clear_page)) [@{expr} LocInfoE loc_22 (UnOp (CastOp $ PtrOp) (IntOp u64) (LocInfoE loc_23 (use{it_layout u64} (LocInfoE loc_24 ("ret"))))) ])) ;
         locinfo: loc_16 ;
         Return (LocInfoE loc_17 (UnOp (CastOp $ PtrOp) (IntOp u64) (LocInfoE loc_18 (use{it_layout u64} (LocInfoE loc_19 ("ret"))))))
       ]> $
@@ -223,8 +222,7 @@ Section code.
         LocInfoE loc_80 (global_size1) <-{ it_layout u64 }
           LocInfoE loc_81 ((LocInfoE loc_82 (use{it_layout u64} (LocInfoE loc_83 (global_size1)))) -{IntOp u64, IntOp u64} (LocInfoE loc_84 (UnOp (CastOp $ IntOp u64) (IntOp i32) (LocInfoE loc_84 (i2v 4096 i32))))) ;
         locinfo: loc_70 ;
-        "_" <- LocInfoE loc_76 (global_clear_page) with
-          [ LocInfoE loc_77 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_78 (use{void*} (LocInfoE loc_79 ("ret"))))) ] ;
+        expr: (LocInfoE loc_70 (Call (LocInfoE loc_76 (global_clear_page)) [@{expr} LocInfoE loc_77 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_78 (use{void*} (LocInfoE loc_79 ("ret"))))) ])) ;
         locinfo: loc_71 ;
         Return (LocInfoE loc_72 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_73 (use{void*} (LocInfoE loc_74 ("ret"))))))
       ]> $

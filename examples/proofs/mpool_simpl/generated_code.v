@@ -213,28 +213,21 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_64 ;
-        "_" <- LocInfoE loc_106 (global_mpool_init) with
-          [ LocInfoE loc_107 (&(LocInfoE loc_108 ("p"))) ] ;
+        expr: (LocInfoE loc_64 (Call (LocInfoE loc_106 (global_mpool_init)) [@{expr} LocInfoE loc_107 (&(LocInfoE loc_108 ("p"))) ])) ;
         locinfo: loc_65 ;
-        "_" <- LocInfoE loc_100 (global_mpool_put) with
-          [ LocInfoE loc_101 (&(LocInfoE loc_102 ("p"))) ;
-          LocInfoE loc_103 (&(LocInfoE loc_104 (global_e1))) ] ;
+        expr: (LocInfoE loc_65 (Call (LocInfoE loc_100 (global_mpool_put)) [@{expr} LocInfoE loc_101 (&(LocInfoE loc_102 ("p"))) ;
+        LocInfoE loc_103 (&(LocInfoE loc_104 (global_e1))) ])) ;
         locinfo: loc_66 ;
-        "_" <- LocInfoE loc_94 (global_mpool_put) with
-          [ LocInfoE loc_95 (&(LocInfoE loc_96 ("p"))) ;
-          LocInfoE loc_97 (&(LocInfoE loc_98 (global_e2))) ] ;
-        locinfo: loc_88 ;
-        "$1" <- LocInfoE loc_90 (global_mpool_get) with
-          [ LocInfoE loc_91 (&(LocInfoE loc_92 ("p"))) ] ;
+        expr: (LocInfoE loc_66 (Call (LocInfoE loc_94 (global_mpool_put)) [@{expr} LocInfoE loc_95 (&(LocInfoE loc_96 ("p"))) ;
+        LocInfoE loc_97 (&(LocInfoE loc_98 (global_e2))) ])) ;
         locinfo: loc_67 ;
-        LocInfoE loc_87 ("p1") <-{ void* } LocInfoE loc_88 ("$1") ;
+        LocInfoE loc_87 ("p1") <-{ void* }
+          LocInfoE loc_88 (Call (LocInfoE loc_90 (global_mpool_get)) [@{expr} LocInfoE loc_91 (&(LocInfoE loc_92 ("p"))) ]) ;
         locinfo: loc_68 ;
         assert: (LocInfoE loc_82 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_82 ((LocInfoE loc_83 (use{void*} (LocInfoE loc_84 ("p1")))) !={PtrOp, PtrOp} (LocInfoE loc_86 (NULL)))))) ;
-        locinfo: loc_77 ;
-        "$0" <- LocInfoE loc_79 (global_mpool_get) with
-          [ LocInfoE loc_80 (&(LocInfoE loc_81 ("p"))) ] ;
         locinfo: loc_69 ;
-        LocInfoE loc_76 ("p2") <-{ void* } LocInfoE loc_77 ("$0") ;
+        LocInfoE loc_76 ("p2") <-{ void* }
+          LocInfoE loc_77 (Call (LocInfoE loc_79 (global_mpool_get)) [@{expr} LocInfoE loc_80 (&(LocInfoE loc_81 ("p"))) ]) ;
         locinfo: loc_70 ;
         assert: (LocInfoE loc_71 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_71 ((LocInfoE loc_72 (use{void*} (LocInfoE loc_73 ("p2")))) !={PtrOp, PtrOp} (LocInfoE loc_75 (NULL)))))) ;
         Return (VOID)
