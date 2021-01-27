@@ -608,15 +608,24 @@ Qed.
 End W.
 
 (** Substitution *)
-(* TODO: make this not unfold AnnotStmt *)
 Ltac simpl_subst :=
-  simpl;
-  repeat (match goal with
-  | |- context [subst_stmt ?xs ?vs ?s] =>
-      let s' := W.of_stmt s in
-      change (subst_stmt xs vs s) with (subst_stmt xs vs (W.to_stmt s'));
-      rewrite <-(W.to_stmt_subst xs); simpl (* ssr rewrite is slower *)
-  end; unfold W.to_stmt, W.to_expr; simpl).
+  (* We need to be careful to never call simpl on the goal as that may
+  become quite slow. TODO: vm_compute seems to perform a lot better
+  than simpl but it reduces to much. Can we somehow still use it?  *)
+  repeat (lazymatch goal with
+          | |- context C [subst_stmt ?xs ?s] =>
+            let s' := W.of_stmt s in
+            let P := context C [subst_stmt xs (W.to_stmt s')] in
+            change_no_check P; rewrite <-(W.to_stmt_subst xs)
+          end);
+  repeat (lazymatch goal with
+          | |- context C [W.to_stmt (W.subst_stmt ?xs ?s)] =>
+            let s' := eval simpl in (W.subst_stmt xs s) in
+            let s' := eval unfold W.to_stmt, W.to_expr in (W.to_stmt s') in
+            let s' := eval simpl in s' in
+            let P := context C [s'] in
+            change_no_check P
+          end).
 Arguments W.to_expr : simpl never.
 Arguments W.to_stmt : simpl never.
 Arguments subst : simpl never.

@@ -265,6 +265,7 @@ Ltac split_blocks Pfull Ps :=
   (* cbn in * is important here to simplify the types of local
   variables, otherwise unification gets confused later *)
   cbn -[union] in *; rewrite !fmap_insert fmap_empty;
+  simpl_subst;
   let Q := fresh "Q" in
   lazymatch goal with
   | |- @envs_entails ?PROP ?Δ (@bi_wand _ ?P (@typed_stmt ?Σ ?tG ?B ?s ?fn ?ls ?fr ?Q')) =>
