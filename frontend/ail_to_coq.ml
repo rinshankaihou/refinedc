@@ -477,23 +477,20 @@ let rec translate_expr : bool -> op_type option -> ail_expr -> expr =
           match (ty1, ty2, res_ty) with
           | (OpInt(_), OpInt(_), Some((OpInt(_) as res_ty))) ->
               if !arith_op then (Some(res_ty), res_ty, res_ty) else
-              if ty1 = ty2 then (None, ty1, ty2) else
               (* We build a type both operands can be casted to. *)
-              let ty =
-                let c_ty1 = c_type_of_type_cat (tc_of e1) in
-                let c_ty2 = c_type_of_type_cat (tc_of e2) in
-                let ty1 = GenTypes.inject_type c_ty1 in
-                let ty2 = GenTypes.inject_type c_ty2 in
-                let gt = GenTypesAux.usual_arithmetic ty1 ty2 in
-                let c_ty = gen_type_to_c_type gt in
-                op_type_of loc c_ty
-              in
+              let c_ty1 = c_type_of_type_cat (tc_of e1) in
+              let c_ty2 = c_type_of_type_cat (tc_of e2) in
+              let ty1 = GenTypes.inject_type c_ty1 in
+              let ty2 = GenTypes.inject_type c_ty2 in
+              let gt = GenTypesAux.usual_arithmetic ty1 ty2 in
+              let c_ty = gen_type_to_c_type gt in
+              let ty = op_type_of loc c_ty in
               (None, ty, ty)
           | (_       , _       , _                         ) ->
               (None        , ty1   , ty2   )
         in
-        let e1 = translate_expr lval  goal_ty e1 in
-        let e2 = translate_expr false goal_ty e2 in
+        let e1 = translate_expr lval  (Some(ty1)) e1 in
+        let e2 = translate_expr false (Some(ty2)) e2 in
         locate (BinOp(op, ty1, ty2, e1, e2))
     | AilEassign(e1,e2)            -> forbidden loc "nested assignment"
     | AilEcompoundAssign(e1,op,e2) -> not_impl loc "expr compound assign"

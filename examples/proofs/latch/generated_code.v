@@ -59,7 +59,7 @@ Section code.
       ]> $
       <[ "#1" :=
         locinfo: loc_7 ;
-        if: LocInfoE loc_7 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_7 ((LocInfoE loc_8 (use{it_layout bool_it, ScOrd} (LocInfoE loc_11 ((LocInfoE loc_12 (!{void*} (LocInfoE loc_13 ("latch")))) at{struct_latch} "released")))) ={IntOp bool_it, IntOp bool_it} (LocInfoE loc_14 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_15 (i2v 0 i32)))))))
+        if: LocInfoE loc_7 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_7 ((LocInfoE loc_8 (UnOp (CastOp $ IntOp i32) (IntOp bool_it) (LocInfoE loc_8 (use{it_layout bool_it, ScOrd} (LocInfoE loc_11 ((LocInfoE loc_12 (!{void*} (LocInfoE loc_13 ("latch")))) at{struct_latch} "released")))))) ={IntOp i32, IntOp i32} (LocInfoE loc_14 (UnOp (CastOp $ IntOp i32) (IntOp bool_it) (LocInfoE loc_14 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_15 (i2v 0 i32)))))))))
         then
         locinfo: loc_5 ;
           Goto "#2"

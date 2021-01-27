@@ -94,11 +94,11 @@ Section code.
       ]> $
       <[ "#1" :=
         locinfo: loc_18 ;
-        if: LocInfoE loc_18 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_18 ((LocInfoE loc_19 (CAS
+        if: LocInfoE loc_18 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_18 ((LocInfoE loc_19 (UnOp (CastOp $ IntOp i32) (IntOp bool_it) (LocInfoE loc_19 (CAS
             (IntOp bool_it)
             (LocInfoE loc_21 (&(LocInfoE loc_22 ((LocInfoE loc_23 (!{void*} (LocInfoE loc_24 ("lock")))) at{struct_spinlock} "lock"))))
             (LocInfoE loc_25 (&(LocInfoE loc_26 ("expected"))))
-            (LocInfoE loc_27 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_27 (i2v 1 i32)))))) ={IntOp bool_it, IntOp bool_it} (LocInfoE loc_28 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_29 (i2v 0 i32)))))))
+            (LocInfoE loc_27 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_27 (i2v 1 i32)))))))) ={IntOp i32, IntOp i32} (LocInfoE loc_28 (UnOp (CastOp $ IntOp i32) (IntOp bool_it) (LocInfoE loc_28 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_29 (i2v 0 i32)))))))))
         then
         locinfo: loc_13 ;
           Goto "#2"

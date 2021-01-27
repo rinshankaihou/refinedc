@@ -254,7 +254,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_84 ;
-        assert: (LocInfoE loc_85 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_85 ((LocInfoE loc_86 (Call (LocInfoE loc_88 (global_getblue)) [@{expr} LocInfoE loc_89 (Call (LocInfoE loc_91 (global_blue)) [@{expr} LocInfoE loc_92 (UnOp (CastOp $ IntOp u8) (IntOp i32) (LocInfoE loc_92 (i2v 5 i32))) ]) ])) ={IntOp u8, IntOp u8} (LocInfoE loc_93 (UnOp (CastOp $ IntOp u8) (IntOp i32) (LocInfoE loc_94 (i2v 5 i32)))))))) ;
+        assert: (LocInfoE loc_85 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_85 ((LocInfoE loc_86 (UnOp (CastOp $ IntOp i32) (IntOp u8) (LocInfoE loc_86 (Call (LocInfoE loc_88 (global_getblue)) [@{expr} LocInfoE loc_89 (Call (LocInfoE loc_91 (global_blue)) [@{expr} LocInfoE loc_92 (UnOp (CastOp $ IntOp u8) (IntOp i32) (LocInfoE loc_92 (i2v 5 i32))) ]) ])))) ={IntOp i32, IntOp i32} (LocInfoE loc_93 (UnOp (CastOp $ IntOp i32) (IntOp u8) (LocInfoE loc_93 (UnOp (CastOp $ IntOp u8) (IntOp i32) (LocInfoE loc_94 (i2v 5 i32)))))))))) ;
         Return (VOID)
       ]> $∅
     )%E
