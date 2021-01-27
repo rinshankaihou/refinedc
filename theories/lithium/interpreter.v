@@ -504,7 +504,15 @@ Ltac liImpl :=
     lazymatch type of P with
     | Prop => first [
               progress normalize_goal_impl; simpl
-            | apply: apply_simpl_impl; simpl;
+            |
+            (*
+              one could also try getting rid of the equality in the goal with something like the
+              following, but it does not seem to be much faster:
+              let inst := eval unfold li_this_is_a_dummy_definition in (_ : SimplImplUnsafe _ P _) in
+              lazymatch (type of inst) with
+              | SimplImplUnsafe false _ _ =>
+             *)
+            apply: apply_simpl_impl; simpl;
               match goal with
               | |- true = true -> _ => move => _
               | |- false = false -> ?P → _ => move => _;
