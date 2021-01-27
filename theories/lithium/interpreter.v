@@ -42,11 +42,11 @@ Section coq_tactics.
   Proof. move => [?[??]]. eauto. Qed.
 
 
-  Lemma tac_find_hyp Δ i p R (P P' : iProp Σ) :
-    envs_lookup i Δ = Some (p, P') → P = P' →
+  Lemma tac_find_hyp Δ i p R (P : iProp Σ) :
+    envs_lookup i Δ = Some (p, P) →
     envs_entails (envs_delete false i p Δ) R → envs_entails Δ (P ∗ R).
   Proof.
-    rewrite envs_entails_eq. intros ? -> HQ.
+    rewrite envs_entails_eq. intros ? HQ.
     rewrite (envs_lookup_sound' _ false) // bi.intuitionistically_if_elim.
       by apply bi.sep_mono_r.
   Qed.
@@ -211,17 +211,19 @@ End coq_tactics.
 (** * Optimization: Introduce let-bindings for environment *)
 (** Extension point for custom reduction *)
 Ltac li_pm_reduce_tac H := H.
+Ltac li_pm_reduce_val v :=
+  let v := li_pm_reduce_tac v in
+  let v := reduction.pm_eval v in v.
 Ltac li_pm_reduce :=
   match goal with
   | H : IPM_STATE _ |- _ =>
          match goal with |- ?u =>
                          let u := eval cbv [H] in u in
-                         let u := li_pm_reduce_tac u in
-                         let u := reduction.pm_eval u in change u
+                         let u := li_pm_reduce_val u in change u
          end
   | |- ?u =>
-    let u := li_pm_reduce_tac u in
-    let v := reduction.pm_eval u in change v
+    let u := li_pm_reduce_val u in
+    change u
   end.
 Ltac li_pm_reflexivity := li_pm_reduce; exact eq_refl.
 
@@ -415,19 +417,15 @@ Ltac liFindHyp :=
       lazymatch Hs with
       | Esnoc ?Hs2 ?id ?Q =>
         first [
-            notypeclasses refine (tac_find_hyp _ id _ _ _ _ _ _ _); [li_pm_reflexivity|
-              li_pm_reduce;
-              match goal with
-                (* we first try to unify using the opaquenes hints of
-                typeclass_instances. Directly doing exact: eq_refl
-                sometimes takes 30 seconds to fail (e.g. when trying
-                to unify GetMemberLoc for the same struct but with
-                different names. ) TODO: investigate if constr_eq
-                could help even more
-                https://coq.inria.fr/distrib/current/refman/proof-engine/tactics.html#coq:tacn.constr-eq*)
-              | |- ?P1 = ?P2 => unify P1 P2 with typeclass_instances; exact: eq_refl
-              end
-            | li_pm_reduce]
+           (* we first try to unify using the opaquenes hints of
+              typeclass_instances. Directly doing exact: eq_refl
+              sometimes takes 30 seconds to fail (e.g. when trying
+              to unify GetMemberLoc for the same struct but with
+              different names. ) TODO: investigate if constr_eq
+              could help even more
+              https://coq.inria.fr/distrib/current/refman/proof-engine/tactics.html#coq:tacn.constr-eq*)
+            unify Q P with typeclass_instances;
+            notypeclasses refine (tac_find_hyp _ id _ _ _ _ _); [li_pm_reflexivity | li_pm_reduce]
           | go P Hs2 ]
       end in
   lazymatch goal with
@@ -438,6 +436,7 @@ Ltac liFindHyp :=
     | context [protected _] => fail "cannot find hyp if it contains protected"
     | _ => idtac
     end;
+    let P := li_pm_reduce_val P in
     let run_go P Hs Hi := first [ go P Hs | go P Hi] in
     lazymatch goal with
     | |- envs_entails (Envs ?Hi ?Hs _) _ => run_go P Hs Hi
