@@ -3,7 +3,7 @@
 coq_root = "refinedc"
 
 [cpp]
-include = [ "include", "examples/include" ]
+include = [ "include", "examples/include" , "linux/pkvm/include" ]
 use_rc_include = false
 
 [coq]
