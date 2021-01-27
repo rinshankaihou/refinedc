@@ -785,25 +785,25 @@ Fixpoint subst (x : var_name) (v : val) (e : expr)  : expr :=
   | StuckE => StuckE
   end.
 
-Fixpoint subst_l (xs : list var_name) (vs : list val) (e : expr)  : expr :=
-  match xs, vs with
-  | x::xs', v::vs' => subst x v (subst_l xs' vs' e)
-  | _, _ => e
+Fixpoint subst_l (xs : list (var_name * val)) (e : expr)  : expr :=
+  match xs with
+  | (x, v)::xs' => subst_l xs' (subst x v e)
+  | _ => e
   end.
 
-Fixpoint subst_stmt (xs : list var_name) (vs : list val) (s : stmt) : stmt :=
+Fixpoint subst_stmt (xs : list (var_name * val)) (s : stmt) : stmt :=
   match s with
   | Goto b => Goto b
-  | Return e => Return (subst_l xs vs e)
-  | Switch it e m' bs def => Switch it (subst_l xs vs e) m' (subst_stmt xs vs <$> bs) (subst_stmt xs vs def)
-  | Assign o ly e1 e2 s => Assign o ly (subst_l xs vs e1) (subst_l xs vs e2) (subst_stmt xs vs s)
-  | SkipS s => SkipS (subst_stmt xs vs s)
+  | Return e => Return (subst_l xs e)
+  | Switch it e m' bs def => Switch it (subst_l xs e) m' (subst_stmt xs <$> bs) (subst_stmt xs def)
+  | Assign o ly e1 e2 s => Assign o ly (subst_l xs e1) (subst_l xs e2) (subst_stmt xs s)
+  | SkipS s => SkipS (subst_stmt xs s)
   | StuckS => StuckS
-  | ExprS e s => ExprS (subst_l xs vs e) (subst_stmt xs vs s)
+  | ExprS e s => ExprS (subst_l xs e) (subst_stmt xs s)
   end.
 
-Definition subst_function (xs : list var_name) (vs : list val) (f : function) : function := {|
-  f_code := (subst_stmt xs vs) <$> f.(f_code);
+Definition subst_function (xs : list (var_name * val)) (f : function) : function := {|
+  f_code := (subst_stmt xs) <$> f.(f_code);
   f_args := f.(f_args); f_init := f.(f_init); f_local_vars := f.(f_local_vars);
 |}.
 
@@ -1005,7 +1005,7 @@ comparing pointers? (see lambda rust) *)
     length lsa = length fn.(f_args) →
     length lsv = length fn.(f_local_vars) →
     (* substitute the variables in fn with the corresponding locations *)
-    fn' = subst_function (fn.(f_args).*1 ++ fn.(f_local_vars).*1) (val_of_loc <$> (lsa ++ lsv)) fn →
+    fn' = subst_function (zip (fn.(f_args).*1 ++ fn.(f_local_vars).*1) (val_of_loc <$> (lsa ++ lsv))) fn →
     (* check the layout of the arguments *)
     Forall2 has_layout_val vs fn.(f_args).*2 →
     (* ensure that locations are aligned *)
@@ -1323,5 +1323,5 @@ Canonical Structure allocationO := leibnizO allocation.
 (*** Tests *)
 
 Example simpl_subst :
-  subst_stmt (["y"; "x"]) [[MPoison; MPoison]; [MPoison]] (Return (BinOp AddOp PtrOp PtrOp (Var "x") (Var "y"))) = Return (BinOp AddOp PtrOp PtrOp (Val [MPoison]) (Val [MPoison; MPoison])).
+  subst_stmt ([("y", [MPoison; MPoison]); ("x", [MPoison])]) (Return (BinOp AddOp PtrOp PtrOp (Var "x") (Var "y"))) = Return (BinOp AddOp PtrOp PtrOp (Val [MPoison]) (Val [MPoison; MPoison])).
 Proof. simpl. done. Abort.

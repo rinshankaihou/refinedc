@@ -20,8 +20,8 @@ Section function.
       □ ∀ (lsa : vec loc (length (fp x).(fp_atys))) (lsv : vec loc (length fn.(f_local_vars))),
           let Qinit := ([∗list] l;t∈lsa;(fp x).(fp_atys), l ◁ₗ (t:mtype)) ∗
                        ([∗list] l;p∈lsv;fn.(f_local_vars), l ◁ₗ uninit (p.2)) ∗ (fp x).(fp_Pa) in
-          let Q := (subst_stmt (fn.(f_args).*1 ++ fn.(f_local_vars).*1)
-                            (val_of_loc <$> (lsa ++ lsv))) <$> fn.(f_code) in
+          let Q := (subst_stmt (zip (fn.(f_args).*1 ++ fn.(f_local_vars).*1)
+                            (val_of_loc <$> (lsa ++ lsv)))) <$> fn.(f_code) in
           Qinit -∗ typed_stmt (Goto fn.(f_init)) fn (lsa ++ lsv) (fp x).(fp_fr) Q
     )%I.
 

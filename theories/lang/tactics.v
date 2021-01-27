@@ -491,45 +491,38 @@ Proof.
 Qed.
 
 (*** Substitution *)
-Fixpoint subst (x : var_name) (v : val) (e : expr)  : expr :=
+Fixpoint subst_l (xs : list (var_name * val)) (e : expr)  : expr :=
   match e with
-  | Var y => if bool_decide (y = x) then (Val v) else Var y
+  | Var y => if list_find (λ x, x.1 = y) xs is Some (_, (_, v)) then Val v else Var y
   | Loc l => Loc l
   | Val v => Val v
-  | UnOp op ot e => UnOp op ot (subst x v e)
-  | BinOp op ot1 ot2 e1 e2 => BinOp op ot1 ot2 (subst x v e1) (subst x v e2)
-  | CopyAllocId e1 e2 => CopyAllocId (subst x v e1) (subst x v e2)
-  | Deref o l e => Deref o l (subst x v e)
-  | CAS ot e1 e2 e3 => CAS ot (subst x v e1) (subst x v e2) (subst x v e3)
-  | Call f args => Call (subst x v f) (subst x v <$> args)
-  | Concat es => Concat (subst x v <$> es)
-  | SkipE e => SkipE (subst x v e)
+  | UnOp op ot e => UnOp op ot (subst_l xs e)
+  | BinOp op ot1 ot2 e1 e2 => BinOp op ot1 ot2 (subst_l xs e1) (subst_l xs e2)
+  | CopyAllocId e1 e2 => CopyAllocId (subst_l xs e1) (subst_l xs e2)
+  | Deref o l e => Deref o l (subst_l xs e)
+  | CAS ot e1 e2 e3 => CAS ot (subst_l xs e1) (subst_l xs e2) (subst_l xs e3)
+  | Call f args => Call (subst_l xs f) (subst_l xs <$> args)
+  | Concat es => Concat (subst_l xs <$> es)
+  | SkipE e => SkipE (subst_l xs e)
   | StuckE => StuckE
-  | Use o ly e => Use o ly (subst x v e)
-  | AddrOf e => AddrOf (subst x v e)
-  | LValue e => LValue (subst x v e)
-  | AnnotExpr n a e => AnnotExpr n a (subst x v e)
-  | LocInfoE a e => LocInfoE a (subst x v e)
-  | StructInit ly fs => StructInit ly (prod_map id (subst x v) <$> fs)
-  | GetMember e s m => GetMember (subst x v e) s m
-  | GetMemberUnion e ul m => GetMemberUnion (subst x v e) ul m
+  | Use o ly e => Use o ly (subst_l xs e)
+  | AddrOf e => AddrOf (subst_l xs e)
+  | LValue e => LValue (subst_l xs e)
+  | AnnotExpr n a e => AnnotExpr n a (subst_l xs e)
+  | LocInfoE a e => LocInfoE a (subst_l xs e)
+  | StructInit ly fs => StructInit ly (prod_map id (subst_l xs) <$> fs)
+  | GetMember e s m => GetMember (subst_l xs e) s m
+  | GetMemberUnion e ul m => GetMemberUnion (subst_l xs e) ul m
   | OffsetOf s m => OffsetOf s m
   | OffsetOfUnion ul m => OffsetOfUnion ul m
-  | MacroE m es wf => MacroE m (subst x v <$> es) wf
-  | Expr e => Expr (lang.subst x v e)
+  | MacroE m es wf => MacroE m (subst_l xs <$> es) wf
+  | Expr e => Expr (lang.subst_l xs e)
   end.
-
-Fixpoint subst_l (xs : list var_name) (vs : list val) (e : expr)  : expr :=
-  match xs, vs with
-  | x::xs', v::vs' => subst x v (subst_l xs' vs' e)
-  | _, _ => e
-  end.
-
 
 Lemma to_expr_subst x v e :
-  to_expr (subst x v e) = lang.subst x v (to_expr e).
+  to_expr (subst_l [(x, v)] e) = lang.subst x v (to_expr e).
 Proof.
-  elim: e => *//; cbn -[notation.GetMember]; (repeat case_bool_decide) => //=; f_equal; eauto.
+  elim: e => *//; cbn -[notation.GetMember]; (repeat case_bool_decide) => //=; f_equal; eauto; try by case_decide.
   - (** Call *)
     rewrite -!list_fmap_compose. apply list_fmap_ext' => //. by apply Forall_forall.
   - (** Concat *)
@@ -562,28 +555,48 @@ Proof.
     rewrite -!list_fmap_compose. apply list_fmap_ext' => //. by apply Forall_forall.
 Qed.
 
-Lemma to_expr_subst_l xs vs e :
-  to_expr (subst_l xs vs e) = lang.subst_l xs vs (to_expr e).
-Proof. elim: xs vs e => //= x xs IH [|v vs] // e. by rewrite to_expr_subst IH. Qed.
+Lemma Forall_eq_fmap {A B} (xs : list A) (f1 f2 : A → B) :
+  Forall (λ x, f1 x = f2 x) xs → f1 <$> xs = f2 <$> xs.
+Proof. elim => //. csimpl. congruence. Qed.
 
-Fixpoint subst_stmt (xs : list var_name) (vs : list val) (s : stmt) : stmt :=
+Lemma fmap_snd_prod_map {A B C} (l : list (A * B)) (f1 f2 : B → C)  :
+  f1 <$> l.*2 = f2 <$> l.*2 →
+  prod_map id f1 <$> l = prod_map id f2 <$> l.
+Proof. elim: l => // -[??] ? IH. csimpl => -[??]. rewrite IH //. congruence. Qed.
+
+Lemma to_expr_subst_l xs e :
+  to_expr (subst_l xs e) = lang.subst_l xs (to_expr e).
+Proof.
+  elim: xs e => //=.
+  - elim => //= >; try congruence; try move => ->.
+    all: try move => /Forall_eq_fmap; try move/fmap_snd_prod_map.
+    all: by move => <-; by rewrite -list_fmap_compose.
+  - move => [x v] xs IH e. rewrite -to_expr_subst -IH. f_equal.
+    elim: e => //= >; try congruence; try move => ->.
+    all: try move => /Forall_eq_fmap; try move/fmap_snd_prod_map.
+    all: try by move => ->; by rewrite -list_fmap_compose.
+    case_decide => //. rewrite /subst_l.
+    by match goal with | |- context [list_find ?f ?xs] => destruct (list_find f xs) as [[?[??]]|] end.
+Qed.
+
+Fixpoint subst_stmt (xs : list (var_name * val)) (s : stmt) : stmt :=
   match s with
   | Goto b => Goto b
-  | Return e => Return (subst_l xs vs e)
-  | Switch it e m' bs def => Switch it (subst_l xs vs e) m' (subst_stmt xs vs <$> bs) (subst_stmt xs vs def)
-  | Assign o ly e1 e2 s => Assign o ly (subst_l xs vs e1) (subst_l xs vs e2) (subst_stmt xs vs s)
-  | SkipS s => SkipS (subst_stmt xs vs s)
+  | Return e => Return (subst_l xs e)
+  | Switch it e m' bs def => Switch it (subst_l xs e) m' (subst_stmt xs <$> bs) (subst_stmt xs def)
+  | Assign o ly e1 e2 s => Assign o ly (subst_l xs e1) (subst_l xs e2) (subst_stmt xs s)
+  | SkipS s => SkipS (subst_stmt xs s)
   | StuckS => StuckS
-  | ExprS e s => ExprS (subst_l xs vs e) (subst_stmt xs vs s)
-  | If e s1 s2 => If (subst_l xs vs e) (subst_stmt xs vs s1) (subst_stmt xs vs s2)
-  | Assert e s => Assert (subst_l xs vs e) (subst_stmt xs vs s)
-  | AnnotStmt n a s => AnnotStmt n a (subst_stmt xs vs s)
-  | LocInfoS a s => LocInfoS a (subst_stmt xs vs s)
-  | Stmt s => Stmt (lang.subst_stmt xs vs s)
+  | ExprS e s => ExprS (subst_l xs e) (subst_stmt xs s)
+  | If e s1 s2 => If (subst_l xs e) (subst_stmt xs s1) (subst_stmt xs s2)
+  | Assert e s => Assert (subst_l xs e) (subst_stmt xs s)
+  | AnnotStmt n a s => AnnotStmt n a (subst_stmt xs s)
+  | LocInfoS a s => LocInfoS a (subst_stmt xs s)
+  | Stmt s => Stmt (lang.subst_stmt xs s)
   end.
 
-Lemma to_stmt_subst xs vs s :
-  to_stmt (subst_stmt xs vs s) = lang.subst_stmt xs vs (to_stmt s).
+Lemma to_stmt_subst xs s :
+  to_stmt (subst_stmt xs s) = lang.subst_stmt xs (to_stmt s).
 Proof.
   elim: s => * //=; repeat rewrite to_expr_subst_l //; repeat f_equal => //; repeat rewrite -list_fmap_compose.
   - by apply Forall_fmap_ext_1.

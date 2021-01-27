@@ -59,9 +59,9 @@ Ltac convert_to_i2p_tac P ::=
 Section automation.
   Context `{!typeG Σ}.
 
-  Lemma tac_simpl_subst {B} xs vs s fn ls Q (fr : B → _):
-    typed_stmt (W.to_stmt (W.subst_stmt xs vs s)) fn ls fr Q -∗
-    typed_stmt (subst_stmt xs vs (W.to_stmt s)) fn ls fr Q.
+  Lemma tac_simpl_subst {B} xs s fn ls Q (fr : B → _):
+    typed_stmt (W.to_stmt (W.subst_stmt xs s)) fn ls fr Q -∗
+    typed_stmt (subst_stmt xs (W.to_stmt s)) fn ls fr Q.
   Proof. by rewrite W.to_stmt_subst. Qed.
 
   Lemma tac_typed_single_block_rec {B} P b Q fn ls (fr : B → _) s:
@@ -123,10 +123,10 @@ Ltac liRStmt :=
   lazymatch goal with
   | |- envs_entails ?Δ (typed_stmt ?s ?fn ?ls ?fr ?Q) =>
     lazymatch s with
-    | subst_stmt ?xs ?vs ?s =>
+    | subst_stmt ?xs ?s =>
       let s' := W.of_stmt s in
-      change (subst_stmt xs vs s) with (subst_stmt xs vs (W.to_stmt s'));
-      refine (tac_fast_apply (tac_simpl_subst _ _ _ _ _ _ _) _); simpl; unfold W.to_stmt, W.to_expr
+      change (subst_stmt xs s) with (subst_stmt xs (W.to_stmt s'));
+      refine (tac_fast_apply (tac_simpl_subst _ _ _ _ _ _) _); simpl; unfold W.to_stmt, W.to_expr
     | _ =>
       let s' := W.of_stmt s in
       lazymatch s' with

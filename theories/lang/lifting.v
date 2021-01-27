@@ -579,8 +579,8 @@ Lemma wp_call vf vl f fn Φ:
   Forall2 has_layout_val vl (f_args fn).*2 →
   fntbl_entry f fn -∗ ▷(∀ lsa lsv, ⌜Forall2 has_layout_loc lsa (f_args fn).*2⌝ -∗
      ([∗ list] l; v ∈ lsa; vl, l↦v) -∗ ([∗ list] l; v ∈ lsv; fn.(f_local_vars), l↦|v.2|) -∗ ∃ Ψ',
-          WPs Goto fn.(f_init) {{ (subst_stmt (fn.(f_args).*1 ++ fn.(f_local_vars).*1)
-                            (val_of_loc <$> (lsa ++ lsv))) <$> fn.(f_code), Ψ' }} ∗
+          WPs Goto fn.(f_init) {{ (subst_stmt (zip (fn.(f_args).*1 ++ fn.(f_local_vars).*1)
+                            (val_of_loc <$> (lsa ++ lsv)))) <$> fn.(f_code), Ψ' }} ∗
          (∀ v, Ψ' v -∗
                   ([∗ list] l; v ∈ lsa; fn.(f_args), l↦|v.2|) ∗
                   ([∗ list] l; v ∈ lsv; fn.(f_local_vars), l↦|v.2|) ∗
