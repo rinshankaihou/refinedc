@@ -234,13 +234,16 @@ Section programs.
   Inductive destruct_hint_if_int :=
   | DestructHintIfInt (n : Z).
 
-  Lemma type_if_int {B} n s1 s2 Q fn ls (fr : B → _) v :
+  Lemma type_if_int it n v T1 T2:
     destruct_hint (DHintDecide (n ≠ 0)) (DestructHintIfInt n)
-    (if decide (n ≠ 0) then typed_stmt s1 fn ls fr Q else typed_stmt s2 fn ls fr Q) -∗
-    typed_if v (n @ int bool_it) s1 s2 fn ls fr Q.
-  Proof. unfold destruct_hint. iIntros "Hs" (Hb%val_to_of_int) => /=. iExists _. iSplit => //. by do ! case_decide. Qed.
-  Global Instance type_if_int_inst n v : TypedIf v (n @ int bool_it) :=
-    λ B s1 s2 fn ls fr Q, i2p (type_if_int n s1 s2 Q fn ls fr v).
+    (if decide (n ≠ 0) then T1 else T2) -∗
+    typed_if (IntOp it) v (n @ int it) T1 T2.
+  Proof.
+    unfold destruct_hint. iIntros "Hs" (Hb%val_to_of_int) => /=.
+    iExists _, _. do 2 iSplit => //. by do ! case_decide.
+  Qed.
+  Global Instance type_if_int_inst n v it : TypedIf (IntOp it) v (n @ int it) :=
+    λ T1 T2, i2p (type_if_int it n v T1 T2).
 
   Inductive destruct_hint_switch_int :=
   | DestructHintSwitchIntCase (n : Z)
@@ -335,13 +338,17 @@ Section programs.
     TypedBinOpVal v1 (b1 @ (boolean it))%I v2 (b2 @ (boolean it))%I NeOp (IntOp it) (IntOp it) := λ T, i2p (type_relop_bool_bool it v1 b1 v2 b2 T (negb (eqb b1 b2)) _ _).
   Next Obligation. done. Qed.
 
-  Lemma type_if_bool {B} (b : bool) s1 s2 Q fn ls (fr : B → _) v :
+  Lemma type_if_bool it (b : bool) v T1 T2 :
     destruct_hint (DHintDestruct _ b) (DestructHintIfBool b)
-    (if b then typed_stmt s1 fn ls fr Q else typed_stmt s2 fn ls fr Q) -∗
-    typed_if v (b @ boolean bool_it) s1 s2 fn ls fr Q.
-  Proof. unfold destruct_hint. iIntros "Hs" (Hb%val_to_of_int) => /=. iExists _. iSplit => //. by destruct b. Qed.
-  Global Instance type_if_bool_inst b v : TypedIf v (b @ boolean bool_it) :=
-    λ B s1 s2 fn ls fr Q, i2p (type_if_bool _ _ _ _ _ _ _ _).
+    (if b then T1 else T2) -∗
+    typed_if (IntOp it) v (b @ boolean it) T1 T2.
+  Proof.
+    unfold destruct_hint. iIntros "Hs" (Hb%val_to_of_int) => /=.
+    iExists _, _. do 2 iSplit => //.
+    by destruct b.
+  Qed.
+  Global Instance type_if_bool_inst it b v : TypedIf (IntOp it) v (b @ boolean it) :=
+    λ T1 T2, i2p (type_if_bool it b v T1 T2).
 
   Lemma type_assert_bool {B} (b : bool) s Q fn ls (fr : B → _) v :
     (⌜b⌝ ∗ typed_stmt s fn ls fr Q) -∗

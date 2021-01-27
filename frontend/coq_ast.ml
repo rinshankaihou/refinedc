@@ -47,6 +47,7 @@ and expr_aux =
   | Deref     of bool (* Atomic? *) * layout * expr
   | CAS       of op_type * expr * expr * expr
   | Call      of expr * expr list
+  | IfE       of op_type * expr * expr * expr
   | SkipE     of expr
   | Use       of bool (* Atomic? *) * layout * expr
   | AddrOf    of expr

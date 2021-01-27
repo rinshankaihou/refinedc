@@ -443,6 +443,19 @@ Lemma wp_offset_of_union Φ ul m E:
   Φ (i2v 0 size_t) -∗ WP OffsetOfUnion ul m @ E {{ Φ }}.
 Proof. by iApply @wp_value. Qed.
 
+Lemma wp_if Φ it v e1 e2 n:
+  val_to_int v it = Some n →
+  (if decide (n = 0) then WP coerce_rtexpr e2 {{ Φ }} else WP coerce_rtexpr e1 {{ Φ }}) -∗
+  WP IfE (IntOp it) (Val v) e1 e2 {{ Φ }}.
+Proof.
+  iIntros (?) "HΦ".
+  iApply wp_lift_expr_step; auto.
+  iIntros (σ1) "?". iModIntro. iSplit; first by eauto 8 using IfES.
+  iIntros (? ? σ2 efs Hst) "!> !>". inv_expr_step.
+  iSplit => //. iFrame.
+  by case_decide; case_bool_decide.
+Qed.
+
 Lemma wp_skip Φ v E:
   ▷ Φ v -∗ WP SkipE (Val v) @ E {{ Φ }}.
 Proof.

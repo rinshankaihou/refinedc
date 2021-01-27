@@ -528,7 +528,12 @@ let rec translate_expr : bool -> op_type option -> ail_expr -> expr =
        let e3 = translate_expr false None e3 in
        let e = locate (CopyAID(e3, e2)) in
        if lval then locate (LValue(e)) else e
-    | AilEcond(e1,e2,e3)           -> not_impl loc "expr cond"
+    | AilEcond(e1,e2,e3)           ->
+       let ty = op_type_of_tc (loc_of e1) (tc_of e1) in
+       let e1 = translate_expr lval None e1 in
+       let e2 = translate_expr lval None e2 in
+       let e3 = translate_expr lval None e3 in
+       locate (IfE(ty, e1, e2, e3))
     | AilEcast(q,c_ty,e)           ->
         begin
           match c_ty with

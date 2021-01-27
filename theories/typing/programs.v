@@ -61,6 +61,13 @@ Section judgements.
     (l ◁ₗ{β} ty ={⊤}[∅]▷=∗ T).
   Class TypedAnnotStmt {A} (a : A) (l : loc) (β : own_state) (ty : type) : Type :=
     typed_annot_stmt_proof T : iProp_to_Prop (typed_annot_stmt a l β ty T).
+
+  Definition typed_if (ot : op_type) (v : val) (ty : type) `{!Movable ty} (T1 T2 : iProp Σ) : iProp Σ :=
+    (* TODO: generalize this to PtrOp *)
+    (v ◁ᵥ ty -∗ ∃ it z, ⌜ot = IntOp it⌝ ∗ ⌜val_to_int v it = Some z⌝ ∗ (if decide (z = 0) then T2 else T1)).
+  Class TypedIf (ot : op_type) (v : val) (ty : type) `{!Movable ty} : Type :=
+    typed_if_proof T1 T2 : iProp_to_Prop (typed_if ot v ty T1 T2).
+
   (*** statements *)
   Record fn_ret := FR {
     fr_rty : mtype;
@@ -76,12 +83,6 @@ Section judgements.
 
   Definition typed_block {B} (P : iProp Σ) (b : label) (fn : function) (ls : list loc) (fr : B → fn_ret) (Q : gmap label stmt) : iProp Σ :=
     (wps_block P b Q (typed_stmt_post_cond fn ls fr)).
-
-  Definition typed_if {B} (v : val) (ty : type) `{!Movable ty} (s1 s2 : stmt) (fn : function) (ls : list loc) (fr : B → fn_ret) (Q : gmap label stmt) : iProp Σ :=
-    (v ◁ᵥ ty -∗ ∃ z, ⌜val_to_int v bool_it = Some z⌝ ∗
-      (if decide (z = 0) then typed_stmt s2 fn ls fr Q else typed_stmt s1 fn ls fr Q)).
-  Class TypedIf (v : val) (ty : type) `{!Movable ty} : Type :=
-    typed_if_proof B s1 s2 fn ls fr Q : iProp_to_Prop (typed_if (B:=B) v ty s1 s2 fn ls fr Q).
 
   Definition typed_switch {B} (v : val) (ty : type) `{!Movable ty} (it : int_type) (m : gmap Z nat) (ss : list stmt) (def : stmt) (fn : function) (ls : list loc) (fr : B → fn_ret) (Q : gmap label stmt) : iProp Σ :=
     (v ◁ᵥ ty -∗ ∃ z, ⌜val_to_int v it = Some z⌝ ∗
@@ -319,7 +320,7 @@ Hint Mode SubsumeVal + + + + ! + ! : typeclass_instances.
 Hint Mode SimpleSubsumePlace + + + ! - : typeclass_instances.
 Hint Mode SimpleSubsumePlaceR + + + ! + ! - : typeclass_instances.
 Hint Mode SimpleSubsumeVal + + + ! + ! - : typeclass_instances.
-Hint Mode TypedIf + + + + + : typeclass_instances.
+Hint Mode TypedIf + + + + + + : typeclass_instances.
 Hint Mode TypedAssert + + + + + : typeclass_instances.
 Hint Mode TypedValue + + + : typeclass_instances.
 Hint Mode TypedBinOp + + + + + + + + + : typeclass_instances.
@@ -702,12 +703,13 @@ Section typing.
   Qed.
 
   Lemma type_if {B} Q e s1 s2 fn ls (fr : B → _):
-    typed_val_expr e (λ v ty, typed_if v ty s1 s2 fn ls fr Q) -∗
+    typed_val_expr e (λ v ty, typed_if (IntOp bool_it) v ty
+          (typed_stmt s1 fn ls fr Q) (typed_stmt s2 fn ls fr Q)) -∗
     typed_stmt (if: e then s1 else s2) fn ls fr Q.
   Proof.
     iIntros "He" (Hls). wps_bind.
     iApply "He". iIntros (v ty) "Hv Hs".
-    iDestruct ("Hs" with "Hv") as (z Hn) "Hs".
+    iDestruct ("Hs" with "Hv") as (it z ? Hn) "Hs". simplify_eq.
     iApply wps_if => //.
     by case_decide; iApply "Hs".
   Qed.
@@ -843,6 +845,17 @@ Section typing.
     wp_bind. iApply "He2". iIntros (v2 ty2) "Hv2 He3".
     wp_bind. iApply "He3". iIntros (v3 ty3) "Hv3 Hop".
     by iApply ("Hop" with "Hv1 Hv2 Hv3").
+  Qed.
+
+  Lemma type_ife ot e1 e2 e3 T:
+    typed_val_expr e1 (λ v ty, typed_if ot v ty (typed_val_expr e2 T) (typed_val_expr e3 T)) -∗
+    typed_val_expr (IfE ot e1 e2 e3) T.
+  Proof.
+    iIntros "He1" (Φ) "HΦ".
+    wp_bind. iApply "He1". iIntros (v1 ty1) "Hv1 Hif".
+    iDestruct ("Hif" with "Hv1") as (it n -> ?) "HT".
+    iApply wp_if => //.
+    by case_decide; iApply "HT".
   Qed.
 
   Lemma type_skipe e T:

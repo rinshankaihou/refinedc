@@ -11,4 +11,8 @@ Section spec.
   (* Specifications for function [test1]. *)
   Definition type_of_test1 :=
     fn(∀ () : (); True) → ∃ () : (), (void); True.
+
+  (* Specifications for function [test_ternary]. *)
+  Definition type_of_test_ternary :=
+    fn(∀ () : (); True) → ∃ () : (), (void); True.
 End spec.

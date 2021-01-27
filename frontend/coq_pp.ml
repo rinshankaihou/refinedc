@@ -177,6 +177,9 @@ let rec pp_expr : Coq_ast.expr pp = fun ff e ->
         List.iteri fn es
       in
       pp "Call (%a) [@@{expr} %a ]" pp_expr e pp_args es
+    | IfE(ty,e1,e2,e3)              ->
+        pp "IfE@ (%a)@ (%a)@ (%a)@ (%a)" pp_op_type ty
+          pp_expr e1 pp_expr e2 pp_expr e3
     | SkipE(e)                      ->
         pp "SkipE (%a)" pp_expr e
     | Use(atomic,lay,e)             ->

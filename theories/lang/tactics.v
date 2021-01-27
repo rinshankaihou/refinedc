@@ -17,6 +17,7 @@ Inductive expr :=
 | CAS (ot : op_type) (e1 e2 e3 : expr)
 | Call (f : expr) (args : list expr)
 | Concat (es : list expr)
+| IfE (op : op_type) (e1 e2 e3 : expr)
 | SkipE (e : expr)
 | StuckE
 (* new constructors *)
@@ -47,6 +48,7 @@ Lemma expr_ind (P : expr → Prop) :
   (∀ (ot : op_type) (e1 e2 e3 : expr), P e1 → P e2 → P e3 → P (CAS ot e1 e2 e3)) →
   (∀ (f : expr) (args : list expr), P f → Forall P args → P (Call f args)) →
   (∀ (es : list expr), Forall P es → P (Concat es)) →
+  (∀ (ot : op_type) (e1 e2 e3 : expr), P e1 → P e2 → P e3 → P (IfE ot e1 e2 e3)) →
   (∀ (e : expr), P e → P (SkipE e)) →
   (P StuckE) →
   (∀ (o : order) (ly : layout) (e : expr), P e → P (Use o ly e)) →
@@ -63,17 +65,17 @@ Lemma expr_ind (P : expr → Prop) :
   (∀ (e : lang.expr), P (Expr e)) → ∀ (e : expr), P e.
 Proof.
   move => *. generalize dependent P => P. match goal with | e : expr |- _ => revert e end.
-  fix FIX 1. move => [ ^e] => ???????? Hcall Hconcat ??????????? Hstruct Hmacro ?.
+  fix FIX 1. move => [ ^e] => ???????? Hcall Hconcat ???????????? Hstruct Hmacro ?.
   9: {
     apply Hcall; [ |apply Forall_true => ?]; by apply: FIX.
   }
   9: {
     apply Hconcat. apply Forall_true => ?. by apply: FIX.
   }
-  20: {
+  21: {
     apply Hstruct. apply Forall_fmap. apply Forall_true => ?. by apply: FIX.
   }
-  20: {
+  21: {
     apply Hmacro. apply Forall_true => ?. by apply: FIX.
   }
   all: auto.
@@ -91,6 +93,7 @@ Fixpoint to_expr (e : expr) : lang.expr :=
   | CAS ot e1 e2 e3 => lang.CAS ot (to_expr e1) (to_expr e2) (to_expr e3)
   | Call f args => lang.Call (to_expr f) (to_expr <$> args)
   | Concat es => lang.Concat (to_expr <$> es)
+  | IfE ot e1 e2 e3 => lang.IfE ot (to_expr e1) (to_expr e2) (to_expr e3)
   | SkipE e => lang.SkipE (to_expr e)
   | StuckE => lang.StuckE
   | Use o ly e => notation.Use o ly (to_expr e)
@@ -153,6 +156,11 @@ Ltac of_expr e :=
     let args := of_expr args in constr:(Call f args)
   | lang.Concat ?es =>
     let es := of_expr es in constr:(Concat es)
+  | lang.IfE ?ot ?e1 ?e2 ?e3 =>
+    let e1 := of_expr e1 in
+    let e2 := of_expr e2 in
+    let e3 := of_expr e3 in
+    constr:(IfE ot e1 e2 e3)
   | lang.SkipE ?e =>
     let e := of_expr e in constr:(SkipE e)
   | lang.StuckE => constr:(StuckE e)
@@ -180,6 +188,7 @@ Inductive ectx_item :=
 | CallLCtx (args : list expr)
 | CallRCtx (f : val) (vl : list val) (el : list expr)
 | ConcatCtx (vs : list val) (es : list expr)
+| IfECtx (ot : op_type) (e2 e3 : expr)
 | SkipECtx
 (* new constructors *)
 | UseCtx (o : order) (ly : layout)
@@ -207,6 +216,7 @@ Definition fill_item (Ki : ectx_item) (e : expr) : expr :=
   | CallLCtx args => Call e args
   | CallRCtx f vl el => Call (Val f) ((Val <$> vl) ++ e :: el)
   | ConcatCtx vs es => Concat ((Val <$> vs) ++ e :: es)
+  | IfECtx ot e2 e3 => IfE ot e e2 e3
   | SkipECtx => SkipE e
   | UseCtx o l => Use o l e
   | AddrOfCtx => AddrOf e
@@ -256,6 +266,9 @@ Fixpoint find_expr_fill (e : expr) (bind_val : bool) : option (list ectx_item * 
       Some (Ks ++ [CallLCtx args], e') else
       (* TODO: handle arguments? *) None
   | Concat _ | MacroE _ _ _ | OffsetOf _ _ | OffsetOfUnion _ _ => None
+  | IfE ot e1 e2 e3 =>
+    if find_expr_fill e1 bind_val is Some (Ks, e') then
+      Some (Ks ++ [IfECtx ot e2 e3], e') else Some ([], e)
   | SkipE e1 =>
     if find_expr_fill e1 bind_val is Some (Ks, e') then
       Some (Ks ++ [SkipECtx], e') else Some ([], e)
@@ -305,6 +318,7 @@ Proof.
     apply: [lang.CallLCtx _]|
     apply: [lang.CallRCtx _ _ _]|
     apply: [lang.ConcatCtx _ _]|
+    apply: [lang.IfECtx _ _ _]|
     apply: [lang.SkipECtx]|
     apply: [lang.DerefCtx _ _]|
     apply: []|
@@ -314,7 +328,7 @@ Proof.
     apply: [lang.BinOpRCtx _ _ _ _]|
     apply: []|..
   ]).
-  move: K => [||||||||||||||||n|||] * //=.
+  move: K => [|||||||||||||||||n|||] * //=.
   - (** Call *)
     do 2 f_equal.
     rewrite !fmap_app !fmap_cons. repeat f_equal; eauto.
@@ -503,6 +517,7 @@ Fixpoint subst_l (xs : list (var_name * val)) (e : expr)  : expr :=
   | CAS ot e1 e2 e3 => CAS ot (subst_l xs e1) (subst_l xs e2) (subst_l xs e3)
   | Call f args => Call (subst_l xs f) (subst_l xs <$> args)
   | Concat es => Concat (subst_l xs <$> es)
+  | IfE ot e1 e2 e3 => IfE ot (subst_l xs e1) (subst_l xs e2) (subst_l xs e3)
   | SkipE e => SkipE (subst_l xs e)
   | StuckE => StuckE
   | Use o ly e => Use o ly (subst_l xs e)

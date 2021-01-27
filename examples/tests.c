@@ -1,3 +1,5 @@
+#include <stddef.h>
+#include <stdbool.h>
 // Random tests.
 
 [[rc::returns("void")]]
@@ -21,4 +23,11 @@ void test1(){
   if(!c) return;
 
   return;
+}
+
+[[rc::returns("void")]]
+void test_ternary(){
+  int local = 0;
+  assert((2 ? 3 : 2) == 3);
+  assert((&local != NULL ? (true ? 1 : 0) + 3 : 2) == 4);
 }

@@ -307,6 +307,7 @@ Inductive expr :=
 | CAS (ot : op_type) (e1 e2 e3 : expr)
 | Call (f : expr) (args : list expr)
 | Concat (es : list expr)
+| IfE (ot : op_type) (e1 e2 e3 : expr)
 | SkipE (e : expr)
 | StuckE (* stuck expression *)
 .
@@ -322,6 +323,7 @@ Lemma expr_ind (P : expr → Prop) :
   (∀ (ot : op_type) (e1 e2 e3 : expr), P e1 → P e2 → P e3 → P (CAS ot e1 e2 e3)) →
   (∀ (f : expr) (args : list expr), P f → Forall P args → P (Call f args)) →
   (∀ (es : list expr), Forall P es → P (Concat es)) →
+  (∀ (ot : op_type) (e1 e2 e3 : expr), P e1 → P e2 → P e3 → P (IfE ot e1 e2 e3)) →
   (∀ (e : expr), P e → P (SkipE e)) →
   (P StuckE) →
   ∀ (e : expr), P e.
@@ -389,6 +391,7 @@ with rtexpr :=
 | RTCall (f : runtime_expr) (args : list runtime_expr)
 | RTCAS (ot : op_type) (e1 e2 e3 : runtime_expr)
 | RTConcat (es : list runtime_expr)
+| RTIfE (ot : op_type) (e1 e2 e3 : runtime_expr)
 | RTSkipE (e : runtime_expr)
 | RTStuckE
 with rtstmt :=
@@ -412,6 +415,7 @@ Fixpoint to_rtexpr (e : expr) : runtime_expr :=
   | Call f args => RTCall (to_rtexpr f) (to_rtexpr <$> args)
   | CAS ot e1 e2 e3 => RTCAS ot (to_rtexpr e1) (to_rtexpr e2) (to_rtexpr e3)
   | Concat es => RTConcat (to_rtexpr <$> es)
+  | IfE ot e1 e2 e3 => RTIfE ot (to_rtexpr e1) (to_rtexpr e2) (to_rtexpr e3)
   | SkipE e => RTSkipE (to_rtexpr e)
   | StuckE => RTStuckE
   end.
@@ -781,6 +785,7 @@ Fixpoint subst (x : var_name) (v : val) (e : expr)  : expr :=
   | Call e es => Call (subst x v e) (subst x v <$> es)
   | CAS ly e1 e2 e3 => CAS ly (subst x v e1) (subst x v e2) (subst x v e3)
   | Concat el => Concat (subst x v <$> el)
+  | IfE ot e1 e2 e3 => IfE ot (subst x v e1) (subst x v e2) (subst x v e3)
   | SkipE e => SkipE (subst x v e)
   | StuckE => StuckE
   end.
@@ -1029,6 +1034,9 @@ comparing pointers? (see lambda rust) *)
     val_to_loc v1 = Some l1 →
     val_to_loc v2 = Some l2 →
     expr_step (CopyAllocId (Val v1) (Val v2)) σ [] (Val (val_of_loc (l2.1, l1.2))) σ []
+| IfES v it e1 e2 n σ:
+    val_to_int v it = Some n →
+    expr_step (IfE (IntOp it) (Val v) e1 e2) σ [] (if bool_decide (n ≠ 0) then e1 else e2)  σ []
 (* no rule for StuckE *)
 .
 
@@ -1088,6 +1096,7 @@ Inductive expr_ectx :=
 | CASMCtx (ot : op_type) (v1 : val) (e3 : runtime_expr)
 | CASRCtx (ot : op_type) (v1 v2 : val)
 | ConcatCtx (vs : list val) (es : list runtime_expr)
+| IfECtx (ot : op_type) (e2 e3 : runtime_expr)
 | SkipECtx
 .
 
@@ -1105,6 +1114,7 @@ Definition expr_fill_item (Ki : expr_ectx) (e : runtime_expr) : rtexpr :=
   | CASMCtx ot v1 e3 => RTCAS ot (Val v1) e e3
   | CASRCtx ot v1 v2 => RTCAS ot (Val v1) (Val v2) e
   | ConcatCtx vs es => RTConcat ((Expr <$> (RTVal <$> vs)) ++ e :: es)
+  | IfECtx ot e2 e3 => RTIfE ot e e2 e3
   | SkipECtx => RTSkipE e
   end.
 
