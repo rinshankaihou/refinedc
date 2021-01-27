@@ -25,9 +25,19 @@ void test1(){
   return;
 }
 
+[[rc::returns("{1} @ int<i32>")]]
+int return1(){
+  return 1;
+}
+
+[[rc::requires("False")]]
+int unreachable(){
+  assert(1 == 2);
+}
+
 [[rc::returns("void")]]
 void test_ternary(){
   int local = 0;
   assert((2 ? 3 : 2) == 3);
-  assert((&local != NULL ? (true ? 1 : 0) + 3 : 2) == 4);
+  assert((&local != NULL ? (return1() ? return1() : unreachable()) + 3 : 2) == 4);
 }

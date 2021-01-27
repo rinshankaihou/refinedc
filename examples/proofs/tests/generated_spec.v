@@ -12,6 +12,14 @@ Section spec.
   Definition type_of_test1 :=
     fn(∀ () : (); True) → ∃ () : (), (void); True.
 
+  (* Specifications for function [return1]. *)
+  Definition type_of_return1 :=
+    fn(∀ () : (); True) → ∃ () : (), ((1) @ (int (i32))); True.
+
+  (* Specifications for function [unreachable]. *)
+  Definition type_of_unreachable :=
+    fn(∀ () : (); ⌜False⌝) → ∃ () : (), (void); True.
+
   (* Specifications for function [test_ternary]. *)
   Definition type_of_test_ternary :=
     fn(∀ () : (); True) → ∃ () : (), (void); True.

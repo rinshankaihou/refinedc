@@ -4,25 +4,23 @@ From refinedc.examples.tests Require Import generated_spec.
 Set Default Proof Using "Type".
 
 (* Generated from [examples/tests.c]. *)
-Section proof_test_ternary.
+Section proof_return1.
   Context `{!typeG Σ} `{!globalG Σ}.
 
-  (* Typing proof for [test_ternary]. *)
-  Lemma type_test_ternary (global_return1 global_unreachable : loc) :
-    global_return1 ◁ᵥ global_return1 @ function_ptr type_of_return1 -∗
-    global_unreachable ◁ᵥ global_unreachable @ function_ptr type_of_unreachable -∗
-    typed_function (impl_test_ternary global_return1 global_unreachable) type_of_test_ternary.
+  (* Typing proof for [return1]. *)
+  Lemma type_return1 :
+    ⊢ typed_function impl_return1 type_of_return1.
   Proof.
     Open Scope printing_sugar.
-    start_function "test_ternary" ([]) => local_local.
+    start_function "return1" ([]).
     split_blocks ((
       ∅
     )%I : gmap label (iProp Σ)) ((
       ∅
     )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
-      all: print_typesystem_goal "test_ternary" "#0".
+      all: print_typesystem_goal "return1" "#0".
     Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
-    all: print_sidecondition_goal "test_ternary".
+    all: print_sidecondition_goal "return1".
   Qed.
-End proof_test_ternary.
+End proof_return1.
