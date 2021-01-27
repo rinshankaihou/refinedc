@@ -130,7 +130,7 @@ Section function.
       by iApply ("IH" with "[] [] [] [] [$] [$]"); iPureIntro; simplify_eq.
     - iIntros (v). iDestruct 1 as (x') "[Hv [Hls HPr]]".
       iDestruct (big_sepL2_app_inv with "Hls") as "[$ $]".
-      { rewrite Hlen1 Hlen3. by eapply Forall2_length. }
+      { rewrite Hlen1 Hlen3. left. by eapply Forall2_length. }
       iApply ("HΦ" with "Hv").
       by iApply ("Hr" with "HPr").
   Qed.

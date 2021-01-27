@@ -444,7 +444,7 @@ Section ofe.
     - split. by destruct 1. by intros ?; constructor.
     - split. by destruct 1. by intros ?; constructor.
   Qed.
-  Canonical Structure typeO : ofeT := OfeT type type_ofe_mixin.
+  Canonical Structure typeO : ofe := Ofe type type_ofe_mixin.
 
   Global Instance ty_own_ne n:
     Proper (dist n ==> eq ==> eq ==> dist n) ty_own.
@@ -505,7 +505,7 @@ Section ofe.
   (*     + destruct 1. eexists _. eauto. *)
   (*     + destruct 1. by econstructor. *)
   (* Qed. *)
-  (* Canonical Structure rtypeO : ofeT := OfeT rtype rtype_ofe_mixin. *)
+  (* Canonical Structure rtypeO : ofe := Ofe rtype rtype_ofe_mixin. *)
 
 
   (* Global Instance with_refinement_ne n: *)

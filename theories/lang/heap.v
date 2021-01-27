@@ -8,19 +8,19 @@ From refinedc.lang Require Export lang.
 Set Default Proof Using "Type".
 Import uPred.
 
-Definition lock_stateR : cmraT :=
+Definition lock_stateR : cmra :=
   csumR (exclR unitO) natR.
 
-Definition heapUR : ucmraT :=
+Definition heapUR : ucmra :=
   gmapUR addr (prodR (prodR fracR lock_stateR) (agreeR (prodO alloc_idO mbyteO))).
 
-Definition allocR : cmraT :=
+Definition allocR : cmra :=
   agreeR allocationO.
 
-Definition allocsUR : ucmraT :=
+Definition allocsUR : ucmra :=
   gmapUR Z allocR.
 
-Definition fntblUR : ucmraT :=
+Definition fntblUR : ucmra :=
   gmapUR loc (agreeR functionO).
 
 Class heapG Σ := HeapG {
