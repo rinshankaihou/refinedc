@@ -46,3 +46,4 @@
 -Q _build/default/examples/proofs/tests refinedc.examples.tests
 -Q _build/default/linux/proofs/page_alloc refinedc.linux.page_alloc
 -Q _build/default/linux/pkvm/proofs/spinlock refinedc.linux.pkvm.spinlock
+-Q _build/default/linux/pkvm/proofs/early_alloc refinedc.linux.pkvm.early_alloc
