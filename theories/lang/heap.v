@@ -285,8 +285,8 @@ Section loc_in_bounds.
     iPureIntro. lia.
   Qed.
 
-  Lemma loc_in_bounds_in_range_size_t l n:
-    loc_in_bounds l n -∗ ⌜l.2 ∈ size_t⌝.
+  Lemma loc_in_bounds_in_range_uintptr_t l n:
+    loc_in_bounds l n -∗ ⌜l.2 ∈ uintptr_t⌝.
   Proof.
     etrans; first by apply loc_in_bounds_ptr_in_range. iPureIntro.
     rewrite /min_alloc_start /max_alloc_end /bytes_per_addr /bytes_per_addr_log /=.

@@ -213,11 +213,11 @@ Section IntType.
   Definition bytes_per_addr_log : nat := 3%nat.
   Definition bytes_per_addr : nat := (2 ^ bytes_per_addr_log)%nat.
 
-  Definition intptr_t  := IntType bytes_per_addr_log false.
-  Definition uintptr_t := IntType bytes_per_addr_log true.
+  Definition intptr_t  := IntType bytes_per_addr_log true.
+  Definition uintptr_t := IntType bytes_per_addr_log false.
 
-  Definition size_t  := intptr_t.
-  Definition ssize_t := uintptr_t.
+  Definition size_t  := uintptr_t.
+  Definition ssize_t := intptr_t.
   Definition bool_it := u8.
 End IntType.
 

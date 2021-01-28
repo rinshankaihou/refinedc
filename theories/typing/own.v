@@ -198,18 +198,18 @@ Section own.
   (* Allow direct casts to other integer types. *)
   Lemma type_cast_ptr_int (p : loc) β ty T:
     ((p ◁ₗ{β} ty -∗ loc_in_bounds p 0 ∗ True) ∧ (p ◁ₗ{β} ty -∗ T (i2v p.2 size_t) (t2mt (p.2 @ int size_t)))) -∗
-    typed_un_op p (p ◁ₗ{β} ty) (CastOp (IntOp size_t)) PtrOp T.
+    typed_un_op p (p ◁ₗ{β} ty) (CastOp (IntOp uintptr_t)) PtrOp T.
   Proof.
     iIntros "HT Hp" (Φ) "HΦ".
     iAssert (⌜p.2 ∈ size_t⌝)%I as %[? Heq]%val_of_int_is_some.
     { iDestruct "HT" as "[HT _]". iDestruct ("HT" with "Hp") as "[Hlib _]".
-      by iApply loc_in_bounds_in_range_size_t. }
+      by iApply loc_in_bounds_in_range_uintptr_t. }
     iDestruct "HT" as "[_ HT]". rewrite /i2v Heq.
     iApply wp_cast_ptr_int => //=; first by rewrite val_to_of_loc.
     iApply ("HΦ" with "[] [HT Hp]"); last by iApply "HT". done.
   Qed.
   Global Instance type_cast_ptr_int_inst (p : loc) β ty:
-    TypedUnOp p (p ◁ₗ{β} ty)%I (CastOp (IntOp size_t)) PtrOp :=
+    TypedUnOp p (p ◁ₗ{β} ty)%I (CastOp (IntOp uintptr_t)) PtrOp :=
     λ T, i2p (type_cast_ptr_int p β ty T).
 
   Lemma type_cast_int_ptr n v it T:
