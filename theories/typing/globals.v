@@ -40,13 +40,13 @@ Section globals.
   Global Instance initialized_intro_persistent A name (x : A) : IntroPersistent (initialized name x) (initialized name x).
   Proof. constructor. iIntros "#$". Qed.
 
-  Lemma simplify_global_with_type_hyp name β ty l T `{!FastDone (global_locs !! name = Some l)} :
-    (l ◁ₗ{β} ty -∗ T) -∗
+  Lemma simplify_global_with_type_hyp name β ty T:
+    (∀ l, ⌜global_locs !! name = Some l⌝ -∗ l ◁ₗ{β} ty -∗ T) -∗
     simplify_hyp (global_with_type name β ty) T.
-  Proof. unfold FastDone in *. iIntros "HT". iDestruct 1 as (l' ?) "Hl". simplify_eq. by iApply "HT". Qed.
-  Global Instance simplify_global_with_type_hyp_inst name β ty l `{!FastDone (global_locs !! name = Some l)}:
+  Proof. iIntros "HT". iDestruct 1 as (l' ?) "Hl". by iApply "HT". Qed.
+  Global Instance simplify_global_with_type_hyp_inst name β ty:
     SimplifyHyp (global_with_type name β ty) (Some 0%N) :=
-    λ T, i2p (simplify_global_with_type_hyp name β ty l T).
+    λ T, i2p (simplify_global_with_type_hyp name β ty T).
 
   Lemma simplify_global_with_type_goal name β ty l T `{!FastDone (global_locs !! name = Some l)} :
     T (l ◁ₗ{β} ty) -∗
