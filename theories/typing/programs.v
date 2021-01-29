@@ -37,7 +37,9 @@ Section judgements.
     simple_subsume_place l β: P -∗ l ◁ₗ{β} ty1 -∗ l ◁ₗ{β} ty2.
   Class SimpleSubsumePlaceR (ty1 ty2 : rtype) (x1 : ty1.(rty_type)) (x2 : ty2.(rty_type)) (P : iProp Σ) : Prop :=
     simple_subsume_place_r l β: P -∗ l ◁ₗ{β} x1 @ ty1 -∗ l ◁ₗ{β} x2 @ ty2.
-  (* TODO: use SimpleSubsumeVal *)
+  (* TODO: add infrastructure like SimpleSubsumePlaceR to
+  SimpleSubsumeVal. Not sure if it would work because of the movable
+  instance. *)
   Class SimpleSubsumeVal (ty1 ty2 : type) `{!Movable ty1} `{!Movable ty2} (P : iProp Σ) : Prop :=
     simple_subsume_val v: P -∗ v ◁ᵥ ty1 -∗ v ◁ᵥ ty2.
 
@@ -530,12 +532,21 @@ Section typing.
   Proof. iIntros (??) "_ $". Qed.
   Global Instance simple_subsume_val_id ty `{!Movable ty} : SimpleSubsumeVal ty ty True | 1.
   Proof. iIntros (?) "_ $". Qed.
+  Global Instance simple_subsume_val_refinement_id ty x1 x2 `{!RMovable ty} :
+    SimpleSubsumeVal (x1 @ ty) (x2 @ ty) (⌜x1 = x2⌝) | 100.
+  Proof. iIntros (? ->) "$". Qed.
 
   Lemma simple_subsume_place_to_subsume l β ty1 ty2 P `{!SimpleSubsumePlace ty1 ty2 P} T:
     P ∗ T -∗ subsume (l ◁ₗ{β} ty1) (l ◁ₗ{β} ty2) T.
   Proof. iIntros "[HP $] Hl". iApply (@simple_subsume_place with "HP Hl"). Qed.
   Global Instance simple_subsume_place_to_subsume_inst l β ty1 ty2 P `{!SimpleSubsumePlace ty1 ty2 P}:
     SubsumePlace l β ty1 ty2 := λ T, i2p (simple_subsume_place_to_subsume l β ty1 ty2 P T).
+
+  Lemma simple_subsume_val_to_subsume v ty1 ty2 P `{!Movable ty1} `{!Movable ty2} `{!SimpleSubsumeVal ty1 ty2 P} T:
+    P ∗ T -∗ subsume (v ◁ᵥ ty1) (v ◁ᵥ ty2) T.
+  Proof. iIntros "[HP $] Hv". iApply (@simple_subsume_val with "HP Hv"). Qed.
+  Global Instance simple_subsume_val_to_subsume_inst v ty1 ty2 P `{!Movable ty1} `{!Movable ty2} `{!SimpleSubsumeVal ty1 ty2 P}:
+    SubsumeVal v ty1 ty2 := λ T, i2p (simple_subsume_val_to_subsume v ty1 ty2 P T).
 
   Import EqNotations.
   Lemma simple_subsume_place_refinement ty1 ty2 (x1 : ty1.(rty_type)) x2 P {Heq: ty1.(rty_type) = ty2.(rty_type)} `{!SimpleSubsumePlaceR ty1 ty2 x1 (rew [λ x : Type, x] Heq in x1) P} :
@@ -560,14 +571,6 @@ Section typing.
     SimpleSubsumePlace (x @ ty1) ty2 P.
   Proof. iIntros (l β) "HP Hl". iExists (rew [λ x : Type, x] Heq in x). iApply (@simple_subsume_place with "HP Hl"). Qed.
 
-
-  (* Doing the same trick as for subsume_place_refine seems hard because of the Movable instance *)
-  Lemma subsume_val_refinement_id v ty T x1 x2 `{!RMovable ty} :
-    ⌜x1 = x2⌝ ∗ T -∗ subsume (v ◁ᵥ x1 @ ty) (v ◁ᵥ x2 @ ty) T.
-  Proof. iIntros "[-> $] $". Qed.
-  Global Instance subsume_val_refinement_id_inst v ty x1 x2 `{!RMovable ty} :
-    SubsumeVal v (x1 @ ty)%I (x2 @ ty)%I | 2:=
-    λ T, i2p (subsume_val_refinement_id v ty T x1 x2).
 
   Lemma subtype_var {A} (ty : A → type) x y l β T:
     ⌜x = y⌝ ∗ T -∗

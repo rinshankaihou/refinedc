@@ -110,6 +110,17 @@ Section optional.
     iSplit => //. iApply (@simple_subsume_place with "HP Hl").
   Qed.
 
+  Global Instance simple_subsume_val_optional ty1 ty2 optty b1 b2 ot1 ot2
+       `{!Movable ty1} `{!Movable ty2} `{!Movable optty}
+       `{!Optionable ty1 optty ot1 ot2} `{!Optionable ty2 optty ot1 ot2}
+       `{!SimpleSubsumeVal ty1 ty2 P}:
+    SimpleSubsumeVal (b1 @ optional ty1 optty) (b2 @ optional ty2 optty) (⌜b1 ↔ b2⌝ ∗ P).
+  Proof.
+    iIntros (v) "[Heq P] H". rewrite /ty_own_val /=. iDestruct "Heq" as %->.
+    iDestruct "H" as "[[?H] | [??]]"; last (iRight; by iFrame).
+    iLeft. iFrame. iApply (simple_subsume_val with "P H").
+  Qed.
+
   Lemma subsume_optional_optty_ref b ty optty l β T:
     ⌜¬ b⌝ ∗ T -∗ subsume (l ◁ₗ{β} optty) (l ◁ₗ{β} b @ optional ty optty) T.
   Proof. iIntros "[Hb $] Hl". iRight. by iFrame. Qed.
