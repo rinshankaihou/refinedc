@@ -53,14 +53,14 @@ Section struct.
     setoid_rewrite <-shift_loc_assoc_nat.
     iDestruct ("IH" with "[] [] Hb2 Hs") as "[Hl1 Hs]"; try iPureIntro.
     { by destruct n, tys; naive_solver. }
-    { destruct n => //. apply: NoDup_cons_12. naive_solver. }
+    { destruct n => //. apply: NoDup_cons_1_2. naive_solver. }
     iClear "IH". destruct n; csimpl.
     - destruct tys => //=. rewrite offset_of_cons; eauto. case_decide => //=. iFrame.
       iSplitL "Hl1". {
         iApply (big_sepL2_impl with "Hl1"). iIntros "!#" (k n ty Hm ?) "Hl".
         move: Hm => /(elem_of_list_lookup_2 _ _ _) ?.
         rewrite offset_of_cons; eauto. case_decide; last by rewrite shift_loc_assoc_nat.
-        move: HND => /= /(NoDup_cons_11 _ _). set_solver.
+        move: HND => /= /(NoDup_cons_1_1 _ _). set_solver.
       }
       iIntros (tys') "Htys".
       iDestruct (big_sepL2_cons_inv_l with "Htys") as (?? ->)"[H1 Htys]".
@@ -71,7 +71,7 @@ Section struct.
       iApply (big_sepL2_impl with "Htys"). iIntros "!#" (k n ty Hm ?) "Hl".
       move: Hm => /(elem_of_list_lookup_2 _ _ _) ?.
       rewrite offset_of_cons; eauto. case_decide; last by rewrite shift_loc_assoc_nat.
-      move: HND => /= /(NoDup_cons_11 _ _). set_solver.
+      move: HND => /= /(NoDup_cons_1_1 _ _). set_solver.
     - iFrame. iSplitL "Hl1". {
         iApply (big_sepL2_impl with "Hl1"). iIntros "!#" (k n ty Hm ?) "Hl".
         move: Hm => /(elem_of_list_lookup_2 _ _ _) ?.
