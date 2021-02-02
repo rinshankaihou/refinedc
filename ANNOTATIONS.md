@@ -33,6 +33,7 @@ attached to.
 | `constraints`  | One or more | Structures, Loops     | `<constr>`                                 |
 | `ensures`      | One or more | Functions             | `<constr>`                                 |
 | `exists`       | One or more | Functions, Loops      | `<ident> ":" <coq_expr>`                   |
+| `let`          | One or more | Structures            | `<ident> {":" <coq_expr>`} "=" <coq_expr>  |
 | `field`        | Exactly one | Structure members     | `<type_expr>`                              |
 | `global`       | Exactly one | Global variables      | `<type_expr>`                              |
 | `immovable`    | None        | Structures            | N/A                                        |
@@ -189,6 +190,17 @@ It corresponds to an existentially quantified variable with the given type. On
 a function, this variable can only appear in post-conditions and on the return
 type of the function (see `rc::ensures` and `rc::returns`). On the other hand,
 when used on a loop, the variable is bound in the whole invariant.
+
+## `rc::let`
+
+This annotation may appear on structures and should have at least one argument
+of the following form.
+```
+<ident (as variable name)> {":" <coq_expr (as Coq type)>} "=" <coq_expr>
+```
+It corresponds to a Coq let-binding with an optional type annotation. All such
+bindings are inserted in the type definition under the existentials (specified
+with `rc::exists`).
 
 ## `rc::field`
 

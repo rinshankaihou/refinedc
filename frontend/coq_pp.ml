@@ -672,6 +672,14 @@ let rec pp_struct_def_np structs guard annot fields ff id =
         in
         List.iter pp_exist annot.st_exists;
       end;
+    (* Printing the let-bindings. *)
+    let pp_let (id, ty, def) =
+      let pp_coq = pp_simple_coq_expr false in
+      match ty with
+      | None    -> pp "let %s := %a in@;" id pp_coq def;
+      | Some ty -> pp "let %s : %a := %a in@;" id pp_coq ty pp_coq def;
+    in
+    List.iter pp_let annot.st_lets;
     (* Opening the "constrained". *)
     pp "@[<v 2>"; (* Open box for struct fields. *)
     if annot.st_constrs <> [] then pp "constrained (";

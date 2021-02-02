@@ -248,6 +248,9 @@ let parser annot_exist : (ident * coq_expr) Earley.grammar =
 let parser annot_constr : constr Earley.grammar =
   | c:constr
 
+let parser annot_let : (ident * coq_expr option * coq_expr) Earley.grammar =
+  | id:ident ty:{":" coq_expr}? "=" def:coq_expr
+
 (** {4 Annotations on tagged unions} *)
 
 type tag_spec = string * (string * coq_expr) list
@@ -322,6 +325,7 @@ type annot =
   | Annot_ptr_type     of (ident * type_expr)
   | Annot_size         of coq_expr
   | Annot_exist        of (ident * coq_expr) list
+  | Annot_lets         of (ident * coq_expr option * coq_expr) list
   | Annot_constraint   of constr list
   | Annot_immovable
   | Annot_tagged_union of coq_expr
@@ -411,6 +415,7 @@ let parse_attr : rc_attr -> annot = fun attr ->
   | "ptr_type"     -> single_arg annot_ptr_type (fun e -> Annot_ptr_type(e))
   | "size"         -> single_arg annot_size (fun e -> Annot_size(e))
   | "exists"       -> many_args annot_exist (fun l -> Annot_exist(l))
+  | "let"          -> many_args annot_let (fun l -> Annot_lets(l))
   | "constraints"  -> many_args annot_constr (fun l -> Annot_constraint(l))
   | "immovable"    -> no_args Annot_immovable
   | "tagged_union" -> single_arg tagged_union (fun e -> Annot_tagged_union(e))
@@ -557,6 +562,7 @@ type basic_struct_annot =
   { st_parameters : (ident * coq_expr) list
   ; st_refined_by : (ident * coq_expr) list
   ; st_exists     : (ident * coq_expr) list
+  ; st_lets       : (ident * coq_expr option * coq_expr) list
   ; st_constrs    : constr list
   ; st_size       : coq_expr option
   ; st_ptr_type   : (ident * type_expr) option
@@ -566,6 +572,7 @@ let default_basic_struct_annot : basic_struct_annot =
   { st_parameters = []
   ; st_refined_by = []
   ; st_exists     = []
+  ; st_lets       = []
   ; st_constrs    = []
   ; st_size       = None
   ; st_ptr_type   = None
@@ -580,6 +587,7 @@ let struct_annot : rc_attr list -> struct_annot = fun attrs ->
   let parameters = ref [] in
   let refined_by = ref [] in
   let exists = ref [] in
+  let lets = ref [] in
   let constrs = ref [] in
   let size = ref None in
   let ptr = ref None in
@@ -602,6 +610,7 @@ let struct_annot : rc_attr list -> struct_annot = fun attrs ->
     | (Annot_parameters(l)  , None   ) -> parameters := !parameters @ l
     | (Annot_refined_by(l)  , None   ) -> refined_by := !refined_by @ l
     | (Annot_exist(l)       , None   ) -> exists := !exists @ l
+    | (Annot_lets(l)        , None   ) -> lets := !lets @ l
     | (Annot_constraint(l)  , None   ) -> constrs := !constrs @ l
     | (Annot_size(s)        , None   ) -> check_and_set size s
     | (Annot_ptr_type(e)    , None   ) -> check_and_set ptr e
@@ -628,6 +637,7 @@ let struct_annot : rc_attr list -> struct_annot = fun attrs ->
     { st_parameters = !parameters
     ; st_refined_by = !refined_by
     ; st_exists     = !exists
+    ; st_lets       = !lets
     ; st_constrs    = !constrs
     ; st_size       = !size
     ; st_ptr_type   = !ptr
