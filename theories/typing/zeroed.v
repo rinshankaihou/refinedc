@@ -26,7 +26,7 @@ Section zeroed.
     by rewrite replicate_length.
   Qed.
 
-  Global Instance loc_in_bounds_zeroed ly β: LocInBounds (zeroed ly) β.
+  Global Instance loc_in_bounds_zeroed ly β: LocInBounds (zeroed ly) β (ly_size ly).
   Proof.
     constructor. iIntros (l) "Hl".
     iDestruct (zeroed_loc_in_bounds with "Hl") as "#Hb".

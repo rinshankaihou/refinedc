@@ -92,6 +92,13 @@ Section optional.
   Qed.
   Next Obligation. done. Qed.
 
+  Global Instance optional_loc_in_bounds ty e ot β n `{!LocInBounds ty β n} `{!LocInBounds ot β n}:
+    LocInBounds (e @ optional ty ot) β n.
+  Proof.
+    constructor. rewrite /with_refinement /=. iIntros (l) "Hl".
+    iDestruct "Hl" as "[[_ Hl]|[_ Hl]]"; by iApply (loc_in_bounds_in_bounds with "Hl").
+  Qed.
+
   (* We could add rules like *)
   (* Lemma simplify_optional_goal ty optty l β T b `{!Decision b}: *)
   (*   T (if decide b then l◁ₗ{β}ty else l◁ₗ{β}optty) -∗ *)
@@ -283,8 +290,8 @@ Section optionalO.
   Qed.
   Next Obligation. done. Qed.
 
-  Global Instance optionalO_loc_in_bounds A (ty : A → type) e ot β `{!∀ x, LocInBounds (ty x) β} `{!LocInBounds ot β}:
-    LocInBounds (e @ optionalO ty ot) β.
+  Global Instance optionalO_loc_in_bounds A (ty : A → type) e ot β n `{!∀ x, LocInBounds (ty x) β n} `{!LocInBounds ot β n}:
+    LocInBounds (e @ optionalO ty ot) β n.
   Proof.
     constructor. iIntros (l) "Hl". rewrite /with_refinement /=.
     destruct e; by iApply (loc_in_bounds_in_bounds with "Hl").

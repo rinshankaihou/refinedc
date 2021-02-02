@@ -34,8 +34,8 @@ Section own_constrained.
   Next Obligation. iIntros (?????) "[? $]". by iApply ty_deref. Qed.
   Next Obligation. iIntros (???????) "Hl [? $]". by iApply (ty_ref with "[//] [Hl]"). Qed.
 
-  Global Instance own_constrained_loc_in_bounds ty β P `{!OwnConstraint P} `{!LocInBounds ty β} :
-    LocInBounds (own_constrained P ty) β.
+  Global Instance own_constrained_loc_in_bounds ty β n P `{!OwnConstraint P} `{!LocInBounds ty β n} :
+    LocInBounds (own_constrained P ty) β n.
   Proof.
     constructor. iIntros (l) "[Hl _]". by iApply loc_in_bounds_in_bounds.
   Qed.

@@ -92,13 +92,12 @@ Section wand_val.
   Next Obligation. iIntros (?????) "Hl". iDestruct "Hl" as (v) "(?&?&?&?)". eauto with iFrame. Qed.
   Next Obligation. iIntros (????? v) "??[??]". iExists v. iFrame. Qed.
 
-  Global Instance wand_val_loc_in_bounds P ly (ty : A → type)
-         `{!∀ x, Movable (ty x)} `{!∀ x, LocInBounds (ty x) β}:
-    LocInBounds (wand_val_ex ly P ty) β.
+  Global Instance wand_val_loc_in_bounds P ly (ty : A → type) `{!∀ x, Movable (ty x)}:
+    LocInBounds (wand_val_ex ly P ty) β (ly_size ly).
   Proof.
-    constructor. iIntros (l) "Hl". iDestruct "Hl" as (?) "(_&_&Hl&_)".
+    constructor. iIntros (l) "Hl". iDestruct "Hl" as (?) "(_&Hly&Hl&_)".
     iDestruct (heap_mapsto_own_state_loc_in_bounds with "Hl") as "H".
-    iApply (loc_in_bounds_shorten with "H"). lia.
+    by iDestruct "Hly" as %->.
   Qed.
 
   Lemma subsume_wand_val v ly1 ly2 P1 P2 ty1 ty2 T `{!∀ x, Movable (ty1 x)} `{!∀ x, Movable (ty2 x)}:

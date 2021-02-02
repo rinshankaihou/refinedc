@@ -31,11 +31,10 @@ Section uninit.
     by iApply heap_mapsto_own_state_loc_in_bounds.
   Qed.
 
-  Global Instance loc_in_bounds_uninit ly β: LocInBounds (uninit ly) β.
+  Global Instance loc_in_bounds_uninit ly β: LocInBounds (uninit ly) β (ly_size ly).
   Proof.
     constructor. iIntros (l) "Hl".
-    iDestruct (uninit_loc_in_bounds with "Hl") as "#Hb".
-    iApply loc_in_bounds_shorten; last done. lia.
+    by iDestruct (uninit_loc_in_bounds with "Hl") as "#Hb".
   Qed.
 
   (* This only works for own because of ty might have interior mutability. *)

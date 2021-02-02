@@ -156,10 +156,9 @@ Section struct.
       all: rewrite drop_app_alt ?take_length// Hv; cbn; lia.
   Qed.
 
-  Global Instance struct_loc_in_bounds sl tys β : LocInBounds (struct sl tys) β.
+  Global Instance struct_loc_in_bounds sl tys β : LocInBounds (struct sl tys) β (ly_size sl).
   Proof.
-    constructor. iIntros (l) "(_&_&?&_)".
-    iApply loc_in_bounds_shorten; last done. lia.
+    constructor. by iIntros (l) "(_&_&?&_)".
   Qed.
 
   Global Instance strip_guarded_struct sl tys tys' E1 E2 β {Hs :StripGuardedLst β E1 E2 tys tys'}:

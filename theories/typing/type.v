@@ -302,18 +302,26 @@ Class Copyable `{!typeG Σ} (ty : type) `{!Movable ty} := {
 }.
 Existing Instance copy_own_persistent.
 
-Class LocInBounds `{!typeG Σ} (ty : type) (β : own_state) := {
-  loc_in_bounds_in_bounds l : ty.(ty_own) β l -∗ loc_in_bounds l 0
+Class LocInBounds `{!typeG Σ} (ty : type) (β : own_state) (n : nat) := {
+  loc_in_bounds_in_bounds l : ty.(ty_own) β l -∗ loc_in_bounds l n
 }.
+Arguments loc_in_bounds_in_bounds {_ _} _ _ _ {_} _.
+Hint Mode LocInBounds + + + + - : typeclass_instances.
 
 Section loc_in_bounds.
   Context `{!typeG Σ}.
 
   Lemma movable_loc_in_bounds ty l `{!Movable ty} :
-    ty_own ty Own l -∗ loc_in_bounds l (ly_size (ty_layout ty)).
+    ty.(ty_own) Own l -∗ loc_in_bounds l (ly_size (ty_layout ty)).
   Proof.
     iIntros "Hl". iDestruct (ty_deref with "Hl") as (v) "[Hl Hv]".
     iDestruct (ty_size_eq with "Hv") as %<-. by iApply heap_mapsto_loc_in_bounds.
+  Qed.
+
+  Global Instance movable_loc_in_bounds_inst ty `{!Movable ty}:
+    LocInBounds ty Own (ly_size (ty_layout ty)).
+  Proof.
+    constructor. iIntros (?) "?". by iApply movable_loc_in_bounds.
   Qed.
 End loc_in_bounds.
 

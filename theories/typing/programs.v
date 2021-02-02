@@ -437,16 +437,18 @@ Section typing.
 
   Global Instance related_to_loc_in_bounds l n : RelatedTo (loc_in_bounds l n) := {| rt_fic := FindLoc l |}.
 
-  Lemma subsume_loc_in_bounds ty β l `{!LocInBounds ty β} T :
-    (l ◁ₗ{β} ty -∗ T) -∗
-    subsume (l ◁ₗ{β} ty) (loc_in_bounds l 0) T.
+  Lemma subsume_loc_in_bounds ty β l (n m : nat) `{!LocInBounds ty β m} T :
+    (l ◁ₗ{β} ty -∗ ⌜n ≤ m⌝ ∗ T) -∗
+    subsume (l ◁ₗ{β} ty) (loc_in_bounds l n) T.
   Proof.
-    iIntros "HT Hl". iSplit; last by iApply "HT".
-    by iApply loc_in_bounds_in_bounds.
+    iIntros "HT Hl".
+    iAssert ⌜n ≤ m⌝%I as %?. { by iDestruct ("HT" with "Hl") as "[% _]". }
+    iSplit; last by iDestruct ("HT" with "Hl") as "[_ $]".
+    iApply loc_in_bounds_shorten; last by iApply loc_in_bounds_in_bounds. lia.
   Qed.
-  Global Instance subsume_loc_in_bounds_inst ty β l `{!LocInBounds ty β} :
-    Subsume (l ◁ₗ{β} ty) (loc_in_bounds l 0) :=
-    λ T, i2p (subsume_loc_in_bounds ty β l T).
+  Global Instance subsume_loc_in_bounds_inst ty β l n m `{!LocInBounds ty β m} :
+    Subsume (l ◁ₗ{β} ty) (loc_in_bounds l n) :=
+    λ T, i2p (subsume_loc_in_bounds ty β l n m T).
 
   Lemma apply_subsume_place_true l1 β1 ty1 l2 β2 ty2:
     l1 ◁ₗ{β1} ty1 -∗

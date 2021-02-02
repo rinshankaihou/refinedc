@@ -37,11 +37,11 @@ Section own.
   Next Obligation. iIntros (β ty l l' v ?) "Hl [-> Hl']". iFrame. iSplit => //. by rewrite left_id. Qed.
   Next Obligation. done. Qed.
 
-  Global Instance frac_ptr_loc_in_bounds l ty β1 β2 : LocInBounds (l @ frac_ptr β1 ty) β2.
+  Global Instance frac_ptr_loc_in_bounds l ty β1 β2 : LocInBounds (l @ frac_ptr β1 ty) β2 bytes_per_addr.
   Proof.
     constructor. iIntros (?) "(_&Hl&_)".
     iDestruct (heap_mapsto_own_state_loc_in_bounds with "Hl") as "Hb".
-    iApply loc_in_bounds_shorten; last done. lia.
+    iApply loc_in_bounds_shorten; last done. by rewrite /val_of_loc.
   Qed.
 
   Lemma frac_ptr_mono ty1 ty2 l β β' p p' T:
@@ -196,21 +196,22 @@ Section own.
     λ T, i2p (type_place_cast_ptr_ptr K l ty β T).
 
   (* Allow direct casts to other integer types. *)
-  Lemma type_cast_ptr_int (p : loc) β ty T:
-    ((p ◁ₗ{β} ty -∗ loc_in_bounds p 0 ∗ True) ∧ (p ◁ₗ{β} ty -∗ T (i2v p.2 size_t) (t2mt (p.2 @ int size_t)))) -∗
+  Lemma type_cast_ptr_int (p : loc) β ty n `{!LocInBounds ty β n} T:
+    (⌜min_alloc_start ≤ p.2 ∧ p.2 + n ≤ max_alloc_end⌝ -∗
+      p ◁ₗ{β} ty -∗ T (i2v p.2 size_t) (t2mt (p.2 @ int uintptr_t))) -∗
     typed_un_op p (p ◁ₗ{β} ty) (CastOp (IntOp uintptr_t)) PtrOp T.
   Proof.
     iIntros "HT Hp" (Φ) "HΦ".
-    iAssert (⌜p.2 ∈ size_t⌝)%I as %[? Heq]%val_of_int_is_some.
-    { iDestruct "HT" as "[HT _]". iDestruct ("HT" with "Hp") as "[Hlib _]".
-      by iApply loc_in_bounds_in_range_uintptr_t. }
-    iDestruct "HT" as "[_ HT]". rewrite /i2v Heq.
+    iDestruct (loc_in_bounds_in_bounds with "Hp") as "#Hlib".
+    iDestruct (loc_in_bounds_in_range_uintptr_t with "Hlib") as %[? H]%val_of_int_is_some.
+    iDestruct (loc_in_bounds_ptr_in_range with "Hlib") as %?.
+    iDestruct ("HT" with "[] Hp") as "HT"; first done.
     iApply wp_cast_ptr_int => //=; first by rewrite val_to_of_loc.
-    iApply ("HΦ" with "[] [HT Hp]"); last by iApply "HT". done.
+    rewrite /i2v H /=. iApply ("HΦ" with "[] [HT]"); last done. done.
   Qed.
-  Global Instance type_cast_ptr_int_inst (p : loc) β ty:
+  Global Instance type_cast_ptr_int_inst (p : loc) β ty n `{!LocInBounds ty β n}:
     TypedUnOp p (p ◁ₗ{β} ty)%I (CastOp (IntOp uintptr_t)) PtrOp :=
-    λ T, i2p (type_cast_ptr_int p β ty T).
+    λ T, i2p (type_cast_ptr_int p β ty n T).
 
   Lemma type_cast_int_ptr n v it T:
     (⌜n ∈ it⌝ -∗ T (val_of_loc (None, n)) (t2mt ((None, n) @ frac_ptr Own (place (None, n))))) -∗
@@ -331,11 +332,11 @@ Section ptr.
   Next Obligation. iIntros (l l' v ?) "Hl ->". by iFrame. Qed.
   Next Obligation. done. Qed.
 
-  Instance ptr_loc_in_bounds l β : LocInBounds (l @ ptr) β.
+  Instance ptr_loc_in_bounds l β : LocInBounds (l @ ptr) β bytes_per_addr.
   Proof.
     constructor. iIntros (?) "[_ Hl]".
     iDestruct (heap_mapsto_own_state_loc_in_bounds with "Hl") as "Hb".
-    iApply loc_in_bounds_shorten; last done. lia.
+    iApply loc_in_bounds_shorten; last done. by rewrite /val_of_loc.
   Qed.
 
   (* TODO: Think about this. This instance is probably not a good idea
@@ -431,11 +432,11 @@ Section null.
   Next Obligation. iIntros (?) "[% ?]". iExists _. by iFrame. Qed.
   Next Obligation. iIntros (???) "? ->". by iFrame. Qed.
 
-  Global Instance null_loc_in_bounds β : LocInBounds null β.
+  Global Instance null_loc_in_bounds β : LocInBounds null β bytes_per_addr.
   Proof.
     constructor. iIntros (l) "[_ Hl]".
     iDestruct (heap_mapsto_own_state_loc_in_bounds with "Hl") as "Hb".
-    iApply loc_in_bounds_shorten; last done. lia.
+    by iApply loc_in_bounds_shorten.
   Qed.
 
   Lemma type_null T :
@@ -487,23 +488,24 @@ Section null.
     TypedBinOp v1 (v1 ◁ᵥ null) v2 (v2 ◁ᵥ null) op PtrOp PtrOp :=
     λ T, i2p (type_binop_null_null v1 v2 op T).
 
-  Lemma type_binop_ptr_null v2 op T (l : loc) ty β `{!LocInBounds ty β}:
+  Lemma type_binop_ptr_null v2 op T (l : loc) ty β n `{!LocInBounds ty β n}:
     (⌜match op with | EqOp | NeOp => True | _ => False end⌝ ∗ ∀ v, l ◁ₗ{β} ty -∗
           T v (t2mt ((if op is EqOp then false else true) @ boolean i32))) -∗
     typed_bin_op l (l ◁ₗ{β} ty) v2 (v2 ◁ᵥ null) op PtrOp PtrOp T.
   Proof.
     iIntros "[% HT] Hl" (-> Φ) "HΦ".
     iDestruct (loc_in_bounds_in_bounds with "Hl") as "#Hb".
+    iDestruct (loc_in_bounds_shorten _ _ 0 with "Hb") as "#Hb0"; first by lia.
     iApply (wp_binop_det (i2v (Z_of_bool (if op is EqOp then false else true)) i32)). iSplit.
     { iIntros (??) "Hctx".
-      iDestruct (loc_in_bounds_to_heap_loc_in_bounds with "Hb Hctx") as %?.
+      iDestruct (loc_in_bounds_to_heap_loc_in_bounds with "Hb0 Hctx") as %?.
       iPureIntro. destruct op => //; split => Heq; subst; try by [inversion Heq].
       all: econstructor; rewrite ?val_to_of_loc /val_of_bool/i2v//. }
     iApply "HΦ". 2: by iApply "HT". by destruct op.
   Qed.
-  Global Instance type_binop_ptr_null_inst v2 op (l : loc) ty β `{!LocInBounds ty β}:
+  Global Instance type_binop_ptr_null_inst v2 op (l : loc) ty β n `{!LocInBounds ty β n}:
     TypedBinOp l (l ◁ₗ{β} ty) v2 (v2 ◁ᵥ null) op PtrOp PtrOp :=
-    λ T, i2p (type_binop_ptr_null v2 op T l ty β).
+    λ T, i2p (type_binop_ptr_null v2 op T l ty β n).
 
 End null.
 

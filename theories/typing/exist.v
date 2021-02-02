@@ -42,8 +42,8 @@ Section tyexist.
   Next Obligation. iIntros (ty ? ? x l v). rewrite tyexists_eq. by apply ty_ref. Qed.
   Next Obligation. move => ?? H x1 x2 /=. move: (H x1 x2). by inversion 1. Qed.
 
-  Global Instance tyexists_loc_in_bounds ty β `{!∀ x, LocInBounds (ty x) β} :
-    LocInBounds (tyexists ty) β.
+  Global Instance tyexists_loc_in_bounds ty β n `{!∀ x, LocInBounds (ty x) β n} :
+    LocInBounds (tyexists ty) β n.
   Proof.
     constructor. iIntros (l) "Hl". iDestruct "Hl" as (x) "Hl".
     rewrite tyexists_eq. by iApply loc_in_bounds_in_bounds.

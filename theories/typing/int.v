@@ -39,7 +39,7 @@ Section int.
     by iApply heap_mapsto_own_state_loc_in_bounds.
   Qed.
 
-  Global Instance loc_in_bounds_int n it β: LocInBounds (n @ int it) β.
+  Global Instance loc_in_bounds_int n it β: LocInBounds (n @ int it) β (bytes_per_int it).
   Proof.
     constructor. iIntros (l) "Hl".
     iDestruct (int_loc_in_bounds with "Hl") as "Hlib".

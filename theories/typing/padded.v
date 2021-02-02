@@ -54,9 +54,9 @@ Section padded.
     rewrite app_length Heq1 Heq2 /ly_size /= -!/(ly_size _). lia.
   Qed.
 
-  Global Instance loc_in_bounds_padded ty lyty ly β: LocInBounds (padded ty lyty ly) β.
+  Global Instance loc_in_bounds_padded ty lyty ly β: LocInBounds (padded ty lyty ly) β (ly_size ly).
   Proof.
-    constructor. iIntros (l) "(_&_&H&_)". iApply loc_in_bounds_shorten; last done. lia.
+    constructor. by iIntros (l) "(_&_&H&_)".
   Qed.
 
   Lemma simpl_padded_hyp_eq_layout l β ty ly T:
