@@ -162,10 +162,22 @@ Lemma unfold_int_elem_of_it (z : Z) (it : int_type) :
   z ∈ it = (min_int it ≤ z ∧ z ≤ max_int it).
 Proof. done. Qed.
 
+Ltac unfold_common_defs :=
+  unfold
+  (* Layout *)
+    ly_size, ly_with_align, ly_align_log,
+  (* Integer bounds *)
+    max_int, min_int, int_half_modulus, int_modulus,
+    bits_per_int, bytes_per_int,
+  (* Address bounds *)
+    max_alloc_end, min_alloc_start, bytes_per_addr,
+  (* Other byte-level definitions *)
+    bits_per_byte in *.
+
 (** * [solve_goal] without cleaning of the context  *)
 Ltac unprepared_solve_goal :=
   try rewrite -> unfold_int_elem_of_it in *;
-  unfold ly_size, ly_align_log, max_int, min_int, int_half_modulus, int_modulus in *; simpl in *;
+  unfold_common_defs; simpl in *;
   normalize_and_simpl_goal;
   rewrite /ly_size/ly_align_log //=; enrich_context;
   repeat case_bool_decide => //; repeat case_decide => //; repeat case_match => //;

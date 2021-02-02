@@ -8,7 +8,6 @@ void sl_init(struct spinlock* lock) {
     lock->lock = 0;
 }
 
-[[rc::tactics("all: try by rewrite /bytes_per_int/=; have ->: bytes_per_addr = 8%nat; solve_goal.")]]
 void sl_lock(struct spinlock* lock) {
     bool expected = 0;
     [[rc::inv_vars("expected : false @ boolean<bool_it>")]]

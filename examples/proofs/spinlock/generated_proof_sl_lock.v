@@ -30,7 +30,6 @@ Section proof_sl_lock.
     - repeat liRStep; liShow.
       all: print_typesystem_goal "sl_lock" "#1".
     Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
-    all: try by rewrite /bytes_per_int/=; have ->: bytes_per_addr = 8%nat; solve_goal.
     all: print_sidecondition_goal "sl_lock".
   Qed.
 End proof_sl_lock.
