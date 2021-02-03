@@ -845,13 +845,17 @@ let pp_spec : string -> import list -> string list -> typedef list ->
     pp "@]@;)%%I.@]@;";
     pp "Proof. by rewrite {1}/with_refinement/=fixp_unfold. Qed.\n";
 
-    pp "\n@;Global Program Instance %s_rmovable %a: RMovable %a :=@;"
-      id pp_params params (pp_id_args true id) par_names;
-    pp "  {| rmovable '%a := movable_eq _ _ (%s_unfold"
-      (pp_as_tuple pp_str) ref_names id;
-    List.iter (fun n -> pp " %s" n) par_names;
-    List.iter (fun n -> pp " %s" n) ref_names;
-    pp ") |}.@;Next Obligation. solve_ty_layout_eq. Qed.\n";
+    (* Movable instance. *)
+    let pp_movable_instance () =
+      pp "\n@;Global Program Instance %s_rmovable %a: RMovable %a :=@;"
+        id pp_params params (pp_id_args true id) par_names;
+      pp "  {| rmovable '%a := movable_eq _ _ (%s_unfold"
+        (pp_as_tuple pp_str) ref_names id;
+      List.iter (fun n -> pp " %s" n) par_names;
+      List.iter (fun n -> pp " %s" n) ref_names;
+      pp ") |}.@;Next Obligation. solve_ty_layout_eq. Qed.\n";
+    in
+    if not annot.st_immovable then pp_movable_instance ();
 
     (* Generation of the global instances. *)
     let pp_instance_place inst_name type_name =
@@ -875,9 +879,12 @@ let pp_spec : string -> import list -> string list -> typedef list ->
     in
     pp_instance_place "simplify_hyp_place" "SimplifyHypPlace";
     pp_instance_place "simplify_goal_place" "SimplifyGoalPlace";
-    pp "\n";
-    pp_instance_val "simplify_hyp_val" "SimplifyHypVal";
-    pp_instance_val "simplify_goal_val" "SimplifyGoalVal"
+    if not annot.st_immovable then
+      begin
+        pp "\n";
+        pp_instance_val "simplify_hyp_val" "SimplifyHypVal";
+        pp_instance_val "simplify_goal_val" "SimplifyGoalVal"
+      end
   in
   let pp_tagged_union id tag_type_e s =
     if s.struct_is_union then
@@ -1008,7 +1015,8 @@ let pp_spec : string -> import list -> string list -> typedef list ->
     pp "  mti_movable c :=@;";
     pp "    match c with@;";
     let fn (_, (c, args), _) =
-      pp "    | %s" c; List.iter (fun (x,_) -> pp " %s" x) args; pp " => _@;"
+      pp "    | %s" c;
+      List.iter (fun (x,_) -> pp " %s" x) args; pp " => _@;"
     in
     List.iter fn union_cases;
     pp "    end;@;";
