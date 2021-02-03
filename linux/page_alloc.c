@@ -1,8 +1,37 @@
 // SPDX-License-Identifier: GPL-2.0-only
+/*
+ * Copyright (C) 2020 Google LLC
+ * Author: Quentin Perret <qperret@google.com>
+ */
+
+// #include <asm/kvm_hyp.h>
+// #include <nvhe/gfp.h>
+
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <limits.h>
+#include "../examples/include/spinlock.h"
+
+#define hyp_spinlock_t struct spinlock
+#define hyp_spin_lock sl_lock
+#define hyp_spin_unlock sl_unlock
+#define hyp_spin_lock_init sl_init
+
+//@rc::inlined Definition PAGE_SIZE : N := 4096.
+//@rc::inlined Definition PAGE_LAYOUT := ly_with_align (N.to_nat PAGE_SIZE) (N.to_nat PAGE_SIZE).
+
+[[rc::parameters("p : loc")]]
+[[rc::args("p @ &own<uninit<PAGE_LAYOUT>>")]]
+[[rc::ensures("own p : zeroed<PAGE_LAYOUT>")]]
+extern void clear_page(void *to);
+
+void *memset(void* ptr, int value, size_t num);
+
+void hyp_panic() {
+	assert(0);
+}
+
 
 typedef unsigned long long u64;
 typedef signed long long s64;
@@ -16,9 +45,6 @@ typedef u64 gfp_t;
 #define WRITE_ONCE(a, b) ((a) = (b))
 #define READ_ONCE(a) (a)
 
-#define HYP_MAX_ORDER	11U
-#define HYP_NO_ORDER	UINT_MAX
-
 #define container_of(ptr, type, member) (type *)( (char *)(ptr) - offsetof(type,member) )
 
 /* SPDX-License-Identifier: GPL-2.0 */
@@ -29,20 +55,6 @@ struct list_head {
 	struct list_head *next, *prev;
 };
 
-/*
- * Simple doubly linked list implementation.
- *
- * Some of the internal functions ("__xxx") are useful when
- * manipulating whole lists rather than single entries, as
- * sometimes we already know the next/prev entries and we can
- * generate better code by using them directly rather than
- * using the generic single-entry routines.
- */
-
-#define LIST_HEAD_INIT(name) { &(name), &(name) }
-
-#define LIST_HEAD(name) \
-	struct list_head name = LIST_HEAD_INIT(name)
 
 static inline bool __list_add_valid(struct list_head *new,
 				struct list_head *prev,
@@ -54,7 +66,6 @@ static inline bool __list_del_entry_valid(struct list_head *entry)
 {
 	return true;
 }
-
 
 /**
  * INIT_LIST_HEAD - Initialize a list_head structure
@@ -79,8 +90,7 @@ static inline void __list_add(struct list_head *new,
 			      struct list_head *prev,
 			      struct list_head *next)
 {
-	/* if (!__list_add_valid(new, prev, next)) */
-	if (__list_add_valid(new, prev, next) == (bool)0)
+	if (!__list_add_valid(new, prev, next))
 		return;
 
 	next->prev = new;
@@ -131,8 +141,7 @@ static inline void __list_del(struct list_head * prev, struct list_head * next)
 
 static inline void __list_del_entry(struct list_head *entry)
 {
-	/* if (!__list_del_entry_valid(entry)) */
-	if (__list_del_entry_valid(entry) == (bool)0)
+	if (!__list_del_entry_valid(entry))
 		return;
 
 	__list_del(entry->prev, entry->next);
@@ -177,17 +186,9 @@ static inline int list_empty(const struct list_head *head)
 #define list_first_entry(ptr, type, member) \
 	list_entry((ptr)->next, type, member)
 
-#endif
+#endif /* _LINUX_LIST_H */
 
-struct hyp_pool {
-	/* nvhe_spinlock_t lock; */
-	struct list_head free_area[HYP_MAX_ORDER + 1];
-};
-
-/* GFP flags */
-#define HYP_GFP_NONE	0
-#define HYP_GFP_ZERO	1
-
+/* SPDX-License-Identifier: GPL-2.0-only */
 #ifndef __KVM_HYP_MEMORY_H
 #define __KVM_HYP_MEMORY_H
 
@@ -195,20 +196,18 @@ struct hyp_pool {
 
 /* #include <linux/types.h> */
 
+#define HYP_MEMBLOCK_REGIONS 128
+struct hyp_memblock_region {
+	phys_addr_t start;
+	phys_addr_t end;
+};
+
 struct hyp_pool;
 struct hyp_page {
+	unsigned int refcount;
 	unsigned int order;
 	struct hyp_pool *pool;
-	int refcount;
-	union {
-		/* allocated page */
-		void *virt;
-		/* free page */
-		struct list_head node;
-	};
-	/* Range of 'sibling' pages (donated by the host at the same time) */
-	phys_addr_t sibling_range_start;
-	phys_addr_t sibling_range_end;
+	struct list_head node;
 };
 
 extern s64 hyp_physvirt_offset;
@@ -216,36 +215,67 @@ extern u64 __hyp_vmemmap;
 #define hyp_vmemmap ((struct hyp_page *)__hyp_vmemmap)
 
 #define __hyp_pa(virt)	((phys_addr_t)(virt) + hyp_physvirt_offset)
-#define __hyp_va(virt)	(void*)((phys_addr_t)(virt) - hyp_physvirt_offset)
+#define __hyp_va(virt)	((void *)((phys_addr_t)(virt) - hyp_physvirt_offset))
 
 static inline void *hyp_phys_to_virt(phys_addr_t phys)
 {
 	return __hyp_va(phys);
 }
 
-static inline phys_addr_t hyp_virt_to_phys(void* addr)
+static inline phys_addr_t hyp_virt_to_phys(void *addr)
 {
 	return __hyp_pa(addr);
 }
 
 #define hyp_phys_to_pfn(phys)	((phys) >> PAGE_SHIFT)
-#define hyp_phys_to_page(phys)	&hyp_vmemmap[hyp_phys_to_pfn(phys)]
+#define hyp_phys_to_page(phys)	(&hyp_vmemmap[hyp_phys_to_pfn(phys)])
 #define hyp_virt_to_page(virt)	hyp_phys_to_page(__hyp_pa(virt))
 
 #define hyp_page_to_phys(page)  ((phys_addr_t)((page) - hyp_vmemmap) << PAGE_SHIFT)
 #define hyp_page_to_virt(page)	__hyp_va(hyp_page_to_phys(page))
-#define hyp_page_to_pool(page)	((struct hyp_page*)page)->pool
+#define hyp_page_to_pool(page)	(((struct hyp_page *)page)->pool)
+
+static inline int hyp_page_count(void *addr)
+{
+	struct hyp_page *p = hyp_virt_to_page(addr);
+
+	return p->refcount;
+}
 
 #endif /* __KVM_HYP_MEMORY_H */
 
-// SPDX-License-Identifier: GPL-2.0-only
-/*
- * Copyright (C) 2020 Google, inc
- * Author: Quentin Perret <qperret@google.com>
- */
+/* SPDX-License-Identifier: GPL-2.0-only */
+#ifndef __KVM_HYP_GFP_H
+#define __KVM_HYP_GFP_H
 
-/* #include <asm/kvm_hyp.h> */
-/* #include <nvhe/gfp.h> */
+/* #include <linux/list.h> */
+
+/* #include <nvhe/memory.h> */
+/* #include <nvhe/spinlock.h> */
+
+#define HYP_MAX_ORDER	11U
+#define HYP_NO_ORDER	UINT_MAX
+
+struct hyp_pool {
+	hyp_spinlock_t lock;
+	struct list_head free_area[HYP_MAX_ORDER + 1];
+	phys_addr_t range_start;
+	phys_addr_t range_end;
+};
+
+/* GFP flags */
+#define HYP_GFP_NONE	0
+#define HYP_GFP_ZERO	1
+
+/* Allocation */
+void *hyp_alloc_pages(struct hyp_pool *pool, gfp_t mask, unsigned int order);
+void hyp_get_page(void *addr);
+void hyp_put_page(void *addr);
+
+/* Used pages cannot be freed */
+int hyp_pool_init(struct hyp_pool *pool, phys_addr_t phys,
+		  unsigned int nr_pages, unsigned int used_pages);
+#endif /* __KVM_HYP_GFP_H */
 
 u64 __hyp_vmemmap;
 
@@ -267,39 +297,43 @@ u64 __hyp_vmemmap;
  *   __find_buddy(pool, page 1, order 0) => page 0
  *   __find_buddy(pool, page 2, order 0) => page 3
  */
-static struct hyp_page * __find_buddy(struct hyp_pool *pool,
-						 struct hyp_page *p,
-						 unsigned int order)
+static struct hyp_page *__find_buddy(struct hyp_pool *pool, struct hyp_page *p,
+				     unsigned int order)
 {
 	phys_addr_t addr = hyp_page_to_phys(p);
 
 	addr ^= (PAGE_SIZE << order);
-	if (addr < p->sibling_range_start || addr >= p->sibling_range_end)
+	if (addr < pool->range_start || addr >= pool->range_end)
 		return NULL;
 
 	return hyp_phys_to_page(addr);
 }
 
 static void __hyp_attach_page(struct hyp_pool *pool,
-					 struct hyp_page *p)
+			      struct hyp_page *p)
 {
 	unsigned int order = p->order;
 	struct hyp_page *buddy;
 
 	p->order = HYP_NO_ORDER;
-	for (;order < HYP_MAX_ORDER; order++) {
+	for (; order < HYP_MAX_ORDER; order++) {
 		/* Nothing to do if the buddy isn't in a free-list */
 		buddy = __find_buddy(pool, p, order);
-		if (!buddy || list_empty(&buddy->node) || buddy->order != order)
+		// TODO(#30): allow !buddy
+		/* if (!buddy || list_empty(&buddy->node) || buddy->order != order) */
+		if (buddy == NULL || list_empty(&buddy->node) || buddy->order != order)
 			break;
 
 		/* Otherwise, coalesce the buddies and go one level up */
 		list_del_init(&buddy->node);
 		buddy->order = HYP_NO_ORDER;
-		if (buddy < p) {
+		// TODO: the original code generate a weird cerberus error
+		/* p = (p < buddy) ? p : buddy; */
+		if (p < buddy) {
+			p = p;
+		} else {
 			p = buddy;
 		}
-		/* p = (p < buddy) ? p : buddy; */
 	}
 
 	p->order = order;
@@ -311,11 +345,13 @@ void hyp_put_page(void *addr)
 	struct hyp_page *p = hyp_virt_to_page(addr);
 	struct hyp_pool *pool = hyp_page_to_pool(p);
 
-	/* nvhe_spin_lock(&pool->lock); */
+	hyp_spin_lock(&pool->lock);
+	if (!p->refcount)
+		hyp_panic();
 	p->refcount--;
 	if (!p->refcount)
 		__hyp_attach_page(pool, p);
-	/* nvhe_spin_unlock(&pool->lock); */
+	hyp_spin_unlock(&pool->lock);
 }
 
 void hyp_get_page(void *addr)
@@ -323,15 +359,15 @@ void hyp_get_page(void *addr)
 	struct hyp_page *p = hyp_virt_to_page(addr);
 	struct hyp_pool *pool = hyp_page_to_pool(p);
 
-	/* nvhe_spin_lock(&pool->lock); */
+	hyp_spin_lock(&pool->lock);
 	p->refcount++;
-	/* nvhe_spin_unlock(&pool->lock); */
+	hyp_spin_unlock(&pool->lock);
 }
 
 /* Extract a page from the buddy tree, at a specific order */
-static struct hyp_page * __hyp_extract_page(struct hyp_pool *pool,
-						       struct hyp_page *p,
-						       unsigned int order)
+static struct hyp_page *__hyp_extract_page(struct hyp_pool *pool,
+					   struct hyp_page *p,
+					   unsigned int order)
 {
 	struct hyp_page *buddy;
 
@@ -353,19 +389,18 @@ static struct hyp_page * __hyp_extract_page(struct hyp_pool *pool,
 	return p;
 }
 
-extern void clear_page(void *to);
 static void clear_hyp_page(struct hyp_page *p)
 {
 	unsigned long i;
 
-	/* for (i = 0; i < (1 << p->order); i++) */
-	for (i = 0; i < (1UL << p->order); i++)
+	for (i = 0; i < (1 << p->order); i++)
 		clear_page((unsigned char *)hyp_page_to_virt(p) + (i << PAGE_SHIFT));
+		// TODO: cerberus does not allow pointer arithmetic on void *
 		/* clear_page(hyp_page_to_virt(p) + (i << PAGE_SHIFT)); */
 }
 
-static void * __hyp_alloc_pages(struct hyp_pool *pool, gfp_t mask,
-					   unsigned int order)
+static void *__hyp_alloc_pages(struct hyp_pool *pool, gfp_t mask,
+			       unsigned int order)
 {
 	unsigned int i = order;
 	struct hyp_page *p;
@@ -386,63 +421,54 @@ static void * __hyp_alloc_pages(struct hyp_pool *pool, gfp_t mask,
 	return p;
 }
 
-void * hyp_alloc_pages(struct hyp_pool *pool, gfp_t mask,
-				  unsigned int order)
+void *hyp_alloc_pages(struct hyp_pool *pool, gfp_t mask, unsigned int order)
 {
 	struct hyp_page *p;
 
-	/* nvhe_spin_lock(&pool->lock); */
+	hyp_spin_lock(&pool->lock);
 	p = __hyp_alloc_pages(pool, mask, order);
-	/* nvhe_spin_unlock(&pool->lock); */
+	hyp_spin_unlock(&pool->lock);
 
-	/* return p ? hyp_page_to_virt(p) : NULL; */
-	if (p) {
-		return hyp_page_to_virt(p);
-	} else {
-		return NULL;
-	}
+	return p ? hyp_page_to_virt(p) : NULL;
 }
-#if 0
+
 /* hyp_vmemmap must be backed beforehand */
-int hyp_pool_extend_used(struct hyp_pool *pool, phys_addr_t phys,
-				    unsigned int nr_pages,
-				    unsigned int used_pages)
+int hyp_pool_init(struct hyp_pool *pool, phys_addr_t phys,
+		  unsigned int nr_pages, unsigned int used_pages)
 {
-	phys_addr_t range_end = phys + (nr_pages << PAGE_SHIFT);
 	struct hyp_page *p;
 	int i;
 
 	if (phys % PAGE_SIZE)
 		return -EINVAL;
 
-	/* nvhe_spin_lock(&pool->lock); */
-
-	/* Init the vmemmap portion - XXX can be done lazily ? */
-	p = hyp_phys_to_page(phys);
-	for (i = 0; i < nr_pages; i++, p++) {
-		p->order = 0;
-		p->pool = pool;
-		p->refcount = 0;
-		INIT_LIST_HEAD(&p->node);
-		p->sibling_range_start = phys;
-		p->sibling_range_end = range_end;
-	}
-
-	/* Attach the unused pages to the buddy tree - XXX optimize ? */
-	p = hyp_phys_to_page(phys + (used_pages << PAGE_SHIFT));
-	for (i = used_pages; i < nr_pages; i++, p++)
-		__hyp_attach_page(pool, p);
-
-	/* nvhe_spin_unlock(&pool->lock); */
-
-	return 0;
-}
-#endif
-void hyp_pool_init(struct hyp_pool *pool)
-{
-	unsigned int i;
-
-	/* nvhe_spin_lock_init(&pool->lock); */
+	hyp_spin_lock_init(&pool->lock);
 	for (i = 0; i <= HYP_MAX_ORDER; i++)
 		INIT_LIST_HEAD(&pool->free_area[i]);
+	pool->range_start = phys;
+	pool->range_end = phys + (nr_pages << PAGE_SHIFT);
+
+	/* Init the vmemmap portion */
+	p = hyp_phys_to_page(phys);
+	memset(p, 0, sizeof(*p) * nr_pages);
+	// TODO: the frontend does not support the comma operator
+	/* for (i = 0; i < nr_pages; i++, p++) { */
+	for (i = 0; i < nr_pages; i++) {
+		p->pool = pool;
+		INIT_LIST_HEAD(&p->node);
+		// TODO(#30): p++ is currently not supported by the frontend
+		p += 1;
+	}
+
+	/* Attach the unused pages to the buddy tree */
+	p = hyp_phys_to_page(phys + (used_pages << PAGE_SHIFT));
+	// TODO: the frontend does not support the comma operator
+	/* for (i = used_pages; i < nr_pages; i++, p++) */
+	for (i = used_pages; i < nr_pages; i++) {
+		__hyp_attach_page(pool, p);
+		// TODO(#30): p++ is currently not supported by the frontend
+		p += 1;
+	}
+
+	return 0;
 }

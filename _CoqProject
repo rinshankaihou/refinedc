@@ -36,7 +36,6 @@
 -Q _build/default/examples/proofs/binary_search refinedc.examples.binary_search
 -Q _build/default/examples/proofs/paper_example_2_1 refinedc.examples.paper_example_2_1
 -Q _build/default/examples/proofs/paper_example_2_2 refinedc.examples.paper_example_2_2
--Q _build/default/examples/proofs/buddy_alloc refinedc.examples.buddy_alloc
 -Q _build/default/examples/proofs/wrapping_add refinedc.examples.wrapping_add
 -Q _build/default/linux/proofs/early_alloc refinedc.linux.early_alloc
 -Q _build/default/examples/proofs/container_of refinedc.examples.container_of
@@ -45,3 +44,4 @@
 -Q _build/default/examples/proofs/talk_demo3 refinedc.examples.talk_demo3
 -Q _build/default/examples/proofs/intptr refinedc.examples.intptr
 -Q _build/default/examples/proofs/tests refinedc.examples.tests
+-Q _build/default/linux/proofs/page_alloc refinedc.linux.page_alloc
