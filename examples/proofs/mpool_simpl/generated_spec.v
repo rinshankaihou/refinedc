@@ -26,7 +26,7 @@ Section spec.
     rty r__ := fixp mpool_entry_rec r__
   |}.
 
-  Lemma mpool_entry_unfold (n : nat) :
+  Lemma mpool_entry_unfold (n : nat):
     (n @ mpool_entry)%I ≡@{type} (
       padded (struct struct_mpool_entry [@{type}
         (((0 < n)%nat) @ (optional (&own (guarded "mpool_entry_0" (((n - 1)%nat) @ mpool_entry))) null))
@@ -36,22 +36,22 @@ Section spec.
 
 
   Global Program Instance mpool_entry_rmovable : RMovable mpool_entry :=
-    {| rmovable 'n := movable_eq _ _ (mpool_entry_unfold n) |}.
+    {| rmovable patt__ := movable_eq _ _ (mpool_entry_unfold patt__) |}.
   Next Obligation. solve_ty_layout_eq. Qed.
 
-  Global Instance mpool_entry_simplify_hyp_place_inst l_ β_ (n : nat) :
-    SimplifyHypPlace l_ β_ (n @ mpool_entry)%I (Some 100%N) :=
+  Global Instance mpool_entry_simplify_hyp_place_inst l_ β_ patt__:
+    SimplifyHypPlace l_ β_ (patt__ @ mpool_entry)%I (Some 100%N) :=
     λ T, i2p (simplify_hyp_place_eq l_ β_ _ _ T (mpool_entry_unfold _)).
-  Global Instance mpool_entry_simplify_goal_place_inst l_ β_ (n : nat) :
-    SimplifyGoalPlace l_ β_ (n @ mpool_entry)%I (Some 100%N) :=
+  Global Instance mpool_entry_simplify_goal_place_inst l_ β_ patt__:
+    SimplifyGoalPlace l_ β_ (patt__ @ mpool_entry)%I (Some 100%N) :=
     λ T, i2p (simplify_goal_place_eq l_ β_ _ _ T (mpool_entry_unfold _)).
 
-  Global Program Instance mpool_entry_simplify_hyp_val_inst v_ (n : nat) :
-    SimplifyHypVal v_ (n @ mpool_entry)%I (Some 100%N) :=
+  Global Program Instance mpool_entry_simplify_hyp_val_inst v_ patt__:
+    SimplifyHypVal v_ (patt__ @ mpool_entry)%I (Some 100%N) :=
     λ T, i2p (simplify_hyp_val_eq v_ _ _ (mpool_entry_unfold _) T _).
   Next Obligation. done. Qed.
-  Global Program Instance mpool_entry_simplify_goal_val_inst v_ (n : nat) :
-    SimplifyGoalVal v_ (n @ mpool_entry)%I (Some 100%N) :=
+  Global Program Instance mpool_entry_simplify_goal_val_inst v_ patt__:
+    SimplifyGoalVal v_ (patt__ @ mpool_entry)%I (Some 100%N) :=
     λ T, i2p (simplify_goal_val_eq v_ _ _ (mpool_entry_unfold _) T _).
   Next Obligation. done. Qed.
 
@@ -71,7 +71,7 @@ Section spec.
     rty r__ := fixp mpool_rec r__
   |}.
 
-  Lemma mpool_unfold (n : nat) :
+  Lemma mpool_unfold (n : nat):
     (n @ mpool)%I ≡@{type} (
       struct struct_mpool [@{type}
         (((0 < n)%nat) @ (optional (&own (((n - 1)%nat) @ (mpool_entry))) null))
@@ -81,22 +81,22 @@ Section spec.
 
 
   Global Program Instance mpool_rmovable : RMovable mpool :=
-    {| rmovable 'n := movable_eq _ _ (mpool_unfold n) |}.
+    {| rmovable patt__ := movable_eq _ _ (mpool_unfold patt__) |}.
   Next Obligation. solve_ty_layout_eq. Qed.
 
-  Global Instance mpool_simplify_hyp_place_inst l_ β_ (n : nat) :
-    SimplifyHypPlace l_ β_ (n @ mpool)%I (Some 100%N) :=
+  Global Instance mpool_simplify_hyp_place_inst l_ β_ patt__:
+    SimplifyHypPlace l_ β_ (patt__ @ mpool)%I (Some 100%N) :=
     λ T, i2p (simplify_hyp_place_eq l_ β_ _ _ T (mpool_unfold _)).
-  Global Instance mpool_simplify_goal_place_inst l_ β_ (n : nat) :
-    SimplifyGoalPlace l_ β_ (n @ mpool)%I (Some 100%N) :=
+  Global Instance mpool_simplify_goal_place_inst l_ β_ patt__:
+    SimplifyGoalPlace l_ β_ (patt__ @ mpool)%I (Some 100%N) :=
     λ T, i2p (simplify_goal_place_eq l_ β_ _ _ T (mpool_unfold _)).
 
-  Global Program Instance mpool_simplify_hyp_val_inst v_ (n : nat) :
-    SimplifyHypVal v_ (n @ mpool)%I (Some 100%N) :=
+  Global Program Instance mpool_simplify_hyp_val_inst v_ patt__:
+    SimplifyHypVal v_ (patt__ @ mpool)%I (Some 100%N) :=
     λ T, i2p (simplify_hyp_val_eq v_ _ _ (mpool_unfold _) T _).
   Next Obligation. done. Qed.
-  Global Program Instance mpool_simplify_goal_val_inst v_ (n : nat) :
-    SimplifyGoalVal v_ (n @ mpool)%I (Some 100%N) :=
+  Global Program Instance mpool_simplify_goal_val_inst v_ patt__:
+    SimplifyGoalVal v_ (patt__ @ mpool)%I (Some 100%N) :=
     λ T, i2p (simplify_goal_val_eq v_ _ _ (mpool_unfold _) T _).
   Next Obligation. done. Qed.
 

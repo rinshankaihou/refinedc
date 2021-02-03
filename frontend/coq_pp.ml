@@ -18,9 +18,9 @@ let pp_as_tuple : 'a pp -> 'a list pp = fun pp ff xs ->
                List.iter (fprintf ff ", %a" pp) xs;
                pp_str ff ")"
 
-let pp_encoded_patt_name : string list pp = fun ff xs ->
+let pp_encoded_patt_name : bool -> string list pp = fun used ff xs ->
   match xs with
-  | []  -> pp_str ff "_"
+  | []  -> pp_str ff (if used then "unit__" else "_")
   | [x] -> pp_str ff x
   | _   -> pp_str ff "patt__"
 
@@ -560,7 +560,7 @@ and pp_type_expr_guard : unit pp option -> guard_mode -> type_expr pp =
     | Ty_ptr(k,ty)       ->
         fprintf ff "%a %a" pp_kind k (pp true false guarded) ty
     | Ty_exists(xs,a,ty) ->
-        fprintf ff "tyexists (λ %a%a, %a%a)" pp_encoded_patt_name xs
+        fprintf ff "tyexists (λ %a%a, %a%a)" (pp_encoded_patt_name false) xs
           pp_ty_annot a pp_encoded_patt_bindings xs
           (pp false false guarded) ty
     | Ty_constr(ty,c)    ->
@@ -634,8 +634,10 @@ and pp_type_expr_guard : unit pp option -> guard_mode -> type_expr pp =
     | Ty_arg_expr(ty)         ->
         pp wrap false guarded ff ty
     | Ty_arg_lambda(xs,a,tya) ->
-        fprintf ff "(λ %a%a,@;  @[<v 0>%a%a@]@;)" pp_encoded_patt_name xs
-          pp_ty_annot a pp_encoded_patt_bindings xs (pp_arg false guarded) tya
+        fprintf ff "(λ %a%a,@;  @[<v 0>%a%a@]@;)"
+          (pp_encoded_patt_name false) xs
+          pp_ty_annot a pp_encoded_patt_bindings xs
+          (pp_arg false guarded) tya
   in
   pp true false false ff ty
 
@@ -819,7 +821,7 @@ let pp_spec : string -> import list -> string list -> typedef list ->
     let pp_prod = pp_as_prod (pp_simple_coq_expr true) in
     pp "@[<v 2>Definition %s_rec : (%a -d> typeO) → (%a -d> typeO) := " id
       pp_prod ref_and_par_types pp_prod ref_and_par_types;
-    pp "(λ self %a,@;" pp_encoded_patt_name ref_and_par_names;
+    pp "(λ self %a,@;" (pp_encoded_patt_name false) ref_and_par_names;
     pp_encoded_patt_bindings ff ref_and_par_names;
     let guard = Guard_in_def(id) in
     pp_struct_def_np ast.structs guard annot fields ff struct_id;
@@ -836,10 +838,13 @@ let pp_spec : string -> import list -> string list -> typedef list ->
       (pp_as_tuple pp_str) ("r__" :: par_names);
 
     (* Generation of the unfolding lemma. *)
-    pp "@;@[<v 2>Lemma %s_unfold %a%a:@;"
-      id pp_params params pp_params annot.st_refined_by;
-    pp "@[<v 2>(%a @@ %a)%%I ≡@@{type} (@;" (pp_as_tuple pp_str) ref_names
+    pp "@;@[<v 2>Lemma %s_unfold %a(%a : %a):@;" id pp_params params
+      (pp_encoded_patt_name true) ref_names
+      (pp_as_prod (pp_simple_coq_expr true)) ref_types;
+    pp "@[<v 2>(%a @@ %a)%%I ≡@@{type} (@;"
+      (pp_encoded_patt_name true) ref_names
       (pp_id_args false id) par_names;
+    pp "%a" pp_encoded_patt_bindings ref_names;
     let guard = Guard_in_lem(id) in
     pp_struct_def_np ast.structs guard annot fields ff struct_id;
     pp "@]@;)%%I.@]@;";
@@ -849,32 +854,28 @@ let pp_spec : string -> import list -> string list -> typedef list ->
     let pp_movable_instance () =
       pp "\n@;Global Program Instance %s_rmovable %a: RMovable %a :=@;"
         id pp_params params (pp_id_args true id) par_names;
-      pp "  {| rmovable '%a := movable_eq _ _ (%s_unfold"
-        (pp_as_tuple pp_str) ref_names id;
+      pp "  {| rmovable patt__ := movable_eq _ _ (%s_unfold" id;
       List.iter (fun n -> pp " %s" n) par_names;
-      List.iter (fun n -> pp " %s" n) ref_names;
-      pp ") |}.@;Next Obligation. solve_ty_layout_eq. Qed.\n";
+      pp " patt__) |}.@;Next Obligation. solve_ty_layout_eq. Qed.\n";
     in
     if not annot.st_immovable then pp_movable_instance ();
 
     (* Generation of the global instances. *)
     let pp_instance_place inst_name type_name =
-      pp "@;Global Instance %s_%s_inst l_ β_ %a%a:@;" id inst_name
-        pp_params params pp_params annot.st_refined_by;
-      pp "  %s l_ β_ (%a @@ %a)%%I (Some 100%%N) :=@;" type_name
-        (pp_as_tuple pp_str) ref_names (pp_id_args false id) par_names;
+      pp "@;Global Instance %s_%s_inst l_ β_ %apatt__:@;"
+        id inst_name pp_params params;
+      pp "  %s l_ β_ (patt__ @@ %a)%%I (Some 100%%N) :=@;"
+        type_name (pp_id_args false id) par_names;
       pp "  λ T, i2p (%s_eq l_ β_ _ _ T (%s_unfold" inst_name id;
-      List.iter (fun _ -> pp " _") par_names;
-      List.iter (fun _ -> pp " _") ref_names; pp "))."
+      List.iter (fun _ -> pp " _") par_names; pp " _))."
     in
     let pp_instance_val inst_name type_name =
-      pp "@;Global Program Instance %s_%s_inst v_ %a%a:@;" id inst_name
-        pp_params params pp_params annot.st_refined_by;
-      pp "  %s v_ (%a @@ %a)%%I (Some 100%%N) :=@;" type_name
-        (pp_as_tuple pp_str) ref_names (pp_id_args false id) par_names;
+      pp "@;Global Program Instance %s_%s_inst v_ %apatt__:@;"
+        id inst_name pp_params params;
+      pp "  %s v_ (patt__ @@ %a)%%I (Some 100%%N) :=@;"
+        type_name (pp_id_args false id) par_names;
       pp "  λ T, i2p (%s_eq v_ _ _ (%s_unfold" inst_name id;
-      List.iter (fun _ -> pp " _") par_names;
-      List.iter (fun _ -> pp " _") ref_names; pp ") T _).";
+      List.iter (fun _ -> pp " _") par_names; pp " _) T _).";
       pp "@;Next Obligation. done. Qed."
     in
     pp_instance_place "simplify_hyp_place" "SimplifyHypPlace";

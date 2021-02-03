@@ -43,7 +43,7 @@ Section spec.
     rty r__ := fixp btree_t_rec r__
   |}.
 
-  Lemma btree_t_unfold (r : btree_rfmt) :
+  Lemma btree_t_unfold (r : btree_rfmt):
     (r @ btree_t)%I ≡@{type} (
       (tyexists (λ patt__ : nat * list Z * list type * list btree_rfmt, let n := patt__.1.1.1 in
       let ks := patt__.1.1.2 in
@@ -67,22 +67,22 @@ Section spec.
 
 
   Global Program Instance btree_t_rmovable : RMovable btree_t :=
-    {| rmovable 'r := movable_eq _ _ (btree_t_unfold r) |}.
+    {| rmovable patt__ := movable_eq _ _ (btree_t_unfold patt__) |}.
   Next Obligation. solve_ty_layout_eq. Qed.
 
-  Global Instance btree_t_simplify_hyp_place_inst l_ β_ (r : btree_rfmt) :
-    SimplifyHypPlace l_ β_ (r @ btree_t)%I (Some 100%N) :=
+  Global Instance btree_t_simplify_hyp_place_inst l_ β_ patt__:
+    SimplifyHypPlace l_ β_ (patt__ @ btree_t)%I (Some 100%N) :=
     λ T, i2p (simplify_hyp_place_eq l_ β_ _ _ T (btree_t_unfold _)).
-  Global Instance btree_t_simplify_goal_place_inst l_ β_ (r : btree_rfmt) :
-    SimplifyGoalPlace l_ β_ (r @ btree_t)%I (Some 100%N) :=
+  Global Instance btree_t_simplify_goal_place_inst l_ β_ patt__:
+    SimplifyGoalPlace l_ β_ (patt__ @ btree_t)%I (Some 100%N) :=
     λ T, i2p (simplify_goal_place_eq l_ β_ _ _ T (btree_t_unfold _)).
 
-  Global Program Instance btree_t_simplify_hyp_val_inst v_ (r : btree_rfmt) :
-    SimplifyHypVal v_ (r @ btree_t)%I (Some 100%N) :=
+  Global Program Instance btree_t_simplify_hyp_val_inst v_ patt__:
+    SimplifyHypVal v_ (patt__ @ btree_t)%I (Some 100%N) :=
     λ T, i2p (simplify_hyp_val_eq v_ _ _ (btree_t_unfold _) T _).
   Next Obligation. done. Qed.
-  Global Program Instance btree_t_simplify_goal_val_inst v_ (r : btree_rfmt) :
-    SimplifyGoalVal v_ (r @ btree_t)%I (Some 100%N) :=
+  Global Program Instance btree_t_simplify_goal_val_inst v_ patt__:
+    SimplifyGoalVal v_ (patt__ @ btree_t)%I (Some 100%N) :=
     λ T, i2p (simplify_goal_val_eq v_ _ _ (btree_t_unfold _) T _).
   Next Obligation. done. Qed.
 

@@ -31,7 +31,7 @@ Section spec.
     rty r__ := fixp queue_elem_rec (r__, cont)
   |}.
 
-  Lemma queue_elem_unfold (cont : type) (ty : type) :
+  Lemma queue_elem_unfold (cont : type) (ty : type):
     (ty @ queue_elem cont)%I ≡@{type} (
       (&own (
         struct struct_queue_elem [@{type}
@@ -44,22 +44,22 @@ Section spec.
 
 
   Global Program Instance queue_elem_rmovable (cont : type) : RMovable (queue_elem cont) :=
-    {| rmovable 'ty := movable_eq _ _ (queue_elem_unfold cont ty) |}.
+    {| rmovable patt__ := movable_eq _ _ (queue_elem_unfold cont patt__) |}.
   Next Obligation. solve_ty_layout_eq. Qed.
 
-  Global Instance queue_elem_simplify_hyp_place_inst l_ β_ (cont : type) (ty : type) :
-    SimplifyHypPlace l_ β_ (ty @ queue_elem cont)%I (Some 100%N) :=
+  Global Instance queue_elem_simplify_hyp_place_inst l_ β_ (cont : type) patt__:
+    SimplifyHypPlace l_ β_ (patt__ @ queue_elem cont)%I (Some 100%N) :=
     λ T, i2p (simplify_hyp_place_eq l_ β_ _ _ T (queue_elem_unfold _ _)).
-  Global Instance queue_elem_simplify_goal_place_inst l_ β_ (cont : type) (ty : type) :
-    SimplifyGoalPlace l_ β_ (ty @ queue_elem cont)%I (Some 100%N) :=
+  Global Instance queue_elem_simplify_goal_place_inst l_ β_ (cont : type) patt__:
+    SimplifyGoalPlace l_ β_ (patt__ @ queue_elem cont)%I (Some 100%N) :=
     λ T, i2p (simplify_goal_place_eq l_ β_ _ _ T (queue_elem_unfold _ _)).
 
-  Global Program Instance queue_elem_simplify_hyp_val_inst v_ (cont : type) (ty : type) :
-    SimplifyHypVal v_ (ty @ queue_elem cont)%I (Some 100%N) :=
+  Global Program Instance queue_elem_simplify_hyp_val_inst v_ (cont : type) patt__:
+    SimplifyHypVal v_ (patt__ @ queue_elem cont)%I (Some 100%N) :=
     λ T, i2p (simplify_hyp_val_eq v_ _ _ (queue_elem_unfold _ _) T _).
   Next Obligation. done. Qed.
-  Global Program Instance queue_elem_simplify_goal_val_inst v_ (cont : type) (ty : type) :
-    SimplifyGoalVal v_ (ty @ queue_elem cont)%I (Some 100%N) :=
+  Global Program Instance queue_elem_simplify_goal_val_inst v_ (cont : type) patt__:
+    SimplifyGoalVal v_ (patt__ @ queue_elem cont)%I (Some 100%N) :=
     λ T, i2p (simplify_goal_val_eq v_ _ _ (queue_elem_unfold _ _) T _).
   Next Obligation. done. Qed.
 
@@ -83,7 +83,7 @@ Section spec.
     rty r__ := fixp queue_rec r__
   |}.
 
-  Lemma queue_unfold (tys : list type) :
+  Lemma queue_unfold (tys : (list type)):
     (tys @ queue)%I ≡@{type} (
       (&own (
         tyexists (λ p : loc,
@@ -97,22 +97,22 @@ Section spec.
 
 
   Global Program Instance queue_rmovable : RMovable queue :=
-    {| rmovable 'tys := movable_eq _ _ (queue_unfold tys) |}.
+    {| rmovable patt__ := movable_eq _ _ (queue_unfold patt__) |}.
   Next Obligation. solve_ty_layout_eq. Qed.
 
-  Global Instance queue_simplify_hyp_place_inst l_ β_ (tys : list type) :
-    SimplifyHypPlace l_ β_ (tys @ queue)%I (Some 100%N) :=
+  Global Instance queue_simplify_hyp_place_inst l_ β_ patt__:
+    SimplifyHypPlace l_ β_ (patt__ @ queue)%I (Some 100%N) :=
     λ T, i2p (simplify_hyp_place_eq l_ β_ _ _ T (queue_unfold _)).
-  Global Instance queue_simplify_goal_place_inst l_ β_ (tys : list type) :
-    SimplifyGoalPlace l_ β_ (tys @ queue)%I (Some 100%N) :=
+  Global Instance queue_simplify_goal_place_inst l_ β_ patt__:
+    SimplifyGoalPlace l_ β_ (patt__ @ queue)%I (Some 100%N) :=
     λ T, i2p (simplify_goal_place_eq l_ β_ _ _ T (queue_unfold _)).
 
-  Global Program Instance queue_simplify_hyp_val_inst v_ (tys : list type) :
-    SimplifyHypVal v_ (tys @ queue)%I (Some 100%N) :=
+  Global Program Instance queue_simplify_hyp_val_inst v_ patt__:
+    SimplifyHypVal v_ (patt__ @ queue)%I (Some 100%N) :=
     λ T, i2p (simplify_hyp_val_eq v_ _ _ (queue_unfold _) T _).
   Next Obligation. done. Qed.
-  Global Program Instance queue_simplify_goal_val_inst v_ (tys : list type) :
-    SimplifyGoalVal v_ (tys @ queue)%I (Some 100%N) :=
+  Global Program Instance queue_simplify_goal_val_inst v_ patt__:
+    SimplifyGoalVal v_ (patt__ @ queue)%I (Some 100%N) :=
     λ T, i2p (simplify_goal_val_eq v_ _ _ (queue_unfold _) T _).
   Next Obligation. done. Qed.
 

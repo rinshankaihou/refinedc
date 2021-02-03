@@ -31,8 +31,8 @@ Section spec.
     rty r__ := fixp list_t_rec r__
   |}.
 
-  Lemma list_t_unfold :
-    (() @ list_t)%I ≡@{type} (
+  Lemma list_t_unfold (unit__ : ()):
+    (unit__ @ list_t)%I ≡@{type} (
       (optionalO (λ _ : unit,
         &own (
           struct struct_list_node [@{type}
@@ -46,23 +46,23 @@ Section spec.
 
 
   Global Program Instance list_t_rmovable : RMovable list_t :=
-    {| rmovable '() := movable_eq _ _ (list_t_unfold) |}.
+    {| rmovable patt__ := movable_eq _ _ (list_t_unfold patt__) |}.
   Next Obligation. solve_ty_layout_eq. Qed.
 
-  Global Instance list_t_simplify_hyp_place_inst l_ β_ :
-    SimplifyHypPlace l_ β_ (() @ list_t)%I (Some 100%N) :=
-    λ T, i2p (simplify_hyp_place_eq l_ β_ _ _ T (list_t_unfold)).
-  Global Instance list_t_simplify_goal_place_inst l_ β_ :
-    SimplifyGoalPlace l_ β_ (() @ list_t)%I (Some 100%N) :=
-    λ T, i2p (simplify_goal_place_eq l_ β_ _ _ T (list_t_unfold)).
+  Global Instance list_t_simplify_hyp_place_inst l_ β_ patt__:
+    SimplifyHypPlace l_ β_ (patt__ @ list_t)%I (Some 100%N) :=
+    λ T, i2p (simplify_hyp_place_eq l_ β_ _ _ T (list_t_unfold _)).
+  Global Instance list_t_simplify_goal_place_inst l_ β_ patt__:
+    SimplifyGoalPlace l_ β_ (patt__ @ list_t)%I (Some 100%N) :=
+    λ T, i2p (simplify_goal_place_eq l_ β_ _ _ T (list_t_unfold _)).
 
-  Global Program Instance list_t_simplify_hyp_val_inst v_ :
-    SimplifyHypVal v_ (() @ list_t)%I (Some 100%N) :=
-    λ T, i2p (simplify_hyp_val_eq v_ _ _ (list_t_unfold) T _).
+  Global Program Instance list_t_simplify_hyp_val_inst v_ patt__:
+    SimplifyHypVal v_ (patt__ @ list_t)%I (Some 100%N) :=
+    λ T, i2p (simplify_hyp_val_eq v_ _ _ (list_t_unfold _) T _).
   Next Obligation. done. Qed.
-  Global Program Instance list_t_simplify_goal_val_inst v_ :
-    SimplifyGoalVal v_ (() @ list_t)%I (Some 100%N) :=
-    λ T, i2p (simplify_goal_val_eq v_ _ _ (list_t_unfold) T _).
+  Global Program Instance list_t_simplify_goal_val_inst v_ patt__:
+    SimplifyGoalVal v_ (patt__ @ list_t)%I (Some 100%N) :=
+    λ T, i2p (simplify_goal_val_eq v_ _ _ (list_t_unfold _) T _).
   Next Obligation. done. Qed.
 
   (* Type definitions. *)

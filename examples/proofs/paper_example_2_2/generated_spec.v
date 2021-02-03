@@ -39,7 +39,7 @@ Section spec.
     rty r__ := fixp chunks_t_rec r__
   |}.
 
-  Lemma chunks_t_unfold (s : gmultiset nat) :
+  Lemma chunks_t_unfold (s : (gmultiset nat)):
     (s @ chunks_t)%I ≡@{type} (
       ((s ≠ ∅) @ (optional (&own (
         tyexists (λ n : nat,
@@ -57,22 +57,22 @@ Section spec.
 
 
   Global Program Instance chunks_t_rmovable : RMovable chunks_t :=
-    {| rmovable 's := movable_eq _ _ (chunks_t_unfold s) |}.
+    {| rmovable patt__ := movable_eq _ _ (chunks_t_unfold patt__) |}.
   Next Obligation. solve_ty_layout_eq. Qed.
 
-  Global Instance chunks_t_simplify_hyp_place_inst l_ β_ (s : gmultiset nat) :
-    SimplifyHypPlace l_ β_ (s @ chunks_t)%I (Some 100%N) :=
+  Global Instance chunks_t_simplify_hyp_place_inst l_ β_ patt__:
+    SimplifyHypPlace l_ β_ (patt__ @ chunks_t)%I (Some 100%N) :=
     λ T, i2p (simplify_hyp_place_eq l_ β_ _ _ T (chunks_t_unfold _)).
-  Global Instance chunks_t_simplify_goal_place_inst l_ β_ (s : gmultiset nat) :
-    SimplifyGoalPlace l_ β_ (s @ chunks_t)%I (Some 100%N) :=
+  Global Instance chunks_t_simplify_goal_place_inst l_ β_ patt__:
+    SimplifyGoalPlace l_ β_ (patt__ @ chunks_t)%I (Some 100%N) :=
     λ T, i2p (simplify_goal_place_eq l_ β_ _ _ T (chunks_t_unfold _)).
 
-  Global Program Instance chunks_t_simplify_hyp_val_inst v_ (s : gmultiset nat) :
-    SimplifyHypVal v_ (s @ chunks_t)%I (Some 100%N) :=
+  Global Program Instance chunks_t_simplify_hyp_val_inst v_ patt__:
+    SimplifyHypVal v_ (patt__ @ chunks_t)%I (Some 100%N) :=
     λ T, i2p (simplify_hyp_val_eq v_ _ _ (chunks_t_unfold _) T _).
   Next Obligation. done. Qed.
-  Global Program Instance chunks_t_simplify_goal_val_inst v_ (s : gmultiset nat) :
-    SimplifyGoalVal v_ (s @ chunks_t)%I (Some 100%N) :=
+  Global Program Instance chunks_t_simplify_goal_val_inst v_ patt__:
+    SimplifyGoalVal v_ (patt__ @ chunks_t)%I (Some 100%N) :=
     λ T, i2p (simplify_goal_val_eq v_ _ _ (chunks_t_unfold _) T _).
   Next Obligation. done. Qed.
 

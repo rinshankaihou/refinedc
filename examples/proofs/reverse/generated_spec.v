@@ -29,7 +29,7 @@ Section spec.
     rty r__ := fixp list_t_rec r__
   |}.
 
-  Lemma list_t_unfold (l : list type) :
+  Lemma list_t_unfold (l : (list type)):
     (l @ list_t)%I ≡@{type} (
       ((maybe2 cons l) @ (optionalO (λ patt__,
         let ty := patt__.1 in
@@ -46,22 +46,22 @@ Section spec.
 
 
   Global Program Instance list_t_rmovable : RMovable list_t :=
-    {| rmovable 'l := movable_eq _ _ (list_t_unfold l) |}.
+    {| rmovable patt__ := movable_eq _ _ (list_t_unfold patt__) |}.
   Next Obligation. solve_ty_layout_eq. Qed.
 
-  Global Instance list_t_simplify_hyp_place_inst l_ β_ (l : list type) :
-    SimplifyHypPlace l_ β_ (l @ list_t)%I (Some 100%N) :=
+  Global Instance list_t_simplify_hyp_place_inst l_ β_ patt__:
+    SimplifyHypPlace l_ β_ (patt__ @ list_t)%I (Some 100%N) :=
     λ T, i2p (simplify_hyp_place_eq l_ β_ _ _ T (list_t_unfold _)).
-  Global Instance list_t_simplify_goal_place_inst l_ β_ (l : list type) :
-    SimplifyGoalPlace l_ β_ (l @ list_t)%I (Some 100%N) :=
+  Global Instance list_t_simplify_goal_place_inst l_ β_ patt__:
+    SimplifyGoalPlace l_ β_ (patt__ @ list_t)%I (Some 100%N) :=
     λ T, i2p (simplify_goal_place_eq l_ β_ _ _ T (list_t_unfold _)).
 
-  Global Program Instance list_t_simplify_hyp_val_inst v_ (l : list type) :
-    SimplifyHypVal v_ (l @ list_t)%I (Some 100%N) :=
+  Global Program Instance list_t_simplify_hyp_val_inst v_ patt__:
+    SimplifyHypVal v_ (patt__ @ list_t)%I (Some 100%N) :=
     λ T, i2p (simplify_hyp_val_eq v_ _ _ (list_t_unfold _) T _).
   Next Obligation. done. Qed.
-  Global Program Instance list_t_simplify_goal_val_inst v_ (l : list type) :
-    SimplifyGoalVal v_ (l @ list_t)%I (Some 100%N) :=
+  Global Program Instance list_t_simplify_goal_val_inst v_ patt__:
+    SimplifyGoalVal v_ (patt__ @ list_t)%I (Some 100%N) :=
     λ T, i2p (simplify_goal_val_eq v_ _ _ (list_t_unfold _) T _).
   Next Obligation. done. Qed.
 

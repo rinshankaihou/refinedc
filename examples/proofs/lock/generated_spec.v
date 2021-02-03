@@ -43,8 +43,11 @@ Section spec.
     rty r__ := fixp lock_test_rec r__
   |}.
 
-  Lemma lock_test_unfold (n1 : Z) (n2 : Z) (n3 : Z) :
-    ((n1, n2, n3) @ lock_test)%I ≡@{type} (
+  Lemma lock_test_unfold (patt__ : Z * Z * Z):
+    (patt__ @ lock_test)%I ≡@{type} (
+      let n1 := patt__.1.1 in
+      let n2 := patt__.1.2 in
+      let n3 := patt__.2 in
       tyexists (λ l : lock_id,
       struct struct_lock_test [@{type}
         (n1 @ (int (size_t))) ;
@@ -69,23 +72,23 @@ Section spec.
 
 
   Global Program Instance lock_test_rmovable : RMovable lock_test :=
-    {| rmovable '(n1, n2, n3) := movable_eq _ _ (lock_test_unfold n1 n2 n3) |}.
+    {| rmovable patt__ := movable_eq _ _ (lock_test_unfold patt__) |}.
   Next Obligation. solve_ty_layout_eq. Qed.
 
-  Global Instance lock_test_simplify_hyp_place_inst l_ β_ (n1 : Z) (n2 : Z) (n3 : Z) :
-    SimplifyHypPlace l_ β_ ((n1, n2, n3) @ lock_test)%I (Some 100%N) :=
-    λ T, i2p (simplify_hyp_place_eq l_ β_ _ _ T (lock_test_unfold _ _ _)).
-  Global Instance lock_test_simplify_goal_place_inst l_ β_ (n1 : Z) (n2 : Z) (n3 : Z) :
-    SimplifyGoalPlace l_ β_ ((n1, n2, n3) @ lock_test)%I (Some 100%N) :=
-    λ T, i2p (simplify_goal_place_eq l_ β_ _ _ T (lock_test_unfold _ _ _)).
+  Global Instance lock_test_simplify_hyp_place_inst l_ β_ patt__:
+    SimplifyHypPlace l_ β_ (patt__ @ lock_test)%I (Some 100%N) :=
+    λ T, i2p (simplify_hyp_place_eq l_ β_ _ _ T (lock_test_unfold _)).
+  Global Instance lock_test_simplify_goal_place_inst l_ β_ patt__:
+    SimplifyGoalPlace l_ β_ (patt__ @ lock_test)%I (Some 100%N) :=
+    λ T, i2p (simplify_goal_place_eq l_ β_ _ _ T (lock_test_unfold _)).
 
-  Global Program Instance lock_test_simplify_hyp_val_inst v_ (n1 : Z) (n2 : Z) (n3 : Z) :
-    SimplifyHypVal v_ ((n1, n2, n3) @ lock_test)%I (Some 100%N) :=
-    λ T, i2p (simplify_hyp_val_eq v_ _ _ (lock_test_unfold _ _ _) T _).
+  Global Program Instance lock_test_simplify_hyp_val_inst v_ patt__:
+    SimplifyHypVal v_ (patt__ @ lock_test)%I (Some 100%N) :=
+    λ T, i2p (simplify_hyp_val_eq v_ _ _ (lock_test_unfold _) T _).
   Next Obligation. done. Qed.
-  Global Program Instance lock_test_simplify_goal_val_inst v_ (n1 : Z) (n2 : Z) (n3 : Z) :
-    SimplifyGoalVal v_ ((n1, n2, n3) @ lock_test)%I (Some 100%N) :=
-    λ T, i2p (simplify_goal_val_eq v_ _ _ (lock_test_unfold _ _ _) T _).
+  Global Program Instance lock_test_simplify_goal_val_inst v_ patt__:
+    SimplifyGoalVal v_ (patt__ @ lock_test)%I (Some 100%N) :=
+    λ T, i2p (simplify_goal_val_eq v_ _ _ (lock_test_unfold _) T _).
   Next Obligation. done. Qed.
 
   (* Type definitions. *)

@@ -36,7 +36,7 @@ Section spec.
     rty r__ := fixp mem_t_rec r__
   |}.
 
-  Lemma mem_t_unfold (a : nat) :
+  Lemma mem_t_unfold (a : nat):
     (a @ mem_t)%I ≡@{type} (
       struct struct_mem_t [@{type}
         (a @ (int (size_t))) ;
@@ -47,22 +47,22 @@ Section spec.
 
 
   Global Program Instance mem_t_rmovable : RMovable mem_t :=
-    {| rmovable 'a := movable_eq _ _ (mem_t_unfold a) |}.
+    {| rmovable patt__ := movable_eq _ _ (mem_t_unfold patt__) |}.
   Next Obligation. solve_ty_layout_eq. Qed.
 
-  Global Instance mem_t_simplify_hyp_place_inst l_ β_ (a : nat) :
-    SimplifyHypPlace l_ β_ (a @ mem_t)%I (Some 100%N) :=
+  Global Instance mem_t_simplify_hyp_place_inst l_ β_ patt__:
+    SimplifyHypPlace l_ β_ (patt__ @ mem_t)%I (Some 100%N) :=
     λ T, i2p (simplify_hyp_place_eq l_ β_ _ _ T (mem_t_unfold _)).
-  Global Instance mem_t_simplify_goal_place_inst l_ β_ (a : nat) :
-    SimplifyGoalPlace l_ β_ (a @ mem_t)%I (Some 100%N) :=
+  Global Instance mem_t_simplify_goal_place_inst l_ β_ patt__:
+    SimplifyGoalPlace l_ β_ (patt__ @ mem_t)%I (Some 100%N) :=
     λ T, i2p (simplify_goal_place_eq l_ β_ _ _ T (mem_t_unfold _)).
 
-  Global Program Instance mem_t_simplify_hyp_val_inst v_ (a : nat) :
-    SimplifyHypVal v_ (a @ mem_t)%I (Some 100%N) :=
+  Global Program Instance mem_t_simplify_hyp_val_inst v_ patt__:
+    SimplifyHypVal v_ (patt__ @ mem_t)%I (Some 100%N) :=
     λ T, i2p (simplify_hyp_val_eq v_ _ _ (mem_t_unfold _) T _).
   Next Obligation. done. Qed.
-  Global Program Instance mem_t_simplify_goal_val_inst v_ (a : nat) :
-    SimplifyGoalVal v_ (a @ mem_t)%I (Some 100%N) :=
+  Global Program Instance mem_t_simplify_goal_val_inst v_ patt__:
+    SimplifyGoalVal v_ (patt__ @ mem_t)%I (Some 100%N) :=
     λ T, i2p (simplify_goal_val_eq v_ _ _ (mem_t_unfold _) T _).
   Next Obligation. done. Qed.
 

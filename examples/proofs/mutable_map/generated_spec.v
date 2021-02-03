@@ -89,8 +89,11 @@ Section spec.
     rty r__ := fixp fixed_size_map_rec r__
   |}.
 
-  Lemma fixed_size_map_unfold (mp : gmap Z type) (items : list item_ref) (count : nat) :
-    ((mp, items, count) @ fixed_size_map)%I ≡@{type} (
+  Lemma fixed_size_map_unfold (patt__ : (gmap Z type) * (list item_ref) * nat):
+    (patt__ @ fixed_size_map)%I ≡@{type} (
+      let mp := patt__.1.1 in
+      let items := patt__.1.2 in
+      let count := patt__.2 in
       constrained (struct struct_fixed_size_map [@{type}
         (&own (array (struct_item) (items `at_type` item))) ;
         (count @ (int (size_t))) ;
@@ -106,23 +109,23 @@ Section spec.
 
 
   Global Program Instance fixed_size_map_rmovable : RMovable fixed_size_map :=
-    {| rmovable '(mp, items, count) := movable_eq _ _ (fixed_size_map_unfold mp items count) |}.
+    {| rmovable patt__ := movable_eq _ _ (fixed_size_map_unfold patt__) |}.
   Next Obligation. solve_ty_layout_eq. Qed.
 
-  Global Instance fixed_size_map_simplify_hyp_place_inst l_ β_ (mp : gmap Z type) (items : list item_ref) (count : nat) :
-    SimplifyHypPlace l_ β_ ((mp, items, count) @ fixed_size_map)%I (Some 100%N) :=
-    λ T, i2p (simplify_hyp_place_eq l_ β_ _ _ T (fixed_size_map_unfold _ _ _)).
-  Global Instance fixed_size_map_simplify_goal_place_inst l_ β_ (mp : gmap Z type) (items : list item_ref) (count : nat) :
-    SimplifyGoalPlace l_ β_ ((mp, items, count) @ fixed_size_map)%I (Some 100%N) :=
-    λ T, i2p (simplify_goal_place_eq l_ β_ _ _ T (fixed_size_map_unfold _ _ _)).
+  Global Instance fixed_size_map_simplify_hyp_place_inst l_ β_ patt__:
+    SimplifyHypPlace l_ β_ (patt__ @ fixed_size_map)%I (Some 100%N) :=
+    λ T, i2p (simplify_hyp_place_eq l_ β_ _ _ T (fixed_size_map_unfold _)).
+  Global Instance fixed_size_map_simplify_goal_place_inst l_ β_ patt__:
+    SimplifyGoalPlace l_ β_ (patt__ @ fixed_size_map)%I (Some 100%N) :=
+    λ T, i2p (simplify_goal_place_eq l_ β_ _ _ T (fixed_size_map_unfold _)).
 
-  Global Program Instance fixed_size_map_simplify_hyp_val_inst v_ (mp : gmap Z type) (items : list item_ref) (count : nat) :
-    SimplifyHypVal v_ ((mp, items, count) @ fixed_size_map)%I (Some 100%N) :=
-    λ T, i2p (simplify_hyp_val_eq v_ _ _ (fixed_size_map_unfold _ _ _) T _).
+  Global Program Instance fixed_size_map_simplify_hyp_val_inst v_ patt__:
+    SimplifyHypVal v_ (patt__ @ fixed_size_map)%I (Some 100%N) :=
+    λ T, i2p (simplify_hyp_val_eq v_ _ _ (fixed_size_map_unfold _) T _).
   Next Obligation. done. Qed.
-  Global Program Instance fixed_size_map_simplify_goal_val_inst v_ (mp : gmap Z type) (items : list item_ref) (count : nat) :
-    SimplifyGoalVal v_ ((mp, items, count) @ fixed_size_map)%I (Some 100%N) :=
-    λ T, i2p (simplify_goal_val_eq v_ _ _ (fixed_size_map_unfold _ _ _) T _).
+  Global Program Instance fixed_size_map_simplify_goal_val_inst v_ patt__:
+    SimplifyGoalVal v_ (patt__ @ fixed_size_map)%I (Some 100%N) :=
+    λ T, i2p (simplify_goal_val_eq v_ _ _ (fixed_size_map_unfold _) T _).
   Next Obligation. done. Qed.
 
   (* Type definitions. *)

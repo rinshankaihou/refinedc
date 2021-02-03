@@ -37,7 +37,7 @@ Section spec.
     rty r__ := fixp flags_rec r__
   |}.
 
-  Lemma flags_unfold (f : Flags) :
+  Lemma flags_unfold (f : Flags):
     (f @ flags)%I ≡@{type} (
       tyexists (λ n : nat,
       constrained (struct struct_flags [@{type}
@@ -50,22 +50,22 @@ Section spec.
 
 
   Global Program Instance flags_rmovable : RMovable flags :=
-    {| rmovable 'f := movable_eq _ _ (flags_unfold f) |}.
+    {| rmovable patt__ := movable_eq _ _ (flags_unfold patt__) |}.
   Next Obligation. solve_ty_layout_eq. Qed.
 
-  Global Instance flags_simplify_hyp_place_inst l_ β_ (f : Flags) :
-    SimplifyHypPlace l_ β_ (f @ flags)%I (Some 100%N) :=
+  Global Instance flags_simplify_hyp_place_inst l_ β_ patt__:
+    SimplifyHypPlace l_ β_ (patt__ @ flags)%I (Some 100%N) :=
     λ T, i2p (simplify_hyp_place_eq l_ β_ _ _ T (flags_unfold _)).
-  Global Instance flags_simplify_goal_place_inst l_ β_ (f : Flags) :
-    SimplifyGoalPlace l_ β_ (f @ flags)%I (Some 100%N) :=
+  Global Instance flags_simplify_goal_place_inst l_ β_ patt__:
+    SimplifyGoalPlace l_ β_ (patt__ @ flags)%I (Some 100%N) :=
     λ T, i2p (simplify_goal_place_eq l_ β_ _ _ T (flags_unfold _)).
 
-  Global Program Instance flags_simplify_hyp_val_inst v_ (f : Flags) :
-    SimplifyHypVal v_ (f @ flags)%I (Some 100%N) :=
+  Global Program Instance flags_simplify_hyp_val_inst v_ patt__:
+    SimplifyHypVal v_ (patt__ @ flags)%I (Some 100%N) :=
     λ T, i2p (simplify_hyp_val_eq v_ _ _ (flags_unfold _) T _).
   Next Obligation. done. Qed.
-  Global Program Instance flags_simplify_goal_val_inst v_ (f : Flags) :
-    SimplifyGoalVal v_ (f @ flags)%I (Some 100%N) :=
+  Global Program Instance flags_simplify_goal_val_inst v_ patt__:
+    SimplifyGoalVal v_ (patt__ @ flags)%I (Some 100%N) :=
     λ T, i2p (simplify_goal_val_eq v_ _ _ (flags_unfold _) T _).
   Next Obligation. done. Qed.
 
