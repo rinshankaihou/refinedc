@@ -12,7 +12,7 @@ Section proof_free.
   (* Typing proof for [free]. *)
   Lemma type_free (global_allocator_state global_sl_lock global_sl_unlock : loc) :
     global_locs !! "allocator_state" = Some global_allocator_state →
-    global_initialized_types !! "allocator_state" = Some (GT () (λ '(), (alloc_state) : type)) →
+    global_initialized_types !! "allocator_state" = Some (GT () (λ '(), (alloc_state) : type)%I) →
     global_sl_lock ◁ᵥ global_sl_lock @ function_ptr type_of_sl_lock -∗
     global_sl_unlock ◁ᵥ global_sl_unlock @ function_ptr type_of_sl_unlock -∗
     typed_function (impl_free global_allocator_state global_sl_lock global_sl_unlock) type_of_free.

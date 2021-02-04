@@ -385,7 +385,14 @@ Ltac unfold_instantiated_evars :=
 Ltac solve_protected_eq :=
   (* intros because it is less aggressive than move => * *)
   intros; repeat rewrite protected_eq;
-  try ( liUnfoldAllEvars; match goal with |- ?a = ?b => unify a b with typeclass_instances end );
+  try (
+      liUnfoldAllEvars;
+      lazymatch goal with |- ?a = ?b => unify a b with typeclass_instances end;
+      (* For some weird reason we need to do this twice that the has_evar check works *)
+      lazymatch goal with |- ?a = ?b => unify a b with typeclass_instances end;
+      lazymatch goal with
+      | |- ?g => assert_fails (has_evar g)
+      end);
   exact: eq_refl.
 
 Ltac liEnforceInvariantAndUnfoldInstantiatedEvars :=
@@ -396,7 +403,7 @@ Ltac convert_to_i2p_tac P := fail "No convert_to_i2p_tac provided!".
 Ltac convert_to_i2p P cont :=
   lazymatch P with
   | subsume ?P1 ?P2 ?T => cont uconstr:(((_ : Subsume _ _) _).(i2p_proof))
-  | subsume_list ?A ?l1 ?l2 ?f ?T => cont uconstr:(((_ : SubsumeList _ _ _ _) _).(i2p_proof))
+  | subsume_list ?A ?ig ?l1 ?l2 ?f ?T => cont uconstr:(((_ : SubsumeList _ _ _ _ _) _).(i2p_proof))
   | _ => let converted := convert_to_i2p_tac P in cont converted
   end.
 Ltac extensible_judgment_hook := idtac.

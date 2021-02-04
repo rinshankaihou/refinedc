@@ -231,7 +231,7 @@ Section defs.
   Qed.
 
   Global Instance simpl_lookup_fsm_map_and mp key items n ir o `{!FastDone (fsm_invariant mp items)} `{!FastDone (probe_ref key items = Some (n, ir))}:
-      SimplAndRel (=) (mp !! key) o (λ T, item_ref_to_ty ir = o ∧ T).
+      SimplBothRel (=) (mp !! key) o (item_ref_to_ty ir = o).
   Proof. unfold FastDone in *. by rewrite (fsm_invariant_lookup _ items _ n ir (item_ref_to_ty ir)). Qed.
 
   Global Instance simpl_fsm_invariant_and mp1 mp2 items `{!IsProtected mp1} `{!FastDone (fsm_invariant mp2 items)}:

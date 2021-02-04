@@ -14,7 +14,7 @@ Section proof_main.
   Lemma type_main (global_allocator_data global_initialized global_free global_init_alloc global_latch_release global_test : loc) :
     global_locs !! "allocator_data" = Some global_allocator_data →
     global_locs !! "initialized" = Some global_initialized →
-    global_initialized_types !! "initialized" = Some (GT () (λ '(), (latch (alloc_initialized)) : type)) →
+    global_initialized_types !! "initialized" = Some (GT () (λ '(), (latch (alloc_initialized)) : type)%I) →
     global_free ◁ᵥ global_free @ function_ptr type_of_free -∗
     global_init_alloc ◁ᵥ global_init_alloc @ function_ptr type_of_init_alloc -∗
     global_latch_release ◁ᵥ global_latch_release @ function_ptr type_of_latch_release -∗

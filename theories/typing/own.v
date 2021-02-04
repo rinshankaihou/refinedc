@@ -547,8 +547,8 @@ Section optionable.
     λ T, i2p (subsume_optional_place_val_null ty l β T b ty').
 
   Lemma subsume_optionalO_place_val_null A (ty : A → type) l β T b ty' `{!∀ x, Movable (ty x)} `{!∀ x, Optionable (ty x) null ot1 ot2}:
-    (∃ x, ⌜b = Some x⌝ ∗ subsume (l ◁ₗ{β} ty') (l ◁ᵥ ty x) T) -∗ subsume (l ◁ₗ{β} ty') (l ◁ᵥ b @ optionalO ty null) T.
-  Proof. iDestruct 1 as (x ->) "Hsub". iIntros "Hl". by iApply "Hsub". Qed.
+    (⌜is_Some b⌝ ∗ ∀ x, ⌜b = Some x⌝ -∗ subsume (l ◁ₗ{β} ty') (l ◁ᵥ ty x) T) -∗ subsume (l ◁ₗ{β} ty') (l ◁ᵥ b @ optionalO ty null) T.
+  Proof. iDestruct 1 as ([x ->]) "Hsub". iIntros "Hl". by iApply "Hsub". Qed.
   Global Instance subsume_optionalO_place_val_null_inst A (ty : A → type) l β b ty' `{!∀ x, Movable (ty x)} `{!∀ x, Optionable (ty x) null ot1 ot2}:
     Subsume (l ◁ₗ{β} ty') (l ◁ᵥ b @ optionalO ty null)%I | 20 :=
     λ T, i2p (subsume_optionalO_place_val_null A ty l β T b ty').

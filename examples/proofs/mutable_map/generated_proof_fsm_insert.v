@@ -26,6 +26,7 @@ Section proof_fsm_insert.
     Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
     all: try by apply: fsm_invariant_insert; solve_goal.
     all: try by erewrite length_filter_insert => //; solve_goal.
+    all: try by eexists _; solve_goal.
     all: print_sidecondition_goal "fsm_insert".
   Qed.
 End proof_fsm_insert.

@@ -128,13 +128,14 @@ Definition subsume {Σ} (P1 P2 T : iProp Σ) : iProp Σ :=
   P1 -∗ P2 ∗ T.
 Class Subsume {Σ} (P1 P2 : iProp Σ) : Type :=
   subsume_proof T : iProp_to_Prop (subsume P1 P2 T).
-Definition subsume_list {Σ} A (l1 l2 : list A) (f : nat → A → iProp Σ) (T : iProp Σ) : iProp Σ :=
-  ⌜length l1 = length l2⌝ -∗ ([∗ list] i↦x∈l1, f i x) -∗ ([∗ list] i↦x∈l2, f i x) ∗ T.
-Class SubsumeList {Σ} A (l1 l2 : list A) (f : nat → A → iProp Σ) :  Type :=
-  subsume_list_proof T : iProp_to_Prop (subsume_list A l1 l2 f T).
+Definition subsume_list {Σ} A (ig : list nat) (l1 l2 : list A) (f : nat → A → iProp Σ) (T : iProp Σ) : iProp Σ :=
+  ([∗ list] i↦x∈l1, if bool_decide (i ∈ ig) then True%I else f i x) -∗
+       ⌜length l1 = length l2⌝ ∗ ([∗ list] i↦x∈l2, if bool_decide (i ∈ ig) then True%I else f i x) ∗ T.
+Class SubsumeList {Σ} A (ig : list nat) (l1 l2 : list A) (f : nat → A → iProp Σ) :  Type :=
+  subsume_list_proof T : iProp_to_Prop (subsume_list A ig l1 l2 f T).
 
 Hint Mode Subsume + + ! : typeclass_instances.
-Hint Mode SubsumeList + + + + ! : typeclass_instances.
+Hint Mode SubsumeList + + + + + ! : typeclass_instances.
 
 (** ** Instances *)
 Lemma subsume_id {Σ} (P : iProp Σ) T:
@@ -164,27 +165,35 @@ Global Instance subsume_simplify_inst {Σ} (P1 P2 : iProp Σ) o1 o2 `{!SimplifyH
   Subsume P1 P2 | 1000 :=
   λ T, i2p (subsume_simplify P1 P2 T o1 o2).
 
-Lemma subsume_list_eq {Σ} A (l1 l2 : list A) (f : nat → A → iProp Σ) (T : iProp Σ) :
-  ⌜l1 = l2⌝ ∗ T -∗ subsume_list A l1 l2 f T.
-Proof. by iIntros "[-> $] _ $". Qed.
-Global Instance subsume_list_eq_inst {Σ} A l1 l2 f:
-  SubsumeList A l1 l2 f | 1000 :=
-  λ T : iProp Σ, i2p (subsume_list_eq A l1 l2 f T).
+Lemma subsume_list_eq {Σ} A ig (l1 l2 : list A) (f : nat → A → iProp Σ) (T : iProp Σ) :
+  ⌜l1 = l2⌝ ∗ T -∗ subsume_list A ig l1 l2 f T.
+Proof. by iIntros "[-> $] $". Qed.
+Global Instance subsume_list_eq_inst {Σ} A ig l1 l2 f:
+  SubsumeList A ig l1 l2 f | 1000 :=
+  λ T : iProp Σ, i2p (subsume_list_eq A ig l1 l2 f T).
 
-Lemma subsume_list_trivial_eq {Σ} A (l : list A) (f : nat → A → iProp Σ) (T : iProp Σ) :
-  T -∗ subsume_list A l l f T.
-Proof. iIntros "$ _ $". Qed.
-Global Instance subsume_list_trivial_eq_inst {Σ} A l f:
-  SubsumeList A l l f | 5 :=
-  λ T : iProp Σ, i2p (subsume_list_trivial_eq A l f T).
+Lemma subsume_list_trivial_eq {Σ} A ig (l : list A) (f : nat → A → iProp Σ) (T : iProp Σ) :
+  T -∗ subsume_list A ig l l f T.
+Proof. by iIntros "$ $". Qed.
+Global Instance subsume_list_trivial_eq_inst {Σ} A ig l f:
+  SubsumeList A ig l l f | 5 :=
+  λ T : iProp Σ, i2p (subsume_list_trivial_eq A ig l f T).
 
-Lemma subsume_list_cons {Σ} A (x1 x2 : A) (l1 l2 : list A) (f : nat → A → iProp Σ) (T : iProp Σ) :
-  subsume (f 0%nat x1) (f 0%nat x2) (subsume_list A l1 l2 (λ i, f (S i)) T) -∗
-          subsume_list A (x1 :: l1) (x2 :: l2) f T.
+Lemma subsume_list_cons_l {Σ} A ig (x1 : A) (l1 l2 : list A) (f : nat → A → iProp Σ) (T : iProp Σ) :
+  (⌜0 ∉ ig⌝ ∗ ∃ x2 l2', ⌜l2 = x2 :: l2'⌝ ∗
+      subsume (f 0%nat x1) (f 0%nat x2) (subsume_list A (pred <$> ig) l1 l2' (λ i, f (S i)) T)) -∗
+   subsume_list A ig (x1 :: l1) l2 f T.
 Proof.
-  iIntros "Hs Hlen". iDestruct "Hlen" as %Hlen. inversion Hlen. rewrite !big_sepL_cons.
-  iIntros "[H0 H]". iDestruct ("Hs" with "H0") as "[$ Hs]". by iApply "Hs".
+  iIntros "[% Hs]". iDestruct "Hs" as (???) "Hs". subst.
+  rewrite /subsume_list !big_sepL_cons /=.
+  case_bool_decide => //. iIntros "[H0 H]".
+  iDestruct ("Hs" with "H0") as "[$ Hs]".
+  iDestruct ("Hs" with "[H]") as (->) "[H $]"; [|iSplit => //].
+  all: iApply (big_sepL_impl with "H"); iIntros "!#" (???) "?".
+  all: case_bool_decide as Hx1 => //; case_bool_decide as Hx2 => //; contradict Hx2.
+  - set_unfold. eexists _. split; [|done]. done.
+  - by move: Hx1 => /(elem_of_list_fmap_2 _ _ _)[[|?]//=[->?]].
 Qed.
-Global Instance subsume_list_cons_inst {Σ} A x1 x2 l1 l2 f:
-  SubsumeList A (x1 :: l1) (x2 :: l2) f | 40 :=
-  λ T : iProp Σ, i2p (subsume_list_cons A x1 x2 l1 l2 f T).
+Global Instance subsume_list_cons_inst {Σ} A ig x1 l1 l2 f:
+  SubsumeList A ig (x1 :: l1) l2 f | 40 :=
+  λ T : iProp Σ, i2p (subsume_list_cons_l A ig x1 l1 l2 f T).

@@ -13,8 +13,8 @@ Section proof_thread_safe_alloc.
   Lemma type_thread_safe_alloc (global_data global_lock global_alloc global_sl_lock global_sl_unlock : loc) :
     global_locs !! "data" = Some global_data →
     global_locs !! "lock" = Some global_lock →
-    global_initialized_types !! "data" = Some (GT lock_id (λ 'lid, (tylocked (lid) ("data") (mem_t)) : type)) →
-    global_initialized_types !! "lock" = Some (GT lock_id (λ 'lid, (spinlock (lid)) : type)) →
+    global_initialized_types !! "data" = Some (GT lock_id (λ 'lid, (tylocked (lid) ("data") (mem_t)) : type)%I) →
+    global_initialized_types !! "lock" = Some (GT lock_id (λ 'lid, (spinlock (lid)) : type)%I) →
     global_alloc ◁ᵥ global_alloc @ function_ptr type_of_alloc -∗
     global_sl_lock ◁ᵥ global_sl_lock @ function_ptr type_of_sl_lock -∗
     global_sl_unlock ◁ᵥ global_sl_unlock @ function_ptr type_of_sl_unlock -∗

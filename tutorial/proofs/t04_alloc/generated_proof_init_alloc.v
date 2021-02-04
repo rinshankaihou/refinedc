@@ -12,7 +12,7 @@ Section proof_init_alloc.
   (* Typing proof for [init_alloc]. *)
   Lemma type_init_alloc (global_allocator_state global_sl_init : loc) :
     global_locs !! "allocator_state" = Some global_allocator_state →
-    global_initialized_types !! "allocator_state" = Some (GT () (λ '(), (alloc_state) : type)) →
+    global_initialized_types !! "allocator_state" = Some (GT () (λ '(), (alloc_state) : type)%I) →
     global_sl_init ◁ᵥ global_sl_init @ function_ptr type_of_sl_init -∗
     typed_function (impl_init_alloc global_allocator_state global_sl_init) type_of_init_alloc.
   Proof.

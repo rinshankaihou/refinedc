@@ -1175,7 +1175,7 @@ let pp_proof : string -> func_def -> import list -> string list -> proof_kind
       match List.find_opt (fun (name, _) -> name = f) ast.global_vars with
       | Some(_, Some(global_type)) ->
          let (param_names, param_types) = List.split global_type.ga_parameters in
-          pp "global_initialized_types !! \"%s\" = Some (GT %a (λ '%a, %a : type)) →@;"
+          pp "global_initialized_types !! \"%s\" = Some (GT %a (λ '%a, %a : type)%%I) →@;"
             f pp_prod param_types (pp_as_tuple pp_str) param_names (pp_type_expr_guard None Guard_none) global_type.ga_type
       | _                 -> ()
     in

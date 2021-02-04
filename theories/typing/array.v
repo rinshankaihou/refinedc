@@ -190,16 +190,9 @@ Section array.
     λ T, i2p (subsume_array_replicate_uninit l β T n ly1 ly2).
 
   Lemma subsume_array ly1 ly2 tys1 tys2 l β T:
-    ⌜ly1 = ly2⌝ ∗ ⌜length tys1 = length tys2⌝ ∗
-    subsume_list type tys1 tys2 (λ i ty, (l offset{ly1}ₗ i) ◁ₗ{β} ty) T -∗
+    ⌜ly1 = ly2⌝ ∗ subsume_list type [] tys1 tys2 (λ i ty, (l offset{ly1}ₗ i) ◁ₗ{β} ty) T -∗
       subsume (l ◁ₗ{β} array ly1 tys1) (l ◁ₗ{β} array ly2 tys2) T.
-  Proof.
-    iIntros "[-> [Hlen H]] ($&Hb&H1)". iDestruct "Hlen" as %Hlen.
-    iDestruct ("H" $! Hlen) as "H2".
-    iAssert (([^bi_sep list] i↦x ∈ tys2, (l offset{ly2}ₗ i) ◁ₗ{β} x) ∗ T)%I
-      with "[H1 H2]" as "[$ $]"; first by iApply "H2".
-    by rewrite Hlen.
-  Qed.
+  Proof. iIntros "[-> H] ($&Hb&H1)". by iDestruct ("H" with "H1") as (->) "[$ $]". Qed.
   Global Instance subsume_array_inst ly1 ly2 tys1 tys2 l β:
     SubsumePlace l β (array ly1 tys1) (array ly2 tys2) | 100 :=
     λ T, i2p (subsume_array ly1 ly2 tys1 tys2 l β T).
@@ -214,7 +207,7 @@ Section array.
     iDestruct ("Hsub" with "H1") as "[H1 HT]".
     iDestruct (array_put_type i with "H1 Ha") as "Ha".
     iApply (subsume_array with "[HT] Ha"). iFrame "HT".
-    rewrite !list_insert_insert. repeat iSplit => //. by iIntros "_ $".
+    rewrite !list_insert_insert. repeat iSplit => //. by iIntros "$".
   Qed.
   Global Instance subsume_array_insert_inst ly (i : nat) ty tys1 tys2 l β:
     SubsumePlace l β (array ly (<[i := ty]>tys1)) (array ly tys2) | 10:=
@@ -243,5 +236,7 @@ Section array.
     TypedPlace (BinOpPCtx (PtrOffsetOp ly1) (IntOp it) v tyv :: K) l β (array ly2 tys):=
     λ T, i2p (type_place_array l β T ly1 it v tyv tys ly2 K).
 End array.
+
 Notation "array< ty , tys >" := (array ty tys)
   (only printing, format "'array<' ty ,  tys '>'") : printing_sugar.
+Typeclasses Opaque array.
