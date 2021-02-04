@@ -18,11 +18,11 @@ uninstall:
 	@dune uninstall
 .PHONY: uninstall
 
-C_SRC = $(wildcard examples/*.c) $(wildcard tutorial/*.c)
+C_SRC = $(wildcard examples/*.c) $(wildcard tutorial/*.c) $(wildcard linux/casestudies/*.c) $(wildcard linux/pkvm/*.c)
 
-%.c.gen: %.c
+%.c.gen: %.c phony
 	@dune exec -- refinedc check --no-build $<
-	@touch $@
+.PHONY: phony
 
 generate_all: $(addsuffix .gen, $(C_SRC))
 .PHONY: generate_all
