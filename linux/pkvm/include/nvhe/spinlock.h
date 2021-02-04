@@ -6,9 +6,8 @@
 #include <nvhe/types.h>
 
 //@rc::require refinedc.linux.pkvm.spinlock
-//@rc::import spinlock_annot from refinedc.linux.pkvm.spinlock (for code only)
 //@rc::import spinlock_def from refinedc.linux.pkvm.spinlock
-//@rc::context `{!lockG Σ}
+//@rc::context `{!lockG Σ} `{!spinlockG Σ}
 
 typedef struct hyp_spinlock {
 #ifdef __AARCH64EB__
@@ -26,12 +25,12 @@ static inline void hyp_spin_lock_init(hyp_spinlock_t *lock);
 
 [[rc::parameters("p : loc", "id : lock_id", "s : own_state")]]
 [[rc::args("p @ &frac<s, hyp_spinlock_t<id>>")]]
-[[rc::ensures("frac s p : hyp_spinlock_t<id>", "[lock_token id []]")]]
+[[rc::ensures("frac s p : hyp_spinlock_t<id>", "[spinlock_token id []]")]]
 static inline void hyp_spin_lock(hyp_spinlock_t *lock);
 
 [[rc::parameters("p : loc", "id : lock_id", "s : own_state")]]
 [[rc::args("p @ &frac<s, hyp_spinlock_t<id>>")]]
-[[rc::requires("[lock_token id []]")]]
+[[rc::requires("[spinlock_token id []]")]]
 [[rc::ensures("frac s p : hyp_spinlock_t<id>")]]
 [[rc::annot_args("0 : 1 LockA")]]
 static inline void hyp_spin_unlock(hyp_spinlock_t *lock);

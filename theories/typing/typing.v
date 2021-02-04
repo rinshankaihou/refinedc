@@ -1,4 +1,4 @@
-From refinedc.typing Require Export programs type int function uninit own struct optional singleton fixpoint automation padded exist immovable constrained union array wand globals tyfold atomic_bool zeroed.
+From refinedc.typing Require Export programs type int function uninit own struct optional singleton fixpoint automation padded exist immovable constrained union array wand globals tyfold atomic_bool zeroed locked.
 
 (* need to be Qpaue, otherwise search for subtyping in malloc1 loops *)
 Typeclasses Opaque uninit.

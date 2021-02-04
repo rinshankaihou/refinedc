@@ -17,10 +17,10 @@ Section spec.
     struct struct_lock_test [@{type}
       (n1 @ (int (size_t))) ;
       (spinlock (l)) ;
-      (spinlocked_ex (l) ("locked_int") (n2) (λ n,
+      (tylocked_ex (l) ("locked_int") (n2) (λ n,
         n @ (int (size_t))
       )) ;
-      ((spinlocked_ex (l) ("locked_struct") (n3) (λ n3,
+      ((tylocked_ex (l) ("locked_struct") (n3) (λ n3,
         tyexists (λ a : Z,
         tyexists (λ b : Z,
         constrained (struct struct_lock_test_inner [@{type}
@@ -52,10 +52,10 @@ Section spec.
       struct struct_lock_test [@{type}
         (n1 @ (int (size_t))) ;
         (spinlock (l)) ;
-        (spinlocked_ex (l) ("locked_int") (n2) (λ n,
+        (tylocked_ex (l) ("locked_int") (n2) (λ n,
           n @ (int (size_t))
         )) ;
-        ((spinlocked_ex (l) ("locked_struct") (n3) (λ n3,
+        ((tylocked_ex (l) ("locked_struct") (n3) (λ n3,
           tyexists (λ a : Z,
           tyexists (λ b : Z,
           constrained (struct struct_lock_test_inner [@{type}
@@ -105,11 +105,11 @@ Section spec.
   (* Specifications for function [sl_lock]. *)
   Definition type_of_sl_lock :=
     fn(∀ (p, gamma, beta) : loc * lock_id * own_state; (p @ (&frac{beta} (spinlock (gamma)))); True)
-      → ∃ () : (), (void); (p ◁ₗ{beta} (spinlock (gamma))) ∗ (spinlock_token gamma []).
+      → ∃ () : (), (void); (p ◁ₗ{beta} (spinlock (gamma))) ∗ (lock_token gamma []).
 
   (* Specifications for function [sl_unlock]. *)
   Definition type_of_sl_unlock :=
-    fn(∀ (p, gamma, beta) : loc * lock_id * own_state; (p @ (&frac{beta} (spinlock (gamma)))); (spinlock_token gamma []))
+    fn(∀ (p, gamma, beta) : loc * lock_id * own_state; (p @ (&frac{beta} (spinlock (gamma)))); (lock_token gamma []))
       → ∃ () : (), (void); (p ◁ₗ{beta} (spinlock (gamma))).
 
   (* Specifications for function [init]. *)

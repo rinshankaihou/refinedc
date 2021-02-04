@@ -495,6 +495,11 @@ Ltac liTrue :=
   | |- envs_entails _ True => notypeclasses refine (tac_true _)
   end.
 
+Ltac liFalse :=
+  lazymatch goal with
+  | |- False => shelve
+  end.
+
 
 Ltac liImpl :=
   lazymatch goal with
@@ -684,6 +689,7 @@ Ltac liStep :=
     | liFindInContext
     | liDestructHint
     | liTrue
+    | liFalse
     | liAccu
     | liUnfoldLetGoal
     ].

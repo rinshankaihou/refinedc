@@ -82,7 +82,7 @@ Section spec.
       tyexists (λ lid : lock_id,
       struct struct_alloc_state [@{type}
         (spinlock (lid)) ;
-        (spinlocked (lid) ("data") (alloc_entry_t))
+        (tylocked (lid) ("data") (alloc_entry_t))
       ])
     )
   )%I.
@@ -102,7 +102,7 @@ Section spec.
         tyexists (λ lid : lock_id,
         struct struct_alloc_state [@{type}
           (spinlock (lid)) ;
-          (spinlocked (lid) ("data") (alloc_entry_t))
+          (tylocked (lid) ("data") (alloc_entry_t))
         ])
       )
     )%I.
@@ -157,11 +157,11 @@ Section spec.
   (* Specifications for function [sl_lock]. *)
   Definition type_of_sl_lock :=
     fn(∀ (p, gamma, beta) : loc * lock_id * own_state; (p @ (&frac{beta} (spinlock (gamma)))); True)
-      → ∃ () : (), (void); (p ◁ₗ{beta} (spinlock (gamma))) ∗ (spinlock_token gamma []).
+      → ∃ () : (), (void); (p ◁ₗ{beta} (spinlock (gamma))) ∗ (lock_token gamma []).
 
   (* Specifications for function [sl_unlock]. *)
   Definition type_of_sl_unlock :=
-    fn(∀ (p, gamma, beta) : loc * lock_id * own_state; (p @ (&frac{beta} (spinlock (gamma)))); (spinlock_token gamma []))
+    fn(∀ (p, gamma, beta) : loc * lock_id * own_state; (p @ (&frac{beta} (spinlock (gamma)))); (lock_token gamma []))
       → ∃ () : (), (void); (p ◁ₗ{beta} (spinlock (gamma))).
 
   (* Specifications for function [alloc]. *)

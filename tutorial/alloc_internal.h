@@ -18,7 +18,7 @@ struct [[rc::ptr_type("alloc_state : ...")]]
     [[rc::field("spinlock<lid>")]]
     struct spinlock lock;
 
-    [[rc::field("spinlocked<lid, {\"data\"}, alloc_entry_t>")]]
+    [[rc::field("tylocked<lid, {\"data\"}, alloc_entry_t>")]]
     alloc_entry_t data;
 };
 

@@ -88,13 +88,13 @@ Section spec.
 
   (* Specifications for function [hyp_early_alloc_contig]. *)
   Definition type_of_hyp_early_alloc_contig :=
-    fn(∀ (base, given, remaining, n) : loc * nat * nat * nat; (n @ (int (u32))); (global_with_type "mem" Own (((base, given, remaining)) @ (region))))
-      → ∃ () : (), ((0%nat < n ≤ remaining) @ (optional (&own (uninit (PAGES (n)))) null)); (global_with_type "mem" Own ((if bool_decide (0%nat < n ≤ remaining) then (base, given + n, remaining - n)%nat else (base, given, remaining)) @ (region))).
+    fn(∀ (base, given, remaining, n) : loc * nat * nat * nat; (n @ (int (u32))); (global_with_type "mem" Own (((base, given, remaining)) @ (region))) ∗ ⌜0%nat < n ≤ remaining⌝)
+      → ∃ () : (), (&own (uninit (PAGES (n)))); (global_with_type "mem" Own (((base, given + n, remaining - n)%nat) @ (region))).
 
   (* Specifications for function [hyp_early_alloc_page]. *)
   Definition type_of_hyp_early_alloc_page :=
-    fn(∀ (base, given, remaining) : loc * nat * nat; (uninit (void*)); (global_with_type "mem" Own (((base, given, remaining)) @ (region))))
-      → ∃ () : (), ((remaining ≠ 0%nat) @ (optional (&own (uninit (PAGE))) null)); (global_with_type "mem" Own ((if bool_decide (remaining ≠ 0%nat) then (base, given + 1, remaining - 1)%nat else (base, given, remaining)) @ (region))).
+    fn(∀ (base, given, remaining) : loc * nat * nat; (uninit (void*)); (global_with_type "mem" Own (((base, given, remaining)) @ (region))) ∗ ⌜remaining ≠ 0%nat⌝)
+      → ∃ () : (), (&own (uninit (PAGE))); (global_with_type "mem" Own (((base, given + 1, remaining - 1)%nat) @ (region))).
 
   (* Specifications for function [hyp_early_alloc_init]. *)
   Definition type_of_hyp_early_alloc_init :=

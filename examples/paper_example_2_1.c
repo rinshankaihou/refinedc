@@ -38,7 +38,7 @@ void *alloc(struct mem_t *d, size_t size) {
 struct spinlock lock;
 
 [[rc::parameters("lid : lock_id")]]
-[[rc::global("spinlocked<lid, {\"data\"}, mem_t>")]]
+[[rc::global("tylocked<lid, {\"data\"}, mem_t>")]]
 struct mem_t data;
 
 [[rc::parameters("lid : lock_id", "n : nat")]]

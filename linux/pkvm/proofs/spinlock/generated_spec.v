@@ -6,7 +6,7 @@ Set Default Proof Using "Type".
 (* Generated from [linux/pkvm/spinlock.c]. *)
 Section spec.
   Context `{!typeG Σ} `{!globalG Σ}.
-  Context `{!lockG Σ}.
+  Context `{!lockG Σ} `{!spinlockG Σ}.
 
   (* Type definitions. *)
 
@@ -22,10 +22,10 @@ Section spec.
   (* Specifications for function [hyp_spin_lock]. *)
   Definition type_of_hyp_spin_lock :=
     fn(∀ (p, id, s) : loc * lock_id * own_state; (p @ (&frac{s} (hyp_spinlock_t (id)))); True)
-      → ∃ () : (), (void); (p ◁ₗ{s} (hyp_spinlock_t (id))) ∗ (lock_token id []).
+      → ∃ () : (), (void); (p ◁ₗ{s} (hyp_spinlock_t (id))) ∗ (spinlock_token id []).
 
   (* Specifications for function [hyp_spin_unlock]. *)
   Definition type_of_hyp_spin_unlock :=
-    fn(∀ (p, id, s) : loc * lock_id * own_state; (p @ (&frac{s} (hyp_spinlock_t (id)))); (lock_token id []))
+    fn(∀ (p, id, s) : loc * lock_id * own_state; (p @ (&frac{s} (hyp_spinlock_t (id)))); (spinlock_token id []))
       → ∃ () : (), (void); (p ◁ₗ{s} (hyp_spinlock_t (id))).
 End spec.

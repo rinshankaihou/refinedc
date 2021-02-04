@@ -8,7 +8,7 @@ Set Default Proof Using "Type".
 (* Generated from [linux/pkvm/spinlock.c]. *)
 Section proof_hyp_spin_unlock.
   Context `{!typeG Σ} `{!globalG Σ}.
-  Context `{!lockG Σ}.
+  Context `{!lockG Σ} `{!spinlockG Σ}.
 
   (* Typing proof for [hyp_spin_unlock]. *)
   Lemma type_hyp_spin_unlock :

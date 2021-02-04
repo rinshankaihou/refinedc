@@ -262,6 +262,8 @@ Definition offset_loc (l : loc) (ly : layout) (z : Z) : loc := (l +ₗ ly.(ly_si
 Notation "l 'offset{' ly '}ₗ' z" := (offset_loc l%L ly z%Z)
   (at level 50, format "l  'offset{' ly '}ₗ'  z", left associativity) : loc_scope.
 
+Typeclasses Opaque shift_loc offset_loc.
+
 Definition aligned_to (l : loc) (n : nat) : Prop := (n | l.2).
 Notation "l `aligned_to` n" := (aligned_to l n) (at level 50) : stdpp_scope.
 Definition has_layout_loc (l : loc) (ly : layout) : Prop := l `aligned_to` ly_align ly.

@@ -5,7 +5,7 @@ From refinedc.examples.spinlock Require Import spinlock_def.
 From refinedc.examples.spinlock Require Import generated_code generated_spec.
 Set Default Proof Using "Type".
 
-Typeclasses Transparent spinlock spinlocked_ex spinlock_token spinlocked_ex_token.
+Typeclasses Transparent spinlock.
 
 Section type.
   Context `{!typeG Σ} `{!lockG Σ}.
@@ -16,10 +16,7 @@ Section type.
   Proof.
     start_function "sl_init" (p) => vl. split_blocks (∅ : gmap label (iProp Σ)) (∅ : gmap label (iProp Σ)).
 
-    iApply fupd_typed_stmt.
-    iMod (own_alloc (● GSet ∅)) as (γ) "Hown"; [ by apply auth_auth_valid |].
-    iAssert (spinlock_token γ []) with "[Hown]" as "?"; [ by iExists _; iFrame |].
-    iModIntro.
+    iApply fupd_typed_stmt. iMod alloc_lock_token as (γ) "?". iModIntro.
 
     repeat liRStep; liShow.
     liInst Hevar γ.

@@ -10,6 +10,7 @@ Ltac get_head e :=
   | _    => constr:(e)
   end.
 
+(* TODO: allow pattern, but add underscores if it does not match *)
 Tactic Notation "liRStepUntil" open_constr(id) :=
   repeat lazymatch goal with
   | |- @environments.envs_entails _ _ ?P => let h := get_head constr:(P) in
@@ -20,6 +21,15 @@ Tactic Notation "liRStepUntil" open_constr(id) :=
   | _                                    => liRStep
   end; liShow.
 
+(* TODO:
+   create a nicer lemma for
+        iDestruct (ty_aligned with "Hnext") as %?.
+        iDestruct (ty_deref with "Hnext") as (v) "[Hl Hv]".
+        iDestruct (ty_size_eq with "Hv") as %?.
+   in type.v
+*)
+
+(* TODO: move int.v *)
 Lemma ty_own_int_in_range `{!typeG Σ} l β n it :
   l ◁ₗ{β} n @ int it -∗ ⌜n ∈ it⌝.
 Proof.
@@ -32,10 +42,9 @@ Proof.
 Qed.
 
 Section proofs.
-  Context `{!typeG Σ} `{!globalG Σ}.
-  Context `{!lockG Σ}.
+  Context `{!typeG Σ} `{!globalG Σ} `{!lockG Σ} `{!spinlockG Σ}.
 
-  Typeclasses Transparent hyp_spinlock_t lock_token.
+  Typeclasses Transparent hyp_spinlock_t spinlock_token.
 
   (* Typing proof for [hyp_spin_lock_init]. *)
   Lemma type_hyp_spin_lock_init :
@@ -423,7 +432,7 @@ Section proofs.
     start_function "hyp_spin_unlock" ([[p id] s]) => lock ticket.
     split_blocks (∅ : gmap label (iProp Σ)) (∅ : gmap label (iProp Σ)).
     (* Extract the real token and our ticket number (owner) with a witness. *)
-    iDestruct select (lock_token _ _) as (owner) "[Htok H●]".
+    iDestruct select (spinlock_token _ _) as (owner) "[Htok H●]".
     (* Run the automation, until we must look into the invariant. *)
     repeat liRStep; liShow. iIntros "Hinv". repeat liRStep; liShow.
     (* We do a different proof depending on the ownership state. *)
@@ -435,7 +444,7 @@ Section proofs.
       iDestruct (owner_auth_agree with "H● H◯") as %<-.
       iDestruct "Hcases" as "[[Hticket %] | Htok']"; last first.
       { iExFalso. iDestruct "Htok'" as (?) "[Htok' _]".
-        iApply (lock_token_token_exclusive with "Htok Htok'"). }
+        iApply (lock_token_exclusive with "Htok Htok'"). }
       (* We put our ticket at the end of the first ticket range. *)
       iDestruct (ty_own_int_in_range with "Howner") as %[Hmin ?].
       rewrite /min_int /= in Hmin.
@@ -493,7 +502,7 @@ Section proofs.
         iDestruct (owner_auth_agree with "H● H◯") as %<-.
         iDestruct "Hcases" as "[[Hticket %] | Htok']"; last first.
         { iExFalso. iDestruct "Htok'" as (?) "[Htok' _]".
-          iApply (lock_token_token_exclusive with "Htok Htok'"). }
+          iApply (lock_token_exclusive with "Htok Htok'"). }
         (* The owner will be 0, update the witness. *)
         iMod (owner_auth_update _ _ _ _ 0%nat with "H● H◯") as "[H● H◯]".
         iMod (fupd_intro_mask') as "Hclose"; last iModIntro; first set_solver.
@@ -566,7 +575,7 @@ Section proofs.
         iDestruct (owner_auth_agree with "H● H◯") as %<-.
         iDestruct "Hcases" as "[[Hticket %] | Htok']"; last first.
         { iExFalso. iDestruct "Htok'" as (?) "[Htok' _]".
-          iApply (lock_token_token_exclusive with "Htok Htok'"). }
+          iApply (lock_token_exclusive with "Htok Htok'"). }
         (* The owner will be [owner + 1], update the witness. *)
         iMod (owner_auth_update _ _ _ _ (owner + 1) with "H● H◯") as "[H● H◯]".
         iMod (fupd_intro_mask') as "Hclose"; last iModIntro; first set_solver.

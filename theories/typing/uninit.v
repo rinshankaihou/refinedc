@@ -110,25 +110,25 @@ Section uninit.
 
   Lemma annot_to_uninit l β ty T:
     (∃ ly, (subsume (l ◁ₗ{β} ty) (l ◁ₗ{β} uninit ly) (l ◁ₗ{β} uninit ly -∗ T))) -∗
-    typed_annot_stmt ToUninit l β ty T.
+    typed_annot_stmt ToUninit l (l ◁ₗ{β} ty) T.
   Proof.
     iDestruct 1 as (ly) "Hsub". iIntros "Hl". iApply step_fupd_intro => //. iModIntro.
     iDestruct ("Hsub" with "Hl") as "[Hl HT]". by iApply "HT".
   Qed.
   Global Instance annot_to_uninit_inst l β ty:
-    TypedAnnotStmt (ToUninit) l β ty :=
+    TypedAnnotStmt (ToUninit) l (l ◁ₗ{β} ty) :=
     λ T, i2p (annot_to_uninit l β ty T).
 
   Lemma annot_uninit_strengthen_align l β ly T `{!FastDone (l `aligned_to` n)}:
     (⌜is_power_of_two n⌝ ∗ (l ◁ₗ{β} uninit (ly_with_align ly.(ly_size) n) -∗ T)) -∗
-    typed_annot_stmt UninitStrengthenAlign l β (uninit ly) T.
+    typed_annot_stmt UninitStrengthenAlign l (l ◁ₗ{β} (uninit ly)) T.
   Proof.
     iIntros "[% HT] Hl". iApply step_fupd_intro => //. iModIntro. iApply "HT".
     iDestruct "Hl" as (v Hv Hl) "Hl". iExists _. iFrame. iSplit => //. iPureIntro.
     by apply ly_with_align_aligned_to.
   Qed.
   Global Instance annot_uninit_strengthen_align_inst l β ly `{!FastDone (l `aligned_to` n)}:
-    TypedAnnotStmt (UninitStrengthenAlign) l β (uninit ly) :=
+    TypedAnnotStmt (UninitStrengthenAlign) l (l ◁ₗ{β} (uninit ly)) :=
     λ T, i2p (annot_uninit_strengthen_align l β ly T).
 
 End uninit.

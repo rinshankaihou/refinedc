@@ -45,11 +45,9 @@ extern void clear_page(void *to);
 
 [[rc::parameters("base : loc", "given : nat", "remaining : nat", "n : nat")]]
 [[rc::args("n @ int<u32>")]]
-[[rc::requires("global mem : {(base, given, remaining)} @ region")]]
-[[rc::returns("{0%nat < n ≤ remaining} @ optional<&own<uninit<PAGES<n>>>>")]]
-[[rc::ensures("global mem : {if bool_decide (0%nat < n ≤ remaining) then "
-                            "(base, given + n, remaining - n)%nat else "
-                            "(base, given, remaining)} @ region")]]
+[[rc::requires("global mem : {(base, given, remaining)} @ region", "{0%nat < n ≤ remaining}")]]
+[[rc::returns("&own<uninit<PAGES<n>>>")]]
+[[rc::ensures("global mem : {(base, given + n, remaining - n)%nat} @ region")]]
 [[rc::trust_me]] // FIXME
 void *hyp_early_alloc_contig(unsigned int nr_pages){
   uintptr_t ret = cur, p;
@@ -73,18 +71,11 @@ void *hyp_early_alloc_contig(unsigned int nr_pages){
   return rc_copy_alloc_id((void *) ret, base);
 }
 
-//[[rc::parameters("n : nat")]]
-//[[rc::args("uninit<void*>")]]
-//[[rc::requires("global mem : n @ region")]]
-//[[rc::returns("{n ≠ 0%nat} @ optional<&own<uninit<PAGE>>>")]]
-//[[rc::ensures("global mem : {if bool_decide (n ≠ 0%nat) then (n - 1)%nat else n} @ region")]]
 [[rc::parameters("base : loc", "given : nat", "remaining : nat")]]
 [[rc::args("uninit<void*>")]]
-[[rc::requires("global mem : {(base, given, remaining)} @ region")]]
-[[rc::returns("{remaining ≠ 0%nat} @ optional<&own<uninit<PAGE>>>")]]
-[[rc::ensures("global mem : {if bool_decide (remaining ≠ 0%nat) then "
-                            "(base, given + 1, remaining - 1)%nat else "
-                            "(base, given, remaining)} @ region")]]
+[[rc::requires("global mem : {(base, given, remaining)} @ region", "{remaining ≠ 0%nat}")]]
+[[rc::returns("&own<uninit<PAGE>>")]]
+[[rc::ensures("global mem : {(base, given + 1, remaining - 1)%nat} @ region")]]
 void *hyp_early_alloc_page(void *arg){
   return hyp_early_alloc_contig(1);
 }

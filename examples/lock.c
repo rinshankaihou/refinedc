@@ -11,10 +11,10 @@ struct [[rc::refined_by("n1 : Z", "n2 : Z", "n3 : Z")]]
     [[rc::field("spinlock<l>")]]
     struct spinlock lock;
 
-    [[rc::field("spinlocked_ex<l, {\"locked_int\"}, n2, λ n. n @ int<size_t>>")]]
+    [[rc::field("tylocked_ex<l, {\"locked_int\"}, n2, λ n. n @ int<size_t>>")]]
     size_t locked_int;
 
-    [[rc::field("spinlocked_ex<l, {\"locked_struct\"}, n3, λ n3. ...>")]]
+    [[rc::field("tylocked_ex<l, {\"locked_struct\"}, n3, λ n3. ...>")]]
     struct [[rc::exists("a : Z", "b : Z")]]
            [[rc::constraints("{n3 = (a + b)%Z}", "{n3 ∈ size_t}")]] lock_test_inner {
 

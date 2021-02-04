@@ -1,7 +1,6 @@
 From refinedc.lang Require Export notation.
 From refinedc.lang Require Import tactics.
 From refinedc.typing Require Import annotations.
-From refinedc.examples.spinlock Require Import spinlock_annot.
 Set Default Proof Using "Type".
 
 (* Generated from [examples/spinlock.c]. *)

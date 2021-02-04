@@ -69,7 +69,7 @@ mpool {
   [[rc::field("spinlock<lid>")]]
   struct spinlock lock;
 
-  [[rc::field("spinlocked_ex<lid, {\"locked\"}, entries, λ entries. ...>")]]
+  [[rc::field("tylocked_ex<lid, {\"locked\"}, entries, λ entries. ...>")]]
   struct [[rc::exists("entries_in_chunks: nat", "entries_in_entry_list: nat")]]
          [[rc::constraints("{(entries = entries_in_chunks + entries_in_entry_list)%nat}")]]
     mpool_locked_inner {

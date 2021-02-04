@@ -17,3 +17,5 @@ Inductive unfold_once_annot : Type :=
 
 Inductive learn_annot : Type :=
   LearnAnnot.
+
+Inductive LockAnnot : Type := LockA | UnlockA.

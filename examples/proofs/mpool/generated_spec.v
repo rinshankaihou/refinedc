@@ -134,7 +134,7 @@ Section spec.
     constrained (struct struct_mpool [@{type}
       (entry_size @ (int (size_t))) ;
       (spinlock (lid)) ;
-      ((spinlocked_ex (lid) ("locked") (entries) (λ entries,
+      ((tylocked_ex (lid) ("locked") (entries) (λ entries,
         tyexists (λ entries_in_chunks : nat,
         tyexists (λ entries_in_entry_list : nat,
         constrained (struct struct_mpool_locked_inner [@{type}
@@ -169,7 +169,7 @@ Section spec.
       constrained (struct struct_mpool [@{type}
         (entry_size @ (int (size_t))) ;
         (spinlock (lid)) ;
-        ((spinlocked_ex (lid) ("locked") (entries) (λ entries,
+        ((tylocked_ex (lid) ("locked") (entries) (λ entries,
           tyexists (λ entries_in_chunks : nat,
           tyexists (λ entries_in_entry_list : nat,
           constrained (struct struct_mpool_locked_inner [@{type}
@@ -225,11 +225,11 @@ Section spec.
   (* Specifications for function [sl_lock]. *)
   Definition type_of_sl_lock :=
     fn(∀ (p, gamma, beta) : loc * lock_id * own_state; (p @ (&frac{beta} (spinlock (gamma)))); True)
-      → ∃ () : (), (void); (p ◁ₗ{beta} (spinlock (gamma))) ∗ (spinlock_token gamma []).
+      → ∃ () : (), (void); (p ◁ₗ{beta} (spinlock (gamma))) ∗ (lock_token gamma []).
 
   (* Specifications for function [sl_unlock]. *)
   Definition type_of_sl_unlock :=
-    fn(∀ (p, gamma, beta) : loc * lock_id * own_state; (p @ (&frac{beta} (spinlock (gamma)))); (spinlock_token gamma []))
+    fn(∀ (p, gamma, beta) : loc * lock_id * own_state; (p @ (&frac{beta} (spinlock (gamma)))); (lock_token gamma []))
       → ∃ () : (), (void); (p ◁ₗ{beta} (spinlock (gamma))).
 
   (* Specifications for function [round_pointer_up]. *)

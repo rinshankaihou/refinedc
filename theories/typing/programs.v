@@ -54,15 +54,15 @@ Section judgements.
     copy_as_proof T : iProp_to_Prop (copy_as l β ty T).
 
   (* A is the annotation from the code *)
-  Definition typed_annot_expr (n : nat) {A} (a : A) (v : val) (ty : mtype) (T : iProp Σ) : iProp Σ :=
-    (v ◁ᵥ ty ={⊤}[∅]▷=∗^n |={⊤}=> T).
-  Class TypedAnnotExpr (n : nat) {A} (a : A) (v : val) (ty : mtype) : Type :=
-    typed_annot_expr_proof T : iProp_to_Prop (typed_annot_expr n a v ty T).
+  Definition typed_annot_expr (n : nat) {A} (a : A) (v : val) (P : iProp Σ) (T : iProp Σ) : iProp Σ :=
+    (P ={⊤}[∅]▷=∗^n |={⊤}=> T).
+  Class TypedAnnotExpr (n : nat) {A} (a : A) (v : val) (P : iProp Σ) : Type :=
+    typed_annot_expr_proof T : iProp_to_Prop (typed_annot_expr n a v P T).
 
-  Definition typed_annot_stmt {A} (a : A) (l : loc) (β : own_state) (ty : type) (T : iProp Σ) : iProp Σ :=
-    (l ◁ₗ{β} ty ={⊤}[∅]▷=∗ T).
-  Class TypedAnnotStmt {A} (a : A) (l : loc) (β : own_state) (ty : type) : Type :=
-    typed_annot_stmt_proof T : iProp_to_Prop (typed_annot_stmt a l β ty T).
+  Definition typed_annot_stmt {A} (a : A) (l : loc) (P : iProp Σ) (T : iProp Σ) : iProp Σ :=
+    (P ={⊤}[∅]▷=∗ T).
+  Class TypedAnnotStmt {A} (a : A) (l : loc) (P : iProp Σ) : Type :=
+    typed_annot_stmt_proof T : iProp_to_Prop (typed_annot_stmt a l P T).
 
   Definition typed_if (ot : op_type) (v : val) (ty : type) `{!Movable ty} (T1 T2 : iProp Σ) : iProp Σ :=
     (* TODO: generalize this to PtrOp *)
@@ -336,7 +336,7 @@ Hint Mode TypedWriteEnd + + + + + + + + + : typeclass_instances.
 Hint Mode TypedAddrOfEnd + + + + + : typeclass_instances.
 Hint Mode TypedPlace + + + + + + : typeclass_instances.
 Hint Mode TypedAnnotExpr + + + + + + + : typeclass_instances.
-Hint Mode TypedAnnotStmt + + + + + + + : typeclass_instances.
+Hint Mode TypedAnnotStmt + + + + + + : typeclass_instances.
 Hint Mode TypedMacroExpr + + + + : typeclass_instances.
 Arguments typed_annot_expr : simpl never.
 Arguments typed_annot_stmt : simpl never.
@@ -658,17 +658,29 @@ Section typing.
     TypedCas ot v1 P1 v2 P2 v3 P3 | 1000 :=
     λ T, i2p (typed_cas_simplify v1 P1 v2 P2 v3 P3 T ot o1 o2 o3).
 
-  Lemma typed_annot_stmt_simplify A (a : A) l β ty T n {SH : SimplifyHyp (l ◁ₗ{β} ty) (Some n)}:
+  Lemma typed_annot_stmt_simplify A (a : A) l P T n {SH : SimplifyHyp P (Some n)}:
     (SH (find_in_context (FindLoc l) (λ '(β1, ty1),
-       typed_annot_stmt a l β1 ty1 T))).(i2p_P) -∗
-    typed_annot_stmt a l β ty T.
+       typed_annot_stmt a l (l ◁ₗ{β1} ty1) T))).(i2p_P) -∗
+    typed_annot_stmt a l P T.
   Proof.
     iIntros "Hs Hv". iDestruct (i2p_proof with "Hs Hv") as ([β1 ty1]) "[Hl Hannot]" => /=.
       by iApply ("Hannot" with "[$]").
   Qed.
-  Global Instance typed_annot_stmt_simplify_inst A (a : A) l β ty n {SH : SimplifyHyp (l ◁ₗ{β} ty) (Some n)}:
-    TypedAnnotStmt a l β ty | 1000 :=
-    λ T, i2p (typed_annot_stmt_simplify A a l β ty T n).
+  Global Instance typed_annot_stmt_simplify_inst A (a : A) l P n {SH : SimplifyHyp P (Some n)}:
+    TypedAnnotStmt a l P | 1000 :=
+    λ T, i2p (typed_annot_stmt_simplify A a l P T n).
+
+  Lemma typed_annot_expr_simplify A m (a : A) v P T n {SH : SimplifyHyp P (Some n)}:
+    (SH (find_in_context (FindValP v) (λ Q,
+       typed_annot_expr m a v Q T))).(i2p_P) -∗
+    typed_annot_expr m a v P T.
+  Proof.
+    iIntros "Hs Hv". iDestruct (i2p_proof with "Hs Hv") as ([β1 ty1]) "[Hl Hannot]" => /=.
+      by iApply ("Hannot" with "[$]").
+  Qed.
+  Global Instance typed_annot_expr_simplify_inst A m (a : A) v P n {SH : SimplifyHyp P (Some n)}:
+    TypedAnnotExpr m a v P | 1000 :=
+    λ T, i2p (typed_annot_expr_simplify A m a v P T n).
 
   (*** statements *)
   Lemma fupd_typed_stmt {B} s fn ls (fr : B → _) Q:
@@ -770,7 +782,7 @@ Section typing.
   Proof. iIntros "Hs". iApply type_skips. by iApply step_fupd_intro. Qed.
 
   Lemma type_annot_stmt {A B} p (a : A) s fn ls Q (fr : B → _):
-    (typed_addr_of p (λ l β ty, typed_annot_stmt a l β ty (typed_stmt s fn ls fr Q))) -∗
+    (typed_addr_of p (λ l β ty, typed_annot_stmt a l (l ◁ₗ{β} ty) (typed_stmt s fn ls fr Q))) -∗
       typed_stmt (annot: a; expr: &p; s) fn ls fr Q.
   Proof.
     iIntros "Hs ?". iApply wps_annot => /=.
@@ -882,14 +894,15 @@ Section typing.
   Qed.
 
   Lemma type_annot_expr n {A} (a : A) e T:
-    typed_val_expr e (λ v ty, typed_annot_expr n a v ty (v ◁ᵥ ty ∗ T v ty)) -∗ typed_val_expr (AnnotExpr n a e) T.
+    typed_val_expr e (λ v ty, typed_annot_expr n a v (v ◁ᵥ ty) (find_in_context (FindVal v) (λ ty, T v ty))) -∗
+    typed_val_expr (AnnotExpr n a e) T.
   Proof.
     iIntros "He" (Φ) "HΦ".
     wp_bind. iApply "He". iIntros (v ty) "Hv HT". iDestruct ("HT" with "Hv") as "HT".
     iInduction n as [|n] "IH" forall (Φ). {
       rewrite /AnnotExpr/=.
       iApply fupd_wp.
-      iMod "HT" as "[HT ?]". iApply wp_value.
+      iMod "HT" as (?) "[HT ?] /=". iApply wp_value.
       iApply ("HΦ" with "[$] [$]").
     }
     rewrite annot_expr_S_r. wp_bind.
@@ -1049,44 +1062,44 @@ Section typing.
 
   Lemma annot_share l ty T:
     (l ◁ₗ{Shr} ty -∗ T) -∗
-    typed_annot_stmt (ShareAnnot) l Own ty T.
+    typed_annot_stmt (ShareAnnot) l (l ◁ₗ ty) T.
   Proof.
     iIntros "HT Hl". iMod (ty_share with "Hl") => //.
     iApply step_fupd_intro => //. iModIntro. by iApply "HT".
   Qed.
   Global Instance annot_share_inst l ty:
-    TypedAnnotStmt (ShareAnnot) l Own ty :=
+    TypedAnnotStmt (ShareAnnot) l (l ◁ₗ ty) :=
     λ T, i2p (annot_share l ty T).
 
   Lemma annot_stop l β ty T:
     (l ◁ₗ{β} ty -∗ False) -∗
-    typed_annot_stmt (StopAnnot) l β ty T.
+    typed_annot_stmt (StopAnnot) l (l ◁ₗ{β} ty) T.
   Proof. iIntros "HT Hl". iDestruct ("HT" with "Hl") as %[]. Qed.
   Global Instance annot_stop_inst l β ty:
-    TypedAnnotStmt (StopAnnot) l β ty :=
+    TypedAnnotStmt (StopAnnot) l (l ◁ₗ{β} ty) :=
     λ T, i2p (annot_stop l β ty T).
 
   Lemma annot_unfold_once l β ty T n {SH : SimplifyHyp (l ◁ₗ{β} ty) (Some (Npos n))}:
     (SH T).(i2p_P) -∗
-    typed_annot_stmt UnfoldOnceAnnot l β ty T.
+    typed_annot_stmt UnfoldOnceAnnot l (l ◁ₗ{β} ty) T.
   Proof.
     iIntros "Hs Hv". iDestruct (i2p_proof with "Hs Hv") as "HT" => /=.
     by iApply step_fupd_intro.
   Qed.
   Global Instance annot_unfold_once_inst l β ty n {SH : SimplifyHyp (l ◁ₗ{β} ty) (Some (Npos n))}:
-    TypedAnnotStmt UnfoldOnceAnnot l β ty :=
+    TypedAnnotStmt UnfoldOnceAnnot l (l ◁ₗ{β} ty) :=
     λ T, i2p (annot_unfold_once l β ty T n).
 
   Lemma annot_learn l β ty T {L : Learnable (l ◁ₗ{β} ty)}:
     (learnable_data ∗ l ◁ₗ{β} ty -∗ T) -∗
-    typed_annot_stmt (LearnAnnot) l β ty T.
+    typed_annot_stmt (LearnAnnot) l (l ◁ₗ{β} ty) T.
   Proof.
     iIntros "HT Hl". iApply step_fupd_intro => //.
     iDestruct (learnable_learn with "Hl") as "#H".
     iApply "HT". by iFrame.
   Qed.
   Global Instance annot_learn_inst l β ty {L : Learnable (l ◁ₗ{β} ty)}:
-    TypedAnnotStmt (LearnAnnot) l β ty :=
+    TypedAnnotStmt (LearnAnnot) l (l ◁ₗ{β} ty) :=
     λ T, i2p (annot_learn l β ty T).
 End typing.
 
