@@ -85,6 +85,17 @@ Section array.
     rewrite Hv. repeat unfold ly_size => /=; lia.
   Qed.
 
+  (*** array_ptr *)
+  Program Definition array_ptr (ly : layout) (base : loc) (idx : Z) (len : nat) : type := {|
+    ty_own β l := (
+      ⌜l = base offset{ly}ₗ idx⌝ ∗
+      ⌜l `has_layout_loc` ly⌝ ∗
+      loc_in_bounds base (ly_size (mk_array_layout ly len))
+    )%I
+  |}.
+  Next Obligation. iIntros (ly base idx len l E ?) "(%&%&$)". done. Qed.
+
+  (*** typing rules *)
 
   Lemma array_get_type (i : nat) ly tys ty l β:
     tys !! i = Some ty →
@@ -213,7 +224,6 @@ Section array.
     SubsumePlace l β (array ly (<[i := ty]>tys1)) (array ly tys2) | 10:=
     λ T, i2p (subsume_array_insert ly i ty tys1 tys2 l β T).
 
-
   Lemma type_place_array l β T ly1 it v (tyv : mtype) tys ly2 K:
     (∃ i, ⌜ly1 = ly2⌝ ∗ subsume (v ◁ᵥ tyv) (v ◁ᵥ i @ int it) (⌜0 ≤ i⌝ ∗ ⌜i < length tys⌝ ∗
      ∀ ty, ⌜tys !! Z.to_nat i = Some ty⌝ -∗
@@ -235,8 +245,44 @@ Section array.
   Global Instance type_place_array_inst l β ly1 it v (tyv : mtype) tys ly2 K:
     TypedPlace (BinOpPCtx (PtrOffsetOp ly1) (IntOp it) v tyv :: K) l β (array ly2 tys):=
     λ T, i2p (type_place_array l β T ly1 it v tyv tys ly2 K).
+
+  Lemma simpl_goal_array_ptr ly base idx1 idx2 len β T:
+    T (⌜idx1 = idx2⌝ ∗ ⌜(base offset{ly}ₗ idx1) `has_layout_loc` ly⌝ ∗
+                   loc_in_bounds base (ly_size (mk_array_layout ly len))) -∗
+      simplify_goal ((base offset{ly}ₗ idx1) ◁ₗ{β} array_ptr ly base idx2 len)  T.
+  Proof. iIntros "HT". iExists _. iFrame. by iIntros "(->&%&$)". Qed.
+  Global Instance simpl_goal_array_ptr_inst ly base idx1 idx2 len β:
+    SimplifyGoalPlace (base offset{ly}ₗ idx1) β (array_ptr ly base idx2 len) (Some 50%N) :=
+    λ T, i2p (simpl_goal_array_ptr ly base idx1 idx2 len β T).
+
+  Lemma subsume_array_ptr ly1 ly2 base1 base2 idx1 idx2 len1 len2 l β T:
+    ⌜ly1 = ly2⌝ ∗ ⌜base1 = base2⌝ ∗ ⌜idx1 = idx2⌝ ∗ ⌜len1 = len2⌝ ∗ T -∗
+      subsume (l ◁ₗ{β} array_ptr ly1 base1 idx1 len1) (l ◁ₗ{β} array_ptr ly2 base2 idx2 len2) T.
+  Proof. by iIntros "(->&->&->&->&$) $". Qed.
+  Global Instance subsume_array_ptr_inst ly1 ly2 base1 base2 idx1 idx2 len1 len2 l β:
+    SubsumePlace l β (array_ptr ly1 base1 idx1 len1) (array_ptr ly2 base2 idx2 len2) :=
+    λ T, i2p (subsume_array_ptr ly1 ly2 base1 base2 idx1 idx2 len1 len2 l β T).
+
+  Lemma simplify_hyp_array_ptr ly l β base idx len T:
+    (⌜(base offset{ly}ₗ idx) `has_layout_loc` ly⌝ -∗ loc_in_bounds base (ly_size (mk_array_layout ly len)) -∗
+      ∃ tys, base ◁ₗ{β} array ly tys ∗ ⌜0 ≤ idx < length tys⌝ ∗ (
+      ∀ ty, ⌜tys !! Z.to_nat idx = Some ty⌝ -∗ base ◁ₗ{β} array ly (<[Z.to_nat idx := place l]>tys) -∗
+        l ◁ₗ{β} ty -∗ T)) -∗
+    simplify_hyp (l ◁ₗ{β} array_ptr ly base idx len) T.
+  Proof.
+    iIntros "HT (->&%&?)".
+    iDestruct ("HT" with "[//] [$]") as (tys) "(Harray&%&HT)".
+    have [|ty ?]:= lookup_lt_is_Some_2 tys (Z.to_nat idx). lia.
+    iDestruct (array_get_type (Z.to_nat idx) with "Harray") as "[Hty Harray]". done.
+    rewrite Z2Nat.id; [|lia].
+    by iApply ("HT" with "[//] Harray Hty").
+  Qed.
+  Global Instance simplify_hyp_array_ptr_inst ly l β base idx len:
+    SimplifyHypPlace l β (array_ptr ly base idx len) (Some 50%N) :=
+    λ T, i2p (simplify_hyp_array_ptr ly l β base idx len T).
 End array.
 
 Notation "array< ty , tys >" := (array ty tys)
   (only printing, format "'array<' ty ,  tys '>'") : printing_sugar.
 Typeclasses Opaque array.
+Typeclasses Opaque array_ptr.
