@@ -3,9 +3,9 @@ From refinedc.lang Require Import tactics.
 From refinedc.typing Require Import annotations.
 Set Default Proof Using "Type".
 
-(* Generated from [linux/early_alloc.c]. *)
+(* Generated from [linux/casestudies/early_alloc.c]. *)
 Section code.
-  Definition file_0 : string := "linux/early_alloc.c".
+  Definition file_0 : string := "linux/casestudies/early_alloc.c".
   Definition loc_2 : location_info := LocationInfo file_0 19 1 19 27.
   Definition loc_3 : location_info := LocationInfo file_0 19 8 19 26.
   Definition loc_4 : location_info := LocationInfo file_0 19 8 19 20.

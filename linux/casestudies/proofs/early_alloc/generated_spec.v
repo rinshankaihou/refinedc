@@ -1,8 +1,8 @@
 From refinedc.typing Require Import typing.
-From refinedc.linux.early_alloc Require Import generated_code.
+From refinedc.linux.casestudies.early_alloc Require Import generated_code.
 Set Default Proof Using "Type".
 
-(* Generated from [linux/early_alloc.c]. *)
+(* Generated from [linux/casestudies/early_alloc.c]. *)
 Section spec.
   Context `{!typeG Σ} `{!globalG Σ}.
 
