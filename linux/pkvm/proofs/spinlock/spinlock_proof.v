@@ -21,24 +21,16 @@ Tactic Notation "liRStepUntil" open_constr(id) :=
   | _                                    => liRStep
   end; liShow.
 
-(* TODO:
-   create a nicer lemma for
-        iDestruct (ty_aligned with "Hnext") as %?.
-        iDestruct (ty_deref with "Hnext") as (v) "[Hl Hv]".
-        iDestruct (ty_size_eq with "Hv") as %?.
-   in type.v
-*)
-
-(* TODO: move int.v *)
-Lemma ty_own_int_in_range `{!typeG Σ} l β n it :
-  l ◁ₗ{β} n @ int it -∗ ⌜n ∈ it⌝.
+(* TODO: move to type.v *)
+Theorem ty_deref_full `{!typeG Σ} (l : loc) (ty : type) `{!Movable ty}:
+  l ◁ₗ ty -∗ ∃ v, ⌜l `has_layout_loc` ty_layout ty⌝ ∗
+                  ⌜v `has_layout_val` ty_layout ty⌝ ∗ l ↦ v ∗ v ◁ᵥ ty.
 Proof.
   iIntros "Hl".
-  destruct β.
-  - iDestruct (ty_deref with "Hl") as (?) "[_ %]".
-    iPureIntro. by eapply val_of_int_in_range.
-  - rewrite /ty_own /=. iDestruct "Hl" as (?) "[% _]".
-    iPureIntro. by eapply val_of_int_in_range.
+  iDestruct (ty_aligned with "Hl") as %?.
+  iDestruct (ty_deref with "Hl") as (v) "[Hl Hv]".
+  iDestruct (ty_size_eq with "Hv") as %?.
+  iExists v. eauto with iFrame.
 Qed.
 
 Section proofs.

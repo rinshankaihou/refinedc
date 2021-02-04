@@ -46,6 +46,16 @@ Section int.
     iApply loc_in_bounds_shorten; last done. lia.
   Qed.
 
+  Lemma ty_own_int_in_range l β n it : l ◁ₗ{β} n @ int it -∗ ⌜n ∈ it⌝.
+  Proof.
+    iIntros "Hl".
+    destruct β.
+    - iDestruct (ty_deref with "Hl") as (?) "[_ %]".
+      iPureIntro. by eapply val_of_int_in_range.
+    - rewrite /ty_own /=. iDestruct "Hl" as (?) "[% _]".
+      iPureIntro. by eapply val_of_int_in_range.
+  Qed.
+
   (* TODO: make a simple type as in lambda rust such that we do not
   have to reprove this everytime? *)
   Global Program Instance int_copyable x it : Copyable (x @ int it).
