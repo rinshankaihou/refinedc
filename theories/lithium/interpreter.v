@@ -297,6 +297,12 @@ Ltac liUnfoldLetsInContext :=
   end.
 
 (** * Management of evars *)
+Ltac liUnfoldAllEvars :=
+  repeat rewrite protected_eq;
+  repeat match goal with
+         | He := EVAR_ID _ |- _ => unfold He, EVAR_ID; clear He
+         end.
+
 Ltac create_protected_evar A :=
   (* necessary, otherwise pattern might not find all occurences later, see also instantiate protected *)
   let A := eval cbn in A in
@@ -304,7 +310,10 @@ Ltac create_protected_evar A :=
   (* see https://stackoverflow.com/a/46178884*)
   let c :=
       match goal with
-      | _ => let x := fresh "x" in evar (x : A); pose (Hevar := EVAR_ID x : A); unfold x in Hevar; clear x
+      | _ =>
+        let x := fresh "x" in
+        unshelve evar (x : A); [ liUnfoldAllEvars; liUnfoldLetsInContext; shelve |];
+        pose (Hevar := EVAR_ID x : A); unfold x in Hevar; clear x
       end in
   Hevar.
 
@@ -313,6 +322,9 @@ Ltac unfold_instantiated_evar_hook H := idtac.
 Ltac unfold_instantiated_evar H :=
   unfold_instantiated_evar_hook H;
   (* first we need to rewrap unfolded evars in H*)
+  repeat match goal with
+         | He := EVAR_ID ?x2 |- _ => progress unfold He in H
+         end;
   revert H;
   repeat lazymatch goal with
          | |- let _ := EVAR_ID ?body in _  =>
@@ -332,6 +344,7 @@ Ltac unfold_instantiated_evar H :=
              end
            end
          end;
+  (* This is copied from the end of instantiate_protected *)
   let tmp := fresh "tmp" in
   intros tmp;
   pattern (protected tmp);
@@ -364,18 +377,15 @@ Ltac instantiate_protected H' tac_with :=
         cbn in (type of Hevar)
       end
     end;
+    (* This is copied from the end of unfold_instantiated_evar *)
     let tmp := fresh "tmp" in
     intros tmp;
-    unfold_instantiated_evar tmp
+    pattern (protected tmp);
+    simple refine (tac_protected_eq_app _ _ _);
+    unfold tmp, EVAR_ID; clear tmp
   end.
 Tactic Notation "liInst" hyp(H) open_constr(c) :=
   instantiate_protected (protected H) ltac:(fun H => instantiate (1:=c) in (Value of H)).
-
-Ltac liUnfoldAllEvars :=
-  repeat rewrite protected_eq;
-  repeat match goal with
-         | He := EVAR_ID _ |- _ => unfold He, EVAR_ID; clear He
-         end.
 
 Ltac unfold_instantiated_evars :=
   repeat match goal with
@@ -388,8 +398,8 @@ Ltac solve_protected_eq :=
   try (
       liUnfoldAllEvars;
       lazymatch goal with |- ?a = ?b => unify a b with typeclass_instances end;
-      (* For some weird reason we need to do this twice that the has_evar check works *)
-      lazymatch goal with |- ?a = ?b => unify a b with typeclass_instances end;
+      (* We need to solve the constraints for the has_evar to work *)
+      solve_constraints;
       lazymatch goal with
       | |- ?g => assert_fails (has_evar g)
       end);

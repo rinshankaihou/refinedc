@@ -400,7 +400,7 @@ Section ptr.
     T ⌜l = p⌝ -∗ simplify_goal (p ◁ᵥ l @ ptr) T.
   Proof. iIntros "HT". iExists _. iFrame. by iIntros (->). Qed.
   Global Instance simplify_ptr_goal_val_inst (p : loc) l:
-    SimplifyGoalVal p (l @ ptr)%I (Some 50%N) :=
+    SimplifyGoalVal p (l @ ptr)%I (Some 10%N) :=
     λ T, i2p (simplify_ptr_goal_val p l T).
 
   Lemma find_in_context_type_loc_own l T:
