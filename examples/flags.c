@@ -7,9 +7,9 @@
 //@}.
 //@
 //@Definition nat_encodes_flags n fs :=
-//@  Z.testbit 0 n = flag1 fs ∧
-//@  Z.testbit 1 n = flag2 fs ∧
-//@  ∀ k, k > 1 → ¬ Z.testbit k n.
+//@  Z.testbit n 0 = flag1 fs ∧
+//@  Z.testbit n 1 = flag2 fs ∧
+//@  ∀ k, k > 1 → ¬ Z.testbit n k.
 //@rc::end
 
 typedef struct
