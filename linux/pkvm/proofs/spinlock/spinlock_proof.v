@@ -21,7 +21,7 @@ Tactic Notation "liRStepUntil" open_constr(id) :=
   | _                                    => liRStep
   end; liShow.
 
-(* TODO: move to type.v *)
+(* TODO: figure out if this is what we want and move to type.v *)
 Theorem ty_deref_full `{!typeG Σ} (l : loc) (ty : type) `{!Movable ty}:
   l ◁ₗ ty -∗ ∃ v, ⌜l `has_layout_loc` ty_layout ty⌝ ∗
                   ⌜v `has_layout_val` ty_layout ty⌝ ∗ l ↦ v ∗ v ◁ᵥ ty.
