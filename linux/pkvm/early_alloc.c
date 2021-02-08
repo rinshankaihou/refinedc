@@ -12,12 +12,13 @@
 //@rc::import instances from refinedc.linux.pkvm.early_alloc (for proofs only)
 
 struct
-[[rc::refined_by("base : loc", "given : nat", "remaining : nat")]]
+[[rc::refined_by("base : loc", "given : Z", "remaining : Z")]]
 [[rc::let("z_cur : Z = {(base.2 + given * PAGE_SIZE)%Z}")]]
 [[rc::let("z_end : Z = {(base.2 + (given + remaining) * PAGE_SIZE)%Z}")]]
+[[rc::constraints("{0 ≤ given}", "{0 ≤ remaining}")]]
 region {
   [[rc::field("own_constrained<nonshr_constraint<"
-                 "{(base.1, z_cur) ◁ₗ uninit (PAGES remaining)}>, "
+                 "{(base.1, z_cur) ◁ₗ uninit (PAGES (Z.to_nat remaining))}>, "
                  "value<void*, base>>")]] unsigned char* base;
   [[rc::field("z_end @ int<uintptr_t>")]] uintptr_t end;
   [[rc::field("z_cur @ int<uintptr_t>")]] uintptr_t cur;
@@ -29,7 +30,7 @@ static struct region mem;
 #define end (mem.end)
 #define cur (mem.cur)
 
-[[rc::parameters("base : loc", "given : nat", "remaining : nat")]]
+[[rc::parameters("base : loc", "given : Z", "remaining : Z")]]
 [[rc::requires("global mem : {(base, given, remaining)} @ region")]]
 [[rc::returns("given @ int<size_t>")]]
 [[rc::ensures("global mem : {(base, given, remaining)} @ region")]]
@@ -43,11 +44,12 @@ size_t hyp_early_alloc_nr_pages(void){
 [[rc::ensures("own p : zeroed<PAGE>")]]
 extern void clear_page(void *to);
 
-[[rc::parameters("base : loc", "given : nat", "remaining : nat", "n : nat")]]
+[[rc::parameters("base : loc", "given : Z", "remaining : Z", "n : Z")]]
 [[rc::args("n @ int<u32>")]]
-[[rc::requires("global mem : {(base, given, remaining)} @ region", "{0%nat < n ≤ remaining}")]]
-[[rc::returns("&own<uninit<PAGES<n>>>")]]
-[[rc::ensures("global mem : {(base, given + n, remaining - n)%nat} @ region")]]
+[[rc::requires("global mem : {(base, given, remaining)} @ region")]]
+[[rc::requires("{0 < n ≤ remaining}")]]
+[[rc::returns("&own<uninit<PAGES<{Z.to_nat n}>>>")]]
+[[rc::ensures("global mem : {(base, given + n, remaining - n)%Z} @ region")]]
 [[rc::trust_me]] // FIXME
 void *hyp_early_alloc_contig(unsigned int nr_pages){
   uintptr_t ret = cur, p;
@@ -71,20 +73,22 @@ void *hyp_early_alloc_contig(unsigned int nr_pages){
   return rc_copy_alloc_id((void *) ret, base);
 }
 
-[[rc::parameters("base : loc", "given : nat", "remaining : nat")]]
+[[rc::parameters("base : loc", "given : Z", "remaining : Z")]]
 [[rc::args("uninit<void*>")]]
-[[rc::requires("global mem : {(base, given, remaining)} @ region", "{remaining ≠ 0%nat}")]]
+[[rc::requires("global mem : {(base, given, remaining)} @ region")]]
+[[rc::requires("{0 < remaining}")]]
 [[rc::returns("&own<uninit<PAGE>>")]]
-[[rc::ensures("global mem : {(base, given + 1, remaining - 1)%nat} @ region")]]
+[[rc::ensures("global mem : {(base, given + 1, remaining - 1)} @ region")]]
 void *hyp_early_alloc_page(void *arg){
   return hyp_early_alloc_contig(1);
 }
 
-[[rc::parameters("l : loc", "n : nat", "s : Z")]]
-[[rc::args("l @ &own<uninit<PAGES<n>>>", "s @ int<u32>")]]
+[[rc::parameters("l : loc", "n : Z", "s : Z")]]
+[[rc::args("l @ &own<uninit<PAGES<{Z.to_nat n}>>>", "s @ int<u32>")]]
 [[rc::requires("{s = (n * PAGE_SIZE)%Z}")]]
 [[rc::requires("global mem : uninit<struct_region>")]]
-[[rc::ensures("global mem : {(l, 0%nat, n)} @ region")]]
+[[rc::ensures("global mem : {(l, 0, n)} @ region")]]
+[[rc::tactics("all: unfold PAGES, PAGE_SIZE in *; solve_goal.")]]
 void hyp_early_alloc_init(unsigned char* virt, unsigned int size){
   base = virt;
   end = (uintptr_t) ((uintptr_t) virt + size);
