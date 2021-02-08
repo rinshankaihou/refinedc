@@ -15,6 +15,14 @@ Global Set Keyed Unification.
 Typeclasses Opaque Z.divide Z.modulo Z.div.
 Arguments min : simpl nomatch.
 
+Arguments Z.testbit : simpl never.
+Arguments Z.shiftl : simpl never.
+Arguments Z.shiftr : simpl never.
+Arguments N.shiftl : simpl never.
+Arguments N.shiftr : simpl never.
+Arguments Pos.shiftl : simpl never.
+Arguments Pos.shiftr : simpl never.
+
 Notation "'[@{' A '}' x ; y ; .. ; z ]" :=  (@cons A x (@cons A y .. (@cons A z (@nil A)) ..)) (only parsing) : list_scope.
 Notation "'[@{' A '}' x ]" := (@cons A x nil) (only parsing) : list_scope.
 Notation "'[@{' A '}' ]" := (@nil A) (only parsing) : list_scope.
