@@ -45,8 +45,7 @@ Section proofs.
     start_function "hyp_spin_lock_init" (p) => lock.
     split_blocks (∅ : gmap label (iProp Σ)) (∅ : gmap label (iProp Σ)).
     (* Allocate the resources for the lock. *)
-    iApply fupd_typed_stmt.
-    iMod (alloc_lock_token_and_tickets) as (id) "(?&?&?)"; iModIntro.
+    iMod (alloc_lock_token_and_tickets) as (id) "(?&?&?)".
     (* Run the automation. *)
     repeat liRStep; liShow. rewrite right_id.
     (* Establish the invariant *)
@@ -444,8 +443,7 @@ Section proofs.
       (* Run the automation up to the [if] statement. *)
       liRStepUntil (@typed_if). liRStep; liRStep; liShow.
       + (* We have the last ticket. The next owner will be 0, we update. *)
-        iApply fupd_typed_stmt.
-        iMod (owner_auth_update _ _ _ _ 0%nat with "H● H◯") as "[??]"; iModIntro.
+        iMod (owner_auth_update _ _ _ _ 0%nat with "H● H◯") as "[??]".
         (* Run the automation to the end of the function. *)
         repeat (liRStep; liShow). rewrite right_id.
         (* Establish the invariant again, placing the token back inside. *)
@@ -453,8 +451,7 @@ Section proofs.
         iSplit; first done. iSplitR; first by iApply ticket_range_empty.
         iRight. iFrame "Htok". by iExists _.
       + (* We do not have the last ticket, we do not reset the queue. *)
-        iApply fupd_typed_stmt.
-        iMod (owner_auth_update _ _ _ _ (owner + 1) with "H● H◯") as "[??]"; iModIntro.
+        iMod (owner_auth_update _ _ _ _ (owner + 1) with "H● H◯") as "[??]".
         (* Run the automation to the end of the function. *)
         repeat liRStep; liShow. rewrite right_id.
         (* Establish the invariant again, placing the token back inside. *)

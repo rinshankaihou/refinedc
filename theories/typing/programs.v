@@ -683,10 +683,19 @@ Section typing.
     λ T, i2p (typed_annot_expr_simplify A m a v P T n).
 
   (*** statements *)
-  Lemma fupd_typed_stmt {B} s fn ls (fr : B → _) Q:
-    (|={⊤}=> typed_stmt s fn ls fr Q) -∗
-    typed_stmt s fn ls fr Q.
-  Proof. iIntros "Hs" (?). iApply fupd_wps. iMod "Hs". iModIntro. by iApply "Hs". Qed.
+  Global Instance elim_modal_bupd_typed_stmt B p s fn ls R Q P :
+    ElimModal True p false (|==> P) P (typed_stmt (B:=B) s fn ls R Q) (typed_stmt (B:=B) s fn ls R Q).
+  Proof.
+    rewrite /ElimModal bi.intuitionistically_if_elim (bupd_fupd ⊤) fupd_frame_r bi.wand_elim_r.
+    iIntros "_ Hs ?". iMod "Hs". by iApply "Hs".
+  Qed.
+
+  Global Instance elim_modal_fupd_typed_stmt B p s fn ls R Q P :
+    ElimModal True p false (|={⊤}=> P) P (typed_stmt (B:=B) s fn ls R Q) (typed_stmt (B:=B) s fn ls R Q).
+  Proof.
+    rewrite /ElimModal bi.intuitionistically_if_elim fupd_frame_r bi.wand_elim_r.
+    iIntros "_ Hs ?". iMod "Hs". by iApply "Hs".
+  Qed.
 
   Lemma type_goto {B} Q b fn ls (fr : B → _) s:
     Q !! b = Some s →

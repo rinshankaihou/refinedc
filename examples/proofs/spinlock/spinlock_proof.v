@@ -16,7 +16,7 @@ Section type.
   Proof.
     start_function "sl_init" (p) => vl. split_blocks (∅ : gmap label (iProp Σ)) (∅ : gmap label (iProp Σ)).
 
-    iApply fupd_typed_stmt. iMod alloc_lock_token as (γ) "?". iModIntro.
+    iMod alloc_lock_token as (γ) "?".
 
     repeat liRStep; liShow.
     liInst Hevar γ.

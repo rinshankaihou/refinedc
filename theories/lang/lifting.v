@@ -579,6 +579,14 @@ Proof.
   iApply fupd_wp. by iApply "Hs".
 Qed.
 
+Global Instance elim_modal_bupd_wps p s Q Ψ P E :
+    ElimModal True p false (|==> P) P (WPs s @ E {{ Q, Ψ }}) (WPs s @ E {{ Q, Ψ }}).
+Proof. by rewrite /ElimModal intuitionistically_if_elim (bupd_fupd E) fupd_frame_r wand_elim_r fupd_wps. Qed.
+
+Global Instance elim_modal_fupd_wps p s Q Ψ P E :
+    ElimModal True p false (|={E}=> P) P (WPs s @ E {{ Q, Ψ }}) (WPs s @ E {{ Q, Ψ }}).
+Proof. by rewrite /ElimModal intuitionistically_if_elim fupd_frame_r wand_elim_r fupd_wps. Qed.
+
 Lemma wps_wand s E Q Φ Ψ:
   WPs s @ E {{ Q , Φ }} -∗ (∀ v, Φ v -∗ Ψ v) -∗ WPs s @ E {{ Q , Ψ }}.
 Proof.
