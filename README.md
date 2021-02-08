@@ -20,7 +20,7 @@ of RefinedC, which is encoded in [Iris](https://gitlab.mpi-sws.org/iris/iris)
 
 The following files contain documentation about RefinedC:
 
-- [ANNOTATION.md](ANNOTATIONS.md): Describes the annotation syntax
+- [ANNOTATIONS.md](ANNOTATIONS.md): Describes the annotation syntax
   accepted by the RefinedC frontend
 - [FAQ.md](FAQ.md): Describes solutions to frequently asked questions
 - [ARCHITECTURE.md](ARCHITECTURE.md): Gives an high-level overview of
@@ -267,7 +267,7 @@ functions have a specification (they have been skipped).
 Let us now do some actual RefinedC verification and give a specification to
 our `add3` function. Specifications are given as attributes attached to the
 function definitions (or prototypes). The valid attributes and the RefinedC
-syntax are documented in [ANNOTATION.md](ANNOTATIONS.md), you can consult it
+syntax are documented in [ANNOTATIONS.md](ANNOTATIONS.md), you can consult it
 later if you want to learn more. For now, we will introduce what we need en
 passant.
 
