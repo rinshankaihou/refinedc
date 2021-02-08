@@ -26,10 +26,11 @@ How do I add additional simplification rules?
 
 The simplification rules can be extended by the user through special
 typeclasses such as `SimplBoth`, `SimplAnd` and `SimplImpl`. See the
-file `theories/typing/automation.v` for the definition and many
-instances. Keep in mind the simplification rules should in general be
-bi-implications to avoid accidentally turning a provable goal into an
-unprovable.
+file
+[theories/lithium/simpl_instances.v](theories/lithium/simpl_instances.v)
+for the definition and many instances. Keep in mind the simplification
+rules should in general be bi-implications to avoid accidentally
+turning a provable goal into an unprovable.
 
 How should I structure my annotations such that the automatic instantiation mechanism for evars works well?
 -----------------------------------------------------------------------------------------------------------
@@ -96,13 +97,13 @@ When adding such simplification rules, the system may still get stuck and it
 may be useful to understand why. To this aim, you can step through the proof
 manually until it gets stuck
 ```
-repeat do_step; do_finish.
+repeat liRStep; liShow.
 ```
 and then enable typeclass debugging.
 ```
 Set Typeclasses Debug.
 (*Set Typeclasses Debug Verbosity 2.*)
-try do_step.
+try liRStep.
 ```
 
 Another option is to apply the instances manually. To start with, use the
@@ -130,5 +131,3 @@ available.
 ```c
 rc_unfold_int(i);
 ```
-
-

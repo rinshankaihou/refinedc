@@ -16,6 +16,16 @@ typing rules. Such additions must be proven sound against the semantic model
 of RefinedC, which is encoded in [Iris](https://gitlab.mpi-sws.org/iris/iris)
 (a modern framework for higher-order, concurrent separation logic).
 
+## Documentation
+
+The following files contain documentation about RefinedC:
+
+- [ANNOTATION.md](ANNOTATIONS.md): Describes the annotation syntax
+  accepted by the RefinedC frontend
+- [FAQ.md](FAQ.md): Describes solutions to frequently asked questions
+- [ARCHITECTURE.md](ARCHITECTURE.md): Gives an high-level overview of
+  the layout of this repository.
+
 ## Installing RefinedC
 
 RefinedC is known to compile with Coq 8.11.2, on 64-bits Linux machines. It
@@ -400,35 +410,4 @@ This script binds `build` to the keys `C-c c`. Use at your own risk!
       (compile (concat buildfile build-file-name " " (buffer-file-name))))
     (select-window (get-buffer-window "*compilation*"))))
 (global-set-key (kbd "C-c c") 'build)
-```
-
-## Structure of the repository
-
-```
-├── examples                      Examples of verified C code.
-│   ├── include                   Header files for the examples.
-│   └── proofs                    All Coq code for the examples (generated or not).
-│       ├── queue                 All Coq code for [examples/queue.c].
-│       ├── ...
-│       ...
-├── frontend                      Source code of the frontend.
-├── include                       RefinedC extra include directory.
-├── theories                      Coq source code of RefiendC.
-│   ├── lang                      Caesium formalization of C and Iris instantiation.
-│   ├── lithium                   Lithium definition and interpreter.
-│   └── typing                    RefinedC type system.
-├── tools                         Scripts and stuff.
-└── tutorial                      Stem of a tutorial (needs more work).
-    ├── adequacy
-    └── proofs
-        ├── quicksort_exercise
-        ├── quicksort_solution
-        ├── t00_intro             Tutorial introduction.
-        ├── t01_basic             Tutorial: RefinedC basics.
-        ├── t02_pointers          Tutorial: pointers and ownership.
-        ├── t03_list              Tutorial: linked lists.
-        ├── t04_alloc             Tutorial: allocator.
-        ├── t05_main              Tutorial: main function (combines the previous).
-        ├── ...
-        ...
 ```
