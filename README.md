@@ -25,12 +25,17 @@ The following files contain documentation about RefinedC:
 - [FAQ.md](FAQ.md): Describes solutions to frequently asked questions
 - [ARCHITECTURE.md](ARCHITECTURE.md): Gives an high-level overview of
   the layout of this repository.
+- [DEVELOPERS.md](DEVELOPERS.md): Information for RefinedC developers.
 
 ## Installing RefinedC
 
 RefinedC is known to compile with Coq 8.11.2, on 64-bits Linux machines. It
 also possibly works on MacOS. In any case, we strongly advise you to rely on
 [opam](https://opam.ocaml.org/doc/Install.html) to install dependencies.
+
+Note that if you want to develop RefinedC or build the examples
+shipped with RefinedC, you should install RefinedC according to the
+instructions in [DEVELOPERS.md](DEVELOPERS.md).
 
 ### tl;dr
 
@@ -362,52 +367,3 @@ With this modification, the verification finally goes through.
 refinedc check src/example.c
 ```
 Congratulations, you have verified your first C program using RefinedC!
-
-## Instructions for RefinedC developers
-
-The `refinedc` program form the repository can be called using `dune` with the
-following command.
-```bash
-dune exec -- refinedc
-```
-Note however that you should **always** use the `--no-build` option for the
-`check` command. The reason is that `refinedc check` calls `dune`, and under
-the `dune` environment one should not call `dune`.
-```bash
-# !!!INVALID!!!
-dune exec -- refinedc check examples/queue.c
-
-# Alternative
-./build.sh examples/queue.c
-
-# Equivalent to the following valid command sequence.
-dune exec -- refinedc check --no-build examples/queue.c
-cd examples/proofs/queue
-dune build
-cd -
-```
-
-To generate the Coq code for all the examples of the repository you can run
-`make generate_all`. You can also force the generation of all the generated
-code using `make -B generate_all`.
-
-## Emacs setup
-
-The following elisp function enables direct execution of the `build.sh` script in this repo from emacs.
-It searches for a `build.sh` file in parent directories of the current file and executes it with the name
-of the current file. A similar functionallity should be easy to add to other editors as well.
-This script binds `build` to the keys `C-c c`. Use at your own risk!
-
-```elisp
-(setq build-file-name "build.sh")
-(defun build ()
-  "Search in the current and parent directories for a file with the name of variable `build-file-name' and execute the first file it find."
-  (interactive)
-  (save-some-buffers t) ; save all buffers
-  (let ((buildfile (locate-dominating-file default-directory build-file-name)))
-    (unless buildfile (error "No build file found!"))
-    (let ((default-directory buildfile))
-      (compile (concat buildfile build-file-name " " (buffer-file-name))))
-    (select-window (get-buffer-window "*compilation*"))))
-(global-set-key (kbd "C-c c") 'build)
-```
