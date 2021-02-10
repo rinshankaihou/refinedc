@@ -59,18 +59,18 @@ Section spec.
     {| rmovable patt__ := movable_eq _ _ (alloc_entry_t_unfold patt__) |}.
   Next Obligation. solve_ty_layout_eq. Qed.
 
-  Global Instance alloc_entry_t_simplify_hyp_place_inst l_ β_ patt__:
+  Global Instance alloc_entry_t_simplify_hyp_place_inst_generated l_ β_ patt__:
     SimplifyHypPlace l_ β_ (patt__ @ alloc_entry_t)%I (Some 100%N) :=
     λ T, i2p (simplify_hyp_place_eq l_ β_ _ _ T (alloc_entry_t_unfold _)).
-  Global Instance alloc_entry_t_simplify_goal_place_inst l_ β_ patt__:
+  Global Instance alloc_entry_t_simplify_goal_place_inst_generated l_ β_ patt__:
     SimplifyGoalPlace l_ β_ (patt__ @ alloc_entry_t)%I (Some 100%N) :=
     λ T, i2p (simplify_goal_place_eq l_ β_ _ _ T (alloc_entry_t_unfold _)).
 
-  Global Program Instance alloc_entry_t_simplify_hyp_val_inst v_ patt__:
+  Global Program Instance alloc_entry_t_simplify_hyp_val_inst_generated v_ patt__:
     SimplifyHypVal v_ (patt__ @ alloc_entry_t)%I (Some 100%N) :=
     λ T, i2p (simplify_hyp_val_eq v_ _ _ (alloc_entry_t_unfold _) T _).
   Next Obligation. done. Qed.
-  Global Program Instance alloc_entry_t_simplify_goal_val_inst v_ patt__:
+  Global Program Instance alloc_entry_t_simplify_goal_val_inst_generated v_ patt__:
     SimplifyGoalVal v_ (patt__ @ alloc_entry_t)%I (Some 100%N) :=
     λ T, i2p (simplify_goal_val_eq v_ _ _ (alloc_entry_t_unfold _) T _).
   Next Obligation. done. Qed.
@@ -112,18 +112,18 @@ Section spec.
     {| rmovable patt__ := movable_eq _ _ (alloc_state_unfold patt__) |}.
   Next Obligation. solve_ty_layout_eq. Qed.
 
-  Global Instance alloc_state_simplify_hyp_place_inst l_ β_ patt__:
+  Global Instance alloc_state_simplify_hyp_place_inst_generated l_ β_ patt__:
     SimplifyHypPlace l_ β_ (patt__ @ alloc_state)%I (Some 100%N) :=
     λ T, i2p (simplify_hyp_place_eq l_ β_ _ _ T (alloc_state_unfold _)).
-  Global Instance alloc_state_simplify_goal_place_inst l_ β_ patt__:
+  Global Instance alloc_state_simplify_goal_place_inst_generated l_ β_ patt__:
     SimplifyGoalPlace l_ β_ (patt__ @ alloc_state)%I (Some 100%N) :=
     λ T, i2p (simplify_goal_place_eq l_ β_ _ _ T (alloc_state_unfold _)).
 
-  Global Program Instance alloc_state_simplify_hyp_val_inst v_ patt__:
+  Global Program Instance alloc_state_simplify_hyp_val_inst_generated v_ patt__:
     SimplifyHypVal v_ (patt__ @ alloc_state)%I (Some 100%N) :=
     λ T, i2p (simplify_hyp_val_eq v_ _ _ (alloc_state_unfold _) T _).
   Next Obligation. done. Qed.
-  Global Program Instance alloc_state_simplify_goal_val_inst v_ patt__:
+  Global Program Instance alloc_state_simplify_goal_val_inst_generated v_ patt__:
     SimplifyGoalVal v_ (patt__ @ alloc_state)%I (Some 100%N) :=
     λ T, i2p (simplify_goal_val_eq v_ _ _ (alloc_state_unfold _) T _).
   Next Obligation. done. Qed.

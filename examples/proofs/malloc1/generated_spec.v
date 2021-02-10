@@ -41,18 +41,18 @@ Section spec.
     {| rmovable patt__ := movable_eq _ _ (freelist_t_unfold entry_size patt__) |}.
   Next Obligation. solve_ty_layout_eq. Qed.
 
-  Global Instance freelist_t_simplify_hyp_place_inst l_ β_ (entry_size : nat) patt__:
+  Global Instance freelist_t_simplify_hyp_place_inst_generated l_ β_ (entry_size : nat) patt__:
     SimplifyHypPlace l_ β_ (patt__ @ freelist_t entry_size)%I (Some 100%N) :=
     λ T, i2p (simplify_hyp_place_eq l_ β_ _ _ T (freelist_t_unfold _ _)).
-  Global Instance freelist_t_simplify_goal_place_inst l_ β_ (entry_size : nat) patt__:
+  Global Instance freelist_t_simplify_goal_place_inst_generated l_ β_ (entry_size : nat) patt__:
     SimplifyGoalPlace l_ β_ (patt__ @ freelist_t entry_size)%I (Some 100%N) :=
     λ T, i2p (simplify_goal_place_eq l_ β_ _ _ T (freelist_t_unfold _ _)).
 
-  Global Program Instance freelist_t_simplify_hyp_val_inst v_ (entry_size : nat) patt__:
+  Global Program Instance freelist_t_simplify_hyp_val_inst_generated v_ (entry_size : nat) patt__:
     SimplifyHypVal v_ (patt__ @ freelist_t entry_size)%I (Some 100%N) :=
     λ T, i2p (simplify_hyp_val_eq v_ _ _ (freelist_t_unfold _ _) T _).
   Next Obligation. done. Qed.
-  Global Program Instance freelist_t_simplify_goal_val_inst v_ (entry_size : nat) patt__:
+  Global Program Instance freelist_t_simplify_goal_val_inst_generated v_ (entry_size : nat) patt__:
     SimplifyGoalVal v_ (patt__ @ freelist_t entry_size)%I (Some 100%N) :=
     λ T, i2p (simplify_goal_val_eq v_ _ _ (freelist_t_unfold _ _) T _).
   Next Obligation. done. Qed.
@@ -106,18 +106,18 @@ Section spec.
     {| rmovable patt__ := movable_eq _ _ (slab_unfold entry_size patt__) |}.
   Next Obligation. solve_ty_layout_eq. Qed.
 
-  Global Instance slab_simplify_hyp_place_inst l_ β_ (entry_size : nat) patt__:
+  Global Instance slab_simplify_hyp_place_inst_generated l_ β_ (entry_size : nat) patt__:
     SimplifyHypPlace l_ β_ (patt__ @ slab entry_size)%I (Some 100%N) :=
     λ T, i2p (simplify_hyp_place_eq l_ β_ _ _ T (slab_unfold _ _)).
-  Global Instance slab_simplify_goal_place_inst l_ β_ (entry_size : nat) patt__:
+  Global Instance slab_simplify_goal_place_inst_generated l_ β_ (entry_size : nat) patt__:
     SimplifyGoalPlace l_ β_ (patt__ @ slab entry_size)%I (Some 100%N) :=
     λ T, i2p (simplify_goal_place_eq l_ β_ _ _ T (slab_unfold _ _)).
 
-  Global Program Instance slab_simplify_hyp_val_inst v_ (entry_size : nat) patt__:
+  Global Program Instance slab_simplify_hyp_val_inst_generated v_ (entry_size : nat) patt__:
     SimplifyHypVal v_ (patt__ @ slab entry_size)%I (Some 100%N) :=
     λ T, i2p (simplify_hyp_val_eq v_ _ _ (slab_unfold _ _) T _).
   Next Obligation. done. Qed.
-  Global Program Instance slab_simplify_goal_val_inst v_ (entry_size : nat) patt__:
+  Global Program Instance slab_simplify_goal_val_inst_generated v_ (entry_size : nat) patt__:
     SimplifyGoalVal v_ (patt__ @ slab entry_size)%I (Some 100%N) :=
     λ T, i2p (simplify_goal_val_eq v_ _ _ (slab_unfold _ _) T _).
   Next Obligation. done. Qed.

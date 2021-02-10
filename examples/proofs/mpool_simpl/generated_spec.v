@@ -39,18 +39,18 @@ Section spec.
     {| rmovable patt__ := movable_eq _ _ (mpool_entry_unfold patt__) |}.
   Next Obligation. solve_ty_layout_eq. Qed.
 
-  Global Instance mpool_entry_simplify_hyp_place_inst l_ β_ patt__:
+  Global Instance mpool_entry_simplify_hyp_place_inst_generated l_ β_ patt__:
     SimplifyHypPlace l_ β_ (patt__ @ mpool_entry)%I (Some 100%N) :=
     λ T, i2p (simplify_hyp_place_eq l_ β_ _ _ T (mpool_entry_unfold _)).
-  Global Instance mpool_entry_simplify_goal_place_inst l_ β_ patt__:
+  Global Instance mpool_entry_simplify_goal_place_inst_generated l_ β_ patt__:
     SimplifyGoalPlace l_ β_ (patt__ @ mpool_entry)%I (Some 100%N) :=
     λ T, i2p (simplify_goal_place_eq l_ β_ _ _ T (mpool_entry_unfold _)).
 
-  Global Program Instance mpool_entry_simplify_hyp_val_inst v_ patt__:
+  Global Program Instance mpool_entry_simplify_hyp_val_inst_generated v_ patt__:
     SimplifyHypVal v_ (patt__ @ mpool_entry)%I (Some 100%N) :=
     λ T, i2p (simplify_hyp_val_eq v_ _ _ (mpool_entry_unfold _) T _).
   Next Obligation. done. Qed.
-  Global Program Instance mpool_entry_simplify_goal_val_inst v_ patt__:
+  Global Program Instance mpool_entry_simplify_goal_val_inst_generated v_ patt__:
     SimplifyGoalVal v_ (patt__ @ mpool_entry)%I (Some 100%N) :=
     λ T, i2p (simplify_goal_val_eq v_ _ _ (mpool_entry_unfold _) T _).
   Next Obligation. done. Qed.
@@ -84,18 +84,18 @@ Section spec.
     {| rmovable patt__ := movable_eq _ _ (mpool_unfold patt__) |}.
   Next Obligation. solve_ty_layout_eq. Qed.
 
-  Global Instance mpool_simplify_hyp_place_inst l_ β_ patt__:
+  Global Instance mpool_simplify_hyp_place_inst_generated l_ β_ patt__:
     SimplifyHypPlace l_ β_ (patt__ @ mpool)%I (Some 100%N) :=
     λ T, i2p (simplify_hyp_place_eq l_ β_ _ _ T (mpool_unfold _)).
-  Global Instance mpool_simplify_goal_place_inst l_ β_ patt__:
+  Global Instance mpool_simplify_goal_place_inst_generated l_ β_ patt__:
     SimplifyGoalPlace l_ β_ (patt__ @ mpool)%I (Some 100%N) :=
     λ T, i2p (simplify_goal_place_eq l_ β_ _ _ T (mpool_unfold _)).
 
-  Global Program Instance mpool_simplify_hyp_val_inst v_ patt__:
+  Global Program Instance mpool_simplify_hyp_val_inst_generated v_ patt__:
     SimplifyHypVal v_ (patt__ @ mpool)%I (Some 100%N) :=
     λ T, i2p (simplify_hyp_val_eq v_ _ _ (mpool_unfold _) T _).
   Next Obligation. done. Qed.
-  Global Program Instance mpool_simplify_goal_val_inst v_ patt__:
+  Global Program Instance mpool_simplify_goal_val_inst_generated v_ patt__:
     SimplifyGoalVal v_ (patt__ @ mpool)%I (Some 100%N) :=
     λ T, i2p (simplify_goal_val_eq v_ _ _ (mpool_unfold _) T _).
   Next Obligation. done. Qed.

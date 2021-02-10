@@ -60,10 +60,10 @@ Section spec.
     )%I.
   Proof. by rewrite {1}/with_refinement/=fixp_unfold. Qed.
 
-  Global Instance hyp_page_simplify_hyp_place_inst l_ β_ patt__:
+  Global Instance hyp_page_simplify_hyp_place_inst_generated l_ β_ patt__:
     SimplifyHypPlace l_ β_ (patt__ @ hyp_page)%I (Some 100%N) :=
     λ T, i2p (simplify_hyp_place_eq l_ β_ _ _ T (hyp_page_unfold _)).
-  Global Instance hyp_page_simplify_goal_place_inst l_ β_ patt__:
+  Global Instance hyp_page_simplify_goal_place_inst_generated l_ β_ patt__:
     SimplifyGoalPlace l_ β_ (patt__ @ hyp_page)%I (Some 100%N) :=
     λ T, i2p (simplify_goal_place_eq l_ β_ _ _ T (hyp_page_unfold _)).
 
@@ -121,10 +121,10 @@ Section spec.
     )%I.
   Proof. by rewrite {1}/with_refinement/=fixp_unfold. Qed.
 
-  Global Instance hyp_pool_simplify_hyp_place_inst l_ β_ patt__:
+  Global Instance hyp_pool_simplify_hyp_place_inst_generated l_ β_ patt__:
     SimplifyHypPlace l_ β_ (patt__ @ hyp_pool)%I (Some 100%N) :=
     λ T, i2p (simplify_hyp_place_eq l_ β_ _ _ T (hyp_pool_unfold _)).
-  Global Instance hyp_pool_simplify_goal_place_inst l_ β_ patt__:
+  Global Instance hyp_pool_simplify_goal_place_inst_generated l_ β_ patt__:
     SimplifyGoalPlace l_ β_ (patt__ @ hyp_pool)%I (Some 100%N) :=
     λ T, i2p (simplify_goal_place_eq l_ β_ _ _ T (hyp_pool_unfold _)).
 

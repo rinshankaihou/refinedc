@@ -862,7 +862,7 @@ let pp_spec : string -> import list -> string list -> typedef list ->
 
     (* Generation of the global instances. *)
     let pp_instance_place inst_name type_name =
-      pp "@;Global Instance %s_%s_inst l_ β_ %apatt__:@;"
+      pp "@;Global Instance %s_%s_inst_generated l_ β_ %apatt__:@;"
         id inst_name pp_params params;
       pp "  %s l_ β_ (patt__ @@ %a)%%I (Some 100%%N) :=@;"
         type_name (pp_id_args false id) par_names;
@@ -870,7 +870,7 @@ let pp_spec : string -> import list -> string list -> typedef list ->
       List.iter (fun _ -> pp " _") par_names; pp " _))."
     in
     let pp_instance_val inst_name type_name =
-      pp "@;Global Program Instance %s_%s_inst v_ %apatt__:@;"
+      pp "@;Global Program Instance %s_%s_inst_generated v_ %apatt__:@;"
         id inst_name pp_params params;
       pp "  %s v_ (patt__ @@ %a)%%I (Some 100%%N) :=@;"
         type_name (pp_id_args false id) par_names;

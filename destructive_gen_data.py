@@ -19,24 +19,28 @@ ANNOT_TYPE = {
     "import": "annot",
     "require": "annot",
     "inlined": "annot",
-    "tagged_union": "annot",
-    "union_tag": "annot",
-    "unfold_int": "annot",
-    "refined_by": "annot",
-    "ptr_type": "annot",
-    "field": "annot",
-    "size": "annot",
+    "let": "annot_type",
+    "tagged_union": "annot_type",
+    "union_tag": "annot_type",
+    "unfold_int": "rule",
+    "refined_by": "annot_type",
+    "ptr_type": "annot_type",
+    "field": "annot_type",
+    "size": "annot_type",
     "global": "annot",
-    "constraints": "annot",
+    "constraints": "annot_loop",
+    "typeconstraints": "annot_type",
+    "typeparameters": "annot_type",
     "parameters": "spec",
     "args": "spec",
     "requires": "spec",
     "ensures": "spec",
     "exists": "spec",
     "returns": "spec",
-    "loopexists": "annot",
-    "inv_vars": "annot",
-    "block": "annot",
+    "loopexists": "annot_loop",
+    "typeexists": "annot_type",
+    "inv_vars": "annot_loop",
+    "block": "annot_loop",
     "tactics": "pure",
     "lemmas": "pure",
     "unfold": "rule",
@@ -45,6 +49,7 @@ ANNOT_TYPE = {
     "share": "rule",
     "to_uninit": "rule",
     "uninit_strengthen_align": "rule",
+    "learn_alignment": "rule",
 }
 
 def print_stats(annots, loc):
@@ -61,18 +66,31 @@ def print_stats(annots, loc):
         if k != "import" and k != "inlined" and k != "require":
             total += v
     types["LoC"] = loc - total
-    types["annot"] = types.get("annot", 0) + types.get("rule", 0)
-    types.pop('rule', None)
+    # types["annot"] = types.get("annot", 0) + types.get("rule", 0)
+    # types.pop('rule', None)
     print(json.dumps(types, indent=2))
     return types
 
 def parse_file(f):
     per_file = {}
+    in_typedef = True # used to disambiguate exists and constraints in loop and typedefs
     for match in annotation_re.finditer(f):
         num_lines = len(match.group(3).strip().split('\n'))
         name = match.group(2)
+        if name == "refined_by":
+            in_typedef = True
+        if name == "args":
+            in_typedef = False
+
         if name == "exists" and match.group(1) != "":
             name = "loopexists"
+        if name == "parameters" and match.group(1) != "":
+            name = "typeparameters"
+
+        if name == "loopexists" and in_typedef:
+            name = "typeexists"
+        if name == "constraints" and in_typedef:
+            name = "typeconstraints"
 
         per_file[name] = per_file.get(name, 0)
         per_file[name] += num_lines
@@ -97,7 +115,7 @@ def parse_file(f):
 
     return per_file
 
-def compute_annots(FILES):
+def compute_annots(FILES, global_rules):
     total = {}
     o = subprocess.check_output(["tokei", "--output=json", "--files"] + FILES)
     # print(o)
@@ -125,13 +143,14 @@ def compute_annots(FILES):
 
 
     total = print_stats(total, lines_total)
+
     if "Coq" in inner:
         total["pure"] = total.get("pure", 0) + inner["Coq"]["code"]
     # count lemmas and quantifier instantiations
     total["exists"] = 0
     total["sideconds"] = 0
     total["unsolvedsideconds"] = 0
-    total["rules"] = 0
+    total["rules"] = {}
     results = []
 
     for f in FILES:
@@ -161,7 +180,7 @@ def compute_annots(FILES):
                 if proofsdir in name:
                     print(name)
                     current = { "name" : name,
-                                "exists": 0, "sideconds": 0, "unsolvedsideconds": 0, "rules": 0 }
+                                "exists": 0, "sideconds": 0, "unsolvedsideconds": 0, "rules": {} }
             if current is None:
                 continue
             if line == b"EVAR":
@@ -173,9 +192,13 @@ def compute_annots(FILES):
             if line == b"UNSOLVEDSIDECOND":
                 current["unsolvedsideconds"] += 1
                 total["unsolvedsideconds"] += 1
-            if line == b"EXTENSIBLE":
-                current["rules"] += 1
-                total["rules"] += 1
+            if line.startswith(b"EXTENSIBLE"):
+                assert(line.startswith(b"EXTENSIBLE @"))
+                name = line[len("EXTENSIBLE @"):].decode("utf8")
+                # print(name)
+                current["rules"][name] = current["rules"].get(name, 0) + 1
+                total["rules"][name] = total["rules"].get(name, 0) + 1
+                # total["rules"] += 1
         if current is not None:
             results.append(current)
             current = None
@@ -184,86 +207,117 @@ def compute_annots(FILES):
         # print((json.dumps(total, indent=2)))
         shutil.move(tmpname, f)
 
+    # post-process rules
+    total["total_applied_rules"] = 0
+    total["total_rules"] = 0
+    total["new_applied_rules"] = 0
+    total["new_rules"] = 0
+    total["rule_is_new"] = []
+    for rule, num in total["rules"].items():
+        total["total_applied_rules"] += num
+        total["total_rules"] += 1
+        if rule not in global_rules and not rule.endswith("_generated"):
+            total["new_applied_rules"] += num
+            total["new_rules"] += 1
+            total["rule_is_new"].append(rule)
+
+    for rule, num in total["rules"].items():
+        global_rules[rule] = global_rules.get(rule, 0) + num
+
     print("total:")
     # print_stats(total, lines_total)
     print(json.dumps(total, indent=2))
     return total
+
+global_rules = {}
 
 stats = [ {
     "name": "#1",
     "progs": [ {
         "name": "Singly linked list",
         "abs": "wand, alloc",
-        "stats": compute_annots(["tutorial/t03_list.c"])
+        "stats": compute_annots(["tutorial/t03_list.c"], global_rules)
     }, {
         "name": "Queue",
         "abs": "list segments, alloc",
-        "stats": compute_annots(["examples/queue.c"])
+        "stats": compute_annots(["examples/queue.c"], global_rules)
     }, {
         "name": "Binary search",
         "abs": "arrays, func. ptr.",
         "stats": compute_annots(["examples/binary_search.c",
-                                 "examples/proofs/binary_search/binary_search_extra.v"])
+                                 "examples/proofs/binary_search/binary_search_extra.v"], global_rules)
     } ]
 }, {
     "name": "#2",
     "progs": [ {
         "name": "Thread-safe allocator",
         "abs": "wand, padded, spinlock",
-        "stats": compute_annots(["tutorial/t04_alloc.c", "tutorial/alloc.h", "tutorial/alloc_internal.h"])
+        "stats": compute_annots(["tutorial/t04_alloc.c", "tutorial/alloc.h", "tutorial/alloc_internal.h"], global_rules)
     }, {
         "name": "Page allocator",
         "abs": "padded",
-        "stats": compute_annots(["examples/malloc1.c"])
+        "stats": compute_annots(["examples/malloc1.c"], global_rules)
     } ]
 }, {
     "name": "#3",
     "progs": [ {
         "name": "Binary search tree (layered)",
         "abs": "wand, alloc",
-        "stats": compute_annots(["tutorial/t08_tree.c", "tutorial/proofs/t08_tree/t08_tree_extra.v"])
+        "stats": compute_annots(["tutorial/t08_tree.c", "tutorial/proofs/t08_tree/t08_tree_extra.v"], global_rules)
     }, {
         "name": "Binary search tree (direct)",
         "abs": "wand, alloc",
-        "stats": compute_annots(["tutorial/t11_tree_set.c"])
+        "stats": compute_annots(["tutorial/t11_tree_set.c"], global_rules)
     } ]
 }, {
     "name": "#4",
     "progs": [ {
         "name": "Linear probing hashmap",
         "abs": "unions, arrays, alloc",
-        "stats": compute_annots(["examples/mutable_map.c", "examples/proofs/mutable_map/mutable_map_extra.v"])
+        "stats": compute_annots(["examples/mutable_map.c", "examples/proofs/mutable_map/mutable_map_extra.v"], global_rules)
     } ]
 }, {
     "name": "#5",
     "progs": [ {
         "name": "Hafnium's mpool allocator",
         "abs": "wand, padded, spinlock",
-        "stats": compute_annots(["examples/mpool.c"])
+        "stats": compute_annots(["examples/mpool.c"], global_rules)
     } ]
 }, {
     "name": "#6",
     "progs": [ {
         "name": "Spinlock",
         "abs": "atomic Boolean",
-        "stats": compute_annots(["examples/spinlock.c", "examples/include/spinlock.h"])
+        "stats": compute_annots(["examples/spinlock.c", "examples/include/spinlock.h"], global_rules)
     }, {
         "name": "One-time barrier",
         "abs": "atomic Boolean",
-        "stats": compute_annots(["examples/latch.c", "examples/include/latch.h"])
+        "stats": compute_annots(["examples/latch.c", "examples/include/latch.h"], global_rules)
     } ]
 } ]
 
-# Add 6 to spinlock for the 6 non-trivial lines in examples/proofs/spinlock/spinlock_proof.v
-#   Typeclasses Transparent spinlock spinlocked_ex spinlock_token spinlocked_ex_token.
-#   iApply fupd_typed_stmt.
-#   iMod (own_alloc (● GSet ∅)) as (γ) "Hown"; [ by apply auth_auth_valid |].
-#   iAssert (spinlock_token γ []) with "[Hown]" as "?"; [ by iExists _; iFrame |].
-#   iModIntro.
+# Add 3 to spinlock for the 3 non-trivial lines in examples/proofs/spinlock/spinlock_proof.v
+#   Typeclasses Transparent spinlock.
+#   iMod alloc_lock_token as (γ) "?".
 #   liInst Hevar γ.
-stats[5]["progs"][0]["stats"]["annot"] += 6
+for cat in stats:
+    for prog in cat["progs"]:
+        if prog["name"] == "Spinlock":
+            prog["stats"]["annot"] += 3
 
-# print(json.dumps(stats, indent=2))
+for cat in stats:
+    for prog in cat["progs"]:
+        prog["stats"]["unique_applied_rules"] = 0
+        prog["stats"]["unique_rules"] = 0
+        prog["stats"]["rule_is_unique"] = []
+        for rule, num in prog["stats"]["rules"].items():
+            if num == global_rules[rule] and not rule.endswith("_generated"):
+                prog["stats"]["unique_applied_rules"] += num
+                prog["stats"]["unique_rules"] += 1
+                is_unique = True
+                prog["stats"]["rule_is_unique"].append(rule)
+
+print(json.dumps(stats, indent=2))
 
 output_file = 'data.json'
 with open(output_file, 'w') as f:
