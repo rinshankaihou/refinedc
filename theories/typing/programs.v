@@ -395,7 +395,9 @@ Definition FindVal `{!typeG Σ} (v : val) :=
   {| fic_A := mtype; fic_Prop ty := (v ◁ᵥ ty)%I; |}.
 Definition FindValP {Σ} (v : val) :=
   {| fic_A := iProp Σ; fic_Prop P := P; |}.
-Typeclasses Opaque FindLoc FindVal FindValP.
+Definition FindLocInBounds {Σ} (l : loc) :=
+    {| fic_A := iProp Σ; fic_Prop P := P |}.
+Typeclasses Opaque FindLoc FindVal FindValP FindLocInBounds.
 
 Section typing.
   Context `{!typeG Σ}.
@@ -432,10 +434,25 @@ Section typing.
     FindInContext (FindValP l) 1%nat :=
     λ T, i2p (find_in_context_type_val_P_loc_id l T).
 
+  Lemma find_in_context_loc_in_bounds l T :
+    (∃ n, loc_in_bounds l n ∗ T (loc_in_bounds l n)) -∗
+    find_in_context (FindLocInBounds l) T.
+  Proof. iDestruct 1 as (n) "[??]". iExists (loc_in_bounds _ _) => /=. iFrame. Qed.
+  Global Instance find_in_context_loc_in_bounds_inst l :
+    FindInContext (FindLocInBounds l) 0 :=
+    λ T, i2p (find_in_context_loc_in_bounds l T).
+
+  Lemma find_in_context_loc_in_bounds_loc l T :
+    (∃ β ty, l ◁ₗ{β} ty ∗ T (l ◁ₗ{β} ty)) -∗
+    find_in_context (FindLocInBounds l) T.
+  Proof. iDestruct 1 as (β ty) "[??]". iExists (ty_own _ _ _) => /=. iFrame. Qed.
+  Global Instance find_in_context_loc_in_bounds_loc_inst l :
+    FindInContext (FindLocInBounds l) 1 :=
+    λ T, i2p (find_in_context_loc_in_bounds_loc l T).
+
   Global Instance related_to_loc l β ty : RelatedTo (l ◁ₗ{β} ty) := {| rt_fic := FindLoc l |}.
   Global Instance related_to_val v ty `{!Movable ty} : RelatedTo (v ◁ᵥ ty) := {| rt_fic := FindValP v |}.
-
-  Global Instance related_to_loc_in_bounds l n : RelatedTo (loc_in_bounds l n) := {| rt_fic := FindLoc l |}.
+  Global Instance related_to_loc_in_bounds l n : RelatedTo (loc_in_bounds l n) := {| rt_fic := FindLocInBounds l |}.
 
   Lemma subsume_loc_in_bounds ty β l (n m : nat) `{!LocInBounds ty β m} T :
     (l ◁ₗ{β} ty -∗ ⌜n ≤ m⌝ ∗ T) -∗
@@ -449,6 +466,14 @@ Section typing.
   Global Instance subsume_loc_in_bounds_inst ty β l n m `{!LocInBounds ty β m} :
     Subsume (l ◁ₗ{β} ty) (loc_in_bounds l n) :=
     λ T, i2p (subsume_loc_in_bounds ty β l n m T).
+
+  Lemma subsume_loc_in_bounds_leq (l : loc) (n1 n2 : nat) T :
+    ⌜n2 ≤ n1⌝%nat ∗ T -∗
+    subsume (loc_in_bounds l n1) (loc_in_bounds l n2) T.
+  Proof. iIntros "[% $] #?". by iApply loc_in_bounds_shorten. Qed.
+  Global Instance subsume_loc_in_bounds_leq_inst (l : loc) (n1 n2 : nat):
+    Subsume (loc_in_bounds l n1) (loc_in_bounds l n2) :=
+    λ T, i2p (subsume_loc_in_bounds_leq l n1 n2 T).
 
   Lemma apply_subsume_place_true l1 β1 ty1 l2 β2 ty2:
     l1 ◁ₗ{β1} ty1 -∗
