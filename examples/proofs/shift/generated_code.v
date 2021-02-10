@@ -11,11 +11,11 @@ Section code.
   Definition loc_4 : location_info := LocationInfo file_0 6 9 6 10.
   Definition loc_5 : location_info := LocationInfo file_0 6 9 6 10.
   Definition loc_6 : location_info := LocationInfo file_0 6 14 6 15.
-  Definition loc_9 : location_info := LocationInfo file_0 16 2 16 16.
-  Definition loc_10 : location_info := LocationInfo file_0 16 9 16 15.
-  Definition loc_11 : location_info := LocationInfo file_0 16 9 16 10.
-  Definition loc_12 : location_info := LocationInfo file_0 16 9 16 10.
-  Definition loc_13 : location_info := LocationInfo file_0 16 14 16 15.
+  Definition loc_9 : location_info := LocationInfo file_0 14 2 14 16.
+  Definition loc_10 : location_info := LocationInfo file_0 14 9 14 15.
+  Definition loc_11 : location_info := LocationInfo file_0 14 9 14 10.
+  Definition loc_12 : location_info := LocationInfo file_0 14 9 14 10.
+  Definition loc_13 : location_info := LocationInfo file_0 14 14 14 15.
 
   (* Definition of function [times_two]. *)
   Definition impl_times_two : function := {|

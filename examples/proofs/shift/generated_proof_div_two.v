@@ -21,9 +21,7 @@ Section proof_div_two.
     - repeat liRStep; liShow.
       all: print_typesystem_goal "div_two" "#0".
     Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
-    + by apply Z.shiftr_nonneg.
-    + rewrite Z.shiftr_div_pow2 //; lia.
-    + rewrite Z.shiftr_div_pow2 //.
+    + by rewrite Z.shiftr_div_pow2.
     all: print_sidecondition_goal "div_two".
   Qed.
 End proof_div_two.

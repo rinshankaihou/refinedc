@@ -154,49 +154,62 @@ Section programs.
     TypedBinOpVal v1 (n1 @ (int it))%I v2 (n2 @ (int it))%I GeOp (IntOp it) (IntOp it) := λ T, i2p (type_relop_int_int it v1 n1 v2 n2 T (bool_decide (n1 >= n2)) _ _).
   Next Obligation. done. Qed.
 
-  Lemma type_arithop_int_int it v1 n1 v2 n2 T n op:
-   match op with
+  Definition arith_op_result (it : int_type) n1 n2 op : option Z :=
+    match op with
     | AddOp => Some (n1 + n2)
     | SubOp => Some (n1 - n2)
     | MulOp => Some (n1 * n2)
     | AndOp => Some (Z.land n1 n2)
-    | OrOp => Some (Z.lor n1 n2)
+    | OrOp  => Some (Z.lor n1 n2)
     | XorOp => Some (Z.lxor n1 n2)
     | ShlOp => Some (n1 ≪ n2)
     | ShrOp => Some (n1 ≫ n2)
-    | _ => None
-    end = Some n →
-    (⌜n1 ∈ it⌝ -∗ ⌜n2 ∈ it⌝ -∗ ⌜n ∈ it⌝ ∗ T (i2v n it) (t2mt (n @ int it))) -∗
-      typed_bin_op v1 (v1 ◁ᵥ n1 @ int it) v2 (v2 ◁ᵥ n2 @ int it) op (IntOp it) (IntOp it) T.
-  Proof.
-    iIntros (Hop) "HT". iIntros (Hv1 Hv2 Φ) "HΦ".
-    iDestruct ("HT" with "[] []" ) as ([v Hv]%val_of_int_is_some) "HT".
-    1-2: iPureIntro; by apply: val_of_int_in_range.
-    move: (Hv) => /val_of_int_in_range ?.
-    move: Hv1 Hv2 => /val_to_of_int Hv1 /val_to_of_int Hv2. rewrite /i2v Hv/=.
-    iApply (wp_binop_det v). iSplit.
-    - iIntros (σ v') "_ !%". split.
-      + destruct op => //.
-        all: inversion 1; simplify_eq/=.
-        all: destruct it as [? []]; simplify_eq/= => //.
-        all: by rewrite ->it_in_range_mod in * => //; simplify_eq.
-      + move => ->; destruct op => //; econstructor => //.
-        all: destruct it as [? []]; simplify_eq/= => //.
-        all: by rewrite it_in_range_mod; simplify_eq/=.
-    - iIntros "!>". iApply "HΦ"; last done.  by iPureIntro.
-  Qed.
-  Lemma type_arithop_int_int_div_mod it v1 n1 v2 n2 T n op:
-    match op with
     | DivOp => Some (n1 `quot` n2)
     | ModOp => Some (n1 `rem` n2)
-    | _ => None
-    end = Some n →
-    (⌜n1 ∈ it⌝ -∗ ⌜n2 ∈ it⌝ -∗ ⌜n2 ≠ 0⌝ ∗ ⌜n ∈ it⌝ ∗ T (i2v n it) (t2mt (n @ int it))) -∗
+    | _     => None (* Relational operators. *)
+    end.
+
+  Definition arith_op_sidecond (it : int_type) (n1 n2 n : Z) op : Prop :=
+    match op with
+    | AddOp => n ∈ it
+    | SubOp => n ∈ it
+    | MulOp => n ∈ it
+    | AndOp => n ∈ it (* TODO: remove side-condition. *)
+    | OrOp  => n ∈ it (* TODO: remove side-condition. *)
+    | XorOp => n ∈ it (* TODO: remove side-condition. *)
+    | ShlOp => 0 ≤ n2 < bits_per_int it ∧ 0 ≤ n1 ∧ n ≤ max_int it
+    | ShrOp => 0 ≤ n2 < bits_per_int it ∧ 0 ≤ n1 (* Result of shifting negative numbers is implementation defined. *)
+    | DivOp => n2 ≠ 0 ∧ n ∈ it
+    | ModOp => n2 ≠ 0 ∧ n ∈ it
+    | _     => True (* Relational operators. *)
+    end.
+
+  Lemma arith_op_result_in_range (it : int_type) (n1 n2 n : Z) op :
+    n1 ∈ it → n2 ∈ it → arith_op_result it n1 n2 op = Some n →
+    arith_op_sidecond it n1 n2 n op → n ∈ it.
+  Proof.
+    move => [Hn1 HN1] [Hn2 HN2] Hn Hsc.
+    destruct op => //=; simpl in Hsc, Hn; destruct_and? => //.
+    all: inversion Hn; simplify_eq; split => //.
+    - transitivity 0; [ apply min_int_le_0 | by apply Z.shiftl_nonneg ].
+    - transitivity 0; [ apply min_int_le_0 | by apply Z.shiftr_nonneg ].
+    - transitivity n1; last done. rewrite Z.shiftr_div_pow2; last by lia.
+      apply Z.div_le_upper_bound. { apply Z.pow_pos_nonneg => //. }
+      rewrite -[X in X ≤ _]Z.mul_1_l. apply Z.mul_le_mono_nonneg_r => //.
+      rewrite -(Z.pow_0_r 2). apply Z.pow_le_mono_r; lia.
+  Qed.
+
+  Lemma type_arithop_int_int it v1 n1 v2 n2 T n op:
+    arith_op_result it n1 n2 op = Some n →
+    (⌜n1 ∈ it⌝ -∗ ⌜n2 ∈ it⌝ -∗ ⌜arith_op_sidecond it n1 n2 n op⌝ ∗ T (i2v n it) (t2mt (n @ int it))) -∗
       typed_bin_op v1 (v1 ◁ᵥ n1 @ int it) v2 (v2 ◁ᵥ n2 @ int it) op (IntOp it) (IntOp it) T.
   Proof.
     iIntros (Hop) "HT". iIntros (Hv1 Hv2 Φ) "HΦ".
-    iDestruct ("HT" with "[] []" ) as (Hn [v Hv]%val_of_int_is_some) "HT".
+    iDestruct ("HT" with "[] []" ) as (Hsc) "HT".
     1-2: iPureIntro; by apply: val_of_int_in_range.
+    assert (n ∈ it) as [v Hv]%val_of_int_is_some.
+    { apply: arith_op_result_in_range; last done.
+      1-2: by apply: val_of_int_in_range. done. }
     move: (Hv) => /val_of_int_in_range ?.
     move: Hv1 Hv2 => /val_to_of_int Hv1 /val_to_of_int Hv2. rewrite /i2v Hv/=.
     iApply (wp_binop_det v). iSplit.
@@ -204,10 +217,11 @@ Section programs.
       + destruct op => //.
         all: inversion 1; destruct n2; simplify_eq/=.
         all: destruct it as [? []]; simplify_eq/= => //.
-        all: by rewrite ->it_in_range_mod in * => //; simplify_eq.
+        all: try by rewrite ->it_in_range_mod in * => //; simplify_eq.
       + move => ->; destruct op, n2 => //; econstructor => // => //.
         all: destruct it as [? []]; simplify_eq/= => //.
-        all: by rewrite it_in_range_mod; simplify_eq/=.
+        all: try by rewrite it_in_range_mod; simplify_eq/=.
+        all: by destruct_and!.
     - iIntros "!>". iApply "HΦ"; last done.  by iPureIntro.
   Qed.
   Global Program Instance type_add_int_int_inst it v1 n1 v2 n2:
@@ -220,10 +234,10 @@ Section programs.
     TypedBinOpVal v1 (n1 @ int it)%I v2 (n2 @ int it)%I MulOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_int_int it v1 n1 v2 n2 T (n1 * n2) _ _).
   Next Obligation. done. Qed.
   Global Program Instance type_div_int_int_inst it v1 n1 v2 n2:
-    TypedBinOpVal v1 (n1 @ int it)%I v2 (n2 @ int it)%I DivOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_int_int_div_mod it v1 n1 v2 n2 T (n1 `quot` n2) _ _).
+    TypedBinOpVal v1 (n1 @ int it)%I v2 (n2 @ int it)%I DivOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_int_int it v1 n1 v2 n2 T (n1 `quot` n2) _ _).
   Next Obligation. done. Qed.
   Global Program Instance type_mod_int_int_inst it v1 n1 v2 n2:
-    TypedBinOpVal v1 (n1 @ int it)%I v2 (n2 @ int it)%I ModOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_int_int_div_mod it v1 n1 v2 n2 T (n1 `rem` n2) _ _).
+    TypedBinOpVal v1 (n1 @ int it)%I v2 (n2 @ int it)%I ModOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_int_int it v1 n1 v2 n2 T (n1 `rem` n2) _ _).
   Next Obligation. done. Qed.
   Global Program Instance type_and_int_int_inst it v1 n1 v2 n2:
     TypedBinOpVal v1 (n1 @ int it)%I v2 (n2 @ int it)%I AndOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_int_int it v1 n1 v2 n2 T (Z.land n1 n2) _ _).
@@ -481,7 +495,7 @@ Section tests.
     iApply type_val. iApply type_val_int. iSplit => //.
     iApply type_val. iApply type_val_int. iSplit => //.
     iApply type_arithop_int_int => //. iIntros (??). iSplit. {
-      iPureIntro. unfold elem_of, int_elem_of_it, min_int, max_int in *; lia.
+      iPureIntro. unfold arith_op_sidecond, elem_of, int_elem_of_it, min_int, max_int in *; lia.
     }
     iApply type_val. iApply type_val_int. iSplit => //.
     iApply type_relop_int_int => //.
