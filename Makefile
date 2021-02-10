@@ -31,12 +31,14 @@ builddep-opamfiles: builddep/refinedc-builddep.opam
 	@true
 .PHONY: builddep-opamfiles
 
-# Create a virtual Opam package with the same deps as RefinedC, but no build.
+# Create a virtual Opam package with the same deps as RefinedC, but no
+# build. Uses a very ugly hack to use sed for removing the last 4
+# lines since head -n -4 does not work on MacOS
+# (https://stackoverflow.com/a/24298204)
 builddep/refinedc-builddep.opam: refinedc.opam Makefile
 	@echo "# Creating builddep package."
 	@mkdir -p builddep
-	@head -n -5 $< > $@
-	@sed -i -E 's/^name: *"(.*)" */name: "\1-builddep"/' $@
+	@sed '$$d' $< | sed '$$d' | sed '$$d' | sed '$$d' | sed -E 's/^name: *"(.*)" */name: "\1-builddep"/' > $@
 
 # Install the virtual Opam package to ensure that:
 #  1) dependencies of RefinedC are installed,
