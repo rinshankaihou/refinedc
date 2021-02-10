@@ -433,6 +433,10 @@ Proof. unfold FastDone in *; subst. split; naive_solver. Qed.
 Global Instance simpl_both_fmap_Some A f (o : option A) (x : A): SimplBothRel (=) (f <$> o) (Some x) (∃ x', o = Some  x' ∧ x = f x').
 Proof. unfold SimplBothRel. rewrite fmap_Some. naive_solver. Qed.
 
+Global Instance simplify_option_fmap_None {A B} (f : A → B) (x : option A) :
+  SimplBothRel (=) (f <$> x) (None) (x = None).
+Proof. by split; rewrite fmap_None. Qed.
+
 Global Instance simpl_both_rotate_lookup_Some A b l i (x : A): SimplBothRel (=) (rotate b l !! i) (Some x) (l !! rotate_nat_add b i (length l) = Some x ∧ (i < length l)%nat).
 Proof. unfold SimplBothRel. by rewrite lookup_rotate_r_Some. Qed.
 
