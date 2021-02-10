@@ -1,5 +1,5 @@
 
-#define container_of(ptr, type, member) (type *)( (char *)(ptr) - offsetof(type,member) )
+#define container_of(ptr, type, member) (type *)( (unsigned char *)(ptr) - offsetof(type,member) )
 
 struct test {
   int a;
@@ -13,5 +13,5 @@ int container_of_test() {
   *b = 3;
   struct test *pt = container_of(b, struct test, b);
   pt->a = 4;
-  return pt->a;
+  return t.a;
 }
