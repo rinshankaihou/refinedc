@@ -278,6 +278,19 @@ Section own.
     by iIntros "_".
   Qed.
 
+  Lemma find_in_context_type_loc_own l T:
+    (∃ l1 β1 β ty, l1 ◁ₗ{β1} (l @ frac_ptr β ty) ∗ (l1 ◁ₗ{β1} (l @ frac_ptr β (place l)) -∗
+      T (own_state_min β1 β, ty))) -∗
+    find_in_context (FindLoc l) T.
+  Proof.
+    iDestruct 1 as (l1 β1 β ty) "[[% [Hmt Hl]] HT]".
+    iExists (_, _) => /=. iFrame. iApply "HT".
+    iSplit => //. by iFrame.
+  Qed.
+  Global Instance find_in_context_type_loc_own_inst l :
+    FindInContext (FindLoc l) 1%nat :=
+    λ T, i2p (find_in_context_type_loc_own l T).
+
   Lemma find_in_context_type_val_own l T:
     (∃ ty : type, l ◁ₗ ty ∗ T (t2mt (l @ frac_ptr Own ty))) -∗
     find_in_context (FindVal l) T.
@@ -339,41 +352,6 @@ Section ptr.
     iApply loc_in_bounds_shorten; last done. by rewrite /val_of_loc.
   Qed.
 
-  (* TODO: Think about this. This instance is probably not a good idea
-  since it is not clear how the ownership is split. More specialized
-  isntances like for uninit make more sense. *)
-  (* Lemma type_add_frac_ptr v2 β ty T (p : loc) n: *)
-  (*   (p ◁ₗ{β} ty -∗ v2 ◁ᵥ n @ int size_t -∗ T (val_of_loc (p +ₗ n)) (t2mt ((p +ₗ n) @ ptr))) -∗ *)
-  (*     typed_bin_op v2 (v2 ◁ᵥ n @ int size_t) p (p ◁ₗ{β} ty) (PtrOffsetOp u8) (IntOp size_t) PtrOp T. *)
-  (* Proof. *)
-  (*   iIntros "HT" (Hint) "Hp". iIntros (Φ) "HΦ". *)
-  (*   have ? := val_of_int_in_range _ _ _ Hint. *)
-  (*   have ? := val_to_of_int _ _ _ Hint. *)
-  (*   have ? := val_to_of_loc p. *)
-  (*   iApply (wp_binop_det (p +ₗ n)). { *)
-  (*     rewrite -(offset_loc_sz1 u8) //. *)
-  (*     move => h v. split => Heq; subst. by inversion Heq; simplify_eq. econstructor => //. unfold it_in_range, it_min  in *. simpl in *. lia. *)
-  (*   } *)
-  (*   iApply ("HΦ" with "[]"). 2: by iApply ("HT" with "[$Hp//] []"). *)
-  (*   done. *)
-  (* Qed. *)
-  (* Global Instance type_add_frac_ptr_inst v2 β ty T (p : loc) n: *)
-  (*   TypedBinOp v2 (v2 ◁ᵥ n @ int size_t)%I p (p ◁ₗ{β} ty) (PtrOffsetOp u8) (IntOp size_t) PtrOp T := *)
-  (*   i2p (type_add_frac_ptr v2 β ty T p n). *)
-
-  (* Lemma type_rounddown_ptr v1 v2 P2 T p: *)
-  (*   (⌜v1 = val_of_loc p⌝ -∗ P2 -∗ T (val_of_loc p) (t2mt (p @ ptr))) -∗ *)
-  (*     typed_bin_op v1 (v1 ◁ᵥ p @ ptr) v2 P2 RoundDownOp T. *)
-  (* Proof. *)
-  (*   iIntros "HT -> Hv2". iIntros (Φ) "HΦ". *)
-  (*   iApply wp_binop_det. by move => h /=; rewrite val_to_of_loc. *)
-  (*   iApply ("HΦ" with "[]"); last by iApply "HT". *)
-  (*   done. *)
-  (* Qed. *)
-  (* Global Instance type_rounddown_ptr_inst v1 v2 T p P2: *)
-  (*   TypedBinOp v1 (v1 ◁ᵥ p @ ptr)%I v2 P2 RoundDownOp T := *)
-  (*   i2p (type_rounddown_ptr v1 v2 P2 T p). *)
-
   Lemma simplify_ptr_hyp_place (p:loc) l T:
     (l ◁ₗ value void* (val_of_loc p) -∗ T) -∗
       simplify_hyp (l ◁ₗ p @ ptr) T.
@@ -384,18 +362,6 @@ Section ptr.
     SimplifyHypPlace l Own (p @ ptr)%I (Some 50%N) :=
     λ T, i2p (simplify_ptr_hyp_place p l T).
 
-  Lemma subsume_frac_ptr_learn_align l p β ty {HL: LearnAlignment β ty} T:
-    ⌜l = p⌝ ∗ (l ◁ₗ{β} ty -∗ ⌜l `aligned_to` HL.(learnalign_align)⌝ -∗ T) -∗
-    subsume (l ◁ₗ{β} ty) (l ◁ᵥ p @ ptr) T.
-  Proof.
-    iIntros "[-> HT] Hl". iSplitR => //.
-    iDestruct ((learnalign_learn HL) with "Hl") as %?.
-      by iApply ("HT" with "Hl").
-  Qed.
-  Global Instance subsume_frac_ptr_learn_align_inst l p β ty {HL: LearnAlignment β ty}:
-    Subsume (l ◁ₗ{β} ty) (l ◁ᵥ p @ ptr)%I :=
-    λ T, i2p (subsume_frac_ptr_learn_align l p β ty T).
-
   Lemma simplify_ptr_goal_val (p:loc) l T:
     T ⌜l = p⌝ -∗ simplify_goal (p ◁ᵥ l @ ptr) T.
   Proof. iIntros "HT". iExists _. iFrame. by iIntros (->). Qed.
@@ -403,17 +369,6 @@ Section ptr.
     SimplifyGoalVal p (l @ ptr)%I (Some 10%N) :=
     λ T, i2p (simplify_ptr_goal_val p l T).
 
-  Lemma find_in_context_type_loc_own l T:
-    (∃ l1 β1 β ty, l1 ◁ₗ{β1} (l @ &frac{β} ty) ∗ (l1 ◁ₗ{β1} (l @ &frac{β} (place l)) -∗ T (own_state_min β1 β, ty))) -∗
-    find_in_context (FindLoc l) T.
-  Proof.
-    iDestruct 1 as (l1 β1 β ty) "[[% [Hmt Hl]] HT]".
-    iExists (_, _) => /=. iFrame. iApply "HT".
-    iSplit => //. by iFrame.
-  Qed.
-  Global Instance find_in_context_type_loc_own_inst l :
-    FindInContext (FindLoc l) 1%nat :=
-    λ T, i2p (find_in_context_type_loc_own l T).
 End ptr.
 
 Section null.

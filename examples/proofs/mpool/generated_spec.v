@@ -13,16 +13,18 @@ Section spec.
     let len := patt__.1 in
     let entry_size := patt__.2 in
     (((0 < len)%nat) @ (optional (&own (
-      tyexists (λ local : nat,
+      tyexists (λ size : Z,
       tyexists (λ next : nat,
       tyexists (λ ly : layout,
+      let local : nat := Z.to_nat (size `quot` entry_size) in
       constrained (padded (struct struct_mpool_chunk [@{type}
-        ((local * entry_size) @ (int (size_t))) ;
+        (size @ (int (size_t))) ;
         (guarded ("mpool_chunk_t_0") (apply_dfun self (next, (entry_size))))
       ]) struct_mpool_chunk ly) (
+        ⌜(entry_size | size)⌝ ∗
         ⌜(len = local + next)%nat⌝ ∗
         ⌜local > 0⌝ ∗
-        ⌜ly = ly_with_align (local * entry_size) entry_size⌝
+        ⌜ly = ly_with_align (Z.to_nat size) entry_size⌝
       ))))
     )) null))
   )%I.
@@ -39,16 +41,18 @@ Section spec.
   Lemma mpool_chunk_t_unfold (entry_size : nat) (len : nat):
     (len @ mpool_chunk_t entry_size)%I ≡@{type} (
       (((0 < len)%nat) @ (optional (&own (
-        tyexists (λ local : nat,
+        tyexists (λ size : Z,
         tyexists (λ next : nat,
         tyexists (λ ly : layout,
+        let local : nat := Z.to_nat (size `quot` entry_size) in
         constrained (padded (struct struct_mpool_chunk [@{type}
-          ((local * entry_size) @ (int (size_t))) ;
+          (size @ (int (size_t))) ;
           (guarded "mpool_chunk_t_0" (next @ (mpool_chunk_t (entry_size))))
         ]) struct_mpool_chunk ly) (
+          ⌜(entry_size | size)⌝ ∗
           ⌜(len = local + next)%nat⌝ ∗
           ⌜local > 0⌝ ∗
-          ⌜ly = ly_with_align (local * entry_size) entry_size⌝
+          ⌜ly = ly_with_align (Z.to_nat size) entry_size⌝
         ))))
       )) null))
     )%I.
@@ -234,13 +238,13 @@ Section spec.
 
   (* Specifications for function [round_pointer_up]. *)
   Definition type_of_round_pointer_up :=
-    fn(∀ (p, size, align) : loc * loc * nat; (p @ (ptr)), (align @ (int (size_t))), (size @ (&own (uninit (size_t)))); True)
-      → ∃ diff : nat, ((p +ₗ diff) @ (ptr)); (size ◁ₗ (diff @ (int (size_t)))) ∗ ⌜(p +ₗ diff) `aligned_to` align⌝ ∗ ⌜diff < align⌝.
+    fn(∀ (p, size, align) : loc * loc * nat; (&own (place (p))), (align @ (int (size_t))), (size @ (&own (uninit (size_t)))); True)
+      → ∃ diff : Z, (&own (place (p +ₗ diff))); (size ◁ₗ (diff @ (int (size_t)))) ∗ ⌜0 <= diff < align⌝ ∗ ⌜(p +ₗ diff) `aligned_to` align⌝.
 
   (* Specifications for function [mpool_add_chunk]. *)
   Definition type_of_mpool_add_chunk :=
-    fn(∀ (p, q, n, entry_size, m) : loc * own_state * nat * nat * nat; (p @ (&frac{q} (n @ (mpool (entry_size))))), (&own (uninit (ly_with_align (m * entry_size) entry_size))), ((m * entry_size) @ (int (size_t))); True)
-      → ∃ () : (), ((Z_of_bool (bool_decide (0 < m)%nat)) @ (int (bool_it))); (p ◁ₗ{q} (((n + m)%nat) @ (mpool (entry_size)))).
+    fn(∀ (p, q, n, entry_size, size) : loc * own_state * nat * nat * Z; (p @ (&frac{q} (n @ (mpool (entry_size))))), (&own (uninit (ly_with_align (Z.to_nat size) entry_size))), (size @ (int (size_t))); ⌜(entry_size | size)⌝)
+      → ∃ () : (), ((Z_of_bool (bool_decide (0 < size))) @ (int (bool_it))); (p ◁ₗ{q} (((n + (Z.to_nat (size `quot` entry_size)))%nat) @ (mpool (entry_size)))).
 
   (* Specifications for function [mpool_free]. *)
   Definition type_of_mpool_free :=

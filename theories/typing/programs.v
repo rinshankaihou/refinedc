@@ -1135,6 +1135,18 @@ Section typing.
   Global Instance annot_learn_inst l β ty {L : Learnable (l ◁ₗ{β} ty)}:
     TypedAnnotStmt (LearnAnnot) l (l ◁ₗ{β} ty) :=
     λ T, i2p (annot_learn l β ty T).
+
+  Lemma annot_learn_aligment l β ty T {L : LearnAlignment β ty}:
+    (⌜l `aligned_to` learnalign_align L⌝ -∗ l ◁ₗ{β} ty -∗ T) -∗
+    typed_annot_stmt (LearnAlignment) l (l ◁ₗ{β} ty) T.
+  Proof.
+    iIntros "HT Hl". iApply step_fupd_intro => //. iModIntro.
+    iDestruct ((learnalign_learn L) with "Hl") as %?.
+    by iApply "HT".
+  Qed.
+  Global Instance annot_learn_align_inst l β ty {L : LearnAlignment β ty}:
+    TypedAnnotStmt (LearnAlignmentAnnot) l (l ◁ₗ{β} ty) :=
+    λ T, i2p (annot_learn_aligment l β ty T).
 End typing.
 
 (* This must be an hint extern because an instance would be a big slowdown . *)

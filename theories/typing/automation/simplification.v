@@ -20,7 +20,7 @@ Global Instance simpl_aligned_to_add l m (n : nat) : SimplBoth ((l +ₗ m * n) `
 Proof. apply aligned_to_add. Qed.
 
 Global Instance simpl_learn_aligned_to_mult l o n1 n2 `{!CanSolve (l `aligned_to` n2)} `{!CanSolve (0 ≤ o)} :
-  SimplImpl false ((l +ₗ o) `aligned_to` (n1 * n2)) (λ T, (l +ₗ o) `aligned_to` (n1 * n2) → ∀ o', o = (o' * n2)%nat → T) | 100.
+  SimplImpl false ((l +ₗ o) `aligned_to` (n1 * n2)) (λ T, (l +ₗ o) `aligned_to` (n1 * n2) → ∀ o' : nat, o = o' * n2 → T) | 100.
 Proof.
   unfold CanSolve in *. split; last naive_solver. move => HT Halign.
   feed destruct (aligned_to_mult_eq l n1 n2 o) as [x ?] => //; subst. apply: (HT _ (Z.to_nat x)) => //.

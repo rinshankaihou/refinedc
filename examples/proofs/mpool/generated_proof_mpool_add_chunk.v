@@ -16,7 +16,7 @@ Section proof_mpool_add_chunk.
     typed_function (impl_mpool_add_chunk global_sl_lock global_sl_unlock) type_of_mpool_add_chunk.
   Proof.
     Open Scope printing_sugar.
-    start_function "mpool_add_chunk" ([[[[p q] n] entry_size] m]) => arg_p arg_begin arg_size local_chunk.
+    start_function "mpool_add_chunk" ([[[[p q] n] entry_size] size]) => arg_p arg_begin arg_size local_chunk.
     split_blocks ((
       ∅
     )%I : gmap label (iProp Σ)) ((
@@ -25,7 +25,6 @@ Section proof_mpool_add_chunk.
     - repeat liRStep; liShow.
       all: print_typesystem_goal "mpool_add_chunk" "#0".
     Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
-    all: try by destruct m => //=; solve_goal.
     all: print_sidecondition_goal "mpool_add_chunk".
   Qed.
 End proof_mpool_add_chunk.

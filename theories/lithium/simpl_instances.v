@@ -73,6 +73,10 @@ Global Instance simpl_gt_both (n1 n2 : nat) `{!CanSolve (n1 ≠ 0)%nat} : SimplB
 Proof. unfold CanSolve in *; split; destruct n2; naive_solver lia. Qed.
 Global Instance simpl_ge_both (n1 n2 : nat) `{!CanSolve (n1 ≠ 0)%nat} : SimplBoth (n1 >= n2 * n1) (n2 = 0 ∨ n2 = 1)%nat.
 Proof. unfold CanSolve in *; split; destruct n2 as [|[]]; naive_solver lia. Qed.
+Global Instance simpl_ge_both_Z (n1 n2 : Z) `{!CanSolve (0 < n1)} : SimplBoth (n1 >= n2 * n1) (1 >= n2).
+Proof. unfold CanSolve in *; split; nia. Qed.
+Global Instance simpl_neq_ge_both_Z (n1 n2 : Z) `{!CanSolve (0 < n1)} : SimplBoth (¬ (n1 >= n2 * n1)) (n2 > 1).
+Proof. unfold CanSolve in *; split; nia. Qed.
 Global Instance simpl_gt_neq_0_both (n1 n2 : nat) `{!CanSolve (n1 ≠ 0)%nat} : SimplBoth (¬ n1 > n2 * n1) (n2 > 0)%nat.
 Proof. unfold CanSolve in *; split; destruct n2; try naive_solver lia. Qed.
 Global Instance simpl_ge_neq_0_both (n1 n2 : nat) `{!CanSolve (n1 ≠ 0)%nat} : SimplBoth (¬ n1 >= n2 * n1) (n2 > 1)%nat.
@@ -86,19 +90,20 @@ Global Instance simpl_mult_le z1 z2:
   SimplBoth (0 ≤ z1 * z2) ((0 ≤ z1 ∧ 0 ≤ z2) ∨ (z1 ≤ 0 ∧ z2 ≤ 0)).
 Proof. split; destruct z1, z2; naive_solver lia. Qed.
 
+Global Instance simpl_divides_impl a b:
+  SimplImpl true (a | b) (λ T, ∀ n, b = n * a → T).
+Proof. rewrite /Z.divide. split; naive_solver. Qed.
+
 Global Instance simpl_divides_and a b `{!CanSolve (a ≠ 0 ∧ b `mod` a = 0)}:
   SimplAnd (a | b) (λ T, T).
 Proof. revert select (CanSolve _) => -[?]. rewrite Z.mod_divide //. split; naive_solver. Qed.
+Global Instance simpl_divides_and_mul_r a b:
+  SimplAnd (a | b * a) (λ T, T).
+Proof. rewrite /Z.divide. split; naive_solver. Qed.
 
-(* TODO: this rule is quite specialized. Can we compose it from less specialized rules?*)
-Global Instance simpl_divides_impl_nat a b `{!CanSolve (0 < a)}:
-  SimplImpl true (a | Z.of_nat b) (λ T, ∀ n : nat, (b = n * Z.to_nat a)%nat → T).
-Proof.
-  unfold CanSolve in *. rewrite /Z.divide. split.
-  - move => HT [x Hx]. apply: (HT (Z.to_nat x)).
-    rewrite -Z2Nat.inj_mul; try lia.
-  - move => HT n ?. apply HT. eexists n. lia.
-Qed.
+Global Instance simpl_nat_divides_and_mul_r a b:
+  SimplAnd (a | b * a)%nat (λ T, T).
+Proof. rewrite /divide. split; naive_solver. Qed.
 
 Global Instance simpl_is_power_of_two_mult n1 n2 :
   SimplBoth (is_power_of_two (n1 * n2)) (is_power_of_two n1 ∧ is_power_of_two n2).

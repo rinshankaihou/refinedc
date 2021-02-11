@@ -7,6 +7,7 @@
  [[rc::global("alloc_state")]]
 static struct alloc_state allocator_state;
 
+ [[rc::tactics("all: try by apply keep_factor2_min_eq; [ solve_goal|]; apply Nat.divide_sub_r; apply Nat2Z_divide; rewrite /ly_align/ly_align_log/=; solve_goal.")]]
 void *alloc(size_t size) {
 
   [[rc::constraints("[initialized \"allocator_state\" ()]")]]
@@ -73,12 +74,12 @@ void init_alloc() {
   rc_share(allocator_state);
 }
 
- [[rc::tactics("all: try by rewrite /layout_wf ?Nat2Z.inj_mul ?Z2Nat.id //; repeat apply Z.divide_mul_r.")]]
+ [[rc::tactics("all: try by rewrite /layout_wf -Z.mod_divide // /ly_size/ly_align/=; nia.")]]
 void *alloc_array(size_t size, size_t n) {
   return alloc(n * size);
 }
 
- [[rc::tactics("all: try by rewrite /layout_wf ?Nat2Z.inj_mul ?Z2Nat.id //; repeat apply Z.divide_mul_r.")]]
+ [[rc::tactics("all: try by rewrite /layout_wf -Z.mod_divide // /ly_size/ly_align/=; nia.")]]
 void free_array(size_t size, size_t n, void *ptr) {
   free(n * size, ptr);
 }

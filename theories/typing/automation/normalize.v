@@ -7,11 +7,6 @@ Create HintDb refinedc_rewrite discriminated.
 Ltac normalize_autorewrite :=
   autorewrite with refinedc_rewrite; exact: eq_refl.
 
-(* TODO: make this unnecessary *)
-Lemma NatZmul_add_distr_r (n1 n2 : nat) z:
-  (n1 + z) * n2 = (n1 * n2)%nat + z * n2.
-Proof. lia. Qed.
-
 Hint Rewrite @drop_0 @take_ge using can_solve_tac : refinedc_rewrite.
 Hint Rewrite @take_app_le @drop_app_ge using can_solve_tac : refinedc_rewrite.
 Hint Rewrite @insert_length @app_length @fmap_length @rotate_length @replicate_length @drop_length : refinedc_rewrite.
@@ -28,7 +23,8 @@ Hint Rewrite Nat2Z.id : refinedc_rewrite.
 Hint Rewrite Z2Nat.inj_mul Z2Nat.inj_sub Z2Nat.id using can_solve_tac : refinedc_rewrite.
 Hint Rewrite Nat.succ_pred_pos using can_solve_tac : refinedc_rewrite.
 Hint Rewrite Nat.add_assoc Nat.min_id : refinedc_rewrite.
-Hint Rewrite <-Nat.mul_sub_distr_r Z.mul_add_distr_r Z.mul_sub_distr_r NatZmul_add_distr_r : refinedc_rewrite.
+Hint Rewrite Z.quot_mul using can_solve_tac : refinedc_rewrite.
+Hint Rewrite <-Nat.mul_sub_distr_r Z.mul_add_distr_r Z.mul_sub_distr_r : refinedc_rewrite.
 Hint Rewrite @bool_decide_eq_x_x_true @if_bool_decide_eq_branches : refinedc_rewrite.
 Hint Rewrite keep_factor2_is_power_of_two keep_factor2_min_eq using can_solve_tac : refinedc_rewrite.
 Hint Rewrite keep_factor2_min_1 keep_factor2_twice : refinedc_rewrite.

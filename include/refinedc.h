@@ -26,6 +26,7 @@
 #define rc_share(e) rc_annot(e, "ShareAnnot")
 #define rc_unfold_once(e) rc_annot(e, "UnfoldOnceAnnot")
 #define rc_learn(e) rc_annot(e, "LearnAnnot")
+#define rc_learn_alignment(e) rc_annot(e, "LearnAlignmentAnnot")
 
 #ifdef RC_ENABLE_FOCUS
 #define RC_FOCUS ,rc::trust_me

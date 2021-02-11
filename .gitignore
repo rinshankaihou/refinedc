@@ -13,3 +13,4 @@ _opam
 /theories/examples/tutorial/tutorial
 *.timing
 .lia.cache
+.nia.cache

@@ -21,23 +21,24 @@
 #include <spinlock.h>
 
 [[rc::parameters("p : loc", "size : loc", "align : nat")]]
-[[rc::args("p @ ptr", "align @ int<size_t>", "size @ &own<uninit<size_t>>")]]
-[[rc::exists("diff : nat")]]
-[[rc::returns("{p +ₗ diff} @ ptr")]]
-[[rc::ensures("own size : diff @ int<size_t>", "{(p +ₗ diff) `aligned_to` align}", "{diff < align}")]]
+[[rc::args("&own<place<p>>", "align @ int<size_t>", "size @ &own<uninit<size_t>>")]]
+[[rc::exists("diff : Z")]]
+[[rc::returns("&own<place<{p +ₗ diff}>>")]]
+[[rc::ensures("own size : diff @ int<size_t>", "{0 <= diff < align}", "{(p +ₗ diff) `aligned_to` align}")]]
 unsigned char * round_pointer_up(unsigned char *p, size_t align, size_t *size);
 
 
 typedef struct [[rc::parameters("entry_size: nat")]]
                [[rc::refined_by("len: nat")]]
                [[rc::ptr_type("mpool_chunk_t : {(0 < len)%nat} @ optional<&own<...>>")]]
-               [[rc::exists("local: nat", "next: nat", "ly : layout")]]
+               [[rc::exists("size : Z", "next: nat", "ly : layout")]]
+               [[rc::let("local : nat = {Z.to_nat (size `quot` entry_size)}")]]
                [[rc::size("ly")]]
-               [[rc::constraints("{(len = local + next)%nat}", "{local > 0}",
-                                 "{ly = ly_with_align (local * entry_size) entry_size}")]]
+               [[rc::constraints("{(entry_size | size)}", "{(len = local + next)%nat}", "{local > 0}",
+                                 "{ly = ly_with_align (Z.to_nat size) entry_size}")]]
 mpool_chunk {
 
-  [[rc::field("{local * entry_size} @ int<size_t>")]]
+  [[rc::field("size @ int<size_t>")]]
   size_t size;
 
   [[rc::field("next @ mpool_chunk_t<entry_size>")]]
@@ -209,13 +210,13 @@ void mpool_fini(struct mpool *p) {
  * Returns true if at least a portion of the chunk was added to pool, or false
  * if none of the buffer was usable in the pool.
  */
-[[rc::parameters("p : loc", "q : own_state", "n : nat", "entry_size : nat", "m : nat")]]
+[[rc::parameters("p : loc", "q : own_state", "n : nat", "entry_size : nat", "size : Z")]]
 [[rc::args("p @ &frac<q, n @ mpool<entry_size>>",
-           "&own<uninit<{ly_with_align (m * entry_size) entry_size}>>",
-           "{m * entry_size} @ int<size_t>")]]
-[[rc::returns("{Z_of_bool (bool_decide (0 < m)%nat)} @ int<bool_it>")]]
-[[rc::ensures("frac q p : {(n + m)%nat} @ mpool<entry_size>")]]
-  [[rc::tactics("all: try by destruct m => //=; solve_goal.")]]
+           "&own<uninit<{ly_with_align (Z.to_nat size) entry_size}>>",
+           "size @ int<size_t>")]]
+[[rc::requires("{(entry_size | size)}")]]
+[[rc::returns("{Z_of_bool (bool_decide (0 < size))} @ int<bool_it>")]]
+[[rc::ensures("frac q p : {(n + (Z.to_nat (size `quot` entry_size)))%nat} @ mpool<entry_size>")]]
 bool mpool_add_chunk(struct mpool *p, void *begin, size_t size)
 {
   struct mpool_chunk *chunk;
@@ -248,7 +249,9 @@ bool mpool_add_chunk(struct mpool *p, void *begin, size_t size)
 [[rc::exists("b : bool")]]
 [[rc::returns("b @ optional<&own<uninit<{ly_with_align entry_size entry_size}>>>")]]
 [[rc::ensures("frac q p : {(n-1)%nat} @ mpool<entry_size>", "{q = Own → b ↔ (0 < n)%nat}")]]
-  [[rc::tactics("all: try by destruct x1 as [|[]]; try solve_goal; zify; ring_simplify; solve_goal.")]]
+ [[rc::tactics("all: try (rewrite Z_distr_mul_sub_1; normalize_and_simpl_goal).")]]
+ [[rc::tactics("all: try solve_goal; try (etrans; [done|]).")]]
+ [[rc::tactics("all: try by rewrite /ly_size/=/ly_size/=; nia.")]]
 static void *mpool_alloc_no_fallback(struct mpool *p)
 {
   void *ret;
@@ -351,9 +354,9 @@ void mpool_free(struct mpool *p, void *ptr) {
 [[rc::exists("n2 : nat")]]
 [[rc::returns("optional<&own<uninit<{ly_with_align (count * entry_size) (align * entry_size)}>>>")]]
 [[rc::ensures("frac q p : n2 @ mpool<entry_size>", "{q = Own → n2 <= n}")]]
+  [[rc::tactics("all: try (etrans; [eassumption|]); repeat progress rewrite /ly_size/=.")]]
+  [[rc::tactics("all: rewrite -?Nat.mul_sub_distr_r; try apply: mult_le_compat_r; try apply mult_le_compat_r_1.")]]
   [[rc::tactics("all: try by destruct o'; solve_goal.")]]
-  [[rc::tactics("all: try by apply mult_le_compat_r; solve_goal.")]]
-  [[rc::tactics("all: try by repeat progress rewrite /ly_size/=; have : (x4 - Z.to_nat o' - count > 0)%nat; solve_goal.")]]
 void *mpool_alloc_contiguous_no_fallback(struct mpool *p, size_t count, size_t align)
 {
   struct mpool_chunk **prev;
@@ -384,6 +387,7 @@ void *mpool_alloc_contiguous_no_fallback(struct mpool *p, size_t count, size_t a
     struct mpool_chunk *chunk = *prev;
     size_t before_start;
 
+    rc_learn_alignment(*chunk);
     /* Round start address up to the required alignment. */
     round_pointer_up((unsigned char *)chunk, align, &before_start);
 

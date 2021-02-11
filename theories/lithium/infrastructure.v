@@ -12,6 +12,10 @@ Class IsProtected {A} (x : A) : Set := is_protected: ().
 Hint Extern 0 (ContainsProtected ?x) => (match x with | context [protected _] => exact: tt end) : typeclass_instances.
 Hint Extern 0 (IsProtected (protected _) ) => (exact: tt) : typeclass_instances.
 
+(** * [IsVar] *)
+Class IsVar {A} (x : A) : Prop := is_var: True.
+Hint Extern 0 (IsVar ?x) => (is_var x; exact: I) : typeclass_instances.
+
 (** * [AssumeInj] *)
 Class AssumeInj {A B} (R : relation A) (S : relation B) (f : A → B) : Prop := assume_inj : True.
 Global Instance assume_inj_inj A B R S (f : A → B) `{!Inj R S f} : AssumeInj R S f.

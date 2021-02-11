@@ -507,15 +507,15 @@ Lemma keep_factor2_is_power_of_two n x:
   keep_factor2 n x = n.
 Proof. move => [? ->]. by rewrite /keep_factor2 factor2'_pow. Qed.
 
-Lemma keep_factor2_min_eq n m:
-  is_power_of_two n →
-  (n `min` keep_factor2 (m * n) n) = n.
+Lemma keep_factor2_min_eq (n m : nat):
+  is_power_of_two n → (n | m) →
+  (n `min` keep_factor2 m n) = n.
 Proof.
-  move => ?. destruct (decide (m = 0)); first by subst; rewrite keep_factor2_0; lia.
+  move => ? [o ->]. destruct (decide (o = 0)); first by subst; rewrite keep_factor2_0; lia.
   destruct (decide (n = 0)); first lia.
   rewrite keep_factor2_mult // (keep_factor2_is_power_of_two n) //.
-  have ?: keep_factor2 m n ≠ 0 by apply keep_factor2_neq_0.
-  destruct (keep_factor2 m n); lia.
+  have ?: keep_factor2 o n ≠ 0 by apply keep_factor2_neq_0.
+  destruct (keep_factor2 o n); lia.
 Qed.
 
 Lemma keep_factor2_min_1 n:
@@ -582,6 +582,15 @@ Proof.
         exists (S m). by rewrite mult_comm -Nat.pow_succ_r'.
   - move => [[m1 ->] [m2 ->]]. exists (m1 + m2). by rewrite Nat.pow_add_r.
 Qed.
+
+Lemma Z_distr_mul_sub_1 a b:
+  (a * b - b = (a - 1) * b)%Z.
+Proof. nia. Qed.
+
+Lemma mult_le_compat_r_1 m p:
+  (1 ≤ m)%nat → (p ≤ m * p)%nat.
+Proof. nia. Qed.
+
 
 Lemma if_bool_decide_eq_branches {A} P `{!Decision P} (x : A) :
   (if bool_decide P then x else x) = x.

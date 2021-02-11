@@ -24,7 +24,7 @@ Section proof_alloc_array.
     - repeat liRStep; liShow.
       all: print_typesystem_goal "alloc_array" "#0".
     Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
-    all: try by rewrite /layout_wf ?Nat2Z.inj_mul ?Z2Nat.id //; repeat apply Z.divide_mul_r.
+    all: try by rewrite /layout_wf -Z.mod_divide // /ly_size/ly_align/=; nia.
     all: print_sidecondition_goal "alloc_array".
   Qed.
 End proof_alloc_array.

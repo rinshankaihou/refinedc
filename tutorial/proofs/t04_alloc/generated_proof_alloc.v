@@ -44,6 +44,7 @@ Section proof_alloc.
     - repeat liRStep; liShow.
       all: print_typesystem_goal "alloc" "#1".
     Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
+    all: try by apply keep_factor2_min_eq; [ solve_goal|]; apply Nat.divide_sub_r; apply Nat2Z_divide; rewrite /ly_align/ly_align_log/=; solve_goal.
     all: print_sidecondition_goal "alloc".
   Qed.
 End proof_alloc.

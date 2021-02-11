@@ -25,7 +25,9 @@ Section proof_mpool_alloc_no_fallback.
     - repeat liRStep; liShow.
       all: print_typesystem_goal "mpool_alloc_no_fallback" "#0".
     Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
-    all: try by destruct x1 as [|[]]; try solve_goal; zify; ring_simplify; solve_goal.
+    all: try (rewrite Z_distr_mul_sub_1; normalize_and_simpl_goal).
+    all: try solve_goal; try (etrans; [done|]).
+    all: try by rewrite /ly_size/=/ly_size/=; nia.
     all: print_sidecondition_goal "mpool_alloc_no_fallback".
   Qed.
 End proof_mpool_alloc_no_fallback.
