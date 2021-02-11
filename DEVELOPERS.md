@@ -39,18 +39,18 @@ following command.
 ```bash
 dune exec -- refinedc
 ```
-Note however that you should **always** use the `--no-build` option for the
-`check` command. The reason is that `refinedc check` calls `dune`, and under
-the `dune` environment one should not call `dune`.
-```bash
-# !!!INVALID!!!
-dune exec -- refinedc check examples/queue.c
+Note however that the command will not build the generated Coq code since this
+would require invoking dune recursively under a dune environment, which is not
+supported. The build is disabled in `rc-project.toml` with `no-build = true`.
 
-# Alternative
+To fully check an example in the repository you can use one of the following
+two (equivalent) methods:
+```bash
+# With the build script.
 ./build.sh examples/queue.c
 
-# Equivalent to the following valid command sequence.
-dune exec -- refinedc check --no-build examples/queue.c
+# Manually.
+dune exec -- refinedc check examples/queue.c
 cd examples/proofs/queue
 dune build
 cd -

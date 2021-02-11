@@ -251,7 +251,7 @@ let run : config -> string -> unit = fun cfg c_file ->
     Printf.sprintf " (theories %s))" (String.concat " " theories);
   ];
   (* Run Coq type-checking. *)
-  if not cfg.no_build then
+  if not (cfg.no_build || project_config.project_no_build) then
     begin
       Sys.chdir output_dir;
       match Sys.command "dune build --display=short" with

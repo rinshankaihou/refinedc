@@ -21,7 +21,7 @@ uninstall:
 C_SRC = $(wildcard examples/*.c) $(wildcard tutorial/*.c) $(wildcard linux/casestudies/*.c) $(wildcard linux/pkvm/*.c)
 
 %.c.gen: %.c phony
-	@dune exec -- refinedc check --no-build $<
+	@dune exec -- refinedc check $<
 .PHONY: phony
 
 generate_all: $(addsuffix .gen, $(C_SRC))

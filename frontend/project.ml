@@ -11,7 +11,8 @@ type project_config =
   { project_coq_root    : coq_path  (** Coq path of the project root. *)
   ; project_theories    : coq_path list (** Extra Coq (dune) theories. *)
   ; project_cpp_include : string list (** CPP include directories. *)
-  ; project_cpp_with_rc : bool (** Use global RefinedC include directory? *) }
+  ; project_cpp_with_rc : bool (** Use global RefinedC include directory? *)
+  ; project_no_build    : bool (** Do not run the Coq compilation. *) }
 
 (** [default_project_config coq_path] builds a default configuration for a new
     RefinedC project under Coq logical directory [coq_path]. *)
@@ -19,7 +20,8 @@ let default_project_config : coq_path -> project_config = fun coq_path ->
   { project_coq_root    = coq_path
   ; project_theories    = []
   ; project_cpp_include = []
-  ; project_cpp_with_rc = true }
+  ; project_cpp_with_rc = true
+  ; project_no_build    = false }
 
 (** [read_project_file fname] reads a RefinedC project configuration from file
     [fname] (in Toml format). The function may raise [Sys_error] in case of an
@@ -36,11 +38,13 @@ let read_project_file : string -> project_config = fun file ->
   let theories = ref None in
   let cpp_include = ref None in
   let cpp_with_rc = ref None in
+  let no_build = ref None in
   let handle_entry key value =
     let open TomlTypes in
     let section = Table.Key.to_string key in
     match (section, value) with
     | ("coq_root", TString(s)) -> coq_root := Some(s)
+    | ("no_build", TBool(b)  ) -> no_build := Some(b)
     | ("coq"     , TTable(t) ) ->
         let handle_entry key value =
           let key = Table.Key.to_string key in
@@ -70,6 +74,8 @@ let read_project_file : string -> project_config = fun file ->
         Table.iter handle_entry t
     | ("coq_root", _         ) ->
         panic "Key [%s] should contain a string" section
+    | ("no_build", _         ) ->
+        panic "Key [%s] should contain a boolean" section
     | ("coq"     , _         ) ->
         panic "Key [%s] should be a section." section
     | ("cpp"     , _         ) ->
@@ -88,8 +94,9 @@ let read_project_file : string -> project_config = fun file ->
   in
   let project_cpp_include = Option.get [] !cpp_include in
   let project_cpp_with_rc = Option.get true !cpp_with_rc in
+  let project_no_build = Option.get false !no_build in
   { project_coq_root ; project_theories ; project_cpp_include
-  ; project_cpp_with_rc }
+  ; project_cpp_with_rc ; project_no_build }
 
 (** [write_project_file config fname] writes the configuration [config] to the
     file [fname]. The function can raise [Sys_error] in case of a problem when
