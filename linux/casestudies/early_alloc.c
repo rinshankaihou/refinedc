@@ -62,7 +62,7 @@ static unsigned char * cur1;
 /* } */
 
 [[rc::parameters("n : nat")]]
-[[rc::args("ptr")]]
+[[rc::args("uninit<void*>")]]
 [[rc::requires("global cur1 : &own<uninit<{ly_set_size PAGE_LAYOUT n}>>")]]
 [[rc::requires("global size1 : n @ int<u64>")]]
 [[rc::exists("m : nat")]]

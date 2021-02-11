@@ -327,47 +327,47 @@ Notation "&shr< ty >" := (frac_ptr Shr ty) (only printing, format "'&shr<' ty '>
 Section ptr.
   Context `{!typeG Σ}.
 
-  Program Definition ptr : rtype := {|
+  Program Definition ptr (n : nat) : rtype := {|
     rty_type := loc;
     rty l' := {|
-      ty_own β l := (⌜l `has_layout_loc` void*⌝ ∗ l ↦[β] l')%I;
+      ty_own β l := (⌜l `has_layout_loc` void*⌝ ∗ loc_in_bounds l' n ∗ l ↦[β] l')%I;
   |} |}.
-  Next Obligation. iIntros (????). iDestruct 1 as "[$ ?]". by iApply heap_mapsto_own_state_share. Qed.
+  Next Obligation. iIntros (????). iDestruct 1 as "[$ [$ ?]]". by iApply heap_mapsto_own_state_share. Qed.
 
-  Global Program Instance rmovable_ptr : RMovable ptr := {|
+  Global Program Instance rmovable_ptr n : RMovable (ptr n) := {|
     rmovable l := {|
       ty_layout := void*;
-      ty_own_val v := (⌜v = val_of_loc l⌝)%I;
+      ty_own_val v := (⌜v = val_of_loc l⌝ ∗ loc_in_bounds l n)%I;
   |} |}.
   Next Obligation. iIntros (l l'). by iDestruct 1 as (?) "_". Qed.
-  Next Obligation. iIntros (l v). by iDestruct 1 as %->. Qed.
-  Next Obligation. iIntros (l v) "[_ Hl]". eauto with iFrame. Qed.
-  Next Obligation. iIntros (l l' v ?) "Hl ->". by iFrame. Qed.
+  Next Obligation. iIntros (n l v) "[Hv _]". by iDestruct "Hv" as %->. Qed.
+  Next Obligation. iIntros (n l v) "[_ [? Hl]]". eauto with iFrame. Qed.
+  Next Obligation. iIntros (n l l' v ?) "Hl [-> $]". by iFrame. Qed.
   Next Obligation. done. Qed.
 
-  Instance ptr_loc_in_bounds l β : LocInBounds (l @ ptr) β bytes_per_addr.
+  Instance ptr_loc_in_bounds l n β : LocInBounds (l @ ptr n) β bytes_per_addr.
   Proof.
-    constructor. iIntros (?) "[_ Hl]".
+    constructor. iIntros (?) "[_ [_ Hl]]".
     iDestruct (heap_mapsto_own_state_loc_in_bounds with "Hl") as "Hb".
     iApply loc_in_bounds_shorten; last done. by rewrite /val_of_loc.
   Qed.
 
-  Lemma simplify_ptr_hyp_place (p:loc) l T:
-    (l ◁ₗ value void* (val_of_loc p) -∗ T) -∗
-      simplify_hyp (l ◁ₗ p @ ptr) T.
+  Lemma simplify_ptr_hyp_place (p:loc) l n T:
+    (loc_in_bounds p n -∗ l ◁ₗ value void* (val_of_loc p) -∗ T) -∗
+      simplify_hyp (l ◁ₗ p @ ptr n) T.
   Proof.
-    iIntros "HT [% Hl]". iApply "HT". by repeat iSplit.
+    iIntros "HT [% [#? Hl]]". iApply "HT"; first done. by repeat iSplit.
   Qed.
-  Global Instance simplify_ptr_hyp_place_inst p l:
-    SimplifyHypPlace l Own (p @ ptr)%I (Some 50%N) :=
-    λ T, i2p (simplify_ptr_hyp_place p l T).
+  Global Instance simplify_ptr_hyp_place_inst p l n:
+    SimplifyHypPlace l Own (p @ ptr n)%I (Some 50%N) :=
+    λ T, i2p (simplify_ptr_hyp_place p l n T).
 
-  Lemma simplify_ptr_goal_val (p:loc) l T:
-    T ⌜l = p⌝ -∗ simplify_goal (p ◁ᵥ l @ ptr) T.
-  Proof. iIntros "HT". iExists _. iFrame. by iIntros (->). Qed.
-  Global Instance simplify_ptr_goal_val_inst (p : loc) l:
-    SimplifyGoalVal p (l @ ptr)%I (Some 10%N) :=
-    λ T, i2p (simplify_ptr_goal_val p l T).
+  Lemma simplify_ptr_goal_val (p:loc) l n T:
+    T (⌜l = p⌝ ∗ loc_in_bounds l n) -∗ simplify_goal (p ◁ᵥ l @ ptr n) T.
+  Proof. iIntros "HT". iExists _. iFrame. iIntros "[-> ?]". by iFrame. Qed.
+  Global Instance simplify_ptr_goal_val_inst (p : loc) l n:
+    SimplifyGoalVal p (l @ ptr n)%I (Some 10%N) :=
+    λ T, i2p (simplify_ptr_goal_val p l n T).
 
 End ptr.
 

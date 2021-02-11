@@ -26,7 +26,7 @@ Section spec.
 
   (* Specifications for function [hyp_early_alloc_page1]. *)
   Definition type_of_hyp_early_alloc_page1 :=
-    fn(∀ n : nat; (ptr); (global_with_type "cur1" Own (&own (uninit (ly_set_size PAGE_LAYOUT n)))) ∗ (global_with_type "size1" Own (n @ (int (u64)))))
+    fn(∀ n : nat; (uninit (void*)); (global_with_type "cur1" Own (&own (uninit (ly_set_size PAGE_LAYOUT n)))) ∗ (global_with_type "size1" Own (n @ (int (u64)))))
       → ∃ m : nat, (optionalO (λ _ : unit,   &own (zeroed (PAGE_LAYOUT))
       ) (null)); (global_with_type "size1" Own (m @ (int (u64)))) ∗ (global_with_type "cur1" Own (&own (uninit (ly_set_size PAGE_LAYOUT m)))).
 
