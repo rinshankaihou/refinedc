@@ -359,7 +359,7 @@ Section ptr.
     iIntros "HT [% [#? Hl]]". iApply "HT"; first done. by repeat iSplit.
   Qed.
   Global Instance simplify_ptr_hyp_place_inst p l n:
-    SimplifyHypPlace l Own (p @ ptr n)%I (Some 50%N) :=
+    SimplifyHypPlace l Own (p @ ptr n)%I (Some 0%N) :=
     λ T, i2p (simplify_ptr_hyp_place p l n T).
 
   Lemma simplify_ptr_goal_val (p:loc) l n T:

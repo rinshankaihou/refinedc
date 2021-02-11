@@ -49,10 +49,15 @@ extern void clear_page(void *to);
 [[rc::parameters("base : loc", "given : Z", "remaining : Z", "n : Z")]]
 [[rc::args("n @ int<u32>")]]
 [[rc::requires("global mem : {(base, given, remaining)} @ region")]]
-[[rc::requires("{0 < n ≤ remaining}")]]
+[[rc::requires("{0 < n ≤ remaining}", "{n ≪ PAGE_SHIFT ≤ max_int u32}")]]
 [[rc::returns("&own<uninit<PAGES<{Z.to_nat n}>>>")]]
 [[rc::ensures("global mem : {(base, given + n, remaining - n)%Z} @ region")]]
-[[rc::trust_me]] // FIXME
+[[rc::tactics("all: unfold PAGE_SIZE, PAGE_SHIFT in *; try solve_goal.")]]
+[[rc::tactics("assert (0 ≤ n ≪ 12); last by lia. by apply Z.shiftl_nonneg.")]]
+[[rc::tactics("transitivity max_alloc_end; last done; etransitivity; last exact H10; "
+              "rewrite Z.shiftl_mul_pow2 -?Z.add_assoc => //=; apply -> Z.add_le_mono_l; lia.")]]
+[[rc::tactics("rewrite Z.shiftl_mul_pow2 in H18 => //. lia.")]]
+[[rc::tactics("rewrite Z.shiftl_mul_pow2 //=. lia.")]]
 void *hyp_early_alloc_contig(unsigned int nr_pages){
   uintptr_t ret = cur, p;
   unsigned int i;
@@ -60,6 +65,7 @@ void *hyp_early_alloc_contig(unsigned int nr_pages){
   if (!nr_pages)
     return NULL;
 
+  rc_unfold(base);
   cur += nr_pages << PAGE_SHIFT;
   if (cur > end) {
     cur = ret;

@@ -13,6 +13,7 @@
 #define PAGE_MASK  (~(PAGE_SIZE-1))
 
 //@rc::inlined
+//@Definition PAGE_SHIFT := (12).
 //@Definition PAGE_SIZE := (4096).
 //@
 //@Definition PAGES (n : nat) : layout :=
