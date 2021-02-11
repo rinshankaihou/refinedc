@@ -9,9 +9,10 @@ Section proof_hyp_early_alloc_page.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [hyp_early_alloc_page]. *)
-  Lemma type_hyp_early_alloc_page (global_hyp_early_alloc_contig : loc) :
+  Lemma type_hyp_early_alloc_page (global_mem global_hyp_early_alloc_contig : loc) :
+    global_locs !! "mem" = Some global_mem →
     global_hyp_early_alloc_contig ◁ᵥ global_hyp_early_alloc_contig @ function_ptr type_of_hyp_early_alloc_contig -∗
-    typed_function (impl_hyp_early_alloc_page global_hyp_early_alloc_contig) type_of_hyp_early_alloc_page.
+    typed_function (impl_hyp_early_alloc_page global_mem global_hyp_early_alloc_contig) type_of_hyp_early_alloc_page.
   Proof.
     Open Scope printing_sugar.
     start_function "hyp_early_alloc_page" ([[base given] remaining]) => arg_arg.

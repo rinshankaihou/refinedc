@@ -369,6 +369,13 @@ Section ptr.
     SimplifyGoalVal p (l @ ptr n)%I (Some 10%N) :=
     λ T, i2p (simplify_ptr_goal_val p l n T).
 
+  Lemma simplify_ptr_hyp_val (v : val) (p : loc) n T:
+    (⌜v = p⌝ -∗ loc_in_bounds p n -∗ p ◁ᵥ p @ ptr n -∗ T) -∗
+    simplify_hyp (v ◁ᵥ p @ ptr n) T.
+  Proof. iIntros "HT [% #Hlib]". iApply "HT" => //. by iSplit. Qed.
+  Global Instance simplify_ptr_hyp_val_inst (v : val) (p : loc) n `{!TCUnless (FastDone (v = p))}:
+    SimplifyHypVal v (p @ ptr n)%I (Some 0%N) :=
+    λ T, i2p (simplify_ptr_hyp_val v p n T).
 End ptr.
 
 Section null.

@@ -611,3 +611,8 @@ Ltac solve_sep_entails :=
     | (∃ _, _)%I => iDestruct H as (?) "?"
     end);
   eauto with iFrame.
+
+Inductive TCFalse : Prop :=.
+Existing Class TCFalse.
+
+Notation TCUnless P := (TCIf P TCFalse TCTrue).

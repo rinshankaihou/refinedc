@@ -23,9 +23,9 @@ Section spec.
     let z_cur : Z := (base.2 + given * PAGE_SIZE)%Z in
     let z_end : Z := (base.2 + (given + remaining) * PAGE_SIZE)%Z in
     constrained (struct struct_region [@{type}
-      (own_constrained (nonshr_constraint ((base.1, z_cur) ◁ₗ uninit (PAGES (Z.to_nat remaining)))) (value (void*) (base))) ;
       (z_end @ (int (uintptr_t))) ;
-      (z_cur @ (int (uintptr_t)))
+      (z_cur @ (int (uintptr_t))) ;
+      (own_constrained (nonshr_constraint ((base.1, z_cur) ◁ₗ uninit (PAGES (Z.to_nat remaining)))) (base @ (ptr (Z.to_nat ((given + remaining) * PAGE_SIZE)))))
     ]) (
       ⌜0 ≤ given⌝ ∗
       ⌜0 ≤ remaining⌝
@@ -49,9 +49,9 @@ Section spec.
       let z_cur : Z := (base.2 + given * PAGE_SIZE)%Z in
       let z_end : Z := (base.2 + (given + remaining) * PAGE_SIZE)%Z in
       constrained (struct struct_region [@{type}
-        (own_constrained (nonshr_constraint ((base.1, z_cur) ◁ₗ uninit (PAGES (Z.to_nat remaining)))) (value (void*) (base))) ;
         (z_end @ (int (uintptr_t))) ;
-        (z_cur @ (int (uintptr_t)))
+        (z_cur @ (int (uintptr_t))) ;
+        (own_constrained (nonshr_constraint ((base.1, z_cur) ◁ₗ uninit (PAGES (Z.to_nat remaining)))) (base @ (ptr (Z.to_nat ((given + remaining) * PAGE_SIZE)))))
       ]) (
         ⌜0 ≤ given⌝ ∗
         ⌜0 ≤ remaining⌝
@@ -99,7 +99,7 @@ Section spec.
 
   (* Specifications for function [hyp_early_alloc_page]. *)
   Definition type_of_hyp_early_alloc_page :=
-    fn(∀ (base, given, remaining) : loc * Z * Z; (uninit (void*)); (global_with_type "mem" Own (((base, given, remaining)) @ (region))) ∗ ⌜0 < remaining⌝)
+    fn(∀ (base, given, remaining) : loc * Z * Z; (uninit (void*)); (global_with_type "mem" Own (((base, given, remaining)) @ (region))) ∗ ⌜0 ≠ remaining⌝)
       → ∃ () : (), (&own (uninit (PAGE))); (global_with_type "mem" Own (((base, given + 1, remaining - 1)) @ (region))).
 
   (* Specifications for function [hyp_early_alloc_init]. *)
