@@ -22,6 +22,7 @@ variables:
   only:
   - master@iris/refinedc
   - /^ci/@iris/refinedc
+  - /^time/@iris/refinedc
   except:
   - triggers
   - schedules
@@ -34,8 +35,20 @@ build-coq.8.12.0:
   variables:
     OPAM_PINS: "coq version 8.12.0   cerberus git git+https://github.com/rems-project/cerberus.git#6ea80db048080468761499238fa0d045222ccc52"
     DENY_WARNINGS: "1"
+  only:
+  - master@iris/refinedc
+  - /^time/@iris/refinedc
+  # timing only for master and /time branches
   tags:
   - fp-timing
+
+build-coq.8.12.0:
+  <<: *template
+  variables:
+    OPAM_PINS: "coq version 8.12.0   cerberus git git+https://github.com/rems-project/cerberus.git#6ea80db048080468761499238fa0d045222ccc52"
+    DENY_WARNINGS: "1"
+  only:
+  - /^ci/@iris/refinedc
 
 build-iris.dev:
   <<: *template
