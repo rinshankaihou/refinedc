@@ -30,7 +30,7 @@ variables:
 
 ## Build jobs
 
-build-coq.8.12.0:
+build-coq.8.12.0-timing:
   <<: *template
   variables:
     OPAM_PINS: "coq version 8.12.0   cerberus git git+https://github.com/rems-project/cerberus.git#6ea80db048080468761499238fa0d045222ccc52"
