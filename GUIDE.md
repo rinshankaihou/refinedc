@@ -14,7 +14,25 @@ Second, a style guide for RefinedC development.
 
 ## Style guide
 
-1. Follow the std++/Iris style.
-2. If there is a typeclass to restrict when a typing rule applies, but
+1. Follow the std++/Iris style except when noted otherwise below. In
+   particular, do the following:
+  - Only use `Lemma`, not any of the other variants like `Fact` or
+    similar.
+  - Specify all types in Definitions, both for arguments and for the
+    Definition itself.
+  - Use std++'s typeclasses to overload existing notations (e.g.
+    `ElemOf` for `∈`).
+  - Type parameters should use captial latin letters, starting from A
+    and should usually be implicit.
+  - Use `done` or `by ...` to solve trivial goals. It replaces
+    `reflexivity`, `trivial`, `assumption`, ...
+2. Prefer the ssreflect tactics to the Coq tactics. I.e. use `move =>
+   ...` instead of `intros ...`, `have ... : ...` instead of `assert`,
+   `have ... := ...` instead of `pose proof`, `move Heq: (...) => ?`
+   instead of `remember` and so on. See
+   https://coq.inria.fr/distrib/current/refman/proof-engine/ssreflect-proof-language.html
+   for documentation on ssreflect.
+3. Use std++ where possible. E.g. use `f <$> l` instead of `map f l`.
+4. If there is a typeclass to restrict when a typing rule applies, but
    it does not contain useful information for proving the typing rule,
    it should only be on the instance, not the lemma.
