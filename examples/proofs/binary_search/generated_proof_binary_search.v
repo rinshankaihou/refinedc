@@ -40,8 +40,8 @@ Section proof_binary_search.
       all: print_typesystem_goal "binary_search" "#1".
     Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
     all: try by [revert select (∀ i j, _ → _ → ¬ R _ _); apply; [| done];solve_goal].
-    all: try by apply: (binary_search_cond_1 y); solve_goal.
-    all: try by apply: (binary_search_cond_2 y); solve_goal.
+    all: try by apply: binary_search_cond_1; [solve_goal|..]; solve_goal.
+    all: try by apply: binary_search_cond_2; [solve_goal|..]; solve_goal.
     all: print_sidecondition_goal "binary_search".
   Qed.
 End proof_binary_search.

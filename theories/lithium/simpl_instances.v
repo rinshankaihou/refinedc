@@ -236,6 +236,17 @@ Proof.
   case_bool_decide; [rewrite subequiv_insert_in_l | rewrite subequiv_insert_ne_l ]; naive_solver.
 Qed.
 
+Global Instance simpl_ig_nil_subequiv {A} (l1 l2 : list A) :
+  SimplBothRel (list_subequiv []) l1 l2 (l1 = l2).
+Proof.
+  split; [|naive_solver] => Hl. apply: list_eq => i.
+  move: (Hl i) => [? ?]. set_solver.
+Qed.
+
+Global Instance simpl_nil_subequiv {A} (l : list A) ig :
+  SimplBothRel (list_subequiv ig) [] l (l = []).
+Proof. by split; rewrite subequiv_nil_l. Qed.
+
 Lemma lookup_eq_app_r {A} (l1 l2 suffix : list A) (i : nat) :
   length l1 = length l2 →
   l1 !! i = l2 !! i ↔ (l1 ++ suffix) !! i = (l2 ++ suffix) !! i.

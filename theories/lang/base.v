@@ -248,6 +248,14 @@ Qed.
       split; first done. etrans; first exact: H1i. naive_solver.
   Qed.
 
+  Lemma subequiv_nil_l {A} (l : list A) ig:
+    list_subequiv ig [] l ↔ l = [].
+  Proof. split => Hs; destruct l => //. by move: (Hs 0) => [??]. Qed.
+
+  Lemma subequiv_nil_r {A} (l : list A) ig:
+    list_subequiv ig l [] ↔ l = [].
+  Proof. split => Hs; destruct l => //. by move: (Hs 0) => [??]. Qed.
+
   Lemma subequiv_insert_in_l {A} (l1 l2 : list A) j x ig:
     j ∈ ig →
     list_subequiv ig (<[j := x]>l1) l2 ↔ list_subequiv ig l1 l2.
@@ -350,6 +358,33 @@ Section bi_big_op.
   End map.
 End bi_big_op.
 
+Section big_op.
+Context {PROP : bi}.
+Implicit Types P Q : PROP.
+Implicit Types Ps Qs : list PROP.
+Implicit Types A : Type.
+
+(** ** Big ops over lists *)
+Section sep_list.
+  Context {A : Type}.
+  Implicit Types l : list A.
+  Implicit Types Φ Ψ : nat → A → PROP.
+
+  Lemma big_sepL_insert l i x Φ:
+    (i < length l)%nat →
+ (([∗ list] k↦v ∈ <[i:=x]> l, Φ k v) ⊣⊢ Φ i x ∗ ([∗ list] k↦v ∈ l, if bool_decide (k = i) then emp else Φ k v)).
+Proof.
+  intros Hl.
+  destruct (lookup_lt_is_Some_2 l i Hl) as [y Hy].
+  rewrite -(take_drop_middle l i y) // insert_app_r_alt take_length_le // ?Nat.sub_diag /=; [|lia..].
+  rewrite !big_sepL_app /= take_length_le ?Nat.add_0_r ?bool_decide_true ?left_id //; [|lia].
+  rewrite assoc (comm _ _ (Φ _ _)) -assoc.
+  do 2 f_equiv; apply big_sepL_proper => ?? /(lookup_lt_Some _ _ _) Hin ; rewrite bool_decide_false //.
+  - rewrite take_length in Hin. lia.
+  - rewrite drop_length in Hin. lia.
+Qed.
+End sep_list.
+End big_op.
 
 Lemma filter_nil_inv {A} P `{!∀ x, Decision (P x)} (l : list A):
   filter P l = [] ↔ (∀ x : A, x ∈ l → ¬ P x).

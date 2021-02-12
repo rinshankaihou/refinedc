@@ -208,22 +208,6 @@ Section array.
     SubsumePlace l β (array ly1 tys1) (array ly2 tys2) | 100 :=
     λ T, i2p (subsume_array ly1 ly2 tys1 tys2 l β T).
 
-  Lemma subsume_array_insert ly (i : nat) ty tys1 tys2 l β T:
-    (∃ ty', ⌜i < length tys1⌝%nat ∗ ⌜<[i := ty']>tys1 = tys2⌝ ∗
-       subsume ((l offset{ly}ₗ i) ◁ₗ{β} ty) ((l offset{ly}ₗ i) ◁ₗ{β} ty') T) -∗
-    subsume (l ◁ₗ{β} array ly (<[i := ty]>tys1)) (l ◁ₗ{β} array ly tys2) T.
-  Proof.
-    iDestruct 1 as (ty' Hlen <-) "Hsub". iIntros "Ha".
-    iDestruct (array_get_type i with "Ha") as "[H1 Ha]". by apply list_lookup_insert.
-    iDestruct ("Hsub" with "H1") as "[H1 HT]".
-    iDestruct (array_put_type i with "H1 Ha") as "Ha".
-    iApply (subsume_array with "[HT] Ha"). iFrame "HT".
-    rewrite !list_insert_insert. repeat iSplit => //. by iIntros "$".
-  Qed.
-  Global Instance subsume_array_insert_inst ly (i : nat) ty tys1 tys2 l β:
-    SubsumePlace l β (array ly (<[i := ty]>tys1)) (array ly tys2) | 10:=
-    λ T, i2p (subsume_array_insert ly i ty tys1 tys2 l β T).
-
   Lemma type_place_array l β T ly1 it v (tyv : mtype) tys ly2 K:
     (∃ i, ⌜ly1 = ly2⌝ ∗ subsume (v ◁ᵥ tyv) (v ◁ᵥ i @ int it) (⌜0 ≤ i⌝ ∗ ⌜i < length tys⌝ ∗
      ∀ ty, ⌜tys !! Z.to_nat i = Some ty⌝ -∗

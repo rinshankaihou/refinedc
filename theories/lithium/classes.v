@@ -1,5 +1,5 @@
 (** Main typeclasses of Lithium *)
-From refinedc.lithium Require Import base.
+From refinedc.lithium Require Import base infrastructure.
 
 (** * [iProp_to_Prop] *)
 Record iProp_to_Prop {Σ} (P : iProp Σ) : Type := i2p {
@@ -166,11 +166,69 @@ Global Instance subsume_simplify_inst {Σ} (P1 P2 : iProp Σ) o1 o2 `{!SimplifyH
   λ T, i2p (subsume_simplify P1 P2 T o1 o2).
 
 Lemma subsume_list_eq {Σ} A ig (l1 l2 : list A) (f : nat → A → iProp Σ) (T : iProp Σ) :
-  ⌜l1 = l2⌝ ∗ T -∗ subsume_list A ig l1 l2 f T.
-Proof. by iIntros "[-> $] $". Qed.
+  ⌜list_subequiv ig l1 l2⌝ ∗ T -∗ subsume_list A ig l1 l2 f T.
+Proof.
+  iDestruct 1 as (Hequiv) "$". iIntros "Hl".
+  have [Hlen _]:= Hequiv 0. iSplit; first done.
+  iInduction l1 as [|x l1] "IH" forall (f ig l2 Hlen Hequiv); destruct l2 => //=.
+  iDestruct "Hl" as "[Hx Hl]". move: Hlen => /= [?].
+  iSplitL "Hx".
+  - case_bool_decide as Hb => //. have [_ /= Heq]:= Hequiv 0. by  move: (Heq Hb) => [->].
+  - iDestruct ("IH" $! (f ∘ S) (pred <$> (filter (λ x, x ≠ 0%nat) ig)) l2 with "[//] [%] [Hl]") as "Hl". {
+      move => i. split => // Hin. move: (Hequiv (S i)) => [_ /= {}Hequiv]. apply: Hequiv.
+      contradict Hin. apply elem_of_list_fmap. eexists (S i). split => //.
+        by apply elem_of_list_filter.
+    }
+    + iApply (big_sepL_impl with "Hl"). iIntros "!>" (k ??) "Hl".
+      case_bool_decide as Hb1; case_bool_decide as Hb2 => //.
+      contradict Hb2. apply elem_of_list_fmap. eexists (S k). split => //.
+        by apply elem_of_list_filter.
+    + iApply (big_sepL_impl with "Hl"). iIntros "!>" (k ??) "Hl".
+      case_bool_decide as Hb1; case_bool_decide as Hb2 => //.
+      contradict Hb2. move: Hb1 => /elem_of_list_fmap[[|?][? /elem_of_list_filter [??]]] //.
+      by simplify_eq/=.
+Qed.
 Global Instance subsume_list_eq_inst {Σ} A ig l1 l2 f:
   SubsumeList A ig l1 l2 f | 1000 :=
   λ T : iProp Σ, i2p (subsume_list_eq A ig l1 l2 f T).
+
+Lemma subsume_list_insert_in_ig {Σ} A ig i x (l1 l2 : list A) (f : nat → A → iProp Σ) (T : iProp Σ) `{!CanSolve (i ∈ ig)} :
+  subsume_list A ig l1 l2 f T -∗
+  subsume_list A ig (<[i := x]>l1) l2 f T.
+Proof.
+  unfold CanSolve in *. iIntros "Hsub Hl".
+  rewrite insert_length. iApply "Hsub".
+  destruct (decide (i < length l1)%nat). 2: { by rewrite list_insert_ge; [|lia]. }
+  iDestruct (big_sepL_insert_acc with "Hl") as "[_ Hl]". { by apply: list_lookup_insert. }
+  have [//|y ?]:= lookup_lt_is_Some_2 l1 i.
+  iDestruct ("Hl" $! y with "[]") as "Hl". { by case_decide. }
+  by rewrite list_insert_insert list_insert_id.
+Qed.
+Global Instance subsume_list_insert_in_ig_inst {Σ} A ig i x (l1 l2 : list A) (f : nat → A → iProp Σ) `{!CanSolve (i ∈ ig)} :
+  SubsumeList A ig (<[i := x]>l1) l2 f :=
+  λ T, i2p (subsume_list_insert_in_ig A ig i x l1 l2 f T).
+
+Lemma subsume_list_insert_not_in_ig {Σ} A ig i x (l1 l2 : list A) (f : nat → A → iProp Σ) (T : iProp Σ) `{!CanSolve (i ∉ ig)} :
+  ⌜i < length l1⌝%nat ∗ subsume_list A (i :: ig) l1 l2 f (∀ x2,
+    ⌜l2 !! i = Some x2⌝ -∗ subsume (f i x) (f i x2) T) -∗
+  subsume_list A ig (<[i := x]>l1) l2 f T.
+Proof.
+  unfold CanSolve in *. iIntros "[% Hsub] Hl". rewrite big_sepL_insert // insert_length.
+  iDestruct "Hl" as "[Hx Hl]". case_bool_decide => //.
+  iDestruct ("Hsub" with "[Hl]") as "[% [Hl HT]]". {
+    iApply (big_sepL_impl with "Hl"). iIntros "!>" (???) "?".
+    repeat case_bool_decide => //; set_solver.
+  }
+  iSplit => //.
+  have [//|y ?]:= lookup_lt_is_Some_2 l2 i. { lia. }
+  iDestruct ("HT" with "[//] Hx") as "[Hf $]".
+  rewrite -{2}(list_insert_id l2 i y) // big_sepL_insert; [|lia]. case_bool_decide => //. iFrame.
+  iApply (big_sepL_impl with "Hl"). iIntros "!>" (???) "?".
+  repeat case_bool_decide => //; set_solver.
+Qed.
+Global Instance subsume_list_insert_not_in_ig_inst {Σ} A ig i x (l1 l2 : list A) (f : nat → A → iProp Σ) `{!CanSolve (i ∉ ig)} :
+  SubsumeList A ig (<[i := x]>l1) l2 f :=
+  λ T, i2p (subsume_list_insert_not_in_ig A ig i x l1 l2 f T).
 
 Lemma subsume_list_trivial_eq {Σ} A ig (l : list A) (f : nat → A → iProp Σ) (T : iProp Σ) :
   T -∗ subsume_list A ig l l f T.

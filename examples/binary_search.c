@@ -18,8 +18,8 @@ typedef bool (*comp_fn)(void *, void *);
 [[rc::ensures("own p : array<void*, {(fun x => &own (ty x) : type) <$> ls}>")]]
 [[rc::ensures("own px : ty<x>")]]
 [[rc::tactics("all: try by [revert select (∀ i j, _ → _ → ¬ R _ _); apply; [| done];solve_goal].")]]
-[[rc::tactics("all: try by apply: (binary_search_cond_1 y); solve_goal.")]]
-[[rc::tactics("all: try by apply: (binary_search_cond_2 y); solve_goal.")]]
+[[rc::tactics("all: try by apply: binary_search_cond_1; [solve_goal|..]; solve_goal.")]]
+[[rc::tactics("all: try by apply: binary_search_cond_2; [solve_goal|..]; solve_goal.")]]
 int binary_search(comp_fn comp, void **xs, int n, void *x) {
   int l = 0, r = n;
   [[rc::exists("vl : nat", "vr : nat")]]
