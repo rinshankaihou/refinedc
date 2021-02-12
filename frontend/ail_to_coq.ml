@@ -1063,18 +1063,19 @@ let translate_block stmts blocks ret_ty =
             | AilEunary(op,e) when incr_or_decr op ->
                 let atomic = is_atomic_tc (tc_of e) in
                 let layout = layout_of_tc (tc_of e) in
-                let int_ty =
+                let (res_ty, int_ty) =
                   let ty_opt = op_type_tc_opt (loc_of e) (tc_of e) in
                   match ty_opt with
-                  | Some(OpInt(int_ty)) -> int_ty
-                  | _                   -> assert false (* Badly typed. *)
+                  | Some(OpInt(int_ty) as ty) -> (ty, int_ty     )
+                  | Some(OpPtr(_)      as ty) -> (ty, ItI32(true))
+                  | _                         -> assert false
                 in
                 let op = match op with PostfixIncr -> AddOp | _ -> SubOp in
                 let e1 = translate_expr true None e in
                 let e2 =
                   let one = locate (Val(Int("1", int_ty))) in
                   let use = locate (Use(atomic, layout, e1)) in
-                  locate (BinOp(op, OpInt(int_ty), OpInt(int_ty), use, one))
+                  locate (BinOp(op, res_ty, OpInt(int_ty), use, one))
                 in
                 locate (Assign(atomic, layout, e1, e2, stmt))
             | AilEcall(e,es)                       ->

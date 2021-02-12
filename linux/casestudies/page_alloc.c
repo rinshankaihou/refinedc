@@ -555,8 +555,7 @@ int hyp_pool_init(struct hyp_pool *pool, phys_addr_t phys,
 	for (i = 0; i < nr_pages; i++) {
 		p->pool = pool;
 		INIT_LIST_HEAD(&p->node);
-		// TODO(#30): p++ is currently not supported by the frontend
-		p += 1;
+		p++; // TODO remove after the support for the comma operator is added.
 	}
 
 	/* Attach the unused pages to the buddy tree */
@@ -565,8 +564,7 @@ int hyp_pool_init(struct hyp_pool *pool, phys_addr_t phys,
 	/* for (i = used_pages; i < nr_pages; i++, p++) */
 	for (i = used_pages; i < nr_pages; i++) {
 		__hyp_attach_page(pool, p);
-		// TODO(#30): p++ is currently not supported by the frontend
-		p += 1;
+		p++; // TODO remove after the support for the comma operator is added.
 	}
 
 	return 0;
