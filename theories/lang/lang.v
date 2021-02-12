@@ -628,6 +628,10 @@ Proof.
     apply Nat.pow_le_mono_r; lia.
 Qed.
 
+Lemma ly_size_ly_set_size ly n:
+  ly_size (ly_set_size ly n) = n.
+Proof. done. Qed.
+
 Lemma ly_align_ly_set_size ly n:
   ly_align (ly_set_size ly n) = ly_align ly.
 Proof. done. Qed.

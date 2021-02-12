@@ -32,6 +32,24 @@ Ltac custom_exist_tac A protect ::=
     | Movable _ => eexists _
     end.
 
+Hint Transparent ly_size : solve_protected_eq_db.
+Ltac solve_protected_eq_unfold_tac ::=
+  lazymatch goal with
+  (* unfold constants for function types *)
+  | |- @eq (_ → fn_params) ?a (λ x, _) =>
+    lazymatch a with
+    | (λ x, _) => idtac
+    | _ =>
+      let h := get_head a in
+      unfold h;
+      (* necessary to reduce after unfolding because of the strict
+      opaqueness settings for unification *)
+      liSimpl
+    end
+  (* don't fail if nothing matches *)
+  | |- _ => idtac
+  end.
+
 Ltac can_solve_tac ::= solve_goal.
 
 Ltac record_destruct_hint hint info ::= add_case_distinction_info hint info.

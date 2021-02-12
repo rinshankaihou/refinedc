@@ -37,6 +37,11 @@ Ltac fast_reflexivity :=
   | |- ?x = ?y => lazymatch x with | y => exact: (eq_refl x) end
   end.
 
+Ltac get_head e :=
+  lazymatch e with
+  | ?h _ => get_head constr:(h)
+  | _    => constr:(e)
+  end.
 
 Definition Z_of_bool (b : bool) : Z :=
   if b then 1 else 0.

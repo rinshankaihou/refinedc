@@ -29,6 +29,7 @@ Hint Rewrite @bool_decide_eq_x_x_true @if_bool_decide_eq_branches : refinedc_rew
 Hint Rewrite keep_factor2_is_power_of_two keep_factor2_min_eq using can_solve_tac : refinedc_rewrite.
 Hint Rewrite keep_factor2_min_1 keep_factor2_twice : refinedc_rewrite.
 Hint Rewrite ly_align_ly_with_align ly_align_ly_offset ly_align_ly_set_size : refinedc_rewrite.
+Hint Rewrite ly_size_ly_set_size : refinedc_rewrite.
 
 Local Definition lookup_insert_gmap A K `{Countable K} := lookup_insert (M := gmap K) (A := A).
 Hint Rewrite lookup_insert_gmap : refinedc_rewrite.

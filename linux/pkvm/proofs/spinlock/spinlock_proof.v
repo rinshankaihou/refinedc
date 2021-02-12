@@ -4,12 +4,6 @@ From refinedc.linux.pkvm.spinlock Require Import generated_spec.
 From refinedc.linux.pkvm.spinlock Require Import spinlock_def.
 Set Default Proof Using "Type".
 
-Ltac get_head e :=
-  match e with
-  | ?h _ => get_head constr:(h)
-  | _    => constr:(e)
-  end.
-
 (* TODO: allow pattern, but add underscores if it does not match *)
 Tactic Notation "liRStepUntil" open_constr(id) :=
   repeat lazymatch goal with

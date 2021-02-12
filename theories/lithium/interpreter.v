@@ -162,7 +162,7 @@ Section coq_tactics.
     envs_entails Δ (∃ a : A, Φ a ∗ Q) → envs_entails Δ ((∃ a : A, Φ a) ∗ Q).
   Proof. by rewrite bi.sep_exist_r. Qed.
 
-  Lemma tac_do_simplify_goal (P : iProp Σ) T {SG : SimplifyGoal P (Some 0%N)} :
+  Lemma tac_do_simplify_goal (n : N) (P : iProp Σ) T {SG : SimplifyGoal P (Some n)} :
     (SG (λ P, P ∗ T)%I).(i2p_P) -∗ P ∗ T.
   Proof. iIntros "HP". iDestruct (i2p_proof with "HP") as (?) "(H&?&$)". by iApply "H". Qed.
 
@@ -321,29 +321,22 @@ Ltac unfold_instantiated_evar_hook H := idtac.
 
 Ltac unfold_instantiated_evar H :=
   unfold_instantiated_evar_hook H;
-  (* first we need to rewrap unfolded evars in H*)
-  repeat match goal with
-         | He := EVAR_ID ?x2 |- _ => progress unfold He in H
-         end;
   revert H;
-  repeat lazymatch goal with
-         | |- let _ := EVAR_ID ?body in _  =>
-           lazymatch body with
-           | context [EVAR_ID ?x1] =>
-             match goal with
-             | He := EVAR_ID ?x2 |- _ => constr_eq x1 x2;
-                                        (* we have found the
-                                        hypotheses for the unfolded
-                                        evar in body. Now do a funny
-                                        dance to refold it. *)
-                                        pattern (EVAR_ID x2);
-                                        simple refine (tac_protected_eq_app_rev _ _ _);
-                                        lazymatch goal with
-                                        | |- ?f (protected _) => change (f (protected He))
-                                        end; cbv beta
-             end
-           end
-         end;
+  repeat match goal with
+        | |- let _ := EVAR_ID ?body in _ =>
+          match goal with
+          | He := EVAR_ID ?var |- _ => is_evar var;
+          lazymatch body with
+          | context [ var ] => pattern var;
+          lazymatch goal with
+          | |- ?G ?E =>
+            change (G He);
+            simple refine (tac_protected_eq_app_rev _ _ _);
+            cbv beta
+          end
+          end
+          end
+        end;
   (* This is copied from the end of instantiate_protected *)
   let tmp := fresh "tmp" in
   intros tmp;
@@ -392,17 +385,17 @@ Ltac unfold_instantiated_evars :=
          | H := EVAR_ID ?x |- _ => assert_fails (is_evar x); unfold_instantiated_evar H
          end.
 
+Create HintDb solve_protected_eq_db discriminated.
+Hint Constants Opaque : solve_protected_eq_db.
+
+Ltac solve_protected_eq_unfold_tac := idtac.
 Ltac solve_protected_eq :=
   (* intros because it is less aggressive than move => * *)
-  intros; repeat rewrite protected_eq;
-  try (
-      liUnfoldAllEvars;
-      lazymatch goal with |- ?a = ?b => unify a b with typeclass_instances end;
-      (* We need to solve the constraints for the has_evar to work *)
-      solve_constraints;
-      lazymatch goal with
-      | |- ?g => assert_fails (has_evar g)
-      end);
+  intros;
+  solve_protected_eq_unfold_tac;
+  repeat rewrite protected_eq;
+  liUnfoldAllEvars;
+  lazymatch goal with |- ?a = ?b => unify a b with solve_protected_eq_db end;
   exact: eq_refl.
 
 Ltac liEnforceInvariantAndUnfoldInstantiatedEvars :=
@@ -656,9 +649,10 @@ Ltac liSep :=
                convert_to_i2p P ltac:(fun converted =>
                simple notypeclasses refine (tac_fast_apply_below_sep converted _); [solve[refine _] |])
              | progress liFindHyp
-             | simple notypeclasses refine (tac_fast_apply (tac_do_simplify_goal _ _) _); [solve [refine _] |]
+             | simple notypeclasses refine (tac_fast_apply (tac_do_simplify_goal 0%N _ _) _); [solve [refine _] |]
              | simple notypeclasses refine (tac_fast_apply (tac_intro_subsume_related _ _) _); [solve [refine _] |];
                simpl; liFindInContext
+             | simple notypeclasses refine (tac_fast_apply (tac_do_simplify_goal _ _ _) _); [| solve [refine _] |]
              | fail "do_sep: unknown sidecondition" P
       ]
     end

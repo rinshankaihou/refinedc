@@ -435,7 +435,7 @@ Global Instance simpl_Some {A} o (x x' : A) `{!FastDone (o = Some x)}:
   SimplBothRel (=) (o) (Some x') (x = x') | 1.
 Proof. unfold FastDone in *; subst. split; naive_solver. Qed.
 
-Global Instance simpl_both_fmap_Some A f (o : option A) (x : A): SimplBothRel (=) (f <$> o) (Some x) (∃ x', o = Some  x' ∧ x = f x').
+Global Instance simpl_both_fmap_Some A B f (o : option A) (x : B): SimplBothRel (=) (f <$> o) (Some x) (∃ x', o = Some  x' ∧ x = f x').
 Proof. unfold SimplBothRel. rewrite fmap_Some. naive_solver. Qed.
 
 Global Instance simplify_option_fmap_None {A B} (f : A → B) (x : option A) :
