@@ -27,6 +27,10 @@ C_SRC = $(wildcard examples/*.c) $(wildcard tutorial/*.c) $(wildcard linux/cases
 generate_all: $(addsuffix .gen, $(C_SRC))
 .PHONY: generate_all
 
+check_generate_all: generate_all
+	git diff --exit-code
+.PHONY: check_generate_all
+
 builddep-opamfiles: builddep/refinedc-builddep.opam
 	@true
 .PHONY: builddep-opamfiles

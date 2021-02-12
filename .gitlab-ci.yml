@@ -50,6 +50,15 @@ build-coq.8.12.0:
   only:
   - /^ci/@iris/refinedc
 
+check-generated:
+  <<: *template
+  variables:
+    OPAM_PINS: "coq version 8.12.0   cerberus git git+https://github.com/rems-project/cerberus.git#6ea80db048080468761499238fa0d045222ccc52"
+    DENY_WARNINGS: "1"
+    MAKE_TARGET: "check_generate_all"
+    # necessary because dune does not like running in parallel
+    CPU_CORES: 1
+
 build-iris.dev:
   <<: *template
   variables:
