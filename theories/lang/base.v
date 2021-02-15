@@ -638,7 +638,7 @@ Proof. by case_bool_decide. Qed.
 
 (* from https://mattermost.mpi-sws.org/iris/pl/dcktjjjpsiycmrieyh74bzoagr *)
 Ltac solve_sep_entails :=
-  try (apply equiv_spec; split);
+  try (apply equiv_entails; split);
   iIntros;
   repeat iMatchHyp (fun H P =>
     lazymatch P with

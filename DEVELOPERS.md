@@ -23,6 +23,14 @@ your shell contains the correct opam environment, e.g. by running:
 eval $(opam env)
 ```
 
+## Updating dependencies
+
+To upgrade the Iris dependency after the version has been updated in
+`refinedc.opam`, run
+```
+opam update && make builddep && make clean
+```
+
 ## make targets
 
 The Makefile provides the following targets:
@@ -31,6 +39,7 @@ The Makefile provides the following targets:
 - `make all_with_examples` builds everything including examples
 - `make generate_all` uses the frontend to regenerate the Caesium code
   for all examples
+- `make clean` remove .vo files and other build artifacts
 
 ## Running RefinedC on examples in this repository
 
