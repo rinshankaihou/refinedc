@@ -248,14 +248,16 @@ Section array.
     λ T, i2p (subsume_array_ptr ly1 ly2 base1 base2 idx1 idx2 len1 len2 l β T).
 
   Lemma simplify_hyp_array_ptr ly l β base idx len T:
-    (⌜(base offset{ly}ₗ idx) `has_layout_loc` ly⌝ -∗ loc_in_bounds base (ly_size (mk_array_layout ly len)) -∗
+    (⌜l = (base offset{ly}ₗ idx)⌝ -∗
+      ⌜(base offset{ly}ₗ idx) `has_layout_loc` ly⌝ -∗
+      loc_in_bounds base (ly_size (mk_array_layout ly len)) -∗
       ∃ tys, base ◁ₗ{β} array ly tys ∗ ⌜0 ≤ idx < length tys⌝ ∗ (
       ∀ ty, ⌜tys !! Z.to_nat idx = Some ty⌝ -∗ base ◁ₗ{β} array ly (<[Z.to_nat idx := place l]>tys) -∗
         l ◁ₗ{β} ty -∗ T)) -∗
     simplify_hyp (l ◁ₗ{β} array_ptr ly base idx len) T.
   Proof.
     iIntros "HT (->&%&?)".
-    iDestruct ("HT" with "[//] [$]") as (tys) "(Harray&%&HT)".
+    iDestruct ("HT" with "[//] [//] [$]") as (tys) "(Harray&%&HT)".
     have [|ty ?]:= lookup_lt_is_Some_2 tys (Z.to_nat idx). lia.
     iDestruct (array_get_type (Z.to_nat idx) with "Harray") as "[Hty Harray]". done.
     rewrite Z2Nat.id; [|lia].

@@ -453,19 +453,29 @@ Section typing.
   Global Instance related_to_loc l β ty : RelatedTo (l ◁ₗ{β} ty) := {| rt_fic := FindLoc l |}.
   Global Instance related_to_val v ty `{!Movable ty} : RelatedTo (v ◁ᵥ ty) := {| rt_fic := FindValP v |}.
   Global Instance related_to_loc_in_bounds l n : RelatedTo (loc_in_bounds l n) := {| rt_fic := FindLocInBounds l |}.
+  Global Instance related_to_alloc_alive l : RelatedTo (alloc_alive l.1) := {| rt_fic := FindLoc l |}.
 
   Lemma subsume_loc_in_bounds ty β l (n m : nat) `{!LocInBounds ty β m} T :
     (l ◁ₗ{β} ty -∗ ⌜n ≤ m⌝ ∗ T) -∗
     subsume (l ◁ₗ{β} ty) (loc_in_bounds l n) T.
   Proof.
     iIntros "HT Hl".
-    iAssert ⌜n ≤ m⌝%I as %?. { by iDestruct ("HT" with "Hl") as "[% _]". }
-    iSplit; last by iDestruct ("HT" with "Hl") as "[_ $]".
-    iApply loc_in_bounds_shorten; last by iApply loc_in_bounds_in_bounds. lia.
+    iDestruct (loc_in_bounds_in_bounds with "Hl") as "#?".
+    iDestruct ("HT" with "Hl") as (?) "$".
+    iApply loc_in_bounds_shorten; last done. lia.
   Qed.
   Global Instance subsume_loc_in_bounds_inst ty β l n m `{!LocInBounds ty β m} :
     Subsume (l ◁ₗ{β} ty) (loc_in_bounds l n) :=
     λ T, i2p (subsume_loc_in_bounds ty β l n m T).
+
+  Lemma subsume_alloc_alive ty β l P `{!AllocAlive ty β P} T :
+    (* You don't get l ◁ₗ{β} ty back because alloc_alive is not persistent. *)
+    P ∗ T -∗
+    subsume (l ◁ₗ{β} ty) (alloc_alive l.1) T.
+  Proof. iIntros "[HP $] Hl". by iApply (alloc_alive_alive with "HP"). Qed.
+  Global Instance subsume_alloc_alive_inst ty β l P `{!AllocAlive ty β P} :
+    Subsume (l ◁ₗ{β} ty) (alloc_alive l.1) :=
+    λ T, i2p (subsume_alloc_alive ty β l P T).
 
   Lemma subsume_loc_in_bounds_leq (l : loc) (n1 n2 : nat) T :
     ⌜n2 ≤ n1⌝%nat ∗ T -∗

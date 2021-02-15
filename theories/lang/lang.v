@@ -708,8 +708,8 @@ Fixpoint heap_at_go l v flk h : Prop :=
 Definition heap_at l ly v flk h : Prop :=
   is_Some l.1 ∧ l `has_layout_loc` ly ∧ v `has_layout_val` ly ∧ heap_at_go l v flk h.
 
-Definition heap_block_free (h : heap) (aid : alloc_id) : Prop :=
-  ∀ a ha, h !! a = Some ha → ha.1.1 ≠ aid.
+Definition heap_block_alive (h : heap) (aid : alloc_id) : Prop :=
+  ∃ a lk b, h !! a = Some (aid, lk, b).
 
 Definition heap_range_free (h : heap) (a : addr) (n : nat) : Prop :=
   ∀ a', a ≤ a' < a + n → h !! a' = None.
@@ -755,15 +755,17 @@ Definition max_alloc_end   : Z := 2 ^ (bytes_per_addr * bits_per_byte) - 2.
 Definition to_allocation (off : Z) (len : nat) : allocation :=
   Allocation off (off + len).
 
-Definition in_range_allocation (a : allocation) : Prop :=
+Definition allocation_in_range (a : allocation) : Prop :=
   min_alloc_start ≤ a.(alloc_start) ∧ a.(alloc_end) ≤ max_alloc_end.
 
 Inductive alloc_new_block : state → loc → val → state → Prop :=
 | AllocNewBlock σ l aid v:
     l.1 = Some aid →
     σ.(st_allocs) !! aid = None →
-    heap_block_free σ.(st_heap) aid →
-    in_range_allocation (to_allocation l.2 (length v)) →
+    (* TODO: is the precondition really useful? It should follow from
+    the previous. *)
+    ¬ heap_block_alive σ.(st_heap) aid →
+    allocation_in_range (to_allocation l.2 (length v)) →
     heap_range_free σ.(st_heap) l.2 (length v) →
     alloc_new_block σ l v {|
       st_heap   := heap_upd l v (λ _, RSt 0%nat) σ.(st_heap);
@@ -819,34 +821,10 @@ Definition subst_function (xs : list (var_name * val)) (f : function) : function
 |}.
 
 (*** Evaluation of operations *)
-(** Checks that the location [l] is allocated on the heap [h] *)
-Definition valid_ptr l h : Prop :=
-  ∃ aid lk b, l.1 = Some aid ∧ h !! l.2 = Some (aid, lk, b).
-Instance valid_ptr_dec l h : Decision (valid_ptr l h).
-Proof.
-  rewrite /valid_ptr/=. destruct l as [[aid|] a]; [ | right; naive_solver].
-  destruct (h !! a) as [[[aid' ?]?]|] eqn: Hh; [ | right; naive_solver].
-  destruct (decide (aid' = aid)); [left | right]; naive_solver.
-Qed.
-(** Checks whether location [l] is a weak valid pointer in heap [h].
-[Some true] means [l] is a valid in bounds pointer, [Some false] means
-[l] is a end of block pointer, [None] means [l] is not a valid pointer. *)
-Definition weak_valid_ptr l h : option bool :=
-  if decide (valid_ptr l h) then
-    Some true
-  else if decide (valid_ptr (l +ₗ -1) h ∧ ¬valid_ptr l h) then
-    Some false
-  else None.
-(** Checks equality between [l1] and [l2]. See
-http://compcert.inria.fr/doc/html/compcert.common.Values.html#Val.cmplu_bool
-*)
-Definition ptr_eq l1 l2 h : option bool :=
-  eob1 ← weak_valid_ptr l1 h;
-  eob2 ← weak_valid_ptr l2 h;
-  if decide (l1.1 = l2.1) then
-    Some (bool_decide (l1 = l2))
-  else
-    if eob1 || eob2 then None else Some false.
+(** Checks that the location [l] is inbounds of its allocation
+(one-past-the-end is allowed) and this allocation is still alive *)
+Definition valid_ptr (l : loc) (st : state) : Prop :=
+  ∃ aid, l.1 = Some aid ∧ heap_block_alive st.(st_heap) aid ∧ heap_loc_in_bounds l 0 st.
 
 (* evaluation can be non-deterministic for comparing pointers *)
 Inductive eval_bin_op : bin_op → op_type → op_type → state → val → val → val → Prop :=
@@ -884,18 +862,21 @@ Inductive eval_bin_op : bin_op → op_type → op_type → state → val → val
     val_to_int v2 size_t = Some 0 →
     i2v (Z_of_bool false) i32 = v →
     eval_bin_op NeOp PtrOp PtrOp σ v1 v2 v
-| EqOpPP v1 v2 σ l1 l2 v b:
+| RelOpPP v1 v2 σ l1 l2 v b op:
     val_to_loc v1 = Some l1 →
     val_to_loc v2 = Some l2 →
-    ptr_eq l1 l2 σ.(st_heap) = Some b →
+    valid_ptr l1 σ → valid_ptr l2 σ →
+    match op with
+    | EqOp => Some (bool_decide (l1.2 = l2.2))
+    | NeOp => Some (bool_decide (l1.2 ≠ l2.2))
+    | LtOp => if bool_decide (l1.1 = l2.1) then Some (bool_decide (l1.2 < l2.2)) else None
+    | GtOp => if bool_decide (l1.1 = l2.1) then Some (bool_decide (l1.2 > l2.2)) else None
+    | LeOp => if bool_decide (l1.1 = l2.1) then Some (bool_decide (l1.2 <= l2.2)) else None
+    | GeOp => if bool_decide (l1.1 = l2.1) then Some (bool_decide (l1.2 >= l2.2)) else None
+    | _ => None
+    end = Some b →
     i2v (Z_of_bool b) i32 = v →
-    eval_bin_op EqOp PtrOp PtrOp σ v1 v2 v
-| NeOpPP v1 v2 σ l1 l2 v b:
-    val_to_loc v1 = Some l1 →
-    val_to_loc v2 = Some l2 →
-    ptr_eq l1 l2 σ.(st_heap) = Some b →
-    i2v (Z_of_bool (negb b)) i32 = v →
-    eval_bin_op NeOp PtrOp PtrOp σ v1 v2 v
+    eval_bin_op op PtrOp PtrOp σ v1 v2 v
 | RelOpII op v1 v2 σ n1 n2 it b:
     match op with
     | EqOp => Some (bool_decide (n1 = n2))

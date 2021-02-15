@@ -161,6 +161,20 @@ Section struct.
     constructor. by iIntros (l) "(_&_&?&_)".
   Qed.
 
+  Global Instance struct_alloc_alive sl tys β P `{!TCExists (λ ty, AllocAlive ty β P) tys} :
+    AllocAlive (struct sl tys) β P.
+  Proof.
+    revert select (TCExists _ _).
+    rewrite TCExists_Exists Exists_exists => -[x [/(elem_of_list_lookup_1 _ _) [i Hx] ?]].
+    constructor. iIntros (l) "HP Hl".
+    iDestruct (struct_focus with "Hl") as "[Hl _]".
+    iDestruct (big_sepL2_length with "Hl") as %Hlen.
+    have [|n Hn] := lookup_lt_is_Some_2 (field_names (sl_members sl)) i.
+    { rewrite Hlen. by apply: lookup_lt_Some. }
+    iDestruct (big_sepL2_lookup with "Hl") as "Hl" => //.
+    by iDestruct (alloc_alive_alive with "HP Hl") as "Hl".
+  Qed.
+
   Global Instance strip_guarded_struct sl tys tys' E1 E2 β {Hs :StripGuardedLst β E1 E2 tys tys'}:
     StripGuarded β E1 E2 (struct sl tys) (struct sl tys').
   Proof.

@@ -244,6 +244,50 @@ Section own.
     TypedCopyAllocId v1 P1 v2 P2 :=
     λ T, i2p (type_copy_aid v1 v2 P1 P2 T).
 
+  (* TODO: Is it a good idea to have this general rule or would it be
+  better to have more specialized rules? *)
+  Lemma type_relop_ptr_ptr op b (l1 l2 : loc) β1 β2 ty1 ty2 T:
+    match op with
+    | LtOp => Some (bool_decide (l1.2 < l2.2))
+    | GtOp => Some (bool_decide (l1.2 > l2.2))
+    | LeOp => Some (bool_decide (l1.2 <= l2.2))
+    | GeOp => Some (bool_decide (l1.2 >= l2.2))
+    | _ => None
+    end = Some b →
+    (l1 ◁ₗ{β1} ty1 -∗ l2 ◁ₗ{β2} ty2 -∗ ⌜l1.1 = l2.1⌝ ∗ (
+      (loc_in_bounds l1 0 ∗ True) ∧
+      (loc_in_bounds l2 0 ∗ True) ∧
+      (alloc_alive l1.1 ∗ True) ∧
+      T (i2v (Z_of_bool b) i32) (t2mt (b @ boolean i32)))) -∗
+    typed_bin_op l1 (l1 ◁ₗ{β1} ty1) l2 (l2 ◁ₗ{β2} ty2) op PtrOp PtrOp T.
+  Proof.
+    iIntros (?) "HT Hl1 Hl2". iIntros (Φ) "HΦ". iDestruct ("HT" with "Hl1 Hl2") as (Heq) "([#? _]&[#? _]&HT)".
+    destruct op => //; simplify_eq.
+    all: iApply wp_ptr_relop; try by [apply val_to_of_loc]; simpl; try done.
+    all: try by case_bool_decide.
+    all: iSplit; [ iDestruct "HT" as "[[$ _] _]" |].
+    all: iSplit; [ rewrite Heq; iDestruct "HT" as "[[$ _] _]"| ].
+    all: iModIntro; iDestruct "HT" as "[_ HT]".
+    all: iApply "HΦ" => //; by case_bool_decide.
+  Qed.
+  Global Program Instance type_lt_ptr_ptr_inst (l1 l2 : loc) β1 β2 ty1 ty2:
+    TypedBinOp l1 (l1 ◁ₗ{β1} ty1) l2 (l2 ◁ₗ{β2} ty2) LtOp PtrOp PtrOp :=
+    λ T, i2p (type_relop_ptr_ptr LtOp (bool_decide (l1.2 < l2.2)) l1 l2 β1 β2 ty1 ty2 T _).
+  Next Obligation. done. Qed.
+  Global Program Instance type_gt_ptr_ptr_inst (l1 l2 : loc) β1 β2 ty1 ty2:
+    TypedBinOp l1 (l1 ◁ₗ{β1} ty1) l2 (l2 ◁ₗ{β2} ty2) GtOp PtrOp PtrOp :=
+    λ T, i2p (type_relop_ptr_ptr GtOp (bool_decide (l1.2 > l2.2)) l1 l2 β1 β2 ty1 ty2 T _).
+  Next Obligation. done. Qed.
+  Global Program Instance type_le_ptr_ptr_inst (l1 l2 : loc) β1 β2 ty1 ty2:
+    TypedBinOp l1 (l1 ◁ₗ{β1} ty1) l2 (l2 ◁ₗ{β2} ty2) LeOp PtrOp PtrOp :=
+    λ T, i2p (type_relop_ptr_ptr LeOp (bool_decide (l1.2 <= l2.2)) l1 l2 β1 β2 ty1 ty2 T _).
+  Next Obligation. done. Qed.
+  Global Program Instance type_ge_ptr_ptr_inst (l1 l2 : loc) β1 β2 ty1 ty2:
+    TypedBinOp l1 (l1 ◁ₗ{β1} ty1) l2 (l2 ◁ₗ{β2} ty2) GeOp PtrOp PtrOp :=
+    λ T, i2p (type_relop_ptr_ptr GeOp (bool_decide (l1.2 >= l2.2)) l1 l2 β1 β2 ty1 ty2 T _).
+  Next Obligation. done. Qed.
+
+
   (* Lemma type_roundup_frac_ptr v2 β ty P2 T p: *)
   (*   (P2 -∗ T (val_of_loc p) (t2mt (p @ frac_ptr β ty))) -∗ *)
   (*     typed_bin_op p (p ◁ₗ{β} ty) v2 P2 RoundUpOp T. *)

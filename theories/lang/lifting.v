@@ -376,6 +376,37 @@ Proof.
   by iApply wp_value.
 Qed.
 
+Lemma wp_ptr_relop Φ op v1 v2 l1 l2 E b:
+  val_to_loc v1 = Some l1 →
+  val_to_loc v2 = Some l2 →
+  match op with
+  | EqOp => Some (bool_decide (l1.2 = l2.2))
+  | NeOp => Some (bool_decide (l1.2 ≠ l2.2))
+  | LtOp => if bool_decide (l1.1 = l2.1) then Some (bool_decide (l1.2 < l2.2)) else None
+  | GtOp => if bool_decide (l1.1 = l2.1) then Some (bool_decide (l1.2 > l2.2)) else None
+  | LeOp => if bool_decide (l1.1 = l2.1) then Some (bool_decide (l1.2 <= l2.2)) else None
+  | GeOp => if bool_decide (l1.1 = l2.1) then Some (bool_decide (l1.2 >= l2.2)) else None
+  | _ => None
+  end = Some b →
+  loc_in_bounds l1 0 -∗ loc_in_bounds l2 0 -∗
+  (alloc_alive l1.1 ∧ alloc_alive l2.1 ∧ ▷ Φ (i2v (Z_of_bool b) i32)) -∗
+  WP BinOp op PtrOp PtrOp (Val v1) (Val v2) @ E {{ Φ }}.
+Proof.
+  iIntros (Hv1 Hv2 Hop) "#Hl1 #Hl2 HΦ".
+  iApply wp_binop. iIntros (σ) "Hσ".
+  iAssert ⌜valid_ptr l1 σ⌝%I as %?. {
+    iApply (alloc_alive_to_valid_ptr with "Hl1 [HΦ] Hσ").
+    by iDestruct "HΦ" as "[$ _]".
+  }
+  iAssert ⌜valid_ptr l2 σ⌝%I as %?. {
+    iApply (alloc_alive_to_valid_ptr with "Hl2 [HΦ] Hσ").
+    by iDestruct "HΦ" as "[_ [$ _]]".
+  }
+  iSplit; first by iPureIntro; eexists _; econstructor.
+  iDestruct "HΦ" as "(_&_&HΦ)". iIntros "!>" (v' Hstep). iFrame.
+  inversion Hstep; simplify_eq => //; by move: Hv1 Hv2 => /val_of_to_loc ?/val_of_to_loc?; subst.
+Qed.
+
 Lemma wp_ptr_offset Φ vl l E it o ly vo:
   val_to_loc vl = Some l →
   val_to_int vo it = Some o →

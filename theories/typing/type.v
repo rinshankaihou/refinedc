@@ -319,11 +319,34 @@ Section loc_in_bounds.
   Qed.
 
   Global Instance movable_loc_in_bounds_inst ty `{!Movable ty}:
-    LocInBounds ty Own (ly_size (ty_layout ty)).
+    LocInBounds ty Own (ly_size (ty_layout ty)) | 100.
   Proof.
     constructor. iIntros (?) "?". by iApply movable_loc_in_bounds.
   Qed.
 End loc_in_bounds.
+
+Class AllocAlive `{!typeG Σ} (ty : type) (β : own_state) (P : iProp Σ) := {
+  alloc_alive_alive l : P -∗ ty.(ty_own) β l -∗ alloc_alive l.1
+}.
+Arguments alloc_alive_alive {_ _} _ _ _ {_} _.
+Hint Mode AllocAlive + + + + - : typeclass_instances.
+
+Section alloc_alive.
+  Context `{!typeG Σ}.
+
+  Lemma movable_alloc_alive ty l `{!Movable ty} :
+    ty.(ty_layout).(ly_size) ≠ 0%nat →
+    ty.(ty_own) Own l -∗ alloc_alive l.1.
+  Proof.
+    iIntros (?) "Hl". iDestruct (ty_deref with "Hl") as (v) "[Hl Hv]".
+    iDestruct (ty_size_eq with "Hv") as %Hv.
+    iApply heap_mapsto_alive => //. by rewrite Hv.
+  Qed.
+
+  Global Instance movable_alloc_alive_inst ty `{!Movable ty}:
+    AllocAlive ty Own (⌜ly_size (ty_layout ty) ≠ 0%nat⌝) | 100.
+  Proof. constructor. iIntros (??) "?". by iApply movable_alloc_alive. Qed.
+End alloc_alive.
 
 Notation "l ◁ₗ{ β } ty" := (ty_own ty β l) (at level 15, format "l  ◁ₗ{ β }  ty") : bi_scope.
 Notation "l ◁ₗ ty" := (ty_own ty Own l) (at level 15) : bi_scope.

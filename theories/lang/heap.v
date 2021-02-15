@@ -61,7 +61,7 @@ Section definitions.
 
   Definition loc_in_bounds_def (l : loc) (n : nat) : iProp Σ :=
     ∃ id a, ⌜l.1 = Some id ∧ alloc_start a ≤ l.2 ∧
-             l.2 + n ≤ alloc_end a ∧ in_range_allocation a⌝ ∗
+             l.2 + n ≤ alloc_end a ∧ allocation_in_range a⌝ ∗
              allocs_entry id a.
   Definition loc_in_bounds_aux : seal (@loc_in_bounds_def). by eexists. Qed.
   Definition loc_in_bounds := unseal loc_in_bounds_aux.
@@ -85,6 +85,15 @@ Section definitions.
   Definition heap_mapsto := unseal heap_mapsto_aux.
   Definition heap_mapsto_eq : @heap_mapsto = @heap_mapsto_def :=
     seal_eq heap_mapsto_aux.
+
+  Definition alloc_alive_def (aid : option alloc_id) : iProp Σ :=
+    (* TODO: This should probably be defined using some custom ghost
+    state, e.g. based on a new killed flag in allocations? *)
+    ∃ a q v, ⌜length v ≠ 0%nat⌝ ∗ heap_mapsto (aid, a) q v.
+  Definition alloc_alive_aux : seal (@alloc_alive_def). by eexists. Qed.
+  Definition alloc_alive := unseal alloc_alive_aux.
+  Definition alloc_alive_eq : @alloc_alive = @alloc_alive_def :=
+    seal_eq alloc_alive_aux.
 
   Definition fntbl_entry_def (l : loc) (f: function) : iProp Σ :=
     own heap_fntbl_name (◯ {[ l := to_agree f ]}).
@@ -214,7 +223,7 @@ Section allocs.
   Lemma allocs_entry_to_loc_in_bounds l aid (n : nat) a:
     l.1 = Some aid →
     alloc_start a ≤ l.2 ∧ l.2 + n ≤ alloc_end a →
-    in_range_allocation a →
+    allocation_in_range a →
     allocs_entry aid a -∗ loc_in_bounds l n.
   Proof.
     iIntros (?[??]?) "?". rewrite loc_in_bounds_eq/loc_in_bounds_def.
@@ -643,6 +652,38 @@ Section heap.
     by iMod (heap_free_free _ _ with "Hown Hl").
   Qed.
 End heap.
+
+Section alloc_alive.
+  Context `{!heapG Σ}.
+
+  Global Instance alloc_alive_timeless a : Timeless (alloc_alive a).
+  Proof. rewrite alloc_alive_eq. by apply _. Qed.
+
+  Lemma heap_mapsto_alive l q v:
+    length v ≠ 0%nat →
+    l ↦{q} v -∗ alloc_alive l.1.
+  Proof. rewrite alloc_alive_eq => ?. iIntros "Hl". destruct l. iExists _, _, _. by iFrame. Qed.
+
+  Lemma alloc_alive_to_heap_alloc_alive a σ:
+    alloc_alive a -∗ state_ctx σ -∗ ⌜∃ aid, a = Some aid ∧ heap_block_alive σ.(st_heap) aid⌝.
+  Proof.
+    rewrite alloc_alive_eq.
+    iDestruct 1 as (addr q [|b v] Hv) "Hl" => //. iIntros "(_&Hhctx&_)".
+    rewrite heap_mapsto_cons_mbyte heap_mapsto_mbyte_eq. iDestruct "Hl" as "[Hmt _]".
+    iDestruct "Hmt" as (aid ?) "Hmt".
+    iDestruct (heap_mapsto_mbyte_lookup_q with "Hhctx Hmt") as %[??].
+    iPureIntro. eexists _. split => //. by eexists _, _, _.
+  Qed.
+
+  Lemma alloc_alive_to_valid_ptr l σ:
+    loc_in_bounds l 0 -∗ alloc_alive l.1 -∗ state_ctx σ -∗ ⌜valid_ptr l σ⌝.
+  Proof.
+    iIntros "Hin Ha Hσ".
+    iDestruct (alloc_alive_to_heap_alloc_alive with "Ha Hσ") as %[?[??]].
+    iDestruct (loc_in_bounds_to_heap_loc_in_bounds with "Hin Hσ") as %?.
+    iPureIntro. by eexists _.
+  Qed.
+End alloc_alive.
 
 Section alloc_new_blocks.
   Context `{!heapG Σ}.

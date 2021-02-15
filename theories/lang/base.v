@@ -651,3 +651,18 @@ Inductive TCFalse : Prop :=.
 Existing Class TCFalse.
 
 Notation TCUnless P := (TCIf P TCFalse TCTrue).
+
+Inductive TCExists {A} (P : A → Prop) : list A → Prop :=
+| TCExists_cons_hd x l : P x → TCExists P (x :: l)
+| TCExists_cons_tl x l: TCExists P l → TCExists P (x :: l).
+Existing Class TCExists.
+Existing Instance TCExists_cons_hd | 10.
+Existing Instance TCExists_cons_tl | 20.
+Global Hint Mode TCExists ! ! ! : typeclass_instances.
+
+Lemma TCExists_Exists {A} (P : A → Prop) l :
+  TCExists P l ↔ Exists P l.
+Proof.
+  elim: l. { split; inversion 1. }
+  move => ?? IH. split; inversion 1; simplify_eq; constructor => //; by apply IH.
+Qed.
