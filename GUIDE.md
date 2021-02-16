@@ -11,6 +11,9 @@ Second, a style guide for RefinedC development.
    `SimplifyHyp` instance and then proving `SimplifyGoal` should be
    equivalent to not using any of the two (except for learning more
    information).
+2. If there are multiple `SimplifyHyp` or `SimplifyGoal` rules for the
+   same proposition, one must ensure that the ones with the smaller
+   number also have the smaller priority on the typeclass.
 
 ## Style guide
 
