@@ -29,6 +29,7 @@ Second, a style guide for RefinedC development.
     and should usually be implicit.
   - Use `done` or `by ...` to solve trivial goals. It replaces
     `reflexivity`, `trivial`, `assumption`, ...
+  - Don't use generated names of hypothesis.
 2. Prefer the ssreflect tactics to the Coq tactics. I.e. use `move =>
    ...` instead of `intros ...`, `have ... : ...` instead of `assert`,
    `have ... := ...` instead of `pose proof`, `move Heq: (...) => ?`
@@ -39,3 +40,7 @@ Second, a style guide for RefinedC development.
 4. If there is a typeclass to restrict when a typing rule applies, but
    it does not contain useful information for proving the typing rule,
    it should only be on the instance, not the lemma.
+5. Use `if bool_decide P then ...` instead of `if decide P then ...`.
+   This works better for automation since one can rewrite with
+   `bool_decide P = true` in the first version, but not in the second
+   version.
