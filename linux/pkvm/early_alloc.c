@@ -58,6 +58,7 @@ extern void clear_page(void *to);
               "rewrite Z.shiftl_mul_pow2 -?Z.add_assoc => //=; apply -> Z.add_le_mono_l; lia.")]]
 [[rc::tactics("rewrite Z.shiftl_mul_pow2 in H18 => //. lia.")]]
 [[rc::tactics("rewrite Z.shiftl_mul_pow2 //=. lia.")]]
+[[rc::tactics("apply: has_layout_loc_trans' => //. by rewrite ly_offset_PAGES.")]]
 void *hyp_early_alloc_contig(unsigned int nr_pages){
   uintptr_t ret = cur, p;
   unsigned int i;

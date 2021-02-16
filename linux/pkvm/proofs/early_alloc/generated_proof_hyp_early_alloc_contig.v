@@ -28,6 +28,7 @@ Section proof_hyp_early_alloc_contig.
     + transitivity max_alloc_end; last done; etransitivity; last exact H10; rewrite Z.shiftl_mul_pow2 -?Z.add_assoc => //=; apply -> Z.add_le_mono_l; lia.
     + rewrite Z.shiftl_mul_pow2 in H18 => //. lia.
     + rewrite Z.shiftl_mul_pow2 //=. lia.
+    + apply: has_layout_loc_trans' => //. by rewrite ly_offset_PAGES.
     all: print_sidecondition_goal "hyp_early_alloc_contig".
   Qed.
 End proof_hyp_early_alloc_contig.
