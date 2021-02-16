@@ -138,6 +138,9 @@ Proof. unfold SimplBothRel. unfold CanSolve in *. by rewrite Nat.mul_cancel_r. Q
 Global Instance simpl_cancel_mult_nat_1 n m `{!CanSolve (m ≠ 0)%nat}:
   SimplBothRel (=) (n * m)%nat m (n = 1)%nat.
 Proof. unfold SimplBothRel. unfold CanSolve in *. nia. Qed.
+Global Instance simpl_cancel_mult_le_nat n1 n2 m `{!CanSolve (0 < m)%nat}:
+  SimplBothRel (≤)%nat (n1 * m)%nat (n2 * m)%nat (n1 ≤ n2)%nat.
+Proof. unfold SimplBothRel. unfold CanSolve in *. nia. Qed.
 Global Instance simpl_cancel_mult_le n1 n2 m `{!CanSolve (0 < m)}:
   SimplBothRel (≤) (n1 * m) (n2 * m) (n1 ≤ n2).
 Proof. unfold SimplBothRel. unfold CanSolve in *. by rewrite -Z.mul_le_mono_pos_r. Qed.
