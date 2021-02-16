@@ -52,6 +52,7 @@ void slab_init(struct slab *s, unsigned char *p, size_t chunksize, size_t entry_
 [[rc::args("p @ &own<n @ slab<entry_size>>")]]
 [[rc::returns("{(0 < n)%nat} @ optional<&own<uninit<{ly_with_align entry_size entry_size}>>>")]]
 [[rc::ensures("own p : {(n - 1)%nat} @ slab<entry_size>")]]
+ [[rc::tactics("all: try by apply: has_layout_loc_trans'; solve_goal.")]]
 void* slab_alloc(struct slab *s)
 {
     struct freelist *f;

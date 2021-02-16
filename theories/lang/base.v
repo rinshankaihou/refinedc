@@ -547,9 +547,9 @@ Lemma keep_factor2_is_power_of_two n x:
   keep_factor2 n x = n.
 Proof. move => [? ->]. by rewrite /keep_factor2 factor2'_pow. Qed.
 
-Lemma keep_factor2_min_eq (n m : nat):
+Lemma keep_factor2_leq (n m : nat):
   is_power_of_two n → (n | m) →
-  (n `min` keep_factor2 m n) = n.
+  n ≤ keep_factor2 m n.
 Proof.
   move => ? [o ->]. destruct (decide (o = 0)); first by subst; rewrite keep_factor2_0; lia.
   destruct (decide (n = 0)); first lia.
@@ -558,12 +558,17 @@ Proof.
   destruct (keep_factor2 o n); lia.
 Qed.
 
+Lemma keep_factor2_min_eq (n m : nat):
+  is_power_of_two n → (n | m) →
+  (n `min` keep_factor2 m n) = n.
+Proof. move => ??. apply: Nat.min_l. by apply: keep_factor2_leq. Qed.
+
 Lemma keep_factor2_min_1 n:
-  (1 `min` keep_factor2 n 1)%nat = 1%nat.
+  1 `min` keep_factor2 n 1 = 1.
 Proof.
   rewrite /keep_factor2 /factor2'. destruct (N.of_nat n) => // /=.
-  apply Nat.min_l. generalize (Pos_factor2 p) => k. induction k as [|k IH].
-  done. rewrite Nat.pow_succ_r'. move: IH. generalize (2 ^ k) => j. lia.
+  apply Nat.min_l. generalize (Pos_factor2 p) => k. induction k as [|k IH] => //.
+  rewrite Nat.pow_succ_r'. lia.
 Qed.
 
 Lemma keep_factor2_twice n m:

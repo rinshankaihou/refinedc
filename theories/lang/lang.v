@@ -616,6 +616,10 @@ Lemma ly_align_log_ly_align_eq_iff ly1 ly2:
   ly_align_log ly1 = ly_align_log ly2 ↔ ly_align ly1 = ly_align ly2.
 Proof. rewrite /ly_align. split; first naive_solver. move => /Nat.pow_inj_r. lia. Qed.
 
+Lemma ly_align_log_ly_align_le_iff ly1 ly2:
+  (ly_align_log ly1 ≤ ly_align_log ly2 ↔ ly_align ly1 ≤ ly_align ly2)%nat.
+Proof. rewrite /ly_align. apply: Nat.pow_le_mono_r_iff. lia. Qed.
+
 Lemma ly_align_ly_with_align m n :
   ly_align (ly_with_align m n) = keep_factor2 n 1.
 Proof. rewrite /ly_with_align/keep_factor2/factor2. by destruct (factor2' n). Qed.
@@ -645,6 +649,10 @@ Proof. move => ??. by rewrite /has_layout_loc ly_align_ly_with_align keep_factor
 Lemma has_layout_loc_trans l ly1 ly2 :
   l `has_layout_loc` ly2 → (ly1.(ly_align_log) ≤ ly2.(ly_align_log))%nat → l `has_layout_loc` ly1.
 Proof. rewrite /has_layout_loc/aligned_to => Hl ?. etrans;[|by apply Hl]. by apply Zdivide_nat_pow. Qed.
+
+Lemma has_layout_loc_trans' l ly1 ly2 :
+  l `has_layout_loc` ly2 → (ly_align ly1 ≤ ly_align ly2)%nat → l `has_layout_loc` ly1.
+Proof. rewrite -ly_align_log_ly_align_le_iff. by apply: has_layout_loc_trans. Qed.
 
 Lemma has_layout_loc_1 l ly:
   ly_align ly = 1%nat →

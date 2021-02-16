@@ -211,7 +211,7 @@ Section function.
   Proof.
     iIntros "[-> [% HP]]". rewrite /variant/=. iApply typed_place_subsume.
     iApply subsume_padded_uninit. iIntros (v) "Hv".
-    iSplit => //. by iApply "HP".
+    iSplit => //. iIntros "$". by iApply "HP".
   Qed.
   Global Instance type_place_variant_neq_inst K ul n l ty `{!Movable ty} ti x:
     TypedPlace (GetMemberUnionPCtx ul n :: K) l Own (variant ti x ty) | 50:=

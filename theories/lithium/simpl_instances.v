@@ -69,6 +69,15 @@ Proof. split; destruct b; naive_solver. Qed.
 Global Instance simpl_Is_true_false b : SimplBoth (¬ Is_true b) (b = false).
 Proof. split; destruct b; naive_solver. Qed.
 
+Global Instance simpl_min_glb_nat n1 n2 m : SimplBoth (m ≤ n1 `min` n2)%nat (m ≤ n1 ∧ m ≤ n2)%nat.
+Proof. rewrite /SimplBoth. lia. Qed.
+Global Instance simpl_min_glb n1 n2 m : SimplBoth (m ≤ n1 `min` n2) (m ≤ n1 ∧ m ≤ n2).
+Proof. rewrite /SimplBoth. lia. Qed.
+Global Instance simpl_max_glb_nat n1 n2 m : SimplBoth (n1 `max` n2 ≤ m)%nat (n1 ≤ m ∧ n2 ≤ m)%nat.
+Proof. rewrite /SimplBoth. lia. Qed.
+Global Instance simpl_max_glb n1 n2 m : SimplBoth (n1 `max` n2 ≤ m) (n1 ≤ m ∧ n2 ≤ m).
+Proof. rewrite /SimplBoth. lia. Qed.
+
 Global Instance simpl_gt_both (n1 n2 : nat) `{!CanSolve (n1 ≠ 0)%nat} : SimplBoth (n1 > n2 * n1) (n2 = 0%nat).
 Proof. unfold CanSolve in *; split; destruct n2; naive_solver lia. Qed.
 Global Instance simpl_ge_both (n1 n2 : nat) `{!CanSolve (n1 ≠ 0)%nat} : SimplBoth (n1 >= n2 * n1) (n2 = 0 ∨ n2 = 1)%nat.
@@ -126,6 +135,9 @@ Qed.
 Global Instance simpl_cancel_mult_nat n1 n2 m `{!CanSolve (m ≠ 0)%nat}:
   SimplBothRel (=) (n1 * m)%nat (n2 * m)%nat (n1 = n2)%nat.
 Proof. unfold SimplBothRel. unfold CanSolve in *. by rewrite Nat.mul_cancel_r. Qed.
+Global Instance simpl_cancel_mult_nat_1 n m `{!CanSolve (m ≠ 0)%nat}:
+  SimplBothRel (=) (n * m)%nat m (n = 1)%nat.
+Proof. unfold SimplBothRel. unfold CanSolve in *. nia. Qed.
 Global Instance simpl_cancel_mult_le n1 n2 m `{!CanSolve (0 < m)}:
   SimplBothRel (≤) (n1 * m) (n2 * m) (n1 ≤ n2).
 Proof. unfold SimplBothRel. unfold CanSolve in *. by rewrite -Z.mul_le_mono_pos_r. Qed.

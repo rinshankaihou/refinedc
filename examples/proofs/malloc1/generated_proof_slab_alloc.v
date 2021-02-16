@@ -21,6 +21,7 @@ Section proof_slab_alloc.
     - repeat liRStep; liShow.
       all: print_typesystem_goal "slab_alloc" "#0".
     Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
+    all: try by apply: has_layout_loc_trans'; solve_goal.
     all: print_sidecondition_goal "slab_alloc".
   Qed.
 End proof_slab_alloc.

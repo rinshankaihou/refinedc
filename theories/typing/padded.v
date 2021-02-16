@@ -104,24 +104,24 @@ Section padded.
 
   (* Only works for Own since ty might have interior mutability, but
   uninit ty assumes that the values are frozen *)
-  Lemma subsume_padded_uninit l ly lyty ty `{!Movable ty} T:
-    (∀ v, v◁ᵥty -∗ ⌜ty.(ty_layout) = lyty⌝ ∗ T) -∗
-    subsume (l ◁ₗ padded ty lyty ly) (l ◁ₗ uninit ly) T.
+  Lemma subsume_padded_uninit l ly1 ly2 lyty ty `{!Movable ty} T:
+    (∀ v, v◁ᵥty -∗ ⌜ty.(ty_layout) = lyty⌝ ∗ subsume (l ◁ₗ uninit ly1) (l ◁ₗ uninit ly2) T) -∗
+    subsume (l ◁ₗ padded ty lyty ly1) (l ◁ₗ uninit ly2) T.
   Proof.
     iIntros "HT". iDestruct 1 as ([? ?] ?) "(Hb & Hl & Hr)".
     iDestruct (ty_deref with "Hl") as (v1) "[Hl Hv1]".
     iDestruct (ty_size_eq with "Hv1") as %Hlen1.
     iDestruct (ty_deref with "Hr") as (v2) "[Hr Hv2]".
     iDestruct (ty_size_eq with "Hv2") as %Hlen2.
-    iDestruct ("HT" with "Hv1") as (<-) "$".
+    iDestruct ("HT" with "Hv1") as (<-) "HT". iApply "HT".
     iExists (v1 ++ v2).
     rewrite /= heap_mapsto_app /has_layout_val app_length Hlen1 Hlen2.
     iFrame. iPureIntro.
     split => //. rewrite /= /ly_offset {2}/ly_size. lia.
   Qed.
-  Global Instance subsume_padded_uninit_inst l ly lyty ty `{!Movable ty}:
-    SubsumePlace l Own (padded ty lyty ly) (uninit ly) :=
-    λ T, i2p (subsume_padded_uninit l ly lyty ty T).
+  Global Instance subsume_padded_uninit_inst l ly1 ly2 lyty ty `{!Movable ty}:
+    SubsumePlace l Own (padded ty lyty ly1) (uninit ly2) | 4 :=
+    λ T, i2p (subsume_padded_uninit l ly1 ly2 lyty ty T).
 
   Lemma subsume_uninit_padded l β ly lyty T:
     ⌜lyty ⊑ ly⌝ ∗ T -∗

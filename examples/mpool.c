@@ -354,7 +354,7 @@ void mpool_free(struct mpool *p, void *ptr) {
 [[rc::exists("n2 : nat")]]
 [[rc::returns("optional<&own<uninit<{ly_with_align (count * entry_size) (align * entry_size)}>>>")]]
 [[rc::ensures("frac q p : n2 @ mpool<entry_size>", "{q = Own → n2 <= n}")]]
-  [[rc::tactics("all: try (etrans; [eassumption|]); repeat progress rewrite /ly_size/=.")]]
+  [[rc::tactics("all: try (etrans; [eassumption|]); repeat progress rewrite /has_layout_loc/ly_size/=.")]]
   [[rc::tactics("all: rewrite -?Nat.mul_sub_distr_r; try apply: mult_le_compat_r; try apply mult_le_compat_r_1.")]]
   [[rc::tactics("all: try by destruct o'; solve_goal.")]]
 void *mpool_alloc_contiguous_no_fallback(struct mpool *p, size_t count, size_t align)
@@ -421,7 +421,6 @@ void *mpool_alloc_contiguous_no_fallback(struct mpool *p, size_t count, size_t a
         chunk->size = before_start;
       }
 
-      rc_uninit_strengthen_align(*start);
       ret = (void *)start;
       break;
     }

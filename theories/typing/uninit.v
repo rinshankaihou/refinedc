@@ -38,10 +38,11 @@ Section uninit.
   Qed.
 
   (* This only works for own because of ty might have interior mutability. *)
-  Lemma uninit_mono l ty `{!Movable ty} ly T:
-    ⌜ty.(ty_layout) = ly⌝ ∗ (∀ v, v ◁ᵥ ty -∗ T) -∗ subsume (l ◁ₗ ty) (l ◁ₗ uninit ly) T.
+  Lemma uninit_mono l ty `{!Movable ty} ly T `{!FastDone (ty.(ty_layout) = ly)}:
+    (∀ v, v ◁ᵥ ty -∗ T) -∗
+    subsume (l ◁ₗ ty) (l ◁ₗ uninit ly) T.
   Proof.
-    iIntros "[<- HT] Hl".
+    unfold FastDone in *; subst. iIntros "HT Hl".
     iDestruct (ty_aligned with "Hl") as %?.
     iDestruct (ty_deref with "Hl") as (v) "[Hmt Hv]".
     iDestruct (ty_size_eq with "Hv") as %?.
@@ -49,10 +50,25 @@ Section uninit.
     - iExists _. by iFrame.
     - by iApply "HT".
   Qed.
-  Global Instance uninit_mono_inst l ty `{!Movable ty} ly:
+  (* This cannot be a definition but must be an Hint Extern since
+  Movable is a dependent subgoal and thus gets shelved. *)
+  Definition uninit_mono_inst l ty `{!Movable ty} ly `{!FastDone (ty.(ty_layout) = ly)}:
     SubsumePlace l Own ty (uninit ly) :=
     λ T, i2p (uninit_mono l ty ly T).
 
+  Lemma subsume_uninit_eq l β ly1 ly2 T `{!CanSolve (ly1.(ly_size) = ly2.(ly_size))}:
+    (⌜l `has_layout_loc` ly1⌝ -∗ ⌜l `has_layout_loc` ly2⌝ ∗ T) -∗
+    subsume (l ◁ₗ{β} uninit ly1) (l ◁ₗ{β} uninit ly2) T.
+  Proof.
+    revert select (CanSolve _) => Hsz. unfold CanSolve in *.
+    iIntros "HT Hl".
+    iDestruct "Hl" as (v Hv Hl) "Hl".
+    iDestruct ("HT" with "[//]") as (?) "$".
+    iExists _. iFrame. by rewrite /has_layout_val -Hsz.
+  Qed.
+  Global Instance subsume_uninit_eq_inst l β ly1 ly2 `{!CanSolve (ly1.(ly_size) = ly2.(ly_size))} :
+    SubsumePlace l β (uninit ly1) (uninit ly2) | 10 :=
+    λ T, i2p (subsume_uninit_eq l β ly1 ly2 T).
 
   Lemma split_uninit n l β ly1:
     (n ≤ ly1.(ly_size))%nat →
@@ -108,31 +124,26 @@ Section uninit.
     TypedBinOp v2 (v2 ◁ᵥ n @ int it)%I p (p ◁ₗ{β} uninit ly) (PtrOffsetOp u8) (IntOp it) PtrOp :=
     λ T, i2p (type_add_uninit v2 β ly p n it T).
 
-  Lemma annot_to_uninit l β ty T:
-    (∃ ly, (subsume (l ◁ₗ{β} ty) (l ◁ₗ{β} uninit ly) (l ◁ₗ{β} uninit ly -∗ T))) -∗
-    typed_annot_stmt ToUninit l (l ◁ₗ{β} ty) T.
+  Lemma annot_to_uninit l ty T `{!Movable ty}:
+    (∀ v, v ◁ᵥ ty -∗ l ◁ₗ uninit ty.(ty_layout) -∗ T) -∗
+    typed_annot_stmt ToUninit l (l ◁ₗ ty) T.
   Proof.
-    iDestruct 1 as (ly) "Hsub". iIntros "Hl". iApply step_fupd_intro => //. iModIntro.
-    iDestruct ("Hsub" with "Hl") as "[Hl HT]". by iApply "HT".
+    iIntros "HT Hl". iApply step_fupd_intro => //. iModIntro.
+    iDestruct (ty_aligned with "Hl") as %?.
+    iDestruct (ty_deref with "Hl") as (v) "[Hmt Hv]".
+    iDestruct (ty_size_eq with "Hv") as %?.
+    iApply ("HT" with "Hv").
+    iExists _. by iFrame.
   Qed.
-  Global Instance annot_to_uninit_inst l β ty:
-    TypedAnnotStmt (ToUninit) l (l ◁ₗ{β} ty) :=
-    λ T, i2p (annot_to_uninit l β ty T).
-
-  Lemma annot_uninit_strengthen_align l β ly T `{!FastDone (l `aligned_to` n)}:
-    (⌜is_power_of_two n⌝ ∗ (l ◁ₗ{β} uninit (ly_with_align ly.(ly_size) n) -∗ T)) -∗
-    typed_annot_stmt UninitStrengthenAlign l (l ◁ₗ{β} (uninit ly)) T.
-  Proof.
-    iIntros "[% HT] Hl". iApply step_fupd_intro => //. iModIntro. iApply "HT".
-    iDestruct "Hl" as (v Hv Hl) "Hl". iExists _. iFrame. iSplit => //. iPureIntro.
-    by apply ly_with_align_aligned_to.
-  Qed.
-  Global Instance annot_uninit_strengthen_align_inst l β ly `{!FastDone (l `aligned_to` n)}:
-    TypedAnnotStmt (UninitStrengthenAlign) l (l ◁ₗ{β} (uninit ly)) :=
-    λ T, i2p (annot_uninit_strengthen_align l β ly T).
+  Global Instance annot_to_uninit_inst l ty `{!Movable ty}:
+    TypedAnnotStmt (ToUninit) l (l ◁ₗ ty) :=
+    λ T, i2p (annot_to_uninit l ty T).
 
 End uninit.
 Notation "uninit< ly >" := (uninit ly) (only printing, format "'uninit<' ly '>'") : printing_sugar.
+
+Hint Extern 5 (SubsumePlace _ Own _ (uninit _)) =>
+  unshelve notypeclasses refine (uninit_mono_inst _ _ _ ) : typeclass_instances.
 
 Section void.
   Context `{!typeG Σ}.

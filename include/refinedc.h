@@ -21,7 +21,6 @@
 
 #define rc_unlock(e) rc_annot(e, "UnlockA")
 #define rc_to_uninit(e) rc_annot(e, "ToUninit")
-#define rc_uninit_strengthen_align(e) rc_annot(e, "UninitStrengthenAlign")
 #define rc_stop(e) rc_annot(e, "StopAnnot")
 #define rc_share(e) rc_annot(e, "ShareAnnot")
 #define rc_unfold_once(e) rc_annot(e, "UnfoldOnceAnnot")
