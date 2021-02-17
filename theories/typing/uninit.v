@@ -85,6 +85,30 @@ Section uninit.
       iPureIntro. by apply has_layout_ly_offset.
   Qed.
 
+  Lemma merge_uninit ly1 ly2 l β:
+    (ly1.(ly_size) ≤ ly2.(ly_size))%nat →
+    (ly_align ly2 ≤ ly_align ly1)%nat →
+    l ◁ₗ{β} uninit ly1 -∗ (l +ₗ ly1.(ly_size)) ◁ₗ{β} (uninit (ly_offset ly2 ly1.(ly_size))) -∗
+      l ◁ₗ{β} uninit ly2.
+  Proof.
+    iIntros (? ?) "Hl1 Hl2". rewrite /ty_own/=.
+    iDestruct "Hl1" as (v1 Hv1 Hl1) "Hmt1".
+    iDestruct "Hl2" as (v2 Hv2 Hl2) "Hmt2".
+    iExists (v1 ++ v2).
+    rewrite heap_mapsto_own_state_app Hv1 /has_layout_val app_length Hv1 Hv2.
+    iFrame. iPureIntro. split.
+    - rewrite {2}/ly_size/=. lia.
+    - by apply: has_layout_loc_trans'.
+  Qed.
+
+  Lemma subsume_uninit_merge l β ly1 ly2 T `{!CanSolve (ly1.(ly_size) ≤ ly2.(ly_size))%nat}:
+    (⌜ly_align ly2 ≤ ly_align ly1⌝%nat ∗ ((l +ₗ ly1.(ly_size)) ◁ₗ{β} uninit (ly_offset ly2 ly1.(ly_size)) ∗ T)) -∗
+    subsume (l ◁ₗ{β} uninit ly1) (l ◁ₗ{β} uninit ly2) T.
+  Proof. unfold CanSolve in *. iIntros "[% [Hl2 $]] Hl". by iApply (merge_uninit with "Hl"). Qed.
+  Global Instance subsume_uninit_merge_inst l β ly1 ly2 `{!CanSolve (ly1.(ly_size) ≤ ly2.(ly_size))%nat} :
+    SubsumePlace l β (uninit ly1) (uninit ly2) | 20 :=
+    λ T, i2p (subsume_uninit_merge l β ly1 ly2 T).
+
   Lemma type_return {B} Q e fn ls (fr : B → _):
     typed_val_expr e (λ v ty, v ◁ᵥ ty -∗ ∃ x, v ◁ᵥ (fr x).(fr_rty) ∗
     foldr (λ (e : (loc * layout)) T, e.1 ◁ₗ uninit e.2 ∗ T)

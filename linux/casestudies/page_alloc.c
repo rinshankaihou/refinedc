@@ -22,8 +22,6 @@
 //@rc::require refinedc.linux.casestudies.page_alloc
 //@rc::import page_alloc_def from refinedc.linux.casestudies.page_alloc
 
-//@rc::inlined Definition PAGE_SIZE : Z := 4096.
-//@rc::inlined Definition PAGE_LAYOUT (n : Z) := ly_with_align (Z.to_nat (PAGE_SIZE * n)) (Z.to_nat (PAGE_SIZE * n)).
 
 [[rc::parameters("p : loc")]]
 [[rc::args("p @ &own<uninit<PAGE_LAYOUT<{1}>>>")]]
@@ -258,7 +256,6 @@ static inline phys_addr_t hyp_virt_to_phys(void *addr)
 #define hyp_phys_to_pfn(phys)	((phys) >> PAGE_SHIFT)
 /* #define hyp_phys_to_page_MACRO(phys)	(&hyp_vmemmap[hyp_phys_to_pfn(phys)]) */
 #define hyp_phys_to_page_MACRO(phys)	(hyp_vmemmap + hyp_phys_to_pfn(phys))
-//@rc::inlined Definition hyp_phys_to_page (vmemmap : loc) (p : Z) : Z. Admitted.
 [[rc::parameters("p : Z", "vmemmap : loc", "pages : {list type}")]]
 [[rc::args("p @ int<u64>")]]
 [[rc::requires("[initialized \"__hyp_vmemmap\" vmemmap]", "own vmemmap : array<struct_hyp_page, pages>")]]
@@ -271,7 +268,6 @@ static inline struct hyp_page * hyp_phys_to_page(phys_addr_t phys) {
 #define hyp_virt_to_page(virt)	hyp_phys_to_page(__hyp_pa(virt))
 
 #define hyp_page_to_phys_MACRO(page)  ((phys_addr_t)((page) - hyp_vmemmap) << PAGE_SHIFT)
-//@rc::inlined Definition hyp_page_to_phys (vmemmap : loc) (page : Z) : Z. Admitted.
 [[rc::parameters("p : loc", "page : Z", "vmemmap : loc", "len : nat")]]
 [[rc::args("p @ &own<array_ptr<struct_hyp_page, vmemmap, page, len>>")]]
 [[rc::requires("[initialized \"__hyp_vmemmap\" vmemmap]")]]
@@ -282,7 +278,6 @@ static inline phys_addr_t hyp_page_to_phys(struct hyp_page *page) {
 	return hyp_page_to_phys_MACRO(page);
 }
 #define hyp_page_to_virt(page)	__hyp_va(hyp_page_to_phys(page))
-//@rc::inlined Definition hyp_page_to_virt (vmemmap : loc) (page : loc) : loc. Admitted.
 #define hyp_page_to_pool(page)	(((struct hyp_page *)page)->pool)
 
 static inline int hyp_page_count(void *addr)

@@ -6,6 +6,11 @@ Remove Hints find_in_context_type_val_P_own_singleton_inst : typeclass_instances
 
 Section type.
   Context `{!typeG Σ}.
+  Definition PAGE_SIZE : Z := 4096.
+  Definition PAGE_LAYOUT (n : Z) := ly_with_align (Z.to_nat (PAGE_SIZE * n)) (Z.to_nat (PAGE_SIZE * n)).
+  Definition hyp_phys_to_page (vmemmap : loc) (p : Z) : Z. Admitted.
+  Definition hyp_page_to_phys (vmemmap : loc) (page : Z) : Z. Admitted.
+  Definition hyp_page_to_virt (vmemmap : loc) (page : loc) : loc. Admitted.
 
   Definition list_node (next : option (option type)) : type. Admitted.
   Definition idx_to_node (vmemmap : loc) (vmemmap_len :nat) (next : option (option Z) ) : option (option type) := (λ no, (λ n, array_ptr struct_hyp_page vmemmap n vmemmap_len) <$> no) <$> next.
@@ -30,7 +35,42 @@ Section type.
     find_buddy vmemmap order page ≠ page.
   Proof. Admitted.
 
+  Lemma simplify_goal_place_find_buddy_lt vmemmap p order β ty T `{!CanSolve (p < find_buddy vmemmap order p)}:
+    T (hyp_page_to_virt vmemmap (vmemmap offset{struct_hyp_page}ₗ find_buddy vmemmap order p) ◁ₗ{β} ty) -∗
+      simplify_goal ((hyp_page_to_virt vmemmap (vmemmap offset{struct_hyp_page}ₗ p) +ₗ ly_size (PAGE_LAYOUT (1 ≪ order))) ◁ₗ{β} ty) T.
+  Proof. Admitted.
+  Global Instance simplify_goal_place_find_buddy_lt_inst vmemmap p order β ty `{!CanSolve (p < find_buddy vmemmap order p)}:
+    SimplifyGoalPlace ((hyp_page_to_virt vmemmap (vmemmap offset{struct_hyp_page}ₗ p) +ₗ ly_size (PAGE_LAYOUT (1 ≪ order)))) β ty (Some 0%N) :=
+    λ T, i2p (simplify_goal_place_find_buddy_lt vmemmap p order β ty T).
+  Lemma simplify_goal_place_find_buddy_gt vmemmap p order β ty T:
+    T (⌜find_buddy vmemmap order p < p⌝ ∗ hyp_page_to_virt vmemmap (vmemmap offset{struct_hyp_page}ₗ p) ◁ₗ{β} ty) -∗
+      simplify_goal ((hyp_page_to_virt vmemmap (vmemmap offset{struct_hyp_page}ₗ find_buddy vmemmap order p) +ₗ ly_size (PAGE_LAYOUT (1 ≪ order))) ◁ₗ{β} ty) T.
+  Proof. Admitted.
+  Global Instance simplify_goal_place_find_buddy_gt_inst vmemmap p order β ty:
+    SimplifyGoalPlace ((hyp_page_to_virt vmemmap (vmemmap offset{struct_hyp_page}ₗ find_buddy vmemmap order p) +ₗ ly_size (PAGE_LAYOUT (1 ≪ order)))) β ty (Some 0%N) :=
+    λ T, i2p (simplify_goal_place_find_buddy_gt vmemmap p order β ty T).
+
+  Global Instance simpl_page_layout_size_le n1 n2:
+    SimplAndUnsafe true (ly_size (PAGE_LAYOUT n1) ≤ ly_size (PAGE_LAYOUT n2))%nat (λ T, n1 ≤ n2 ∧ T).
+  Proof. rewrite /PAGE_LAYOUT/ly_size/= => ? [??]. split => //. rewrite /PAGE_SIZE. lia. Qed.
+  Global Instance simpl_shiftl_monol_le n m1 m2 `{!CanSolve (0 < n ∧ 0 ≤ m1 ∧ 0 ≤ m2)}:
+    SimplBoth (n ≪ m1 ≤ n ≪ m2) (m1 ≤ m2).
+  Proof.
+    unfold CanSolve in *.
+      by rewrite /SimplBoth !Z.shiftl_mul_pow2 -?Z.mul_le_mono_pos_l -?Z.pow_le_mono_r_iff; [|lia..].
+  Qed.
+  Global Instance simpl_page_layout_shift order `{!CanSolve (0 ≤ order)}:
+    SimplAndRel (=) (ly_size (PAGE_LAYOUT (1 ≪ (order + 1))) - ly_size (PAGE_LAYOUT (1 ≪ order)))%nat
+                (ly_size (PAGE_LAYOUT (1 ≪ order))) (λ T, T).
+  Proof.
+    unfold CanSolve in *. split; [|naive_solver] => ?. split => //.
+    have ?:= Z.pow_nonneg 2 order.
+    rewrite/ly_size/=/PAGE_SIZE !Z.shiftl_mul_pow2  -?Z2Nat.inj_sub -?Z.mul_sub_distr_l ?Z.pow_add_r /=; nia.
+  Qed.
 End type.
+
+Typeclasses Opaque PAGE_LAYOUT.
+Global Opaque PAGE_LAYOUT.
 
 Ltac enrich_context_tac ::=
   enrich_context_base;

@@ -11,11 +11,6 @@ Section spec.
 
   (* Inlined code. *)
 
-  Definition PAGE_SIZE : Z := 4096.
-  Definition PAGE_LAYOUT (n : Z) := ly_with_align (Z.to_nat (PAGE_SIZE * n)) (Z.to_nat (PAGE_SIZE * n)).
-  Definition hyp_phys_to_page (vmemmap : loc) (p : Z) : Z. Admitted.
-  Definition hyp_page_to_phys (vmemmap : loc) (page : Z) : Z. Admitted.
-  Definition hyp_page_to_virt (vmemmap : loc) (page : loc) : loc. Admitted.
   Definition HYP_MAX_ORDER : nat := Z.to_nat 11.
   Definition HYP_NO_ORDER : Z := max_int u32.
 
