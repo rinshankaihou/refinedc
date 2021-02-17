@@ -69,7 +69,7 @@ Section value.
       typed_read_end a l Own ty ly T.
   Proof.
     iIntros "[<- HT] Hl".
-    iMod (fupd_intro_mask') as "Hclose". 2: iModIntro. by destruct a; set_solver.
+    iApply fupd_mask_intro => //. iIntros "Hclose".
     iDestruct (ty_aligned with "Hl") as %?.
     iDestruct (ty_deref with "Hl") as (v) "[Hl Hv]".
     iDestruct (ty_size_eq with "Hv") as %?.
@@ -91,7 +91,7 @@ Section value.
     iDestruct (ty_aligned with "Hl") as %?.
     iDestruct (ty_deref with "Hl") as (v') "[Hl Hv']".
     iDestruct (ty_size_eq with "Hv'") as %?.
-    iMod (fupd_intro_mask' _ (if a then ∅ else ⊤)) as "Hmask" => //. iModIntro.
+    iApply fupd_mask_intro => //. iIntros "Hmask".
     iSplitL "Hl". by iExists _; iFrame; rewrite -Heq.
     iIntros "!# Hl". iMod "Hmask". iModIntro.
     iDestruct (ty_size_eq with "Hv") as %?.

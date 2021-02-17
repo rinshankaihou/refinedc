@@ -63,7 +63,7 @@ Section programs.
     iIntros "HT Hl". unfold destruct_hint.
     destruct β.
     - iDestruct "Hl" as (b) "[Hl Hif]".
-      iMod (fupd_intro_mask') as "Hclose". 2: iModIntro. done.
+      iApply fupd_mask_intro => //. iIntros "Hclose".
       iDestruct (ty_aligned with "Hl") as %?.
       iDestruct (ty_deref with "Hl") as (v) "[Hl #Hv]".
       iDestruct (ty_size_eq with "Hv") as %?.
@@ -74,7 +74,7 @@ Section programs.
         by iApply (ty_ref with "[] Hl Hv").
     - iDestruct "Hl" as (Hly) "#Hinv".
       iInv "Hinv" as (b) "[>Hl Hif]" "Hclose".
-      iMod (fupd_intro_mask') as "Hclose2". 2: iModIntro. solve_ndisj.
+      iApply fupd_mask_intro. set_solver. iIntros "Hclose2".
       iExists _, _, _, (t2mt (b @ boolean it)). iFrame.
       rewrite /has_layout_val i2v_bool_length.
       do 2 iSplitR => //=. iSplitR => //. { by rewrite /ty_own_val/= val_of_int_bool. }
@@ -94,7 +94,7 @@ Section programs.
     iDestruct ("Hsub" with "Hv") as "(Hnew&->&Hif'&HT)".
     destruct β.
     - iDestruct "Hl" as (bold) "[Hl Hif]".
-      iMod (fupd_intro_mask' _ ∅) as "Hc" => //. iModIntro.
+      iApply fupd_mask_intro => //. iIntros "Hc".
       iDestruct (ty_aligned with "Hl") as %?.
       iDestruct (ty_deref with "Hl") as (vb) "[Hmt Hold]".
       iDestruct (ty_size_eq with "Hold") as %?.
@@ -104,7 +104,7 @@ Section programs.
       iApply (@ty_ref with "[] Hl") => //. done.
     - iDestruct "Hl" as (?) "#Hinv".
       iInv "Hinv" as (b) "[>Hmt Hif]" "Hc".
-      iMod (fupd_intro_mask' _ ∅) as "Hc2". solve_ndisj. iModIntro.
+      iApply fupd_mask_intro; first solve_ndisj. iIntros "Hc2".
       iSplitL "Hmt".
       { iExists _; iFrame; iPureIntro; split => //. apply i2v_bool_length. }
       iIntros "!# Hl". iMod "Hc2".

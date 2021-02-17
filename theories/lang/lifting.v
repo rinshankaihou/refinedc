@@ -110,8 +110,8 @@ Section lifting.
     iIntros (??) "HWP".
     iApply wp_c_lift_step_fupd => //.
     iIntros (?) "Hσ". iMod ("HWP" with "Hσ") as "[$ HWP]".
-    iMod (fupd_intro_mask' _ ∅) as "HE"; first set_solver.
-    iIntros "!>" (?????) "!> !>". iMod "HE". by iMod ("HWP" with "[//]") as "$".
+    iApply fupd_mask_intro; first set_solver. iIntros "HE".
+    iIntros (?????) "!> !>". iMod "HE". by iMod ("HWP" with "[//]") as "$".
   Qed.
 
   Lemma wp_lift_expr_step E (e : expr) Φ:
@@ -729,7 +729,7 @@ Lemma wps_assign Q Ψ vl ly vr s l o:
 Proof.
   iIntros (E Ho Hvl Hly) "HWP". rewrite !stmt_wp_eq. iIntros (?? ->) "?".
   iApply wp_lift_stmt_step_fupd. iIntros ([h1 ?]) "(%&Hhctx&Hfctx)/=". iMod "HWP" as "[Hl HWP]".
-  iMod (fupd_intro_mask' _ ∅) as "HE"; first set_solver.
+  iApply (fupd_mask_weaken ∅); first set_solver. iIntros "HE".
   iDestruct "Hl" as (v' ? ?) "Hl".
   iDestruct (heap_mapsto_has_alloc_id with "Hl") as %Haid.
   unfold E. case: Ho => ->.

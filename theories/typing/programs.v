@@ -1004,7 +1004,7 @@ Section typing.
     iIntros "Hs Hl". iDestruct (i2p_proof with "Hs Hl") as (ty') "(Hl&%&<-&HT)".
     iRevert "Hl". destruct β.
     - iIntros "Hl".
-      iMod (fupd_intro_mask') as "Hclose". 2: iModIntro. by destruct a; set_solver.
+      iApply fupd_mask_intro => //. iIntros "Hclose".
       iDestruct (ty_aligned with "Hl") as %?.
       iDestruct (ty_deref with "Hl") as (v) "[Hl #Hv]".
       iDestruct (ty_size_eq with "Hv") as %?.
@@ -1014,7 +1014,7 @@ Section typing.
     - iIntros "#Hl".
       iMod (copy_shr_acc with "Hl") as (? q' v) "[Hmt [Hv Hc]]" => //.
       iDestruct (ty_size_eq with "Hv") as "#>%".
-      iMod (fupd_intro_mask') as "Hclose". 2: iModIntro. by destruct a; set_solver.
+      iApply fupd_mask_intro => //. iIntros "Hclose".
       iExists _, _, _, _. iFrame. do 2 iSplit => //=.
       iIntros "!# Hmt". iMod "Hclose". iModIntro. by iSplitR "HT".
   Qed.
@@ -1049,7 +1049,7 @@ Section typing.
     iDestruct (ty_aligned with "Hl") as %?.
     iDestruct (ty_deref with "Hl") as (v') "[Hl Hv']".
     iDestruct (ty_size_eq with "Hv'") as %?.
-    iMod (fupd_intro_mask' _ (if a then ∅ else ⊤)) as "Hmask" => //. iModIntro.
+    iApply fupd_mask_intro => //. iIntros "Hmask".
     iSplitL "Hl". by iExists _; iFrame; rewrite -Heq.
     iIntros "!# Hl". iMod "Hmask". iModIntro.
     iDestruct (ty_size_eq with "Hv") as %?.

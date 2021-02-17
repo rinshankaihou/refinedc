@@ -78,7 +78,7 @@ Proof.
     iApply type_val. iApply type_val_context.
     iExists (t2mt (main @ function_ptr (main_type P))) => /=. iFrame => /=.
     iApply type_callable. iExists () => /=. iFrame. by iIntros (v []) "Hv" => /=.
-  - iFrame. iIntros (?? _ _ ?) "_ _ _". iApply fupd_mask_weaken => //. iPureIntro. by eauto.
+  - iFrame. iIntros (?? _ _ ?) "_ _ _". iApply fupd_mask_intro_discard => //. iPureIntro. by eauto.
   - by iFrame.
 Qed.
 

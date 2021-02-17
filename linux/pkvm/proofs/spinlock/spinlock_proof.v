@@ -95,7 +95,7 @@ Section proofs.
         iDestruct select (inv _ _) as "#Hinv".
         iInv "Hinv" as ">Inv" "Hclose_inv".
         iDestruct "Inv" as (owner next) "(%&Howner&Hnext&Hrest)".
-        iMod (fupd_intro_mask') as "Hclose"; last iModIntro; first (clear; set_solver).
+        iApply fupd_mask_intro; first solve_ndisj. iIntros "Hclose".
         iDestruct (ty_aligned with "Hnext") as %?.
         iDestruct (ty_deref with "Hnext") as (v) "[Hl Hv]".
         iDestruct (ty_size_eq with "Hv") as %?.
@@ -126,7 +126,7 @@ Section proofs.
         iDestruct select (inv _ _) as "#Hinv".
         iInv "Hinv" as ">Inv" "Hclose_inv".
         iDestruct "Inv" as (owner next) "(%&Howner&Hnext&Hrest)".
-        iMod (fupd_intro_mask') as "Hclose"; last iModIntro; first (clear; set_solver).
+        iApply fupd_mask_intro; first solve_ndisj. iIntros "Hclose".
         iDestruct (ty_aligned with "Hnext") as %?.
         iDestruct (ty_deref with "Hnext") as (v') "[Hl Hv]".
         iDestruct (ty_size_eq with "Hv") as %?.
@@ -253,7 +253,7 @@ Section proofs.
           iDestruct select (inv _ _) as "#Hinv".
           iInv "Hinv" as ">Inv" "Hclose_inv".
           iDestruct "Inv" as (owner next) "(%&Howner&Hnext&Hrest)".
-          iMod (fupd_intro_mask') as "Hclose"; last iModIntro; first (clear; set_solver).
+          iApply fupd_mask_intro; first solve_ndisj. iIntros "Hclose".
           iDestruct (ty_aligned with "Hnext") as %?.
           iDestruct (ty_deref with "Hnext") as (v') "[Hl Hv]".
           iDestruct (ty_size_eq with "Hv") as %?.
@@ -270,7 +270,7 @@ Section proofs.
           iDestruct select (inv _ _) as "#Hinv".
           iInv "Hinv" as ">Inv" "Hclose_inv".
           iDestruct "Inv" as (owner next) "([%%]&Howner&Hnext&Hrest)".
-          iMod (fupd_intro_mask') as "Hclose"; last iModIntro; first (clear; set_solver).
+          iApply fupd_mask_intro; first solve_ndisj. iIntros "Hclose".
           destruct (decide (next = i)) as [<-|] .
           ** iRename select (_ ◁ₗ next @ int u16)%I into "Hnext".
              iDestruct (ty_aligned with "Hnext") as %?.
@@ -372,7 +372,7 @@ Section proofs.
         iDestruct select (inv _ _) as "#Hinv".
         iInv "Hinv" as ">Inv" "Hclose_inv".
         iDestruct "Inv" as (owner next) "([%%]&Howner&Hnext&Hrest)".
-        iMod (fupd_intro_mask') as "Hclose"; last iModIntro; first (clear; set_solver).
+        iApply fupd_mask_intro; first solve_ndisj. iIntros "Hclose".
         iDestruct (ty_aligned with "Howner") as %?.
         iDestruct (ty_deref with "Howner") as (w) "[Hl Hv]".
         iDestruct (ty_size_eq with "Hv") as %?.
@@ -458,7 +458,7 @@ Section proofs.
       rewrite /typed_read_end; iIntros "?".
       iDestruct select (inv _ _) as "#Hinv". iInv "Hinv" as ">Inv" "Hclose_inv".
       iDestruct "Inv" as (owner' next) "(%&Howner&Hnext&H◯&Hrest)".
-      iMod (fupd_intro_mask') as "Hclose"; last iModIntro; first set_solver.
+      iApply fupd_mask_intro; first solve_ndisj. iIntros "Hclose".
       (* We have the token: we are the owner. *)
       iDestruct (owner_auth_agree with "H● H◯") as %<-.
       (* We perform the read. *)
@@ -488,7 +488,7 @@ Section proofs.
           iApply (lock_token_exclusive with "Htok Htok'"). }
         (* The owner will be 0, update the witness. *)
         iMod (owner_auth_update _ _ _ _ 0%nat with "H● H◯") as "[H● H◯]".
-        iMod (fupd_intro_mask') as "Hclose"; last iModIntro; first set_solver.
+        iApply fupd_mask_intro; first solve_ndisj. iIntros "Hclose".
         (* Learn that [next'] actually is [max_int u16]. *)
         iAssert ⌜next' = max_int u16⌝%I as %->.
         { iDestruct (ty_deref with "Hnext") as (w) "[_ H]". iDestruct "H" as %Hnext.
@@ -535,7 +535,7 @@ Section proofs.
           iDestruct (overlaping_ticket_ranges with "[] Htk Htr2") as "$".
           iExists next''. iPureIntro. split; apply elem_of_seqZ; lia. }
         (* We perform the write and close the invariant. *)
-        iMod (fupd_intro_mask') as "Hclose"; last iModIntro; first set_solver.
+        iApply fupd_mask_intro; first solve_ndisj. iIntros "Hclose".
         iDestruct (ty_aligned with "Hnext") as %?.
         iDestruct (ty_deref with "Hnext") as (v'') "[Hl Hv]".
         iDestruct (ty_size_eq with "Hv") as %?.
@@ -561,7 +561,7 @@ Section proofs.
           iApply (lock_token_exclusive with "Htok Htok'"). }
         (* The owner will be [owner + 1], update the witness. *)
         iMod (owner_auth_update _ _ _ _ (owner + 1) with "H● H◯") as "[H● H◯]".
-        iMod (fupd_intro_mask') as "Hclose"; last iModIntro; first set_solver.
+        iApply fupd_mask_intro; first solve_ndisj. iIntros "Hclose".
         (* We perform the write and close the invariant. *)
         iDestruct (ty_aligned with "Howner") as %?.
         iDestruct (ty_deref with "Howner") as (v') "[Hl Hv]".
