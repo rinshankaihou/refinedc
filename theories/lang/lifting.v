@@ -389,7 +389,7 @@ Lemma wp_ptr_relop Φ op v1 v2 l1 l2 E b:
   | _ => None
   end = Some b →
   loc_in_bounds l1 0 -∗ loc_in_bounds l2 0 -∗
-  (alloc_alive l1.1 ∧ alloc_alive l2.1 ∧ ▷ Φ (i2v (Z_of_bool b) i32)) -∗
+  (alloc_alive l1 ∧ alloc_alive l2 ∧ ▷ Φ (i2v (Z_of_bool b) i32)) -∗
   WP BinOp op PtrOp PtrOp (Val v1) (Val v2) @ E {{ Φ }}.
 Proof.
   iIntros (Hv1 Hv2 Hop) "#Hl1 #Hl2 HΦ".

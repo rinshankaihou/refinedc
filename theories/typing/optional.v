@@ -302,6 +302,20 @@ Section optionalO.
     SimpleSubsumePlaceR (optionalO ty1 optty) (optionalO ty2 optty) b b P.
   Proof. iIntros (l β) "HP Hl". destruct b. 2: by iFrame. iApply (@simple_subsume_place with "HP Hl"). Qed.
 
+  (* TODO: Should we have more instances like this? E.g. for the goal or for values? *)
+  Lemma simpl_hyp_optionalO_Some A (ty : A → type) optty l β x T:
+    (l ◁ₗ{β} ty x -∗ T) -∗ simplify_hyp (l ◁ₗ{β} Some x @ optionalO ty optty) T.
+  Proof. iIntros "HT Hl". by iApply "HT". Qed.
+  Global Instance simpl_hyp_optionalO_Some_inst A (ty : A → type) optty l β x:
+    SimplifyHypPlace l β (Some x @ optionalO ty optty) (Some 0%N) :=
+    λ T, i2p (simpl_hyp_optionalO_Some A ty optty l β x T).
+  Lemma simpl_hyp_optionalO_None A (ty : A → type) optty l β T:
+    (l ◁ₗ{β} optty -∗ T) -∗ simplify_hyp (l ◁ₗ{β} None @ optionalO ty optty) T.
+  Proof. iIntros "HT Hl". by iApply "HT". Qed.
+  Global Instance simpl_hyp_optionalO_None_inst A (ty : A → type) optty l β:
+    SimplifyHypPlace l β (None @ optionalO ty optty) (Some 0%N) :=
+    λ T, i2p (simpl_hyp_optionalO_None A ty optty l β T).
+
   Lemma subsume_optionalO_optty A (ty : A → type) optty l β T b:
     ⌜b = None⌝ ∗ T -∗ subsume (l ◁ₗ{β} optty) (l ◁ₗ{β} b @ optionalO ty optty) T.
   Proof. by iIntros "[-> $] Hl". Qed.

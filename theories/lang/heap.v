@@ -86,10 +86,10 @@ Section definitions.
   Definition heap_mapsto_eq : @heap_mapsto = @heap_mapsto_def :=
     seal_eq heap_mapsto_aux.
 
-  Definition alloc_alive_def (aid : option alloc_id) : iProp Σ :=
+  Definition alloc_alive_def (l : loc) : iProp Σ :=
     (* TODO: This should probably be defined using some custom ghost
     state, e.g. based on a new killed flag in allocations? *)
-    ∃ a q v, ⌜length v ≠ 0%nat⌝ ∗ heap_mapsto (aid, a) q v.
+    ∃ a q v, ⌜length v ≠ 0%nat⌝ ∗ heap_mapsto (l.1, a) q v.
   Definition alloc_alive_aux : seal (@alloc_alive_def). by eexists. Qed.
   Definition alloc_alive := unseal alloc_alive_aux.
   Definition alloc_alive_eq : @alloc_alive = @alloc_alive_def :=
@@ -659,13 +659,22 @@ Section alloc_alive.
   Global Instance alloc_alive_timeless a : Timeless (alloc_alive a).
   Proof. rewrite alloc_alive_eq. by apply _. Qed.
 
+  Lemma alloc_alive_mono l1 l2:
+    l1.1 = l2.1 →
+    alloc_alive l1 -∗ alloc_alive l2.
+  Proof.
+    rewrite alloc_alive_eq => Heq.
+    iDestruct 1 as (????) "?". rewrite Heq.
+    iExists _, _, _. by iFrame.
+  Qed.
+
   Lemma heap_mapsto_alive l q v:
     length v ≠ 0%nat →
-    l ↦{q} v -∗ alloc_alive l.1.
+    l ↦{q} v -∗ alloc_alive l.
   Proof. rewrite alloc_alive_eq => ?. iIntros "Hl". destruct l. iExists _, _, _. by iFrame. Qed.
 
-  Lemma alloc_alive_to_heap_alloc_alive a σ:
-    alloc_alive a -∗ state_ctx σ -∗ ⌜∃ aid, a = Some aid ∧ heap_block_alive σ.(st_heap) aid⌝.
+  Lemma alloc_alive_to_heap_alloc_alive l σ:
+    alloc_alive l -∗ state_ctx σ -∗ ⌜∃ aid, l.1 = Some aid ∧ heap_block_alive σ.(st_heap) aid⌝.
   Proof.
     rewrite alloc_alive_eq.
     iDestruct 1 as (addr q [|b v] Hv) "Hl" => //. iIntros "(_&Hhctx&_)".
@@ -676,7 +685,7 @@ Section alloc_alive.
   Qed.
 
   Lemma alloc_alive_to_valid_ptr l σ:
-    loc_in_bounds l 0 -∗ alloc_alive l.1 -∗ state_ctx σ -∗ ⌜valid_ptr l σ⌝.
+    loc_in_bounds l 0 -∗ alloc_alive l -∗ state_ctx σ -∗ ⌜valid_ptr l σ⌝.
   Proof.
     iIntros "Hin Ha Hσ".
     iDestruct (alloc_alive_to_heap_alloc_alive with "Ha Hσ") as %[?[??]].

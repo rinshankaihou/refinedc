@@ -326,7 +326,7 @@ Section loc_in_bounds.
 End loc_in_bounds.
 
 Class AllocAlive `{!typeG Σ} (ty : type) (β : own_state) (P : iProp Σ) := {
-  alloc_alive_alive l : P -∗ ty.(ty_own) β l -∗ alloc_alive l.1
+  alloc_alive_alive l : P -∗ ty.(ty_own) β l -∗ alloc_alive l
 }.
 Arguments alloc_alive_alive {_ _} _ _ _ {_} _.
 Hint Mode AllocAlive + + + + - : typeclass_instances.
@@ -336,7 +336,7 @@ Section alloc_alive.
 
   Lemma movable_alloc_alive ty l `{!Movable ty} :
     ty.(ty_layout).(ly_size) ≠ 0%nat →
-    ty.(ty_own) Own l -∗ alloc_alive l.1.
+    ty.(ty_own) Own l -∗ alloc_alive l.
   Proof.
     iIntros (?) "Hl". iDestruct (ty_deref with "Hl") as (v) "[Hl Hv]".
     iDestruct (ty_size_eq with "Hv") as %Hv.

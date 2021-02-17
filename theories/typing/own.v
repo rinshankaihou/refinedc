@@ -257,7 +257,7 @@ Section own.
     (l1 ◁ₗ{β1} ty1 -∗ l2 ◁ₗ{β2} ty2 -∗ ⌜l1.1 = l2.1⌝ ∗ (
       (loc_in_bounds l1 0 ∗ True) ∧
       (loc_in_bounds l2 0 ∗ True) ∧
-      (alloc_alive l1.1 ∗ True) ∧
+      (alloc_alive l1 ∗ True) ∧
       T (i2v (Z_of_bool b) i32) (t2mt (b @ boolean i32)))) -∗
     typed_bin_op l1 (l1 ◁ₗ{β1} ty1) l2 (l2 ◁ₗ{β2} ty2) op PtrOp PtrOp T.
   Proof.
@@ -266,7 +266,7 @@ Section own.
     all: iApply wp_ptr_relop; try by [apply val_to_of_loc]; simpl; try done.
     all: try by case_bool_decide.
     all: iSplit; [ iDestruct "HT" as "[[$ _] _]" |].
-    all: iSplit; [ rewrite Heq; iDestruct "HT" as "[[$ _] _]"| ].
+    all: iSplit; [ iApply alloc_alive_mono;[eassumption|]; iDestruct "HT" as "[[$ _] _]"| ].
     all: iModIntro; iDestruct "HT" as "[_ HT]".
     all: iApply "HΦ" => //; by case_bool_decide.
   Qed.
