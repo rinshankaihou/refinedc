@@ -181,8 +181,8 @@ Fixpoint check_fields_aligned (s : field_list) (pos : nat) : bool :=
 
 Record struct_layout := {
    sl_members : field_list;
-   sl_nodup : NoDup (field_names sl_members);
-   sl_size : sum_list (ly_size <$> sl_members.*2) ≤ max_int size_t;
+   sl_nodup : bool_decide (NoDup (field_names sl_members));
+   sl_size : sum_list (ly_size <$> sl_members.*2) < max_int size_t + 1;
    sl_fields_aligned : check_fields_aligned sl_members 0 = true;
 }.
 
@@ -199,6 +199,11 @@ Definition layout_of (s : struct_layout) : layout := {|
 |}.
 
 Coercion layout_of : struct_layout >-> layout.
+
+Lemma struct_layout_eq sl1 sl2 :
+  sl1.(sl_members) = sl2.(sl_members) →
+  sl1 = sl2.
+Proof. destruct sl1, sl2 => /= ?. subst. f_equal; apply: proof_irrel. Qed.
 
 Lemma index_of_cons n n' ly s:
   index_of ((n',ly)::s) n = (if decide (n' = Some n) then Some 0%nat else S <$> index_of s n).
@@ -285,7 +290,8 @@ Qed.
 Lemma offset_of_bound i sl:
   offset_of_idx sl.(sl_members) i ≤ max_int size_t.
 Proof.
-  etrans; last by apply (sl_size sl).
+  have ?:= sl_size sl.
+  enough (offset_of_idx (sl_members sl) i ≤ sum_list (ly_size <$> (sl_members sl).*2)) by lia.
   by apply Nat2Z.inj_le, sum_list_with_take.
 Qed.
 
@@ -328,8 +334,8 @@ Arguments OffsetOf : simpl never.
 
 Record union_layout := {
    ul_members : list (var_name * layout);
-   ul_nodup : NoDup ul_members.*1;
-   ul_size : max_list (ly_size <$> ul_members.*2) ≤ max_int size_t;
+   ul_nodup : bool_decide (NoDup ul_members.*1);
+   ul_size : max_list (ly_size <$> ul_members.*2) < max_int size_t + 1;
 }.
 
 Definition ul_layout (ul : union_layout) : layout := {|
@@ -343,6 +349,11 @@ Definition index_of_union (n : var_name) (ul : union_layout) : option nat :=
 
 Definition layout_of_union_member (n : var_name) (ul : union_layout) : option layout :=
   i ← index_of_union n ul; (snd <$> ul.(ul_members) !! i).
+
+Lemma union_layout_eq ul1 ul2 :
+  ul1.(ul_members) = ul2.(ul_members) →
+  ul1 = ul2.
+Proof. destruct ul1, ul2 => /= ?. subst. f_equal; apply: proof_irrel. Qed.
 
 Lemma layout_of_union_member_in_ul n ul ly:
   layout_of_union_member n ul = Some ly →
@@ -359,7 +370,8 @@ Proof.
   move => H1. apply fmap_Some. exists (i, (n, ly)). split => //.
   apply list_find_Some. split_and! => // j[??]H2? /=?. subst.
   suff : (i = j) by lia. apply: NoDup_lookup.
-  apply (ul_nodup ul). all: rewrite list_lookup_fmap; apply fmap_Some; naive_solver.
+  { eapply bool_decide_spec. apply (ul_nodup ul). }
+  all: rewrite list_lookup_fmap; apply fmap_Some; naive_solver.
 Qed.
 
 Definition GetMemberUnion (e : expr) (ul : union_layout) (m : var_name) : expr := (e)%E.

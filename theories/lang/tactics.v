@@ -669,5 +669,4 @@ Ltac inv_expr_step :=
      inversion H; subst; clear H
   end.
 
-Ltac solve_struct_obligations :=
-  try done; do ! constructor; set_solver.
+Ltac solve_struct_obligations := done.

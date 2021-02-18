@@ -43,7 +43,7 @@ Section struct.
   Proof.
     rewrite {1 4}/ty_own/=. iIntros "[$ Hs]". iDestruct "Hs" as (Hcount) "[#Hb Hs]".
     rewrite /GetMemberLoc/offset_of_idx.
-    have HND : (NoDup (field_names (sl_members sl))) by apply sl_nodup.
+    have HND : (NoDup (field_names (sl_members sl))) by eapply bool_decide_unpack, sl_nodup.
     iInduction (sl_members sl) as [|[n ly] ms] "IH" forall (l tys Hcount HND). {
       destruct tys => //. iSplit => //. iIntros (tys') "Htys".
       iDestruct (big_sepL2_nil_inv_l with "Htys") as %->. iFrame. by iSplit.
