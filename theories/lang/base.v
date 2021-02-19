@@ -383,8 +383,50 @@ Proof.
   - rewrite take_length in Hin. lia.
   - rewrite drop_length in Hin. lia.
 Qed.
+
+Lemma big_sepL_impl' {B} Φ (Ψ : _ → B → _) (l1 : list A) (l2 : list B) :
+    length l1 = length l2 →
+    ([∗ list] k↦x ∈ l1, Φ k x) -∗
+    □ (∀ k x1 x2, ⌜l1 !! k = Some x1⌝ -∗ ⌜l2 !! k = Some x2⌝ -∗ Φ k x1 -∗ Ψ k x2) -∗
+    [∗ list] k↦x ∈ l2, Ψ k x.
+  Proof.
+    iIntros (Hlen) "Hl #Himpl".
+    iInduction l1 as [|x1 l1] "IH" forall (Φ Ψ l2 Hlen); destruct l2 => //=; simpl in *.
+    iDestruct "Hl" as "[Hx1 Hl]". iSplitL "Hx1". by iApply "Himpl".
+    iApply ("IH" $! (Φ ∘ S) (Ψ ∘ S) l2 _ with "[] Hl").
+    iIntros "!>" (k y1 y2 ?) "Hl2 /= ?".
+      by iApply ("Himpl" with "[] [Hl2]").
+      Unshelve. lia.
+  Qed.
 End sep_list.
+
+  Lemma big_sepL2_impl' {A B C D} (Φ : _ → _ → _ → PROP) (Ψ : _ → _ → _ → _) (l1 : list A) (l2 : list B) (l1' : list C) (l2' : list D)  `{!BiAffine PROP} :
+    length l1 = length l1' → length l2 = length l2' →
+    ([∗ list] k↦x;y ∈ l1; l2, Φ k x y) -∗
+    □ (∀ k x1 x2 y1 y2, ⌜l1 !! k = Some x1⌝ -∗ ⌜l2 !! k = Some x2⌝ -∗ ⌜l1' !! k = Some y1⌝ -∗  ⌜l2' !! k = Some y2⌝ -∗ Φ k x1 x2 -∗ Ψ k y1 y2) -∗
+    [∗ list] k↦x;y ∈ l1';l2', Ψ k x y.
+  Proof.
+    iIntros (Hlen1 Hlen2) "Hl #Himpl".
+    rewrite !big_sepL2_alt. iDestruct "Hl" as (Hl1) "Hl".
+    iSplit. { iPureIntro. congruence. }
+    iApply (big_sepL_impl' with "Hl"). { rewrite !zip_with_length. lia. }
+    iIntros "!>" (k [x1 x2] [y1 y2]).
+    rewrite !lookup_zip_with_Some.
+    iDestruct 1 as %(?&?&?&?).
+    iDestruct 1 as %(?&?&?&?). simplify_eq. destruct_and!.
+    by iApply "Himpl".
+  Qed.
 End big_op.
+
+Lemma vec_cast {A} n (v : vec A n) m:
+  n = m → ∃ v' : vec A m, vec_to_list v = vec_to_list v'.
+Proof.
+  elim: v m => [|??? IH] [|m']// ?.
+  - by eexists vnil.
+  - have [|??]:= IH m'. { lia. }
+    eexists (vcons _ _) => /=. by f_equal.
+Qed.
+
 
 Lemma filter_nil_inv {A} P `{!∀ x, Decision (P x)} (l : list A):
   filter P l = [] ↔ (∀ x : A, x ∈ l → ¬ P x).

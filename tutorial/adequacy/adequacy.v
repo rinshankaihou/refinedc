@@ -3,7 +3,7 @@ From refinedc.examples.spinlock Require Import
   generated_code spinlock_def spinlock_proof
   generated_proof_sl_lock generated_proof_sl_unlock.
 From refinedc.examples.latch Require Import
-  generated_code latch_def generated_proof_latch_release
+  generated_code generated_spec latch_def generated_proof_latch_release
   generated_proof_latch_wait.
 From refinedc.tutorial.t03_list Require Import
   generated_code generated_spec generated_proof_test generated_proof_reverse
@@ -72,8 +72,13 @@ Section adequate.
   Definition global_types `{!typeG Σ} `{!lockG Σ} : gmap string global_type :=
     <["allocator_state" := GT unit (λ '(),  t04_alloc.generated_spec.alloc_state)]> $
     (* We need to use initialized_raw to avoid a cyclic definition of globalG  *)
-    <["initialized" := GT unit (λ '(), latch (initialized_raw "allocator_state" () (Some loc_allocator_state) (Some (GT unit (λ '(), t04_alloc.generated_spec.alloc_state)))))]> $
+    <["initialized" := GT unit (λ '(), (initialized_raw "allocator_state" () (Some loc_allocator_state) (Some (GT unit (λ '(), t04_alloc.generated_spec.alloc_state)))) @ latch )%I]> $
     ∅.
+
+
+  Ltac unfold_defs :=
+    unfold latch.generated_spec.latch_rec, latch_rec.
+
 
   Lemma tutorial_adequate n κs t2 σ2 σ:
     loc_allocator_data `has_layout_loc` void_ptr →
@@ -122,33 +127,37 @@ Section adequate.
       simpl.
       iLöb as "IH". iDestruct "IH" as "(?&?&?&?&?&?&?&?&?&?&?&?&?&?&?&?&?)".
       repeat iSplit.
-      - iApply type_main2 => //; iExists _; repeat iSplit => //.
-      - iApply type_main => //; iExists _; repeat iSplit => //.
-      - iApply type_init_alloc => //; iExists _; repeat iSplit => //.
-      - iApply type_free => //; iExists _; repeat iSplit => //.
-      - iApply type_alloc => //; iExists _; repeat iSplit => //.
-      - iApply type_test => //; iExists _; repeat iSplit => //.
-      - iApply type_reverse => //; iExists _; repeat iSplit => //.
-      - iApply type_member => //; iExists _; repeat iSplit => //.
-      - iApply type_pop => //; iExists _; repeat iSplit => //.
-      - iApply type_push => //; iExists _; repeat iSplit => //.
-      - iApply type_is_empty => //; iExists _; repeat iSplit => //.
-      - iApply type_init => //; iExists _; repeat iSplit => //.
-      - iApply type_latch_release => //; iExists _; repeat iSplit => //.
-      - iApply type_latch_wait => //; iExists _; repeat iSplit => //.
-      - iApply type_sl_unlock => //; iExists _; repeat iSplit => //.
-      - iApply type_sl_lock => //; iExists _; repeat iSplit => //.
-      - iApply type_sl_init => //; iExists _; repeat iSplit => //.
+      - adequacy_solve_typed_function type_main2 unfold_defs.
+      - adequacy_solve_typed_function type_main unfold_defs.
+      - adequacy_solve_typed_function type_init_alloc unfold_defs.
+      - adequacy_solve_typed_function type_free unfold_defs.
+      - adequacy_solve_typed_function type_alloc unfold_defs.
+      - adequacy_solve_typed_function type_test unfold_defs.
+      - adequacy_solve_typed_function type_reverse unfold_defs.
+      - adequacy_solve_typed_function type_member unfold_defs.
+      - adequacy_solve_typed_function type_pop unfold_defs.
+      - adequacy_solve_typed_function type_push unfold_defs.
+      - adequacy_solve_typed_function type_is_empty unfold_defs.
+      - adequacy_solve_typed_function type_init unfold_defs.
+      - adequacy_solve_typed_function type_latch_release unfold_defs.
+      - adequacy_solve_typed_function type_latch_wait unfold_defs.
+      - adequacy_solve_typed_function type_sl_unlock unfold_defs.
+      - adequacy_solve_typed_function type_sl_lock unfold_defs.
+      - adequacy_solve_typed_function type_sl_init unfold_defs.
     }
     iMod (latch_init with "Hinit") as "#Hinit" => //.
     iModIntro. iSplitL => //. 2: iSplitL => //.
     all: iExists _; iSplitR; [iExists _; repeat iSplit => // |].
     - iSplitR. 2: iSplitL "Hstate".
-      + iApply initialized_intro => //=. iExists eq_refl => /=. iApply "Hinit".
+      + iApply initialized_intro => //=. iExists eq_refl => /=.
+        iApply (ty_own_entails with "Hinit").
+        repeat adequacy_solve_equiv unfold_defs.
       + iExists _; iSplit => //; iExists _; iEval (simpl).
         iFrame "Hstate" => //.
       + iExists _; iSplit => //; iExists _; iEval (simpl). iFrame "Hdata" => //.
-    - iApply initialized_intro => //=. iExists eq_refl => /=. iApply "Hinit".
+    - iApply initialized_intro => //=. iExists eq_refl => /=.
+      iApply (ty_own_entails with "Hinit").
+      repeat adequacy_solve_equiv unfold_defs.
   Qed.
 End adequate.
 

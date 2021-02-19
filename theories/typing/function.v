@@ -27,6 +27,47 @@ Section function.
 
   Global Instance typed_function_persistent fn fp : Persistent (typed_function fn fp) := _.
 
+  Import EqNotations.
+  Lemma typed_function_equiv fn1 fn2 (fp1 fp2 : A → _) :
+    fn1 = fn2 →
+    (* TODO: replace the following with an equivalenve relation for fn_params? *)
+    (∀ x, ∃ Heq : (fp1 x).(fp_rtype) = (fp2 x).(fp_rtype),
+          (fp1 x).(fp_atys) ≡ (fp2 x).(fp_atys) ∧
+          (fp1 x).(fp_Pa) ≡ (fp2 x).(fp_Pa) ∧
+          (∀ y, ((fp1 x).(fp_fr) y).(fr_rty) ≡ ((fp2 x).(fp_fr) (rew [λ x : Type, x] Heq in y)).(fr_rty) ∧
+                ((fp1 x).(fp_fr) y).(fr_R) ≡ ((fp2 x).(fp_fr) (rew [λ x : Type, x] Heq in y)).(fr_R))) →
+    typed_function fn1 fp1 -∗ typed_function fn2 fp2.
+  Proof.
+    iIntros (-> Hfn) "HT".
+    rewrite /typed_function.
+    iIntros (x). iDestruct ("HT" $! x) as ([Hlen Hall]%Forall2_same_length_lookup) "#HT".
+    have [Heq [Hatys [HPa Hret]]] := Hfn x.
+
+    iSplit. {
+      iPureIntro. apply: Forall2_same_length_lookup_2. { rewrite -Hlen. symmetry. by apply: length_proper. }
+      move => i ty [??] Haty Harg.
+      move: Hatys => /list_equiv_lookup Hatys.
+      have := Hatys i. rewrite Haty => /(equiv_Some_inv_r' _ _)[? [? [?->?]]].
+        by apply: (Hall _ _ (_, _)).
+    }
+    iIntros "!>" (lsa lsv) "[Hv Ha] %". rewrite -HPa.
+    have [|lsa' Hlsa]:= vec_cast _ lsa (length (fp_atys (fp1 x))). { by rewrite Hatys. }
+    iApply (wps_wand with "[Hv Ha]").
+    - iSpecialize ("HT" $! lsa' lsv with "[Hv Ha]"); rewrite Hlsa. {
+        iFrame. iApply (big_sepL2_impl' with "Hv") => //. by rewrite Hatys.
+        move: Hatys => /list_equiv_lookup Hatys.
+        iIntros "!>" (k ????? Haty2 ? Haty1) "?".
+        have := Hatys k. rewrite Haty1 Haty2=> /(equiv_Some_inv_r' _ _)[? [? [Heql ??]]].
+        rewrite Heql. by simplify_eq.
+      }
+      iApply "HT". by rewrite -Hlsa.
+    - rewrite /typed_stmt_post_cond. iIntros (v).
+      iDestruct 1 as (y) "[?[??]]".
+      have [[?? ->] ->]:= Hret y.
+      iExists (rew [λ x : Type, x] Heq in y).
+      rewrite Hlsa. iFrame.
+  Qed.
+
   Program Definition function_ptr (fp : A → fn_params) : rtype := {|
     rty_type := loc;
     rty f := {|

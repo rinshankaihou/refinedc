@@ -2,7 +2,7 @@
 #include "list.h"
 #include "alloc_internal.h"
 
-[[rc::global("latch<{alloc_initialized}>")]]
+[[rc::global("{alloc_initialized} @ latch")]]
 static struct latch initialized = LATCH_INIT;
 
 #define DATA_SIZE 10000

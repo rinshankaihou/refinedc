@@ -21,7 +21,20 @@ Section fixpoint.
   Lemma fixp_unfold n:
     fixp n ≡ T (λ n, fixp n) n.
   Proof. rewrite /fixp. rewrite ->fixpoint_unfold. rewrite /apply_dfun{1}/type_fixpoint. f_equiv. Qed.
+End fixpoint.
 
+Section fixpoint.
+  Context `{!typeG Σ}.
+  Lemma fixp_proper {A} x1 x2 (T1 T2 : (A -d> typeO) → (A -d> typeO)) `{!Contractive T1} `{!Contractive T2}:
+    x1 = x2 → (∀ f x, T1 f x ≡ T2 f x) →
+    fixp T1 x1 ≡ fixp T2 x2.
+  Proof.
+    move => ? HT. rewrite /fixp.
+    apply apply_dfun_proper => //.
+    apply fixpoint_proper => ?.
+    rewrite /type_fixpoint.
+    apply: HT.
+  Qed.
 End fixpoint.
 
 (*** Tests *)

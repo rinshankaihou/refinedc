@@ -482,6 +482,10 @@ Section ofe.
   Proof. intros ?? EQ ??-> ??->. apply EQ. Qed.
   Global Instance ty_own_proper : Proper ((≡) ==> eq ==> eq ==> (≡)) ty_own.
   Proof. intros ?? EQ ??-> ??->. apply EQ. Qed.
+  Lemma ty_own_entails `{!typeG Σ} ty1 ty2 β l:
+    ty1 ≡@{type} ty2 →
+    ty_own ty1 β l -∗ ty_own ty2 β l.
+  Proof. by move => [->]. Qed.
 
   Global Instance type_cofe : Cofe typeO.
   Proof.
@@ -542,6 +546,28 @@ Section ofe.
   (* Global Instance with_refinement_ne n: *)
   (*   Proper (dist n ==> eq ==> dist n) with_refinement. *)
   (* Proof. intros ?? EQ ??-> ??->. apply EQ. Qed. *)
+
+  Inductive mtype_equiv' (ty1 ty2 : mtype) : Prop :=
+    MType_equiv :
+      ty1.(mt_type) ≡ ty2.(mt_type) →
+      ty1.(ty_layout) = ty2.(ty_layout) →
+      (∀ v, ty1.(ty_own_val) v ≡ ty2.(ty_own_val) v) →
+      mtype_equiv' ty1 ty2.
+  Global Instance mtype_equiv : Equiv mtype := mtype_equiv'.
+
+  Global Instance type_equivalence : Equivalence (≡@{type}).
+  Proof.
+    constructor.
+    - done.
+    - move => ?? [Heq]. constructor => ??. by symmetry.
+    - move => ??? [Heq1] [Heq2]. constructor => ??. etrans; [apply: Heq1|]. done.
+  Qed.
+  Global Instance mtype_equivalence : Equivalence (≡@{mtype}).
+  Proof.
+    constructor => //.
+    - move => ?? [? ? ?]. by constructor; intros; symmetry.
+    - move => ??? [?? Hv1] [???]. by constructor; etrans; try eassumption; try apply: Hv1.
+  Qed.
 
   Program Definition movable_eq ty1 ty2 `{!Movable ty2} (_ : ty1 ≡@{type} ty2): Movable ty1 := {|
     ty_layout := ty2.(ty_layout);

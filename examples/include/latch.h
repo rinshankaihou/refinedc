@@ -5,24 +5,22 @@
 #include <stdbool.h>
 #include <stdatomic.h>
 
-//@rc::import latch_def from refinedc.examples.latch
-//@rc::require refinedc.examples.latch
-
-struct latch {
+struct [[rc::refined_by("P : {iProp Σ}")]] latch {
+    [[rc::field("atomic_bool<bool_it, {(□ P)}, True>")]]
     atomic_bool released;
 };
 
 #define LATCH_INIT ((struct latch){.released = false})
 
 [[rc::parameters("p : loc", "beta : own_state", "P : {iProp Σ}")]]
-[[rc::args("p @ &frac<beta, latch<P>>")]]
-[[rc::ensures("frac beta p : latch<P>", "[P]")]]
+[[rc::args("p @ &frac<beta, P @ latch>")]]
+[[rc::ensures("frac beta p : P @ latch", "[P]")]]
 void latch_wait(struct latch* latch);
 
 [[rc::parameters("p : loc", "beta : own_state", "P : {iProp Σ}")]]
-[[rc::args("p @ &frac<beta, latch<P>>")]]
+[[rc::args("p @ &frac<beta, P @ latch>")]]
 [[rc::requires("[□ P]")]]
-[[rc::ensures("frac beta p : latch<P>")]]
+[[rc::ensures("frac beta p : P @ latch")]]
 void latch_release(struct latch* latch);
 
 #endif

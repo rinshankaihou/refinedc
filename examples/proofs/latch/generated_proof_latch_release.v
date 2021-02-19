@@ -1,7 +1,6 @@
 From refinedc.typing Require Import typing.
 From refinedc.examples.latch Require Import generated_code.
 From refinedc.examples.latch Require Import generated_spec.
-From refinedc.examples.latch Require Import latch_def.
 Set Default Proof Using "Type".
 
 (* Generated from [examples/latch.c]. *)

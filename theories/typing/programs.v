@@ -357,12 +357,12 @@ Section proper.
     T (l ◁ₗ{β} ty2) -∗ simplify_goal (l◁ₗ{β} ty1) T.
   Proof. iIntros (Heq) "HT". iExists _. iFrame. rewrite Heq. by iIntros "?". Qed.
 
-  Lemma simplify_hyp_val_eq v ty1 ty2 (Heq : ty1 ≡ ty2) {Hm: Movable ty1} `{!Movable ty2} T:
+  Lemma simplify_hyp_val_eq v ty1 ty2 (Heq : ty1 ≡@{type} ty2) {Hm: Movable ty1} `{!Movable ty2} T:
     Hm = movable_eq ty1 ty2 Heq →
     (v ◁ᵥ ty2 -∗ T) -∗ simplify_hyp (v ◁ᵥ ty1) T.
   Proof. by move => ->. Qed.
 
-  Lemma simplify_goal_val_eq v ty1 ty2 (Heq : ty1 ≡ ty2) {Hm: Movable ty1} `{!Movable ty2} T:
+  Lemma simplify_goal_val_eq v ty1 ty2 (Heq : ty1 ≡@{type} ty2) {Hm: Movable ty1} `{!Movable ty2} T:
     Hm = movable_eq ty1 ty2 Heq →
     T (v ◁ᵥ ty2) -∗ simplify_goal (v ◁ᵥ ty1) T.
   Proof. iIntros (->) "HT". iExists _. iFrame. by iIntros "?". Qed.

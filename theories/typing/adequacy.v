@@ -1,7 +1,7 @@
 From iris.program_logic Require Export adequacy weakestpre.
 From iris.algebra Require Import csum excl auth cmra_big_op gmap.
 From refinedc.typing Require Export type.
-From refinedc.typing Require Import programs function uninit globals int.
+From refinedc.typing Require Import programs function uninit globals int fixpoint.
 From refinedc.lang Require Import heap.
 From iris.program_logic Require Export language.
 Set Default Proof Using "Type".
@@ -96,3 +96,29 @@ Proof.
   rewrite /fn_lists_to_fns /= big_sepM_insert //.
   apply not_elem_of_list_to_map_1. rewrite fst_zip => //; lia.
 Qed.
+
+(** * Tactics for solving conditions in an adequacy proof *)
+
+Ltac adequacy_intro_parameter :=
+  repeat lazymatch goal with
+         | |- ∀ _ : (), _ => case
+         | |- ∀ _ : (_ * _), _ => case
+         | |- ∀ _ : _, _ => move => ?
+         end.
+
+Ltac adequacy_unfold_equiv :=
+  lazymatch goal with
+  | |- Build_mtype _ _ _ _ ≡ Build_mtype _ _ _ _ => constructor => /=; [| |move => ?]
+  | |- fixp _ _ ≡ fixp _ _ => apply: fixp_proper; [|move => ??]
+  | |- ty_own_val _ _ ≡ ty_own_val _ _ => unfold ty_own_val => /=
+  | |-  _ =@{struct_layout} _ => apply: struct_layout_eq
+  end.
+
+Ltac adequacy_solve_equiv unfold_tac :=
+  first [ eassumption | fast_reflexivity | unfold_type_equiv | adequacy_unfold_equiv | f_contractive | f_equiv' | reflexivity | progress unfold_tac ].
+
+Ltac adequacy_solve_typed_function lemma unfold_tac :=
+  iApply typed_function_equiv; [
+    done |
+    | iApply lemma => //; iExists _; repeat iSplit => //];
+    adequacy_intro_parameter => /=; eexists eq_refl => /=; split_and!; [..|adequacy_intro_parameter => /=; split_and!];  repeat adequacy_solve_equiv unfold_tac.
