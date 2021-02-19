@@ -1,5 +1,5 @@
 From refinedc.typing Require Export type.
-From refinedc.typing Require Import programs uninit padded int struct.
+From refinedc.typing Require Import programs bytes padded int struct.
 Set Default Proof Using "Type".
 
 Section function.

@@ -1,6 +1,6 @@
 From refinedc.typing Require Export type.
 From iris.algebra Require Import list.
-From refinedc.typing Require Import programs uninit.
+From refinedc.typing Require Import programs bytes.
 Set Default Proof Using "Type".
 
 Section struct.
@@ -278,7 +278,9 @@ Section struct.
         * by rewrite fmap_app reshape_app take_app_alt ?drop_app_alt /= ?take_ge ?Hsz ?replicate_length; subst.
         * rewrite app_length fmap_app sum_list_with_app Hv replicate_length /=. lia.
         * by rewrite /field_names omap_app !app_length Hf.
-        * iApply (big_sepL2_app with "Hvs"). iSplit => //. iPureIntro. by rewrite /has_layout_val replicate_length.
+        * iApply (big_sepL2_app with "Hvs"). iSplit => //. iPureIntro.
+          split; first by rewrite /has_layout_val replicate_length.
+          by apply Forall_forall.
   Qed.
 
 
@@ -287,7 +289,7 @@ Section struct.
   Proof.
     rewrite /layout_of/struct{1 2}/ty_own/offset_of_idx/=.
     iSplit.
-    - iDestruct 1 as (v Hv Hl) "Hl". iSplit => //. iSplit.
+    - iDestruct 1 as (v Hv Hl _) "Hl". iSplit => //. iSplit.
       { iPureIntro. rewrite fmap_length. by apply omap_length_eq => i [[?|]?]. }
       have {}Hl := check_fields_aligned_alt_correct _ _ Hl.
       rewrite /has_layout_val{1}/ly_size in Hv.
@@ -297,20 +299,21 @@ Section struct.
       have Hlen: (length (take (ly_size ly) v) = ly_size ly) by rewrite take_length_le ?Hv//; cbn; lia.
       rewrite -(take_drop ly.(ly_size) v).
       iDestruct (heap_mapsto_own_state_app with "Hl") as "[Hl Hr]". rewrite Hlen.
-      iSplitL "Hl"; destruct n; try by [iExists _; iFrame]; iApply "IH" => //;
+      iSplitL "Hl"; destruct n; try by [iExists _; iFrame; rewrite Forall_forall]; iApply "IH" => //;
       try rewrite drop_length; try iPureIntro; lia.
     - iIntros "[$ Hl]". iDestruct "Hl" as (_) "[#Hb Hl]".
       rewrite /has_layout_val{2}/ly_size.
       iInduction (sl_members s) as [|[n ly] ms] "IH" forall (l) => //; csimpl in *.
-      { iExists []. iSplit => //. by rewrite heap_mapsto_own_state_nil. }
+      { iExists []. rewrite Forall_nil. repeat iSplit => //. by rewrite heap_mapsto_own_state_nil. }
       rewrite shift_loc_0. setoid_rewrite <-shift_loc_assoc_nat.
       iDestruct "Hl" as "[Hl Hs]".
       iDestruct (loc_in_bounds_split with "Hb") as "[Hb1 Hb2]".
       destruct n; csimpl.
-      all: iDestruct "Hl" as (v1 Hv1 Hl) "Hl".
-      all: iDestruct ("IH" with "Hb2 Hs") as (v2 Hv2 )"Hv".
+      all: rewrite /ty_own/=; iDestruct "Hl" as (v1 Hv1 Hl _) "Hl".
+      all: iDestruct ("IH" with "Hb2 Hs") as (v2 Hv2 _) "Hv".
       all: iExists (v1 ++ v2).
       all: rewrite heap_mapsto_own_state_app app_length Hv1 Hv2.
+      all: rewrite Forall_app !Forall_forall.
       all: by iFrame.
   Qed.
 

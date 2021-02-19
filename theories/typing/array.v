@@ -1,6 +1,6 @@
 From iris.algebra Require Import list.
 From refinedc.typing Require Export type.
-From refinedc.typing Require Import programs singleton uninit int.
+From refinedc.typing Require Import programs singleton bytes int.
 Set Default Proof Using "Type".
 
 Section array.
@@ -135,17 +135,21 @@ Section array.
     l ◁ₗ{β} array ly (replicate n (uninit ly)) ⊣⊢ l ◁ₗ{β} uninit (mk_array_layout ly n).
   Proof.
     rewrite /ty_own/= => ?. iSplit.
-    - rewrite heap_mapsto_own_state_layout_alt. iDestruct 1 as (Hl) "[Hb Ha]". iSplit => //. clear Hl.
-      iInduction n as [|n] "IH" forall (l) => /=.
-      { iExists []. rewrite heap_mapsto_own_state_nil mult_0_r.
-        iFrame. iPureIntro. rewrite /has_layout_val/ly_size/=. lia. }
+    - iInduction n as [|n] "IH" forall (l) => /=; iIntros "(%&Hlib&Htys)".
+      { iExists []. rewrite heap_mapsto_own_state_nil mult_0_r Forall_nil.
+        iFrame "Hlib". iPureIntro. rewrite /has_layout_val/ly_size/=. naive_solver lia. }
       setoid_rewrite offset_loc_S. setoid_rewrite offset_loc_1. rewrite offset_loc_0.
-      iDestruct "Ha" as "[Hl Ha]". iDestruct (loc_in_bounds_split_mul_S with "Hb") as "[#Hb1 Hb2]".
-      iDestruct ("IH" with "Hb2 Ha") as (v2 Hv2) "Hv2".
-      iDestruct "Hl" as (v1 Hv1  Hl1) "Hv1".
-      iExists (v1 ++ v2). rewrite heap_mapsto_own_state_app Hv1 /has_layout_val app_length Hv1 Hv2. iFrame.
-      iPureIntro. rewrite {2 3}/ly_size/=. lia.
-    - iDestruct 1 as (v Hv Hl) "Hl". iSplit => //.
+      iDestruct "Htys" as "[Hty Htys]".
+      iDestruct (loc_in_bounds_split_mul_S with "Hlib") as "[#Hlib1 Hlib2]".
+      iDestruct ("IH" with "[Hlib2 Htys]") as (v2 Hv2 ? _) "Hv2".
+      { iFrame. iPureIntro. revert select (layout_wf _). revert select (_ `has_layout_loc` _).
+        rewrite /has_layout_loc /layout_wf /aligned_to. destruct l as [? a].
+        move => /= [? ->] [? ->]. eexists. by rewrite -Z.mul_add_distr_r. }
+      rewrite {2}/ty_own/=. iDestruct "Hty" as (v1 Hv1 Hl1 _) "Hv1".
+      iExists (v1 ++ v2). rewrite heap_mapsto_own_state_app Hv1 /has_layout_val app_length Hv1 Hv2.
+      iFrame. rewrite Forall_forall. iPureIntro. split_and! => //.
+      rewrite {2 3}/ly_size/=. lia.
+    - iDestruct 1 as (v Hv Hl _) "Hl". iSplit => //.
       iInduction n as [|n] "IH" forall (v l Hv Hl) => /=.
       { rewrite mult_0_r right_id.
         iApply loc_in_bounds_shorten; last by iApply heap_mapsto_own_state_loc_in_bounds. lia. }
@@ -164,7 +168,7 @@ Section array.
         iFrame "Hbl". rewrite replicate_length drop_length Hv.
         destruct ly as [k?]. repeat unfold ly_size => /=.
         have ->: (k * n = k * S n - k)%nat by lia. done.
-      + iSplitL "Hl"; last done. iExists _. iFrame. iPureIntro. split => //.
+      + iSplitL "Hl"; last done. iExists _. iFrame. iPureIntro. rewrite Forall_forall. split_and! => //.
         rewrite /has_layout_val take_length_le ?Hv; repeat unfold ly_size => /=; lia.
   Qed.
 

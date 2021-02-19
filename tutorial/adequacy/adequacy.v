@@ -153,8 +153,9 @@ Section adequate.
         iApply (ty_own_entails with "Hinit").
         repeat adequacy_solve_equiv unfold_defs.
       + iExists _; iSplit => //; iExists _; iEval (simpl).
-        iFrame "Hstate" => //.
-      + iExists _; iSplit => //; iExists _; iEval (simpl). iFrame "Hdata" => //.
+        rewrite Forall_forall. iFrame "Hstate" => //.
+      + iExists _; iSplit => //; iExists _; iEval (simpl).
+        rewrite Forall_forall. iFrame "Hdata" => //.
     - iApply initialized_intro => //=. iExists eq_refl => /=.
       iApply (ty_own_entails with "Hinit").
       repeat adequacy_solve_equiv unfold_defs.

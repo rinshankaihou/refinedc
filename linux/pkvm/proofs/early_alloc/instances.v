@@ -4,6 +4,8 @@ Set Default Proof Using "Type".
 
 Remove Hints find_in_context_type_val_P_own_singleton_inst : typeclass_instances.
 
+(*** Simplification of locations ***)
+
 Class SimplLoc (l1 l2 : loc) : Prop := simpl_loc : l1 = l2.
 
 Instance simpl_loc_eta (l : loc):
@@ -42,6 +44,15 @@ Proof. rewrite Z.mul_add_distr_r. repeat f_equal. rewrite Z.shiftl_mul_pow2 //. 
 Instance simpl_loc_extra4 l n1 n2:
   SimplLoc (l +ₗ (n1 + 0%nat) * n2) (l +ₗ (n1 * n2)).
 Proof. f_equal. lia. Qed.
+
+(*** Things about PAGES ***)
+
+Global Instance simpl_ly_size_page_le i j:
+  SimplBothRel (≤)%nat (PAGES i).(ly_size) (PAGES j).(ly_size) (i ≤ j)%nat.
+Proof. rewrite /PAGES /ly_with_align /ly_size /PAGE_SIZE /=. split; lia. Qed.
+
+Lemma ly_size_PAGES i : ly_size (PAGES i) = (i * Z.to_nat PAGE_SIZE)%nat.
+Proof. by rewrite /PAGES /ly_with_align /ly_size. Qed.
 
 Section instances.
   Context  `{!typeG Σ}.
@@ -146,58 +157,15 @@ Section instances.
     SimplifyHyp (loc_in_bounds l n) (Some 0%N) :=
     λ T, i2p (simplify_hyp_loc_in_bounds_ptr_in_range l n T).
 
-  Lemma subsume_uninit_split l β ly1 ly2 T `{!CanSolve (ly2.(ly_size) ≤ ly1.(ly_size))%nat}:
-    (⌜ly_align ly2 ≤ ly_align ly1⌝%nat ∗ ((l +ₗ ly2.(ly_size)) ◁ₗ{β} uninit (ly_offset ly1 ly2.(ly_size)) -∗ T)) -∗
-    subsume (l ◁ₗ{β} uninit ly1) (l ◁ₗ{β} uninit ly2) T.
-  Proof.
-    unfold CanSolve in *. iIntros "[% HT] Hl".
-    iDestruct (split_uninit ly2.(ly_size) with "Hl") as "[Hl1 Hl2]"; [lia|].
-    rewrite /ty_own/=.
-    iSplitL "Hl1". 2: by iApply "HT".
-    iDestruct "Hl1" as (???) "?".
-    iExists _. iFrame. iPureIntro.
-    split => //. by apply: has_layout_loc_trans'.
-  Qed.
-  Global Instance subsume_uninit_split_inst l β ly1 ly2 `{!CanSolve (ly2.(ly_size) ≤ ly1.(ly_size))%nat} :
-    SubsumePlace l β (uninit ly1) (uninit ly2) | 15 :=
-    λ T, i2p (subsume_uninit_split l β ly1 ly2 T).
-
-  Lemma subsume_uninit_uninit_PAGES p n1 n2 (T : iProp Σ):
-    ⌜n2 ≤ n1⌝%nat ∗ ((p +ₗ ly_size (PAGES n2)) ◁ₗ uninit (PAGES (n1 - n2)) -∗ T) -∗
-    subsume (p ◁ₗ uninit (PAGES n1))%I (p ◁ₗ uninit (PAGES n2))%I T.
-  Proof.
-    iIntros "[% HT] Hp". rewrite /uninit /ty_own /=.
-    iDestruct "Hp" as (v Hly1 Hly2) "Hp".
-    rewrite -(take_drop (ly_size (PAGES n2)) v).
-    rewrite /heap_mapsto_own_state heap_mapsto_app.
-    iDestruct "Hp" as "[Hp Hp+n2]".
-    iSplitL "Hp".
-    - iExists _. iFrame. iSplit; iPureIntro.
-      + rewrite /has_layout_val in Hly1.
-        rewrite /has_layout_val take_length Hly1.
-        rewrite /PAGES /PAGE_SIZE /ly_with_align /ly_size /=.
-        rewrite min_l //=. lia.
-      + move: Hly2. by rewrite /has_layout_loc /aligned_to /PAGES /ly_with_align /ly_align.
-    - iApply ("HT" with "[Hp+n2]").
-      rewrite /has_layout_val in Hly1.
-      rewrite take_length min_l; last first.
-      { rewrite Hly1 /PAGES /PAGE_SIZE /ly_with_align /ly_size /=. lia. }
-      iExists _. iFrame. iSplit; iPureIntro.
-      + rewrite /has_layout_val drop_length Hly1.
-        rewrite /PAGES /PAGE_SIZE /ly_with_align /ly_size /=. lia.
-      + move: Hly2. rewrite /has_layout_loc /aligned_to /ly_align /ly_size /=.
-        rewrite /PAGE_SIZE. move => Hly2. apply Z.divide_add_r => //.
-        rewrite Nat2Z.inj_mul. apply Z.divide_mul_r. rewrite Z2Nat.id => //.
-  Qed.
-  (* Global Instance subsume_uninit_uninit_PAGES_inst p n1 n2: *)
-  (*   Subsume (p ◁ₗ uninit (PAGES n1))%I (p ◁ₗ uninit (PAGES n2))%I := *)
-  (*   λ T, i2p (subsume_uninit_uninit_PAGES p n1 n2 T). *)
-
   Lemma ly_offset_PAGES n m:
     (ly_offset (PAGES n) (ly_size (PAGES m))) = PAGES (n - m).
-  Proof. Admitted.
+  Proof.
+    rewrite ly_size_PAGES /ly_offset /PAGES /ly_with_align /ly_size /PAGE_SIZE /=.
+    f_equal; first lia. rewrite min_l // /factor2 /factor2' /=. case_match => //=.
+    assert (p = Pos.of_nat m * (2 ^ 12))%positive as ->. { simpl. lia. }
+    rewrite Pos_factor2_mult Pos_factor2_pow. lia.
+  Qed.
 
-  (*
   Lemma subsume_zeroed_zeroed_PAGES p n1 n2 (T : iProp Σ) `{!CanSolve (n1 ≤ n2)%nat}:
     ((p +ₗ ly_size (PAGES n2)) ◁ₗ zeroed (PAGES (n1 - n2)) -∗ T) -∗
     subsume (p ◁ₗ zeroed (PAGES n1))%I (p ◁ₗ zeroed (PAGES n2))%I T.
@@ -216,24 +184,11 @@ Section instances.
   Global Instance subsume_zeroed_zeroed_PAGES_lt_inst p n1 n2 `{!CanSolve (n2 ≤ n1)%nat}:
     Subsume (p ◁ₗ zeroed (PAGES n1))%I (p ◁ₗ zeroed (PAGES n2))%I :=
     λ T, i2p (subsume_zeroed_zeroed_PAGES_lt p n1 n2 T).
-
-  Lemma subsume_uninit_zeroed_0 p ly1 ly2 T:
-    ⌜ly_align ly1 = ly_align ly2⌝ ∗ ⌜ly_size ly2 = 0%nat⌝ ∗ (p ◁ₗ uninit ly1 -∗ T) -∗
-    subsume (p ◁ₗ uninit ly1)%I (p ◁ₗ zeroed ly2)%I T.
-  Proof.
-    iIntros "HT Hp".
-    iDestruct (ty_aligned with "Hp") as %Hal.
-    iDestruct (loc_in_bounds_in_bounds with "Hp") as "#Hlib".
-    rewrite /ty_own /= /has_layout_loc. rewrite /has_layout_loc /= in Hal.
-    iDestruct "HT" as "(<-&->&HT)". iSplitR; last by iApply "HT".
-    iSplit; first done. rewrite /zero_val heap_mapsto_eq. iSplit; last done.
-    rewrite replicate_length. iApply (loc_in_bounds_shorten with "Hlib"). lia.
-  Qed.
-  Global Instance subsume_uninit_zeroed_0_inst p ly1 ly2:
-    Subsume (p ◁ₗ uninit ly1)%I (p ◁ₗ zeroed ly2)%I :=
-    λ T, i2p (subsume_uninit_zeroed_0 p ly1 ly2 T).
-  *)
 End instances.
 
 Typeclasses Opaque FindLocInBounds.
+
+Typeclasses Opaque PAGES.
+Global Opaque PAGES.
+
 (* Typeclasses Opaque PAGE_SIZE PAGE_SHIFT. *)

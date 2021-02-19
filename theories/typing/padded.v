@@ -1,5 +1,5 @@
 From refinedc.typing Require Export type.
-From refinedc.typing Require Import programs uninit int own struct.
+From refinedc.typing Require Import programs bytes int own struct.
 Set Default Proof Using "Type".
 
 Section padded.
@@ -115,9 +115,9 @@ Section padded.
     iDestruct (ty_size_eq with "Hv2") as %Hlen2.
     iDestruct ("HT" with "Hv1") as (<-) "HT". iApply "HT".
     iExists (v1 ++ v2).
-    rewrite /= heap_mapsto_app /has_layout_val app_length Hlen1 Hlen2.
-    iFrame. iPureIntro.
-    split => //. rewrite /= /ly_offset {2}/ly_size. lia.
+    rewrite /= heap_mapsto_app /has_layout_val app_length Forall_forall Hlen1 Hlen2.
+    iFrame. iPureIntro; split_and! => //.
+    rewrite /= /ly_offset {2}/ly_size. lia.
   Qed.
   Global Instance subsume_padded_uninit_inst l ly1 ly2 lyty ty `{!Movable ty}:
     SubsumePlace l Own (padded ty lyty ly1) (uninit ly2) | 4 :=
@@ -128,10 +128,12 @@ Section padded.
     subsume (l ◁ₗ{β} uninit ly) (l ◁ₗ{β} padded (uninit lyty) lyty ly) T.
   Proof.
     iDestruct 1 as ([? ?]) "$". iIntros "Hl".
-    iDestruct (uninit_loc_in_bounds with "Hl") as "#$".
-    iDestruct (split_uninit with "Hl") as "[Hl $]" => //. do 2 iSplit => //. by iDestruct "Hl" as (???) "?".
-    iDestruct "Hl" as (v ??) "Hl". iExists _. iFrame. iSplit => //. iPureIntro.
-    by apply: has_layout_loc_trans.
+    iDestruct (bytewise_loc_in_bounds with "Hl") as "#$".
+    iDestruct (split_bytewise with "Hl") as "[Hl $]" => //.
+    rewrite /ty_own/=. iDestruct "Hl" as (????) "Hl".
+    iSplit; first done. iSplit; first done. iExists _; iFrame.
+    iSplit; first done. iSplit; last by rewrite Forall_forall.
+    iPureIntro. by apply: has_layout_loc_trans.
   Qed.
   Global Instance subsume_uninit_padded_inst l ly β lyty:
     SubsumePlace l β (uninit ly) (padded (uninit lyty) lyty ly) :=
@@ -169,16 +171,17 @@ Section padded.
   Proof.
     iIntros (? ?). iDestruct 1 as ([??]?) "(#Hb&$&Hl)".
     (* iDestruct (split_uninit with "Hl") as "[? ?]". *)
-    iDestruct "Hl" as (v Hv Hl) "Hmt".
+    rewrite {1}/ty_own/=. iDestruct "Hl" as (v Hv Hl _) "Hmt".
     rewrite -[v](take_drop (n - lyty.(ly_size))%nat) heap_mapsto_own_state_app.
     iDestruct "Hmt" as "[Hmt1 Hmt2]". iSplitL "Hmt1".
     - iSplit => //. iSplit; first by iPureIntro; apply: has_layout_loc_trans.
       iSplit. { iApply loc_in_bounds_shorten; last done. rewrite /ly_size /= -/(ly_size _). lia. }
-      iExists _. iFrame. iPureIntro. split; last by apply has_layout_ly_offset.
+      iExists _. iFrame. iPureIntro. rewrite Forall_forall. split_and! => //.
       rewrite /has_layout_val take_length_le // Hv. rewrite {2}/ly_size/=. lia.
     - rewrite shift_loc_assoc take_length_le. 2: rewrite Hv {2}/ly_size/=; lia.
       have ->: (ly_size lyty + (n - ly_size lyty)%nat) = n by lia.
-      iExists _. iFrame. iPureIntro. split; last by apply has_layout_ly_offset.
+      iExists _. iFrame. iPureIntro. rewrite Forall_forall.
+      split_and! => //; last by apply has_layout_ly_offset.
       rewrite /has_layout_val drop_length Hv {1 4}/ly_size/=. lia.
   Qed.
 

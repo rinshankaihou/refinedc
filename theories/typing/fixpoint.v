@@ -1,5 +1,5 @@
 From refinedc.typing Require Export type.
-From refinedc.typing Require Import programs uninit.
+From refinedc.typing Require Import programs bytes.
 Set Default Proof Using "Type*".
 Import uPred.
 

@@ -1,5 +1,5 @@
 From refinedc.typing Require Export type.
-From refinedc.typing Require Import programs uninit.
+From refinedc.typing Require Import programs bytes.
 Set Default Proof Using "Type".
 
 Section function.
@@ -161,14 +161,17 @@ Section function.
       move: Hlen1 Hly. move: (lsa' : list _) => lsa'' Hlen1 Hly. clear lsa' Hall.
       move: Hlen3 Hl. move: (fp_atys (fp x)) => atys Hlen3 Hl.
       move: Hly Hl. move: (f_args fn) => alys Hly Hl.
-      iInduction (vl) as [|v vl] "IH" forall (atys lsa'' alys Hlen1 Hly Hlen3 Hl). by destruct atys, lsa''.
+      iInduction (vl) as [|v vl] "IH" forall (atys lsa'' alys Hlen1 Hly Hlen3 Hl).
+      { destruct atys, lsa'' => //. iSplitR => //. iApply (big_sepL2_mono with "Hv").
+        iIntros (?????) => /=. iDestruct 1 as (??) "[%?]".
+        iExists _. iFrame. by rewrite Forall_forall. }
       destruct atys, lsa'' => //.
       move: Hl => /(Forall2_cons_inv_l _ _)[[??][?[?[??]]]]; simplify_eq. csimpl in *.
       move: Hly => /(Forall2_cons_inv _ _ _ _)[??].
-      iDestruct "Hvl" as "[Hv ?]".
+      iDestruct "Hvl" as "[Hvl ?]".
       iDestruct "Ha" as "[Ha ?]".
-      iDestruct (ty_ref with "[] Ha Hv") as "$". done.
-      by iApply ("IH" with "[] [] [] [] [$] [$]"); iPureIntro; simplify_eq.
+      iDestruct (ty_ref with "[] Ha Hvl") as "$". done.
+      by iApply ("IH" with "[] [] [] [] [$] [$]").
     - iIntros (v). iDestruct 1 as (x') "[Hv [Hls HPr]]".
       iDestruct (big_sepL2_app_inv with "Hls") as "[$ $]".
       { rewrite Hlen1 Hlen3. left. by eapply Forall2_length. }

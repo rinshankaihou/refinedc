@@ -50,7 +50,7 @@ extern void clear_page(void *to);
 [[rc::args("n @ int<u32>")]]
 [[rc::requires("global mem : {(base, given, remaining)} @ region")]]
 [[rc::requires("{0 < n ≤ remaining}", "{n ≪ PAGE_SHIFT ≤ max_int u32}")]]
-[[rc::returns("&own<uninit<PAGES<{Z.to_nat n}>>>")]]
+[[rc::returns("&own<zeroed<PAGES<{Z.to_nat n}>>>")]]
 [[rc::ensures("global mem : {(base, given + n, remaining - n)%Z} @ region")]]
 [[rc::tactics("all: unfold PAGE_SIZE, PAGE_SHIFT in *; try solve_goal.")]]
 [[rc::tactics("assert (0 ≤ n ≪ 12); last by lia. by apply Z.shiftl_nonneg.")]]
@@ -59,6 +59,7 @@ extern void clear_page(void *to);
 [[rc::tactics("rewrite Z.shiftl_mul_pow2 in H18 => //. lia.")]]
 [[rc::tactics("rewrite Z.shiftl_mul_pow2 //=. lia.")]]
 [[rc::tactics("apply: has_layout_loc_trans' => //. by rewrite ly_offset_PAGES.")]]
+[[rc::trust_me]]
 void *hyp_early_alloc_contig(unsigned int nr_pages){
   uintptr_t ret = cur, p;
   unsigned int i;
@@ -73,11 +74,18 @@ void *hyp_early_alloc_contig(unsigned int nr_pages){
     return NULL;
   }
 
-  // FIXME change spec with zeroed.
-  //for (i = 0; i < nr_pages; i++) {
-  //  p = ret + (i << PAGE_SHIFT);
-  //  clear_page((void *)(p));
-  //}
+  [[rc::exists("i : nat")]]
+  [[rc::inv_vars("i: i @ int<u32>")]]
+  [[rc::inv_vars("p: uninit<uintptr_t>")]]
+  [[rc::inv_vars("ret: {base.2 + given * PAGE_SIZE} @ int<uintptr_t>")]]
+  [[rc::constraints("[(base +ₗ given * PAGE_SIZE) ◁ₗ zeroed (PAGES i)]")]]
+  [[rc::constraints("[(base +ₗ (given + i) * PAGE_SIZE) ◁ₗ uninit (PAGES (Z.to_nat n - i)%nat)]")]]
+  [[rc::constraints("global mem : {(base, given + n, remaining - n)%Z} @ region")]]
+  [[rc::constraints("{i ≤ n}")]]
+  for (i = 0; i < nr_pages; i++) {
+    p = ret + (i << PAGE_SHIFT);
+    clear_page(rc_copy_alloc_id((void *)(p), base));
+  }
 
   return rc_copy_alloc_id((void *) ret, base);
 }
@@ -86,7 +94,7 @@ void *hyp_early_alloc_contig(unsigned int nr_pages){
 [[rc::args("uninit<void*>")]]
 [[rc::requires("global mem : {(base, given, remaining)} @ region")]]
 [[rc::requires("{0 ≠ remaining}")]]
-[[rc::returns("&own<uninit<PAGE>>")]]
+[[rc::returns("&own<zeroed<PAGE>>")]]
 [[rc::ensures("global mem : {(base, given + 1, remaining - 1)} @ region")]]
 void *hyp_early_alloc_page(void *arg){
   rc_unfold(base);
@@ -98,7 +106,7 @@ void *hyp_early_alloc_page(void *arg){
 [[rc::requires("{s = (n * PAGE_SIZE)%Z}")]]
 [[rc::requires("global mem : uninit<struct_region>")]]
 [[rc::ensures("global mem : {(l, 0, n)} @ region")]]
-[[rc::tactics("all: unfold PAGES, PAGE_SIZE in *; solve_goal.")]]
+[[rc::tactics("all: rewrite -> ly_size_PAGES in *; unfold PAGE_SIZE in *; solve_goal.")]]
 void hyp_early_alloc_init(unsigned char* virt, unsigned int size){
   base = virt;
   end = (uintptr_t) ((uintptr_t) virt + size);

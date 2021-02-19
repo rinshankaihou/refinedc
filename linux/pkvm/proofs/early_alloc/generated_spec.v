@@ -96,12 +96,12 @@ Section spec.
   (* Specifications for function [hyp_early_alloc_contig]. *)
   Definition type_of_hyp_early_alloc_contig :=
     fn(∀ (base, given, remaining, n) : loc * Z * Z * Z; (n @ (int (u32))); (global_with_type "mem" Own (((base, given, remaining)) @ (region))) ∗ ⌜0 < n ≤ remaining⌝ ∗ ⌜n ≪ PAGE_SHIFT ≤ max_int u32⌝)
-      → ∃ () : (), (&own (uninit (PAGES (Z.to_nat n)))); (global_with_type "mem" Own (((base, given + n, remaining - n)%Z) @ (region))).
+      → ∃ () : (), (&own (zeroed (PAGES (Z.to_nat n)))); (global_with_type "mem" Own (((base, given + n, remaining - n)%Z) @ (region))).
 
   (* Specifications for function [hyp_early_alloc_page]. *)
   Definition type_of_hyp_early_alloc_page :=
     fn(∀ (base, given, remaining) : loc * Z * Z; (uninit (void*)); (global_with_type "mem" Own (((base, given, remaining)) @ (region))) ∗ ⌜0 ≠ remaining⌝)
-      → ∃ () : (), (&own (uninit (PAGE))); (global_with_type "mem" Own (((base, given + 1, remaining - 1)) @ (region))).
+      → ∃ () : (), (&own (zeroed (PAGE))); (global_with_type "mem" Own (((base, given + 1, remaining - 1)) @ (region))).
 
   (* Specifications for function [hyp_early_alloc_init]. *)
   Definition type_of_hyp_early_alloc_init :=

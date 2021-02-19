@@ -196,6 +196,7 @@ Section proofs.
              iSplitL "Hcases".
              { iDestruct "Hcases" as "[[H %]|H]"; [iLeft | iRight] => //. iSplitL => //. iPureIntro. lia. }
              iDestruct (ty_ref (t := uninit u16) with "[] Hnext+1 []") as "$" => //.
+             { iPureIntro. split => //. by apply Forall_forall. }
              iRename select (local_ticket ↦ _)%I into "Hticket".
              iRename select (local_got_it ◁ₗ _)%I into "Hgot_it".
              iDestruct (ty_ref (t := next @ int u16) with "[] Hticket []") as "$" => //.
@@ -240,6 +241,7 @@ Section proofs.
              iDestruct select (ticket_range _ _ _) as "$".
              iDestruct select (_ ∨ _)%I as "$".
              iDestruct (ty_ref (t := uninit u16) with "[] Hi+1 []") as "$" => //.
+             { iPureIntro. split => //. by apply Forall_forall. }
              iRename select (local_ticket ↦ _)%I into "Hticket".
              iDestruct (ty_ref (t := next @ int u16) with "[] Hticket []") as "$" => //.
              iRename select (local_got_it ◁ₗ _)%I into "Hgot_it".
@@ -311,6 +313,7 @@ Section proofs.
              iRename select (local_next ↦ _)%I into "Hlocal_next".
              iDestruct (ty_ref (t := next @ int u16) with "[] Hlocal_ticket []") as "$" => //.
              iDestruct (ty_ref (t := uninit u16) with "[] Hlocal_next []") as "$" => //.
+             { iPureIntro. split => //. by apply Forall_forall. }
           ** iRename select (_ ◁ₗ next @ int u16)%I into "Hnext".
              iDestruct (ty_aligned with "Hnext") as %?.
              iDestruct (ty_deref with "Hnext") as (?) "[Hnext Hv]".
@@ -344,6 +347,7 @@ Section proofs.
              iRename select (local_next ↦ _)%I into "Hlocal_next".
              iDestruct (ty_ref (t := next @ int u16) with "[] Hlocal_ticket []") as "$" => //.
              iDestruct (ty_ref (t := uninit u16) with "[] Hlocal_next []") as "$" => //.
+             { iPureIntro. split => //. by apply Forall_forall. }
     - (* #4 Final loop: checking if we are the owner. *)
       destruct s.
       + repeat liRStep; liShow.
