@@ -37,6 +37,7 @@ Second, a style guide for RefinedC development.
    https://coq.inria.fr/distrib/current/refman/proof-engine/ssreflect-proof-language.html
    for documentation on ssreflect.
 3. Use std++ where possible. E.g. use `f <$> l` instead of `map f l`.
+   Also use `naive_solver` instead of `intuition` or `tauto`.
 4. If there is a typeclass to restrict when a typing rule applies, but
    it does not contain useful information for proving the typing rule,
    it should only be on the instance, not the lemma.
