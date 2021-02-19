@@ -323,6 +323,10 @@ Section loc_in_bounds.
   Proof.
     constructor. iIntros (?) "?". by iApply movable_loc_in_bounds.
   Qed.
+
+  Global Instance intro_persistent_loc_in_bounds l n:
+    IntroPersistent (loc_in_bounds l n) (loc_in_bounds l n).
+  Proof. constructor. by iIntros "#H !>". Qed.
 End loc_in_bounds.
 
 Class AllocAlive `{!typeG Σ} (ty : type) (β : own_state) (P : iProp Σ) := {

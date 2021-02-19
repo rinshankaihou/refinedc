@@ -43,14 +43,39 @@ Instance simpl_loc_extra4 l n1 n2:
   SimplLoc (l +ₗ (n1 + 0%nat) * n2) (l +ₗ (n1 * n2)).
 Proof. f_equal. lia. Qed.
 
+Instance simpl_loc_extra5 l n1 n2 n3 n4:
+  SimplLoc (l +ₗ (n1 + (n2 + n3)%nat) * n4) (l +ₗ (n1 + n2 + n3) * n4).
+Proof. f_equal. lia. Qed.
+
 (*** Things about PAGES ***)
+
+Lemma ly_size_PAGES i : ly_size (PAGES i) = (i * Z.to_nat PAGE_SIZE)%nat.
+Proof. by rewrite /PAGES /ly_with_align /ly_size. Qed.
+
+Lemma ly_offset_PAGES n m:
+  (ly_offset (PAGES n) (ly_size (PAGES m))) = PAGES (n - m).
+Proof.
+  rewrite ly_size_PAGES /ly_offset /PAGES /ly_with_align /ly_size /PAGE_SIZE /=.
+  f_equal; first lia. rewrite min_l // /factor2 /factor2' /=. case_match => //=.
+  assert (p = Pos.of_nat m * (2 ^ 12))%positive as ->. { simpl. lia. }
+  rewrite Pos_factor2_mult Pos_factor2_pow. lia.
+Qed.
 
 Global Instance simpl_ly_size_page_le i j:
   SimplBothRel (≤)%nat (PAGES i).(ly_size) (PAGES j).(ly_size) (i ≤ j)%nat.
 Proof. rewrite /PAGES /ly_with_align /ly_size /PAGE_SIZE /=. split; lia. Qed.
 
-Lemma ly_size_PAGES i : ly_size (PAGES i) = (i * Z.to_nat PAGE_SIZE)%nat.
-Proof. by rewrite /PAGES /ly_with_align /ly_size. Qed.
+Global Instance simpl_ly_size_page_eq i j:
+  SimplBothRel (=) (PAGES i).(ly_size) (PAGES j).(ly_size) (i = j).
+Proof. rewrite !ly_size_PAGES /PAGE_SIZE. split; lia. Qed.
+
+Global Instance simpl_extra1 k m n:
+  SimplBoth (k = ly_size (ly_offset (PAGES n) (ly_size (PAGES m)))) (k = ly_size (PAGES (n - m))).
+Proof. by rewrite ly_offset_PAGES. Qed.
+
+Global Instance simpl_extra2 k m n:
+  SimplBoth (ly_size (ly_offset (PAGES n) (ly_size (PAGES m))) = k) (ly_size (PAGES (n - m)) = k).
+Proof. by rewrite ly_offset_PAGES. Qed.
 
 Section instances.
   Context  `{!typeG Σ}.
@@ -107,41 +132,6 @@ Section instances.
     SimplifyHyp ((l +ₗ (n1 + (Z.to_nat n2 - 0)%nat) * PAGE_SIZE) ◁ₗ{β} ty) (Some 0%N) :=
     λ T, i2p (simplify_hyp_place_PAGE_SIZE_stuff_other l β n1 n2 ty T).
 
-  Lemma type_cast_ptr_int_val (v : val) (p : loc) (n : nat) T:
-    (⌜min_alloc_start ≤ p.2 ∧ p.2 + n ≤ max_alloc_end⌝ -∗
-      v ◁ᵥ p @ ptr n -∗ T (i2v p.2 size_t) (t2mt (p.2 @ int uintptr_t))) -∗
-    typed_un_op v (v ◁ᵥ p @ ptr n) (CastOp (IntOp uintptr_t)) PtrOp T.
-  Proof.
-    iIntros "HT Hp" (Φ) "HΦ".
-    iDestruct "Hp" as "[-> #Hlib]".
-    iDestruct (loc_in_bounds_in_range_uintptr_t with "Hlib") as %[? H]%val_of_int_is_some.
-    iDestruct (loc_in_bounds_ptr_in_range with "Hlib") as %?.
-    iDestruct ("HT" with "[] []") as "HT"; first done. { by iFrame "Hlib". }
-    iApply wp_cast_ptr_int => //=; first by rewrite val_to_of_loc.
-    rewrite /i2v H /=. iApply ("HΦ" with "[] [HT]"); last done. done.
-  Qed.
-  Global Instance type_cast_ptr_int_val_inst (v : val) (p : loc) n:
-    TypedUnOp v (v ◁ᵥ p @ ptr n)%I (CastOp (IntOp uintptr_t)) PtrOp :=
-    λ T, i2p (type_cast_ptr_int_val v p n T).
-
-  Lemma subsume_own_ptr p l1 l2 ty n T:
-    ⌜l1 = l2⌝ ∗ (l1 ◁ₗ ty -∗ loc_in_bounds l1 n ∗ T) -∗
-    subsume (p ◁ₗ l1 @ &own ty)%I (p ◁ₗ l2 @ ptr n)%I T.
-  Proof.
-    iIntros "[-> HT] Hp".
-    iDestruct (ty_aligned with "Hp") as %?.
-    iDestruct (ty_deref with "Hp") as (v) "[Hp [-> Hl]]".
-    iDestruct ("HT" with "Hl") as "[#Hlib $]".
-    iFrame "Hp Hlib". done.
-  Qed.
-  Global Instance subsume_own_ptr_inst p l1 l2 ty n:
-    Subsume (p ◁ₗ l1 @ &own ty)%I (p ◁ₗ l2 @ ptr n)%I :=
-    λ T, i2p (subsume_own_ptr p l1 l2 ty n T).
-
-  Global Instance intro_persistent_loc_in_bounds l n:
-    IntroPersistent (loc_in_bounds l n) (loc_in_bounds l n).
-  Proof. constructor. by iIntros "#H !>". Qed.
-
   Lemma simplify_hyp_loc_in_bounds_ptr_in_range l (n : nat) T:
     (⌜min_alloc_start ≤ l.2 ∧ l.2 + n ≤ max_alloc_end⌝ -∗ loc_in_bounds l n -∗ T) -∗
     simplify_hyp (loc_in_bounds l n) T.
@@ -154,39 +144,7 @@ Section instances.
   Global Instance simplify_hyp_loc_in_bounds_ptr_in_range_inst l n `{!TCUnless (FastDone (min_alloc_start ≤ l.2))}:
     SimplifyHyp (loc_in_bounds l n) (Some 0%N) :=
     λ T, i2p (simplify_hyp_loc_in_bounds_ptr_in_range l n T).
-
-  Lemma ly_offset_PAGES n m:
-    (ly_offset (PAGES n) (ly_size (PAGES m))) = PAGES (n - m).
-  Proof.
-    rewrite ly_size_PAGES /ly_offset /PAGES /ly_with_align /ly_size /PAGE_SIZE /=.
-    f_equal; first lia. rewrite min_l // /factor2 /factor2' /=. case_match => //=.
-    assert (p = Pos.of_nat m * (2 ^ 12))%positive as ->. { simpl. lia. }
-    rewrite Pos_factor2_mult Pos_factor2_pow. lia.
-  Qed.
-
-  Lemma subsume_zeroed_zeroed_PAGES p n1 n2 (T : iProp Σ) `{!CanSolve (n1 ≤ n2)%nat}:
-    ((p +ₗ ly_size (PAGES n2)) ◁ₗ zeroed (PAGES (n1 - n2)) -∗ T) -∗
-    subsume (p ◁ₗ zeroed (PAGES n1))%I (p ◁ₗ zeroed (PAGES n2))%I T.
-  Proof.
-    revert select (CanSolve _) => Hle. unfold CanSolve in Hle.
-    iIntros "HT Hp".
-  Admitted.
-  Global Instance subsume_zeroed_zeroed_PAGES_inst p n1 n2 `{!CanSolve (n1 ≤ n2)%nat}:
-    Subsume (p ◁ₗ zeroed (PAGES n1))%I (p ◁ₗ zeroed (PAGES n2))%I :=
-    λ T, i2p (subsume_zeroed_zeroed_PAGES p n1 n2 T).
-
-  Lemma subsume_zeroed_zeroed_PAGES_lt p n1 n2 (T : iProp Σ) `{!CanSolve (n2 ≤ n1)%nat}:
-    (p +ₗ ly_size (PAGES n1)) ◁ₗ zeroed (PAGES (n2 - n1)) ∗ T -∗
-    subsume (p ◁ₗ zeroed (PAGES n1))%I (p ◁ₗ zeroed (PAGES n2))%I T.
-  Admitted.
-  Global Instance subsume_zeroed_zeroed_PAGES_lt_inst p n1 n2 `{!CanSolve (n2 ≤ n1)%nat}:
-    Subsume (p ◁ₗ zeroed (PAGES n1))%I (p ◁ₗ zeroed (PAGES n2))%I :=
-    λ T, i2p (subsume_zeroed_zeroed_PAGES_lt p n1 n2 T).
 End instances.
-
-Typeclasses Opaque FindLocInBounds.
 
 Typeclasses Opaque PAGES.
 Global Opaque PAGES.
-
-(* Typeclasses Opaque PAGE_SIZE PAGE_SHIFT. *)

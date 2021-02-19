@@ -35,8 +35,8 @@ static struct region mem;
 [[rc::requires("global mem : {(base, given, remaining)} @ region")]]
 [[rc::returns("given @ int<size_t>")]]
 [[rc::ensures("global mem : {(base, given, remaining)} @ region")]]
-[[rc::tactics("rewrite Z.add_simpl_l /PAGE_SIZE. solve_goal.")]]
-[[rc::tactics("rewrite /PAGE_SIZE Z.add_simpl_l Z.shiftr_div_pow2 //= Z.div_mul //=.")]]
+[[rc::tactics("all: rewrite /PAGE_SIZE Z.add_simpl_l; try solve_goal.")]]
+[[rc::tactics("all: rewrite Z.shiftr_div_pow2 //= Z.div_mul //=.")]]
 size_t hyp_early_alloc_nr_pages(void){
   return (cur - (uintptr_t) base) >> PAGE_SHIFT;
 }
@@ -53,13 +53,12 @@ extern void clear_page(void *to);
 [[rc::returns("&own<zeroed<PAGES<{Z.to_nat n}>>>")]]
 [[rc::ensures("global mem : {(base, given + n, remaining - n)%Z} @ region")]]
 [[rc::tactics("all: unfold PAGE_SIZE, PAGE_SHIFT in *; try solve_goal.")]]
-[[rc::tactics("assert (0 ≤ n ≪ 12); last by lia. by apply Z.shiftl_nonneg.")]]
-[[rc::tactics("transitivity max_alloc_end; last done; etransitivity; last exact H10; "
-              "rewrite Z.shiftl_mul_pow2 -?Z.add_assoc => //=; apply -> Z.add_le_mono_l; lia.")]]
-[[rc::tactics("rewrite Z.shiftl_mul_pow2 in H18 => //. lia.")]]
-[[rc::tactics("rewrite Z.shiftl_mul_pow2 //=. lia.")]]
-[[rc::tactics("apply: has_layout_loc_trans' => //. by rewrite ly_offset_PAGES.")]]
-[[rc::trust_me]]
+[[rc::tactics("all: rewrite -> Z.shiftl_mul_pow2 in *; try lia.")]]
+[[rc::tactics("all: try apply: has_layout_loc_trans' => //.")]]
+[[rc::tactics("all: rewrite ?ly_offset_PAGES; try solve_goal.")]]
+[[rc::tactics("all: transitivity max_alloc_end; last done.")]]
+[[rc::tactics("all: etransitivity; last eassumption.")]]
+[[rc::tactics("all: rewrite -?Z.add_assoc => //=; apply -> Z.add_le_mono_l; lia.")]]
 void *hyp_early_alloc_contig(unsigned int nr_pages){
   uintptr_t ret = cur, p;
   unsigned int i;
@@ -83,6 +82,7 @@ void *hyp_early_alloc_contig(unsigned int nr_pages){
   [[rc::constraints("global mem : {(base, given + n, remaining - n)%Z} @ region")]]
   [[rc::constraints("{i ≤ n}")]]
   for (i = 0; i < nr_pages; i++) {
+    rc_unfold(base);
     p = ret + (i << PAGE_SHIFT);
     clear_page(rc_copy_alloc_id((void *)(p), base));
   }
