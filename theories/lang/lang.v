@@ -138,6 +138,13 @@ Section IntType.
   Definition bits_per_int (it : int_type) : Z :=
     bytes_per_int it * bits_per_byte.
 
+  Lemma bits_per_int_gt_0 it : bits_per_int it > 0.
+  Proof.
+    rewrite /bits_per_int /bits_per_byte.
+    suff : (bytes_per_int it > 0) by lia.
+    by apply: bytes_per_int_gt_0.
+  Qed.
+
   Definition int_modulus (it : int_type) : Z :=
     2 ^ bits_per_int it.
 
@@ -908,14 +915,20 @@ Inductive eval_bin_op : bin_op → op_type → op_type → state → val → val
     (* we need to take `quot` and `rem` here for the correct rounding
     behavior, i.e. rounding towards 0 (instead of `div` and `mod`,
     which round towards floor)*)
-    | DivOp => if n2 is 0 then None else Some (n1 `quot` n2)
-    | ModOp => if n2 is 0 then None else Some (n1 `rem` n2)
-    (* TODO: Figure out if these are the operations we want and what sideconditions they have *)
+    | DivOp => if bool_decide (n2 ≠ 0) then Some (n1 `quot` n2) else None
+    | ModOp => if bool_decide (n2 ≠ 0) then Some (n1 `rem` n2) else None
     | AndOp => Some (Z.land n1 n2)
     | OrOp => Some (Z.lor n1 n2)
     | XorOp => Some (Z.lxor n1 n2)
-    | ShlOp => Some (n1 ≪ n2)
-    | ShrOp => Some (n1 ≫ n2)
+    (* For shift operators (`ShlOp` and `ShrOp`), behaviors are defined if:
+       - lhs is nonnegative, and
+       - rhs (also nonnegative) is less than the number of bits in lhs.
+       See: https://en.cppreference.com/w/c/language/operator_arithmetic, "Shift operators". *)
+    | ShlOp => if bool_decide (0 ≤ n1 ∧ 0 ≤ n2 < bits_per_int it) then Some (n1 ≪ n2) else None
+    (* NOTE: when lhs is negative, Coq's `≫` is not semantically equivalent to C's `>>`.
+       Counterexample: Coq `-1000 ≫ 10 = 0`; C `-1000 >> 10 == -1`.
+       This is because `≫` is implemented by `Z.div`. *)
+    | ShrOp => if bool_decide (0 ≤ n1 ∧ 0 ≤ n2 < bits_per_int it) then Some (n1 ≫ n2) else None
     | _ => None
     end = Some n →
     val_to_int v1 it = Some n1 →

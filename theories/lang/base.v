@@ -713,3 +713,41 @@ Proof.
   elim: l. { split; inversion 1. }
   move => ?? IH. split; inversion 1; simplify_eq; constructor => //; by apply IH.
 Qed.
+
+(* Binary representation of bounded integers. *)
+
+Lemma pos_bounded_iff_bits k n :
+  (0 ≤ k → 0 ≤ n → n < 2^k ↔ ∀ l, k ≤ l → Z.testbit n l = false)%Z.
+Proof.
+  move => Hk Hn.
+  destruct (decide (n = 0)) as [->|].
+  - setoid_rewrite Z.bits_0. split => // ?. by apply: Z.pow_pos_nonneg.
+  - split.
+    + move => /Z.log2_lt_pow2 Hb l Hl.
+      apply Z.bits_above_log2 => //. lia.
+    + move => Hl.
+      destruct (decide (n < 2^k)%Z) => //.
+      have : Z.testbit n (Z.log2 n) = false.
+      { apply Hl, Z.log2_le_pow2; lia. }
+      rewrite Z.bit_log2 //. lia.
+Qed.
+
+Lemma bounded_iff_bits k n :
+  (0 ≤ k → -2^k ≤ n < 2^k ↔
+    ∀ l, k ≤ l → Z.testbit n l = bool_decide (n < 0))%Z.
+Proof.
+  move => Hk.
+  case_bool_decide; last by rewrite -pos_bounded_iff_bits; lia.
+  have -> : (n = - Z.abs n)%Z by lia.
+  split.
+  + move => [? _] l Hl.
+    rewrite Z.bits_opp ?negb_true_iff; last lia.
+    eapply pos_bounded_iff_bits => //; lia.
+  + move => He.
+    split; last by etrans; [|apply: Z.pow_pos_nonneg]; lia.
+    rewrite -Z.opp_le_mono.
+    suff : (Z.abs n - 1 < 2 ^ k)%Z by lia.
+    apply pos_bounded_iff_bits; [lia..|] => l Hl.
+    rewrite -negb_true_iff -Z.bits_opp; last lia.
+    by apply: He.
+Qed.

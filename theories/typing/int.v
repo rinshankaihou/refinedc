@@ -174,9 +174,9 @@ Section programs.
     | AddOp => n ∈ it
     | SubOp => n ∈ it
     | MulOp => n ∈ it
-    | AndOp => n ∈ it (* TODO: remove side-condition. *)
-    | OrOp  => n ∈ it (* TODO: remove side-condition. *)
-    | XorOp => n ∈ it (* TODO: remove side-condition. *)
+    | AndOp => True
+    | OrOp  => True
+    | XorOp => True
     | ShlOp => 0 ≤ n2 < bits_per_int it ∧ 0 ≤ n1 ∧ n ≤ max_int it
     | ShrOp => 0 ≤ n2 < bits_per_int it ∧ 0 ≤ n1 (* Result of shifting negative numbers is implementation defined. *)
     | DivOp => n2 ≠ 0 ∧ n ∈ it
@@ -184,19 +184,71 @@ Section programs.
     | _     => True (* Relational operators. *)
     end.
 
+  Lemma bitwise_op_result_in_range op bop (it : int_type) n1 n2 :
+    (0 ≤ n1 → 0 ≤ n2 → 0 ≤ op n1 n2) →
+    bool_decide (op n1 n2 < 0) = bop (bool_decide (n1 < 0)) (bool_decide (n2 < 0)) →
+    (∀ k, Z.testbit (op n1 n2) k = bop (Z.testbit n1 k) (Z.testbit n2 k)) →
+    n1 ∈ it → n2 ∈ it → op n1 n2 ∈ it.
+  Proof.
+    move => Hnonneg Hsign Htestbit.
+    rewrite /elem_of /int_elem_of_it /min_int /max_int.
+    destruct (it_signed it).
+    - rewrite /int_half_modulus.
+      move ? : (bits_per_int it - 1) => k.
+      have ? : 0 ≤ k.
+      { suff : bits_per_int it > 0 by lia. by apply: bits_per_int_gt_0. }
+      have Hb : ∀ n, -2^k ≤ n ≤ 2^k - 1 ↔
+        ∀ l, k ≤ l → Z.testbit n l = bool_decide (n < 0)
+        by intros; rewrite -bounded_iff_bits; lia.
+      move => /Hb Hn1 /Hb Hn2.
+      apply Hb => l Hl.
+      by rewrite Htestbit Hsign Hn1 ?Hn2.
+    - rewrite /int_modulus.
+      move ? : (bits_per_int it) => k.
+      have ? : 0 ≤ k.
+      { suff : bits_per_int it > 0 by lia. by apply: bits_per_int_gt_0. }
+      have Hb : ∀ n, 0 ≤ n → n ≤ 2^k - 1 ↔
+        ∀ l, k ≤ l → Z.testbit n l = bool_decide (n < 0)
+        by intros; rewrite bool_decide_false -?pos_bounded_iff_bits; lia.
+      move => [Hn1 /Hb HN1] [Hn2 /Hb HN2].
+      have Hn := Hnonneg Hn1 Hn2.
+      split; first done.
+      apply (Hb _ Hn) => l Hl.
+      by rewrite Htestbit HN1 ?HN2.
+  Qed.
+
   Lemma arith_op_result_in_range (it : int_type) (n1 n2 n : Z) op :
     n1 ∈ it → n2 ∈ it → arith_op_result it n1 n2 op = Some n →
     arith_op_sidecond it n1 n2 n op → n ∈ it.
   Proof.
-    move => [Hn1 HN1] [Hn2 HN2] Hn Hsc.
+    move => Hn1 Hn2 Hn Hsc.
     destruct op => //=; simpl in Hsc, Hn; destruct_and? => //.
-    all: inversion Hn; simplify_eq; split => //.
-    - transitivity 0; [ apply min_int_le_0 | by apply Z.shiftl_nonneg ].
-    - transitivity 0; [ apply min_int_le_0 | by apply Z.shiftr_nonneg ].
-    - transitivity n1; last done. rewrite Z.shiftr_div_pow2; last by lia.
-      apply Z.div_le_upper_bound. { apply Z.pow_pos_nonneg => //. }
-      rewrite -[X in X ≤ _]Z.mul_1_l. apply Z.mul_le_mono_nonneg_r => //.
-      rewrite -(Z.pow_0_r 2). apply Z.pow_le_mono_r; lia.
+    all: inversion Hn; simplify_eq.
+    - apply (bitwise_op_result_in_range Z.land andb) => //.
+      + rewrite Z.land_nonneg; naive_solver.
+      + repeat case_bool_decide; try rewrite -> Z.land_neg in *; naive_solver.
+      + by apply Z.land_spec.
+    - apply (bitwise_op_result_in_range Z.lor orb) => //.
+      + by rewrite Z.lor_nonneg.
+      + repeat case_bool_decide; try rewrite -> Z.lor_neg in *; naive_solver.
+      + by apply Z.lor_spec.
+    - apply (bitwise_op_result_in_range Z.lxor xorb) => //.
+      + by rewrite Z.lxor_nonneg.
+      + have Hn : ∀ n, bool_decide (n < 0) = negb (bool_decide (0 ≤ n)).
+        { intros. repeat case_bool_decide => //; lia. }
+        rewrite !Hn.
+        repeat case_bool_decide; try rewrite -> Z.lxor_nonneg in *; naive_solver.
+      + by apply Z.lxor_spec.
+    - split.
+      + trans 0; [ apply min_int_le_0 | by apply Z.shiftl_nonneg ].
+      + done.
+    - split.
+      + trans 0; [ apply min_int_le_0 | by apply Z.shiftr_nonneg ].
+      + destruct Hn1.
+        trans n1; last done. rewrite Z.shiftr_div_pow2; last by lia.
+        apply Z.div_le_upper_bound. { apply Z.pow_pos_nonneg => //. }
+        rewrite -[X in X ≤ _]Z.mul_1_l. apply Z.mul_le_mono_nonneg_r => //.
+        rewrite -(Z.pow_0_r 2). apply Z.pow_le_mono_r; lia.
   Qed.
 
   Lemma type_arithop_int_int it v1 n1 v2 n2 T n op:
@@ -215,13 +267,14 @@ Section programs.
     iApply (wp_binop_det v). iSplit.
     - iIntros (σ v') "_ !%". split.
       + destruct op => //.
-        all: inversion 1; destruct n2; simplify_eq/=.
+        all: inversion 1; simplify_eq/=.
+        all: try case_bool_decide => //.
         all: destruct it as [? []]; simplify_eq/= => //.
         all: try by rewrite ->it_in_range_mod in * => //; simplify_eq.
-      + move => ->; destruct op, n2 => //; econstructor => // => //.
+      + move => ->; destruct op => //; econstructor => // => //.
+        all: try by inversion Hsc; case_bool_decide; naive_solver.
         all: destruct it as [? []]; simplify_eq/= => //.
-        all: try by rewrite it_in_range_mod; simplify_eq/=.
-        all: by destruct_and!.
+        all: try by rewrite it_in_range_mod.
     - iIntros "!>". iApply "HΦ"; last done.  by iPureIntro.
   Qed.
   Global Program Instance type_add_int_int_inst it v1 n1 v2 n2:
