@@ -237,6 +237,32 @@ Ltac liRStep :=
  | liStep
 ]; liSimpl.
 
+Tactic Notation "liRStepUntil" open_constr(id) :=
+  repeat lazymatch goal with
+         | |- @environments.envs_entails _ _ ?P =>
+           lazymatch P with
+           | id _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ => fail
+           | id _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ => fail
+           | id _ _ _ _ _ _ _ _ _ _ _ _ _ _ => fail
+           | id _ _ _ _ _ _ _ _ _ _ _ _ _ => fail
+           | id _ _ _ _ _ _ _ _ _ _ _ _ => fail
+           | id _ _ _ _ _ _ _ _ _ _ _ => fail
+           | id _ _ _ _ _ _ _ _ _ _ => fail
+           | id _ _ _ _ _ _ _ _ _ => fail
+           | id _ _ _ _ _ _ _ _ => fail
+           | id _ _ _ _ _ _ _ => fail
+           | id _ _ _ _ _ _ => fail
+           | id _ _ _ _ _ => fail
+           | id _ _ _ _ => fail
+           | id _ _ => fail
+           | id _ => fail
+           | id => fail
+           | _  => liRStep
+           end
+         | _ => liRStep
+  end; liShow.
+
+
 (** * Tactics for starting a function *)
 (* Recursively destruct a product in hypothesis H, using the given name as template. *)
 Ltac destruct_product_hypothesis name H :=

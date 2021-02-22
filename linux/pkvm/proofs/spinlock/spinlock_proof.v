@@ -4,17 +4,6 @@ From refinedc.linux.pkvm.spinlock Require Import generated_spec.
 From refinedc.linux.pkvm.spinlock Require Import spinlock_def.
 Set Default Proof Using "Type".
 
-(* TODO: allow pattern, but add underscores if it does not match *)
-Tactic Notation "liRStepUntil" open_constr(id) :=
-  repeat lazymatch goal with
-  | |- @environments.envs_entails _ _ ?P => let h := get_head constr:(P) in
-                                            lazymatch h with
-                                            | id => fail
-                                            | _  => liRStep
-                                            end
-  | _                                    => liRStep
-  end; liShow.
-
 (* TODO: figure out if this is what we want and move to type.v *)
 Theorem ty_deref_full `{!typeG Σ} (l : loc) (ty : type) `{!Movable ty}:
   l ◁ₗ ty -∗ ∃ v, ⌜l `has_layout_loc` ty_layout ty⌝ ∗
@@ -141,7 +130,7 @@ Section proofs.
         destruct b => //. iFrame.
     - (* #7 Code that eventually goes to the CAS and takes care of the loop. *)
       destruct s.
-      + liRStepUntil (@typed_if). do 2 liRStep; liShow.
+      + liRStepUntil typed_if. do 2 liRStep; liShow.
         * repeat liRStep; liShow.
           iDestruct select (hyp_spinlock_t_invariant _ _ _) as (owner next) "([%%]&?&?&?&?&?&?)".
           repeat liRStep; liShow.
@@ -150,7 +139,7 @@ Section proofs.
           repeat liRStep; liShow.
           liInst Hevar owner. liInst Hevar0 next.
           repeat liRStep; liShow.
-        * liRStepUntil (@typed_cas).
+        * liRStepUntil typed_cas.
           iDestruct select (hyp_spinlock_t_invariant _ _ _) as (owner next) "([%%]&?&?&?&?&?&?)".
           iIntros "???" (Φ) "HΦ".
           destruct (decide (next = i)) as [<-|] .
@@ -248,7 +237,7 @@ Section proofs.
              iDestruct (ty_aligned with "Hgot_it") as %?.
              iDestruct (ty_deref with "Hgot_it") as (?) "[Hgot_it [% ->]]".
              iDestruct (ty_ref (t := false @ boolean bool_it) with "[] Hgot_it []") as "$" => //.
-      + liRStepUntil (@typed_if). do 2 liRStep; liShow.
+      + liRStepUntil typed_if. do 2 liRStep; liShow.
         * repeat liRStep; liShow.
           iExists (Shr, place _); iSplitR; first by simpl.
           rewrite /typed_read_end; iIntros "?".
@@ -267,12 +256,11 @@ Section proofs.
             by iApply (ty_ref with "[] Hl Hv"). }
           iModIntro. iFrame select (_ ◁ₗ{Shr} _)%I.
           repeat liRStep; liShow.
-        * liRStepUntil (@typed_cas).
-          iIntros "???" (Φ) "HΦ". iApply @wp_atomic.
+        * liRStepUntil typed_cas.
+          iIntros "???" (Φ) "HΦ".
           iDestruct select (inv _ _) as "#Hinv".
           iInv "Hinv" as ">Inv" "Hclose_inv".
           iDestruct "Inv" as (owner next) "([%%]&Howner&Hnext&Hrest)".
-          iApply fupd_mask_intro; first solve_ndisj. iIntros "Hclose".
           destruct (decide (next = i)) as [<-|] .
           ** iRename select (_ ◁ₗ next @ int u16)%I into "Hnext".
              iDestruct (ty_aligned with "Hnext") as %?.
@@ -301,7 +289,7 @@ Section proofs.
              iDestruct "Hrest" as "(Hfrag&Hr1&Hr2&Hcases)".
              iDestruct (split_first_ticket with "Hr2") as "[Hticket Hr2]".
              { split; last by lia. by transitivity (min_int u16). }
-             iMod "Hclose" as "_". iMod ("Hclose_inv" with "[Howner Hnext Hfrag Hr1 Hr2 Hcases]") as "_".
+             iMod ("Hclose_inv" with "[Howner Hnext Hfrag Hr1 Hr2 Hcases]") as "_".
              { iNext. iExists owner, (next + 1). iFrame.
                iSplit. { iPureIntro. lia. }
                iDestruct "Hcases" as "[[H %]|H]"; [iLeft | iRight] => //.
@@ -338,7 +326,7 @@ Section proofs.
              iNext. iIntros "??". iApply ("HΦ" $! _ (t2mt (false @ boolean bool_it))%I) => //.
              iRename select (p at{struct_hyp_spinlock}ₗ _ ↦ _)%I into "Hnext".
              iDestruct (ty_ref (t := next @ int u16)%I with "[] Hnext []") as "Hnext" => //.
-             iMod "Hclose" as "_". iMod ("Hclose_inv" with "[Howner Hnext Hrest]") as "_".
+             iMod ("Hclose_inv" with "[Howner Hnext Hrest]") as "_".
              { iNext. iExists owner, next. iFrame "Howner". iFrame "Hnext". iFrame "Hrest". done. }
              iModIntro.
              repeat liRStep; liShow.
@@ -352,7 +340,7 @@ Section proofs.
       destruct s.
       + repeat liRStep; liShow.
         iDestruct select (hyp_spinlock_t_invariant _ _ _) as (owner next) "([%%]&?&?&?&?&?&?)".
-        liRStepUntil (@typed_if). do 2 liRStep; liShow.
+        liRStepUntil typed_if. do 2 liRStep; liShow.
         * repeat liRStep; liShow. rewrite /hyp_spinlock_t_invariant. repeat liRStep; liShow.
           liInst Hevar0 owner. liInst Hevar1 next.
           repeat liRStep; liShow.
@@ -439,7 +427,7 @@ Section proofs.
       rewrite /min_int /= in Hmin.
       iDestruct (ticket_range_insert_r with "Hr1 Hticket") as "Hr1"; first by lia.
       (* Run the automation up to the [if] statement. *)
-      liRStepUntil (@typed_if). liRStep; liRStep; liShow.
+      liRStepUntil typed_if. liRStep; liRStep; liShow.
       + (* We have the last ticket. The next owner will be 0, we update. *)
         iMod (owner_auth_update _ _ _ _ 0%nat with "H● H◯") as "[??]".
         (* Run the automation to the end of the function. *)
