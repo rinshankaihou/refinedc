@@ -19,8 +19,11 @@ Record find_in_context_info {Σ} : Type := {
 (* The nat n is necessary to allow different options, they are tried starting from 0. *)
 Definition find_in_context {Σ} (fic : find_in_context_info) (T : fic.(fic_A) → iProp Σ) : iProp Σ :=
   (∃ b, fic.(fic_Prop) b ∗ T b).
-Class FindInContext {Σ} (fic : find_in_context_info) (n : nat) : Type :=
-  find_in_context_proof T: iProp_to_Prop (Σ:=Σ) (find_in_context fic T).
+Class FindInContext {Σ} (fic : find_in_context_info) (n : nat) (key : Set) : Type :=
+  find_in_context_proof T: iProp_to_Prop (Σ:=Σ) (find_in_context fic T)
+.
+Hint Mode FindInContext + + + - : typeclass_instances.
+Inductive FICSyntactic : Set :=.
 
 (** ** Instances  *)
 Definition FindDirect {Σ A} (P : A → iProp Σ) := {| fic_A := A; fic_Prop := P; |}.
@@ -31,9 +34,12 @@ Lemma find_in_context_direct {Σ B} P (T : B → iProp Σ):
    find_in_context (FindDirect P) T.
 Proof. done. Qed.
 Global Instance find_in_context_direct_inst {Σ B} (P : _ → iProp Σ) :
-  FindInContext (FindDirect P) 0%nat :=
+  FindInContext (FindDirect P) 0%nat FICSyntactic :=
   λ T : B → _, i2p (find_in_context_direct P T).
 
+(** ** [FindHypEqual]  *)
+Class FindHypEqual {Σ} (key : Type) (Q P P' : iProp Σ) := find_hyp_equal_equal: P = P'.
+Hint Mode FindHypEqual + + + ! - : typeclass_instances.
 
 (** * [destruct_hint] *)
 Inductive destruct_hint_info :=
@@ -48,6 +54,7 @@ Arguments destruct_hint : simpl never.
 Class RelatedTo {Σ} (pat : iProp Σ) : Type := {
   rt_fic : find_in_context_info (Σ:=Σ);
 }.
+Hint Mode RelatedTo + + : typeclass_instances.
 Arguments rt_fic {_ _} _.
 
 (** * [IntroPersistent] *)
@@ -55,6 +62,7 @@ Arguments rt_fic {_ _} _.
 Class IntroPersistent {Σ} (P P' : iProp Σ) := {
   ip_persistent : P -∗ □ P'
 }.
+Hint Mode IntroPersistent + + - : typeclass_instances.
 (** ** Instances *)
 Global Instance intro_persistent_intuit Σ (P : iProp Σ) : IntroPersistent (□ P) P.
 Proof. constructor. iIntros "$". Qed.

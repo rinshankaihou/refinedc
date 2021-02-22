@@ -2,6 +2,32 @@ From refinedc.typing Require Import typing.
 From refinedc.linux.pkvm.early_alloc Require Import generated_spec.
 Set Default Proof Using "Type".
 
+(*** Demonstration of FindHypEqual ***)
+(* Instance simpl_loc_offset_0_times (l : loc) (n : Z): *)
+(*   SimplLoc (l +ₗ 0%nat * n) l. *)
+(* Proof. assert (0%nat * n = 0) as -> by lia. by rewrite shift_loc_0. Qed. *)
+
+(* TODO: move this to own.v or somewhere in the automation folder *)
+Inductive FICLocSemantic : Set :=.
+Global Instance find_in_context_type_loc_semantic_inst `{!typeG Σ} l :
+  FindInContext (FindLoc l) 2%nat FICLocSemantic :=
+  λ T, i2p (find_in_context_type_loc_id l T).
+
+(* TODO: move this to somewhere in the automation folder *)
+Lemma tac_solve_loc_eq `{!typeG Σ} l1 β1 ty1 l2 β2 ty2:
+  l1 = l2 →
+  FindHypEqual FICLocSemantic (l1 ◁ₗ{β1} ty1) (l2 ◁ₗ{β2} ty2) (l1 ◁ₗ{β2} ty2).
+Proof. by move => ->. Qed.
+
+(* TODO: move this to somewhere in the automation folder and implement
+it properly. *)
+Ltac solve_loc_eq :=
+  rewrite ?shift_loc_0; done.
+
+(* TODO: move this to somewhere in the automation folder *)
+Hint Extern 10 (FindHypEqual FICLocSemantic (_ ◁ₗ{_} _) (_ ◁ₗ{_} _) _) =>
+  (notypeclasses refine (tac_solve_loc_eq _ _ _ _ _ _ _); solve_loc_eq) : typeclass_instances.
+
 (*** Simplification of locations ***)
 
 Class SimplLoc (l1 l2 : loc) : Prop := simpl_loc : l1 = l2.
@@ -17,10 +43,6 @@ Proof. by destruct l. Qed.
 Instance simpl_loc_shift_loc_assoc (l : loc) (n1 n2 : Z):
   SimplLoc (l +ₗ n1 +ₗ n2) (l +ₗ (n1 + n2)).
 Proof. by rewrite shift_loc_assoc. Qed.
-
-Instance simpl_loc_offset_0_times (l : loc) (n : Z):
-  SimplLoc (l +ₗ 0%nat * n) l.
-Proof. assert (0%nat * n = 0) as -> by lia. by rewrite shift_loc_0. Qed.
 
 Instance simpl_loc_offset_add_assoc id p n1 n2:
   SimplLoc (id, p + n1 + n2) (id, p + (n1 + n2)).

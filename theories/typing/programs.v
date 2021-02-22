@@ -407,7 +407,7 @@ Section typing.
     find_in_context (FindLoc l) T.
   Proof. iDestruct 1 as (β ty) "[Hl HT]". iExists (_, _) => /=. iFrame. Qed.
   Global Instance find_in_context_type_loc_id_inst l :
-    FindInContext (FindLoc l) 0%nat :=
+    FindInContext (FindLoc l) 0%nat FICSyntactic :=
     λ T, i2p (find_in_context_type_loc_id l T).
 
   Lemma find_in_context_type_val_id v T:
@@ -415,7 +415,7 @@ Section typing.
     find_in_context (FindVal v) T.
   Proof. iDestruct 1 as (ty) "[Hl HT]". iExists _ => /=. iFrame. Qed.
   Global Instance find_in_context_type_val_id_inst v :
-    FindInContext (FindVal v) 0%nat :=
+    FindInContext (FindVal v) 0%nat FICSyntactic :=
     λ T, i2p (find_in_context_type_val_id v T).
 
   Lemma find_in_context_type_val_P_id v T:
@@ -423,7 +423,7 @@ Section typing.
     find_in_context (FindValP v) T.
   Proof. iDestruct 1 as (ty) "[Hl HT]". iExists (ty_own_val _ _) => /=. iFrame. Qed.
   Global Instance find_in_context_type_val_P_id_inst v :
-    FindInContext (FindValP v) 0%nat :=
+    FindInContext (FindValP v) 0%nat FICSyntactic :=
     λ T, i2p (find_in_context_type_val_P_id v T).
 
   Lemma find_in_context_type_val_P_loc_id l T:
@@ -431,7 +431,7 @@ Section typing.
     find_in_context (FindValP l) T.
   Proof. iDestruct 1 as (β ty) "[Hl HT]". iExists (ty_own _ _ _) => /=. iFrame. Qed.
   Global Instance find_in_context_type_val_P_loc_id_inst (l : loc) :
-    FindInContext (FindValP l) 1%nat :=
+    FindInContext (FindValP l) 1%nat FICSyntactic :=
     λ T, i2p (find_in_context_type_val_P_loc_id l T).
 
   Lemma find_in_context_loc_in_bounds l T :
@@ -439,7 +439,7 @@ Section typing.
     find_in_context (FindLocInBounds l) T.
   Proof. iDestruct 1 as (n) "[??]". iExists (loc_in_bounds _ _) => /=. iFrame. Qed.
   Global Instance find_in_context_loc_in_bounds_inst l :
-    FindInContext (FindLocInBounds l) 0 :=
+    FindInContext (FindLocInBounds l) 0 FICSyntactic :=
     λ T, i2p (find_in_context_loc_in_bounds l T).
 
   Lemma find_in_context_loc_in_bounds_loc l T :
@@ -447,7 +447,7 @@ Section typing.
     find_in_context (FindLocInBounds l) T.
   Proof. iDestruct 1 as (β ty) "[??]". iExists (ty_own _ _ _) => /=. iFrame. Qed.
   Global Instance find_in_context_loc_in_bounds_loc_inst l :
-    FindInContext (FindLocInBounds l) 1 :=
+    FindInContext (FindLocInBounds l) 1 FICSyntactic :=
     λ T, i2p (find_in_context_loc_in_bounds_loc l T).
 
   Global Instance related_to_loc l β ty : RelatedTo (l ◁ₗ{β} ty) := {| rt_fic := FindLoc l |}.

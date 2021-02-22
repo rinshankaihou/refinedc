@@ -41,6 +41,10 @@ Section coq_tactics.
     (∃ (a : A) (x : f a), P (existT a x)) → @ex (sigT f) P.
   Proof. move => [?[??]]. eauto. Qed.
 
+  Lemma tac_find_hyp_equal key (Q P P' R : iProp Σ) Δ `{!FindHypEqual key Q P P'}:
+    envs_entails Δ (P' ∗ R) →
+    envs_entails Δ (P ∗ R).
+  Proof. by revert select (FindHypEqual _ _ _ _) => ->. Qed.
 
   Lemma tac_find_hyp Δ i p R (P : iProp Σ) :
     envs_lookup i Δ = Some (p, P) →
@@ -50,7 +54,6 @@ Section coq_tactics.
     rewrite (envs_lookup_sound' _ false) // bi.intuitionistically_if_elim.
       by apply bi.sep_mono_r.
   Qed.
-
 
   Lemma tac_do_exist A Δ (P : A → iProp Σ) :
     (∃ x, envs_entails Δ (P x)) → envs_entails Δ (∃ x : A, P x).
@@ -122,13 +125,14 @@ Section coq_tactics.
     end →
     envs_entails Δ (P -∗ T).
   Proof.
+    revert select (IntroPersistent _ _) => Hpers.
     rewrite envs_entails_eq => HP. iIntros "Henv HP".
     destruct o as [[|?] |]. {
       iDestruct (HP with "Henv") as "HSH".
       iDestruct (i2p_proof with "HSH HP") as "$".
     }
     all: case_match => //.
-    all: iDestruct (ip_persistent with "HP") as "#HP'".
+    all: iDestruct (@ip_persistent _ _ _ Hpers with "HP") as "#HP'".
     all: rewrite envs_app_sound //=; simpl.
     all: iDestruct ("Henv" with "[$]") as "Henv".
     all: by iDestruct (HP with "Henv") as "$".
@@ -422,11 +426,13 @@ Ltac liSimpl :=
 
 Ltac liShow := liUnfoldLetsInContext.
 
-Ltac liFindHyp :=
+Ltac liFindHyp key :=
   let rec go P Hs :=
       lazymatch Hs with
       | Esnoc ?Hs2 ?id ?Q =>
         first [
+            lazymatch key with
+            | FICSyntactic =>
            (* we first try to unify using the opaquenes hints of
               typeclass_instances. Directly doing exact: eq_refl
               sometimes takes 30 seconds to fail (e.g. when trying
@@ -434,7 +440,14 @@ Ltac liFindHyp :=
               different names. ) TODO: investigate if constr_eq
               could help even more
               https://coq.inria.fr/distrib/current/refman/proof-engine/tactics.html#coq:tacn.constr-eq*)
-            unify Q P with typeclass_instances;
+              unify Q P with typeclass_instances
+            | _ =>
+              notypeclasses refine (tac_find_hyp_equal key Q _ _ _ _ _); [solve [refine _] | ];
+              lazymatch goal with
+              | |- envs_entails _ (?P' ∗ _) =>
+                unify Q P' with typeclass_instances
+              end
+            end;
             notypeclasses refine (tac_find_hyp _ id _ _ _ _ _); [li_pm_reflexivity | li_pm_reduce]
           | go P Hs2 ]
       end in
@@ -454,10 +467,10 @@ Ltac liFindHyp :=
     end
   end.
 
-Ltac liFindHypOrTrue :=
+Ltac liFindHypOrTrue key :=
   first [
       notypeclasses refine (tac_sep_true _ _ _)
-    | progress liFindHyp
+    | progress liFindHyp key
   ].
 
 Ltac custom_exist_tac A protect := fail "No custom_exist_tac provided.".
@@ -491,11 +504,15 @@ Ltac liFindInContext :=
   lazymatch goal with
   | |- envs_entails _ (find_in_context ?fic ?T) =>
     let rec go n :=
-        match n with
-        | _ => simple notypeclasses refine (tac_fast_apply ((_ : FindInContext fic n) _).(i2p_proof) _); [solve [refine _] || fail 1 "no more instances to try" |]; simpl;
-          repeat liExist false; liFindHypOrTrue
-        | _ => go constr:(S n)
-        end
+        let inst := eval cbv beta in (_ : FindInContext fic n _) in
+        first [
+          lazymatch (type of inst) with
+          | FindInContext _ _ ?key =>
+          simple notypeclasses refine (tac_fast_apply (inst _).(i2p_proof) _); simpl;
+          repeat liExist false; liFindHypOrTrue key
+          end
+         | go constr:(S n)
+        ]
     in
     go constr:(0%nat)
   end.
@@ -648,7 +665,7 @@ Ltac liSep :=
     | ?P => first [
                convert_to_i2p P ltac:(fun converted =>
                simple notypeclasses refine (tac_fast_apply_below_sep converted _); [solve[refine _] |])
-             | progress liFindHyp
+             | progress liFindHyp FICSyntactic
              | simple notypeclasses refine (tac_fast_apply (tac_do_simplify_goal 0%N _ _) _); [solve [refine _] |]
              | simple notypeclasses refine (tac_fast_apply (tac_intro_subsume_related _ _) _); [solve [refine _] |];
                simpl; liFindInContext

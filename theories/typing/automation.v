@@ -160,7 +160,7 @@ Ltac liRStmt :=
       | W.Switch _ _ _ _ _ => notypeclasses refine (tac_fast_apply (type_switch _ _ _ _ _ _ _ _ _) _)
       | W.Assert _ _ => notypeclasses refine (tac_fast_apply (type_assert _ _ _ _ _ _) _)
       | W.Goto ?bid => first [
-         notypeclasses refine (tac_fast_apply (type_goto_precond _ _ _ _ _ _) _); progress liFindHyp
+         notypeclasses refine (tac_fast_apply (type_goto_precond _ _ _ _ _ _) _); progress liFindHyp FICSyntactic
        | lazymatch goal with
          | H : BLOCK_PRECOND bid ?P |- _ =>
            notypeclasses refine (tac_fast_apply (tac_typed_single_block_rec P _ _ _ _ _ _ _) _);[compute_map_lookup|]

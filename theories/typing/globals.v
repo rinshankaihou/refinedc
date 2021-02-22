@@ -95,7 +95,7 @@ Section globals.
     find_in_context (FindInitialized name A) T.
   Proof. iDestruct 1 as (x) "[Hinit HT]". iExists _. iFrame. Qed.
   Global Instance find_in_context_initialized_inst name A :
-    FindInContext (FindInitialized name A) 0%nat :=
+    FindInContext (FindInitialized name A) 0%nat FICSyntactic :=
     λ T, i2p (find_in_context_initialized name A T).
 
   Lemma subsume_initialized name A (x1 x2 : A) T:
