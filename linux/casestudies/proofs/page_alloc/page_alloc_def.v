@@ -2,8 +2,6 @@ From refinedc.typing Require Import typing.
 From refinedc.linux.casestudies.page_alloc Require Import generated_code.
 Set Default Proof Using "Type".
 
-Remove Hints find_in_context_type_val_P_own_singleton_inst : typeclass_instances.
-
 Section type.
   Context `{!typeG Σ}.
   Definition PAGE_SIZE : Z := 4096.

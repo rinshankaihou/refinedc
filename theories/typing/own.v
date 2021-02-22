@@ -351,14 +351,21 @@ Section own.
     FindInContext (FindVal l) 2%nat :=
     λ T, i2p (find_in_context_type_val_own_singleton l T).
 
+  (* We cannot use place here as it can easily lead to an infinite
+  loop during type checking. Thus, we define place' that is not
+  unfolded as eagerly as place. You probably should not add typing
+  rules for place', but for place instead. *)
+  Definition place' (l : loc) : type := place l.
   Lemma find_in_context_type_val_P_own_singleton (l : loc) T:
-    (True ∗ T (l ◁ₗ place l)) -∗
+    (True ∗ T (l ◁ₗ place' l)) -∗
     find_in_context (FindValP l) T.
-  Proof. iIntros "[_ HT]". iExists _. iFrame "HT" => //=. Qed.
+  Proof. rewrite /place'. iIntros "[_ HT]". iExists _. iFrame "HT" => //=. Qed.
   Global Instance find_in_context_type_val_P_own_singleton_inst (l : loc):
     FindInContext (FindValP l) 2%nat :=
     λ T, i2p (find_in_context_type_val_P_own_singleton l T).
 End own.
+Typeclasses Opaque place'.
+Notation "place'< l >" := (place' l) (only printing, format "'place'<' l '>'") : printing_sugar.
 
 Notation "&frac{ β }" := (frac_ptr β) (format "&frac{ β }") : bi_scope.
 Notation "&own" := (frac_ptr Own) (format "&own") : bi_scope.

@@ -2,8 +2,6 @@ From refinedc.typing Require Import typing.
 From refinedc.linux.pkvm.early_alloc Require Import generated_spec.
 Set Default Proof Using "Type".
 
-Remove Hints find_in_context_type_val_P_own_singleton_inst : typeclass_instances.
-
 (*** Simplification of locations ***)
 
 Class SimplLoc (l1 l2 : loc) : Prop := simpl_loc : l1 = l2.
