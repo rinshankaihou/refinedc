@@ -1,7 +1,7 @@
 From iris.proofmode Require Import coq_tactics reduction.
 From refinedc.typing Require Export type.
 From refinedc.lithium Require Export tactics.
-From refinedc.typing.automation Require Export normalize solvers simplification proof_state.
+From refinedc.typing.automation Require Export normalize solvers simplification proof_state loc_eq.
 From refinedc.typing Require Import programs function singleton own struct bytes int.
 Set Default Proof Using "Type".
 
