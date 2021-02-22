@@ -176,9 +176,9 @@ Ltac unfold_common_defs :=
 
 (** * [solve_goal] without cleaning of the context  *)
 Ltac unprepared_solve_goal :=
+  normalize_and_simpl_goal;
   try rewrite -> unfold_int_elem_of_it in *;
   unfold_common_defs; simpl in *;
-  normalize_and_simpl_goal;
   rewrite /ly_size/ly_align_log //=; enrich_context;
   repeat case_bool_decide => //; repeat case_decide => //; repeat case_match => //;
   refined_solver lia.

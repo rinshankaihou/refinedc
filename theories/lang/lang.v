@@ -627,6 +627,10 @@ Lemma ly_align_log_ly_align_le_iff ly1 ly2:
   (ly_align_log ly1 ≤ ly_align_log ly2 ↔ ly_align ly1 ≤ ly_align ly2)%nat.
 Proof. rewrite /ly_align. apply: Nat.pow_le_mono_r_iff. lia. Qed.
 
+Lemma ly_size_ly_with_align m n :
+  ly_size (ly_with_align m n) = m.
+Proof. done. Qed.
+
 Lemma ly_align_ly_with_align m n :
   ly_align (ly_with_align m n) = keep_factor2 n 1.
 Proof. rewrite /ly_with_align/keep_factor2/factor2. by destruct (factor2' n). Qed.
