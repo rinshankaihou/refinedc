@@ -23,7 +23,7 @@ Section proof_hyp_early_alloc_init.
     - repeat liRStep; liShow.
       all: print_typesystem_goal "hyp_early_alloc_init" "#0".
     Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
-    all: rewrite -> ly_size_PAGES in *; unfold PAGE_SIZE in *; solve_goal.
+    all: rewrite -> ly_size_PAGES in *; solve_goal.
     all: print_sidecondition_goal "hyp_early_alloc_init".
   Qed.
 End proof_hyp_early_alloc_init.

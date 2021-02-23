@@ -35,7 +35,7 @@ static struct region mem;
 [[rc::requires("global mem : {(base, given, remaining)} @ region")]]
 [[rc::returns("given @ int<size_t>")]]
 [[rc::ensures("global mem : {(base, given, remaining)} @ region")]]
-[[rc::tactics("all: rewrite /PAGE_SIZE Z.add_simpl_l; try solve_goal.")]]
+[[rc::tactics("all: rewrite Z.add_simpl_l; try solve_goal.")]]
 [[rc::tactics("all: rewrite Z.shiftr_div_pow2 //= Z.div_mul //=.")]]
 size_t hyp_early_alloc_nr_pages(void){
   return (cur - (uintptr_t) base) >> PAGE_SHIFT;
@@ -52,7 +52,6 @@ extern void clear_page(void *to);
 [[rc::requires("{0 < n ≤ remaining}", "{n ≪ PAGE_SHIFT ≤ max_int u32}")]]
 [[rc::returns("&own<zeroed<PAGES<{Z.to_nat n}>>>")]]
 [[rc::ensures("global mem : {(base, given + n, remaining - n)%Z} @ region")]]
-[[rc::tactics("all: unfold PAGE_SIZE, PAGE_SHIFT in *; try solve_goal.")]]
 [[rc::tactics("all: rewrite -> Z.shiftl_mul_pow2 in *; try lia.")]]
 [[rc::tactics("all: try apply: has_layout_loc_trans' => //.")]]
 [[rc::tactics("all: rewrite ?ly_offset_PAGES; try solve_goal.")]]
@@ -106,7 +105,7 @@ void *hyp_early_alloc_page(void *arg){
 [[rc::requires("{s = (n * PAGE_SIZE)%Z}")]]
 [[rc::requires("global mem : uninit<struct_region>")]]
 [[rc::ensures("global mem : {(l, 0, n)} @ region")]]
-[[rc::tactics("all: rewrite -> ly_size_PAGES in *; unfold PAGE_SIZE in *; solve_goal.")]]
+[[rc::tactics("all: rewrite -> ly_size_PAGES in *; solve_goal.")]]
 void hyp_early_alloc_init(unsigned char* virt, unsigned int size){
   base = virt;
   end = (uintptr_t) ((uintptr_t) virt + size);

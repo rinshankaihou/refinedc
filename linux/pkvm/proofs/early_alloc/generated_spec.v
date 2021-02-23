@@ -3,18 +3,19 @@ From refinedc.linux.pkvm.early_alloc Require Import generated_code.
 Set Default Proof Using "Type".
 
 (* Generated from [linux/pkvm/early_alloc.c]. *)
+
+(* Inlined code (prelude). *)
+
+Notation PAGE_SHIFT := (12).
+Notation PAGE_SIZE := (4096).
+
+Definition PAGES (n : nat) : layout :=
+  ly_with_align (n * Z.to_nat PAGE_SIZE) (Z.to_nat PAGE_SIZE).
+
+Notation PAGE := (PAGES 1).
+
 Section spec.
   Context `{!typeG Σ} `{!globalG Σ}.
-
-  (* Inlined code. *)
-
-  Definition PAGE_SHIFT := (12).
-  Definition PAGE_SIZE := (4096).
-
-  Definition PAGES (n : nat) : layout :=
-    ly_with_align (n * Z.to_nat PAGE_SIZE) (Z.to_nat PAGE_SIZE).
-
-  Notation PAGE := (PAGES 1).
 
   (* Definition of type [region]. *)
   Definition region_rec : (loc * Z * Z -d> typeO) → (loc * Z * Z -d> typeO) := (λ self patt__,

@@ -37,7 +37,6 @@ Section proof_hyp_early_alloc_contig.
     - repeat liRStep; liShow.
       all: print_typesystem_goal "hyp_early_alloc_contig" "#3".
     Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
-    all: unfold PAGE_SIZE, PAGE_SHIFT in *; try solve_goal.
     all: rewrite -> Z.shiftl_mul_pow2 in *; try lia.
     all: try apply: has_layout_loc_trans' => //.
     all: rewrite ?ly_offset_PAGES; try solve_goal.
