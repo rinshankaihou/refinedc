@@ -3,6 +3,7 @@ open Extra
 open Panic
 open Coq_ast
 open Rc_annot
+open Comment_annot
 
 (* Flags set by CLI. *)
 let print_expr_locs = ref true
@@ -766,30 +767,45 @@ let collect_invs : func_def -> (string * loop_annot) list = fun def ->
   in
   SMap.fold fn def.func_blocks []
 
-let pp_spec : string -> import list -> string list -> typedef list ->
-      string list -> Coq_ast.t pp =
+let pp_spec : string -> import list -> inlined_code ->
+      typedef list -> string list -> Coq_ast.t pp =
     fun import_path imports inlined typedefs ctxt ff ast ->
 
   (* Formatting utilities. *)
   let pp fmt = Format.fprintf ff fmt in
 
+  (* Print inlined code (starts with an empty line) *)
+  let pp_inlined extra_line_after descr ls =
+    if ls <> [] then pp "\n";
+    if ls <> [] then
+      begin
+        match descr with
+        | None        -> pp "@;(* Inlined code. *)\n"
+        | Some(descr) -> pp "@;(* Inlined code (%s). *)\n" descr
+      end;
+    List.iter (fun s -> if s = "" then pp "\n" else pp "@;%s" s) ls;
+    if extra_line_after && ls <> [] then pp "\n";
+  in
+
   (* Printing some header. *)
   pp "@[<v 0>From refinedc.typing Require Import typing.@;";
   pp "From %s Require Import generated_code.@;" import_path;
   List.iter (pp_import ff) imports;
-  pp "Set Default Proof Using \"Type\".@;@;";
+  pp "Set Default Proof Using \"Type\".\n";
 
   (* Printing generation data in a comment. *)
-  pp "(* Generated from [%s]. *)@;" ast.source_file;
+  pp "@;(* Generated from [%s]. *)" ast.source_file;
+
+  (* Printing inlined code (from comments). *)
+  pp_inlined true (Some "prelude") inlined.ic_prelude;
 
   (* Opening the section. *)
-  pp "@[<v 2>Section spec.@;";
+  pp "@;@[<v 2>Section spec.@;";
   pp "Context `{!typeG Σ} `{!globalG Σ}.";
   List.iter (pp "@;%s.") ctxt;
 
   (* Printing inlined code (from comments). *)
-  if inlined <> [] then pp "\n@;(* Inlined code. *)\n";
-  List.iter (fun s -> if s = "" then pp "\n" else pp "@;%s" s) inlined;
+  pp_inlined false None inlined.ic_section;
 
   (* [Notation] data for printing sugar. *)
   let sugar = ref [] in
@@ -1101,6 +1117,9 @@ let pp_spec : string -> import list -> string list -> typedef list ->
   if !opaque <> [] then pp "@;";
   let pp_opaque = pp "@;Typeclasses Opaque %s." in
   List.iter pp_opaque !opaque;
+
+  (* Printing inlined code (from comments). *)
+  pp_inlined false (Some "final") inlined.ic_final;
   pp "@]"
 
 let pp_proof : string -> func_def -> import list -> string list -> proof_kind
@@ -1342,7 +1361,7 @@ let pp_proof : string -> func_def -> import list -> string list -> proof_kind
 
 type mode =
   | Code of import list
-  | Spec of string * import list * string list * typedef list * string list
+  | Spec of string * import list * inlined_code * typedef list * string list
   | Fprf of string * func_def * import list * string list * proof_kind
 
 let write : mode -> string -> Coq_ast.t -> unit = fun mode fname ast ->

@@ -602,20 +602,26 @@ The Coq context (in spec and proof sections) using the following annotation:
 
 ## Inlined Coq code
 
-Coq code can be inlined at the beginning (of the section) of the generated
-spec file using the following syntax.
+An arbitrary line of Coq code can be inlined in the generated specification
+file using the following syntax (for single of multiple lines).
 ```c
 //@rc::inlined <code line>
-```
 
-For multiple lines, use the following syntax.
-```c
 //@rc::inlined
 //@<code line 1>
 //@<code line 2>
 //@<code line 3>
 //@rc::end
 ```
+With `rc::inlined`, the code is inserted at the beginning of the main section
+of the specification file.
+
+To inline Coq code at the beginning of the file (before the section) you can
+use the tag `rc::inlined_prelude` instead. This is typically useful when you
+want to define a notation (and want it to be available in proof files).
+
+To inline Coq code at the end of the file (after the section) you can use the
+tag `rc::inlined_final` instead.
 
 ## Type definition
 
