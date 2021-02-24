@@ -1,6 +1,5 @@
 From refinedc.typing Require Export type.
 From refinedc.typing Require Import programs optional int singleton.
-From refinedc.typing.automation Require Import simplification.
 Set Default Proof Using "Type".
 
 Section own.
@@ -229,15 +228,13 @@ Section own.
   Lemma type_copy_aid v1 v2 P1 P2 T:
     (∃ p1 p2, subsume P1 (v1 ◁ᵥ p1 @ frac_ptr Own (place p1)) (
               subsume P2 (v2 ◁ᵥ p2 @ frac_ptr Own (place p2)) (
-              ∃ p, ⌜normalize_loc (p2.1, p1.2) p⌝ ∗
-                   T (val_of_loc p) (t2mt (value void* (val_of_loc p)))))) -∗
+                   T (val_of_loc (p2.1, p1.2)) (t2mt (value void* (val_of_loc (p2.1, p1.2))))))) -∗
     typed_copy_alloc_id v1 P1 v2 P2 T.
   Proof.
     iIntros "HT Hp1 Hp2" (Φ) "HΦ". iDestruct "HT" as (p1 p2) "HT".
     iDestruct ("HT" with "Hp1") as "[Hp1 HT]". iDestruct "Hp1" as (->) "Hp1".
     iDestruct ("HT" with "Hp2") as "[Hp2 HT]". iDestruct "Hp2" as (->) "Hp2".
-    iDestruct "HT" as (p Hp) "HT". rewrite /normalize_loc in Hp. unlock in Hp.
-    iApply wp_copy_alloc_id; try by rewrite val_to_of_loc. rewrite Hp.
+    iApply wp_copy_alloc_id; try by rewrite val_to_of_loc.
     by iApply ("HΦ" with "[] HT").
   Qed.
   Global Instance type_copy_aid_inst v1 v2 P1 P2:

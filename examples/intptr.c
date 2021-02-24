@@ -35,6 +35,7 @@ int* roundtrip1(int* p){
 [[rc::parameters("p : loc", "n : Z")]]
 [[rc::args("p @ &own<n @ int<i32>>")]]
 [[rc::returns("p @ &own<n @ int<i32>>")]]
+[[rc::tactics("all: try f_equal; solve_loc_eq.")]]
 int* roundtrip2(int* p){
   size_t i = (size_t) p;
   int *q = (void*) i;
