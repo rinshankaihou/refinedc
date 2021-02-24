@@ -548,21 +548,6 @@ Section typing.
     SimplifyGoalPlace l (match β with | Own => Own | Shr => Shr end) ty (Some 0%N) :=
     λ T, i2p (simplify_bad_own_state_goal l β ty T).
 
-  (* TODO: generalize this to more simplifications? *)
-  Lemma simplify_hyp_place_Z_to_nat ly l β ty n T:
-    ⌜0 ≤ n⌝ ∗ ((l offset{ly}ₗ n) ◁ₗ{β} ty -∗ T) -∗ simplify_hyp ((l offset{ly}ₗ Z.to_nat n) ◁ₗ{β} ty) T.
-  Proof. iIntros "[% HT]". rewrite Z2Nat.id //. Qed.
-  Global Instance simplify_hyp_place_Z_to_nat_inst ly l β ty n:
-    SimplifyHypPlace (l offset{ly}ₗ Z.to_nat n) β ty (Some 0%N) :=
-    λ T, i2p (simplify_hyp_place_Z_to_nat ly l β ty n T).
-
-  Lemma simplify_goal_place_Z_to_nat ly l β ty n T:
-    ⌜0 ≤ n⌝ ∗ T ((l offset{ly}ₗ n) ◁ₗ{β} ty) -∗ simplify_goal ((l offset{ly}ₗ Z.to_nat n) ◁ₗ{β} ty) T.
-  Proof. iIntros "[% HT]". rewrite Z2Nat.id //. iExists _. iFrame. iIntros "$". Qed.
-  Global Instance simplify_goal_place_Z_to_nat_inst ly l β ty n:
-    SimplifyGoalPlace (l offset{ly}ₗ Z.to_nat n) β ty (Some 0%N) :=
-    λ T, i2p (simplify_goal_place_Z_to_nat ly l β ty n T).
-
   Global Instance simple_subsume_place_id ty : SimpleSubsumePlace ty ty True | 1.
   Proof. iIntros (??) "_ $". Qed.
   Global Instance simple_subsume_place_r_id ty x : SimpleSubsumePlaceR ty ty x x True | 1.
