@@ -43,10 +43,6 @@ Hint Rewrite ly_size_PAGES_sub : refinedc_loc_eq_rewrite.
 Hint Rewrite ly_size_PAGES : refinedc_loc_eq_rewrite.
 Hint Rewrite ly_offset_PAGES : refinedc_loc_eq_rewrite.
 
-Global Instance simpl_to_NULL_val_of_loc (l : loc):
-  SimplAndRel (=) NULL (l) (λ T, False).
-Proof. split; naive_solver. Qed.
-
 Section instances.
   Context `{!typeG Σ}.
 

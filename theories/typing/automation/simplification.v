@@ -30,3 +30,10 @@ Qed.
 (** * location offset *)
 Global Instance simpl_offset_inj l1 l2 sl n : SimplBothRel (=) (l1 at{sl}ₗ n) (l2 at{sl}ₗ n) (l1 = l2).
 Proof. unfold GetMemberLoc. split; [apply shift_loc_inj1| naive_solver]. Qed.
+
+(** * NULL *)
+Global Instance simpl_to_NULL_val_of_loc (l : loc):
+  SimplAndRel (=) NULL (l) (λ T, False).
+Proof. split; naive_solver. Qed.
+
+
