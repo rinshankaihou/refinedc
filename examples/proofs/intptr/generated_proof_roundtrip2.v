@@ -21,7 +21,7 @@ Section proof_roundtrip2.
     - repeat liRStep; liShow.
       all: print_typesystem_goal "roundtrip2" "#0".
     Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
-    all: try f_equal; solve_loc_eq.
+    all: try solve_loc_eq.
     all: print_sidecondition_goal "roundtrip2".
   Qed.
 End proof_roundtrip2.

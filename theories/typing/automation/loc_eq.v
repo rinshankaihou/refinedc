@@ -30,6 +30,7 @@ succeeds if the compared locations have convertible allocation ids. *)
 Ltac prepare_loc_eq :=
   (* Sanity check on the goal. *)
   lazymatch goal with
+  | |- @eq val (val_of_loc _) (val_of_loc _) => f_equal
   | |- @eq ?A _ _ => unify A loc
   | |- @eq _ _ _  => fail "[simpl_loc_eq]: goal not an equality between locations"
   | |- _          => fail "[simpl_loc_eq]: goal not an equality"
