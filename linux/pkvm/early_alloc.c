@@ -15,7 +15,8 @@ struct
 [[rc::refined_by("base : loc", "given : Z", "remaining : Z")]]
 [[rc::let("z_cur : Z = {(base.2 + given * PAGE_SIZE)%Z}")]]
 [[rc::let("z_end : Z = {(base.2 + (given + remaining) * PAGE_SIZE)%Z}")]]
-[[rc::constraints("{0 ≤ given}", "{0 ≤ remaining}")]]
+[[rc::constraints("{0 ≤ given}", "{0 ≤ remaining}",
+				  "{base.2 + (given + remaining) * PAGE_SIZE <= max_int u64}")]]
 region {
   [[rc::field("z_end @ int<uintptr_t>")]] uintptr_t end;
   [[rc::field("z_cur @ int<uintptr_t>")]] uintptr_t cur;
@@ -52,12 +53,8 @@ extern void clear_page(void *to);
 [[rc::requires("{0 < n ≤ remaining}", "{n ≪ PAGE_SHIFT ≤ max_int u32}")]]
 [[rc::returns("&own<zeroed<PAGES<{Z.to_nat n}>>>")]]
 [[rc::ensures("global mem : {(base, given + n, remaining - n)%Z} @ region")]]
-[[rc::tactics("all: rewrite -> Z.shiftl_mul_pow2 in *; try lia.")]]
-[[rc::tactics("all: try apply: has_layout_loc_trans' => //.")]]
+[[rc::tactics("all: try rewrite -> Z.shiftl_mul_pow2 in *; try lia.")]]
 [[rc::tactics("all: rewrite ?ly_offset_PAGES; try solve_goal.")]]
-[[rc::tactics("all: transitivity max_alloc_end; last done.")]]
-[[rc::tactics("all: etransitivity; last eassumption.")]]
-[[rc::tactics("all: rewrite -?Z.add_assoc => //=; apply -> Z.add_le_mono_l; lia.")]]
 void *hyp_early_alloc_contig(unsigned int nr_pages){
   uintptr_t ret = cur, p;
   unsigned int i;

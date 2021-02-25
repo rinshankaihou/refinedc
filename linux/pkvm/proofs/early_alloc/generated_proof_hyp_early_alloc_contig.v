@@ -37,12 +37,8 @@ Section proof_hyp_early_alloc_contig.
     - repeat liRStep; liShow.
       all: print_typesystem_goal "hyp_early_alloc_contig" "#3".
     Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
-    all: rewrite -> Z.shiftl_mul_pow2 in *; try lia.
-    all: try apply: has_layout_loc_trans' => //.
+    all: try rewrite -> Z.shiftl_mul_pow2 in *; try lia.
     all: rewrite ?ly_offset_PAGES; try solve_goal.
-    all: transitivity max_alloc_end; last done.
-    all: etransitivity; last eassumption.
-    all: rewrite -?Z.add_assoc => //=; apply -> Z.add_le_mono_l; lia.
     all: print_sidecondition_goal "hyp_early_alloc_contig".
   Qed.
 End proof_hyp_early_alloc_contig.

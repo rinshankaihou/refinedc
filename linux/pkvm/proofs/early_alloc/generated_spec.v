@@ -30,7 +30,8 @@ Section spec.
       (own_constrained (nonshr_constraint ((base.1, z_cur) ◁ₗ uninit (PAGES (Z.to_nat remaining)))) (base @ (ptr (Z.to_nat ((given + remaining) * PAGE_SIZE)))))
     ]) (
       ⌜0 ≤ given⌝ ∗
-      ⌜0 ≤ remaining⌝
+      ⌜0 ≤ remaining⌝ ∗
+      ⌜base.2 + (given + remaining) * PAGE_SIZE <= max_int u64⌝
     )
   )%I.
   Typeclasses Opaque region_rec.
@@ -56,7 +57,8 @@ Section spec.
         (own_constrained (nonshr_constraint ((base.1, z_cur) ◁ₗ uninit (PAGES (Z.to_nat remaining)))) (base @ (ptr (Z.to_nat ((given + remaining) * PAGE_SIZE)))))
       ]) (
         ⌜0 ≤ given⌝ ∗
-        ⌜0 ≤ remaining⌝
+        ⌜0 ≤ remaining⌝ ∗
+        ⌜base.2 + (given + remaining) * PAGE_SIZE <= max_int u64⌝
       )
     )%I.
   Proof. by rewrite {1}/with_refinement/=fixp_unfold. Qed.

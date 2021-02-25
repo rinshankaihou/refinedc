@@ -42,20 +42,3 @@ Hint Rewrite ly_size_ly_offset : refinedc_loc_eq_rewrite.
 Hint Rewrite ly_size_PAGES_sub : refinedc_loc_eq_rewrite.
 Hint Rewrite ly_size_PAGES : refinedc_loc_eq_rewrite.
 Hint Rewrite ly_offset_PAGES : refinedc_loc_eq_rewrite.
-
-Section instances.
-  Context `{!typeG Σ}.
-
-  Lemma simplify_hyp_loc_in_bounds_ptr_in_range l (n : nat) T:
-    (⌜min_alloc_start ≤ l.2 ∧ l.2 + n ≤ max_alloc_end⌝ -∗ loc_in_bounds l n -∗ T) -∗
-    simplify_hyp (loc_in_bounds l n) T.
-  Proof.
-    iIntros "HT Hlib".
-    iDestruct (loc_in_bounds_ptr_in_range with "Hlib") as %?.
-    by iApply "HT".
-  Qed.
-  (* FIXME limit the application in a cleaner way. *)
-  Global Instance simplify_hyp_loc_in_bounds_ptr_in_range_inst l n `{!TCUnless (FastDone (min_alloc_start ≤ l.2))}:
-    SimplifyHyp (loc_in_bounds l n) (Some 0%N) :=
-    λ T, i2p (simplify_hyp_loc_in_bounds_ptr_in_range l n T).
-End instances.

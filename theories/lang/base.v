@@ -12,7 +12,7 @@ Set Default Proof Using "Type".
 
 Global Unset Program Cases.
 Global Set Keyed Unification.
-Typeclasses Opaque Z.divide Z.modulo Z.div.
+Typeclasses Opaque Z.divide Z.modulo Z.div Z.shiftl Z.shiftr.
 Arguments min : simpl nomatch.
 
 Arguments Z.testbit : simpl never.
