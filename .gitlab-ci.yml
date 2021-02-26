@@ -33,7 +33,7 @@ variables:
 build-coq.8.12.0-timing:
   <<: *template
   variables:
-    OPAM_PINS: "coq version 8.12.0   cerberus git git+https://github.com/rems-project/cerberus.git#6ea80db048080468761499238fa0d045222ccc52"
+    OPAM_PINS: "coq version 8.12.0   cerberus git git+https://github.com/rems-project/cerberus.git#9f3a825a5f32a8245101a57105a5598a1adf6879"
     DENY_WARNINGS: "1"
   only:
   - master@iris/refinedc
@@ -45,7 +45,7 @@ build-coq.8.12.0-timing:
 build-coq.8.12.0:
   <<: *template
   variables:
-    OPAM_PINS: "coq version 8.12.0   cerberus git git+https://github.com/rems-project/cerberus.git#6ea80db048080468761499238fa0d045222ccc52"
+    OPAM_PINS: "coq version 8.12.0   cerberus git git+https://github.com/rems-project/cerberus.git#9f3a825a5f32a8245101a57105a5598a1adf6879"
     DENY_WARNINGS: "1"
   only:
   - /^ci/@iris/refinedc
@@ -53,7 +53,7 @@ build-coq.8.12.0:
 check-generated:
   <<: *template
   variables:
-    OPAM_PINS: "coq version 8.12.0   cerberus git git+https://github.com/rems-project/cerberus.git#6ea80db048080468761499238fa0d045222ccc52"
+    OPAM_PINS: "coq version 8.12.0   cerberus git git+https://github.com/rems-project/cerberus.git#9f3a825a5f32a8245101a57105a5598a1adf6879"
     DENY_WARNINGS: "1"
     MAKE_TARGET: "check_generate_all"
     # necessary because dune does not like running in parallel
@@ -62,7 +62,7 @@ check-generated:
 build-iris.dev:
   <<: *template
   variables:
-    OPAM_PINS: "coq version 8.12.dev   coq-stdpp.dev git git+https://gitlab.mpi-sws.org/iris/stdpp.git#$STDPP_REV   coq-iris.dev git git+https://gitlab.mpi-sws.org/iris/iris.git#$IRIS_REV  cerberus git git+https://github.com/rems-project/cerberus.git#6ea80db048080468761499238fa0d045222ccc52"
+    OPAM_PINS: "coq version 8.12.dev   coq-stdpp.dev git git+https://gitlab.mpi-sws.org/iris/stdpp.git#$STDPP_REV   coq-iris.dev git git+https://gitlab.mpi-sws.org/iris/iris.git#$IRIS_REV  cerberus git git+https://github.com/rems-project/cerberus.git#9f3a825a5f32a8245101a57105a5598a1adf6879"
   except:
   only:
   - triggers

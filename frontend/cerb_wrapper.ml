@@ -27,13 +27,17 @@ let impl_name =
   try Sys.getenv "IMPL_NAME" with Not_found ->
     "gcc_4.9.0_x86_64-apple-darwin10.8.0"
 
+let set_cerb_conf () =
+  let open Global_ocaml in
+  set_cerb_conf false Random false Basic false false false false
+
 let frontend cpp_cmd filename =
   let conf =
     { debug_level = 0 ; pprints = [] ; astprints = [] ; ppflags = []
     ; typecheck_core = false ; rewrite_core = false
     ; sequentialise_core = false ; cpp_cmd ; cpp_stderr = true }
   in
-  Global_ocaml.(set_cerb_conf false Random false Basic false false false);
+  set_cerb_conf ();
   Ocaml_implementation.(set (HafniumImpl.impl));
   load_core_stdlib () >>= fun stdlib ->
   load_core_impl stdlib impl_name >>= fun impl ->
@@ -45,7 +49,7 @@ let run_cpp cpp_cmd filename =
     ; typecheck_core = false ; rewrite_core = false
     ; sequentialise_core = false ; cpp_cmd ; cpp_stderr = true }
   in
-  Global_ocaml.(set_cerb_conf false Random false Basic false false false);
+  set_cerb_conf ();
   cpp (conf, io) ~filename
 
 let cpp_cmd config =

@@ -276,6 +276,8 @@ let points_to classify expr =
           []
       | AilEunion (_, _, e_opt) ->
           []
+      | AilEgcc_statement ->
+          Panic.panic loc "Not implemented GCC statement expr." (* TODO *)
   in
   aux expr
 
@@ -411,7 +413,8 @@ let rec taint_expr points_to (AnnotatedExpression (_, _, loc, expr_)) =
        merge_pointsto (List.map (function (_, Some e) -> self e | (_, None) -> []) xs)
     | AilEva_copy (e1, e2) ->
         merge_pointsto [self e1; self e2]
-
+    | AilEgcc_statement ->
+        Panic.panic loc "Not implemented GCC statement expr." (* TODO *)
 
 let taints_of_functions sigm =
   List.fold_left (fun acc (sym_decl, (_, _, decl)) ->
@@ -454,13 +457,13 @@ let taints_of_functions sigm =
                         merge_pointsto (List.map (fold_stmt env') ss)
                     | AilSif (e, s1, s2) ->
                         merge_pointsto [taint_expr e; fold_stmt env s1; fold_stmt env s2]
-                    | AilSwhile (e, s)
-                    | AilSdo (s, e)
+                    | AilSwhile (e, s, _)
+                    | AilSdo (s, e, _)
                     | AilSswitch (e, s) ->
                         merge_pointsto [taint_expr e; fold_stmt env s]
                     | AilScase (_, s)
                     | AilSdefault s
-                    | AilSlabel (_, s) ->
+                    | AilSlabel (_, s, _) ->
                         fold_stmt env s
                     | AilSdeclaration xs ->
                         merge_pointsto (List.map (fun (_, e) -> taint_expr e) xs)
@@ -589,6 +592,8 @@ let warn_unseq taints_map expr =
           merge_status (List.map (function (_, Some e) -> aux e | (_, None) -> NO_CALL) xs)
       | AilEva_copy (e1, e2) ->
           merge_status [aux e1; aux e2]
+      | AilEgcc_statement ->
+          Panic.panic loc "Not implemented GCC statement expr." (* TODO *)
   in
   ignore (aux expr)
 
@@ -709,7 +714,10 @@ let warn_file (_, sigm) =
                 self e
             | None ->
                 ()
-          end in
+          end
+      | AilEgcc_statement ->
+          Panic.panic loc "Not implemented GCC statement expr." (* TODO *)
+  in
   let rec aux env (AnnotatedStatement (loc, _, stmt_)) =
     let self = aux env in
     let warn_unseq e = warn_unseq taints_map e in
@@ -736,11 +744,11 @@ let warn_file (_, sigm) =
           warn_unseq e;
           self s1;
           self s2
-      | AilSwhile (e, s) ->
+      | AilSwhile (e, s, _) ->
           self s;
           aux_expr env e;
           warn_unseq e
-      | AilSdo (s, e) ->
+      | AilSdo (s, e, _) ->
           aux_expr env e;
           warn_unseq e;
           self s
@@ -754,7 +762,7 @@ let warn_file (_, sigm) =
           self s
       | AilScase (_, s)
       | AilSdefault s
-      | AilSlabel (_, s) ->
+      | AilSlabel (_, s, _) ->
           self s
       | AilSgoto _ ->
           ()

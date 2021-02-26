@@ -78,7 +78,10 @@ let collect_rc_attrs : Annot.attributes -> rc_attr list =
           mkloc id (register_loc rc_locs loc)
         in
         let rc_attr_args =
-          let fn (loc, s) = mkloc s (register_str_loc rc_locs loc) in
+          let fn (loc, s, _) =
+            (* FIXME record data for location computation. *)
+            mkloc s (register_str_loc rc_locs loc)
+          in
           List.map fn attr_args
         in
         {rc_attr_id; rc_attr_args} :: acc
@@ -190,7 +193,8 @@ let rec macro_annot_to_list e =
   let open AilSyntax in
   let get_expr e =
     match e with
-    | AnnotatedExpression(_, _, _, AilEarray_decay(AnnotatedExpression(_, _, _, AilEstr(_, strs)))) -> MacroString(String.concat "" strs)
+    | AnnotatedExpression(_, _, _, AilEarray_decay(AnnotatedExpression(_, _, _, AilEstr(_, strs)))) ->
+        MacroString(String.concat "" (List.concat (List.map snd strs)))
     | _            -> MacroExpr(e)
   in
   match e with
@@ -658,6 +662,8 @@ let rec translate_expr : bool -> op_type option -> ail_expr -> expr =
           | _                                            ->
               not_impl loc "expr function_decay (not an ident)"
         in res
+    | AilEgcc_statement            ->
+        Panic.panic loc "Not implemented GCC statement expr." (* TODO *)
   in
   match (goal_ty, res_ty) with
   | (None         , _           )
@@ -912,12 +918,12 @@ let warn_ignored_attrs so attrs =
       | AilSskip           -> "a skip"
       | AilSexpr(_)        -> "an expression"
       | AilSif(_,_,_)      -> "an if statement"
-      | AilSwhile(_,_)     -> "a while loop"
-      | AilSdo(_,_)        -> "a do-while loop"
+      | AilSwhile(_,_,_)   -> "a while loop"
+      | AilSdo(_,_,_)      -> "a do-while loop"
       | AilSswitch(_,_)    -> "a switch statement"
       | AilScase(_,_)      -> "a case statement"
       | AilSdefault(_)     -> "a default statement"
-      | AilSlabel(_,_)     -> "a label"
+      | AilSlabel(_,_,_)   -> "a label"
       | AilSdeclaration(_) -> "a declaration"
       | AilSpar(_)         -> "a par statement"
       | AilSreg_store(_,_) -> "a register store statement"
@@ -1126,7 +1132,7 @@ let translate_block stmts blocks ret_ty =
             (blocks, mkloc (Goto(id_else)) s.loc)
           in
           translate_bool_expr then_goto else_goto blocks e
-      | AilSwhile(e,s)      ->
+      | AilSwhile(e,s,_)    ->
           let attrs = extra_attrs @ attrs in
           let id_cond = fresh_block_id () in
           let id_body = fresh_block_id () in
@@ -1159,7 +1165,7 @@ let translate_block stmts blocks ret_ty =
             add_block ~annots id_cond s blocks
           in
           (locate (Goto(id_cond)), blocks)
-      | AilSdo(s,e)         ->
+      | AilSdo(s,e,_)       ->
           let attrs = extra_attrs @ attrs in
           let id_cond = fresh_block_id () in
           let id_body = fresh_block_id () in
@@ -1296,7 +1302,7 @@ let translate_block stmts blocks ret_ty =
           (* Update the default ref. *)
           default_ref := Some(default_s);
           (default_s, blocks)
-      | AilSlabel(l,s)      ->
+      | AilSlabel(l,s,_)    ->
           let (s, blocks) = trans extra_attrs swstk ks (s :: stmts) blocks in
           let blocks = add_block (sym_to_str l) s blocks in
           (locate (Goto(sym_to_str l)), blocks)
