@@ -359,9 +359,32 @@ let invalid_annot : type a. Location.t -> string -> a = fun loc msg ->
 let invalid_annot_no_pos : type a. string -> a = fun msg ->
   invalid_annot (Location.none rc_locs) msg
 
+type rc_attr_arg =
+  { rc_attr_arg_value  : string Location.located
+  ; rc_attr_arg_pieces : string Location.located list }
+
+let loc_of_pos : rc_attr_arg -> int -> Location.t = fun arg pos ->
+  let open Location in
+  let rec find pos pieces =
+    match pieces with
+    | []          -> assert false
+    | p :: pieces ->
+        if pos < String.length p.elt then (pos, p.loc)
+        else find (pos - String.length p.elt) pieces
+  in
+  let (i, loc) = find pos arg.rc_attr_arg_pieces in
+  match Location.get loc with
+  | None    -> Location.none rc_locs
+  | Some(d) ->
+  let file = d.loc_file in
+  let line = d.loc_line1 in
+  let col = d.loc_col1 in
+  (* FIXME unicode offset. *)
+  Location.make file (line - 1) (col + i) (line - 1) (col + i) rc_locs
+
 type rc_attr =
   { rc_attr_id   : string Location.located
-  ; rc_attr_args : string Location.located list }
+  ; rc_attr_args : rc_attr_arg list }
 
 let parse_attr : rc_attr -> annot = fun attr ->
   let {rc_attr_id = id; rc_attr_args = args} = attr in
@@ -369,14 +392,12 @@ let parse_attr : rc_attr -> annot = fun attr ->
     invalid_annot id.loc (Printf.sprintf "Annotation [%s] %s." id.elt msg)
   in
 
-  let parse : type a.a grammar -> string Location.located -> a = fun gr s ->
+  let parse : type a.a grammar -> rc_attr_arg -> a = fun gr arg ->
+    let s = arg.rc_attr_arg_value in
     let parse_string = Earley.parse_string gr Blanks.default in
     try parse_string s.elt with Earley.Parse_error(buf,pos) ->
-      let msg =
-        let i = Input.utf8_col_num buf pos in
-        Printf.sprintf "No parse in annotation at position %i." i
-      in
-      invalid_annot s.loc msg
+      let loc = loc_of_pos arg pos in
+      invalid_annot loc "No parse in annotation."
   in
 
   let single_arg : type a.a grammar -> (a -> annot) -> annot = fun gr c ->
@@ -393,14 +414,14 @@ let parse_attr : rc_attr -> annot = fun attr ->
 
   let raw_single_arg : (string -> annot) -> annot = fun c ->
     match args with
-    | [s] -> c s.elt
+    | [a] -> c a.rc_attr_arg_value.elt
     | _   -> error "should have exactly one argument"
   in
 
   let raw_many_args : (string list -> annot) -> annot = fun c ->
     match args with
     | [] -> error "should have at least one argument"
-    | _  -> c (List.map (fun a -> Location.(a.elt)) args)
+    | _  -> c (List.map (fun a -> Location.(a.rc_attr_arg_value.elt)) args)
   in
 
   let no_args : annot -> annot = fun c ->

@@ -78,9 +78,11 @@ let collect_rc_attrs : Annot.attributes -> rc_attr list =
           mkloc id (register_loc rc_locs loc)
         in
         let rc_attr_args =
-          let fn (loc, s, _) =
-            (* FIXME record data for location computation. *)
-            mkloc s (register_str_loc rc_locs loc)
+          let fn (loc, s, pieces) =
+            let locate (loc, s) = mkloc s (register_str_loc rc_locs loc) in
+            let rc_attr_arg_value = mkloc s (register_str_loc rc_locs loc) in
+            let rc_attr_arg_pieces = List.map locate pieces in
+            {rc_attr_arg_value; rc_attr_arg_pieces}
           in
           List.map fn attr_args
         in
@@ -899,8 +901,10 @@ let warn_ignored_attrs so attrs =
     match args with
     | arg :: args ->
         let open Location in
-        Format.fprintf ff "%s" arg.elt;
-        List.iter (fun arg -> Format.fprintf ff ", %s" arg.elt) args;
+        Format.fprintf ff "%s" arg.rc_attr_arg_value.elt;
+        List.iter (fun arg ->
+          Format.fprintf ff ", %s" arg.rc_attr_arg_value.elt
+        ) args;
         Format.fprintf ff ")"
     | []          ->
         Format.fprintf ff ")"
