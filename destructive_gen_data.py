@@ -120,11 +120,11 @@ def compute_annots(FILES, global_rules):
     o = subprocess.check_output(["tokei", "--output=json", "--files"] + FILES).decode("utf8")
     # print(o)
     inner = json.loads(o)
-    if "CHeader" not in inner:
-        inner["CHeader"] = { "code": 0, "reports": []}
-    lines_total = inner["C"]["code"] + inner["CHeader"]["code"]
+    if "C Header" not in inner:
+        inner["C Header"] = { "code": 0, "reports": []}
+    lines_total = inner["C"]["code"] + inner["C Header"]["code"]
     lines_per_file = {}
-    for s in inner["C"]["reports"] + inner["CHeader"]["reports"]:
+    for s in inner["C"]["reports"] + inner["C Header"]["reports"]:
         lines_per_file[s["name"]] = s["stats"]["code"]
 
     # count annotations
@@ -302,8 +302,13 @@ stats = [ {
 #   liInst Hevar γ.
 for cat in stats:
     for prog in cat["progs"]:
+        # set to 0 if missing
+        prog["stats"]["annot"] = prog["stats"].get("annot", 0)
+        prog["stats"]["pure"] = prog["stats"].get("pure", 0)
+
         if prog["name"] == "Spinlock":
             prog["stats"]["annot"] += 3
+        prog["stats"]["overhead"] = round((prog["stats"]["annot"] + prog["stats"]["pure"]) / prog["stats"]["LoC"], 1)
 
 for cat in stats:
     for prog in cat["progs"]:
