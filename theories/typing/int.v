@@ -486,6 +486,11 @@ Section programs.
 End programs.
 Typeclasses Opaque int_inner_type boolean_inner_type.
 
+Notation "'if' p " := (DestructHintIfBool p) (at level 100, only printing).
+Notation "'if' p ≠ 0 " := (DestructHintIfInt p) (at level 100, only printing).
+Notation "'case' n " := (DestructHintSwitchIntCase n) (at level 100, only printing).
+Notation "'default'" := (DestructHintSwitchIntDefault) (at level 100, only printing).
+
 Section offsetof.
   Context `{!typeG Σ}.
 

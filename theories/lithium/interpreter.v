@@ -605,22 +605,22 @@ Ltac liDestructHint :=
        record_destruct_hint hint info
     | DHintDestruct _ (@bool_decide ?P ?b) =>
       let H := fresh "H" in destruct_decide (@bool_decide_reflect P b) as H; revert H; [
-      record_destruct_hint hint (true, info) |
-      record_destruct_hint hint (false, info) ]
+      record_destruct_hint hint (info, true) |
+      record_destruct_hint hint (info, false) ]
     | DHintDestruct _ ?x =>
       tryif (non_trivial_destruct x) then
         case_eq x; repeat liForall;
         lazymatch goal with
         | |- _ = ?res → _ =>
-          record_destruct_hint hint (res, info)
+          record_destruct_hint hint (info, res)
         end
       else (
           idtac
         )
     | @DHintDecide ?P ?b =>
        let H := fresh "H" in destruct_decide (@decide P b) as H; revert H; [
-      record_destruct_hint hint (true, info) |
-      record_destruct_hint hint (false, info) ]
+      record_destruct_hint hint (info, true) |
+      record_destruct_hint hint (info, false) ]
     end
   end; repeat (liForall || liImpl); try by [exfalso; can_solve_tac].
 

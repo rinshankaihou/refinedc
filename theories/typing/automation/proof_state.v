@@ -110,8 +110,11 @@ Ltac print_goal :=
         clear H
       end;
    repeat lazymatch reverse goal with
-          | H : CASE_DISTINCTION_INFO ?hint ?info ?l |- _ =>
-            idtac "Case distinction" hint " - " info;
+          | H : CASE_DISTINCTION_INFO ?hint ?i ?l |- _ =>
+            lazymatch i with
+            | (?a, ?b) => idtac "Case distinction" a "->" b
+            | ?a => idtac "Case distinction" a
+            end;
             lazymatch l with
             | ?i :: ?l =>
               lazymatch eval unfold i in i with

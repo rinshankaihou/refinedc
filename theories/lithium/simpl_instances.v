@@ -23,6 +23,10 @@ Global Instance simpl_shelve_hint P:
   SimplImpl true (shelve_hint P) (λ T, P → T).
 Proof. split; naive_solver. Qed.
 
+Global Instance simpl_double_neg_elim_dec P `{!Decision P} :
+  SimplBoth (¬ ¬ P) P.
+Proof. split; destruct (decide P); naive_solver. Qed.
+
 Global Instance simpl_eq_pair A B (x1 x2 : A) (y1 y2 : B):
   SimplAnd ((x1, y1) = (x2, y2)) (λ T, x1 = x2 ∧ y1 = y2 ∧ T).
 Proof. split; naive_solver. Qed.

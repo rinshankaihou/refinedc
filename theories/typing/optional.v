@@ -157,34 +157,39 @@ Section optional.
     λ T, i2p (subsume_optional_val_ty_ref b ty ty' optty v T ot1 ot2).
 
   Inductive destruct_hint_optional :=
-  | DestructHintOptional.
+  | DestructHintOptionalEq (P : Prop)
+  | DestructHintOptionalNe (P : Prop).
 
-  Lemma type_eq_optional_refined v1 v2 ty optty `{!Movable ty} `{!Movable optty} ot1 ot2 `{!Optionable ty optty ot1 ot2} T b  `{!Decision b} :
+  Lemma type_eq_optional_refined v1 v2 ty optty `{!Movable ty} `{!Movable optty} ot1 ot2 `{!Optionable ty optty ot1 ot2} T b :
     opt_pre ty v1 v2 ∧
-    destruct_hint (DHintDecide b) DestructHintOptional
-    (∀ v, (if decide b then v1 ◁ᵥ ty else v1 ◁ᵥ optty) -∗ T v (t2mt ((if decide b then false else true) @ boolean i32)) ) -∗
+    destruct_hint DHintInfo (DestructHintOptionalEq b) (⌜b⌝ -∗ v1 ◁ᵥ ty -∗ T (i2v (Z_of_bool false) i32) (t2mt (false @ boolean i32))) ∧
+    destruct_hint DHintInfo (DestructHintOptionalEq (¬ b)) (⌜¬ b⌝ -∗ v1 ◁ᵥ optty -∗ T (i2v (Z_of_bool true) i32) (t2mt (true @ boolean i32))) -∗
       typed_bin_op v1 (v1 ◁ᵥ b @ (optional ty optty)) v2 (v2 ◁ᵥ optty) EqOp ot1 ot2 T.
   Proof.
     unfold destruct_hint. iIntros "HT Hv1 Hv2" (Φ) "HΦ".
-    iDestruct "Hv1" as "[[% Hv1]|[% Hv1]]"; case_decide => //.
-    - have [|v' Hv] := val_of_int_is_some i32 (Z_of_bool false) => //.
-      iApply (wp_binop_det v'). iSplit. {
+    iDestruct "Hv1" as "[[% Hv1]|[% Hv1]]".
+    - iApply (wp_binop_det (i2v (Z_of_bool false) i32)). iSplit. {
         iIntros (σ v) "Hctx". iDestruct "HT" as "[Hpre _]".
         iDestruct (opt_bin_op true true with "Hpre Hv1 Hv2 Hctx") as %->.
-        iPureIntro. by split => ?; simpl in *; simplify_eq.
+        iPureIntro. rewrite /i2v.
+        have [|v' ->] := val_of_int_is_some i32 (Z_of_bool false) => //.
+        naive_solver.
       }
-      iDestruct ("HT" with "Hv1") as "HT".
-      iApply "HΦ" => //. by rewrite /ty_own_val/=.
-    - have [|v' Hv] := val_of_int_is_some i32 (Z_of_bool true) => //.
-      iApply (wp_binop_det v'). iSplit. {
+      iDestruct "HT" as "[_ [HT _]]".
+      iDestruct ("HT" with "[//] Hv1") as "HT".
+      by iApply ("HΦ" with "[] HT").
+    - iApply (wp_binop_det (i2v (Z_of_bool true) i32)). iSplit. {
         iIntros (σ v) "Hctx". iDestruct "HT" as "[Hpre _]".
         iDestruct (opt_bin_op false true with "Hpre Hv1 Hv2 Hctx") as %->.
-        iPureIntro. by split => ?; simpl in *; simplify_eq.
+        iPureIntro. rewrite /i2v.
+        have [|v' ->] := val_of_int_is_some i32 (Z_of_bool true) => //.
+        naive_solver.
       }
-      iDestruct ("HT" with "Hv1") as "HT".
-      iApply "HΦ" => //. by rewrite /ty_own_val/=.
+      iDestruct "HT" as "[_ [_ HT]]".
+      iDestruct ("HT" with "[//] Hv1") as "HT".
+      by iApply ("HΦ" with "[] HT").
   Qed.
-  Global Instance type_eq_optional_refined_inst v1 v2 ty optty `{!Movable ty} `{!Movable optty} ot1 ot2 `{!Optionable ty optty ot1 ot2} b `{!Decision b} :
+  Global Instance type_eq_optional_refined_inst v1 v2 ty optty `{!Movable ty} `{!Movable optty} ot1 ot2 `{!Optionable ty optty ot1 ot2} b :
     TypedBinOp v1 (v1 ◁ᵥ b @ (optional ty optty))%I v2 (v2 ◁ᵥ optty) EqOp ot1 ot2 :=
     λ T, i2p (type_eq_optional_refined v1 v2 ty optty ot1 ot2 T b).
 
@@ -208,32 +213,36 @@ Section optional.
     TypedBinOp v1 (v1 ◁ᵥ ty) v2 (v2 ◁ᵥ optty) EqOp ot1 ot2 :=
     λ T, i2p (type_eq_optional_neq v1 v2 ty optty ot1 ot2 T).
 
-  Lemma type_neq_optional v1 v2 ty optty ot1 ot2 `{!Movable ty} `{!Movable optty} `{!Optionable ty optty ot1 ot2} T b  `{!Decision b} :
+  Lemma type_neq_optional v1 v2 ty optty ot1 ot2 `{!Movable ty} `{!Movable optty} `{!Optionable ty optty ot1 ot2} T b :
     opt_pre ty v1 v2 ∧
-    destruct_hint (DHintDecide b) DestructHintOptional
-    (∀ v, (if decide b then v1 ◁ᵥ ty else v1 ◁ᵥ optty) -∗ T v (t2mt ((if decide b then true else false) @ boolean i32)) ) -∗
+    destruct_hint DHintInfo (DestructHintOptionalNe b) (⌜b⌝ -∗ v1 ◁ᵥ ty -∗ T (i2v (Z_of_bool true) i32) (t2mt (true @ boolean i32))) ∧
+    destruct_hint DHintInfo (DestructHintOptionalNe (¬ b)) (⌜¬ b⌝ -∗ v1 ◁ᵥ optty -∗ T (i2v (Z_of_bool false) i32) (t2mt (false @ boolean i32))) -∗
       typed_bin_op v1 (v1 ◁ᵥ b @ (optional ty optty)) v2 (v2 ◁ᵥ optty) NeOp ot1 ot2 T.
   Proof.
-    unfold destruct_hint. iIntros "HT Hv1 Hv2". iIntros (Φ) "HΦ".
-    iDestruct "Hv1" as "[[% Hv1]|[% Hv1]]"; case_decide => //.
-    - have [|v' Hv] := val_of_int_is_some i32 (Z_of_bool true) => //.
-      iApply (wp_binop_det v'). iSplit. {
+    unfold destruct_hint. iIntros "HT Hv1 Hv2" (Φ) "HΦ".
+    iDestruct "Hv1" as "[[% Hv1]|[% Hv1]]".
+    - iApply (wp_binop_det (i2v (Z_of_bool true) i32)). iSplit. {
         iIntros (σ v) "Hctx". iDestruct "HT" as "[Hpre _]".
         iDestruct (opt_bin_op true false with "Hpre Hv1 Hv2 Hctx") as %->.
-        iPureIntro. by split => ?; simpl in *; simplify_eq.
+        iPureIntro. rewrite /i2v.
+        have [|v' ->] := val_of_int_is_some i32 (Z_of_bool true) => //.
+        naive_solver.
       }
-      iDestruct ("HT" with "Hv1") as "HT".
-      iApply "HΦ" => //. by rewrite /ty_own_val/=.
-    - have [|v' Hv] := val_of_int_is_some i32 (Z_of_bool false) => //.
-      iApply (wp_binop_det v'). iSplit. {
+      iDestruct "HT" as "[_ [HT _]]".
+      iDestruct ("HT" with "[//] Hv1") as "HT".
+      by iApply ("HΦ" with "[] HT").
+    - iApply (wp_binop_det (i2v (Z_of_bool false) i32)). iSplit. {
         iIntros (σ v) "Hctx". iDestruct "HT" as "[Hpre _]".
         iDestruct (opt_bin_op false false with "Hpre Hv1 Hv2 Hctx") as %->.
-        iPureIntro. by split => ?; simpl in *; simplify_eq.
+        iPureIntro. rewrite /i2v.
+        have [|v' ->] := val_of_int_is_some i32 (Z_of_bool false) => //.
+        naive_solver.
       }
-      iDestruct ("HT" with "Hv1") as "HT".
-      iApply "HΦ" => //. by rewrite /ty_own_val/=.
+      iDestruct "HT" as "[_ [_ HT]]".
+      iDestruct ("HT" with "[//] Hv1") as "HT".
+      by iApply ("HΦ" with "[] HT").
   Qed.
-  Global Instance type_neq_optional_inst v1 v2 ty optty ot1 ot2 `{!Movable ty} `{!Movable optty} `{!Optionable ty optty ot1 ot2} b `{!Decision b} :
+  Global Instance type_neq_optional_inst v1 v2 ty optty ot1 ot2 `{!Movable ty} `{!Movable optty} `{!Optionable ty optty ot1 ot2} b :
     TypedBinOp v1 (v1 ◁ᵥ b @ (optional ty optty))%I v2 (v2 ◁ᵥ optty) NeOp ot1 ot2 :=
     λ T, i2p (type_neq_optional v1 v2 ty optty ot1 ot2 T b).
 
@@ -259,6 +268,9 @@ End optional.
 Typeclasses Opaque optional_type.
 Notation "optional< ty , optty >" := (optional ty optty)
   (only printing, format "'optional<' ty ,  optty '>'") : printing_sugar.
+
+Notation "'optional' == ... : P" := (DestructHintOptionalEq P) (at level 100, only printing).
+Notation "'optional' != ... : P" := (DestructHintOptionalNe P) (at level 100, only printing).
 
 Section optionalO.
   Context `{!typeG Σ}.
