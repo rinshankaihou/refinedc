@@ -117,7 +117,7 @@ def parse_file(f):
 
 def compute_annots(FILES, global_rules):
     total = {}
-    o = subprocess.check_output(["tokei", "--output=json", "--files"] + FILES)
+    o = subprocess.check_output(["tokei", "--output=json", "--files"] + FILES).decode("utf8")
     # print(o)
     inner = json.loads(o)
     if "CHeader" not in inner:
@@ -162,7 +162,7 @@ def compute_annots(FILES, global_rules):
         shutil.copyfile(f, tmpname)
         with open(f, "a") as fd:
             fd.write("//@rc::import enable_debug from refinedc.typing.automation\n")
-            fd.write(f"//@rc::inlined Definition marker_{random.randint(0, 1000)} := tt.\n")
+            fd.write("//@rc::inlined Definition marker_{} := tt.\n".format(random.randint(0, 1000)))
 
         subprocess.check_output(["dune", "exec", "--", "refinedc", "check", "--no-build", f])
 
