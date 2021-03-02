@@ -114,13 +114,13 @@ let run : config -> string -> unit = fun cfg c_file ->
       Coq_pp.print_stmt_locs := false
     end;
   (* Split the file path into a file name and absolute directory path. *)
+  let c_file =
+    try Filename.realpath c_file with Invalid_argument(_) ->
+      panic "File [%s] disappeared..." c_file
+  in
   let c_file_name = Filename.basename c_file in
   let c_file_name_no_ext = Filename.remove_extension c_file_name in
-  let c_file_dir =
-    let c_file_dir = Filename.dirname c_file in
-    try Filename.realpath c_file_dir with Invalid_argument(_) ->
-      panic "Directory [%s] disappeared..." c_file_dir
-  in
+  let c_file_dir = Filename.dirname c_file in
   (* Locate the RefinedC project root and the relitive logical directory. *)
   let find_root_and_dir_path dir =
     let rec find acc dir =
