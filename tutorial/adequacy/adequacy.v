@@ -80,18 +80,18 @@ Section adequate.
     unfold latch.generated_spec.latch_rec, latch_rec.
 
 
-  Lemma tutorial_adequate n κs t2 σ2 σ:
+  Lemma tutorial_adequate n κs t2 σ2 hs σ:
     loc_allocator_data `has_layout_loc` void_ptr →
     loc_allocator_state `has_layout_loc` struct_alloc_state →
     loc_initialized `has_layout_loc` struct_latch →
     (* TODO: Should we try to show that this assumption is provable? *)
-    alloc_new_blocks (initial_state (fn_lists_to_fns function_locs functions))
-                     initial_heap_locs initial_heap_values σ →
+    alloc_new_blocks initial_heap_state initial_heap_locs initial_heap_values hs →
+    σ = {| st_heap := hs; st_fntbl := fn_lists_to_fns function_locs functions; |} →
     NoDup function_locs →
     nsteps (Λ := c_lang) n (initial_prog <$> [loc_main; loc_main2], σ) κs (t2, σ2) →
     ∀ e2, e2 ∈ t2 → not_stuck e2 σ2.
   Proof.
-    move => Hly1 Hly2 Hly3 Halloc HNDfns.
+    move => Hly1 Hly2 Hly3 Halloc -> HNDfns.
 
     set Σ : gFunctors := #[typeΣ; lockΣ].
     apply: (refinedc_adequacy Σ) => //.

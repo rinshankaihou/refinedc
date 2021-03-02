@@ -495,7 +495,7 @@ Section null.
   Qed.
 
   Lemma eval_bin_op_ptr_null (b : bool) op h (p : loc) v:
-    heap_loc_in_bounds p 0 h →
+    heap_state_loc_in_bounds p 0 h.(st_heap) →
     (if b then op = NeOp else op = EqOp) →
     eval_bin_op op PtrOp PtrOp h p NULL v
      ↔ val_of_int (Z_of_bool b) i32 = Some v.

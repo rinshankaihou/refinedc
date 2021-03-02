@@ -24,17 +24,19 @@ Proof. solve_inG. Qed.
 Definition initial_prog (main : loc) : runtime_expr :=
   coerce_rtexpr (Call main []).
 
+Definition initial_heap_state :=
+  {| hs_heap := ∅; hs_allocs := ∅; |}.
+
 Definition initial_state (fns : gmap loc function) :=
-  {| st_heap := ∅;
-     st_fntbl := fns;
-     st_allocs := ∅; |}.
+  {| st_heap := initial_heap_state; st_fntbl := fns; |}.
 
 Definition main_type `{!typeG Σ} (P : iProp Σ) :=
   fn(∀ () : (); P) → ∃ () : (), int i32; True.
 
 (** * The main adequacy lemma *)
-Lemma refinedc_adequacy Σ `{!typePreG Σ} (thread_mains : list loc) (fns : gmap loc function) (gls : list loc) (gvs : list lang.val) n t2 σ2 κs σ:
-  alloc_new_blocks (initial_state fns) gls gvs σ →
+Lemma refinedc_adequacy Σ `{!typePreG Σ} (thread_mains : list loc) (fns : gmap loc function) (gls : list loc) (gvs : list lang.val) n t2 σ2 κs hs σ:
+  alloc_new_blocks initial_heap_state gls gvs hs →
+  σ = {| st_heap := hs; st_fntbl := fns; |} →
   (∀ {HtypeG : typeG Σ}, ∃ gl gt,
   let Hglobals : globalG Σ := {| global_locs := gl; global_initialized_types := gt; |} in
     ([∗ list] l; v ∈ gls; gvs, l ↦ v) -∗
@@ -43,7 +45,7 @@ Lemma refinedc_adequacy Σ `{!typePreG Σ} (thread_mains : list loc) (fns : gmap
   nsteps (Λ := c_lang) n (initial_prog <$> thread_mains, σ) κs (t2, σ2) →
   ∀ e2, e2 ∈ t2 → not_stuck e2 σ2.
 Proof.
-  move => Hnew Hwp. apply: wp_strong_adequacy. move => ?.
+  move => Hnew -> Hwp. apply: wp_strong_adequacy. move => ?.
   set h := to_heap ∅.
   iMod (own_alloc (● h ⋅ ◯ h)) as (γh) "[Hh _]" => //.
   { apply auth_both_valid_discrete. split => //. }
@@ -60,7 +62,7 @@ Proof.
   move: (Hwp HtypeG) => {Hwp} [gl [gt]].
   set (Hglobals := {| global_locs := gl; global_initialized_types := gt; |}).
   move => Hwp.
-  iMod (heap_alloc_new_blocks_upd with "[Hh Hf Hb]") as "[Hctx Hmt]" => //. { iFrame. }
+  iMod (heap_alloc_new_blocks_upd with "[Hh Hb]") as "[Hctx Hmt]" => //. { iFrame. }
   iMod (Hwp with "Hmt [Hfm]") as "Hmains". {
     rewrite /f => {f Hwp Hnew}.
     iInduction (fns) as [] "IH" using map_ind => //.
@@ -71,7 +73,7 @@ Proof.
   }
 
   iModIntro. iExists NotStuck, _, (replicate (length thread_mains) (λ _, True%I)), _.
-  iSplitL "Hctx"; last first. 1: iSplitL.
+  iSplitL "Hctx Hf"; last first. 1: iSplitL "Hmains".
   - rewrite big_sepL2_fmap_l. iApply big_sepL2_replicate_2. iApply (big_sepL_impl with "Hmains").
     iIntros "!#" (? main ?); iDestruct 1 as (P) "[Hmain HP]".
     iApply (type_call with "[-]"). 2: { by iIntros (??) "??". }

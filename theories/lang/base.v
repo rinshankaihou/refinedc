@@ -47,6 +47,12 @@ Definition Z_of_bool (b : bool) : Z :=
   if b then 1 else 0.
 Typeclasses Opaque Z_of_bool.
 
+Lemma Z_of_bool_true b: Z_of_bool b ≠ 0 ↔ b = true.
+Proof. destruct b; naive_solver. Qed.
+
+Lemma Z_of_bool_false b: Z_of_bool b = 0 ↔ b = false.
+Proof. destruct b; naive_solver. Qed.
+
 Lemma big_sepL2_fupd `{BiFUpd PROP} {A B} E (Φ : nat → A → B → PROP) l1 l2 :
   ([∗ list] k↦x;y ∈ l1;l2, |={E}=> Φ k x y) ={E}=∗ [∗ list] k↦x;y ∈ l1;l2, Φ k x y.
 Proof. rewrite !big_sepL2_alt. iIntros "[$ H]". by iApply big_sepL_fupd. Qed.
