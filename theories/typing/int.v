@@ -377,6 +377,35 @@ Section programs.
     TypedUnOpVal v (n @ int it1)%I (CastOp (IntOp it2)) (IntOp it1) :=
     λ T, i2p (type_cast_int n it1 it2 v T).
 
+  Lemma type_not_int n1 it v1 T:
+    let n := if it_signed it then Z.lnot n1 else Z_lunot (bits_per_int it) n1 in
+    (⌜n1 ∈ it⌝ -∗ T (i2v n it) (t2mt (n @ int it))) -∗
+    typed_un_op v1 (v1 ◁ᵥ n1 @ int it)%I (NotIntOp) (IntOp it) T.
+  Proof.
+    iIntros (n) "HT". iIntros (Hv1 Φ) "HΦ".
+    have Hn1 : n1 ∈ it by apply: val_of_int_in_range.
+    iDestruct ("HT" with "[//]") as "HT".
+    have : n ∈ it.
+    { move: Hn1.
+      rewrite /n /elem_of /int_elem_of_it /min_int /max_int.
+      destruct (it_signed it).
+      - rewrite /int_half_modulus /Z.lnot. lia.
+      - rewrite /int_modulus => ?.
+        have -> : ∀ a b, a ≤ b - 1 ↔ a < b by lia.
+        have ? := bits_per_int_gt_0 it.
+        apply Z_lunot_range; lia. }
+    rewrite /n => /val_of_int_is_some [v Hv].
+    move: Hv1 => /val_to_of_int Hv1. rewrite /i2v Hv/=.
+    iApply (wp_unop_det v). iSplit.
+    - iIntros (σ v') "_ !%". split.
+      + by inversion 1; simplify_eq.
+      + move => ->. by econstructor.
+    - iIntros "!>". iApply "HΦ"; last done. by iPureIntro.
+  Qed.
+  Global Instance type_not_int_inst n it v:
+    TypedUnOpVal v (n @ int it)%I NotIntOp (IntOp it) :=
+    λ T, i2p (type_not_int n it v T).
+
   (*** bool *)
   Lemma type_val_bool' b:
     ⊢ (val_of_bool b) ◁ᵥ (b @ boolean bool_it).

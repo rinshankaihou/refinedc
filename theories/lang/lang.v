@@ -847,6 +847,10 @@ Inductive eval_un_op : un_op → op_type → state → val → val → Prop :=
     val_to_int vs it = Some n →
     val_of_int (-n) it = Some vt →
     eval_un_op NegOp (IntOp it) σ vs vt
+| NotIntOpI it σ vs vt n:
+    val_to_int vs it = Some n →
+    val_of_int (if it_signed it then Z.lnot n else Z_lunot (bits_per_int it) n) it = Some vt →
+    eval_un_op NotIntOp (IntOp it) σ vs vt
 .
 
 (*** Evaluation of Expressions *)

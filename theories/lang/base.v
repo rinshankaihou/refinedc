@@ -757,3 +757,23 @@ Proof.
     rewrite -negb_true_iff -Z.bits_opp; last lia.
     by apply: He.
 Qed.
+
+(** Z.lnot (bitwise negation) for unsigned integers with [bits] bits. *)
+Definition Z_lunot (bits n : Z) := 
+  (Z.lnot n `mod` 2 ^ bits)%Z.
+Typeclasses Opaque Z_lunot.
+
+Lemma Z_lunot_spec bits n k:
+  (0 ≤ k < bits)%Z → Z.testbit (Z_lunot bits n) k = negb (Z.testbit n k).
+Proof.
+  move => [? ?].
+  by rewrite Z.mod_pow2_bits_low ?Z.lnot_spec.
+Qed.
+
+Lemma Z_lunot_range bits n:
+  (0 ≤ bits → 0 ≤ Z_lunot bits n < 2 ^ bits)%Z.
+Proof.
+  move => ?.
+  apply: Z.mod_pos_bound.
+  by apply: Z.pow_pos_nonneg.
+Qed.

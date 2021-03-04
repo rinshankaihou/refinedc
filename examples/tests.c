@@ -41,3 +41,20 @@ void test_ternary(){
   assert((2 ? 3 : 2) == 3);
   assert((&local != NULL ? (return1() ? return1() : unreachable()) + 3 : 2) == 4);
 }
+
+[[rc::returns("void")]]
+void test_bits() {
+  // resource: https://en.cppreference.com/w/c/language/operator_arithmetic
+  unsigned int mask = 0x00f0; // try uint16_t when issue #34 is fixed
+  unsigned int a = 0x12345678;
+  unsigned int setting_bits = a | mask;
+  unsigned int selecting_bits = a & mask;
+  unsigned int clearing_bits = a & ~mask;
+  assert(setting_bits == 0x123456f8);
+  assert(selecting_bits == 0x70);
+  assert(clearing_bits == 0x12345608);
+
+  // bitwise not on signed integers
+  assert(~(-2) == 1);
+  assert(~0 == -1);
+}
