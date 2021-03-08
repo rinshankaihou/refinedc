@@ -13,8 +13,10 @@ Class refinedcG Σ := RefinedCG {
 
 Instance c_irisG `{!refinedcG Σ} : irisG c_lang Σ := {
   iris_invG := refinedcG_invG;
-  state_interp σ κs _ := state_ctx σ;
+  state_interp σ κs _ _ := state_ctx σ;
   fork_post _ := True%I;
+  num_laters_per_step _ := 0%nat;
+  state_interp_mono _ _ _ _ := fupd_intro _ _;
 }.
 Global Opaque iris_invG.
 
@@ -65,7 +67,7 @@ Section lifting.
   Proof.
     iIntros (He ?) "HWP".
     iApply wp_lift_head_step_fupd => //.
-    iIntros (σ1 κ κs n) "Hσ".
+    iIntros (σ1 κ κs n ?) "Hσ".
     iMod ("HWP" $! σ1 with "Hσ") as (Hstep) "HWP".
     iModIntro. iSplit. {
       iPureIntro. destruct Hstep as (?&?&?&?&?).

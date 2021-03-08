@@ -72,7 +72,7 @@ Proof.
     by iApply "IH".
   }
 
-  iModIntro. iExists NotStuck, _, (replicate (length thread_mains) (λ _, True%I)), _.
+  iModIntro. iExists NotStuck, _, (replicate (length thread_mains) (λ _, True%I)), _, _.
   iSplitL "Hctx Hf"; last first. 1: iSplitL "Hmains".
   - rewrite big_sepL2_fmap_l. iApply big_sepL2_replicate_2. iApply (big_sepL_impl with "Hmains").
     iIntros "!#" (? main ?); iDestruct 1 as (P) "[Hmain HP]".
