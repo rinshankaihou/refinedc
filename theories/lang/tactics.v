@@ -118,7 +118,7 @@ Ltac of_expr e :=
     let es := of_expr es in
     constr:(e :: es)
 
-  | lang.Val (lang.val_of_loc ?l) => constr:(Loc l)
+  | lang.Val (val.val_of_loc ?l) => constr:(Loc l)
   | notation.AddrOf ?e =>
     let e := of_expr e in constr:(AddrOf e)
   | notation.LValue ?e =>

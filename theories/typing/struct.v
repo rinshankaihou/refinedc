@@ -173,7 +173,7 @@ Section struct.
     { rewrite Hlen. by apply: lookup_lt_Some. }
     iDestruct (big_sepL2_lookup with "Hl") as "Hl" => //.
     iDestruct (alloc_alive_alive with "HP Hl") as "Hl".
-    by iApply (alloc_alive_mono with "Hl").
+    by iApply (alloc_alive_loc_mono with "Hl").
   Qed.
 
   Global Instance strip_guarded_struct sl tys tys' E1 E2 β {Hs :StripGuardedLst β E1 E2 tys tys'}:

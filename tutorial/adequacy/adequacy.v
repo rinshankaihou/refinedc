@@ -58,7 +58,7 @@ Section adequate.
     loc_allocator_state;
     loc_initialized
   ].
-  Definition initial_heap_values : list lang.val := [
+  Definition initial_heap_values : list val.val := [
     replicate (Z.to_nat 10000) MPoison;
     replicate (struct_alloc_state).(ly_size) MPoison;
     LATCH_INIT

@@ -7,16 +7,18 @@ From iris.program_logic Require Export language.
 Set Default Proof Using "Type".
 
 Class typePreG Σ := PreTypeG {
-  type_invG :> invPreG Σ;
-  type_heap_inG :> inG Σ (authR heapUR);
-  type_heap_allocs_inG :> inG Σ (authR allocsUR);
-  type_heap_fntbl_inG :> inG Σ (authR fntblUR);
+  type_invG                      :> invPreG Σ;
+  type_heap_heap_inG             :> inG Σ (authR heapUR);
+  type_heap_alloc_range_map_inG  :> inG Σ (authR alloc_range_mapUR);
+  type_heap_alloc_status_map_inG :> inG Σ (authR alloc_status_mapUR);
+  type_heap_fntbl_inG            :> inG Σ (authR fntblUR);
 }.
 
 Definition typeΣ : gFunctors :=
   #[invΣ;
     GFunctor (constRF (authR heapUR));
-    GFunctor (constRF (authR allocsUR));
+    GFunctor (constRF (authR alloc_range_mapUR));
+    GFunctor (constRF (authR alloc_status_mapUR));
     GFunctor (constRF (authR fntblUR))].
 Instance subG_typePreG {Σ} : subG typeΣ Σ → typePreG Σ.
 Proof. solve_inG. Qed.
@@ -34,7 +36,7 @@ Definition main_type `{!typeG Σ} (P : iProp Σ) :=
   fn(∀ () : (); P) → ∃ () : (), int i32; True.
 
 (** * The main adequacy lemma *)
-Lemma refinedc_adequacy Σ `{!typePreG Σ} (thread_mains : list loc) (fns : gmap loc function) (gls : list loc) (gvs : list lang.val) n t2 σ2 κs hs σ:
+Lemma refinedc_adequacy Σ `{!typePreG Σ} (thread_mains : list loc) (fns : gmap loc function) (gls : list loc) (gvs : list val.val) n t2 σ2 κs hs σ:
   alloc_new_blocks initial_heap_state gls gvs hs →
   σ = {| st_heap := hs; st_fntbl := fns; |} →
   (∀ {HtypeG : typeG Σ}, ∃ gl gt,
@@ -46,23 +48,27 @@ Lemma refinedc_adequacy Σ `{!typePreG Σ} (thread_mains : list loc) (fns : gmap
   ∀ e2, e2 ∈ t2 → not_stuck e2 σ2.
 Proof.
   move => Hnew -> Hwp. apply: wp_strong_adequacy. move => ?.
-  set h := to_heap ∅.
+  set h := to_heapUR ∅.
   iMod (own_alloc (● h ⋅ ◯ h)) as (γh) "[Hh _]" => //.
   { apply auth_both_valid_discrete. split => //. }
-  set f := to_fntbl fns.
+  set f := to_fntblUR fns.
   iMod (own_alloc (● f ⋅ ◯ f)) as (γf) "[Hf Hfm]" => //.
   { apply auth_both_valid_discrete. split => //. eauto using to_fntbl_valid. }
-  set b := to_allocs ∅.
-  iMod (own_alloc (● b ⋅ ◯ b)) as (γb) "[Hb _]" => //.
+  set r := to_alloc_range_mapUR ∅.
+  iMod (own_alloc (● r ⋅ ◯ r)) as (γr) "[Hr _]" => //.
+  { apply auth_both_valid_discrete. split => //. }
+  set s := to_alloc_status_mapUR ∅.
+  iMod (own_alloc (● s ⋅ ◯ s)) as (γs) "[Hs _]" => //.
   { apply auth_both_valid_discrete. split => //. }
 
-  set (HheapG := HeapG _ _ γh _ γb _ γf).
+  set (HheapG := HeapG _ _ γh _ γr _ γs _ γf).
   set (HrefinedCG := RefinedCG _ _ HheapG).
   set (HtypeG := TypeG _ HrefinedCG).
   move: (Hwp HtypeG) => {Hwp} [gl [gt]].
   set (Hglobals := {| global_locs := gl; global_initialized_types := gt; |}).
   move => Hwp.
-  iMod (heap_alloc_new_blocks_upd with "[Hh Hb]") as "[Hctx Hmt]" => //. { iFrame. }
+  iMod (heap_alloc_new_blocks_upd with "[Hh Hr Hs]") as "[Hctx Hmt]" => //. { by iFrame. }
+  rewrite big_sepL2_sep. iDestruct "Hmt" as "[Hmt Hfree]".
   iMod (Hwp with "Hmt [Hfm]") as "Hmains". {
     rewrite /f => {f Hwp Hnew}.
     iInduction (fns) as [] "IH" using map_ind => //.
