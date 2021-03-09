@@ -65,13 +65,12 @@ Section spec.
 
   (* Definition of type [queue]. *)
   Definition queue_rec : ((list type) -d> typeO) → ((list type) -d> typeO) := (λ self tys,
-    (&own (
-      tyexists (λ p : loc,
+    (tyexists (λ p, own_constrained (tyown_constraint (p) (null)) (&own (
       struct struct_queue [@{type}
         (tyfold ((λ ty x, ty @ queue_elem x) <$> tys) (place (p))) ;
-        (p @ (&own (null)))
-      ])
-    ))
+        (&own (place (p)))
+      ]
+    ))))
   )%I.
   Typeclasses Opaque queue_rec.
 
@@ -85,13 +84,12 @@ Section spec.
 
   Lemma queue_unfold (tys : (list type)):
     (tys @ queue)%I ≡@{type} (
-      (&own (
-        tyexists (λ p : loc,
+      (tyexists (λ p, own_constrained (tyown_constraint (p) (null)) (&own (
         struct struct_queue [@{type}
           (tyfold ((λ ty x, ty @ queue_elem x) <$> tys) (place (p))) ;
-          (p @ (&own (null)))
-        ])
-      ))
+          (&own (place (p)))
+        ]
+      ))))
     )%I.
   Proof. by rewrite {1}/with_refinement/=fixp_unfold. Qed.
 

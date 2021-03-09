@@ -13,12 +13,11 @@ queue_elem {
 } *queue_elem_t;
 
 typedef struct [[rc::refined_by("tys: {list type}")]]
-               [[rc::ptr_type("queue : &own<...>")]]
-               [[rc::exists("p : loc")]]
+               [[rc::ptr_type("queue : ∃ p. own_constrained<tyown_constraint<p, null>, &own<...>>")]]
 queue {
   [[rc::field("tyfold<{(λ ty x, ty @ queue_elem x) <$> tys}, place<p>>")]]
   queue_elem_t head;
-  [[rc::field("p @ &own<null>")]]
+  [[rc::field("&own<place<p>>")]]
   queue_elem_t *tail;
 } *queue_t;
 
@@ -36,7 +35,6 @@ queue_t init_queue() {
 [[rc::returns("{bool_decide (tys ≠ [])} @ boolean<bool_it>")]]
 [[rc::ensures("own p : {tys} @ queue")]]
 bool is_empty(queue_t *q) {
-  rc_unfold(*(*q)->tail);
   return (*q)->head != NULL;
 }
 
@@ -58,7 +56,6 @@ void enqueue(queue_t *q, void *v) {
 [[rc::returns("{maybe2 cons tys} @ optionalO<λ (ty, _). &own<ty>>")]]
 [[rc::ensures("own p : {tail tys} @ queue")]]
 void *dequeue(queue_t *q) {
-  rc_unfold(*(*q)->tail);
   if ((*q)->head == NULL) {
     return NULL;
   }
