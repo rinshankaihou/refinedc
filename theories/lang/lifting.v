@@ -400,11 +400,11 @@ Proof.
   iIntros (Hv1 Hv2 Hop) "#Hl1 #Hl2 HΦ".
   iApply wp_binop. iIntros (σ) "Hσ".
   iAssert ⌜valid_ptr l1 σ.(st_heap)⌝%I as %?. {
-    iApply (alloc_alive_to_valid_ptr with "Hl1 [HΦ] Hσ").
+    iApply (alloc_alive_loc_to_valid_ptr with "Hl1 [HΦ] Hσ").
     by iDestruct "HΦ" as "[$ _]".
   }
   iAssert ⌜valid_ptr l2 σ.(st_heap)⌝%I as %?. {
-    iApply (alloc_alive_to_valid_ptr with "Hl2 [HΦ] Hσ").
+    iApply (alloc_alive_loc_to_valid_ptr with "Hl2 [HΦ] Hσ").
     by iDestruct "HΦ" as "[_ [$ _]]".
   }
   iSplit; first by iPureIntro; eexists _; econstructor.
@@ -655,7 +655,6 @@ Proof.
     iModIntro. iSplit; first done. rewrite /state_ctx. iFrame. iSplit; first done.
     iApply wp_alloc_failed.
   }
-  repeat match goal with H : state_alloc_new_blocks _ _ _ _ |- _ => destruct H as [??] end.
   iMod (heap_alloc_new_blocks_upd with "[$Hhctx $Hbctx]") as "[Hctx Hlv]" => //.
   rewrite big_sepL2_sep. iDestruct "Hlv" as "[Hlv Hfree_v]".
   iMod (heap_alloc_new_blocks_upd with "Hctx") as "[Hctx Hla]" => //.
@@ -667,8 +666,7 @@ Proof.
     iIntros "?". iExists _. iFrame. iPureIntro. split; first by apply replicate_length.
     apply: Forall2_lookup_lr. 2: done. done. rewrite list_lookup_fmap. apply fmap_Some. naive_solver.
   }
-  iFrame. rewrite /=. rewrite H3 H1 /=. iFrame.
-  rewrite stmt_wp_eq. iApply "HQinit" => //.
+  iFrame. rewrite stmt_wp_eq. iApply "HQinit" => //.
 
   (** prove Return *)
   iIntros (v) "Hv". iDestruct ("HΨ'" with "Hv") as "(Ha & Hv & Hs)".

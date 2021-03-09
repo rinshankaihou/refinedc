@@ -75,12 +75,6 @@ Fixpoint heap_free (a : addr) (n : nat) (h : heap) : heap :=
   | S n => delete a (heap_free (Z.succ a) n h)
   end.
 
-Fixpoint heap_free_list (ls : list (loc * layout)) (h : heap) : heap :=
-  match ls with
-  | []           => h
-  | (l,ly) :: ls => heap_free l.2 ly.(ly_size) (heap_free_list ls h)
-  end.
-
 (** ** Lemmas about the heap and related operations. *)
 
 Lemma heap_lookup_inj_val a h v1 v2 Paid1 Paid2 Plk1 Plk2:
@@ -92,20 +86,22 @@ Proof.
   f_equal. by apply: IH.
 Qed.
 
+Lemma heap_lookup_is_Some a p v Paid Plk h:
+  heap_lookup a v Paid Plk h →
+  a ≤ p < a + length v →
+  is_Some (h !! p).
+Proof.
+  elim: v a => /=; first lia. move => b v IH a [[aid [lk [Ha _]]] H] Hp.
+  destruct (decide (p = a)) as [->|]; first naive_solver.
+  apply (IH (Z.succ a)) => //. lia.
+Qed.
+
 Lemma heap_update_ext h a v faid1 faid2 flk1 flk2:
   (∀ x, faid1 x = faid2 x) → (∀ x, flk1 x = flk2 x) →
   heap_update a v faid1 flk1 h = heap_update a v faid2 flk2 h.
 Proof.
   move => Hext1 Hext2. elim: v a => //= ?? IH ?. rewrite IH.
   apply: partial_alter_ext => ??. by rewrite Hext1 Hext2.
-Qed.
-
-Lemma heap_update_lookup_lt a1 a2 v faid flk h:
-  a1 < a2 →
-  heap_update a2 v faid flk h !! a1 = h !! a1.
-Proof.
-  elim: v a1 a2 => // ?? IH ???.
-  rewrite lookup_partial_alter_ne; last lia. apply IH. lia.
 Qed.
 
 Lemma heap_update_lookup_not_in_range a1 a2 v faid flk h:
@@ -128,7 +124,7 @@ Proof.
   - move => /= a1 a2 [??]. exfalso. lia.
   - move => ?? IH a1 a2 [H1 H2]. destruct (decide (a1 = a2)) as [->|Hne].
     + rewrite lookup_partial_alter -/heap_update Z.sub_diag /=.
-      rewrite heap_update_lookup_lt; [done | lia].
+      rewrite heap_update_lookup_not_in_range; [done | lia].
     + rewrite lookup_partial_alter_ne // -/heap_update /= IH; last first.
       { rewrite /= in H2. lia. } do 3 f_equal.
       rewrite lookup_cons_ne_0; last lia. f_equal. lia.
@@ -137,10 +133,6 @@ Qed.
 Lemma heap_free_delete h a1 a2 n :
   delete a1 (heap_free a2 n h) = heap_free a2 n (delete a1 h).
 Proof. elim: n a2 => //= ? IH ?. by rewrite delete_commute IH. Qed.
-
-Lemma heap_free_list_app ls1 ls2 h :
-  heap_free_list (ls1 ++ ls2) h = heap_free_list ls1 (heap_free_list ls2 h).
-Proof. by elim: ls1 => //= [[??]] ? ->. Qed.
 
 Lemma heap_upd_ext h l v f1 f2:
   (∀ x, f1 x = f2 x) → heap_upd l v f1 h = heap_upd l v f2 h.
@@ -172,14 +164,14 @@ Proof.
   by rewrite H Hlookup H1 /=.
 Qed.
 
-Lemma heap_free_lookup_None a p (n : nat) h:
+Lemma heap_free_lookup_in_range a p (n : nat) h:
   a ≤ p < a + n →
   heap_free a n h !! p = None.
 Proof.
   elim: n a; first lia. move => n IH a [H1 H2] /=.
-  destruct (decide (a = p)) as [->|].
-  - by rewrite lookup_delete.
-  - rewrite lookup_delete_ne; last done. apply IH. lia.
+  rewrite lookup_delete_None.
+  destruct (decide (a = p)) as [->|]; [by left|right].
+  apply: IH. lia.
 Qed.
 
 Lemma heap_free_lookup_not_in_range a p (n : nat) h:
@@ -452,7 +444,7 @@ Proof.
   destruct H as (Hi1&Hi2&Hi3&Hi4&Hi5). split_and!.
   - move => a hc /= Hhc.
     assert (¬ (l.2 ≤ a < l.2 + length v)) as Hnot_in.
-    { move => ?. rewrite heap_free_lookup_None // in Hhc; lia. }
+    { move => ?. rewrite heap_free_lookup_in_range // in Hhc; lia. }
     rewrite heap_free_lookup_not_in_range in Hhc; last lia.
     destruct (Hi1 _ _ Hhc) as [al [?[??]]]. exists al. split; last done.
     rewrite /= lookup_insert_ne; first done.
@@ -460,7 +452,7 @@ Proof.
     unfold al_end in *. simpl in *. lia.
   - move => a hc /= Hhc.
     assert (¬ (l.2 ≤ a < l.2 + length v)) as Hnot_in.
-    { move => ?. rewrite heap_free_lookup_None // in Hhc; lia. }
+    { move => ?. rewrite heap_free_lookup_in_range // in Hhc; lia. }
     rewrite heap_free_lookup_not_in_range in Hhc; last lia.
     destruct (Hi2 _ _ Hhc) as [al [??]]. exists al.
     rewrite lookup_insert_ne; first done.
@@ -519,7 +511,7 @@ Proof.
   move: Hcontains => [[id[?[Heq [??]]]] Hcontains].
   destruct (decide (a1 = a2)) as [->|Hne].
   - rewrite lookup_partial_alter -/heap_update in H. simplify_eq => /=.
-    rewrite heap_update_lookup_lt; last lia. rewrite Heq /= Hfaid.
+    rewrite heap_update_lookup_not_in_range; last lia. rewrite Heq /= Hfaid.
     apply (Hσ a2 _ Heq).
   - rewrite lookup_partial_alter_ne // -/heap_update in H.
     by unshelve eapply (IH _ _ Hσ _ Hfaid Hlen a2 hc) => //.
@@ -540,20 +532,10 @@ Proof.
   move: Hcontains => [[id[?[Heq [??]]]] Hcontains].
   destruct (decide (a1 = a2)) as [->|Hne].
   - rewrite lookup_partial_alter -/heap_update in H. simplify_eq => /=.
-    rewrite heap_update_lookup_lt; last lia. rewrite Heq /= Hfaid.
+    rewrite heap_update_lookup_not_in_range; last lia. rewrite Heq /= Hfaid.
     apply (Hσ a2 _ Heq).
   - rewrite lookup_partial_alter_ne // -/heap_update in H.
     by unshelve eapply (IH _ _ Hσ _ Hfaid Hlen a2 hc) => //.
-Qed.
-
-Lemma heap_lookup_is_Some a p v Paid Plk h:
-  heap_lookup a v Paid Plk h →
-  a ≤ p < a + length v →
-  is_Some (h !! p).
-Proof.
-  elim: v a => /=; first lia. move => b v IH a [[aid [lk [Ha _]]] H] Hp.
-  destruct (decide (p = a)) as [->|]; first naive_solver.
-  apply (IH (Z.succ a)) => //. lia.
 Qed.
 
 Lemma heap_update_alloc_alive_in_heap σ a v1 v2 Paid Plk faid flk:

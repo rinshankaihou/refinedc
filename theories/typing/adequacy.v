@@ -1,5 +1,6 @@
 From iris.program_logic Require Export adequacy weakestpre.
 From iris.algebra Require Import csum excl auth cmra_big_op gmap.
+From iris.base_logic.lib Require Import ghost_map.
 From refinedc.typing Require Export type.
 From refinedc.typing Require Import programs function bytes globals int fixpoint.
 From refinedc.lang Require Import ghost_state.
@@ -9,17 +10,17 @@ Set Default Proof Using "Type".
 Class typePreG Σ := PreTypeG {
   type_invG                      :> invPreG Σ;
   type_heap_heap_inG             :> inG Σ (authR heapUR);
-  type_heap_alloc_range_map_inG  :> inG Σ (authR alloc_range_mapUR);
-  type_heap_alloc_status_map_inG :> inG Σ (authR alloc_status_mapUR);
-  type_heap_fntbl_inG            :> inG Σ (authR fntblUR);
+  type_heap_alloc_range_map_inG  :> ghost_mapG Σ alloc_id (Z * nat);
+  type_heap_alloc_alive_map_inG  :> ghost_mapG Σ alloc_id bool;
+  type_heap_fntbl_inG            :> ghost_mapG Σ loc function;
 }.
 
 Definition typeΣ : gFunctors :=
   #[invΣ;
-    GFunctor (constRF (authR heapUR));
-    GFunctor (constRF (authR alloc_range_mapUR));
-    GFunctor (constRF (authR alloc_status_mapUR));
-    GFunctor (constRF (authR fntblUR))].
+   GFunctor (constRF (authR heapUR));
+   ghost_mapΣ alloc_id (Z * nat);
+   ghost_mapΣ alloc_id bool;
+   ghost_mapΣ loc function].
 Instance subG_typePreG {Σ} : subG typeΣ Σ → typePreG Σ.
 Proof. solve_inG. Qed.
 
@@ -51,32 +52,26 @@ Proof.
   set h := to_heapUR ∅.
   iMod (own_alloc (● h ⋅ ◯ h)) as (γh) "[Hh _]" => //.
   { apply auth_both_valid_discrete. split => //. }
-  set f := to_fntblUR fns.
-  iMod (own_alloc (● f ⋅ ◯ f)) as (γf) "[Hf Hfm]" => //.
-  { apply auth_both_valid_discrete. split => //. eauto using to_fntbl_valid. }
-  set r := to_alloc_range_mapUR ∅.
-  iMod (own_alloc (● r ⋅ ◯ r)) as (γr) "[Hr _]" => //.
-  { apply auth_both_valid_discrete. split => //. }
-  set s := to_alloc_status_mapUR ∅.
-  iMod (own_alloc (● s ⋅ ◯ s)) as (γs) "[Hs _]" => //.
-  { apply auth_both_valid_discrete. split => //. }
-
+  iMod (ghost_map_alloc fns) as (γf) "[Hf Hfm]".
+  iMod (ghost_map_alloc_empty (V:=(Z * nat))) as (γr) "Hr".
+  iMod (ghost_map_alloc_empty (V:=bool)) as (γs) "Hs".
   set (HheapG := HeapG _ _ γh _ γr _ γs _ γf).
   set (HrefinedCG := RefinedCG _ _ HheapG).
   set (HtypeG := TypeG _ HrefinedCG).
   move: (Hwp HtypeG) => {Hwp} [gl [gt]].
   set (Hglobals := {| global_locs := gl; global_initialized_types := gt; |}).
   move => Hwp.
-  iMod (heap_alloc_new_blocks_upd with "[Hh Hr Hs]") as "[Hctx Hmt]" => //. { by iFrame. }
-  rewrite big_sepL2_sep. iDestruct "Hmt" as "[Hmt Hfree]".
-  iMod (Hwp with "Hmt [Hfm]") as "Hmains". {
-    rewrite /f => {f Hwp Hnew}.
-    iInduction (fns) as [] "IH" using map_ind => //.
-    iApply big_sepM_insert => //. rewrite to_fntbl_insert.
-    rewrite (insert_singleton_op); last by apply lookup_to_fntbl_None.
-    rewrite fntbl_entry_eq. iDestruct "Hfm" as "[$ Hfm]".
-    by iApply "IH".
+  iMod (heap_alloc_new_blocks_upd with "[Hh Hr Hs]") as "[Hctx Hmt]" => //. {
+    rewrite /heap_state_ctx /alloc_range_ctx /to_alloc_range_map /alloc_alive_ctx /to_alloc_alive_map !fmap_empty.
+    by iFrame.
   }
+  rewrite big_sepL2_sep. iDestruct "Hmt" as "[Hmt Hfree]".
+  iAssert (|==> [∗ map] k↦qs ∈ fns, fntbl_entry k qs)%I with "[Hfm]" as ">Hfm". {
+    iApply big_sepM_bupd. iApply (big_sepM_impl with "Hfm").
+    iIntros "!>" (???) "Hm". rewrite fntbl_entry_eq.
+    by iApply ghost_map_elem_persist.
+  }
+  iMod (Hwp with "Hmt Hfm") as "Hmains".
 
   iModIntro. iExists NotStuck, _, (replicate (length thread_mains) (λ _, True%I)), _, _.
   iSplitL "Hctx Hf"; last first. 1: iSplitL "Hmains".

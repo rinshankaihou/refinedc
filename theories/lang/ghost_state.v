@@ -4,6 +4,7 @@ From iris.algebra Require Import big_op gmap frac agree.
 From iris.algebra Require Import csum excl auth cmra_big_op numbers.
 From iris.bi Require Import fractional.
 From iris.base_logic Require Export lib.own.
+From iris.base_logic.lib Require Import ghost_map.
 From iris.proofmode Require Export tactics.
 From refinedc.lang Require Export lang.
 Set Default Proof Using "Type".
@@ -18,29 +19,14 @@ Definition heap_cellR : cmra :=
 Definition heapUR : ucmra :=
   gmapUR addr heap_cellR.
 
-Definition alloc_rangeR : cmra :=
-  agreeR (prodO ZO natO).
-
-Definition alloc_range_mapUR : ucmra :=
-  gmapUR Z alloc_rangeR.
-
-Definition alloc_statusR : cmra :=
-  csumR (exclR unitO) (agreeR unitO).
-
-Definition alloc_status_mapUR : ucmra :=
-  gmapUR Z alloc_statusR.
-
-Definition fntblUR : ucmra :=
-  gmapUR loc (agreeR functionO).
-
 Class heapG Σ := HeapG {
   heap_heap_inG              :> inG Σ (authR heapUR);
   heap_heap_name             : gname;
-  heap_alloc_range_map_inG   :> inG Σ (authR alloc_range_mapUR);
+  heap_alloc_range_map_inG   :> ghost_mapG Σ alloc_id (Z * nat);
   heap_alloc_range_map_name  : gname;
-  heap_alloc_status_map_inG  :> inG Σ (authR alloc_status_mapUR);
-  heap_alloc_status_map_name : gname;
-  heap_fntbl_inG             :> inG Σ (authR fntblUR);
+  heap_alloc_alive_map_inG  :> ghost_mapG Σ alloc_id bool;
+  heap_alloc_alive_map_name : gname;
+  heap_fntbl_inG             :> ghost_mapG Σ loc function;
   heap_fntbl_name            : gname;
 }.
 
@@ -53,23 +39,14 @@ Definition to_heap_cellR (hc : heap_cell) : heap_cellR :=
 Definition to_heapUR : heap → heapUR :=
   fmap to_heap_cellR.
 
-Definition to_alloc_rangeR (al : allocation) : alloc_rangeR :=
-  to_agree (al.(al_start), al.(al_len)).
+Definition to_alloc_rangeR (al : allocation) : (Z * nat) :=
+  (al.(al_start), al.(al_len)).
 
-Definition to_alloc_range_mapUR : allocs → alloc_range_mapUR :=
+Definition to_alloc_range_map : allocs → gmap alloc_id (Z * nat) :=
   fmap to_alloc_rangeR.
 
-Definition alloc_is_dead  : alloc_statusR := Cinr (to_agree ()).
-Definition alloc_is_alive : alloc_statusR := Cinl (Excl ()).
-
-Definition to_alloc_statusR (al : allocation) : alloc_statusR :=
-  if al.(al_alive) then alloc_is_alive else alloc_is_dead.
-
-Definition to_alloc_status_mapUR : allocs → alloc_status_mapUR :=
-  fmap to_alloc_statusR.
-
-Definition to_fntblUR : gmap loc function → fntblUR :=
-  fmap to_agree.
+Definition to_alloc_alive_map : allocs → gmap alloc_id bool :=
+  fmap al_alive.
 
 Section definitions.
   Context `{!heapG Σ}.
@@ -79,7 +56,7 @@ Section definitions.
   (** [alloc_range id al] persistently records the information that allocation
   with identifier [id] has a range corresponding to that of [a]. *)
   Definition alloc_range_def (id : alloc_id) (al : allocation) : iProp Σ :=
-    own heap_alloc_range_map_name (◯ {[ id := to_alloc_rangeR al ]}).
+    id ↪[ heap_alloc_range_map_name ]□ to_alloc_rangeR al.
   Definition alloc_range_aux : seal (@alloc_range_def). by eexists. Qed.
   Definition alloc_range := unseal alloc_range_aux.
   Definition alloc_range_eq : @alloc_range = @alloc_range_def :=
@@ -112,39 +89,15 @@ Section definitions.
 
   (** [alloc_alive id q] is a token witnessing the fact that the allocation
   with identifier [id] is still alive. *)
-  Definition alloc_alive_def (id : alloc_id) : iProp Σ :=
-    own heap_alloc_status_map_name (◯ {[ id := alloc_is_alive ]}).
+  Definition alloc_alive_def (id : alloc_id) (dq : dfrac) (a : bool) : iProp Σ :=
+    id ↪[ heap_alloc_alive_map_name ]{dq} a.
   Definition alloc_alive_aux : seal (@alloc_alive_def). by eexists. Qed.
   Definition alloc_alive := unseal alloc_alive_aux.
   Definition alloc_alive_eq : @alloc_alive = @alloc_alive_def :=
     seal_eq alloc_alive_aux.
 
-  Lemma alloc_alive_nd id :
-    alloc_alive id -∗ alloc_alive id -∗ False.
-  Proof.
-    rewrite alloc_alive_eq /alloc_alive_def /alloc_is_alive /=.
-    iIntros "H1 H2". iDestruct (own_valid_2 with "H1 H2") as %Hvalid.
-    iPureIntro. move: Hvalid => /auth_frag_op_valid. rewrite singleton_op.
-    by move => /singleton_valid.
-  Qed.
-
-  Global Instance alloc_alive_tl id : Timeless (alloc_alive id).
+  Global Instance alloc_alive_tl id dq a : Timeless (alloc_alive id dq a).
   Proof. rewrite alloc_alive_eq. by apply _. Qed.
-
-  (** [alloc_dead id] persistently records the information that the allocation
-  with identifier [id] has been killed. *)
-  Definition alloc_dead_def (id : alloc_id) : iProp Σ :=
-    own heap_alloc_status_map_name (◯ {[ id := alloc_is_dead ]}).
-  Definition alloc_dead_aux : seal (@alloc_dead_def). by eexists. Qed.
-  Definition alloc_dead := unseal alloc_dead_aux.
-  Definition alloc_dead_eq : @alloc_dead = @alloc_dead_def :=
-    seal_eq alloc_dead_aux.
-
-  Global Instance alloc_dead_pers id : Persistent (alloc_dead id).
-  Proof. rewrite alloc_dead_eq. by apply _. Qed.
-
-  Global Instance alloc_dead_tl id : Timeless (alloc_dead id).
-  Proof. rewrite alloc_dead_eq. by apply _. Qed.
 
   (** * Function table stuff. *)
 
@@ -152,7 +105,7 @@ Section definitions.
   [f] is stored at location [l]. NOTE: we use locations, but do not really
   store the code on the actual heap. *)
   Definition fntbl_entry_def (l : loc) (f: function) : iProp Σ :=
-    own heap_fntbl_name (◯ {[ l := to_agree f ]}).
+    l ↪[ heap_fntbl_name ]□ f.
   Definition fntbl_entry_aux : seal (@fntbl_entry_def). by eexists. Qed.
   Definition fntbl_entry := unseal fntbl_entry_aux.
   Definition fntbl_entry_eq : @fntbl_entry = @fntbl_entry_def :=
@@ -187,14 +140,19 @@ Section definitions.
 
 
   (** Token witnessing that [l] has an allocation identifier that is alive. *)
-  Definition alloc_alive_loc (l : loc) : iProp Σ :=
-    (∃ id, ⌜l.1 = Some id⌝ ∗ alloc_alive id) ∨
+  Definition alloc_alive_loc_def (l : loc) : iProp Σ :=
+    (∃ id q, ⌜l.1 = Some id⌝ ∗ alloc_alive id q true) ∨
     (∃ a q v, ⌜v ≠ []⌝ ∗ heap_mapsto (l.1, a) q v).
+  Definition alloc_alive_loc_aux : seal (@alloc_alive_loc_def). by eexists. Qed.
+  Definition alloc_alive_loc := unseal alloc_alive_loc_aux.
+  Definition alloc_alive_loc_eq : @alloc_alive_loc = @alloc_alive_loc_def :=
+    seal_eq alloc_alive_loc_aux.
 
   (** * Freeable *)
 
   Definition freeable_def (l : loc) (n : nat) : iProp Σ :=
-    ∃ id, ⌜l.1 = Some id⌝ ∗ alloc_range id {| al_start := l.2; al_len := n; al_alive := true |} ∗ alloc_alive id.
+    ∃ id, ⌜l.1 = Some id⌝ ∗ alloc_range id {| al_start := l.2; al_len := n; al_alive := true |} ∗
+     alloc_alive id (DfracOwn 1) true.
   Definition freeable_aux : seal (@freeable_def). by eexists. Qed.
   Definition freeable := unseal freeable_aux.
   Definition freeable_eq : @freeable = @freeable_def :=
@@ -206,19 +164,19 @@ Section definitions.
     own heap_heap_name (● to_heapUR h).
 
   Definition alloc_range_ctx (ub : allocs) : iProp Σ :=
-    own heap_alloc_range_map_name (● to_alloc_range_mapUR ub).
+    ghost_map_auth heap_alloc_range_map_name 1 (to_alloc_range_map ub).
 
-  Definition alloc_status_ctx (ub : allocs) : iProp Σ :=
-    own heap_alloc_status_map_name (● to_alloc_status_mapUR ub).
+  Definition alloc_alive_ctx (ub : allocs) : iProp Σ :=
+    ghost_map_auth heap_alloc_alive_map_name 1 (to_alloc_alive_map ub).
 
-  Definition fntbl_ctx (t : gmap loc function) : iProp Σ :=
-    own heap_fntbl_name (● to_fntblUR t).
+  Definition fntbl_ctx (fns : gmap loc function) : iProp Σ :=
+    ghost_map_auth heap_fntbl_name 1 fns.
 
   Definition heap_state_ctx (st : heap_state) : iProp Σ :=
     ⌜heap_state_invariant st⌝ ∗
     heap_ctx st.(hs_heap) ∗
     alloc_range_ctx st.(hs_allocs) ∗
-    alloc_status_ctx st.(hs_allocs).
+    alloc_alive_ctx st.(hs_allocs).
 
   Definition state_ctx (σ:state) : iProp Σ :=
     heap_state_ctx σ.(st_heap) ∗
@@ -261,52 +219,15 @@ Section heap.
   Proof. by rewrite /to_heapUR fmap_delete. Qed.
 End heap.
 
-Section alloc_range_map.
-  Implicit Types am : allocs.
-
-  Lemma to_alloc_range_mapUR_valid am : ✓ to_alloc_range_mapUR am.
-  Proof.
-    move => id. rewrite lookup_fmap.
-    case (am !! id) => // -[??[]] //.
-  Qed.
-End alloc_range_map.
-
-Section alloc_status_map.
-  Implicit Types am : allocs.
-
-  Lemma to_alloc_status_mapUR_valid am : ✓ to_alloc_status_mapUR am.
-  Proof.
-    move => id. rewrite lookup_fmap.
-    case (am !! id) => // -[??[]] //.
-  Qed.
-End alloc_status_map.
-
 Section fntbl.
   Context `{!heapG Σ}.
   Implicit Types P Q : iProp Σ.
   Implicit Types σ : state.
   Implicit Types E : coPset.
 
-  Lemma to_fntbl_valid f : ✓ to_fntblUR f.
-  Proof. intros l. rewrite lookup_fmap. by case (f !! l). Qed.
-
-  Lemma to_fntbl_insert f l v :
-    to_fntblUR (<[l:=v]> f) = <[l:=to_agree v]> (to_fntblUR f).
-  Proof. by rewrite /to_fntblUR fmap_insert. Qed.
-
-  Lemma lookup_to_fntbl_None f l :
-    f !! l = None → to_fntblUR f !! l = None.
-  Proof. by rewrite /to_fntblUR lookup_fmap=> ->. Qed.
-
   Lemma fntbl_entry_lookup t f fn :
     fntbl_ctx t -∗ fntbl_entry f fn -∗ ⌜t !! f = Some fn⌝.
-  Proof.
-    rewrite fntbl_entry_eq. iIntros "Htbl Hf".
-    iDestruct (own_valid_2 with "Htbl Hf") as %[Hf?]%auth_both_valid_discrete.
-    iPureIntro. move: Hf => /singleton_included_l [?].
-    rewrite lookup_fmap fmap_Some_equiv => [[[?[?->]]]].
-    move => /Some_included_total /to_agree_included ?. by simplify_eq.
-  Qed.
+  Proof. rewrite fntbl_entry_eq. by apply ghost_map_lookup. Qed.
 End fntbl.
 
 Section alloc_range.
@@ -321,10 +242,8 @@ Section alloc_range.
   Lemma alloc_range_agree id a1 a2 :
     alloc_range id a1 -∗ alloc_range id a2 -∗ ⌜alloc_same_range a1 a2⌝.
   Proof.
-    move: a1 a2 => ??. rewrite alloc_range_eq /alloc_same_range.
-    iIntros "H1 H2". iDestruct (own_valid_2 with "H1 H2") as %Hvalid.
-    iPureIntro. move: Hvalid => /auth_frag_valid/=. rewrite singleton_op.
-    by move => /singleton_valid /to_agree_op_inv_L [->->].
+    destruct a1 as [???], a2 as [???]. rewrite alloc_range_eq /alloc_same_range.
+    iIntros "H1 H2". by iDestruct (ghost_map_elem_agree with "H1 H2") as %[=->->].
   Qed.
 
   Lemma alloc_range_alloc am id al :
@@ -332,11 +251,9 @@ Section alloc_range.
     alloc_range_ctx am ==∗
     alloc_range_ctx (<[id := al]> am) ∗ alloc_range id al.
   Proof.
-    move => Hid. rewrite /alloc_range_ctx alloc_range_eq -own_op.
-    apply own_update, auth_update_alloc.
-    rewrite /to_alloc_range_mapUR fmap_insert.
-    apply alloc_singleton_local_update; last done.
-    by rewrite lookup_fmap Hid.
+    move => Hid. rewrite alloc_range_eq. iIntros "Hctx".
+    iMod (ghost_map_insert_persist with "Hctx") as "[? $]". { by rewrite lookup_fmap fmap_None. }
+    by rewrite -fmap_insert.
   Qed.
 
   Lemma alloc_range_to_loc_in_bounds l id (n : nat) al:
@@ -355,69 +272,59 @@ Section alloc_range.
     ⌜∃ al', am !! id = Some al' ∧ alloc_same_range al al'⌝.
   Proof.
     rewrite alloc_range_eq. iIntros "Htbl Hf".
-    iDestruct (own_valid_2 with "Htbl Hf") as %[Hf?]%auth_both_valid_discrete.
-    iPureIntro. move: Hf => /singleton_included_l [?].
-    rewrite lookup_fmap fmap_Some_equiv => [[[al'[?->]]]] /Some_included_total.
-    move => /to_agree_included ?. by eexists al'.
+    iDestruct (ghost_map_lookup with "Htbl Hf") as %Hlookup.
+    iPureIntro. move: Hlookup. rewrite lookup_fmap fmap_Some => -[[???][?[??]]].
+    by eexists _.
+  Qed.
+
+  Lemma alloc_range_ctx_same_range am id al1 al2 :
+    am !! id = Some al1 →
+    alloc_same_range al1 al2 →
+    alloc_range_ctx am = alloc_range_ctx (<[id := al2]> am).
+  Proof.
+    move => Hid [Heq1 Heq2].
+    rewrite /alloc_range_ctx /to_alloc_range_map fmap_insert insert_id; first done.
+    rewrite lookup_fmap Hid /=. destruct al1, al2; naive_solver.
   Qed.
 
   Lemma alloc_range_ctx_killed am id al :
     am !! id = Some al →
-    alloc_range_ctx am ≡ alloc_range_ctx (<[id := killed al]> am).
-  Proof.
-    move => Hlookup. rewrite /alloc_range_ctx /to_alloc_range_mapUR.
-    rewrite fmap_insert. rewrite insert_id; first done.
-    rewrite lookup_fmap Hlookup /=. by destruct al.
-  Qed.
+    alloc_range_ctx am = alloc_range_ctx (<[id := killed al]> am).
+  Proof. move => ?. by apply: alloc_range_ctx_same_range. Qed.
 End alloc_range.
 
-Section alloc_status.
+Section alloc_alive.
   Context `{!heapG Σ}.
   Implicit Types am : allocs.
 
-  Lemma alloc_status_alloc am id al :
+  Lemma alloc_alive_alloc am id al :
     am !! id = None →
-    al.(al_alive) = true →
-    alloc_status_ctx am ==∗
-    alloc_status_ctx (<[id := al]> am) ∗ alloc_alive id.
+    alloc_alive_ctx am ==∗
+    alloc_alive_ctx (<[id := al]> am) ∗ alloc_alive id (DfracOwn 1) (al.(al_alive)).
   Proof.
-    move => Hid Hal. rewrite /alloc_status_ctx alloc_alive_eq -own_op.
-    apply own_update, auth_update_alloc.
-    rewrite /to_alloc_status_mapUR fmap_insert.
-    rewrite {2}/to_alloc_statusR Hal /=.
-    apply alloc_singleton_local_update; last done.
-    by rewrite lookup_fmap Hid.
+    iIntros (?) "Hctx". rewrite alloc_alive_eq.
+    iMod (ghost_map_insert with "Hctx") as "[? $]". { by rewrite lookup_fmap fmap_None. }
+    by rewrite -fmap_insert.
   Qed.
 
-  Lemma alloc_status_lookup am id :
-    alloc_status_ctx am -∗ alloc_alive id -∗ ⌜∃ al, am !! id = Some al ∧ al.(al_alive) = true⌝.
+  Lemma alloc_alive_lookup am id q a:
+    alloc_alive_ctx am -∗ alloc_alive id q a -∗ ⌜∃ al, am !! id = Some al ∧ al.(al_alive) = a⌝.
   Proof.
-    rewrite /alloc_status_ctx alloc_alive_eq.
-    apply wand_intro_r. rewrite -!own_op.
-    etrans; [by apply own_valid|].  iPureIntro.
-    move => /auth_both_valid_discrete [] /singleton_included_l [?].
-    rewrite lookup_fmap fmap_Some_equiv => [[[[?? alive][?->]]]].
-    destruct alive => /=; first naive_solver.
-    rewrite /to_alloc_statusR/= => /Some_csum_included. naive_solver.
+    rewrite /alloc_alive_ctx alloc_alive_eq. iIntros "Hctx Ha".
+    iDestruct (ghost_map_lookup with "Hctx Ha") as %Hlookup.
+    iPureIntro. move: Hlookup. rewrite lookup_fmap fmap_Some. naive_solver.
   Qed.
 
-  Lemma alloc_status_kill am id al :
-    am !! id = Some al →
-    al.(al_alive) = true →
-    alloc_status_ctx am -∗
-    alloc_alive id ==∗
-    alloc_status_ctx (<[id := killed al]> am) ∗ alloc_dead id.
+  Lemma alloc_alive_kill am id al a:
+    alloc_alive_ctx am -∗
+    alloc_alive id (DfracOwn 1) a ==∗
+    alloc_alive_ctx (<[id := killed al]> am) ∗ alloc_alive id (DfracOwn 1) false.
   Proof.
-    move => Hid Hal. rewrite alloc_alive_eq alloc_dead_eq.
-    rewrite /alloc_alive_def /alloc_dead_def /alloc_status_ctx.
-    apply wand_intro_r. rewrite -!own_op. apply own_update.
-    apply auth_update. rewrite /to_alloc_status_mapUR fmap_insert.
-    eapply singleton_local_update; first by rewrite lookup_fmap Hid.
-    destruct al; move: Hal => /= ->. rewrite /to_alloc_statusR /killed /=.
-    rewrite /alloc_is_alive /alloc_is_dead.
-    apply replace_local_update; last done. apply _.
+    rewrite alloc_alive_eq. iIntros "Hctx Ha".
+    iMod (ghost_map_update with "Hctx Ha") as "[? $]".
+    by rewrite /alloc_alive_ctx/to_alloc_alive_map fmap_insert.
   Qed.
-End alloc_status.
+End alloc_alive.
 
 Section loc_in_bounds.
   Context `{!heapG Σ}.
@@ -624,7 +531,7 @@ Section heap.
     al.(al_len) = length v →
     allocation_in_range al →
     alloc_range id al -∗
-    alloc_alive id -∗
+    alloc_alive id (DfracOwn 1) true -∗
     heap_ctx h ==∗
       heap_ctx (heap_alloc l.2 v id h) ∗
       l ↦ v ∗
@@ -732,19 +639,19 @@ Section heap.
     move: Hat => /= -[[? [? [Hin [?[n ?]]]]] ?]; simplify_eq.
     iMod ("IH" with "[] Hh Hl") as "{IH}[Hh IH]" => //.
     iMod (heap_read_mbyte_vs _ 0 1 with "Hh Hb") as "[Hh Hb]".
-    { rewrite heap_update_lookup_lt // /shift_loc /=. lia. }
+    { rewrite heap_update_lookup_not_in_range // /shift_loc /=. lia. }
     iModIntro. iSplitL "Hh".
     { iStopProof. f_equiv. symmetry. apply partial_alter_to_insert.
-      rewrite heap_update_lookup_lt /shift_loc /= ?Hin ?Heq //; lia. }
+      rewrite heap_update_lookup_not_in_range /shift_loc /= ?Hin ?Heq //; lia. }
     iIntros (h2) "Hh". iDestruct (heap_mapsto_mbyte_lookup_q with "Hh Hb") as %[n' Hn].
     iMod ("IH" with "Hh") as (Hat) "[Hh Hl]". iSplitR.
     { rewrite /shift_loc /= Z.add_1_r Heq in Hat. iPureIntro. naive_solver. }
     iMod (heap_read_mbyte_vs _ 1 0 with "Hh Hb") as "[Hh Hb]".
-    { rewrite heap_update_lookup_lt // /shift_loc /=. lia. }
+    { rewrite heap_update_lookup_not_in_range // /shift_loc /=. lia. }
     rewrite heap_mapsto_cons_mbyte heap_mapsto_mbyte_eq. iFrame. iModIntro.
     iSplitR "Hb"; [ iStopProof | iExists _; by iFrame ].
     f_equiv. symmetry. apply partial_alter_to_insert.
-    rewrite heap_update_lookup_lt /shift_loc /= ?Hn ?Heq //. lia.
+    rewrite heap_update_lookup_not_in_range /shift_loc /= ?Hn ?Heq //. lia.
   Qed.
 
   Lemma heap_write_mbyte_vs h st1 st2 l aid b b':
@@ -769,11 +676,11 @@ Section heap.
     iDestruct (heap_mapsto_mbyte_lookup_1 with "Hh Hb") as % Hin; auto.
     iMod ("IH" with "[//] Hh Hl") as "[Hh $]".
     iMod (heap_write_mbyte_vs with "Hh Hb") as "[Hh Hb]".
-    { rewrite heap_update_lookup_lt /shift_loc //=. lia. }
+    { rewrite heap_update_lookup_not_in_range /shift_loc //=. lia. }
     iModIntro => /=. iSplitR "Hb"; last (iExists _; by iFrame).
     iClear "IH". iStopProof. f_equiv => /=. symmetry.
     apply: partial_alter_to_insert.
-    rewrite heap_update_lookup_lt /shift_loc /= ?Heq ?Hin ?Hf //. lia.
+    rewrite heap_update_lookup_not_in_range /shift_loc /= ?Heq ?Hin ?Hf //. lia.
   Qed.
 
   Lemma heap_write_na h l v v' :
@@ -795,17 +702,17 @@ Section heap.
     move: Hat => /= -[[? [? [Hin [??]]]] ?]; simplify_eq.
     iMod ("IH" with "[] [] Hh Hl") as "{IH}[Hh IH]" => //.
     iMod (heap_write_mbyte_vs with "Hh Hb") as "[Hh Hb]".
-    { rewrite heap_update_lookup_lt /shift_loc /= ?Hin ?Heq //=. lia. }
+    { rewrite heap_update_lookup_not_in_range /shift_loc /= ?Hin ?Heq //=. lia. }
     iSplitL "Hh". { rewrite /heap_upd /=. erewrite partial_alter_to_insert; first done.
-                    rewrite heap_update_lookup_lt; last lia. by rewrite Heq Hin. }
+                    rewrite heap_update_lookup_not_in_range; last lia. by rewrite Heq Hin. }
     iIntros "!#" (h2) "Hh". iDestruct (heap_mapsto_mbyte_lookup_1 with "Hh Hb") as %Hn.
     iMod ("IH" with "Hh") as (Hat) "[Hh Hl]". iSplitR.
     { rewrite /shift_loc /= Z.add_1_r Heq in Hat. iPureIntro. naive_solver. }
     iMod (heap_write_mbyte_vs with "Hh Hb") as "[Hh Hb]".
-    { rewrite heap_update_lookup_lt /shift_loc /= ?Heq ?Hin //=. lia. }
+    { rewrite heap_update_lookup_not_in_range /shift_loc /= ?Heq ?Hin //=. lia. }
     rewrite /heap_upd !Heq /=. erewrite partial_alter_to_insert; last done.
     rewrite Z.add_1_r Heq. iFrame.
-    rewrite heap_update_lookup_lt; last lia. rewrite Hn /=. iFrame.
+    rewrite heap_update_lookup_not_in_range; last lia. rewrite Hn /=. iFrame.
     rewrite heap_mapsto_cons_mbyte heap_mapsto_mbyte_eq. iFrame.
     iExists _. by iFrame.
   Qed.
@@ -852,47 +759,30 @@ Section alloc_alive.
   Context `{!heapG Σ}.
 
   Global Instance alloc_alive_loc_tl l : Timeless (alloc_alive_loc l).
-  Proof. rewrite /alloc_alive. by apply _. Qed.
+  Proof. rewrite alloc_alive_loc_eq. by apply _. Qed.
 
   Lemma alloc_alive_loc_mono (l1 l2 : loc) :
     l1.1 = l2.1 →
     alloc_alive_loc l1 -∗ alloc_alive_loc l2.
-  Proof.
-    by rewrite /alloc_alive_loc => ->.
-  Qed.
+  Proof. by rewrite alloc_alive_loc_eq /alloc_alive_loc_def => ->. Qed.
 
   Lemma heap_mapsto_alive l q v:
     length v ≠ 0%nat →
     l ↦{q} v -∗ alloc_alive_loc l.
   Proof.
-    move: l => [? a]. iIntros (?) "H".
+    rewrite alloc_alive_loc_eq. move: l => [? a]. iIntros (?) "H".
     iRight. iExists a, q, _. iFrame. by destruct v.
   Qed.
 
-  Lemma alloc_alive_to_heap_alloc_alive l σ:
+  Lemma alloc_alive_loc_to_alloc_id_alive l σ:
     alloc_alive_loc l -∗ state_ctx σ -∗ ⌜∃ aid, l.1 = Some aid ∧ alloc_id_alive aid σ.(st_heap)⌝.
   Proof.
+    rewrite alloc_alive_loc_eq.
     iIntros "[H|H]".
-    - iDestruct "H" as (??) "Hl". iIntros "((Hinv&_&_&Hctx)&_)".
-      iDestruct "Hinv" as %(?&Hinv&?&?&?). iExists id. iSplit; first done.
-      rewrite alloc_alive_eq. iDestruct (own_valid_2 with "Hctx Hl") as %Hvalid.
-      iPureIntro. move: Hvalid => /auth_both_valid_discrete [].
-      move => /singleton_included_l [a [Ha Halive]] _.
-
-      rewrite lookup_fmap in Ha.
-      destruct (hs_allocs σ.(st_heap) !! id) as [al|] eqn:Heq; last first.
-      { exfalso. rewrite Heq /= in Ha. by inversion Ha. }
-      exists al. split; first done. rewrite Heq /= in Ha.
-      move: Halive => /Some_included. rewrite /to_alloc_statusR in Ha.
-      destruct (al_alive al) => //. move => Heq_a; exfalso.
-      assert (alloc_is_alive ≡ alloc_is_dead) as Habsurd.
-      { destruct Heq_a as [->|Heq_a]; inversion Ha.
-        - by simplify_eq.
-        - exfalso. move: Heq_a. rewrite -H6. rewrite /alloc_is_alive /alloc_is_dead.
-          move => /csum_included. move => [] //. move => [].
-          + move => [?[?[?[??]]]]. done.
-          + move => [?[?[?[??]]]]. done. }
-      inversion Habsurd.
+    - iDestruct "H" as (???) "Hl". iIntros "((Hinv&_&_&Hctx)&_)".
+      iExists _. iSplit => //.
+      iDestruct (alloc_alive_lookup with "Hctx Hl") as %[?[??]]. iPureIntro.
+      eexists _. naive_solver.
     - iIntros "(((?&Halive&?&?)&Hctx&?&?)&?)".
       iDestruct "H" as (????) "H".
       iDestruct (heap_mapsto_lookup_q (λ _, True) with "Hctx H") as %Hlookup => //.
@@ -901,11 +791,11 @@ Section alloc_alive.
       iPureIntro. apply: (Halive _ (HeapCell _ _ _)). done.
   Qed.
 
-  Lemma alloc_alive_to_valid_ptr l σ:
+  Lemma alloc_alive_loc_to_valid_ptr l σ:
     loc_in_bounds l 0 -∗ alloc_alive_loc l -∗ state_ctx σ -∗ ⌜valid_ptr l σ.(st_heap)⌝.
   Proof.
     iIntros "Hin Ha Hσ".
-    iDestruct (alloc_alive_to_heap_alloc_alive with "Ha Hσ") as %[?[??]].
+    iDestruct (alloc_alive_loc_to_alloc_id_alive with "Ha Hσ") as %[?[??]].
     iDestruct (loc_in_bounds_to_heap_loc_in_bounds with "Hin Hσ") as %?.
     iPureIntro. split; last done. by eexists.
   Qed.
@@ -921,7 +811,7 @@ Section alloc_new_blocks.
     move => []; clear. move => σ l aid v alloc Haid ???; subst alloc.
     iIntros "Hctx". iDestruct "Hctx" as (Hinv) "(Hhctx&Hrctx&Hsctx)".
     iMod (alloc_range_alloc  with "Hrctx") as "[$ #Hb]" => //.
-    iMod (alloc_status_alloc with "Hsctx") as "[$ Hs]" => //.
+    iMod (alloc_alive_alloc with "Hsctx") as "[$ Hs]" => //.
     iDestruct (alloc_range_to_loc_in_bounds l aid (length v) with "[Hb]")
       as "#Hinb" => //; [done|..].
     iMod (heap_alloc with "Hb Hs Hhctx") as "[Hhctx [Hv Hal]]" => //.
@@ -944,18 +834,6 @@ End alloc_new_blocks.
 Section free_blocks.
   Context `{!heapG Σ}.
 
-  Lemma alloc_range_ctx_same_range am id al1 al2 :
-    am !! id = Some al1 →
-    alloc_same_range al1 al2 →
-    alloc_range_ctx am -∗
-    alloc_range_ctx (<[id := al2]> am).
-  Proof.
-    move => Hid [Heq1 Heq2].
-    rewrite -{1}(insert_id am id al1) // -!(insert_delete am).
-    rewrite /alloc_range_ctx /to_alloc_range_mapUR !fmap_insert.
-    rewrite /to_alloc_rangeR Heq1 Heq2. done.
-  Qed.
-
   Lemma heap_free_block_upd σ1 l ly:
     l ↦|ly| -∗
     freeable l (ly_size ly) -∗
@@ -964,14 +842,13 @@ Section free_blocks.
     iIntros "Hl Hfree (Hinv&Hhctx&Hrctx&Hsctx)". iDestruct "Hinv" as %Hinv.
     rewrite freeable_eq. iDestruct "Hfree" as (aid Haid) "[#Hrange Hkill]".
     iDestruct "Hl" as (v Hv ?) "Hl".
-    iDestruct (alloc_status_lookup with "Hsctx Hkill") as %[[???] [??]].
+    iDestruct (alloc_alive_lookup with "Hsctx Hkill") as %[[???] [??]].
     iDestruct (alloc_range_lookup with "Hrctx Hrange") as %[al'' [?[??]]]. simplify_eq/=.
     iDestruct (heap_mapsto_lookup_1 (λ st : lock_state, st = RSt 0) with "Hhctx Hl") as %? => //.
     iExists _. iSplitR. { iPureIntro. by econstructor. }
-    iMod (heap_free_free with "Hhctx Hl") as "Hhctx".
-    iDestruct (alloc_range_ctx_same_range with "Hrctx") as "$"; [done|done|..].
-    iMod (alloc_status_kill with "Hsctx Hkill") as "[Hsctx Hd]"; [done|done|..].
-    rewrite /killed /= Hv. iFrame "Hsctx Hhctx".
+    iMod (heap_free_free with "Hhctx Hl") as "Hhctx". rewrite Hv. iFrame => /=.
+    iMod (alloc_alive_kill _ _ ({| al_start := l.2; al_len := ly_size ly; al_alive := true |}) with "Hsctx Hkill") as "[$ Hd]".
+    erewrite alloc_range_ctx_same_range; [iFrame |done..].
     iPureIntro. eapply free_block_invariant => //. by eapply FreeBlock.
   Qed.
 

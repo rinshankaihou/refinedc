@@ -349,9 +349,6 @@ Inductive eval_un_op : un_op → op_type → state → val → val → Prop :=
 
 (*** Evaluation of Expressions *)
 
-Definition state_alloc_new_blocks (σ1 : state) (ls : list loc) (vs : list val) (σ2 : state) : Prop :=
-  alloc_new_blocks σ1.(st_heap) ls vs σ2.(st_heap) ∧ σ1.(st_fntbl) = σ2.(st_fntbl).
-
 Inductive expr_step : expr → state → list Empty_set → runtime_expr → state → list runtime_expr → Prop :=
 | SkipES v σ:
     expr_step (SkipE (Val v)) σ [] (Val v) σ []
@@ -402,7 +399,7 @@ comparing pointers? (see lambda rust) *)
     z1 = z2 →
     expr_step (CAS (IntOp it) (Val v1) (Val v2) (Val v3)) σ []
               (Val (val_of_bool true)) (heap_fmap (heap_upd l1 v3 (λ _, RSt 0%nat)) σ) []
-| CallS lsa lsv σ σ' σ'' vf vs f rf fn fn' :
+| CallS lsa lsv σ hs' hs'' vf vs f rf fn fn' :
     val_to_loc vf = Some f →
     σ.(st_fntbl) !! f = Some fn →
     length lsa = length fn.(f_args) →
@@ -415,12 +412,12 @@ comparing pointers? (see lambda rust) *)
     Forall2 has_layout_loc lsa fn.(f_args).*2 →
     Forall2 has_layout_loc lsv fn.(f_local_vars).*2 →
     (* initialize the local vars to poison *)
-    state_alloc_new_blocks σ lsv ((λ p, replicate p.2.(ly_size) MPoison) <$> fn.(f_local_vars)) σ' →
+    alloc_new_blocks σ.(st_heap) lsv ((λ p, replicate p.2.(ly_size) MPoison) <$> fn.(f_local_vars)) hs' →
     (* initialize the arguments with the supplied values *)
-    state_alloc_new_blocks σ' lsa vs σ'' →
+    alloc_new_blocks hs' lsa vs hs'' →
     (* add used blocks allocations  *)
     rf = {| rf_fn := fn'; rf_locs := zip lsa fn.(f_args).*2 ++ zip lsv fn.(f_local_vars).*2; |} →
-    expr_step (Call (Val vf) (Val <$> vs)) σ [] (to_rtstmt rf (Goto fn'.(f_init))) σ'' []
+    expr_step (Call (Val vf) (Val <$> vs)) σ [] (to_rtstmt rf (Goto fn'.(f_init))) {| st_heap := hs''; st_fntbl := σ.(st_fntbl)|} []
 | CallFailS σ vf vs f fn:
     val_to_loc vf = Some f →
     σ.(st_fntbl) !! f = Some fn →
@@ -487,7 +484,6 @@ Proof.
   all: repeat select (heap_at _ _ _ _ _) ltac:(fun H => destruct H as [?[?[??]]]).
   all: try (rewrite /heap_fmap/=; eapply heap_update_heap_state_invariant => //).
   all: try (unfold has_layout_val in *; by etransitivity).
-  repeat match goal with H : state_alloc_new_blocks _ _ _ _ |- _ => destruct H as [??] end.
   repeat eapply alloc_new_blocks_invariant => //.
 Qed.
 
@@ -500,7 +496,7 @@ Proof.
   - move => o *.
     revert select (heap_at _ _ _ _ _) => -[?[?[??]]].
     rewrite /heap_fmap/=. eapply heap_update_heap_state_invariant => //.
-    match goal with H : _ `has_layout_val` _ |- _ => try rewrite H // end.
+    match goal with H : _ `has_layout_val` _ |- _ => rewrite H end.
     by destruct o.
   - move => ??? _ Hfree Hinv. by eapply free_blocks_invariant.
 Qed.
