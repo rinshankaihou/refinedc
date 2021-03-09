@@ -1,7 +1,7 @@
 From iris.proofmode Require Import tactics.
 From iris.program_logic Require Export weakestpre.
 From iris.program_logic Require Import ectx_lifting.
-From refinedc.lang Require Export lang heap notation.
+From refinedc.lang Require Export lang ghost_state notation.
 From refinedc.lang Require Import tactics.
 Set Default Proof Using "Type".
 Import uPred.

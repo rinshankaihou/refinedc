@@ -2,7 +2,7 @@ From iris.program_logic Require Export adequacy weakestpre.
 From iris.algebra Require Import csum excl auth cmra_big_op gmap.
 From refinedc.typing Require Export type.
 From refinedc.typing Require Import programs function bytes globals int fixpoint.
-From refinedc.lang Require Import heap.
+From refinedc.lang Require Import ghost_state.
 From iris.program_logic Require Export language.
 Set Default Proof Using "Type".
 
