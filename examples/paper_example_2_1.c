@@ -16,19 +16,33 @@
 //@Coercion byte_layout : nat >-> layout.
 //@rc::end
 
-struct [[rc::refined_by("a : nat")]] mem_t {
+struct [[rc::refined_by("a: nat")]] mem_t {
   [[rc::field("a @ int<size_t>")]] size_t len;
-  [[rc::field("&own<uninit<a>>")]] unsigned char *buffer;
+  [[rc::field("&own<uninit<a>>")]] unsigned char* buffer;
 };
 
-[[rc::parameters("a : nat", "n : nat", "p : loc")]]
+[[rc::parameters("a: nat", "n: nat", "p: loc")]]
 [[rc::args   ("p @ &own<a @ mem_t>", "n @ int<size_t>")]]
 [[rc::returns("{n ≤ a} @ optional<&own<uninit<n>>, null>")]]
 [[rc::ensures("own p : {n ≤ a ? a - n : a} @ mem_t")]]
-void *alloc(struct mem_t *d, size_t size) {
-  if(size > d->len) return NULL;
-  d->len -= size;
+void* alloc(struct mem_t* d, size_t sz) {
+  if(sz > d->len) return NULL;
+  d->len -= sz;
   return d->buffer + d->len;
+}
+
+// variant of alloc that allocates from the start of buffer instead of the end
+
+[[rc::parameters("a: nat", "n: nat", "p: loc")]]
+[[rc::args   ("p @ &own<a @ mem_t>", "n @ int<size_t>")]]
+[[rc::returns("{n ≤ a} @ optional<&own<uninit<n>>, null>")]]
+[[rc::ensures("own p : {n ≤ a ? a - n : a} @ mem_t")]]
+void* alloc_from_start(struct mem_t* d, size_t sz) {
+  if(sz > d->len) return NULL;
+  d->len -= sz;
+  unsigned char *res = d->buffer;
+  d->buffer += sz;
+  return res;
 }
 
 // Thread-safe version (given in appendix).

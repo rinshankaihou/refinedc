@@ -1,4 +1,5 @@
 generated_proof_alloc.v
+generated_proof_alloc_from_start.v
 generated_proof_atomic_signal_fence.v
 generated_proof_atomic_thread_fence.v
 generated_proof_fork.v
