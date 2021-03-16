@@ -14,13 +14,13 @@ Section proof_free.
     ⊢ typed_function impl_free type_of_free.
   Proof.
     Open Scope printing_sugar.
-    start_function "free" ([[[s p] q] n]) => arg_list arg_data arg_size local_cur local_entry.
+    start_function "free" ([[s p] n]) => arg_list arg_data arg_sz local_cur local_entry.
     split_blocks ((
       <[ "#1" :=
         ∃ cp : loc,
         ∃ cs : gmultiset nat,
-        arg_data ◁ₗ (q @ (&own (uninit (n)))) ∗
-        arg_size ◁ₗ (n @ (int (size_t))) ∗
+        arg_data ◁ₗ (&own (uninit (n))) ∗
+        arg_sz ◁ₗ (n @ (int (size_t))) ∗
         local_entry ◁ₗ uninit void* ∗
         local_cur ◁ₗ (cp @ (&own (cs @ (chunks_t)))) ∗
         arg_list ◁ₗ (p @ (&own (wand (cp ◁ₗ ({[n]} ⊎ cs) @ chunks_t) (({[n]} ⊎ s) @ (chunks_t)))))

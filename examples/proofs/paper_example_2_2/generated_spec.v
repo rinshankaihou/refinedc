@@ -99,7 +99,7 @@ Section spec.
 
   (* Specifications for function [free]. *)
   Definition type_of_free :=
-    fn(∀ (s, p, q, n) : (gmultiset nat) * loc * loc * nat; (p @ (&own (s @ (chunks_t)))), (q @ (&own (uninit (n)))), (n @ (int (size_t))); ⌜sizeof struct_chunk ≤ n⌝)
+    fn(∀ (s, p, n) : (gmultiset nat) * loc * nat; (p @ (&own (s @ (chunks_t)))), (&own (uninit (n))), (n @ (int (size_t))); ⌜sizeof(struct_chunk) ≤ n⌝)
       → ∃ () : (), (void); (p ◁ₗ (({[n]} ⊎ s) @ (chunks_t))).
 End spec.
 
