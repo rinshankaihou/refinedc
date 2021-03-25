@@ -35,6 +35,7 @@ build-coq.8.12.0-timing:
   variables:
     OPAM_PINS: "coq version 8.12.0   cerberus git git+https://github.com/rems-project/cerberus.git#9f3a825a5f32a8245101a57105a5598a1adf6879"
     DENY_WARNINGS: "1"
+    OPAM_PKG: "1"
   only:
   - master@iris/refinedc
   - /^time/@iris/refinedc
