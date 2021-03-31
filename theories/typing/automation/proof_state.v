@@ -81,11 +81,9 @@ Ltac prepare_sideconditions :=
       end;
   clear_unused_vars.
 
-Ltac solve_goal :=
-  try fast_done;
+Ltac solve_goal_prepare_tac ::=
   prepare_sideconditions;
-  repeat match goal with | H : CASE_DISTINCTION_INFO _ _ _ |- _ =>  clear H end;
-  unprepared_solve_goal.
+  repeat match goal with | H : CASE_DISTINCTION_INFO _ _ _ |- _ =>  clear H end.
 
 (** * Tactics for showing failures to the user *)
 Ltac clear_for_print_goal :=

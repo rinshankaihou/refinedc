@@ -33,10 +33,10 @@ Proof. rewrite !ly_size_PAGES. lia. Qed.
 Typeclasses Opaque PAGES.
 Global Opaque PAGES.
 
-Hint Rewrite ly_size_ly_offset : refinedc_rewrite.
-Hint Rewrite ly_size_PAGES_sub : refinedc_rewrite.
-Hint Rewrite ly_size_PAGES : refinedc_rewrite.
-Hint Rewrite ly_offset_PAGES : refinedc_rewrite.
+Hint Rewrite ly_size_ly_offset : lithium_rewrite.
+Hint Rewrite ly_size_PAGES_sub : lithium_rewrite.
+Hint Rewrite ly_size_PAGES : lithium_rewrite.
+Hint Rewrite ly_offset_PAGES : lithium_rewrite.
 
 Hint Rewrite ly_size_ly_offset : refinedc_loc_eq_rewrite.
 Hint Rewrite ly_size_PAGES_sub : refinedc_loc_eq_rewrite.
