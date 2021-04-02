@@ -140,5 +140,5 @@ Ltac print_typesystem_goal fn block :=
   print_goal; admit.
 
 Ltac print_sidecondition_goal fn :=
-  idtac "Cannot solve sidecondition in function" fn "!";
+  idtac "Cannot solve side condition in function" fn "!";
   print_goal; admit.
