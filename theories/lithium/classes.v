@@ -1,4 +1,6 @@
 (** Main typeclasses of Lithium *)
+From iris.base_logic.lib Require Export iprop.
+From iris.proofmode Require Export tactics.
 From refinedc.lithium Require Import base infrastructure.
 
 (** * [iProp_to_Prop] *)

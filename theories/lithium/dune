@@ -2,5 +2,4 @@
  (name refinedc.lithium)
  (package refinedc)
  (flags -w -notation-overridden -w -redundant-canonical-projection)
- (synopsis "Lithium")
- (theories refinedc.lang))
+ (synopsis "Lithium"))

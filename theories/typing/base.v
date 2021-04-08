@@ -1,5 +1,5 @@
-From refinedc.lang Require Export proofmode.
 From refinedc.lithium Require Export lithium.
+From refinedc.lang Require Export proofmode.
 
 Create HintDb refinedc_typing.
 
