@@ -240,7 +240,7 @@ Qed.
   val_to_loc vl2 = Some l2 →
   (bytes_per_int it ≤ bytes_per_addr)%nat →
   (|={E, ∅}=> ∃ (q1 q2 : Qp) vo ve z1 z2,
-     ⌜val_to_int vo it = Some z1⌝ ∗ ⌜val_to_int ve it = Some z2⌝ ∗
+     ⌜val_to_Z vo it = Some z1⌝ ∗ ⌜val_to_Z ve it = Some z2⌝ ∗
      ⌜l1 `has_layout_loc` it_layout it⌝ ∗ ⌜l2 `has_layout_loc` it_layout it⌝ ∗
      ⌜length vd = bytes_per_int it⌝ ∗ ⌜if bool_decide (z1 = z2) then q1 = 1%Qp else q2 = 1%Qp⌝ ∗
      l1↦{q1}vo ∗ l2↦{q2}ve ∗ ▷ (
@@ -255,8 +255,8 @@ Lemma wp_cas_fail vl1 vl2 vd vo ve z1 z2 Φ l1 l2 it q E:
   val_to_loc vl2 = Some l2 →
   l1 `has_layout_loc` it_layout it →
   l2 `has_layout_loc` it_layout it →
-  val_to_int vo it = Some z1 →
-  val_to_int ve it = Some z2 →
+  val_to_Z vo it = Some z1 →
+  val_to_Z ve it = Some z2 →
   length vd = bytes_per_int it →
   (bytes_per_int it ≤ bytes_per_addr)%nat →
   z1 ≠ z2 →
@@ -268,7 +268,7 @@ Proof.
   iIntros (σ1) "((%&Hhctx&?)&Hfctx)".
   iDestruct (heap_mapsto_has_alloc_id with "Hl1") as %Haid1.
   iDestruct (heap_mapsto_has_alloc_id with "Hl2") as %Haid2.
-  move: (Hvo) (Hve) => /val_to_int_length ? /val_to_int_length ?.
+  move: (Hvo) (Hve) => /val_to_Z_length ? /val_to_Z_length ?.
   iDestruct (heap_mapsto_lookup_q (λ st : lock_state, ∃ n : nat, st = RSt n) with "Hhctx Hl1") as %? => //. { naive_solver. }
   iDestruct (heap_mapsto_lookup_1 (λ st : lock_state, st = RSt 0%nat) with "Hhctx Hl2") as %? => //.
   iModIntro. iSplit; first by eauto 15 using CasFailS.
@@ -286,8 +286,8 @@ Lemma wp_cas_suc vl1 vl2 vd vo ve z1 z2 Φ l1 l2 it E q:
   val_to_loc vl2 = Some l2 →
   l1 `has_layout_loc` it_layout it →
   l2 `has_layout_loc` it_layout it →
-  val_to_int vo it = Some z1 →
-  val_to_int ve it = Some z2 →
+  val_to_Z vo it = Some z1 →
+  val_to_Z ve it = Some z2 →
   length vd = bytes_per_int it →
   (bytes_per_int it ≤ bytes_per_addr)%nat →
   z1 = z2 →
@@ -299,7 +299,7 @@ Proof.
   iIntros (σ1) "((%&Hhctx&?)&Hfctx)".
   iDestruct (heap_mapsto_has_alloc_id with "Hl1") as %Haid1.
   iDestruct (heap_mapsto_has_alloc_id with "Hl2") as %Haid2.
-  move: (Hvo) (Hve) => /val_to_int_length ? /val_to_int_length ?.
+  move: (Hvo) (Hve) => /val_to_Z_length ? /val_to_Z_length ?.
   iDestruct (heap_mapsto_lookup_1 (λ st : lock_state, st = RSt 0%nat) with "Hhctx Hl1") as %? => //.
   iDestruct (heap_mapsto_lookup_q (λ st : lock_state, ∃ n : nat, st = RSt n) with "Hhctx Hl2") as %? => //. { naive_solver. }
   iModIntro. iSplit; first by eauto 15 using CasSucS.
@@ -313,8 +313,8 @@ Proof.
 Qed.
 
 Lemma wp_neg_int Φ v v' n E it:
-  val_to_int v it = Some n →
-  val_of_int (-n) it = Some v' →
+  val_to_Z v it = Some n →
+  val_of_Z (-n) it = Some v' →
   ▷ Φ (v') -∗ WP UnOp NegOp (IntOp it) (Val v) @ E {{ Φ }}.
 Proof.
   iIntros (Hv Hv') "HΦ".
@@ -325,8 +325,8 @@ Proof.
 Qed.
 
 Lemma wp_cast_int Φ v v' n E its itt:
-  val_to_int v its = Some n →
-  val_of_int n itt = Some v' →
+  val_to_Z v its = Some n →
+  val_of_Z n itt = Some v' →
   ▷ Φ (v') -∗ WP UnOp (CastOp (IntOp itt)) (IntOp its) (Val v) @ E {{ Φ }}.
 Proof.
   iIntros (Hv Hv') "HΦ".
@@ -349,7 +349,7 @@ Qed.
 
 Lemma wp_cast_ptr_int Φ v v' l E it:
   val_to_loc v = Some l →
-  val_of_int l.2 it = Some v' →
+  val_of_Z l.2 it = Some v' →
   ▷ Φ (v') -∗ WP UnOp (CastOp (IntOp it)) PtrOp (Val v) @ E {{ Φ }}.
 Proof.
   iIntros (Hv Hv') "HΦ".
@@ -360,7 +360,7 @@ Proof.
 Qed.
 
 Lemma wp_cast_int_ptr Φ v n E it:
-  val_to_int v it = Some n →
+  val_to_Z v it = Some n →
   ▷ Φ (val_of_loc (None, n)) -∗ WP UnOp (CastOp PtrOp) (IntOp it) (Val v) @ E {{ Φ }}.
 Proof.
   iIntros (Hv) "HΦ".
@@ -414,7 +414,7 @@ Qed.
 
 Lemma wp_ptr_offset Φ vl l E it o ly vo:
   val_to_loc vl = Some l →
-  val_to_int vo it = Some o →
+  val_to_Z vo it = Some o →
   0 ≤ o →
   ▷ Φ (val_of_loc (l offset{ly}ₗ o)) -∗ WP Val vl at_offset{ ly , PtrOp, IntOp it} Val vo @ E {{ Φ }}.
 Proof.
@@ -427,7 +427,7 @@ Qed.
 
 Lemma wp_ptr_neg_offset Φ vl l E it o ly vo:
   val_to_loc vl = Some l →
-  val_to_int vo it = Some o →
+  val_to_Z vo it = Some o →
   ▷ Φ (val_of_loc (l offset{ly}ₗ -o)) -∗ WP Val vl at_neg_offset{ ly , PtrOp, IntOp it} Val vo @ E {{ Φ }}.
 Proof.
   iIntros (Hvl Hvo) "HΦ".
@@ -444,7 +444,7 @@ Lemma wp_get_member Φ vl l sl n E:
 Proof.
   iIntros (Hvl [i Hi]) "HΦ".
   rewrite /GetMember/GetMemberLoc/offset_of Hi /=.
-  have [|? Hs]:= (val_of_int_is_some size_t (offset_of_idx sl.(sl_members) i)). {
+  have [|? Hs]:= (val_of_Z_is_some size_t (offset_of_idx sl.(sl_members) i)). {
     split; first by rewrite /min_int/=; lia.
     by apply offset_of_bound.
   }
@@ -462,11 +462,11 @@ Proof. iIntros (->%val_of_to_loc) "?". rewrite /GetMemberUnion/GetMemberUnionLoc
 
 Lemma wp_offset_of Φ s m i E:
   offset_of s.(sl_members) m = Some i →
-  (∀ v, ⌜val_of_int i size_t = Some v⌝ -∗ Φ v) -∗
+  (∀ v, ⌜val_of_Z i size_t = Some v⌝ -∗ Φ v) -∗
   WP OffsetOf s m @ E {{ Φ }}.
 Proof.
   rewrite /OffsetOf. iIntros (Ho) "HΦ".
-  have [|? Hs]:= (val_of_int_is_some size_t i). {
+  have [|? Hs]:= (val_of_Z_is_some size_t i). {
     split; first by rewrite /min_int/=; lia.
     move: Ho => /fmap_Some[?[?->]].
     by apply offset_of_bound.
@@ -480,7 +480,7 @@ Lemma wp_offset_of_union Φ ul m E:
 Proof. by iApply @wp_value. Qed.
 
 Lemma wp_if Φ it v e1 e2 n:
-  val_to_int v it = Some n →
+  val_to_Z v it = Some n →
   (if decide (n = 0) then WP coerce_rtexpr e2 {{ Φ }} else WP coerce_rtexpr e1 {{ Φ }}) -∗
   WP IfE (IntOp it) (Val v) e1 e2 {{ Φ }}.
 Proof.
@@ -778,7 +778,7 @@ Proof.
 Qed.
 
 Lemma wps_switch Q Ψ v n ss def m it:
-  val_to_int v it = Some n →
+  val_to_Z v it = Some n →
   (∀ i, m !! n = Some i → is_Some (ss !! i)) →
   WPs default def (i ← m !! n; ss !! i) {{ Q, Ψ }} -∗ WPs (Switch it (Val v) m ss def) {{ Q , Ψ }}.
 Proof.
@@ -791,7 +791,7 @@ Qed.
 
 (** a version of wps_switch which is directed by ss instead of n *)
 Lemma wps_switch' Q Ψ v n ss def m it:
-  val_to_int v it = Some n →
+  val_to_Z v it = Some n →
   map_Forall (λ _ i, is_Some (ss !! i)) m →
   ([∧ list] i↦s∈ss, ⌜m !! n = Some i⌝ -∗ WPs s {{ Q, Ψ }}) ∧
   (⌜m !! n = None⌝ -∗ WPs def {{ Q, Ψ }}) -∗
@@ -806,7 +806,7 @@ Proof.
 Qed.
 
 Lemma wps_if Q Ψ v s1 s2 n:
-  val_to_int v bool_it = Some n →
+  val_to_Z v bool_it = Some n →
   (if decide (n = 0) then WPs s2 {{ Q, Ψ }} else WPs s1 {{ Q, Ψ }}) -∗
   WPs (if: (Val v) then s1 else s2) {{ Q , Ψ }}.
 Proof.
@@ -816,7 +816,7 @@ Proof.
 Qed.
 
 Lemma wps_assert Q Ψ v s n:
-  val_to_int v bool_it = Some n → n ≠ 0 →
+  val_to_Z v bool_it = Some n → n ≠ 0 →
   WPs s {{ Q, Ψ }} -∗
   WPs (assert: Val v; s) {{ Q , Ψ }}.
 Proof.

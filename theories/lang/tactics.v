@@ -548,7 +548,7 @@ Proof.
     end; done.
   - rewrite /notation.OffsetOf/=.
     match goal with | |- context [offset_of ?s ?m] => destruct (offset_of s m) end => //=.
-    by match goal with | |- context [val_of_int ?o ?it] => destruct (val_of_int o it) end.
+    by match goal with | |- context [val_of_Z ?o ?it] => destruct (val_of_Z o it) end.
   - (** AnnotExpr *)
     match goal with
     | |- notation.AnnotExpr ?n _ _ = _ => generalize dependent n

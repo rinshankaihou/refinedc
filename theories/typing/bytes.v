@@ -149,7 +149,7 @@ Section bytewise.
     typed_bin_op v2 (v2 ◁ᵥ n @ int it) p (p ◁ₗ{β} bytewise P ly) (PtrOffsetOp u8) (IntOp it) PtrOp T.
   Proof.
     iIntros "HT" (Hint) "Hp". iIntros (Φ) "HΦ".
-    move: (Hint) => /val_of_int_in_range?.
+    move: (Hint) => /val_of_Z_in_range?.
     iDestruct ("HT" with "[//]") as (??) "HT".
     iDestruct (split_bytewise (Z.to_nat n) with "Hp") as "[H1 H2]"; [lia..|].
     iApply wp_ptr_offset. by apply val_to_of_loc. by apply val_to_of_int. done.

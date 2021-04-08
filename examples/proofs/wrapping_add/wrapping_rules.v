@@ -21,8 +21,8 @@ Section type.
     iDestruct ("HT" with "Hty2") as (Hv2) "HT".
     iIntros (Φ) "HΦ".
     iDestruct ("HT" with "[] []" ) as (??) "HT".
-    1-2: iPureIntro; by apply: val_of_int_in_range.
-    have /val_of_int_is_some[v Hv] : ((n1 + n2) `mod` int_modulus it1) ∈ it1 by apply int_modulus_mod_in_range.
+    1-2: iPureIntro; by apply: val_of_Z_in_range.
+    have /val_of_Z_is_some[v Hv] : ((n1 + n2) `mod` int_modulus it1) ∈ it1 by apply int_modulus_mod_in_range.
     move: Hv1 Hv2 => /val_to_of_int Hv1 /val_to_of_int Hv2. subst it2.
     iApply (wp_binop_det v). iSplit.
     - iIntros (σ v') "_ !%". split.

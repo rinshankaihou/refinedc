@@ -227,37 +227,37 @@ Definition subst_function (xs : list (var_name * val)) (f : function) : function
 (* evaluation can be non-deterministic for comparing pointers *)
 Inductive eval_bin_op : bin_op → op_type → op_type → state → val → val → val → Prop :=
 | PtrOffsetOpIP v1 v2 σ o l ly it:
-    val_to_int v1 it = Some o →
+    val_to_Z v1 it = Some o →
     val_to_loc v2 = Some l →
     (* TODO: should we have an alignment check here? *)
     0 ≤ o →
     eval_bin_op (PtrOffsetOp ly) (IntOp it) PtrOp σ v1 v2 (val_of_loc (l offset{ly}ₗ o))
 | PtrNegOffsetOpIP v1 v2 σ o l ly it:
-    val_to_int v1 it = Some o →
+    val_to_Z v1 it = Some o →
     val_to_loc v2 = Some l →
     (* TODO: should we have an alignment check here? *)
     eval_bin_op (PtrNegOffsetOp ly) (IntOp it) PtrOp σ v1 v2 (val_of_loc (l offset{ly}ₗ -o))
 | EqOpPNull v1 v2 σ l v:
     heap_state_loc_in_bounds l 0%nat σ.(st_heap) →
     val_to_loc v1 = Some l →
-    val_to_int v2 size_t = Some 0 →
+    val_to_Z v2 size_t = Some 0 →
     (* TODO ( see below ): Should we really hard code i32 here because of C? *)
     i2v (Z_of_bool false) i32 = v →
     eval_bin_op EqOp PtrOp PtrOp σ v1 v2 v
 | NeOpPNull v1 v2 σ l v:
     heap_state_loc_in_bounds l 0%nat σ.(st_heap) →
     val_to_loc v1 = Some l →
-    val_to_int v2 size_t = Some 0 →
+    val_to_Z v2 size_t = Some 0 →
     i2v (Z_of_bool true) i32 = v →
     eval_bin_op NeOp PtrOp PtrOp σ v1 v2 v
 | EqOpNullNull v1 v2 σ v:
-    val_to_int v1 size_t = Some 0 →
-    val_to_int v2 size_t = Some 0 →
+    val_to_Z v1 size_t = Some 0 →
+    val_to_Z v2 size_t = Some 0 →
     i2v (Z_of_bool true) i32 = v →
     eval_bin_op EqOp PtrOp PtrOp σ v1 v2 v
 | NeOpNullNull v1 v2 σ v:
-    val_to_int v1 size_t = Some 0 →
-    val_to_int v2 size_t = Some 0 →
+    val_to_Z v1 size_t = Some 0 →
+    val_to_Z v2 size_t = Some 0 →
     i2v (Z_of_bool false) i32 = v →
     eval_bin_op NeOp PtrOp PtrOp σ v1 v2 v
 | RelOpPP v1 v2 σ l1 l2 v b op:
@@ -285,8 +285,8 @@ Inductive eval_bin_op : bin_op → op_type → op_type → state → val → val
     | GeOp => Some (bool_decide (n1 >= n2))
     | _ => None
     end = Some b →
-    val_to_int v1 it = Some n1 →
-    val_to_int v2 it = Some n2 →
+    val_to_Z v1 it = Some n1 →
+    val_to_Z v2 it = Some n2 →
     (* TODO: What is the right int type of the result here? C seems to
     use i32 but maybe we don't want to hard code that. *)
     eval_bin_op op (IntOp it) (IntOp it) σ v1 v2 (i2v (Z_of_bool b) i32)
@@ -314,16 +314,16 @@ Inductive eval_bin_op : bin_op → op_type → op_type → state → val → val
     | ShrOp => if bool_decide (0 ≤ n1 ∧ 0 ≤ n2 < bits_per_int it) then Some (n1 ≫ n2) else None
     | _ => None
     end = Some n →
-    val_to_int v1 it = Some n1 →
-    val_to_int v2 it = Some n2 →
-    val_of_int (if it_signed it then n else n `mod` int_modulus it) it = Some v →
+    val_to_Z v1 it = Some n1 →
+    val_to_Z v2 it = Some n2 →
+    val_of_Z (if it_signed it then n else n `mod` int_modulus it) it = Some v →
     eval_bin_op op (IntOp it) (IntOp it) σ v1 v2 v
 .
 
 Inductive eval_un_op : un_op → op_type → state → val → val → Prop :=
 | CastOpII itt its σ vs vt n:
-    val_to_int vs its = Some n →
-    val_of_int n itt = Some vt →
+    val_to_Z vs its = Some n →
+    val_of_Z n itt = Some vt →
     eval_un_op (CastOp (IntOp itt)) (IntOp its) σ vs vt
 | CastOpPP σ vs vt l:
     val_to_loc vs = Some l →
@@ -331,19 +331,19 @@ Inductive eval_un_op : un_op → op_type → state → val → val → Prop :=
     eval_un_op (CastOp PtrOp) PtrOp σ vs vt
 | CastOpPI it σ vs vt l:
     val_to_loc vs = Some l →
-    val_of_int l.2 it = Some vt →
+    val_of_Z l.2 it = Some vt →
     eval_un_op (CastOp (IntOp it)) PtrOp σ vs vt
 | CastOpIP it σ vs vt n:
-    val_to_int vs it = Some n →
+    val_to_Z vs it = Some n →
     val_of_loc (None, n) = vt →
     eval_un_op (CastOp PtrOp) (IntOp it) σ vs vt
 | NegOpI it σ vs vt n:
-    val_to_int vs it = Some n →
-    val_of_int (-n) it = Some vt →
+    val_to_Z vs it = Some n →
+    val_of_Z (-n) it = Some vt →
     eval_un_op NegOp (IntOp it) σ vs vt
 | NotIntOpI it σ vs vt n:
-    val_to_int vs it = Some n →
-    val_of_int (if it_signed it then Z.lnot n else Z_lunot (bits_per_int it) n) it = Some vt →
+    val_to_Z vs it = Some n →
+    val_of_Z (if it_signed it then Z.lnot n else Z_lunot (bits_per_int it) n) it = Some vt →
     eval_un_op NotIntOp (IntOp it) σ vs vt
 .
 
@@ -380,8 +380,8 @@ comparing pointers? (see lambda rust) *)
     heap_at l1 (it_layout it) vo (λ st, ∃ n, st = RSt n) σ.(st_heap).(hs_heap) →
     val_to_loc v2 = Some l2 →
     heap_at l2 (it_layout it) ve (λ st, st = RSt 0%nat) σ.(st_heap).(hs_heap) →
-    val_to_int vo it = Some z1 →
-    val_to_int ve it = Some z2 →
+    val_to_Z vo it = Some z1 →
+    val_to_Z ve it = Some z2 →
     v3 `has_layout_val` it_layout it →
     (bytes_per_int it ≤ bytes_per_addr)%nat →
     z1 ≠ z2 →
@@ -392,8 +392,8 @@ comparing pointers? (see lambda rust) *)
     heap_at l1 (it_layout it) vo (λ st, st = RSt 0%nat) σ.(st_heap).(hs_heap) →
     val_to_loc v2 = Some l2 →
     heap_at l2 (it_layout it) ve (λ st, ∃ n, st = RSt n) σ.(st_heap).(hs_heap) →
-    val_to_int vo it = Some z1 →
-    val_to_int ve it = Some z2 →
+    val_to_Z vo it = Some z1 →
+    val_to_Z ve it = Some z2 →
     v3 `has_layout_val` it_layout it →
     (bytes_per_int it ≤ bytes_per_addr)%nat →
     z1 = z2 →
@@ -430,7 +430,7 @@ comparing pointers? (see lambda rust) *)
     val_to_loc v2 = Some l2 →
     expr_step (CopyAllocId (Val v1) (Val v2)) σ [] (Val (val_of_loc (l2.1, l1.2))) σ []
 | IfES v it e1 e2 n σ:
-    val_to_int v it = Some n →
+    val_to_Z v it = Some n →
     expr_step (IfE (IntOp it) (Val v) e1 e2) σ [] (if bool_decide (n ≠ 0) then e1 else e2)  σ []
 (* no rule for StuckE *)
 .
@@ -447,7 +447,7 @@ Inductive stmt_step : stmt → runtime_function → state → list Empty_set →
     heap_at l ly v' start_st σ.(st_heap).(hs_heap) →
     stmt_step (Assign o ly (Val v1) (Val v2) s) rf σ [] (to_rtstmt rf end_stmt) (heap_fmap (heap_upd l end_val end_st) σ) []
 | SwitchS rf σ v n m bs s def it :
-    val_to_int v it = Some n →
+    val_to_Z v it = Some n →
     (∀ i : nat, m !! n = Some i → is_Some (bs !! i)) →
     stmt_step (Switch it (Val v) m bs def) rf σ [] (to_rtstmt rf (default def (i ← m !! n; bs !! i))) σ []
 | GotoS rf σ b s :

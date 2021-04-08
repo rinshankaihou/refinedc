@@ -202,7 +202,7 @@ Section own.
   Proof.
     iIntros "HT Hp" (Φ) "HΦ".
     iDestruct (loc_in_bounds_in_bounds with "Hp") as "#Hlib".
-    iDestruct (loc_in_bounds_in_range_uintptr_t with "Hlib") as %[? H]%val_of_int_is_some.
+    iDestruct (loc_in_bounds_in_range_uintptr_t with "Hlib") as %[? H]%val_of_Z_is_some.
     iDestruct (loc_in_bounds_ptr_in_range with "Hlib") as %?.
     iDestruct ("HT" with "[] Hp") as "HT"; first done.
     iApply wp_cast_ptr_int => //=; first by rewrite val_to_of_loc.
@@ -219,7 +219,7 @@ Section own.
     iIntros "HT" (Hn Φ) "HΦ".
     iApply wp_cast_int_ptr => //. by apply val_to_of_int.
     iApply ("HΦ" with "[]"); last iApply "HT"; first done.
-    iPureIntro. by apply: val_of_int_in_range.
+    iPureIntro. by apply: val_of_Z_in_range.
   Qed.
   Global Instance type_cast_int_ptr_inst n v it:
     TypedUnOp v (v ◁ᵥ n @ int it)%I (CastOp PtrOp) (IntOp it) :=
@@ -446,7 +446,7 @@ Section ptr.
   Proof.
     iIntros "HT Hp" (Φ) "HΦ".
     iDestruct "Hp" as "[-> #Hlib]".
-    iDestruct (loc_in_bounds_in_range_uintptr_t with "Hlib") as %[? H]%val_of_int_is_some.
+    iDestruct (loc_in_bounds_in_range_uintptr_t with "Hlib") as %[? H]%val_of_Z_is_some.
     iDestruct (loc_in_bounds_ptr_in_range with "Hlib") as %?.
     iDestruct ("HT" with "[] []") as "HT"; first done. { by iFrame "Hlib". }
     iApply wp_cast_ptr_int => //=; first by rewrite val_to_of_loc.
@@ -498,7 +498,7 @@ Section null.
     heap_state_loc_in_bounds p 0 h.(st_heap) →
     (if b then op = NeOp else op = EqOp) →
     eval_bin_op op PtrOp PtrOp h p NULL v
-     ↔ val_of_int (Z_of_bool b) i32 = Some v.
+     ↔ val_of_Z (Z_of_bool b) i32 = Some v.
   Proof.
     move => ??.
     destruct b => //; split => Heq; subst; try by [inversion Heq; simplify_eq].
@@ -508,7 +508,7 @@ Section null.
   Lemma eval_bin_op_null_null (b : bool) op h v:
     (if b then op = EqOp else op = NeOp) →
     eval_bin_op op PtrOp PtrOp h NULL NULL v
-     ↔ val_of_int (Z_of_bool b) i32 = Some v.
+     ↔ val_of_Z (Z_of_bool b) i32 = Some v.
   Proof.
     move => ?.
     destruct b => //; split => Heq; subst; try by [inversion Heq; simplify_eq].

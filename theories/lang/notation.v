@@ -316,7 +316,7 @@ Proof.
 Qed.
 
 Definition GetMember (e : expr) (s : struct_layout) (m : var_name) : expr :=
-  (e at_offset{u8, PtrOp, IntOp size_t} Val (default [MPoison] (offset_of s.(sl_members) m ≫= (λ m, val_of_int (Z.of_nat m) size_t))))%E.
+  (e at_offset{u8, PtrOp, IntOp size_t} Val (default [MPoison] (offset_of s.(sl_members) m ≫= (λ m, val_of_Z (Z.of_nat m) size_t))))%E.
 Notation "e 'at{' s } m" := (GetMember e%E s m) (at level 10, format "e  'at{' s }  m") : expr_scope.
 Typeclasses Opaque GetMember.
 Arguments GetMember : simpl never.
@@ -328,7 +328,7 @@ Typeclasses Opaque GetMemberLoc.
 Arguments GetMemberLoc : simpl never.
 
 Definition OffsetOf (s : struct_layout) (m : var_name) : expr :=
-  (default StuckE (Val <$> (offset_of s.(sl_members) m) ≫= (λ m, val_of_int (Z.of_nat m) size_t)))%E.
+  (default StuckE (Val <$> (offset_of s.(sl_members) m) ≫= (λ m, val_of_Z (Z.of_nat m) size_t)))%E.
 Typeclasses Opaque OffsetOf.
 Arguments OffsetOf : simpl never.
 
