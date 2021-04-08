@@ -7,8 +7,16 @@ Open Scope Z_scope.
 (** Representation of a byte stored in memory. *)
 Inductive mbyte : Set :=
 | MByte (b : byte)
-| MPtrFrag (l : loc) (n : nat)
+| MPtrFrag (l : loc) (n : nat) (** Fragment [n] for location [l]. *)
 | MPoison.
+
+Instance mbyte_dec_eq : EqDecision mbyte.
+Proof.
+  move => [b1|l1 n1|] [b2|l2 n2|]; try by right.
+  - destruct (decide (b1 = b2)); [left|right]; naive_solver.
+  - destruct (decide (l1 = l2 ∧ n1 = n2)); [left|right]; naive_solver.
+  - by left.
+Qed.
 
 (** Representation of a value (list of bytes). *)
 Definition val : Set := list mbyte.
@@ -19,6 +27,40 @@ Definition has_layout_val (v : val) (ly : layout) : Prop := length v = ly.(ly_si
 Notation "v `has_layout_val` n" := (has_layout_val v n) (at level 50) : stdpp_scope.
 Arguments has_layout_val : simpl never.
 Typeclasses Opaque has_layout_val.
+
+(** ** Conversion to and from locations. *)
+
+Definition val_of_loc (l : loc) : val :=
+  MPtrFrag l <$> seq 0 bytes_per_addr.
+
+Definition val_to_loc (v : val) : option loc :=
+  if v is MPtrFrag l 0 :: _ then
+    if (bool_decide (v = val_of_loc l)) then Some l else None
+  else None.
+
+Lemma val_to_of_loc l: val_to_loc (val_of_loc l) = Some l.
+Proof.
+  by rewrite /= bool_decide_true.
+Qed.
+
+Lemma val_of_to_loc v l :
+  val_to_loc v = Some l → v = val_of_loc l.
+Proof.
+  destruct v => //=; case_match => //; case_match => //.
+  case_bool_decide; naive_solver.
+Qed.
+
+Lemma val_to_loc_length v:
+  is_Some (val_to_loc v) → length v = bytes_per_addr.
+Proof.
+  rewrite /val_to_loc. move => [? H]. repeat case_match => //; simplify_eq.
+  revert select (bool_decide _ = _) => /bool_decide_eq_true ->.
+  by rewrite /val_of_loc fmap_length seq_length.
+Qed.
+
+Typeclasses Opaque val_of_loc val_to_loc.
+Arguments val_of_loc : simpl never.
+Arguments val_to_loc : simpl never.
 
 (** ** Conversion to and from mathematical integers. *)
 
@@ -143,47 +185,6 @@ Lemma i2v_bool_Some b it:
   val_to_int (i2v (Z_of_bool b) it) it = Some (Z_of_bool b).
 Proof. apply val_to_of_int. apply val_of_int_bool. Qed.
 
-(** ** Conversion to and from locations. *)
-
-Fixpoint val_to_loc_go (v : val) (pos : nat) (l : loc) : option loc :=
-  match v with
-  | MPtrFrag l' pos' :: v =>
-      if bool_decide (pos = pos' ∧ l = l') then
-        if bool_decide (pos = bytes_per_addr - 1)%nat then
-          if v is [] then Some l else None
-        else
-          val_to_loc_go v (S pos) l
-      else
-        None
-  | _                     => None
-  end.
-
-Definition val_to_loc (v : val) : option loc :=
-  match v with
-  | MPtrFrag l 0 :: v => val_to_loc_go v 1 l
-  | _                 => None
-  end.
-
-Definition val_of_loc (l : loc) : val :=
-  MPtrFrag l <$> seq 0 bytes_per_addr.
-
-Lemma val_to_of_loc l :
-  val_to_loc (val_of_loc l) = Some l.
-Proof. simpl. by case_decide. Qed.
-
-Lemma val_of_to_loc v l :
-  val_to_loc v = Some l → v = val_of_loc l.
-Proof.
-  destruct v => //=; case_match => //; case_match => //.
-  repeat (match goal with
-  | |- context [ val_to_loc_go ?v _ _ ] => destruct v
-          end => //=;
-                  case_match => //; repeat (case_decide; subst => //=)).
-  by case_match => // [[->]].
-Qed.
-
 Arguments val_to_int : simpl never.
 Arguments val_of_int : simpl never.
-Arguments val_to_loc : simpl never.
-Arguments val_of_loc : simpl never.
-Typeclasses Opaque val_to_loc val_of_loc val_to_int val_of_int val_of_bool.
+Typeclasses Opaque val_to_int val_of_int val_of_bool.
