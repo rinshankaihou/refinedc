@@ -206,7 +206,7 @@ Section optional.
       iPureIntro. by split => ?; simpl in *; simplify_eq.
     }
     iDestruct ("HT" with "Hv1") as "HT".
-    iApply "HΦ" => //. by rewrite /ty_own_val/=.
+    iApply "HΦ" => //. iPureIntro. by apply val_to_of_int.
   Qed.
 
   Global Instance type_eq_optional_neq_inst v1 v2 ty optty ot1 ot2 `{!Movable ty} `{!Movable optty} `{!Optionable ty optty ot1 ot2} :
@@ -382,7 +382,7 @@ Section optionalO.
         iFrame. iFrame. iPureIntro. by split => ?; simpl in *; simplify_eq.
       }
       iDestruct ("HT" with "Hv1") as "HT".
-      iApply "HΦ" => //. by rewrite /ty_own_val/=.
+      iApply "HΦ" => //. iPureIntro. by apply val_to_of_int.
     - have [|v' Hv] := val_of_Z_is_some i32 (Z_of_bool true) => //.
       iApply (wp_binop_det v'). iSplit. {
         iIntros (σ v) "Hctx". iDestruct "HT" as "[Hpre _]".
@@ -390,7 +390,7 @@ Section optionalO.
         iFrame. iFrame. iPureIntro. by split => ?; simpl in *; simplify_eq.
       }
       iDestruct ("HT" with "Hv1") as "HT".
-      iApply "HΦ" => //. by rewrite /ty_own_val/=.
+      iApply "HΦ" => //. iPureIntro. by apply val_to_of_int.
   Qed.
 
   Global Instance type_eq_optionalO_inst A v1 v2 (ty : A → type) optty ot1 ot2 `{!∀ x, Movable (ty x)} `{!Movable optty} `{!∀ x, Optionable (ty x) optty ot1 ot2} b `{!Inhabited A} :
@@ -412,7 +412,7 @@ Section optionalO.
         iFrame. iFrame. iPureIntro. by split => ?; simpl in *; simplify_eq.
       }
       iDestruct ("HT" with "Hv1") as "HT".
-      iApply "HΦ" => //. by rewrite /ty_own_val/=.
+      iApply "HΦ" => //. iPureIntro. by apply val_to_of_int.
     - have [|v' Hv] := val_of_Z_is_some i32 (Z_of_bool false) => //.
       iApply (wp_binop_det v'). iSplit. {
         iIntros (σ v) "Hctx". iDestruct "HT" as "[Hpre _]".
@@ -420,7 +420,7 @@ Section optionalO.
         iFrame. iFrame. iPureIntro. by split => ?; simpl in *; simplify_eq.
       }
       iDestruct ("HT" with "Hv1") as "HT".
-      iApply "HΦ" => //. by rewrite /ty_own_val/=.
+      iApply "HΦ" => //. iPureIntro. by apply val_to_of_int.
   Qed.
   Global Instance type_neq_optionalO_inst A v1 v2 (ty : A → type) optty ot1 ot2 `{!∀ x, Movable (ty x)} `{!Movable optty} `{!∀ x, Optionable (ty x) optty ot1 ot2} b `{!Inhabited A} :
     TypedBinOp v1 (v1 ◁ᵥ b @ optionalO ty optty)%I v2 (v2 ◁ᵥ optty) NeOp ot1 ot2 :=
@@ -472,13 +472,10 @@ Section int_optional.
     Optionable (n @ int it) ((-1) @ int it)%I (IntOp it) (IntOp it) := {|
     opt_pre _ _ := True%I
   |}.
-  Next Obligation. move => ??.  done. Qed.
+  Next Obligation. by move => ??. Qed.
   Next Obligation.
-    move => ?? [] [] ????; iIntros "_" (Hv1 Hv2) "_ !%";
-    rewrite val_of_Z_bool;
-    move: (Hv1) (Hv2) => /val_to_of_int? /val_to_of_int?;
-    split => Hin; first [
-       by simplify_eq; econstructor => //; case_bool_decide => //; lia |
-       by inversion Hin; simplify_eq; case_bool_decide => //; lia].
+    iIntros (?? [] [] ????) "_ %Hv1 %Hv2 _ !%".
+    all: split; first by (move => Hstep; inversion Hstep; simplify_eq; case_bool_decide => //=; lia).
+    all: rewrite val_of_Z_bool => ?; simplify_eq; econstructor => //; case_bool_decide => //; lia.
   Qed.
 End int_optional.

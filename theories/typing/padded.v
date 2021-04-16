@@ -192,10 +192,10 @@ Section padded.
       typed_bin_op v2 (v2 ◁ᵥ n @ int it) p (p ◁ₗ{β} padded ty lyty ly) (PtrOffsetOp u8) (IntOp it) PtrOp T.
   Proof.
     iIntros "HT" (Hint) "Hp". iIntros (Φ) "HΦ".
-    move: (Hint) => /val_of_Z_in_range?.
+    move: (Hint) => /val_to_Z_in_range?.
     iDestruct ("HT" with "[//]") as (???) "HT".
     iDestruct (split_padded (Z.to_nat n) with "Hp") as "[H1 H2]"; [lia..|].
-    iApply wp_ptr_offset. by apply val_to_of_loc. by apply val_to_of_int. done.
+    iApply wp_ptr_offset. by apply val_to_of_loc. done. done.
     iModIntro. rewrite offset_loc_sz1//.
     iApply ("HΦ" with "[H2]"). 2: iApply ("HT" with "H1 []"). rewrite Z2Nat.id; [|lia]. by iFrame.
     by iPureIntro.

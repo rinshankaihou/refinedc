@@ -158,7 +158,7 @@ Section own.
     ⌜ly_size ly = 1%nat⌝ ∗ (P -∗ T (val_of_loc l) (t2mt (l @ frac_ptr Own (place l)))) -∗
     typed_bin_op v1 (v1 ◁ᵥ offsetof s m) (l at{s}ₗ m) P (PtrNegOffsetOp ly) (IntOp size_t) PtrOp T.
   Proof.
-    iDestruct 1 as (Hly) "HT". iIntros ([n [Ho Hi%val_to_of_int]]) "HP". iIntros (Φ) "HΦ".
+    iDestruct 1 as (Hly) "HT". iIntros ([n [Ho Hi]]) "HP". iIntros (Φ) "HΦ".
     iApply wp_ptr_neg_offset. by apply val_to_of_loc. done. iModIntro.
     rewrite offset_loc_sz1 // /GetMemberLoc shift_loc_assoc Ho /= Z.add_opp_diag_r shift_loc_0.
     iApply "HΦ"; [ | by iApply "HT"]. done.
@@ -206,7 +206,8 @@ Section own.
     iDestruct (loc_in_bounds_ptr_in_range with "Hlib") as %?.
     iDestruct ("HT" with "[] Hp") as "HT"; first done.
     iApply wp_cast_ptr_int => //=; first by rewrite val_to_of_loc.
-    rewrite /i2v H /=. iApply ("HΦ" with "[] [HT]"); last done. done.
+    rewrite /i2v H /=. iApply ("HΦ" with "[] [HT]"); last done.
+    iPureIntro. by apply val_to_of_int.
   Qed.
   Global Instance type_cast_ptr_int_inst (p : loc) β ty n `{!LocInBounds ty β n}:
     TypedUnOp p (p ◁ₗ{β} ty)%I (CastOp (IntOp uintptr_t)) PtrOp :=
@@ -217,9 +218,9 @@ Section own.
     typed_un_op v (v ◁ᵥ n @ int it) (CastOp PtrOp) (IntOp it) T.
   Proof.
     iIntros "HT" (Hn Φ) "HΦ".
-    iApply wp_cast_int_ptr => //. by apply val_to_of_int.
+    iApply wp_cast_int_ptr => //.
     iApply ("HΦ" with "[]"); last iApply "HT"; first done.
-    iPureIntro. by apply: val_of_Z_in_range.
+    iPureIntro. by apply: val_to_Z_in_range.
   Qed.
   Global Instance type_cast_int_ptr_inst n v it:
     TypedUnOp v (v ◁ᵥ n @ int it)%I (CastOp PtrOp) (IntOp it) :=
@@ -450,7 +451,8 @@ Section ptr.
     iDestruct (loc_in_bounds_ptr_in_range with "Hlib") as %?.
     iDestruct ("HT" with "[] []") as "HT"; first done. { by iFrame "Hlib". }
     iApply wp_cast_ptr_int => //=; first by rewrite val_to_of_loc.
-    rewrite /i2v H /=. iApply ("HΦ" with "[] [HT]"); last done. done.
+    rewrite /i2v H /=. iApply ("HΦ" with "[] [HT]"); last done.
+    iPureIntro. by apply val_to_of_int.
   Qed.
   Global Instance type_cast_ptr_int_val_inst (v : val) (p : loc) n:
     TypedUnOp v (v ◁ᵥ p @ ptr n)%I (CastOp (IntOp uintptr_t)) PtrOp :=

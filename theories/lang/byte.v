@@ -23,3 +23,10 @@ Proof.
   - left. assert (H1 = H2) as ->; [|done]. apply proof_irrel.
   - right. naive_solver.
 Qed.
+
+Lemma byte_eq (b1 b2 : byte) :
+  b1 = b2 ↔ b1.(byte_val) = b2.(byte_val).
+Proof.
+  destruct b1, b2. split; simpl; [ naive_solver|].
+  intros. subst. f_equal. apply proof_irrel.
+Qed.

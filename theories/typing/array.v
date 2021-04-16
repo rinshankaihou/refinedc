@@ -222,7 +222,7 @@ Section array.
     iDestruct ("HP" with "Hv") as (Hv) "HP".
     iDestruct "HP" as (? Hlen) "HP".
     have [|ty ?]:= lookup_lt_is_Some_2 tys (Z.to_nat i). lia.
-    iApply wp_ptr_offset => //. by apply val_to_of_loc. by apply val_to_of_int.
+    iApply wp_ptr_offset => //. by apply val_to_of_loc.
     iIntros "!#". iExists _. iSplit => //.
     iDestruct (big_sepL_insert_acc with "Hl") as "[Hl Hc]" => //. rewrite Z2Nat.id//.
     iApply ("HP" $! ty with "[//] Hl"). iIntros (l' ty2 β2 typ R) "Hl' Htyp HT".

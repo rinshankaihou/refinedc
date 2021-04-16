@@ -123,3 +123,19 @@ Proof.
   destruct it as [? []] => //.
   split; unfold min_int, max_int => /=; lia.
 Qed.
+
+Lemma elem_of_int_type_0_to_127 (n : Z) (it : int_type):
+  0 ≤ n ≤ 127 → n ∈ it.
+Proof.
+  move => [??]. rewrite /elem_of /int_elem_of_it.
+  have ? := min_int_le_0 it.
+  have ? := max_int_ge_127 it.
+  lia.
+Qed.
+
+Lemma Z_of_bool_elem_of_int_type (b : bool) (it : int_type):
+  Z_of_bool b ∈ it.
+Proof.
+  apply elem_of_int_type_0_to_127.
+  destruct b => /=; lia.
+Qed.

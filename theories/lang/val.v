@@ -138,6 +138,41 @@ Lemma val_of_Z_in_range it z v:
   val_of_Z z it = Some v → z ∈ it.
 Proof. rewrite /val_of_Z. case_bool_decide; by eauto. Qed.
 
+Lemma val_to_Z_go_in_range v n:
+  val_to_Z_go v = Some n → 0 ≤ n < 2 ^ (length v * bits_per_byte).
+Proof.
+  elim: v n => /=.
+  - move => n [] <-. split; first lia.
+    apply Z.pow_pos_nonneg; lia.
+  - move => ? v IH n. case_match => //.
+    destruct (val_to_Z_go v) => /=; last done.
+    move => [] <-. move: (IH z eq_refl).
+    move: (byte_constr b). rewrite /byte_modulus /bits_per_byte.
+    move => [??] [??]. split; first lia.
+    have ->: S (length v) * 8 = 8 + length v * 8 by lia.
+    rewrite Z.pow_add_r; lia.
+Qed.
+
+Lemma val_to_Z_in_range v it n:
+  val_to_Z v it = Some n → n ∈ it.
+Proof.
+  rewrite /val_to_Z. case_decide as Hlen; last done.
+  destruct (val_to_Z_go v) eqn:Heq => /=; last done.
+  move: Heq => /val_to_Z_go_in_range.
+  rewrite Hlen /elem_of /int_elem_of_it /max_int /min_int.
+  rewrite /int_half_modulus /int_modulus /bits_per_int.
+  destruct (it_signed it) eqn:Hsigned => /=.
+  - case_decide => /=.
+    + move => [??] [] ?. simplify_eq.
+      assert (2 ^ (bytes_per_int it * bits_per_byte) =
+              2 * 2 ^ (bytes_per_int it * bits_per_byte - 1)) as Heq.
+      { rewrite Z.sub_1_r. rewrite Z_pow_pred_r => //. rewrite /bits_per_byte.
+        have ? := bytes_per_int_gt_0 it. lia. }
+      rewrite Heq. lia.
+    + move => [??] [] ?. lia.
+  - move => [??] [] ?. lia.
+Qed.
+
 Lemma val_to_of_int z it v:
   val_of_Z z it = Some v → val_to_Z v it = Some z.
 Proof.
@@ -184,6 +219,47 @@ Proof. by have /val_of_Z_length -> := val_of_Z_bool b it. Qed.
 Lemma i2v_bool_Some b it:
   val_to_Z (i2v (Z_of_bool b) it) it = Some (Z_of_bool b).
 Proof. apply val_to_of_int. apply val_of_Z_bool. Qed.
+
+Lemma val_to_Z_go_Some_inj v1 v2 n:
+  length v1 = length v2 →
+  val_to_Z_go v1 = Some n →
+  val_to_Z_go v2 = Some n →
+  v1 = v2.
+Proof.
+  elim: v1 v2 n; first by destruct v2.
+  move => b1 v1 IH [] b2 v2 // n /= [] Hlen.
+  destruct b1 as [b1|?|] => //. destruct b2 as [b2|?|] => //.
+  destruct (val_to_Z_go v1) as [n1|] eqn:Hn1 => //.
+  destruct (val_to_Z_go v2) as [n2|] eqn:Hn2 => //.
+  move => /= [] <- [] Heq.
+  assert (n1 = n2 ∧ byte_val b1 = byte_val b2) as [??].
+  { move: Heq. clear.
+    have H1 := byte_constr b1.
+    have H2 := byte_constr b2.
+    move: H1 H2. rewrite /byte_modulus. lia. }
+  simplify_eq. f_equal; last by eapply IH. f_equal.
+  by apply byte_eq.
+Qed.
+
+Lemma val_to_Z_Some_inj v1 v2 it n:
+  val_to_Z v1 it = Some n →
+  val_to_Z v2 it = Some n →
+  v1 = v2.
+Proof.
+  rewrite /val_to_Z.
+  case_decide as Hlen1; last done.
+  case_decide as Hlen2; last done.
+  destruct (val_to_Z_go v1) as [n1|] eqn:Hn1 => //=.
+  destruct (val_to_Z_go v2) as [n2|] eqn:Hn2 => //=.
+  move: (Hn1) => /val_to_Z_go_in_range [Hb1 HB1]; rewrite Hlen1 in HB1.
+  move: (Hn2) => /val_to_Z_go_in_range [Hb2 HB2]; rewrite Hlen2 in HB2.
+  have Hlen: length v1 = length v2 by rewrite Hlen1 Hlen2.
+  move => <- Heq_if. eapply val_to_Z_go_Some_inj => //.
+  rewrite Hn2; f_equal. move: Heq_if.
+  rewrite /int_modulus /int_half_modulus /bits_per_int.
+  destruct (it_signed it) => /=; last naive_solver.
+  repeat case_bool_decide => /=; naive_solver lia.
+Qed.
 
 Arguments val_to_Z : simpl never.
 Arguments val_of_Z : simpl never.
