@@ -63,6 +63,10 @@ Section int.
     iSplitR => //. iExists q, v. iFrame. iModIntro. eauto with iFrame.
   Qed.
 
+  Global Instance int_timeless l z it:
+    Timeless (l ◁ₗ z @ int it)%I.
+  Proof. apply _. Qed.
+
 End int.
 (* Typeclasses Opaque int. *)
 Notation "int< it >" := (int it) (only printing, format "'int<' it '>'") : printing_sugar.
@@ -86,17 +90,12 @@ Section boolean.
   Next Obligation. iIntros (???). done. Qed.
 
   Lemma boolean_own_val_eq v b it:
-    (v ◁ᵥ b @ boolean it)%I ≡ ⌜v = i2v (Z_of_bool b) it⌝%I.
-  Proof.
-    iSplit.
-    - iIntros "%Hv !%". rewrite /i2v.
-      have [v' Hv']: is_Some (val_of_Z (Z_of_bool b) it).
-      { apply val_of_Z_is_some. apply elem_of_int_type_0_to_127.
-        destruct b => /=; lia. }
-      rewrite Hv'. simpl. apply val_to_of_int in Hv'.
-      by eapply val_to_Z_Some_inj.
-    - iIntros "-> !%". by rewrite i2v_bool_Some.
-  Qed.
+    (v ◁ᵥ b @ boolean it)%I ≡ ⌜val_to_Z v it = Some (Z_of_bool b)⌝%I.
+  Proof. done. Qed.
+
+  Global Instance boolean_timeless l b it:
+    Timeless (l ◁ₗ b @ boolean it)%I.
+  Proof. apply _. Qed.
 
 End boolean.
 Notation "boolean< it >" := (boolean it) (only printing, format "'boolean<' it '>'") : printing_sugar.
@@ -412,6 +411,31 @@ Section programs.
     TypedUnOpVal v (n @ int it)%I NotIntOp (IntOp it) :=
     λ T, i2p (type_not_int n it v T).
 
+  (* TODO: replace this with a typed_cas once it is refactored to take E as an argument. *)
+  Lemma wp_cas_suc_int it z1 z2 zd l1 l2 vd Φ E:
+    (bytes_per_int it ≤ bytes_per_addr)%nat →
+    z1 = z2 →
+    l1 ◁ₗ z1 @ int it -∗ l2 ◁ₗ z2 @ int it -∗ vd ◁ᵥ zd @ int it -∗
+    ▷ (l1 ◁ₗ zd @ int it -∗ l2 ◁ₗ z2 @ int it -∗ Φ (val_of_bool true)) -∗
+    wp NotStuck E (CAS (IntOp it) (Val l1) (Val l2) (Val vd)) Φ.
+  Proof.
+    iIntros (? ->) "(%v1&%&%&Hl1) (%v2&%&%&Hl2) % HΦ/=".
+    iApply (wp_cas_suc with "Hl1 Hl2"); try done; try by [apply: val_to_of_loc]; try by [apply: val_to_Z_length].
+    iIntros "!# Hl1 Hl2". iApply ("HΦ" with "[Hl1] [Hl2]"); iExists _; by iFrame.
+  Qed.
+
+  Lemma wp_cas_fail_int it z1 z2 zd l1 l2 vd Φ E:
+    (bytes_per_int it ≤ bytes_per_addr)%nat →
+    z1 ≠ z2 →
+    l1 ◁ₗ z1 @ int it -∗ l2 ◁ₗ z2 @ int it -∗ vd ◁ᵥ zd @ int it -∗
+    ▷ (l1 ◁ₗ z1 @ int it -∗ l2 ◁ₗ z1 @ int it -∗ Φ (val_of_bool false)) -∗
+    wp NotStuck E (CAS (IntOp it) (Val l1) (Val l2) (Val vd)) Φ.
+  Proof.
+    iIntros (? ?) "(%v1&%&%&Hl1) (%v2&%&%&Hl2) % HΦ/=".
+    iApply (wp_cas_fail with "Hl1 Hl2"); try done; try by [apply: val_to_of_loc]; try by [apply: val_to_Z_length].
+    iIntros "!# Hl1 Hl2". iApply ("HΦ" with "[Hl1] [Hl2]"); iExists _; by iFrame.
+  Qed.
+
   (*** bool *)
   Lemma type_val_bool' b:
     ⊢ (val_of_bool b) ◁ᵥ (b @ boolean bool_it).
@@ -480,6 +504,27 @@ Section programs.
   Global Instance type_cast_bool_inst b it1 it2 v:
     TypedUnOpVal v (b @ boolean it1)%I (CastOp (IntOp it2)) (IntOp it1) :=
     λ T, i2p (type_cast_bool b it1 it2 v T).
+
+  (* TODO: replace this with a typed_cas once it is refactored to take E as an argument. *)
+  Lemma wp_cas_suc_bool it b1 b2 bd l1 l2 vd Φ E:
+    (bytes_per_int it ≤ bytes_per_addr)%nat →
+    b1 = b2 →
+    l1 ◁ₗ b1 @ boolean it -∗ l2 ◁ₗ b2 @ boolean it -∗ vd ◁ᵥ bd @ boolean it -∗
+    ▷ (l1 ◁ₗ bd @ boolean it -∗ l2 ◁ₗ b2 @ boolean it -∗ Φ (val_of_bool true)) -∗
+    wp NotStuck E (CAS (IntOp it) (Val l1) (Val l2) (Val vd)) Φ.
+  Proof. iIntros (? ->) "Hl1 Hl2 Hv HΦ/=". iApply (wp_cas_suc_int with "Hl1 Hl2 Hv"); done. Qed.
+
+  Lemma wp_cas_fail_bool it b1 b2 bd l1 l2 vd Φ E:
+    (bytes_per_int it ≤ bytes_per_addr)%nat →
+    b1 ≠ b2 →
+    l1 ◁ₗ b1 @ boolean it -∗ l2 ◁ₗ b2 @ boolean it -∗ vd ◁ᵥ bd @ boolean it -∗
+    ▷ (l1 ◁ₗ b1 @ boolean it -∗ l2 ◁ₗ b1 @ boolean it -∗ Φ (val_of_bool false)) -∗
+    wp NotStuck E (CAS (IntOp it) (Val l1) (Val l2) (Val vd)) Φ.
+  Proof.
+    iIntros (? ?) "Hl1 Hl2 Hv HΦ/=". iApply (wp_cas_fail_int with "Hl1 Hl2 Hv"); try done.
+    by destruct b1, b2.
+  Qed.
+
 
   (*** int <-> bool *)
   Lemma subsume_int_bool_place l β n b it T:

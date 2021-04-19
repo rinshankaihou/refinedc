@@ -144,24 +144,10 @@ Section proofs.
           iIntros "???" (Φ) "HΦ".
           destruct (decide (next = i)) as [<-|] .
           ** iRename select (_ ◁ₗ next @ int u16)%I into "Hnext".
-             iDestruct (ty_aligned with "Hnext") as %?.
-             iDestruct (ty_deref with "Hnext") as (?) "[Hnext Hv]".
-             iDestruct (ty_size_eq with "Hv") as %?. iDestruct "Hv" as "%".
              iRename select (_ ◁ₗ (next + 1) @ int u16)%I into "Hnext+1".
-             iDestruct (ty_aligned with "Hnext+1") as %?.
-             iDestruct (ty_deref with "Hnext+1") as (?) "[Hnext+1 Hv]".
-             iDestruct (ty_size_eq with "Hv") as %?. iDestruct "Hv" as "%".
-             iDestruct select (_ ◁ᵥ (next + 1) @ int u16)%I as "Hv".
-             iDestruct (ty_size_eq with "Hv") as %?. iDestruct "Hv" as "%".
              iDestruct select (local_ticket ◁ᵥ _)%I as "[_ Hticket]".
-             iDestruct (ty_aligned with "Hticket") as %?.
-             iDestruct (ty_deref with "Hticket") as (?) "[Hticket Hv]".
-             iDestruct (ty_size_eq with "Hv") as %?. iDestruct "Hv" as "%".
              iDestruct select (p at{_}ₗ _ ◁ᵥ _)%I as "[_ ->]".
-             iApply (wp_cas_suc _ _ _ v2 v4 next next _ _ _ u16 _ _ with "Hnext Hticket") => //.
-             { by rewrite val_to_of_loc. }
-             { by rewrite val_to_of_loc. }
-             { cbv. lia. }
+             iApply (wp_cas_suc_int with "Hnext Hticket [$]"). { cbv. lia. } done.
              iNext. iIntros "??". iApply ("HΦ" $! _ (t2mt (true @ boolean bool_it))%I) => //.
              repeat liRStep; liShow.
              rewrite /hyp_spinlock_t_invariant.
@@ -171,44 +157,19 @@ Section proofs.
              liInst Hevar2 (next + 1).
              liInst Hevar0 next.
              repeat liRStep; liShow.
-             iRename select (p at{struct_hyp_spinlock}ₗ _ ↦ _)%I into "Hnext".
-             iSplitL "Hnext".
-             { iDestruct (ty_ref (t := (next + 1) @ int u16)%I with "[] Hnext []") as "$" => //. }
-             iDestruct select (owner_frag _ _) as "$".
-             iDestruct select (ticket_range _ 0 _) as "$".
              iRename select (ticket_range _ _ _) into "Htks".
-             iDestruct (split_first_ticket with "Htks") as "[$$]".
+             iDestruct (split_first_ticket with "Htks") as "[Hnext $]".
              { split; last by lia. by transitivity (min_int u16) => //. }
              iRename select (_ ∨ _)%I into "Hcases".
              iSplitL "Hcases".
              { iDestruct "Hcases" as "[[H %]|H]"; [iLeft | iRight] => //. iSplitL => //. iPureIntro. lia. }
-             iDestruct (ty_ref (t := uninit u16) with "[] Hnext+1 []") as "$" => //.
-             { iPureIntro. split => //. by apply Forall_forall. }
-             iRename select (local_ticket ↦ _)%I into "Hticket".
-             iRename select (local_got_it ◁ₗ _)%I into "Hgot_it".
-             iDestruct (ty_ref (t := next @ int u16) with "[] Hticket []") as "$" => //.
-             iDestruct (ty_aligned with "Hgot_it") as %?.
-             iDestruct (ty_deref with "Hgot_it") as (?) "[Hgot_it [% ->]]".
-             iDestruct (ty_ref (t := true @ boolean bool_it) with "[] Hgot_it []") as "$" => //.
+             repeat liRStep; liShow.
           ** iRename select (_ ◁ₗ next @ int u16)%I into "Hnext".
-             iDestruct (ty_aligned with "Hnext") as %?.
-             iDestruct (ty_deref with "Hnext") as (?) "[Hnext Hv]".
-             iDestruct (ty_size_eq with "Hv") as %?. iDestruct "Hv" as "%".
              iRename select (_ ◁ₗ (i + 1) @ int u16)%I into "Hi+1".
-             iDestruct (ty_aligned with "Hi+1") as %?.
-             iDestruct (ty_deref with "Hi+1") as (?) "[Hi+1 Hv]".
-             iDestruct (ty_size_eq with "Hv") as %?. iDestruct "Hv" as "%".
              iDestruct select (_ ◁ᵥ (i + 1) @ int u16)%I as "Hv".
-             iDestruct (ty_size_eq with "Hv") as %?. iDestruct "Hv" as "%".
              iDestruct select (local_ticket ◁ᵥ _)%I as "[_ Hticket]".
-             iDestruct (ty_aligned with "Hticket") as %?.
-             iDestruct (ty_deref with "Hticket") as (?) "[Hticket Hv]".
-             iDestruct (ty_size_eq with "Hv") as %?. iDestruct "Hv" as "%".
              iDestruct select (p at{_}ₗ _ ◁ᵥ _)%I as "[_ ->]".
-             iApply (wp_cas_fail _ _ _ v2 v4 next i _ _ _ u16 _ _ with "Hnext Hticket") => //.
-             { by rewrite val_to_of_loc. }
-             { by rewrite val_to_of_loc. }
-             { cbv. lia. }
+             iApply (wp_cas_fail_int with "Hnext Hticket [$]"). { cbv. lia. } done.
              iNext. iIntros "??". iApply ("HΦ" $! _ (t2mt (false @ boolean bool_it))%I) => //.
              repeat liRStep; liShow.
              rewrite /hyp_spinlock_t_invariant.
@@ -218,21 +179,6 @@ Section proofs.
              liInst Hevar2 next.
              liInst Hevar0 next.
              repeat liRStep; liShow.
-             iRename select (p at{struct_hyp_spinlock}ₗ _ ↦ _)%I into "Hnext".
-             iSplitL "Hnext".
-             { iDestruct (ty_ref (t := next @ int u16)%I with "[] Hnext []") as "$" => //. }
-             iDestruct select (owner_frag _ _) as "$".
-             iDestruct select (ticket_range _ 0 _) as "$".
-             iDestruct select (ticket_range _ _ _) as "$".
-             iDestruct select (_ ∨ _)%I as "$".
-             iDestruct (ty_ref (t := uninit u16) with "[] Hi+1 []") as "$" => //.
-             { iPureIntro. split => //. by apply Forall_forall. }
-             iRename select (local_ticket ↦ _)%I into "Hticket".
-             iDestruct (ty_ref (t := next @ int u16) with "[] Hticket []") as "$" => //.
-             iRename select (local_got_it ◁ₗ _)%I into "Hgot_it".
-             iDestruct (ty_aligned with "Hgot_it") as %?.
-             iDestruct (ty_deref with "Hgot_it") as (?) "[Hgot_it [% ->]]".
-             iDestruct (ty_ref (t := false @ boolean bool_it) with "[] Hgot_it []") as "$" => //.
       + liRStepUntil typed_if. do 2 liRStep; liShow.
         * repeat liRStep; liShow.
           iExists (Shr, place _); iSplitR; first by simpl.
@@ -259,27 +205,13 @@ Section proofs.
           iDestruct "Inv" as (owner next) "([%%]&Howner&Hnext&Hrest)".
           destruct (decide (next = i)) as [<-|] .
           ** iRename select (_ ◁ₗ next @ int u16)%I into "Hnext".
-             iDestruct (ty_aligned with "Hnext") as %?.
-             iDestruct (ty_deref with "Hnext") as (?) "[Hnext Hv]".
-             iDestruct (ty_size_eq with "Hv") as %?. iDestruct "Hv" as "%".
              iRename select (_ ◁ₗ (next + 1) @ int u16)%I into "Hnext+1".
-             iDestruct (ty_aligned with "Hnext+1") as %?.
-             iDestruct (ty_deref with "Hnext+1") as (?) "[Hnext+1 Hv]".
-             iDestruct (ty_size_eq with "Hv") as %?. iDestruct "Hv" as "%".
              iDestruct select (_ ◁ᵥ (next + 1) @ int u16)%I as "Hv".
-             iDestruct (ty_size_eq with "Hv") as %?. iDestruct "Hv" as "%".
              iDestruct select (local_ticket ◁ᵥ _)%I as "[_ Hticket]".
-             iDestruct (ty_aligned with "Hticket") as %?.
-             iDestruct (ty_deref with "Hticket") as (?) "[Hticket Hv]".
-             iDestruct (ty_size_eq with "Hv") as %?. iDestruct "Hv" as "%".
              iDestruct select (p at{_}ₗ _ ◁ᵥ _)%I as "[_ ->]".
-             iApply (wp_cas_suc _ _ _ v2 v4 next next _ _ _ u16 _ _ with "Hnext Hticket") => //.
-             { by rewrite val_to_of_loc. }
-             { by rewrite val_to_of_loc. }
-             { cbv. lia. }
+             iApply (wp_cas_suc_int with "Hnext Hticket [$]"). { cbv. lia. } done.
              iNext. iIntros "??". iApply ("HΦ" $! _ (t2mt (true @ boolean bool_it))%I) => //.
-             iRename select (p at{struct_hyp_spinlock}ₗ _ ↦ _)%I into "Hnext".
-             iDestruct (ty_ref (t := (next + 1) @ int u16)%I with "[] Hnext []") as "Hnext" => //.
+             iRename select (p at{struct_hyp_spinlock}ₗ "next" ◁ₗ _)%I into "Hnext".
              iDestruct "Hrest" as "(Hfrag&Hr1&Hr2&Hcases)".
              iDestruct (split_first_ticket with "Hr2") as "[Hticket Hr2]".
              { split; last by lia. by transitivity (min_int u16). }
@@ -290,44 +222,18 @@ Section proofs.
                iSplitL => //. iPureIntro. lia. }
              iModIntro.
              repeat liRStep; liShow.
-             liInst Hevar0 next. iFrame.
-             iRename select (local_ticket ↦ _)%I into "Hlocal_ticket".
-             iRename select (local_next ↦ _)%I into "Hlocal_next".
-             iDestruct (ty_ref (t := next @ int u16) with "[] Hlocal_ticket []") as "$" => //.
-             iDestruct (ty_ref (t := uninit u16) with "[] Hlocal_next []") as "$" => //.
-             { iPureIntro. split => //. by apply Forall_forall. }
           ** iRename select (_ ◁ₗ next @ int u16)%I into "Hnext".
-             iDestruct (ty_aligned with "Hnext") as %?.
-             iDestruct (ty_deref with "Hnext") as (?) "[Hnext Hv]".
-             iDestruct (ty_size_eq with "Hv") as %?. iDestruct "Hv" as "%".
              iRename select (_ ◁ₗ (i + 1) @ int u16)%I into "Hi+1".
-             iDestruct (ty_aligned with "Hi+1") as %?.
-             iDestruct (ty_deref with "Hi+1") as (?) "[Hi+1 Hv]".
-             iDestruct (ty_size_eq with "Hv") as %?. iDestruct "Hv" as "%".
              iDestruct select (_ ◁ᵥ (i + 1) @ int u16)%I as "Hv".
-             iDestruct (ty_size_eq with "Hv") as %?. iDestruct "Hv" as "%".
              iDestruct select (local_ticket ◁ᵥ _)%I as "[_ Hticket]".
-             iDestruct (ty_aligned with "Hticket") as %?.
-             iDestruct (ty_deref with "Hticket") as (?) "[Hticket Hv]".
-             iDestruct (ty_size_eq with "Hv") as %?. iDestruct "Hv" as "%".
              iDestruct select (p at{_}ₗ _ ◁ᵥ _)%I as "[_ ->]".
-             iApply (wp_cas_fail _ _ _ v2 v4 next i _ _ _ u16 _ _ with "Hnext Hticket") => //.
-             { by rewrite val_to_of_loc. }
-             { by rewrite val_to_of_loc. }
-             { cbv. lia. }
+             iApply (wp_cas_fail_int with "Hnext Hticket [$]"). { cbv. lia. } done.
              iNext. iIntros "??". iApply ("HΦ" $! _ (t2mt (false @ boolean bool_it))%I) => //.
-             iRename select (p at{struct_hyp_spinlock}ₗ _ ↦ _)%I into "Hnext".
-             iDestruct (ty_ref (t := next @ int u16)%I with "[] Hnext []") as "Hnext" => //.
+             iRename select (p at{struct_hyp_spinlock}ₗ _ ◁ₗ _)%I into "Hnext".
              iMod ("Hclose_inv" with "[Howner Hnext Hrest]") as "_".
              { iNext. iExists owner, next. iFrame "Howner". iFrame "Hnext". iFrame "Hrest". done. }
              iModIntro.
              repeat liRStep; liShow.
-             liInst Hevar0 next.
-             iRename select (local_ticket ↦ _)%I into "Hlocal_ticket".
-             iRename select (local_next ↦ _)%I into "Hlocal_next".
-             iDestruct (ty_ref (t := next @ int u16) with "[] Hlocal_ticket []") as "$" => //.
-             iDestruct (ty_ref (t := uninit u16) with "[] Hlocal_next []") as "$" => //.
-             { iPureIntro. split => //. by apply Forall_forall. }
     - (* #4 Final loop: checking if we are the owner. *)
       destruct s.
       + repeat liRStep; liShow.

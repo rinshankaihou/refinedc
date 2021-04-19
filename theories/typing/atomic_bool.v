@@ -11,15 +11,13 @@ Section atomic_bool.
       match β return _ with
       | Own => ∃ b, l ◁ₗ b @ boolean it ∗ if b then PT else PF
       | Shr => ⌜l `has_layout_loc` it⌝ ∗
-               inv atomic_boolN (∃ b, l ↦ i2v (Z_of_bool b) it ∗ if b then PT else PF)
+               inv atomic_boolN (∃ b, l ◁ₗ b @ boolean it ∗ if b then PT else PF)
       end;
   |}%I.
   Next Obligation.
     iIntros "%it %PT %PF %l %E %HE (%b&Hb&Hown)".
     iDestruct (ty_aligned with "Hb") as %?. iSplitR => //.
     iApply inv_alloc. iNext. iExists b. iFrame.
-    iDestruct (ty_deref with "Hb") as "(%v&Hl&Hb)".
-    by iDestruct (boolean_own_val_eq with "Hb") as %<-.
   Qed.
 
   Global Program Instance movable_atomic_bool it PT PF : Movable (atomic_bool it PT PF) := {|
@@ -82,12 +80,14 @@ Section programs.
     - iDestruct "Hl" as (Hly) "#Hinv".
       iInv "Hinv" as (b) "[>Hl Hif]" "Hclose".
       iApply fupd_mask_intro. set_solver. iIntros "Hclose2".
-      iExists _, _, _, (t2mt (b @ boolean it)). iFrame.
-      rewrite /has_layout_val i2v_bool_length.
-      do 2 iSplitR => //=. iSplitR; first by iApply boolean_own_val_eq.
+      iDestruct (ty_aligned with "Hl") as %?.
+      iDestruct (ty_deref with "Hl") as (?) "[Hmt #Hv]".
+      iDestruct (ty_size_eq with "Hv") as %?.
+      iExists _, _, _, (t2mt (b @ boolean it)). iFrame "Hmt Hv".
+      iSplit; [done|]. iSplit; [done|].
       iIntros "!# Hl". iDestruct ("HT" with "Hif") as "[Hif $]".
       iMod "Hclose2" as "_".
-      iMod ("Hclose" with "[-]"). { iExists _. by iFrame. }
+      iMod ("Hclose" with "[-]"). { iExists b. iModIntro. iFrame. by iApply (ty_ref with "[] Hl Hv"). }
       iModIntro. by iSplitR.
   Qed.
   Global Instance type_read_atomic_bool_inst l β it PT PF:
@@ -105,7 +105,7 @@ Section programs.
     typed_write_end true v ty l β (atomic_bool it PT PF) T.
   Proof.
     iIntros "[%bnew Hsub] Hl Hv".
-    iDestruct ("Hsub" with "Hv") as "(Hnew&->&Hif_new&HT)".
+    iDestruct ("Hsub" with "Hv") as "(#Hnew&->&Hif_new&HT)".
     destruct β.
     - iDestruct "Hl" as "[%bold [Hl Hif_old]]".
       iApply fupd_mask_intro => //. iIntros "Hc".
@@ -119,12 +119,14 @@ Section programs.
     - iDestruct "Hl" as (?) "#Hinv".
       iInv "Hinv" as (b) "[>Hmt Hif]" "Hc".
       iApply fupd_mask_intro; first solve_ndisj.
-      iIntros "Hc2". iSplitL "Hmt".
-      { iExists _; iFrame; iPureIntro; split => //. apply i2v_bool_length. }
+      iIntros "Hc2".
+      iDestruct (ty_aligned with "Hmt") as %?.
+      iDestruct (ty_deref with "Hmt") as (?) "[Hmt #Hv]".
+      iDestruct (ty_size_eq with "Hv") as %?.
+      iSplitL "Hmt". { iExists _; by iFrame. }
       iIntros "!# Hl". iMod "Hc2".
-      iDestruct (boolean_own_val_eq with "Hnew") as %->.
       iMod ("Hc" with "[Hif_new Hl]").
-      { iModIntro. iExists bnew. iFrame. }
+      { iModIntro. iExists bnew. iFrame. by iApply (@ty_ref with "[] Hl Hnew"). }
       iModIntro. iExists _. iFrame. by iSplit.
   Qed.
   Global Instance type_write_atomic_bool_inst l β it PT PF v ty `{!Movable ty}:
@@ -151,77 +153,39 @@ Section programs.
   Proof.
     iIntros "(%bexp&%bnew&Hsub) Hl Hlexp Hvnew".
     iDestruct ("Hsub" with "Hlexp") as "[Hlexp Hsub]".
-    iDestruct ("Hsub" with "Hvnew") as "[Hvnew [% Hsub]]".
+    iDestruct ("Hsub" with "Hvnew") as "[#Hvnew [% Hsub]]".
     iIntros (Φ) "HΦ".
-    (* TODO: don't unfold here *)
-    rewrite {1 2}/boolean/boolean_inner_type/int/int_inner_type/=.
-    iDestruct "Hlexp" as (ve Hve Hle) "He" => /=.
-    iDestruct "Hvnew" as %Hvnew.
     destruct β.
     - iDestruct "Hl" as (b) "[Hb Hif]".
-      (* TODO: don't unfold here *)
-      rewrite {1}/boolean/boolean_inner_type/int/int_inner_type/=.
-      iDestruct "Hb" as (vb Hvb Hlb) "Hb" => /=.
       destruct (decide (b = bexp)); subst.
-      + iApply (wp_cas_suc with "Hb He") => //.
-        { by apply val_to_of_loc. }
-        { by apply val_to_of_loc. }
-        { by eapply val_to_Z_length. }
+      + iApply (wp_cas_suc_bool with "Hb Hlexp") => //.
         iIntros "!# Hb Hexp".
         iDestruct "Hsub" as "[Hsub _]". iDestruct ("Hsub" with "Hif") as "[Hif HT]".
-        iApply "HΦ". 2: iApply ("HT" with "[Hb Hif]"). done.
-        * iExists bnew. iFrame "Hif". iExists _. by iFrame.
-        * iExists _. by iFrame.
-      + iApply (wp_cas_fail with "Hb He") => //.
-        { by apply val_to_of_loc. }
-        { by apply val_to_of_loc. }
-        { by eapply val_to_Z_length. }
-        { by destruct b, bexp. }
+        iApply "HΦ". 2: iApply ("HT" with "[Hb Hif] Hexp"). done.
+        iExists bnew. by iFrame.
+      + iApply (wp_cas_fail_bool with "Hb Hlexp") => //.
         iIntros "!# Hb Hexp".
         iDestruct "Hsub" as "[_ HT]".
         iApply "HΦ". 2: iApply ("HT" with "[Hb Hif]"). done.
-        * iExists b. iFrame "Hif". iExists _. by iFrame.
-        * iExists _. iFrame. by destruct b, bexp.
+        * iExists b. iFrame.
+        * by destruct b, bexp.
     - iDestruct "Hl" as (?) "#Hinv".
       iInv "Hinv" as "Hb".
       iDestruct "Hb" as (b) "[>Hmt Hif]".
       destruct (decide (b = bexp)); subst.
-      + iApply (wp_cas_suc with "Hmt He") => //.
-        { by apply val_to_of_loc. }
-        { by apply val_to_of_loc. }
-        { apply val_to_of_int. rewrite /i2v.
-          have Hin: Z_of_bool bexp ∈ it by apply Z_of_bool_elem_of_int_type.
-          apply val_of_Z_is_some in Hin. destruct Hin as [? ->]. done. }
-        { by eapply val_to_Z_length. }
+      + iApply (wp_cas_suc_bool with "Hmt Hlexp") => //.
         iIntros "!# Hb Hexp".
         iDestruct "Hsub" as "[Hsub _]". iDestruct ("Hsub" with "Hif") as "[Hif HT]".
-        iModIntro. iSplitL "Hb Hif".
-        { iExists bnew. iFrame.
-          assert (vnew = i2v (Z_of_bool bnew) it) as ->; last done.
-          rewrite /i2v.
-          have Hin: Z_of_bool bnew ∈ it by apply Z_of_bool_elem_of_int_type.
-          apply val_of_Z_is_some in Hin. destruct Hin as [? Heq]. rewrite Heq /=.
-          apply val_to_of_int in Heq. by eapply val_to_Z_Some_inj. }
-        iApply "HΦ". 2: iApply ("HT" with "[]"). done.
-        * by iSplit.
-        * iExists _. by iFrame.
-      + iApply (wp_cas_fail with "Hmt He") => //.
-        { by apply val_to_of_loc. }
-        { by apply val_to_of_loc. }
-        { apply val_to_of_int. rewrite /i2v.
-          have Hin: Z_of_bool b ∈ it by apply Z_of_bool_elem_of_int_type.
-          apply val_of_Z_is_some in Hin. destruct Hin as [? ->]. done. }
-        { by eapply val_to_Z_length. }
-        { by destruct b, bexp. }
+        iModIntro. iSplitL "Hb Hif". { iExists bnew. iFrame. }
+        iApply "HΦ". 2: iApply ("HT" with "[] Hexp"). done.
+        by iSplit.
+      + iApply (wp_cas_fail_bool with "Hmt Hlexp") => //.
         iIntros "!# Hb Hexp".
         iDestruct "Hsub" as "[_ HT]".
         iModIntro. iSplitL "Hb Hif". { by iExists b; iFrame; rewrite /i2v Hvnew. }
         iApply "HΦ". 2: iApply ("HT" with "[]"). done.
         * by iSplit.
-        * iExists _. iFrame. iSplit; last done. iPureIntro. rewrite /i2v.
-          have Hin: Z_of_bool b ∈ it by apply Z_of_bool_elem_of_int_type.
-          apply val_of_Z_is_some in Hin. destruct Hin as [? Heq]. rewrite Heq /=.
-          apply val_to_of_int in Heq. rewrite Heq. by destruct b, bexp.
+        * by destruct b, bexp.
   Qed.
   Global Instance type_cas_atomic_bool_inst (l : loc) β it PT PF (lexp : loc) Pexp vnew Pnew:
     TypedCas (IntOp it) l (l ◁ₗ{β} (atomic_bool it PT PF))%I lexp Pexp vnew Pnew :=
