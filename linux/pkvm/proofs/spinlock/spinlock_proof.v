@@ -466,8 +466,8 @@ Section proofs.
           iSplit. { iPureIntro. by lia. }
           iDestruct ((ty_ref (t := (owner + 1) @ int u16)) with "[] Hl []") as "$" => //.
           { iPureIntro. rewrite /i2v.
-            destruct (val_of_Z (owner + 1)) eqn:Heq => /=; first by apply val_to_of_int.
-            exfalso. assert (owner + 1 ∈ u16) as Hu16%val_of_Z_is_some by (split; lia).
+            destruct (val_of_Z (owner + 1)) eqn:Heq => /=; first by apply val_to_of_Z.
+            exfalso. assert (owner + 1 ∈ u16) as Hu16%val_of_Z_is_Some by (split; lia).
             destruct Hu16 as [??]. by simplify_eq. }
           iRight. iFrame "Htok". by iExists _. }
         iModIntro.

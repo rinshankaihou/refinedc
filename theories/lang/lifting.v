@@ -444,11 +444,11 @@ Lemma wp_get_member Φ vl l sl n E:
 Proof.
   iIntros (Hvl [i Hi]) "HΦ".
   rewrite /GetMember/GetMemberLoc/offset_of Hi /=.
-  have [|? Hs]:= (val_of_Z_is_some size_t (offset_of_idx sl.(sl_members) i)). {
+  have [|? Hs]:= (val_of_Z_is_Some size_t (offset_of_idx sl.(sl_members) i)). {
     split; first by rewrite /min_int/=; lia.
     by apply offset_of_bound.
   }
-  rewrite Hs /=. move: Hs => /val_to_of_int Hs.
+  rewrite Hs /=. move: Hs => /val_to_of_Z Hs.
   iApply wp_binop_det. iSplit; last done.
   iIntros (σ v) "_ !%". split.
   - inversion 1; simplify_eq. by rewrite offset_loc_sz1.
@@ -466,7 +466,7 @@ Lemma wp_offset_of Φ s m i E:
   WP OffsetOf s m @ E {{ Φ }}.
 Proof.
   rewrite /OffsetOf. iIntros (Ho) "HΦ".
-  have [|? Hs]:= (val_of_Z_is_some size_t i). {
+  have [|? Hs]:= (val_of_Z_is_Some size_t i). {
     split; first by rewrite /min_int/=; lia.
     move: Ho => /fmap_Some[?[?->]].
     by apply offset_of_bound.

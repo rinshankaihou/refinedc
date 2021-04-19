@@ -202,12 +202,12 @@ Section own.
   Proof.
     iIntros "HT Hp" (Φ) "HΦ".
     iDestruct (loc_in_bounds_in_bounds with "Hp") as "#Hlib".
-    iDestruct (loc_in_bounds_in_range_uintptr_t with "Hlib") as %[? H]%val_of_Z_is_some.
+    iDestruct (loc_in_bounds_in_range_uintptr_t with "Hlib") as %[? H]%val_of_Z_is_Some.
     iDestruct (loc_in_bounds_ptr_in_range with "Hlib") as %?.
     iDestruct ("HT" with "[] Hp") as "HT"; first done.
     iApply wp_cast_ptr_int => //=; first by rewrite val_to_of_loc.
     rewrite /i2v H /=. iApply ("HΦ" with "[] [HT]"); last done.
-    iPureIntro. by apply val_to_of_int.
+    iPureIntro. by apply val_to_of_Z.
   Qed.
   Global Instance type_cast_ptr_int_inst (p : loc) β ty n `{!LocInBounds ty β n}:
     TypedUnOp p (p ◁ₗ{β} ty)%I (CastOp (IntOp uintptr_t)) PtrOp :=
@@ -447,12 +447,12 @@ Section ptr.
   Proof.
     iIntros "HT Hp" (Φ) "HΦ".
     iDestruct "Hp" as "[-> #Hlib]".
-    iDestruct (loc_in_bounds_in_range_uintptr_t with "Hlib") as %[? H]%val_of_Z_is_some.
+    iDestruct (loc_in_bounds_in_range_uintptr_t with "Hlib") as %[? H]%val_of_Z_is_Some.
     iDestruct (loc_in_bounds_ptr_in_range with "Hlib") as %?.
     iDestruct ("HT" with "[] []") as "HT"; first done. { by iFrame "Hlib". }
     iApply wp_cast_ptr_int => //=; first by rewrite val_to_of_loc.
     rewrite /i2v H /=. iApply ("HΦ" with "[] [HT]"); last done.
-    iPureIntro. by apply val_to_of_int.
+    iPureIntro. by apply val_to_of_Z.
   Qed.
   Global Instance type_cast_ptr_int_val_inst (v : val) (p : loc) n:
     TypedUnOp v (v ◁ᵥ p @ ptr n)%I (CastOp (IntOp uintptr_t)) PtrOp :=

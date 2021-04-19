@@ -107,7 +107,7 @@ Lemma val_of_Z_go_length z sz :
   length (val_of_Z_go z sz) = sz.
 Proof. elim: sz z => //= ? IH ?. by f_equal. Qed.
 
-Lemma val_to_of_int_go z (sz : nat) :
+Lemma val_to_of_Z_go z (sz : nat) :
   0 ≤ z < 2 ^ (sz * bits_per_byte) →
   val_to_Z_go (val_of_Z_go z sz) = Some z.
 Proof.
@@ -130,7 +130,7 @@ Lemma val_to_Z_length v it z:
   val_to_Z v it = Some z → length v = bytes_per_int it.
 Proof. rewrite /val_to_Z. by case_decide. Qed.
 
-Lemma val_of_Z_is_some it z:
+Lemma val_of_Z_is_Some it z:
   z ∈ it → is_Some (val_of_Z z it).
 Proof. rewrite /val_of_Z. case_bool_decide; by eauto. Qed.
 
@@ -173,7 +173,7 @@ Proof.
   - move => [??] [] ?. lia.
 Qed.
 
-Lemma val_to_of_int z it v:
+Lemma val_to_of_Z z it v:
   val_of_Z z it = Some v → val_to_Z v it = Some z.
 Proof.
   rewrite /val_of_Z /val_to_Z => Ht.
@@ -181,7 +181,7 @@ Proof.
   move: Hr => /bool_decide_eq_true[Hm HM].
   have Hlen := bytes_per_int_gt_0 it.
   rewrite /max_int in HM. rewrite /min_int in Hm.
-  rewrite val_of_Z_go_length val_to_of_int_go /=.
+  rewrite val_of_Z_go_length val_to_of_Z_go /=.
   - case_decide as H => //. clear H.
     destruct (it_signed it) eqn:Hs => /=.
     + case_decide => /=; last (rewrite bool_decide_false //; lia).
@@ -202,7 +202,7 @@ Qed.
 Lemma val_of_Z_bool b it:
   val_of_Z (Z_of_bool b) it = Some (i2v (Z_of_bool b) it).
 Proof.
-  have [|? Hv] := val_of_Z_is_some it (Z_of_bool b); last by rewrite /i2v Hv.
+  have [|? Hv] := val_of_Z_is_Some it (Z_of_bool b); last by rewrite /i2v Hv.
   rewrite /elem_of /int_elem_of_it.
   have ? := min_int_le_0 it. have ? := max_int_ge_127 it.
   split; destruct b => /=; lia.
@@ -218,7 +218,7 @@ Proof. by have /val_of_Z_length -> := val_of_Z_bool b it. Qed.
 
 Lemma i2v_bool_Some b it:
   val_to_Z (i2v (Z_of_bool b) it) it = Some (Z_of_bool b).
-Proof. apply val_to_of_int. apply val_of_Z_bool. Qed.
+Proof. apply val_to_of_Z. apply val_of_Z_bool. Qed.
 
 Lemma val_to_Z_go_Some_inj v1 v2 n:
   length v1 = length v2 →

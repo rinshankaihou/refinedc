@@ -108,8 +108,8 @@ Section programs.
     ⌜n ∈ it⌝ ∗ T (t2mt (n @ (int it))) -∗ typed_value (i2v n it) T.
   Proof.
     iIntros "[%Hn HT]".
-    move: Hn => /val_of_Z_is_some [v Hv].
-    move: (Hv) => /val_to_of_int Hn.
+    move: Hn => /val_of_Z_is_Some [v Hv].
+    move: (Hv) => /val_to_of_Z Hn.
     iExists _. iFrame. iPureIntro. by rewrite /i2v Hv.
   Qed.
   Global Instance type_val_int_inst n it : TypedValue (i2v n it) :=
@@ -264,7 +264,7 @@ Section programs.
     iIntros "%Hop HT %Hv1 %Hv2 %Φ HΦ".
     iDestruct ("HT" with "[] []" ) as (Hsc) "HT".
     1-2: iPureIntro; by apply: val_to_Z_in_range.
-    assert (n ∈ it) as [v Hv]%val_of_Z_is_some.
+    assert (n ∈ it) as [v Hv]%val_of_Z_is_Some.
     { apply: arith_op_result_in_range => //; by apply: val_to_Z_in_range. }
     move: (Hv) => /val_of_Z_in_range ?. rewrite /i2v Hv /=.
     iApply (wp_binop_det v). iSplit.
@@ -278,7 +278,7 @@ Section programs.
         all: try by inversion Hsc; case_bool_decide; naive_solver.
         all: destruct it as [? []]; simplify_eq/= => //.
         all: try by rewrite it_in_range_mod.
-    - iIntros "!>". iApply "HΦ"; last done. iPureIntro. by apply val_to_of_int.
+    - iIntros "!>". iApply "HΦ"; last done. iPureIntro. by apply val_to_of_Z.
   Qed.
   Global Program Instance type_add_int_int_inst it v1 n1 v2 n2:
     TypedBinOpVal v1 (n1 @ int it)%I v2 (n2 @ int it)%I AddOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_int_int it v1 n1 v2 n2 T (n1 + n2) _ _).
@@ -357,12 +357,12 @@ Section programs.
     iIntros "HT %Hv %Φ HΦ". move: (Hv) => /val_to_Z_in_range ?.
     iDestruct ("HT" with "[//]") as (Hs Hn) "HT".
     have ? : val_of_Z (- n) it = Some (i2v (- n) it). {
-      have [|? Hv'] := val_of_Z_is_some it (- n); last by rewrite /i2v Hv'.
+      have [|? Hv'] := val_of_Z_is_Some it (- n); last by rewrite /i2v Hv'.
       unfold elem_of, int_elem_of_it, max_int, min_int in *.
       destruct it as [?[]] => //; simpl in *; lia.
     }
     iApply wp_neg_int => //. iApply ("HΦ" with "[] HT").
-    iPureIntro. by apply val_to_of_int.
+    iPureIntro. by apply val_to_of_Z.
   Qed.
   Global Instance type_neg_int_inst n it v:
     TypedUnOpVal v (n @ int it)%I NegOp (IntOp it) :=
@@ -374,9 +374,9 @@ Section programs.
   Proof.
     iIntros "HT %Hv %Φ HΦ". iDestruct ("HT" with "[]") as (Hin) "HT".
     { iPureIntro. by apply: val_to_Z_in_range. }
-    move: Hin => /val_of_Z_is_some [v' Hv']. rewrite /i2v Hv' /=.
+    move: Hin => /val_of_Z_is_Some [v' Hv']. rewrite /i2v Hv' /=.
     iApply wp_cast_int => //. iApply ("HΦ" with "[] HT") => //.
-    iPureIntro. by apply val_to_of_int.
+    iPureIntro. by apply val_to_of_Z.
   Qed.
   Global Instance type_cast_int_inst n it1 it2 v:
     TypedUnOpVal v (n @ int it1)%I (CastOp (IntOp it2)) (IntOp it1) :=
@@ -399,13 +399,13 @@ Section programs.
         have -> : ∀ a b, a ≤ b - 1 ↔ a < b by lia.
         have ? := bits_per_int_gt_0 it.
         apply Z_lunot_range; lia. }
-    rewrite /n => /val_of_Z_is_some [v Hv]. rewrite /i2v Hv /=.
+    rewrite /n => /val_of_Z_is_Some [v Hv]. rewrite /i2v Hv /=.
     iApply (wp_unop_det v). iSplit.
     - iIntros (σ v') "_ !%". split.
       + by inversion 1; simplify_eq.
       + move => ->. by econstructor.
     - iIntros "!>". iApply "HΦ"; last done. iPureIntro.
-      by apply val_to_of_int.
+      by apply val_to_of_Z.
   Qed.
   Global Instance type_not_int_inst n it v:
     TypedUnOpVal v (n @ int it)%I NotIntOp (IntOp it) :=
@@ -609,7 +609,7 @@ Section offsetof.
   Proof.
     iIntros "[%Hin HT] %Φ HΦ". move: Hin => /offset_of_from_in [n Hn].
     iApply wp_offset_of => //. iIntros "%v %Hv". iApply "HΦ" => //.
-    iExists _. iSplit; first done. iPureIntro. by apply val_to_of_int.
+    iExists _. iSplit; first done. iPureIntro. by apply val_to_of_Z.
   Qed.
 
 End offsetof.
