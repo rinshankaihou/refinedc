@@ -23,7 +23,7 @@ Section proof_free.
         arg_sz ◁ₗ (n @ (int (size_t))) ∗
         local_entry ◁ₗ uninit void* ∗
         local_cur ◁ₗ (cp @ (&own (cs @ (chunks_t)))) ∗
-        arg_list ◁ₗ (p @ (&own (wand (cp ◁ₗ ({[n]} ⊎ cs) @ chunks_t) (({[n]} ⊎ s) @ (chunks_t)))))
+        arg_list ◁ₗ (p @ (&own (wand (cp ◁ₗ ({[+n+]} ⊎ cs) @ chunks_t) (({[+n+]} ⊎ s) @ (chunks_t)))))
     ]> $
       ∅
     )%I : gmap label (iProp Σ)) ((

@@ -24,7 +24,7 @@ Section spec.
         (n @ (int (size_t))) ;
         (guarded ("chunks_t_0") (apply_dfun self (tail)))
       ]) struct_chunk n) (
-        ⌜s = {[n]} ⊎ tail⌝ ∗
+        ⌜s = {[+n+]} ⊎ tail⌝ ∗
         ⌜∀ k, k ∈ tail → n ≤ k⌝
       )))
     )) (null)))
@@ -48,7 +48,7 @@ Section spec.
           (n @ (int (size_t))) ;
           (guarded "chunks_t_0" (tail @ chunks_t))
         ]) struct_chunk n) (
-          ⌜s = {[n]} ⊎ tail⌝ ∗
+          ⌜s = {[+n+]} ⊎ tail⌝ ∗
           ⌜∀ k, k ∈ tail → n ≤ k⌝
         )))
       )) (null)))
@@ -100,7 +100,7 @@ Section spec.
   (* Specifications for function [free]. *)
   Definition type_of_free :=
     fn(∀ (s, p, n) : (gmultiset nat) * loc * nat; (p @ (&own (s @ (chunks_t)))), (&own (uninit (n))), (n @ (int (size_t))); ⌜sizeof(struct_chunk) ≤ n⌝)
-      → ∃ () : (), (void); (p ◁ₗ (({[n]} ⊎ s) @ (chunks_t))).
+      → ∃ () : (), (void); (p ◁ₗ (({[+n+]} ⊎ s) @ (chunks_t))).
 End spec.
 
 Typeclasses Opaque chunks_t_rec.

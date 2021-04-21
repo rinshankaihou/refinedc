@@ -20,7 +20,7 @@ typedef struct
                "{s ≠ ∅} @ optional<&own<...>, null>")]]
 [[rc::exists  ("n: nat", "tail: {gmultiset nat}")]]
 [[rc::size    ("n")]]
-[[rc::constraints("{s = {[n]} ⊎ tail}",
+[[rc::constraints("{s = {[+n+]} ⊎ tail}",
                   "{∀ k, k ∈ tail → n ≤ k}")]]
 chunk {
   [[rc::field("n @ int<size_t>")]] size_t size;
@@ -31,15 +31,15 @@ chunk {
 [[rc::args      ("p @ &own<s @ chunks_t>", "&own<uninit<n>>",
                  "n @ int<size_t>")]]
 [[rc::requires  ("{sizeof(struct_chunk) ≤ n}")]]
-[[rc::ensures   ("own p : {{[n]} ⊎ s} @ chunks_t")]]
+[[rc::ensures   ("own p : {{[+n+]} ⊎ s} @ chunks_t")]]
 [[rc::tactics   ("all: multiset_solver.")]]
 void free(chunks_t* list, void* data, size_t sz) {
   chunks_t* cur = list;
   [[rc::exists  ("cp: loc", "cs: {gmultiset nat}")]]
   [[rc::inv_vars("cur: cp @ &own<cs @ chunks_t>")]]
   [[rc::inv_vars("list:"
-       "p @ &own<wand<{cp ◁ₗ ({[n]} ⊎ cs) @ chunks_t},"
-                     "{{[n]} ⊎ s} @ chunks_t>>")]]
+       "p @ &own<wand<{cp ◁ₗ ({[+n+]} ⊎ cs) @ chunks_t},"
+                     "{{[+n+]} ⊎ s} @ chunks_t>>")]]
   while(*cur != NULL) {
     if(sz <= (*cur)->size) break;
     cur = &(*cur)->next;
