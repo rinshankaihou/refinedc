@@ -30,33 +30,72 @@ Typeclasses Opaque has_layout_val.
 
 (** ** Conversion to and from locations. *)
 
-Definition val_of_loc (l : loc) : val :=
-  MPtrFrag l <$> seq 0 bytes_per_addr.
+Definition val_of_loc_n (n : nat) (l : loc) : val :=
+  MPtrFrag l <$> rev (seq 0 n).
 
-Definition val_to_loc (v : val) : option loc :=
-  if v is MPtrFrag l 0 :: _ then
-    if (bool_decide (v = val_of_loc l)) then Some l else None
+Definition val_of_loc : loc → val :=
+  val_of_loc_n bytes_per_addr.
+
+Definition val_to_loc_n (n : nat) (v : val) : option loc :=
+  if v is MPtrFrag l _ :: _ then
+    if (bool_decide (v = val_of_loc_n n l)) then Some l else None
   else None.
 
-Lemma val_to_of_loc l: val_to_loc (val_of_loc l) = Some l.
+Definition val_to_loc : val → option loc :=
+  val_to_loc_n bytes_per_addr.
+
+Lemma val_of_loc_n_length n l:
+  length (val_of_loc_n n l) = n.
 Proof.
-  by rewrite /= bool_decide_true.
+  by rewrite /val_of_loc_n fmap_length rev_length seq_length.
 Qed.
 
-Lemma val_of_to_loc v l :
+Lemma val_to_of_loc_n n l:
+  n ≠ 0%nat →
+  val_to_loc_n n (val_of_loc_n n l) = Some l.
+Proof.
+  destruct n as [|n]; first done.
+  rewrite /val_of_loc_n seq_S rev_unit /= bool_decide_true //.
+  by rewrite /val_of_loc_n seq_S rev_unit.
+Qed.
+
+Lemma val_to_of_loc l:
+  val_to_loc (val_of_loc l) = Some l.
+Proof.
+  by apply val_to_of_loc_n.
+Qed.
+
+Lemma val_of_to_loc_n n v l:
+  val_to_loc_n n v = Some l → v = val_of_loc_n n l.
+Proof.
+  rewrite /val_to_loc_n.
+  destruct v as [|b v'] eqn:Hv; first done. repeat case_match => //.
+  revert select (_ = _) => /bool_decide_eq_true -> ?. by simplify_eq.
+Qed.
+
+Lemma val_of_to_loc v l:
   val_to_loc v = Some l → v = val_of_loc l.
 Proof.
-  destruct v => //=; case_match => //; case_match => //.
-  case_bool_decide; naive_solver.
+  by move => /val_of_to_loc_n ->.
+Qed.
+
+Lemma val_to_loc_n_length n v:
+  is_Some (val_to_loc_n n v) → length v = n.
+Proof.
+  rewrite /val_to_loc_n. move => [? H]. repeat case_match => //; simplify_eq.
+  revert select (bool_decide _ = _) => /bool_decide_eq_true ->.
+  by rewrite val_of_loc_n_length.
 Qed.
 
 Lemma val_to_loc_length v:
   is_Some (val_to_loc v) → length v = bytes_per_addr.
 Proof.
-  rewrite /val_to_loc. move => [? H]. repeat case_match => //; simplify_eq.
-  revert select (bool_decide _ = _) => /bool_decide_eq_true ->.
-  by rewrite /val_of_loc fmap_length seq_length.
+  apply val_to_loc_n_length.
 Qed.
+
+Typeclasses Opaque val_of_loc_n val_to_loc_n val_of_loc val_to_loc.
+Arguments val_of_loc : simpl never.
+Arguments val_to_loc : simpl never.
 
 Typeclasses Opaque val_of_loc val_to_loc.
 Arguments val_of_loc : simpl never.
@@ -74,7 +113,7 @@ Fixpoint val_to_Z_go v : option Z :=
   end.
 
 Definition val_to_Z (v : val) (it : int_type) : option Z :=
-  if decide (length v = bytes_per_int it) then
+  if bool_decide (length v = bytes_per_int it) then
     z ← val_to_Z_go v;
     if it.(it_signed) && bool_decide (int_half_modulus it ≤ z) then
       Some (z - int_modulus it)
@@ -182,7 +221,7 @@ Proof.
   have Hlen := bytes_per_int_gt_0 it.
   rewrite /max_int in HM. rewrite /min_int in Hm.
   rewrite val_of_Z_go_length val_to_of_Z_go /=.
-  - case_decide as H => //. clear H.
+  - case_bool_decide as H => //. clear H.
     destruct (it_signed it) eqn:Hs => /=.
     + case_decide => /=; last (rewrite bool_decide_false //; lia).
       rewrite bool_decide_true; [f_equal; lia|].
@@ -197,6 +236,16 @@ Proof.
       rewrite /bits_per_int /bytes_per_int /bits_per_byte /=.
       apply Z.pow_lt_mono_r; try lia.
     + rewrite /int_modulus /bits_per_int in HM. lia.
+Qed.
+
+Lemma val_to_Z_val_of_loc_n_None n l it:
+  val_to_Z (val_of_loc_n n l) it = None.
+Proof.
+  destruct n as [|n].
+  - rewrite /val_of_loc_n /= /val_to_Z bool_decide_false //=.
+    have ? := bytes_per_int_gt_0 it. lia.
+  - rewrite /val_of_loc_n seq_S rev_app_distr /= /val_to_Z.
+    by case_bool_decide.
 Qed.
 
 Lemma val_of_Z_bool b it:
@@ -264,3 +313,172 @@ Qed.
 Arguments val_to_Z : simpl never.
 Arguments val_of_Z : simpl never.
 Typeclasses Opaque val_to_Z val_of_Z val_of_bool.
+
+(** ** Conversion to and from integer representation. *)
+
+Inductive int_repr :=
+| IRInt (z : Z)
+| IRLoc (l : loc).
+
+Definition int_repr_to_Z (i : int_repr) : Z :=
+  match i with
+  | IRInt z => z
+  | IRLoc l => l.2
+  end.
+
+Definition int_repr_to_loc (i : int_repr) : loc :=
+  match i with
+  | IRInt z => (None, z)
+  | IRLoc l => l
+  end.
+
+Definition val_of_int_repr (i : int_repr) (it : int_type) : option val :=
+  match i with
+  | IRInt z => val_of_Z z it
+  | IRLoc l => if bool_decide (l.2 ∈ it) then
+                 Some (val_of_loc_n (bytes_per_int it) l)
+               else
+                 None
+  end.
+
+Definition val_to_int_repr (v : val) (it : int_type) : option int_repr :=
+  match val_to_Z v it with
+  | Some z => Some (IRInt z)
+  | None   =>
+    match val_to_loc_n (bytes_per_int it) v with
+    | Some l => if bool_decide (l.2 ∈ it) then Some (IRLoc l) else None
+    | None   => None
+    end
+  end.
+
+Definition val_to_Z_weak (v : val) (it : int_type) : option Z :=
+  int_repr_to_Z <$> val_to_int_repr v it.
+
+Definition val_to_loc_weak (v : val) (it : int_type) : option loc :=
+  int_repr_to_loc <$> val_to_int_repr v it.
+
+Definition ir2v (i : int_repr) (it : int_type) : val :=
+  default (replicate (bytes_per_int it) MPoison) (val_of_int_repr i it).
+
+Lemma val_to_Z_to_int_repr_Z v it z:
+  val_to_Z v it = Some z → val_to_Z_weak v it = Some z.
+Proof.
+  by rewrite /val_to_Z_weak /val_to_int_repr => ->.
+Qed.
+
+Lemma val_of_int_repr_length i it v:
+  val_of_int_repr i it = Some v → length v = bytes_per_int it.
+Proof.
+  destruct i => /=; first by apply val_of_Z_length.
+  case_bool_decide; last done. move => [] <-.
+  by rewrite /val_of_loc_n fmap_length rev_length seq_length.
+Qed.
+
+Lemma val_to_int_repr_length v it i:
+  val_to_int_repr v it = Some i → length v = bytes_per_int it.
+Proof.
+  rewrite /val_to_int_repr.
+  destruct (val_to_Z v it) eqn:? => /=.
+  - move => _. by eapply val_to_Z_length.
+  - destruct (val_to_loc_n (bytes_per_int it) v) eqn:?; last done.
+    move => _. apply val_to_loc_n_length. by eexists.
+Qed.
+
+Lemma val_to_Z_weak_length v it z:
+  val_to_Z_weak v it = Some z → length v = bytes_per_int it.
+Proof.
+  rewrite /val_to_Z_weak.
+  destruct (val_to_int_repr v it) eqn:Heq; last done.
+  by apply val_to_int_repr_length in Heq.
+Qed.
+
+Lemma val_to_loc_weak_length v it l:
+  val_to_loc_weak v it = Some l → length v = bytes_per_int it.
+Proof.
+  rewrite /val_to_loc_weak.
+  destruct (val_to_int_repr v it) eqn:Heq; last done.
+  by apply val_to_int_repr_length in Heq.
+Qed.
+
+Lemma ir2v_length i it : length (ir2v i it) = bytes_per_int it.
+Proof.
+  rewrite /ir2v. destruct (val_of_int_repr i it) eqn:Heq => /=.
+  - by move: Heq => /val_of_int_repr_length.
+  - by rewrite replicate_length.
+Qed.
+
+Lemma val_of_int_repr_in_range it i v:
+  val_of_int_repr i it = Some v → (int_repr_to_Z i) ∈ it.
+Proof.
+  destruct i => /=; first by apply val_of_Z_in_range.
+  by case_bool_decide.
+Qed.
+
+Lemma val_to_int_repr_in_range v it i:
+  val_to_int_repr v it = Some i → int_repr_to_Z i ∈ it.
+Proof.
+  rewrite /val_to_int_repr.
+  destruct (val_to_Z v it) eqn:? => /=.
+  - move => [<-] /=. by eapply val_to_Z_in_range.
+  - destruct (val_to_loc_n (bytes_per_int it) v) eqn:?; last done.
+    case_bool_decide; last done. by move => /= [<-] /=.
+Qed.
+
+Lemma val_to_Z_weak_in_range v it z:
+  val_to_Z_weak v it = Some z → z ∈ it.
+Proof.
+  rewrite /val_to_Z_weak.
+  destruct (val_to_int_repr v it) eqn:Heq; last done.
+  move => /= [<-]. by apply val_to_int_repr_in_range in Heq.
+Qed.
+
+Lemma val_to_loc_weak_in_range v it l:
+  val_to_loc_weak v it = Some l → l.2 ∈ it.
+Proof.
+  rewrite /val_to_loc_weak.
+  destruct (val_to_int_repr v it) eqn:Heq; last done.
+  move => /= [<-]. apply val_to_int_repr_in_range in Heq.
+  by destruct i.
+Qed.
+
+Lemma val_to_of_int_repr i it v:
+  val_of_int_repr i it = Some v → val_to_int_repr v it = Some i.
+Proof.
+  rewrite /val_of_int_repr /val_to_int_repr.
+  destruct i => /=; first by move => /val_to_of_Z ->.
+  case_bool_decide; last done. move => [] <-.
+  rewrite val_to_Z_val_of_loc_n_None /= val_to_of_loc_n ?bool_decide_true //.
+  have ? := bytes_per_int_gt_0 it. lia.
+Qed.
+
+Lemma int_repr_to_Z_is_Some_val_of_int_repr i it:
+  int_repr_to_Z i ∈ it → is_Some (val_of_int_repr i it).
+Proof.
+  destruct i => /=; first by apply val_of_Z_is_Some.
+  move => ?. rewrite bool_decide_true //. by eexists.
+Qed.
+
+Lemma val_of_int_repr_is_Some it i:
+  int_repr_to_Z i ∈ it → is_Some (val_of_int_repr i it).
+Proof.
+  destruct i => /=; first by apply val_of_Z_is_Some.
+  move => ?. rewrite bool_decide_true //=. by eexists.
+Qed.
+
+Lemma val_to_loc_weak_val_of_loc_n it p:
+  p.2 ∈ it →
+  val_to_loc_weak (val_of_loc_n (bytes_per_int it) p) it = Some p.
+Proof.
+  move => ?. rewrite /val_to_loc_weak /val_to_int_repr.
+  rewrite val_to_Z_val_of_loc_n_None val_to_of_loc_n ?bool_decide_true //.
+  have ? := bytes_per_int_gt_0 it. lia.
+Qed.
+
+Instance int_repr_eq_dec : EqDecision int_repr.
+Proof.
+  move => i1 i2; destruct i1 as [z1|l1]; destruct i2 as [z2|l2]; try by right.
+  - destruct (decide (z1 = z2)) as [->|]; [left | right]; naive_solver.
+  - destruct (decide (l1 = l2)) as [->|]; [left | right]; naive_solver.
+Qed.
+
+Instance int_repr_inhabited : Inhabited int_repr := populate (IRInt 0).

@@ -219,8 +219,8 @@ let rec pp_expr : Coq_ast.expr pp = fun ff e ->
         in
         List.iteri fn es;
         pp "@]@;] (%a : expr)@]" pp_expr e
-    | CopyAID(e1, e2)               ->
-        pp "CopyAllocId (%a) (%a)" pp_expr e1 pp_expr e2
+    | CopyAID(ot2, e1, e2)          ->
+        pp "CopyAllocId (%a) (%a) (%a)" pp_op_type ot2 pp_expr e1 pp_expr e2
   in
   match Location.get e.loc with
   | Some(d) when !print_expr_locs ->

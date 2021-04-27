@@ -12,7 +12,7 @@ Section proof_roundtrip2.
     ⊢ typed_function impl_roundtrip2 type_of_roundtrip2.
   Proof.
     Open Scope printing_sugar.
-    start_function "roundtrip2" ([p n]) => arg_p local_i local_q.
+    start_function "roundtrip2" (p) => arg_p local_i local_q.
     split_blocks ((
       ∅
     )%I : gmap label (iProp Σ)) ((
@@ -21,7 +21,6 @@ Section proof_roundtrip2.
     - repeat liRStep; liShow.
       all: print_typesystem_goal "roundtrip2" "#0".
     Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
-    all: try solve_loc_eq.
     all: print_sidecondition_goal "roundtrip2".
   Qed.
 End proof_roundtrip2.

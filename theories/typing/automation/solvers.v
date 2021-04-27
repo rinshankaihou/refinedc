@@ -8,6 +8,8 @@ Proof. done. Qed.
 
 Ltac unfold_common_defs :=
   unfold
+  (* Unfold [addr] since [lia] may get stuck due to [addr]/[Z] mismatches. *)
+    addr,
   (* Layout *)
     ly_size, ly_with_align, ly_align_log,
   (* Integer bounds *)

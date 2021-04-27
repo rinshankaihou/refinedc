@@ -36,4 +36,8 @@ Global Instance simpl_to_NULL_val_of_loc (l : loc):
   SimplAndRel (=) NULL (l) (λ T, False).
 Proof. split; naive_solver. Qed.
 
+(** * value representation *)
+Global Instance simpl_and_eq_val_of_loc l1 l2:
+  SimplAnd (val_of_loc l1 = val_of_loc l2) (λ T, l1 = l2 ∧ T).
+Proof. split; naive_solver. Qed.
 

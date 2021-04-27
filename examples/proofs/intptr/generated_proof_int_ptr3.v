@@ -4,23 +4,23 @@ From refinedc.examples.intptr Require Import generated_spec.
 Set Default Proof Using "Type".
 
 (* Generated from [examples/intptr.c]. *)
-Section proof_roundtrip_and_read2.
+Section proof_int_ptr3.
   Context `{!typeG Σ} `{!globalG Σ}.
 
-  (* Typing proof for [roundtrip_and_read2]. *)
-  Lemma type_roundtrip_and_read2 :
-    ⊢ typed_function impl_roundtrip_and_read2 type_of_roundtrip_and_read2.
+  (* Typing proof for [int_ptr3]. *)
+  Lemma type_int_ptr3 :
+    ⊢ typed_function impl_int_ptr3 type_of_int_ptr3.
   Proof.
     Open Scope printing_sugar.
-    start_function "roundtrip_and_read2" ([l n]) => arg_p local_i local_r local_q.
+    start_function "int_ptr3" (l) => arg_p local_i.
     split_blocks ((
       ∅
     )%I : gmap label (iProp Σ)) ((
       ∅
     )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
-      all: print_typesystem_goal "roundtrip_and_read2" "#0".
+      all: print_typesystem_goal "int_ptr3" "#0".
     Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
-    all: print_sidecondition_goal "roundtrip_and_read2".
+    all: print_sidecondition_goal "int_ptr3".
   Qed.
-End proof_roundtrip_and_read2.
+End proof_int_ptr3.

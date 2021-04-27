@@ -6,40 +6,76 @@ Set Default Proof Using "Type".
 Section spec.
   Context `{!typeG Σ} `{!globalG Σ}.
 
+  (* Inlined code. *)
+
+  Notation "P ? l : r" :=
+    (if bool_decide P then l else r)
+    (at level 100, l at next level, r at next level).
+
   (* Type definitions. *)
 
-  (* Specifications for function [int_ptr]. *)
-  Definition type_of_int_ptr :=
-    fn(∀ () : (); (&own (int (i32))); True)
-      → ∃ () : (), (int (size_t)); True.
+  (* Specifications for function [int_ptr1]. *)
+  Definition type_of_int_ptr1 :=
+    fn(∀ l : loc; (l @ (&own (int (i32)))); True)
+      → ∃ () : (), (l @ (intptr (uintptr_t))); True.
 
-  (* Specifications for function [min_ptr_val]. *)
-  Definition type_of_min_ptr_val :=
+  (* Specifications for function [int_ptr2]. *)
+  Definition type_of_int_ptr2 :=
+    fn(∀ l : loc; (l @ (&own (int (i32)))); True)
+      → ∃ () : (), ((l.2) @ (int (uintptr_t))); True.
+
+  (* Specifications for function [int_ptr3]. *)
+  Definition type_of_int_ptr3 :=
+    fn(∀ l : loc; (l @ (&own (int (i32)))); True)
+      → ∃ () : (), ((l.2) @ (int (uintptr_t))); True.
+
+  (* Specifications for function [min_ptr_val1]. *)
+  Definition type_of_min_ptr_val1 :=
     fn(∀ (p1, p2) : loc * loc; (p1 @ (&own (int (i32)))), (p2 @ (&own (int (i32)))); True)
-      → ∃ () : (), ((p1.2 `min` p2.2) @ (int (size_t))); True.
+      → ∃ () : (), ((p1.2 `min` p2.2) @ (int (uintptr_t))); True.
+
+  (* Specifications for function [min_ptr_val2]. *)
+  Definition type_of_min_ptr_val2 :=
+    fn(∀ (p1, p2) : loc * loc; (p1 @ (&own (int (i32)))), (p2 @ (&own (int (i32)))); True)
+      → ∃ () : (), ((p1.2 ≤ p2.2 ? p1 : p2) @ (intptr (uintptr_t))); True.
 
   (* Specifications for function [roundtrip1]. *)
   Definition type_of_roundtrip1 :=
     fn(∀ p : loc; (p @ (&own (int (i32)))); True)
-      → ∃ () : (), (((None, p.2)) @ (&own (place ((None, p.2))))); True.
+      → ∃ () : (), (p @ (&own (place (p)))); True.
 
   (* Specifications for function [roundtrip2]. *)
   Definition type_of_roundtrip2 :=
+    fn(∀ p : loc; (p @ (&own (int (i32)))); True)
+      → ∃ id : (option alloc_id), (((id, p.2)) @ (&own (place ((id, p.2))))); True.
+
+  (* Specifications for function [roundtrip3]. *)
+  Definition type_of_roundtrip3 :=
     fn(∀ (p, n) : loc * Z; (p @ (&own (n @ (int (i32))))); True)
       → ∃ () : (), (p @ (&own (n @ (int (i32))))); True.
 
-  (* Specifications for function [roundtrip_and_read]. *)
-  Definition type_of_roundtrip_and_read :=
+  (* Specifications for function [roundtrip_and_read1]. *)
+  Definition type_of_roundtrip_and_read1 :=
     fn(∀ (l, n) : loc * Z; (l @ (&own (n @ (int (i32))))); True)
       → ∃ () : (), (n @ (int (i32))); (l ◁ₗ (n @ (int (i32)))).
 
   (* Specifications for function [roundtrip_and_read2]. *)
   Definition type_of_roundtrip_and_read2 :=
-    fn(∀ (p, n) : loc * Z; (p @ (&own (n @ (int (i32))))); True)
-      → ∃ () : (), (n @ (int (i32))); (p ◁ₗ (n @ (int (i32)))).
+    fn(∀ (l, n) : loc * Z; (l @ (&own (n @ (int (i32))))); True)
+      → ∃ () : (), (n @ (int (i32))); (l ◁ₗ (n @ (int (i32)))).
 
   (* Specifications for function [roundtrip_and_read3]. *)
   Definition type_of_roundtrip_and_read3 :=
     fn(∀ (p, n) : loc * Z; (p @ (&own (n @ (int (i32))))); True)
       → ∃ () : (), (n @ (int (i32))); (p ◁ₗ (n @ (int (i32)))).
+
+  (* Specifications for function [roundtrip_and_read4]. *)
+  Definition type_of_roundtrip_and_read4 :=
+    fn(∀ (p, n) : loc * Z; (p @ (&own (n @ (int (i32))))); True)
+      → ∃ () : (), (n @ (int (i32))); (p ◁ₗ (n @ (int (i32)))).
+
+  (* Specifications for function [int_to_ptr]. *)
+  Definition type_of_int_to_ptr :=
+    fn(∀ p : loc; (p @ (intptr (uintptr_t))); True)
+      → ∃ () : (), (p @ (&own (place (p)))); True.
 End spec.

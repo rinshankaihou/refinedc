@@ -21,7 +21,7 @@ Section type.
     iDestruct ("HT" with "Hty2") as (Hv2) "HT".
     iIntros (Φ) "HΦ".
     iDestruct ("HT" with "[] []" ) as (??) "HT".
-    1-2: iPureIntro; by apply: val_to_Z_in_range.
+    1-2: iPureIntro; by apply: val_to_Z_weak_in_range.
     have /val_of_Z_is_Some[v Hv] : ((n1 + n2) `mod` int_modulus it1) ∈ it1 by apply int_modulus_mod_in_range.
     subst it2.
     iApply (wp_binop_det v). iSplit.
@@ -30,7 +30,8 @@ Section type.
         by destruct it1 as [? []]; simplify_eq/=.
       + move => ->. econstructor => //.
         by destruct it1 as [? []]; simplify_eq/=.
-    - iIntros "!>". iApply "HΦ"; last done. iPureIntro. by apply val_to_of_Z.
+    - iIntros "!>". iApply "HΦ"; last done. iPureIntro.
+      apply val_to_of_Z in Hv. by apply val_to_Z_to_int_repr_Z.
   Qed.
 
   Global Instance macro_wrapping_add_inst it1 it2 e1 e2 :

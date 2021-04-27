@@ -66,7 +66,7 @@ Section judgements.
 
   Definition typed_if (ot : op_type) (v : val) (ty : type) `{!Movable ty} (T1 T2 : iProp Σ) : iProp Σ :=
     (* TODO: generalize this to PtrOp *)
-    (v ◁ᵥ ty -∗ ∃ it z, ⌜ot = IntOp it⌝ ∗ ⌜val_to_Z v it = Some z⌝ ∗ (if decide (z = 0) then T2 else T1)).
+    (v ◁ᵥ ty -∗ ∃ it z, ⌜ot = IntOp it⌝ ∗ ⌜val_to_Z_weak v it = Some z⌝ ∗ (if decide (z = 0) then T2 else T1)).
   Class TypedIf (ot : op_type) (v : val) (ty : type) `{!Movable ty} : Type :=
     typed_if_proof T1 T2 : iProp_to_Prop (typed_if ot v ty T1 T2).
 
@@ -87,7 +87,7 @@ Section judgements.
     (wps_block P b Q (typed_stmt_post_cond fn ls fr)).
 
   Definition typed_switch {B} (v : val) (ty : type) `{!Movable ty} (it : int_type) (m : gmap Z nat) (ss : list stmt) (def : stmt) (fn : function) (ls : list loc) (fr : B → fn_ret) (Q : gmap label stmt) : iProp Σ :=
-    (v ◁ᵥ ty -∗ ∃ z, ⌜val_to_Z v it = Some z⌝ ∗
+    (v ◁ᵥ ty -∗ ∃ z, ⌜val_to_Z_weak v it = Some z⌝ ∗
       match m !! z with
       | Some i => ∃ s, ⌜ss !! i = Some s⌝ ∗ typed_stmt s fn ls fr Q
       | None   => typed_stmt def fn ls fr Q
@@ -96,7 +96,7 @@ Section judgements.
     typed_switch_proof B m ss def fn ls fr Q : iProp_to_Prop (typed_switch (B:=B) v ty it m ss def fn ls fr Q).
 
   Definition typed_assert {B} (v : val) (ty : type) `{!Movable ty} (s : stmt) (fn : function) (ls : list loc) (fr : B → fn_ret) (Q : gmap label stmt) : iProp Σ :=
-    (v ◁ᵥ ty -∗ ∃ z, ⌜val_to_Z v bool_it = Some z⌝ ∗ ⌜z ≠ 0⌝ ∗ typed_stmt s fn ls fr Q)%I.
+    (v ◁ᵥ ty -∗ ∃ z, ⌜val_to_Z_weak v bool_it = Some z⌝ ∗ ⌜z ≠ 0⌝ ∗ typed_stmt s fn ls fr Q)%I.
   Class TypedAssert (v : val) (ty : type) `{!Movable ty} : Type :=
     typed_assert_proof B s fn ls fr Q : iProp_to_Prop (typed_assert (B:=B) v ty s fn ls fr Q).
   (*** expressions *)
@@ -125,13 +125,13 @@ Section judgements.
   Class TypedUnOpVal (v : val) (ty : type) `{!Movable ty} (o : un_op) (ot : op_type) : Type :=
     typed_un_op_val :> TypedUnOp v (v ◁ᵥ ty) o ot.
 
-  Definition typed_copy_alloc_id (v1 : val) (P1 : iProp Σ) (v2 : val) (P2 : iProp Σ) (T : val → mtype → iProp Σ) : iProp Σ :=
-    (P1 -∗ P2 -∗ typed_val_expr (CopyAllocId v1 v2) T).
+  Definition typed_copy_alloc_id (v1 : val) (P1 : iProp Σ) (v2 : val) (P2 : iProp Σ) (ot : op_type) (T : val → mtype → iProp Σ) : iProp Σ :=
+    (P1 -∗ P2 -∗ typed_val_expr (CopyAllocId ot v1 v2) T).
 
-  Class TypedCopyAllocId (v1 : val) (P1 : iProp Σ) (v2 : val) (P2 : iProp Σ) : Type :=
-    typed_copy_alloc_id_proof T : iProp_to_Prop (typed_copy_alloc_id v1 P1 v2 P2 T).
-  Class TypedCopyAllocIdVal (v1 : val) (ty1 : type) `{!Movable ty1} (v2 : val) (ty2 : type) `{!Movable ty2} : Type :=
-    typed_copy_alloc_id_val :> TypedCopyAllocId v1 (v1 ◁ᵥ ty1) v2 (v2 ◁ᵥ ty2).
+  Class TypedCopyAllocId (v1 : val) (P1 : iProp Σ) (v2 : val) (P2 : iProp Σ) (ot : op_type) : Type :=
+    typed_copy_alloc_id_proof T : iProp_to_Prop (typed_copy_alloc_id v1 P1 v2 P2 ot T).
+  Class TypedCopyAllocIdVal (v1 : val) (ty1 : type) `{!Movable ty1} (v2 : val) (ty2 : type) (ot : op_type) `{!Movable ty2} : Type :=
+    typed_copy_alloc_id_val :> TypedCopyAllocId v1 (v1 ◁ᵥ ty1) v2 (v2 ◁ᵥ ty2) ot.
 
   Definition typed_cas (ot : op_type) (v1 : val) (P1 : iProp Σ) (v2 : val) (P2 : iProp Σ) (v3 : val) (P3 : iProp Σ)  (T : val → mtype → iProp Σ) : iProp Σ :=
     (P1 -∗ P2 -∗ P3 -∗ typed_val_expr (CAS ot v1 v2 v3) T).
@@ -329,8 +329,8 @@ Hint Mode TypedBinOp + + + + + + + + + : typeclass_instances.
 Hint Mode TypedBinOpVal + + + + + + + + + + + : typeclass_instances.
 Hint Mode TypedUnOp + + + + + + : typeclass_instances.
 Hint Mode TypedUnOpVal + + + + + + + : typeclass_instances.
-Hint Mode TypedCopyAllocId + + + + + + : typeclass_instances.
-Hint Mode TypedCopyAllocIdVal + + + + + + + + : typeclass_instances.
+Hint Mode TypedCopyAllocId + + + + + + + : typeclass_instances.
+Hint Mode TypedCopyAllocIdVal + + + + + + + + + : typeclass_instances.
 Hint Mode TypedReadEnd + + + + + + + : typeclass_instances.
 Hint Mode TypedWriteEnd + + + + + + + + + : typeclass_instances.
 Hint Mode TypedAddrOfEnd + + + + + : typeclass_instances.
@@ -633,16 +633,16 @@ Section typing.
     TypedUnOp v P op ot | 1000 :=
     λ T, i2p (typed_unop_simplify v P T n ot op).
 
-  Lemma typed_copy_alloc_id_simplify v1 P1 v2 P2 T o1 o2 {SH1 : SimplifyHyp P1 o1} {SH2 : SimplifyHyp P2 o2}:
-    let G1 := (SH1 (find_in_context (FindValP v1) (λ P, typed_copy_alloc_id v1 P v2 P2 T))).(i2p_P) in
-    let G2 := (SH2 (find_in_context (FindValP v2) (λ P, typed_copy_alloc_id v1 P1 v2 P T))).(i2p_P) in
+  Lemma typed_copy_alloc_id_simplify v1 P1 v2 P2 T o1 o2 ot {SH1 : SimplifyHyp P1 o1} {SH2 : SimplifyHyp P2 o2}:
+    let G1 := (SH1 (find_in_context (FindValP v1) (λ P, typed_copy_alloc_id v1 P v2 P2 ot T))).(i2p_P) in
+    let G2 := (SH2 (find_in_context (FindValP v2) (λ P, typed_copy_alloc_id v1 P1 v2 P ot T))).(i2p_P) in
     let G :=
        match o1, o2 with
      | Some n1, Some n2 => if (n2 ?= n1)%N is Lt then G2 else G1
      | Some n1, _ => G1
      | _, _ => G2
        end in
-    G -∗ typed_copy_alloc_id v1 P1 v2 P2 T.
+    G -∗ typed_copy_alloc_id v1 P1 v2 P2 ot T.
   Proof.
     iIntros "Hs Hv1 Hv2".
     destruct o1 as [n1|], o2 as [n2|] => //. case_match.
@@ -650,9 +650,9 @@ Section typing.
     4,5,6: iDestruct (i2p_proof with "Hs Hv2") as (P) "[Hv Hsub]".
     all: by simpl in *; iApply ("Hsub" with "[$]").
   Qed.
-  Global Instance typed_copy_alloc_id_simplify_inst v1 P1 v2 P2 o1 o2 {SH1 : SimplifyHyp P1 o1} {SH2 : SimplifyHyp P2 o2} `{!TCOneIsSome o1 o2} :
-    TypedCopyAllocId v1 P1 v2 P2 | 1000 :=
-    λ T, i2p (typed_copy_alloc_id_simplify v1 P1 v2 P2 T o1 o2).
+  Global Instance typed_copy_alloc_id_simplify_inst v1 P1 v2 P2 o1 o2 ot {SH1 : SimplifyHyp P1 o1} {SH2 : SimplifyHyp P2 o2} `{!TCOneIsSome o1 o2} :
+    TypedCopyAllocId v1 P1 v2 P2 ot | 1000 :=
+    λ T, i2p (typed_copy_alloc_id_simplify v1 P1 v2 P2 T o1 o2 ot).
 
   Lemma typed_cas_simplify v1 P1 v2 P2 v3 P3 T ot o1 o2 o3 {SH1 : SimplifyHyp P1 o1} {SH2 : SimplifyHyp P2 o2} {SH3 : SimplifyHyp P3 o3}:
     let G1 := (SH1 (find_in_context (FindValP v1) (λ P, typed_cas ot v1 P v2 P2 v3 P3 T))).(i2p_P) in
@@ -756,8 +756,7 @@ Section typing.
     iIntros "He" (Hls). wps_bind.
     iApply "He". iIntros (v ty) "Hv Hs".
     iDestruct ("Hs" with "Hv") as (it z ? Hn) "Hs". simplify_eq.
-    iApply wps_if => //.
-    by case_decide; iApply "Hs".
+    iApply wps_if; [done|..]. by case_decide; iApply "Hs".
   Qed.
 
   Lemma type_switch {B} Q it e m ss def fn ls (fr : B → _):
@@ -775,7 +774,7 @@ Section typing.
     iAssert (⌜∀ i : nat, m !! z = Some i → is_Some (ss !! i)⌝%I) as %?. {
       iIntros (i ->). iDestruct "Hs" as (s ->) "_"; by eauto.
     }
-    iApply wps_switch; [done..|].
+    iApply wps_switch; [done|done|..].
     destruct (m !! z) => /=.
     - iDestruct "Hs" as (s ->) "Hs". by iApply "Hs".
     - by iApply "Hs".
@@ -788,8 +787,7 @@ Section typing.
     iIntros "He" (Hls). wps_bind.
     iApply "He". iIntros (v ty) "Hv Hs".
     iDestruct ("Hs" with "Hv") as (z Hn Hz) "Hs".
-    iApply wps_assert => //.
-    by iApply "Hs".
+    iApply wps_assert; [done|done|..]. by iApply "Hs".
   Qed.
 
   Lemma type_exprs {B} s e fn ls (fr : B → _) Q:
@@ -863,6 +861,15 @@ Section typing.
     by iApply ("Hop" with "Hv1 Hv2").
   Qed.
 
+  Lemma typed_bin_op_wand v1 P1 Q1 v2 P2 Q2 op ot1 ot2 T:
+    (P1 -∗ Q1) -∗ (P2 -∗ Q2) -∗
+    typed_bin_op v1 Q1 v2 Q2 op ot1 ot2 T -∗
+    typed_bin_op v1 P1 v2 P2  op ot1 ot2 T.
+  Proof.
+    iIntros "Hw1 Hw2 H H1 H2".
+    iApply ("H" with "[Hw1 H1]"); [by iApply "Hw1"|by iApply "Hw2"].
+  Qed.
+
   Lemma type_un_op o e ot T:
     typed_val_expr e (λ v ty, typed_un_op v (v ◁ᵥ ty) o ot T) -∗
     typed_val_expr (UnOp o ot e) T.
@@ -872,9 +879,17 @@ Section typing.
     by iApply ("Hop" with "Hv").
   Qed.
 
-  Lemma type_copy_alloc_id e1 e2 T:
-    typed_val_expr e1 (λ v1 ty1, typed_val_expr e2 (λ v2 ty2, typed_copy_alloc_id v1 (v1 ◁ᵥ ty1) v2 (v2 ◁ᵥ ty2) T)) -∗
-    typed_val_expr (CopyAllocId e1 e2) T.
+  Lemma typed_un_op_wand v P Q op ot T:
+    (P -∗ Q) -∗
+    typed_un_op v Q op ot T -∗
+    typed_un_op v P op ot T.
+  Proof.
+    iIntros "Hw H HP". iApply "H". by iApply "Hw".
+  Qed.
+
+  Lemma type_copy_alloc_id e1 e2 ot T:
+    typed_val_expr e1 (λ v1 ty1, typed_val_expr e2 (λ v2 ty2, typed_copy_alloc_id v1 (v1 ◁ᵥ ty1) v2 (v2 ◁ᵥ ty2) ot T)) -∗
+    typed_val_expr (CopyAllocId ot e1 e2) T.
   Proof.
     iIntros "He1" (Φ) "HΦ".
     wp_bind. iApply "He1". iIntros (v1 ty1) "Hv1 He2".
@@ -900,8 +915,7 @@ Section typing.
     iIntros "He1" (Φ) "HΦ".
     wp_bind. iApply "He1". iIntros (v1 ty1) "Hv1 Hif".
     iDestruct ("Hif" with "Hv1") as (it n -> ?) "HT".
-    iApply wp_if => //.
-    by case_decide; iApply "HT".
+    iApply wp_if; [done|..]. by case_decide; iApply "HT".
   Qed.
 
   Lemma type_skipe e T:

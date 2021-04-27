@@ -27,9 +27,13 @@ Global Instance simpl_double_neg_elim_dec P `{!Decision P} :
   SimplBoth (¬ ¬ P) P.
 Proof. split; destruct (decide P); naive_solver. Qed.
 
-Global Instance simpl_eq_pair A B (x1 x2 : A) (y1 y2 : B):
-  SimplAnd ((x1, y1) = (x2, y2)) (λ T, x1 = x2 ∧ y1 = y2 ∧ T).
-Proof. split; naive_solver. Qed.
+Global Instance simpl_eq_pair_l A B (x : A) (y : B) (xy : A * B):
+  SimplAnd ((x, y) = xy) (λ T, x = xy.1 ∧ y = xy.2 ∧ T).
+Proof. destruct xy; split; naive_solver. Qed.
+
+Global Instance simpl_eq_pair_r A B (xy : A * B) (x : A) (y : B):
+  SimplAnd (xy = (x, y)) (λ T, xy.1 = x ∧ xy.2 = y ∧ T).
+Proof. destruct xy; split; naive_solver. Qed.
 
 Global Instance simple_protected_neq_empty A `{!EqDecision A} `{!Countable A} (p : gset A) `{!IsProtected p} :
   SimplAnd (p ≠ ∅) (λ T, shelve_hint (p ≠ ∅) ∧ T).

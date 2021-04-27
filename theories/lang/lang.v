@@ -32,7 +32,7 @@ Inductive expr :=
 | Val (v : val)
 | UnOp (op : un_op) (ot : op_type) (e : expr)
 | BinOp (op : bin_op) (ot1 ot2 : op_type) (e1 e2 : expr)
-| CopyAllocId (e1 : expr) (e2 : expr)
+| CopyAllocId (ot2 : op_type) (e1 : expr) (e2 : expr)
 | Deref (o : order) (ly : layout) (e : expr)
 | CAS (ot : op_type) (e1 e2 e3 : expr)
 | Call (f : expr) (args : list expr)
@@ -48,7 +48,7 @@ Lemma expr_ind (P : expr → Prop) :
   (∀ (v : val), P (Val v)) →
   (∀ (op : un_op) (ot : op_type) (e : expr), P e → P (UnOp op ot e)) →
   (∀ (op : bin_op) (ot1 ot2 : op_type) (e1 e2 : expr), P e1 → P e2 → P (BinOp op ot1 ot2 e1 e2)) →
-  (∀ (e1 e2 : expr), P e1 → P e2 → P (CopyAllocId e1 e2)) →
+  (∀ (ot2 : op_type) (e1 e2 : expr), P e1 → P e2 → P (CopyAllocId ot2 e1 e2)) →
   (∀ (o : order) (ly : layout) (e : expr), P e → P (Deref o ly e)) →
   (∀ (ot : op_type) (e1 e2 e3 : expr), P e1 → P e2 → P e3 → P (CAS ot e1 e2 e3)) →
   (∀ (f : expr) (args : list expr), P f → Forall P args → P (Call f args)) →
@@ -120,7 +120,7 @@ with rtexpr :=
 | RTVal (v : val)
 | RTUnOp (op : un_op) (ot : op_type) (e : runtime_expr)
 | RTBinOp (op : bin_op) (ot1 ot2 : op_type) (e1 e2 : runtime_expr)
-| RTCopyAllocId (e1 : runtime_expr) (e2 : runtime_expr)
+| RTCopyAllocId (ot2 : op_type) (e1 : runtime_expr) (e2 : runtime_expr)
 | RTDeref (o : order) (ly : layout) (e : runtime_expr)
 | RTCall (f : runtime_expr) (args : list runtime_expr)
 | RTCAS (ot : op_type) (e1 e2 e3 : runtime_expr)
@@ -144,7 +144,7 @@ Fixpoint to_rtexpr (e : expr) : runtime_expr :=
   | Val v => RTVal v
   | UnOp op ot e => RTUnOp op ot (to_rtexpr e)
   | BinOp op ot1 ot2 e1 e2 => RTBinOp op ot1 ot2 (to_rtexpr e1) (to_rtexpr e2)
-  | CopyAllocId e1 e2 => RTCopyAllocId (to_rtexpr e1) (to_rtexpr e2)
+  | CopyAllocId ot2 e1 e2 => RTCopyAllocId ot2 (to_rtexpr e1) (to_rtexpr e2)
   | Deref o ly e => RTDeref o ly (to_rtexpr e)
   | Call f args => RTCall (to_rtexpr f) (to_rtexpr <$> args)
   | CAS ot e1 e2 e3 => RTCAS ot (to_rtexpr e1) (to_rtexpr e2) (to_rtexpr e3)
@@ -190,7 +190,7 @@ Fixpoint subst (x : var_name) (v : val) (e : expr)  : expr :=
   | Val v => Val v
   | UnOp op ot e => UnOp op ot (subst x v e)
   | BinOp op ot1 ot2 e1 e2 => BinOp op ot1 ot2 (subst x v e1) (subst x v e2)
-  | CopyAllocId e1 e2 => CopyAllocId (subst x v e1) (subst x v e2)
+  | CopyAllocId ot2 e1 e2 => CopyAllocId ot2 (subst x v e1) (subst x v e2)
   | Deref o l e => Deref o l (subst x v e)
   | Call e es => Call (subst x v e) (subst x v <$> es)
   | CAS ly e1 e2 e3 => CAS ly (subst x v e1) (subst x v e2) (subst x v e3)
@@ -227,13 +227,13 @@ Definition subst_function (xs : list (var_name * val)) (f : function) : function
 (* evaluation can be non-deterministic for comparing pointers *)
 Inductive eval_bin_op : bin_op → op_type → op_type → state → val → val → val → Prop :=
 | PtrOffsetOpIP v1 v2 σ o l ly it:
-    val_to_Z v1 it = Some o →
+    val_to_Z_weak v1 it = Some o →
     val_to_loc v2 = Some l →
     (* TODO: should we have an alignment check here? *)
     0 ≤ o →
     eval_bin_op (PtrOffsetOp ly) (IntOp it) PtrOp σ v1 v2 (val_of_loc (l offset{ly}ₗ o))
 | PtrNegOffsetOpIP v1 v2 σ o l ly it:
-    val_to_Z v1 it = Some o →
+    val_to_Z_weak v1 it = Some o →
     val_to_loc v2 = Some l →
     (* TODO: should we have an alignment check here? *)
     eval_bin_op (PtrNegOffsetOp ly) (IntOp it) PtrOp σ v1 v2 (val_of_loc (l offset{ly}ₗ -o))
@@ -285,8 +285,8 @@ Inductive eval_bin_op : bin_op → op_type → op_type → state → val → val
     | GeOp => Some (bool_decide (n1 >= n2))
     | _ => None
     end = Some b →
-    val_to_Z v1 it = Some n1 →
-    val_to_Z v2 it = Some n2 →
+    val_to_Z_weak v1 it = Some n1 →
+    val_to_Z_weak v2 it = Some n2 →
     (* TODO: What is the right int type of the result here? C seems to
     use i32 but maybe we don't want to hard code that. *)
     eval_bin_op op (IntOp it) (IntOp it) σ v1 v2 (i2v (Z_of_bool b) i32)
@@ -314,16 +314,16 @@ Inductive eval_bin_op : bin_op → op_type → op_type → state → val → val
     | ShrOp => if bool_decide (0 ≤ n1 ∧ 0 ≤ n2 < bits_per_int it) then Some (n1 ≫ n2) else None
     | _ => None
     end = Some n →
-    val_to_Z v1 it = Some n1 →
-    val_to_Z v2 it = Some n2 →
+    val_to_Z_weak v1 it = Some n1 →
+    val_to_Z_weak v2 it = Some n2 →
     val_of_Z (if it_signed it then n else n `mod` int_modulus it) it = Some v →
     eval_bin_op op (IntOp it) (IntOp it) σ v1 v2 v
 .
 
 Inductive eval_un_op : un_op → op_type → state → val → val → Prop :=
-| CastOpII itt its σ vs vt n:
-    val_to_Z vs its = Some n →
-    val_of_Z n itt = Some vt →
+| CastOpII itt its σ vs vt i:
+    val_to_int_repr vs its = Some i →
+    val_of_int_repr i itt = Some vt →
     eval_un_op (CastOp (IntOp itt)) (IntOp its) σ vs vt
 | CastOpPP σ vs vt l:
     val_to_loc vs = Some l →
@@ -331,18 +331,18 @@ Inductive eval_un_op : un_op → op_type → state → val → val → Prop :=
     eval_un_op (CastOp PtrOp) PtrOp σ vs vt
 | CastOpPI it σ vs vt l:
     val_to_loc vs = Some l →
-    val_of_Z l.2 it = Some vt →
+    val_of_int_repr (IRLoc l) it = Some vt →
     eval_un_op (CastOp (IntOp it)) PtrOp σ vs vt
-| CastOpIP it σ vs vt n:
-    val_to_Z vs it = Some n →
-    val_of_loc (None, n) = vt →
+| CastOpIP it σ vs vt l:
+    val_to_loc_weak vs it = Some l →
+    val_of_loc l = vt →
     eval_un_op (CastOp PtrOp) (IntOp it) σ vs vt
 | NegOpI it σ vs vt n:
-    val_to_Z vs it = Some n →
+    val_to_Z_weak vs it = Some n →
     val_of_Z (-n) it = Some vt →
     eval_un_op NegOp (IntOp it) σ vs vt
 | NotIntOpI it σ vs vt n:
-    val_to_Z vs it = Some n →
+    val_to_Z_weak vs it = Some n →
     val_of_Z (if it_signed it then Z.lnot n else Z_lunot (bits_per_int it) n) it = Some vt →
     eval_un_op NotIntOp (IntOp it) σ vs vt
 .
@@ -380,8 +380,8 @@ comparing pointers? (see lambda rust) *)
     heap_at l1 (it_layout it) vo (λ st, ∃ n, st = RSt n) σ.(st_heap).(hs_heap) →
     val_to_loc v2 = Some l2 →
     heap_at l2 (it_layout it) ve (λ st, st = RSt 0%nat) σ.(st_heap).(hs_heap) →
-    val_to_Z vo it = Some z1 →
-    val_to_Z ve it = Some z2 →
+    val_to_Z_weak vo it = Some z1 →
+    val_to_Z_weak ve it = Some z2 →
     v3 `has_layout_val` it_layout it →
     (bytes_per_int it ≤ bytes_per_addr)%nat →
     z1 ≠ z2 →
@@ -392,8 +392,8 @@ comparing pointers? (see lambda rust) *)
     heap_at l1 (it_layout it) vo (λ st, st = RSt 0%nat) σ.(st_heap).(hs_heap) →
     val_to_loc v2 = Some l2 →
     heap_at l2 (it_layout it) ve (λ st, ∃ n, st = RSt n) σ.(st_heap).(hs_heap) →
-    val_to_Z vo it = Some z1 →
-    val_to_Z ve it = Some z2 →
+    val_to_Z_weak vo it = Some z1 →
+    val_to_Z_weak ve it = Some z2 →
     v3 `has_layout_val` it_layout it →
     (bytes_per_int it ≤ bytes_per_addr)%nat →
     z1 = z2 →
@@ -425,12 +425,16 @@ comparing pointers? (see lambda rust) *)
     expr_step (Call (Val vf) (Val <$> vs)) σ [] AllocFailed σ []
 | ConcatS vs σ:
     expr_step (Concat (Val <$> vs)) σ [] (Val (mjoin vs)) σ []
-| CopyAllocIdS l1 l2 v1 v2 σ:
+| CopyAllocIdPS l1 l2 v1 v2 σ:
     val_to_loc v1 = Some l1 →
     val_to_loc v2 = Some l2 →
-    expr_step (CopyAllocId (Val v1) (Val v2)) σ [] (Val (val_of_loc (l2.1, l1.2))) σ []
+    expr_step (CopyAllocId PtrOp (Val v1) (Val v2)) σ [] (Val (val_of_loc (l2.1, l1.2))) σ []
+| CopyAllocIdIS it l1 l2 v1 v2 σ:
+    val_to_loc v1 = Some l1 →
+    val_to_loc_weak v2 it = Some l2 →
+    expr_step (CopyAllocId (IntOp it) (Val v1) (Val v2)) σ [] (Val (val_of_loc (l2.1, l1.2))) σ []
 | IfES v it e1 e2 n σ:
-    val_to_Z v it = Some n →
+    val_to_Z_weak v it = Some n →
     expr_step (IfE (IntOp it) (Val v) e1 e2) σ [] (if bool_decide (n ≠ 0) then e1 else e2)  σ []
 (* no rule for StuckE *)
 .
@@ -447,7 +451,7 @@ Inductive stmt_step : stmt → runtime_function → state → list Empty_set →
     heap_at l ly v' start_st σ.(st_heap).(hs_heap) →
     stmt_step (Assign o ly (Val v1) (Val v2) s) rf σ [] (to_rtstmt rf end_stmt) (heap_fmap (heap_upd l end_val end_st) σ) []
 | SwitchS rf σ v n m bs s def it :
-    val_to_Z v it = Some n →
+    val_to_Z_weak v it = Some n →
     (∀ i : nat, m !! n = Some i → is_Some (bs !! i)) →
     stmt_step (Switch it (Val v) m bs def) rf σ [] (to_rtstmt rf (default def (i ← m !! n; bs !! i))) σ []
 | GotoS rf σ b s :
@@ -517,8 +521,8 @@ Inductive expr_ectx :=
 | UnOpCtx (op : un_op) (ot : op_type)
 | BinOpLCtx (op : bin_op) (ot1 ot2 : op_type) (e2 : runtime_expr)
 | BinOpRCtx (op : bin_op) (ot1 ot2 : op_type) (v1 : val)
-| CopyAllocIdLCtx (e2 : runtime_expr)
-| CopyAllocIdRCtx (v1 : val)
+| CopyAllocIdLCtx (ot2 : op_type) (e2 : runtime_expr)
+| CopyAllocIdRCtx (ot2 : op_type) (v1 : val)
 | DerefCtx (o : order) (l : layout)
 | CallLCtx (args : list runtime_expr)
 | CallRCtx (f : val) (vl : list val) (el : list runtime_expr)
@@ -535,8 +539,8 @@ Definition expr_fill_item (Ki : expr_ectx) (e : runtime_expr) : rtexpr :=
   | UnOpCtx op ot => RTUnOp op ot e
   | BinOpLCtx op ot1 ot2 e2 => RTBinOp op ot1 ot2 e e2
   | BinOpRCtx op ot1 ot2 v1 => RTBinOp op ot1 ot2 (Val v1) e
-  | CopyAllocIdLCtx e2 => RTCopyAllocId e e2
-  | CopyAllocIdRCtx v1 => RTCopyAllocId (Val v1) e
+  | CopyAllocIdLCtx ot2 e2 => RTCopyAllocId ot2 e e2
+  | CopyAllocIdRCtx ot2 v1 => RTCopyAllocId ot2 (Val v1) e
   | DerefCtx o l => RTDeref o l e
   | CallLCtx args => RTCall e args
   | CallRCtx f vl el => RTCall (Val f) ((Expr <$> (RTVal <$> vl)) ++ e :: el)

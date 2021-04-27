@@ -194,33 +194,18 @@ Section own.
     TypedPlace (UnOpPCtx (CastOp PtrOp) :: K) l β ty :=
     λ T, i2p (type_place_cast_ptr_ptr K l ty β T).
 
-  (* Allow direct casts to other integer types. *)
-  Lemma type_cast_ptr_int (p : loc) β ty n `{!LocInBounds ty β n} T:
-    (⌜min_alloc_start ≤ p.2 ∧ p.2 + n ≤ max_alloc_end⌝ -∗
-      p ◁ₗ{β} ty -∗ T (i2v p.2 size_t) (t2mt (p.2 @ int uintptr_t))) -∗
-    typed_un_op p (p ◁ₗ{β} ty) (CastOp (IntOp uintptr_t)) PtrOp T.
-  Proof.
-    iIntros "HT Hp" (Φ) "HΦ".
-    iDestruct (loc_in_bounds_in_bounds with "Hp") as "#Hlib".
-    iDestruct (loc_in_bounds_in_range_uintptr_t with "Hlib") as %[? H]%val_of_Z_is_Some.
-    iDestruct (loc_in_bounds_ptr_in_range with "Hlib") as %?.
-    iDestruct ("HT" with "[] Hp") as "HT"; first done.
-    iApply wp_cast_ptr_int => //=; first by rewrite val_to_of_loc.
-    rewrite /i2v H /=. iApply ("HΦ" with "[] [HT]"); last done.
-    iPureIntro. by apply val_to_of_Z.
-  Qed.
-  Global Instance type_cast_ptr_int_inst (p : loc) β ty n `{!LocInBounds ty β n}:
-    TypedUnOp p (p ◁ₗ{β} ty)%I (CastOp (IntOp uintptr_t)) PtrOp :=
-    λ T, i2p (type_cast_ptr_int p β ty n T).
-
   Lemma type_cast_int_ptr n v it T:
-    (⌜n ∈ it⌝ -∗ T (val_of_loc (None, n)) (t2mt ((None, n) @ frac_ptr Own (place (None, n))))) -∗
+    (⌜n ∈ it⌝ -∗ ∀ oid, T (val_of_loc (oid, n)) (t2mt ((oid, n) @ frac_ptr Own (place (oid, n))))) -∗
     typed_un_op v (v ◁ᵥ n @ int it) (CastOp PtrOp) (IntOp it) T.
   Proof.
     iIntros "HT" (Hn Φ) "HΦ".
-    iApply wp_cast_int_ptr => //.
-    iApply ("HΦ" with "[]"); last iApply "HT"; first done.
-    iPureIntro. by apply: val_to_Z_in_range.
+    move: (Hn). rewrite /val_to_Z_weak. move => /fmap_Some [i][Hi ->].
+    iDestruct ("HT" with "[]") as "HT".
+    { iPureIntro. by eapply val_to_int_repr_in_range. }
+    iApply wp_cast_int_ptr => //. { by rewrite /val_to_loc_weak Hi. }
+    rewrite /int_repr_to_loc /int_repr_to_Z. destruct i as [z|[id p]]=> /=.
+    - iApply ("HΦ" with "[]"); last by iApply ("HT" $! None). done.
+    - iApply ("HΦ" with "[]"); last by iApply ("HT" $! id). done.
   Qed.
   Global Instance type_cast_int_ptr_inst n v it:
     TypedUnOp v (v ◁ᵥ n @ int it)%I (CastOp PtrOp) (IntOp it) :=
@@ -230,7 +215,7 @@ Section own.
     (∃ p1 p2, subsume P1 (v1 ◁ᵥ p1 @ frac_ptr Own (place p1)) (
               subsume P2 (v2 ◁ᵥ p2 @ frac_ptr Own (place p2)) (
                    T (val_of_loc (p2.1, p1.2)) (t2mt (value void* (val_of_loc (p2.1, p1.2))))))) -∗
-    typed_copy_alloc_id v1 P1 v2 P2 T.
+    typed_copy_alloc_id v1 P1 v2 P2 PtrOp T.
   Proof.
     iIntros "HT Hp1 Hp2" (Φ) "HΦ". iDestruct "HT" as (p1 p2) "HT".
     iDestruct ("HT" with "Hp1") as "[Hp1 HT]". iDestruct "Hp1" as (->) "Hp1".
@@ -239,7 +224,7 @@ Section own.
     by iApply ("HΦ" with "[] HT").
   Qed.
   Global Instance type_copy_aid_inst v1 v2 P1 P2:
-    TypedCopyAllocId v1 P1 v2 P2 :=
+    TypedCopyAllocId v1 P1 v2 P2 PtrOp :=
     λ T, i2p (type_copy_aid v1 v2 P1 P2 T).
 
   (* TODO: Is it a good idea to have this general rule or would it be
@@ -440,23 +425,6 @@ Section ptr.
     Subsume (p ◁ₗ l1 @ &own ty)%I (p ◁ₗ l2 @ ptr n)%I :=
     λ T, i2p (subsume_own_ptr p l1 l2 ty n T).
 
-  Lemma type_cast_ptr_int_val (v : val) (p : loc) (n : nat) T:
-    (⌜min_alloc_start ≤ p.2 ∧ p.2 + n ≤ max_alloc_end⌝ -∗
-      v ◁ᵥ p @ ptr n -∗ T (i2v p.2 size_t) (t2mt (p.2 @ int uintptr_t))) -∗
-    typed_un_op v (v ◁ᵥ p @ ptr n) (CastOp (IntOp uintptr_t)) PtrOp T.
-  Proof.
-    iIntros "HT Hp" (Φ) "HΦ".
-    iDestruct "Hp" as "[-> #Hlib]".
-    iDestruct (loc_in_bounds_in_range_uintptr_t with "Hlib") as %[? H]%val_of_Z_is_Some.
-    iDestruct (loc_in_bounds_ptr_in_range with "Hlib") as %?.
-    iDestruct ("HT" with "[] []") as "HT"; first done. { by iFrame "Hlib". }
-    iApply wp_cast_ptr_int => //=; first by rewrite val_to_of_loc.
-    rewrite /i2v H /=. iApply ("HΦ" with "[] [HT]"); last done.
-    iPureIntro. by apply val_to_of_Z.
-  Qed.
-  Global Instance type_cast_ptr_int_val_inst (v : val) (p : loc) n:
-    TypedUnOp v (v ◁ᵥ p @ ptr n)%I (CastOp (IntOp uintptr_t)) PtrOp :=
-    λ T, i2p (type_cast_ptr_int_val v p n T).
 End ptr.
 
 Section null.

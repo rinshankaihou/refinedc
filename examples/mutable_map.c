@@ -111,7 +111,7 @@ size_t fsm_slot_for_key(size_t len, size_t key) {
 [[rc::ensures("{∃ x, items !! n = Some x ∧ probe_ref key items = Some (n, x)}")]]
  [[rc::lemmas("lookup_lt_is_Some_2")]]
  [[rc::tactics("all: try by eexists _; split => //; apply probe_ref_take_Some; naive_solver.")]]
- [[rc::tactics("all: try by apply: probe_ref_go_next_take=> //i; intros Hi%lookup_rotate_r_Some; try lia; simplify_eq; naive_solver.")]]
+ [[rc::tactics("all: try by apply: probe_ref_go_next_take => // ? /lookup_rotate_r_Some ?; try lia; simplify_eq; naive_solver.")]]
 size_t fsm_probe(struct fixed_size_map *m, size_t key) {
     size_t slot_idx = fsm_slot_for_key(m->length, key);
 

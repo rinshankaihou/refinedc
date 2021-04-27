@@ -280,7 +280,7 @@ Section proofs.
           iDestruct "Hcases" as "[[Hticket' %] | Htok]".
           { iExFalso. by iApply (ticket_non_duplicable with "Hticket Hticket'"). }
           iAssert (⌜owner ∈ u16⌝)%I as %[??].
-          { rewrite /ty_own_val /=. by iDestruct "Hv" as %Hv%val_to_Z_in_range. }
+          { rewrite /ty_own_val /=. by iDestruct "Hv" as %Hv%val_to_Z_weak_in_range. }
           iAssert (⌜owner < next⌝)%I as %?.
           { destruct (decide (owner < next)); first done. iExFalso.
             iDestruct (ty_size_eq with "Hv") as %?.
@@ -382,16 +382,17 @@ Section proofs.
         (* Learn that [next'] actually is [max_int u16]. *)
         iAssert ⌜next' = max_int u16⌝%I as %->.
         { iDestruct (ty_deref with "Hnext") as (w) "[_ H]". iDestruct "H" as %Hnext.
-          iPureIntro. apply val_to_Z_in_range in Hnext as [??]. lia. }
+          iPureIntro. apply val_to_Z_weak_in_range in Hnext as [??]. lia. }
         (* We perform the write and close the invariant. *)
         iDestruct (ty_aligned with "Howner") as %?.
         iDestruct (ty_deref with "Howner") as (v') "[Hl Hv]".
         iDestruct (ty_size_eq with "Hv") as %?.
         iSplitL "Hl". { iExists _. by iFrame "Hl". }
         iIntros "!> Hl".
-        iMod "Hclose" as "_". iMod ("Hclose_inv" with "[Htok H● H◯ Hnext Hl Hv]") as "_".
+        iRename select (_ ◁ᵥ 0 @ int u16)%I into "H0".
+        iMod "Hclose" as "_". iMod ("Hclose_inv" with "[Htok H● H◯ Hnext Hl Hv H0]") as "_".
         { iNext. iExists 0, (LAST_TICKET + 1). iFrame.
-          iDestruct ((ty_ref (t := 0 @ int u16)) with "[] Hl []") as "$" => //.
+          iDestruct ((ty_ref (t := 0 @ int u16)) with "[] Hl H0") as "$" => //.
           iSplit. { iPureIntro. split => //. }
           do 2 (iSplitR; first by iApply ticket_range_empty).
           iRight. iFrame "Htok". by iExists _. }
@@ -409,7 +410,8 @@ Section proofs.
         iAssert ⌜owner' = 0⌝%I as %->.
         { destruct (decide (owner' = 0)) => //. iExFalso.
           iDestruct (ty_deref with "Howner") as (?) "[? Hv]".
-          iDestruct "Hv" as %Howner%val_to_Z_in_range. destruct Howner as [Howner ?].
+          iDestruct "Hv" as %Howner%val_to_Z_weak_in_range.
+          destruct Howner as [Howner ?].
           iDestruct (overlaping_ticket_ranges with "[] Htk Htr1") as "$".
           iPureIntro. exists 0. split; apply elem_of_seqZ; try done.
           split => //. rewrite /min_int /= in Howner. lia. }
@@ -432,9 +434,10 @@ Section proofs.
         iSplitL "Hl". { iExists _. by iFrame "Hl". }
         iIntros "!> Hl".
         iRename select (ticket ◁ₗ _)%I into "Hticket_var".
+        iRename select (_ ◁ᵥ 0 @ int u16)%I into "H0".
         iMod "Hclose" as "_". iMod ("Hclose_inv" with "[- Hticket_var]") as "_".
         { iNext. iExists 0, 0. iFrame. iSplit; first by iPureIntro.
-          iApply ((ty_ref (t := 0 @ int u16)) with "[] Hl []") => //. }
+          iApply ((ty_ref (t := 0 @ int u16)) with "[] Hl H0") => //. }
         iModIntro. iExists (place (p at{struct_hyp_spinlock}ₗ "next")).
         (* Run the automation to finish the branch. *)
         repeat liRStep; liShow.
@@ -456,19 +459,16 @@ Section proofs.
         iDestruct (ty_aligned with "Howner") as %?.
         iDestruct (ty_deref with "Howner") as (v') "[Hl Hv]".
         iDestruct (ty_size_eq with "Hv") as %?.
-        iDestruct "Hv" as %?%val_to_Z_in_range.
+        iDestruct "Hv" as %?%val_to_Z_weak_in_range.
         iSplitL "Hl". { iExists _. by iFrame "Hl". }
         iIntros "!> Hl".
-        iMod "Hclose" as "_". iMod ("Hclose_inv" with "[Htok H● H◯ Hticket Hnext Hl Htk1 Htk2]") as "_".
+        iRename select (_ ◁ᵥ (owner + 1) @ int u16)%I into "Howner+1".
+        iMod "Hclose" as "_". iMod ("Hclose_inv" with "[Htok H● H◯ Hticket Hnext Hl Htk1 Htk2 Howner+1]") as "_".
         { iNext. iExists (owner + 1), next'. iFrame "Hnext". iFrame "H◯". iFrame "Htk2".
           iDestruct (ticket_range_insert_r with "Htk1 Hticket") as "$".
           { split; first done. by transitivity (min_int u16). }
           iSplit. { iPureIntro. by lia. }
-          iDestruct ((ty_ref (t := (owner + 1) @ int u16)) with "[] Hl []") as "$" => //.
-          { iPureIntro. rewrite /i2v.
-            destruct (val_of_Z (owner + 1)) eqn:Heq => /=; first by apply val_to_of_Z.
-            exfalso. assert (owner + 1 ∈ u16) as Hu16%val_of_Z_is_Some by (split; lia).
-            destruct Hu16 as [??]. by simplify_eq. }
+          iDestruct ((ty_ref (t := (owner + 1) @ int u16)) with "[] Hl Howner+1") as "$" => //.
           iRight. iFrame "Htok". by iExists _. }
         iModIntro.
         (* Run the automation to finish the branch. *)
