@@ -5,6 +5,13 @@ From refinedc.typing.automation Require Export normalize solvers simplification 
 From refinedc.typing Require Import programs function singleton own struct bytes int.
 Set Default Proof Using "Type".
 
+(** Wrapper identity function for code (introduced by [split_bocks]). *)
+Definition CODE_MARKER (bs : gmap label stmt) : gmap label stmt := bs.
+Notation "'HIDDEN'" := (CODE_MARKER _) (only printing).
+
+Ltac unfold_code_marker_and_compute_map_lookup :=
+  unfold CODE_MARKER in *; compute_map_lookup.
+
 (** * Registering extensions *)
 (** More automation for modular arithmetics. *)
 Ltac Zify.zify_post_hook ::= Z.to_euclidean_division_equations.
@@ -163,9 +170,9 @@ Ltac liRStmt :=
          notypeclasses refine (tac_fast_apply (type_goto_precond _ _ _ _ _ _) _); progress liFindHyp FICSyntactic
        | lazymatch goal with
          | H : BLOCK_PRECOND bid ?P |- _ =>
-           notypeclasses refine (tac_fast_apply (tac_typed_single_block_rec P _ _ _ _ _ _ _) _);[compute_map_lookup|]
+           notypeclasses refine (tac_fast_apply (tac_typed_single_block_rec P _ _ _ _ _ _ _) _);[unfold_code_marker_and_compute_map_lookup|]
          end
-       | notypeclasses refine (tac_fast_apply (type_goto _ _ _ _ _ _ _) _); [compute_map_lookup|]
+       | notypeclasses refine (tac_fast_apply (type_goto _ _ _ _ _ _ _) _); [unfold_code_marker_and_compute_map_lookup|]
                      ]
       | W.ExprS _ _ => notypeclasses refine (tac_fast_apply (type_exprs _ _ _ _ _ _) _)
       | W.SkipS _ => notypeclasses refine (tac_fast_apply (type_skips' _ _ _ _ _) _)
@@ -320,7 +327,7 @@ Ltac split_blocks Pfull Ps :=
   let Q := fresh "Q" in
   lazymatch goal with
   | |- @envs_entails ?PROP ?Δ (@bi_wand _ ?P (@typed_stmt ?Σ ?tG ?B ?s ?fn ?ls ?fr ?Q')) =>
-    pose (Q := (Q')); change_no_check (@envs_entails PROP Δ (@bi_wand PROP P (@typed_stmt Σ tG B s fn ls fr Q)))
+    pose (Q := (CODE_MARKER Q')); change_no_check (@envs_entails PROP Δ (@bi_wand PROP P (@typed_stmt Σ tG B s fn ls fr Q)))
   end;
   let rec pose_Ps Ps :=
       lazymatch Ps with
@@ -339,5 +346,5 @@ Ltac split_blocks Pfull Ps :=
   liRSplitBlocksIntro;
   iApply (typed_block_rec Hfull); unfold Hfull; clear Hfull; last first; [|
   repeat (iApply big_sepM_insert; [reflexivity|]; iSplitL); last by [iApply big_sepM_empty];
-  iExists _; (iSplitR; [iPureIntro; compute_map_lookup|]); iModIntro ];
+  iExists _; (iSplitR; [iPureIntro; unfold_code_marker_and_compute_map_lookup|]); iModIntro ];
   repeat (iApply tac_split_big_sepM; [reflexivity|]; iIntros "?"); iIntros "_".

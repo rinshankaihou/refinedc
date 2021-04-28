@@ -48,25 +48,31 @@ Ltac update_loc_info i :=
     |
     (* TODO: unify the first two branches *)
     lazymatch i with
-    | Some ?i2 => let Hcur := fresh "HCURLOC" in pose (Hcur := ());
-      change (unit) with (CURRENT_LOCATION [i2] true) in Hcur
-    | [?i2] => let Hcur := fresh "HCURLOC" in pose (Hcur := ());
-      change (unit) with (CURRENT_LOCATION [i2] true) in Hcur
+    | Some ?i2 =>
+      let Hcur := fresh "HCURLOC" in
+      have Hcur := (() : CURRENT_LOCATION [i2] true)
+    | [?i2] =>
+      let Hcur := fresh "HCURLOC" in
+      have Hcur := (() : CURRENT_LOCATION [i2] true)
     | None => idtac
     end
     ].
 
 Ltac add_case_distinction_info hint info :=
     get_loc_info ltac:(fun icur =>
-    let Hcase := fresh "Hcase" in
-    pose (Hcase := () : (CASE_DISTINCTION_INFO hint info icur))).
+    let Hcase := fresh "HCASE" in
+    have Hcase := (() : (CASE_DISTINCTION_INFO hint info icur))).
 
 (** * Tactics cleaning the proof state *)
 Ltac clear_unused_vars :=
   repeat match goal with
          | H : ?T |- _ =>
-           (* don't clear case distinction info or location info  *)
-           assert_fails (clearbody H);
+           (* Keep current location and case distinction info. *)
+           lazymatch T with
+           | CURRENT_LOCATION _ _ => fail
+           | CASE_DISTINCTION_INFO _ _ _ => fail
+           | _ => idtac
+           end;
            let ty := (type of T) in
            match ty with | Type => clear H | Set => clear H end
          end.
