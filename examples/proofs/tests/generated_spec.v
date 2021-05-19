@@ -27,4 +27,8 @@ Section spec.
   (* Specifications for function [test_bits]. *)
   Definition type_of_test_bits :=
     fn(∀ () : (); True) → ∃ () : (), (void); True.
+
+  (* Specifications for function [test_comma]. *)
+  Definition type_of_test_comma :=
+    fn(∀ () : (); True) → ∃ () : (), ((0) @ (int (i32))); True.
 End spec.

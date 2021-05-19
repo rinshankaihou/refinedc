@@ -122,6 +122,7 @@ let pp_bin_op : Coq_ast.bin_op pp = fun ff op ->
   | GtOp        -> ">"
   | LeOp        -> "≤"
   | GeOp        -> "≥"
+  | CommaOp     -> ","
 
 let rec pp_expr : Coq_ast.expr pp = fun ff e ->
   let pp fmt = Format.fprintf ff fmt in
@@ -145,19 +146,22 @@ let rec pp_expr : Coq_ast.expr pp = fun ff e ->
     | BinOp(op,ty1,ty2,e1,e2)       ->
         begin
           match (ty1, ty2, op) with
-          | (OpPtr(l), OpInt(_), AddOp) ->
+          | (_       , _       , CommaOp) ->
+              pp "(%a) %a{%a, %a} (%a)" pp_expr e1 pp_bin_op op
+                pp_op_type ty1 pp_op_type ty2 pp_expr e2
+          | (OpPtr(l), OpInt(_), AddOp  ) ->
               pp "(%a) at_offset{%a, PtrOp, %a} (%a)" pp_expr e1
                 (pp_layout false) l pp_op_type ty2 pp_expr e2
-          | (OpPtr(l), OpInt(_), SubOp) ->
+          | (OpPtr(l), OpInt(_), SubOp  ) ->
               pp "(%a) at_neg_offset{%a, PtrOp, %a} (%a)" pp_expr e1
                 (pp_layout false) l pp_op_type ty2 pp_expr e2
-          | (OpPtr(_), OpInt(_), _) ->
+          | (OpPtr(_), OpInt(_), _      ) ->
               panic_no_pos "Binop [%a] not supported on pointers."
                 pp_bin_op op
-          | (OpInt(_), OpPtr(_), _) ->
+          | (OpInt(_), OpPtr(_), _      ) ->
               panic_no_pos "Wrong ordering of integer pointer binop [%a]."
                 pp_bin_op op
-          | _                 ->
+          | _                             ->
               pp "(%a) %a{%a, %a} (%a)" pp_expr e1 pp_bin_op op
                 pp_op_type ty1 pp_op_type ty2 pp_expr e2
         end

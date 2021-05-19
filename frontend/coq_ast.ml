@@ -28,7 +28,7 @@ type un_op =
 
 type bin_op =
   | AddOp | SubOp | MulOp | DivOp | ModOp | AndOp | OrOp | XorOp | ShlOp
-  | ShrOp | EqOp | NeOp | LtOp | GtOp | LeOp | GeOp
+  | ShrOp | EqOp | NeOp | LtOp | GtOp | LeOp | GeOp | CommaOp
 
 type value =
   | Null

@@ -58,3 +58,10 @@ void test_bits() {
   assert(~(-2) == 1);
   assert(~0 == -1);
 }
+
+[[rc::returns("{0} @ int<i32>")]]
+int test_comma(){
+  int x = (NULL, 42);
+
+  return x + x, x - x;
+}

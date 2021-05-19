@@ -623,6 +623,18 @@ Section typing.
     TypedBinOp v1 P1 v2 P2 op ot1 ot2 | 1000 :=
     λ T, i2p (typed_binop_simplify v1 P1 v2 P2 T o1 o2 ot1 ot2 op).
 
+  Lemma typed_binop_comma v1 v2 P (ty : type) ot1 ot2 `{!Movable ty} T:
+    (P -∗ T v2 (t2mt ty)) -∗
+    typed_bin_op v1 P v2 (v2 ◁ᵥ ty) Comma ot1 ot2 T.
+  Proof.
+    iIntros "HT H1 H2" (Φ) "HΦ". iApply (wp_binop_det v2). iSplit.
+    - iIntros (??) "_ !%". split; [ by inversion 1 | move => ->; constructor ].
+    - iDestruct ("HT" with "H1") as "HT". iApply ("HΦ" $! v2 (t2mt ty) with "H2 HT").
+  Qed.
+  Global Instance typed_binop_comma_inst v1 v2 P (ty : type) ot1 ot2 `{!Movable ty}:
+    TypedBinOp v1 P v2 (v2 ◁ᵥ ty) Comma ot1 ot2 :=
+    λ T, i2p (typed_binop_comma v1 v2 P ty ot1 ot2 T).
+
   Lemma typed_unop_simplify v P T n ot {SH : SimplifyHyp P (Some n)} op:
     (SH (find_in_context (FindValP v) (λ P, typed_un_op v P op ot T))).(i2p_P) -∗
     typed_un_op v P op ot T.

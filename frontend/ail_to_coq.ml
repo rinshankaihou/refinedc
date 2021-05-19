@@ -471,7 +471,7 @@ let rec translate_expr : bool -> op_type option -> ail_expr -> expr =
           | Ge             -> GeOp
           | And            -> not_impl loc "nested && operator"
           | Or             -> not_impl loc "nested || operator"
-          | Comma          -> not_impl loc "binary operator (Comma)"
+          | Comma          -> CommaOp
           | Arithmetic(op) ->
           arith_op := true;
           match op with

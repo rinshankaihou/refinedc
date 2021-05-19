@@ -16,7 +16,7 @@ Inductive op_type : Set :=
 (* see http://compcert.inria.fr/doc/html/compcert.cfrontend.Cop.html#binary_operation *)
 Inductive bin_op : Set :=
 | AddOp | SubOp | MulOp | DivOp | ModOp | AndOp | OrOp | XorOp | ShlOp
-| ShrOp | EqOp | NeOp | LtOp | GtOp | LeOp | GeOp
+| ShrOp | EqOp | NeOp | LtOp | GtOp | LeOp | GeOp | Comma
 (* Ptr is the second argument and pffset the first *)
 | PtrOffsetOp (ly : layout) | PtrNegOffsetOp (ly : layout).
 
@@ -318,6 +318,8 @@ Inductive eval_bin_op : bin_op → op_type → op_type → state → val → val
     val_to_Z_weak v2 it = Some n2 →
     val_of_Z (if it_signed it then n else n `mod` int_modulus it) it = Some v →
     eval_bin_op op (IntOp it) (IntOp it) σ v1 v2 v
+| CommaOp ot1 ot2 σ v1 v2:
+    eval_bin_op Comma ot1 ot2 σ v1 v2 v2
 .
 
 Inductive eval_un_op : un_op → op_type → state → val → val → Prop :=

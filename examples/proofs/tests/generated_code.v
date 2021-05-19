@@ -163,6 +163,22 @@ Section code.
   Definition loc_206 : location_info := LocationInfo file_0 50 34 50 38.
   Definition loc_209 : location_info := LocationInfo file_0 49 19 49 29.
   Definition loc_212 : location_info := LocationInfo file_0 48 22 48 28.
+  Definition loc_217 : location_info := LocationInfo file_0 64 2 64 31.
+  Definition loc_218 : location_info := LocationInfo file_0 66 2 66 22.
+  Definition loc_219 : location_info := LocationInfo file_0 66 9 66 21.
+  Definition loc_220 : location_info := LocationInfo file_0 66 9 66 14.
+  Definition loc_221 : location_info := LocationInfo file_0 66 9 66 10.
+  Definition loc_222 : location_info := LocationInfo file_0 66 9 66 10.
+  Definition loc_223 : location_info := LocationInfo file_0 66 13 66 14.
+  Definition loc_224 : location_info := LocationInfo file_0 66 13 66 14.
+  Definition loc_225 : location_info := LocationInfo file_0 66 16 66 21.
+  Definition loc_226 : location_info := LocationInfo file_0 66 16 66 17.
+  Definition loc_227 : location_info := LocationInfo file_0 66 16 66 17.
+  Definition loc_228 : location_info := LocationInfo file_0 66 20 66 21.
+  Definition loc_229 : location_info := LocationInfo file_0 66 20 66 21.
+  Definition loc_230 : location_info := LocationInfo file_0 64 10 64 30.
+  Definition loc_231 : location_info := LocationInfo file_0 64 11 64 25.
+  Definition loc_232 : location_info := LocationInfo file_0 64 27 64 29.
 
   (* Definition of function [test1]. *)
   Definition impl_test1 : function := {|
@@ -471,6 +487,24 @@ Section code.
         locinfo: loc_164 ;
         assert: (LocInfoE loc_165 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_165 ((LocInfoE loc_166 (UnOp NotIntOp (IntOp i32) (LocInfoE loc_167 (i2v 0 i32)))) ={IntOp i32, IntOp i32} (LocInfoE loc_168 (UnOp NegOp (IntOp i32) (LocInfoE loc_169 (i2v 1 i32)))))))) ;
         Return (VOID)
+      ]> $∅
+    )%E
+  |}.
+
+  (* Definition of function [test_comma]. *)
+  Definition impl_test_comma : function := {|
+    f_args := [
+    ];
+    f_local_vars := [
+      ("x", it_layout i32)
+    ];
+    f_init := "#0";
+    f_code := (
+      <[ "#0" :=
+        "x" <-{ it_layout i32 }
+          LocInfoE loc_230 ((LocInfoE loc_231 (NULL)) ,{PtrOp, IntOp i32} (LocInfoE loc_232 (i2v 42 i32))) ;
+        locinfo: loc_218 ;
+        Return (LocInfoE loc_219 ((LocInfoE loc_220 ((LocInfoE loc_221 (use{it_layout i32} (LocInfoE loc_222 ("x")))) +{IntOp i32, IntOp i32} (LocInfoE loc_223 (use{it_layout i32} (LocInfoE loc_224 ("x")))))) ,{IntOp i32, IntOp i32} (LocInfoE loc_225 ((LocInfoE loc_226 (use{it_layout i32} (LocInfoE loc_227 ("x")))) -{IntOp i32, IntOp i32} (LocInfoE loc_228 (use{it_layout i32} (LocInfoE loc_229 ("x"))))))))
       ]> $∅
     )%E
   |}.
