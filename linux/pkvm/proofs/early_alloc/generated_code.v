@@ -140,8 +140,8 @@ Section code.
   (* Definition of struct [region]. *)
   Program Definition struct_region := {|
     sl_members := [
-      (Some "end", it_layout size_t);
-      (Some "cur", it_layout size_t);
+      (Some "end", it_layout uintptr_t);
+      (Some "cur", it_layout uintptr_t);
       (Some "base", void*)
     ];
   |}.
@@ -157,7 +157,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_2 ;
-        Return (LocInfoE loc_3 ((LocInfoE loc_4 ((LocInfoE loc_5 (use{it_layout size_t} (LocInfoE loc_6 ((LocInfoE loc_7 (global_mem)) at{struct_region} "cur")))) -{IntOp size_t, IntOp size_t} (LocInfoE loc_8 (UnOp (CastOp $ IntOp size_t) (PtrOp) (LocInfoE loc_9 (use{void*} (LocInfoE loc_10 ((LocInfoE loc_11 (global_mem)) at{struct_region} "base")))))))) >>{IntOp size_t, IntOp size_t} (LocInfoE loc_12 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_12 (i2v 12 i32))))))
+        Return (LocInfoE loc_3 (UnOp (CastOp $ IntOp size_t) (IntOp uintptr_t) (LocInfoE loc_3 ((LocInfoE loc_4 ((LocInfoE loc_5 (use{it_layout uintptr_t} (LocInfoE loc_6 ((LocInfoE loc_7 (global_mem)) at{struct_region} "cur")))) -{IntOp uintptr_t, IntOp uintptr_t} (LocInfoE loc_8 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_9 (use{void*} (LocInfoE loc_10 ((LocInfoE loc_11 (global_mem)) at{struct_region} "base")))))))) >>{IntOp uintptr_t, IntOp uintptr_t} (LocInfoE loc_12 (UnOp (CastOp $ IntOp uintptr_t) (IntOp i32) (LocInfoE loc_12 (i2v 12 i32))))))))
       ]> $∅
     )%E
   |}.
@@ -169,14 +169,14 @@ Section code.
     ];
     f_local_vars := [
       ("i", it_layout u32);
-      ("ret", it_layout size_t);
-      ("p", it_layout size_t)
+      ("ret", it_layout uintptr_t);
+      ("p", it_layout uintptr_t)
     ];
     f_init := "#0";
     f_code := (
       <[ "#0" :=
-        "ret" <-{ it_layout size_t }
-          LocInfoE loc_103 (use{it_layout size_t} (LocInfoE loc_104 ((LocInfoE loc_105 (global_mem)) at{struct_region} "cur"))) ;
+        "ret" <-{ it_layout uintptr_t }
+          LocInfoE loc_103 (use{it_layout uintptr_t} (LocInfoE loc_104 ((LocInfoE loc_105 (global_mem)) at{struct_region} "cur"))) ;
         locinfo: loc_99 ;
         if: LocInfoE loc_99 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_99 ((UnOp (CastOp $ IntOp u32) (IntOp i32) (i2v 0 i32)) ={IntOp u32, IntOp u32} (LocInfoE loc_101 (use{it_layout u32} (LocInfoE loc_102 ("nr_pages")))))))
         then
@@ -190,10 +190,10 @@ Section code.
         locinfo: loc_17 ;
         expr: (LocInfoE loc_93 (&(LocInfoE loc_94 ((LocInfoE loc_95 (global_mem)) at{struct_region} "base")))) ;
         locinfo: loc_19 ;
-        LocInfoE loc_83 ((LocInfoE loc_84 (global_mem)) at{struct_region} "cur") <-{ it_layout size_t }
-          LocInfoE loc_85 ((LocInfoE loc_86 (use{it_layout size_t} (LocInfoE loc_87 ((LocInfoE loc_88 (global_mem)) at{struct_region} "cur")))) +{IntOp size_t, IntOp size_t} (LocInfoE loc_89 (UnOp (CastOp $ IntOp size_t) (IntOp u32) (LocInfoE loc_89 ((LocInfoE loc_90 (use{it_layout u32} (LocInfoE loc_91 ("nr_pages")))) <<{IntOp u32, IntOp u32} (LocInfoE loc_92 (UnOp (CastOp $ IntOp u32) (IntOp i32) (LocInfoE loc_92 (i2v 12 i32))))))))) ;
+        LocInfoE loc_83 ((LocInfoE loc_84 (global_mem)) at{struct_region} "cur") <-{ it_layout uintptr_t }
+          LocInfoE loc_85 ((LocInfoE loc_86 (use{it_layout uintptr_t} (LocInfoE loc_87 ((LocInfoE loc_88 (global_mem)) at{struct_region} "cur")))) +{IntOp uintptr_t, IntOp uintptr_t} (LocInfoE loc_89 (UnOp (CastOp $ IntOp uintptr_t) (IntOp u32) (LocInfoE loc_89 ((LocInfoE loc_90 (use{it_layout u32} (LocInfoE loc_91 ("nr_pages")))) <<{IntOp u32, IntOp u32} (LocInfoE loc_92 (UnOp (CastOp $ IntOp u32) (IntOp i32) (LocInfoE loc_92 (i2v 12 i32))))))))) ;
         locinfo: loc_76 ;
-        if: LocInfoE loc_76 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_76 ((LocInfoE loc_77 (use{it_layout size_t} (LocInfoE loc_78 ((LocInfoE loc_79 (global_mem)) at{struct_region} "cur")))) >{IntOp size_t, IntOp size_t} (LocInfoE loc_80 (use{it_layout size_t} (LocInfoE loc_81 ((LocInfoE loc_82 (global_mem)) at{struct_region} "end")))))))
+        if: LocInfoE loc_76 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_76 ((LocInfoE loc_77 (use{it_layout uintptr_t} (LocInfoE loc_78 ((LocInfoE loc_79 (global_mem)) at{struct_region} "cur")))) >{IntOp uintptr_t, IntOp uintptr_t} (LocInfoE loc_80 (use{it_layout uintptr_t} (LocInfoE loc_81 ((LocInfoE loc_82 (global_mem)) at{struct_region} "end")))))))
         then
         locinfo: loc_68 ;
           Goto "#6"
@@ -222,21 +222,21 @@ Section code.
         locinfo: loc_33 ;
         expr: (LocInfoE loc_57 (&(LocInfoE loc_58 ((LocInfoE loc_59 (global_mem)) at{struct_region} "base")))) ;
         locinfo: loc_35 ;
-        LocInfoE loc_49 ("p") <-{ it_layout size_t }
-          LocInfoE loc_50 ((LocInfoE loc_51 (use{it_layout size_t} (LocInfoE loc_52 ("ret")))) +{IntOp size_t, IntOp size_t} (LocInfoE loc_53 (UnOp (CastOp $ IntOp size_t) (IntOp u32) (LocInfoE loc_53 ((LocInfoE loc_54 (use{it_layout u32} (LocInfoE loc_55 ("i")))) <<{IntOp u32, IntOp u32} (LocInfoE loc_56 (UnOp (CastOp $ IntOp u32) (IntOp i32) (LocInfoE loc_56 (i2v 12 i32))))))))) ;
+        LocInfoE loc_49 ("p") <-{ it_layout uintptr_t }
+          LocInfoE loc_50 ((LocInfoE loc_51 (use{it_layout uintptr_t} (LocInfoE loc_52 ("ret")))) +{IntOp uintptr_t, IntOp uintptr_t} (LocInfoE loc_53 (UnOp (CastOp $ IntOp uintptr_t) (IntOp u32) (LocInfoE loc_53 ((LocInfoE loc_54 (use{it_layout u32} (LocInfoE loc_55 ("i")))) <<{IntOp u32, IntOp u32} (LocInfoE loc_56 (UnOp (CastOp $ IntOp u32) (IntOp i32) (LocInfoE loc_56 (i2v 12 i32))))))))) ;
         locinfo: loc_36 ;
-        expr: (LocInfoE loc_36 (Call (LocInfoE loc_41 (global_clear_page)) [@{expr} LocInfoE loc_42 (CopyAllocId (PtrOp) (LocInfoE loc_46 (UnOp (CastOp $ PtrOp) (IntOp size_t) (LocInfoE loc_47 (use{it_layout size_t} (LocInfoE loc_48 ("p")))))) (LocInfoE loc_43 (use{void*} (LocInfoE loc_44 ((LocInfoE loc_45 (global_mem)) at{struct_region} "base"))))) ])) ;
+        expr: (LocInfoE loc_36 (Call (LocInfoE loc_41 (global_clear_page)) [@{expr} LocInfoE loc_42 (CopyAllocId (PtrOp) (LocInfoE loc_46 (UnOp (CastOp $ PtrOp) (IntOp uintptr_t) (LocInfoE loc_47 (use{it_layout uintptr_t} (LocInfoE loc_48 ("p")))))) (LocInfoE loc_43 (use{void*} (LocInfoE loc_44 ((LocInfoE loc_45 (global_mem)) at{struct_region} "base"))))) ])) ;
         locinfo: loc_37 ;
         Goto "continue5"
       ]> $
       <[ "#5" :=
         locinfo: loc_24 ;
-        Return (LocInfoE loc_25 (CopyAllocId (PtrOp) (LocInfoE loc_29 (UnOp (CastOp $ PtrOp) (IntOp size_t) (LocInfoE loc_30 (use{it_layout size_t} (LocInfoE loc_31 ("ret")))))) (LocInfoE loc_26 (use{void*} (LocInfoE loc_27 ((LocInfoE loc_28 (global_mem)) at{struct_region} "base"))))))
+        Return (LocInfoE loc_25 (CopyAllocId (PtrOp) (LocInfoE loc_29 (UnOp (CastOp $ PtrOp) (IntOp uintptr_t) (LocInfoE loc_30 (use{it_layout uintptr_t} (LocInfoE loc_31 ("ret")))))) (LocInfoE loc_26 (use{void*} (LocInfoE loc_27 ((LocInfoE loc_28 (global_mem)) at{struct_region} "base"))))))
       ]> $
       <[ "#6" :=
         locinfo: loc_68 ;
-        LocInfoE loc_71 ((LocInfoE loc_72 (global_mem)) at{struct_region} "cur") <-{ it_layout size_t }
-          LocInfoE loc_73 (use{it_layout size_t} (LocInfoE loc_74 ("ret"))) ;
+        LocInfoE loc_71 ((LocInfoE loc_72 (global_mem)) at{struct_region} "cur") <-{ it_layout uintptr_t }
+          LocInfoE loc_73 (use{it_layout uintptr_t} (LocInfoE loc_74 ("ret"))) ;
         locinfo: loc_69 ;
         Return (LocInfoE loc_70 (NULL))
       ]> $
@@ -295,11 +295,11 @@ Section code.
         LocInfoE loc_139 ((LocInfoE loc_140 (global_mem)) at{struct_region} "base") <-{ void* }
           LocInfoE loc_141 (use{void*} (LocInfoE loc_142 ("virt"))) ;
         locinfo: loc_123 ;
-        LocInfoE loc_130 ((LocInfoE loc_131 (global_mem)) at{struct_region} "end") <-{ it_layout size_t }
-          LocInfoE loc_132 (UnOp (CastOp $ IntOp size_t) (IntOp size_t) (LocInfoE loc_133 ((LocInfoE loc_134 (UnOp (CastOp $ IntOp size_t) (PtrOp) (LocInfoE loc_135 (use{void*} (LocInfoE loc_136 ("virt")))))) +{IntOp size_t, IntOp size_t} (LocInfoE loc_137 (UnOp (CastOp $ IntOp size_t) (IntOp u32) (LocInfoE loc_137 (use{it_layout u32} (LocInfoE loc_138 ("size"))))))))) ;
+        LocInfoE loc_130 ((LocInfoE loc_131 (global_mem)) at{struct_region} "end") <-{ it_layout uintptr_t }
+          LocInfoE loc_132 (UnOp (CastOp $ IntOp uintptr_t) (IntOp uintptr_t) (LocInfoE loc_133 ((LocInfoE loc_134 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_135 (use{void*} (LocInfoE loc_136 ("virt")))))) +{IntOp uintptr_t, IntOp uintptr_t} (LocInfoE loc_137 (UnOp (CastOp $ IntOp uintptr_t) (IntOp u32) (LocInfoE loc_137 (use{it_layout u32} (LocInfoE loc_138 ("size"))))))))) ;
         locinfo: loc_124 ;
-        LocInfoE loc_125 ((LocInfoE loc_126 (global_mem)) at{struct_region} "cur") <-{ it_layout size_t }
-          LocInfoE loc_127 (UnOp (CastOp $ IntOp size_t) (PtrOp) (LocInfoE loc_128 (use{void*} (LocInfoE loc_129 ("virt"))))) ;
+        LocInfoE loc_125 ((LocInfoE loc_126 (global_mem)) at{struct_region} "cur") <-{ it_layout uintptr_t }
+          LocInfoE loc_127 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_128 (use{void*} (LocInfoE loc_129 ("virt"))))) ;
         Return (VOID)
       ]> $∅
     )%E

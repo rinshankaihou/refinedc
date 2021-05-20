@@ -55,6 +55,7 @@ Definition uintptr_t := IntType bytes_per_addr_log false.
 
 Definition size_t  := uintptr_t.
 Definition ssize_t := intptr_t.
+Definition ptrdiff_t := intptr_t.
 Definition bool_it := u8.
 
 (*** Lemmas about [int_type] *)

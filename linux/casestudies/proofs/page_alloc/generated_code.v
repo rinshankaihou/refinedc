@@ -1175,7 +1175,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_185 ;
-        Return (LocInfoE loc_186 ((LocInfoE loc_187 (UnOp (CastOp $ IntOp u64) (IntOp ssize_t) (LocInfoE loc_188 ((LocInfoE loc_189 (use{void*} (LocInfoE loc_190 ("page")))) -{PtrOp, PtrOp} (LocInfoE loc_191 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_192 (use{void*} (LocInfoE loc_193 (global___hyp_vmemmap)))))))))) <<{IntOp u64, IntOp u64} (LocInfoE loc_194 (UnOp (CastOp $ IntOp u64) (IntOp i32) (LocInfoE loc_194 (i2v 12 i32))))))
+        Return (LocInfoE loc_186 ((LocInfoE loc_187 (UnOp (CastOp $ IntOp u64) (IntOp ptrdiff_t) (LocInfoE loc_188 ((LocInfoE loc_189 (use{void*} (LocInfoE loc_190 ("page")))) -{PtrOp, PtrOp} (LocInfoE loc_191 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_192 (use{void*} (LocInfoE loc_193 (global___hyp_vmemmap)))))))))) <<{IntOp u64, IntOp u64} (LocInfoE loc_194 (UnOp (CastOp $ IntOp u64) (IntOp i32) (LocInfoE loc_194 (i2v 12 i32))))))
       ]> $∅
     )%E
   |}.

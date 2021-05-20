@@ -67,6 +67,9 @@ let pp_int_type : Coq_ast.int_type pp = fun ff it ->
   match it with
   | ItSize_t(true)      -> pp "ssize_t"
   | ItSize_t(false)     -> pp "size_t"
+  | ItIntptr_t(true)    -> pp "intptr_t"
+  | ItIntptr_t(false)   -> pp "uintptr_t"
+  | ItPtrdiff_t         -> pp "ptrdiff_t"
   | ItI8(true)          -> pp "i8"
   | ItI8(false)         -> pp "u8"
   | ItI16(true)         -> pp "i16"

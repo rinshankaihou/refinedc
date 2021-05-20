@@ -2,11 +2,13 @@ open Extra
 open Rc_annot
 
 type int_type =
-  | ItSize_t of bool (* signed *)
-  | ItI8     of bool (* signed *)
-  | ItI16    of bool (* signed *)
-  | ItI32    of bool (* signed *)
-  | ItI64    of bool (* signed *)
+  | ItSize_t    of bool (* signed *)
+  | ItIntptr_t  of bool (* signed *)
+  | ItPtrdiff_t
+  | ItI8        of bool (* signed *)
+  | ItI16       of bool (* signed *)
+  | ItI32       of bool (* signed *)
+  | ItI64       of bool (* signed *)
   | ItBool
 
 type layout =

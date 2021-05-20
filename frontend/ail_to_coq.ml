@@ -101,7 +101,7 @@ let rec translate_int_type : loc -> i_type -> Coq_ast.int_type = fun loc i ->
     | Int_leastN_t(_) -> not_impl loc "size_of_base_type (Int_leastN_t)"
     | Int_fastN_t(_)  -> not_impl loc "size_of_base_type (Int_fastN_t)"
     | Intmax_t        -> not_impl loc "size_of_base_type (Intmax_t)"
-    | Intptr_t        -> ItSize_t(signed)
+    | Intptr_t        -> ItIntptr_t(signed)
     (* Normal integer types *)
     | Ichar | Short | Int_ | Long | LongLong ->
     let ity = if signed then Signed(i) else Unsigned i in
@@ -123,7 +123,7 @@ let rec translate_int_type : loc -> i_type -> Coq_ast.int_type = fun loc i ->
   | Wchar_t     -> not_impl loc "layout_of (Wchar_t)"
   | Wint_t      -> not_impl loc "layout_of (Win_t)"
   | Size_t      -> ItSize_t(false)
-  | Ptrdiff_t   -> ItSize_t(true)
+  | Ptrdiff_t   -> ItPtrdiff_t
 
 (** [layout_of fa c_ty] translates the C type [c_ty] into a layout.  Note that
     argument [fa] must be set to [true] when in function arguments, since this
