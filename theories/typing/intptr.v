@@ -180,7 +180,7 @@ Section programs.
   Proof.
     iApply typed_un_op_wand. iApply intptr_wand_int.
   Qed.
-  Global Instance typed_un_op_intptr_inst it v l op `{!Movable ty}:
+  Global Instance typed_un_op_intptr_inst it v l op:
     TypedUnOpVal v (l @ intptr it)%I op (IntOp it) :=
     λ T, i2p (typed_un_op_intptr it v l op T).
 
