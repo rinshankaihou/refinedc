@@ -522,10 +522,10 @@ let rec translate_expr : bool -> op_type option -> ail_expr -> expr =
        | _ -> not_impl loc "wrong macro"
        end
     | AilEcond(e1,e2,e3) when is_const_0 e1 && is_copy_alloc_id_annot e2 ->
-       let e2 =
+       let (e2, e3) =
          match macro_annot_to_list e2 with
-         | [_; MacroExpr(e2); _] -> e2
-         | _                     ->
+         | [_; MacroExpr(e2); MacroExpr(e3)] -> (e2, e3)
+         | _                                 ->
              not_impl loc "wrong copy alloc id annotation"
        in
        let ot2 = op_type_of_tc (loc_of e2) (tc_of e2) in
