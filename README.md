@@ -1,4 +1,4 @@
-# RefinedC verification framework
+# RefinedC verification framework ([webpage](https://plv.mpi-sws.org/refinedc/))
 
 This repository contains the source code of **RefinedC**: a foundational
 verification framework targeted at idiomatic C code. Thanks to its frontend
