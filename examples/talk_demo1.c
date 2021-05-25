@@ -16,7 +16,6 @@ void append(list_t *l, list_t k) {
   }
 }
 
-/* [[rc::requires("[alloc_initialized]")]] */
 void test() {
   struct list_node * node1 = alloc(sizeof(struct list_node));
   node1->val = 1; node1->next = NULL;
@@ -26,7 +25,4 @@ void test() {
   if(node1 != NULL) {
     assert(node1->val == 1);
   }
-  /* assert(node1->next->val == 2); */
-  /* free(sizeof(struct list_node), node1->next); */
-  /* free(sizeof(struct list_node), node1); */
 }
