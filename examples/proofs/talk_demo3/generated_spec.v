@@ -93,12 +93,10 @@ Section spec.
 
   (* Specifications for function [append]. *)
   Definition type_of_append :=
-    fn(∀ (p, xs, ys) : loc * (list Z) * (list Z); (p @ (&own (xs @ (list_t)))), (ys @ (list_t)); True)
-      → ∃ () : (), (void); (p ◁ₗ ((xs ++ ys) @ (list_t))).
+    fn(∀ p : loc; (p @ (&own (list_t))), (list_t); True)
+      → ∃ () : (), (void); (p ◁ₗ (list_t)).
 
-  (* Specifications for function [test]. *)
-  Definition type_of_test :=
-    fn(∀ () : (); (alloc_initialized)) → ∃ () : (), (void); True.
+  (* Function [test] has been skipped. *)
 End spec.
 
 Typeclasses Opaque list_t_rec.

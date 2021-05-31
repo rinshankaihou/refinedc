@@ -14,9 +14,9 @@ list_node {
 } *list_t;
 
 
-[[rc::parameters("p : loc", "xs : {list Z}","ys : {list Z}")]]
-[[rc::args("p @ &own<xs @ list_t>", "ys @ list_t")]]
-[[rc::ensures("own p : {xs ++ ys} @ list_t")]]
+[[rc::parameters("p : loc")]]
+[[rc::args("p @ &own<list_t>", "list_t")]]
+[[rc::ensures("own p : list_t")]]
 void append(list_t *l, list_t k) {
   if(*l == NULL) {
     *l = k;
@@ -25,7 +25,7 @@ void append(list_t *l, list_t k) {
   }
 }
 
-[[rc::requires("[alloc_initialized]")]]
+/* [[rc::requires("[alloc_initialized]")]] */
 void test() {
   struct list_node * node1 = alloc(sizeof(struct list_node));
   node1->val = 1; node1->next = NULL;

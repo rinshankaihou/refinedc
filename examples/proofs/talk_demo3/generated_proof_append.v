@@ -13,7 +13,7 @@ Section proof_append.
     typed_function (impl_append global_append) type_of_append.
   Proof.
     Open Scope printing_sugar.
-    start_function "append" ([[p xs] ys]) => arg_l arg_k.
+    start_function "append" (p) => arg_l arg_k.
     split_blocks ((
       ∅
     )%I : gmap label (iProp Σ)) ((
