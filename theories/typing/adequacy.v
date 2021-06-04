@@ -8,7 +8,7 @@ From iris.program_logic Require Export language.
 Set Default Proof Using "Type".
 
 Class typePreG Σ := PreTypeG {
-  type_invG                      :> invPreG Σ;
+  type_invG                      :> invGpreS Σ;
   type_heap_heap_inG             :> inG Σ (authR heapUR);
   type_heap_alloc_range_map_inG  :> ghost_mapG Σ alloc_id (Z * nat);
   type_heap_alloc_alive_map_inG  :> ghost_mapG Σ alloc_id bool;

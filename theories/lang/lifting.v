@@ -7,11 +7,11 @@ Set Default Proof Using "Type".
 Import uPred.
 
 Class refinedcG Σ := RefinedCG {
-  refinedcG_invG : invG Σ;
+  refinedcG_invG : invGS Σ;
   refinedcG_gen_heapG :> heapG Σ
 }.
 
-Instance c_irisG `{!refinedcG Σ} : irisG c_lang Σ := {
+Instance c_irisG `{!refinedcG Σ} : irisGS c_lang Σ := {
   iris_invG := refinedcG_invG;
   state_interp σ κs _ _ := state_ctx σ;
   fork_post _ := True%I;
