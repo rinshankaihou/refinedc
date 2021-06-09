@@ -535,7 +535,7 @@ Qed.
 
 Lemma wps_concat_bind_ind vs E Φ es:
   foldr (λ e f, (λ vl, WP coerce_rtexpr e @ E {{ v, f (vl ++ [v]) }}))
-        (λ vl, WP Concat (Val <$> (vs ++ vl)) @ E {{ Φ }}) es [] -∗
+        (λ vl, WP coerce_rtexpr (Concat (Val <$> (vs ++ vl))) @ E {{ Φ }}) es [] -∗
   WP Concat ((Val <$> vs) ++ es) @ E {{ Φ }}.
 Proof.
   rewrite -{2}(app_nil_r vs).
@@ -555,7 +555,7 @@ Qed.
 
 Lemma wp_concat_bind E Φ es:
   foldr (λ e f, (λ vl, WP coerce_rtexpr e @ E {{ v, f (vl ++ [v]) }}))
-        (λ vl, WP Concat (Val <$> vl) @ E {{ Φ }}) es [] -∗
+        (λ vl, WP coerce_rtexpr (Concat (Val <$> vl)) @ E {{ Φ }}) es [] -∗
   WP Concat es @ E {{ Φ }}.
 Proof. by iApply (wps_concat_bind_ind []). Qed.
 
@@ -574,7 +574,7 @@ Qed.
 
 Lemma wp_call_bind_ind vs E Φ vf el:
   foldr (λ e f, (λ vl, WP coerce_rtexpr e @ E {{ v, f (vl ++ [v]) }}))
-        (λ vl, WP (Call (Val vf) (Val <$> (vs ++ vl))) @ E {{ Φ }}) el [] -∗
+        (λ vl, WP coerce_rtexpr (Call (Val vf) (Val <$> (vs ++ vl))) @ E {{ Φ }}) el [] -∗
   WP (Call (Val vf) ((Val <$> vs) ++ el)) @ E {{ Φ}}.
 Proof.
   rewrite -{2}(app_nil_r vs).
@@ -594,7 +594,7 @@ Qed.
 
 Lemma wp_call_bind E Φ el ef:
   WP (coerce_rtexpr ef) @ E {{ vf, foldr (λ e f, (λ vl, WP coerce_rtexpr e @ E {{ v, f (vl ++ [v]) }}))
-        (λ vl, WP (Call (Val vf) (Val <$> vl)) @ E {{ Φ }}) el [] }} -∗
+        (λ vl, WP coerce_rtexpr (Call (Val vf) (Val <$> vl)) @ E {{ Φ }}) el [] }} -∗
   WP (Call ef el) @ E {{ Φ }}.
 Proof.
   iIntros "HWP".
