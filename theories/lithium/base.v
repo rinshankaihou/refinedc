@@ -47,6 +47,21 @@ Ltac get_head e :=
   | _    => constr:(e)
   end.
 
+(* Checks that a term is closed using a trick by Jason Gross. *)
+Ltac check_closed t :=
+  assert_succeeds (
+    let x := fresh "x" in
+    exfalso; pose t as x; revert x;
+    repeat match goal with H : _ |- _ => clear H end;
+    lazymatch goal with H : _ |- _ => fail | _ => idtac end
+  ).
+
+Tactic Notation "reduce_closed" constr(x) :=
+  check_closed x;
+  let r := eval vm_compute in x in
+  change_no_check x with r in *
+.
+
 Definition Z_of_bool (b : bool) : Z :=
   if b then 1 else 0.
 Typeclasses Opaque Z_of_bool.

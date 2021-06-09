@@ -162,10 +162,23 @@ Ltac enrich_context :=
 Ltac solve_goal_prepare_tac := idtac.
 Ltac solve_goal_normalized_prepare_tac := idtac.
 
+Local Open Scope Z_scope.
+Ltac reduce_closed_Z_tac := idtac.
+Ltac reduce_closed_Z :=
+  idtac;
+  reduce_closed_Z_tac;
+  repeat match goal with
+  | |- context [?a ≪ ?b] => progress reduce_closed (a ≪ b)
+  | H : context [?a ≪ ?b] |- _ => progress reduce_closed (a ≪ b)
+  | |- context [?a ≫ ?b] => progress reduce_closed (a ≫ b)
+  | H : context [?a ≫ ?b] |- _ => progress reduce_closed (a ≫ b)
+  end.
+
+
 Ltac solve_goal :=
   try fast_done;
   solve_goal_prepare_tac;
   normalize_and_simpl_goal;
-  solve_goal_normalized_prepare_tac; enrich_context;
+  solve_goal_normalized_prepare_tac; reduce_closed_Z; enrich_context;
   repeat case_bool_decide => //; repeat case_decide => //; repeat case_match => //;
   refined_solver lia.
