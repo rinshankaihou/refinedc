@@ -11,7 +11,8 @@ Section type.
   Definition hyp_page_to_virt (vmemmap : loc) (page : loc) : loc. Admitted.
 
   Definition list_node (next : option (option type)) : type. Admitted.
-  Definition idx_to_node (vmemmap : loc) (vmemmap_len :nat) (next : option (option Z) ) : option (option type) := (λ no, (λ n, array_ptr struct_hyp_page vmemmap n vmemmap_len) <$> no) <$> next.
+  Definition idx_to_node (vmemmap : loc) (vmemmap_len :nat) (next : option (option Z) ) : option (option type) :=
+    (λ no : option _, (λ n, array_ptr struct_hyp_page vmemmap n vmemmap_len) <$> no) <$> next.
 
   Lemma subsume_list_node n1 n2 l β T:
     ⌜n1 = n2⌝ ∗ T -∗
