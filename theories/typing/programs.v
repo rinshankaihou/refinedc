@@ -10,10 +10,9 @@ Section judgements.
     learnable_learn : P -∗ □ learnable_data;
   }.
 
-  Class LearnAlignment (β : own_state) (ty : type) := {
-    learnalign_align : nat;
-    learnalign_learn l : l ◁ₗ{β} ty -∗ ⌜l `aligned_to` learnalign_align⌝
-  }.
+  Class LearnAlignment (β : own_state) (ty : type) (n : option nat) :=
+    learnalign_learn l : l ◁ₗ{β} ty -∗ ⌜if n is Some n' then l `aligned_to` n' else True⌝
+  .
 
   Class SimplifyHypPlace (l : loc) (β : own_state) (ty : type) (n : option N) : Type :=
     simplify_hyp_place :> SimplifyHyp (l ◁ₗ{β} ty) n.
@@ -312,6 +311,8 @@ Ltac solve_into_place_ctx :=
   end.
 Hint Extern 0 (IntoPlaceCtx _ _) => solve_into_place_ctx : typeclass_instances.
 
+Hint Mode Learnable + + : typeclass_instances.
+Hint Mode LearnAlignment + + + + - : typeclass_instances.
 Hint Mode SimplifyHypPlace + + + + + - : typeclass_instances.
 Hint Mode SimplifyHypVal + + + + + - : typeclass_instances.
 Hint Mode SimplifyGoalPlace + + + + ! - : typeclass_instances.
@@ -341,8 +342,8 @@ Hint Mode TypedMacroExpr + + + + : typeclass_instances.
 Arguments typed_annot_expr : simpl never.
 Arguments typed_annot_stmt : simpl never.
 Arguments typed_macro_expr : simpl never.
-Arguments learnalign_align {_ _ _ _} _.
-Arguments learnalign_learn {_ _ _ _} _.
+Arguments learnable_data {_ _} _.
+Arguments learnalign_learn {_ _ _ _ _} _.
 
 Section proper.
   Context `{!typeG Σ}.
@@ -395,9 +396,11 @@ Definition FindVal `{!typeG Σ} (v : val) :=
   {| fic_A := mtype; fic_Prop ty := (v ◁ᵥ ty)%I; |}.
 Definition FindValP {Σ} (v : val) :=
   {| fic_A := iProp Σ; fic_Prop P := P; |}.
+Definition FindValOrLoc {Σ} (v : val) (l : loc) :=
+  {| fic_A := iProp Σ; fic_Prop P := P; |}.
 Definition FindLocInBounds {Σ} (l : loc) :=
     {| fic_A := iProp Σ; fic_Prop P := P |}.
-Typeclasses Opaque FindLoc FindVal FindValP FindLocInBounds.
+Typeclasses Opaque FindLoc FindVal FindValP FindValOrLoc FindLocInBounds.
 
 Section typing.
   Context `{!typeG Σ}.
@@ -434,6 +437,30 @@ Section typing.
     FindInContext (FindValP l) 1%nat FICSyntactic :=
     λ T, i2p (find_in_context_type_val_P_loc_id l T).
 
+  Lemma find_in_context_type_val_or_loc_P_id_val (v : val) (l : loc) T:
+    (∃ ty : mtype, v ◁ᵥ ty ∗ T (v ◁ᵥ ty)) -∗
+    find_in_context (FindValOrLoc v l) T.
+  Proof. iDestruct 1 as (ty) "[Hl HT]". iExists (ty_own_val _ _) => /=. iFrame. Qed.
+  Global Instance find_in_context_type_val_or_loc_P_id_val_inst v l:
+    FindInContext (FindValOrLoc v l) 0%nat FICSyntactic :=
+    λ T, i2p (find_in_context_type_val_or_loc_P_id_val v l T).
+
+  Lemma find_in_context_type_val_or_loc_P_val_loc (lv l : loc) T:
+    (∃ β ty, lv ◁ₗ{β} ty ∗ T (lv ◁ₗ{β} ty)) -∗
+    find_in_context (FindValOrLoc lv l) T.
+  Proof. iDestruct 1 as (β ty) "[Hl HT]". iExists _. by iFrame. Qed.
+  Global Instance find_in_context_type_val_or_loc_P_val_loc_inst (lv l : loc):
+    FindInContext (FindValOrLoc lv l) 1%nat FICSyntactic :=
+    λ T, i2p (find_in_context_type_val_or_loc_P_val_loc lv l T).
+
+  Lemma find_in_context_type_val_or_loc_P_id_loc (v : val) (l : loc) T:
+    (∃ β ty, l ◁ₗ{β} ty ∗ T (l ◁ₗ{β} ty)) -∗
+    find_in_context (FindValOrLoc v l) T.
+  Proof. iDestruct 1 as (β ty) "[Hl HT]". iExists (l ◁ₗ{β} ty)%I => /=. iFrame. Qed.
+  Global Instance find_in_context_type_val_or_loc_P_id_loc_inst v l:
+    FindInContext (FindValOrLoc v l) 2%nat FICSyntactic :=
+    λ T, i2p (find_in_context_type_val_or_loc_P_id_loc v l T).
+
   Lemma find_in_context_loc_in_bounds l T :
     (∃ n, loc_in_bounds l n ∗ T (loc_in_bounds l n)) -∗
     find_in_context (FindLocInBounds l) T.
@@ -450,10 +477,13 @@ Section typing.
     FindInContext (FindLocInBounds l) 1 FICSyntactic :=
     λ T, i2p (find_in_context_loc_in_bounds_loc l T).
 
-  Global Instance related_to_loc l β ty : RelatedTo (l ◁ₗ{β} ty) := {| rt_fic := FindLoc l |}.
-  Global Instance related_to_val v ty `{!Movable ty} : RelatedTo (v ◁ᵥ ty) := {| rt_fic := FindValP v |}.
-  Global Instance related_to_loc_in_bounds l n : RelatedTo (loc_in_bounds l n) := {| rt_fic := FindLocInBounds l |}.
-  Global Instance related_to_alloc_alive l : RelatedTo (alloc_alive_loc l) := {| rt_fic := FindLoc l |}.
+  Global Instance related_to_loc l β ty : RelatedTo (l ◁ₗ{β} ty)  | 100 := {| rt_fic := FindLoc l |}.
+  Global Instance related_to_val v ty `{!Movable ty} : RelatedTo (v ◁ᵥ ty)  | 100 := {| rt_fic := FindValP v |}.
+  Global Instance related_to_loc_in_bounds l n : RelatedTo (loc_in_bounds l n)  | 100 := {| rt_fic := FindLocInBounds l |}.
+  Global Instance related_to_alloc_alive l : RelatedTo (alloc_alive_loc l)  | 100 := {| rt_fic := FindLoc l |}.
+
+  Global Program Instance learnalignment_none β ty : LearnAlignment β ty None | 1000.
+  Next Obligation. iIntros (???) "?". done. Qed.
 
   Lemma subsume_loc_in_bounds ty β l (n m : nat) `{!LocInBounds ty β m} T :
     (l ◁ₗ{β} ty -∗ ⌜n ≤ m⌝ ∗ T) -∗
@@ -465,8 +495,19 @@ Section typing.
     iApply loc_in_bounds_shorten; last done. lia.
   Qed.
   Global Instance subsume_loc_in_bounds_inst ty β l n m `{!LocInBounds ty β m} :
-    Subsume (l ◁ₗ{β} ty) (loc_in_bounds l n) :=
+    Subsume (l ◁ₗ{β} ty) (loc_in_bounds l n) | 20 :=
     λ T, i2p (subsume_loc_in_bounds ty β l n m T).
+
+  Lemma subsume_loc_in_bounds_evar ty β l (n m : nat) `{!LocInBounds ty β m} T :
+    (l ◁ₗ{β} ty -∗ ⌜n = m⌝ ∗ T) -∗
+    subsume (l ◁ₗ{β} ty) (loc_in_bounds l n) T.
+  Proof.
+    etrans; [|by apply subsume_loc_in_bounds].
+    iIntros "HT Hl". by iDestruct ("HT" with "Hl") as (->) "$".
+  Qed.
+  Global Instance subsume_loc_in_bounds_evar_inst ty β l n m `{!LocInBounds ty β m} `{!IsProtected n} :
+    Subsume (l ◁ₗ{β} ty) (loc_in_bounds l n) | 10 :=
+    λ T, i2p (subsume_loc_in_bounds_evar ty β l n m T).
 
   Lemma subsume_alloc_alive ty β l P `{!AllocAlive ty β P} T :
     (* You don't get l ◁ₗ{β} ty back because alloc_alive is not persistent. *)
@@ -482,8 +523,16 @@ Section typing.
     subsume (loc_in_bounds l n1) (loc_in_bounds l n2) T.
   Proof. iIntros "[% $] #?". by iApply loc_in_bounds_shorten. Qed.
   Global Instance subsume_loc_in_bounds_leq_inst (l : loc) (n1 n2 : nat):
-    Subsume (loc_in_bounds l n1) (loc_in_bounds l n2) :=
+    Subsume (loc_in_bounds l n1) (loc_in_bounds l n2) | 20 :=
     λ T, i2p (subsume_loc_in_bounds_leq l n1 n2 T).
+
+  Lemma subsume_loc_in_bounds_leq_evar (l : loc) (n1 n2 : nat) T :
+    ⌜n2 = n1⌝%nat ∗ T -∗
+    subsume (loc_in_bounds l n1) (loc_in_bounds l n2) T.
+  Proof. etrans; [|by apply subsume_loc_in_bounds_leq]. by iIntros "[-> $]". Qed.
+  Global Instance subsume_loc_in_bounds_leq_evar_inst (l : loc) (n1 n2 : nat) `{!IsProtected n2}:
+    Subsume (loc_in_bounds l n1) (loc_in_bounds l n2) | 10 :=
+    λ T, i2p (subsume_loc_in_bounds_leq_evar l n1 n2 T).
 
   Lemma apply_subsume_place_true l1 β1 ty1 l2 β2 ty2:
     l1 ◁ₗ{β1} ty1 -∗
@@ -1146,7 +1195,7 @@ Section typing.
     λ T, i2p (annot_unfold_once l β ty T n).
 
   Lemma annot_learn l β ty T {L : Learnable (l ◁ₗ{β} ty)}:
-    (learnable_data ∗ l ◁ₗ{β} ty -∗ T) -∗
+    (learnable_data L ∗ l ◁ₗ{β} ty -∗ T) -∗
     typed_annot_stmt (LearnAnnot) l (l ◁ₗ{β} ty) T.
   Proof.
     iIntros "HT Hl". iApply step_fupd_intro => //.
@@ -1157,17 +1206,17 @@ Section typing.
     TypedAnnotStmt (LearnAnnot) l (l ◁ₗ{β} ty) :=
     λ T, i2p (annot_learn l β ty T).
 
-  Lemma annot_learn_aligment l β ty T {L : LearnAlignment β ty}:
-    (⌜l `aligned_to` learnalign_align L⌝ -∗ l ◁ₗ{β} ty -∗ T) -∗
+  Lemma annot_learn_aligment l β ty n T `{!LearnAlignment β ty (Some n)}:
+    (⌜l `aligned_to` n⌝ -∗ l ◁ₗ{β} ty -∗ T) -∗
     typed_annot_stmt (LearnAlignment) l (l ◁ₗ{β} ty) T.
   Proof.
     iIntros "HT Hl". iApply step_fupd_intro => //. iModIntro.
-    iDestruct ((learnalign_learn L) with "Hl") as %?.
+    iDestruct ((learnalign_learn) with "Hl") as %?.
     by iApply "HT".
   Qed.
-  Global Instance annot_learn_align_inst l β ty {L : LearnAlignment β ty}:
+  Global Instance annot_learn_align_inst l β ty n `{!LearnAlignment β ty (Some n)}:
     TypedAnnotStmt (LearnAlignmentAnnot) l (l ◁ₗ{β} ty) :=
-    λ T, i2p (annot_learn_aligment l β ty T).
+    λ T, i2p (annot_learn_aligment l β ty n T).
 End typing.
 
 (* This must be an hint extern because an instance would be a big slowdown . *)

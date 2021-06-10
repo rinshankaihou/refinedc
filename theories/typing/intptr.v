@@ -67,48 +67,48 @@ Section intptr.
   Proof. apply _. Qed.
 
 End intptr.
-(* Typeclasses Opaque int. *)
 Notation "intptr< it >" := (intptr it) (only printing, format "'intptr<' it '>'") : printing_sugar.
 
 Section programs.
   Context `{!typeG Σ}.
 
-  Lemma type_cast_ptr_intptr (p : loc) β it ty n `{!LocInBounds ty β n} T:
-    ((⌜min_alloc_start ≤ p.2 ∧ p.2 + n ≤ max_alloc_end → p.2 ∈ it⌝) ∗ (
-        ⌜min_alloc_start ≤ p.2 ∧ p.2 + n ≤ max_alloc_end⌝ -∗
-        p ◁ₗ{β} ty -∗
-        T (val_of_loc_n (bytes_per_int it) p) (t2mt (p @ intptr it)))
+  Lemma type_cast_ptr_intptr (p : loc) β it ty T:
+    (∃ n, (p ◁ₗ{β} ty -∗ loc_in_bounds p n ∗ True) ∧
+      (⌜min_alloc_start ≤ p.2 ∧ p.2 + n ≤ max_alloc_end⌝ -∗
+       p ◁ₗ{β} ty -∗
+       ⌜p.2 ∈ it⌝ ∗ T (val_of_loc_n (bytes_per_int it) p) (t2mt (p @ intptr it)))
     ) -∗
     typed_un_op p (p ◁ₗ{β} ty) (CastOp (IntOp it)) PtrOp T.
   Proof.
-    iIntros "[%Hin HT] Hp" (Φ) "HΦ".
-    iDestruct (loc_in_bounds_in_bounds with "Hp") as "#Hlib".
+    iIntros "[%n HT] Hp" (Φ) "HΦ".
+    iAssert (loc_in_bounds p n) as "#Hlib".
+    { iDestruct "HT" as "[HT _]". iDestruct ("HT" with "Hp") as "[$ _]". }
+    iDestruct "HT" as "[_ HT]".
     iDestruct (loc_in_bounds_ptr_in_range with "Hlib") as %?.
-    iDestruct ("HT" with "[] Hp") as "HT"; first done.
+    iDestruct ("HT" with "[//] Hp") as (?) "HT".
     iApply wp_cast_ptr_int => //=; first by rewrite val_to_of_loc.
     { rewrite bool_decide_true; naive_solver. }
-    iApply ("HΦ" with "[] [HT]"); last done.
-    iPureIntro. apply val_to_loc_weak_val_of_loc_n. naive_solver.
+    iApply ("HΦ" with "[] HT").
+    iPureIntro. by apply val_to_loc_weak_val_of_loc_n.
   Qed.
-  Global Instance type_cast_ptr_intptr_inst (p : loc) β it ty n `{!LocInBounds ty β n}:
+  Global Instance type_cast_ptr_intptr_inst (p : loc) β it ty:
     TypedUnOp p (p ◁ₗ{β} ty)%I (CastOp (IntOp it)) PtrOp :=
-    λ T, i2p (type_cast_ptr_intptr p β it ty n T).
+    λ T, i2p (type_cast_ptr_intptr p β it ty T).
 
   Lemma type_cast_ptr_intptr_val (v : val) (p : loc) it (n : nat) T:
-    ((⌜min_alloc_start ≤ p.2 ∧ p.2 + n ≤ max_alloc_end → p.2 ∈ it⌝) ∗ (
-        ⌜min_alloc_start ≤ p.2 ∧ p.2 + n ≤ max_alloc_end⌝ -∗
-        v ◁ᵥ p @ ptr n -∗
-        T (val_of_loc_n (bytes_per_int it) p) (t2mt (p @ intptr it)))
+    (⌜min_alloc_start ≤ p.2 ∧ p.2 + n ≤ max_alloc_end⌝ -∗
+      v ◁ᵥ p @ ptr n -∗
+      ⌜p.2 ∈ it⌝ ∗ T (val_of_loc_n (bytes_per_int it) p) (t2mt (p @ intptr it))
     ) -∗
     typed_un_op v (v ◁ᵥ p @ ptr n) (CastOp (IntOp it)) PtrOp T.
   Proof.
-    iIntros "[%Hin HT] [-> #Hlib]" (Φ) "HΦ".
+    iIntros "HT [-> #Hlib]" (Φ) "HΦ".
     iDestruct (loc_in_bounds_ptr_in_range with "Hlib") as %?.
-    iDestruct ("HT" with "[//] []") as "HT". { by iFrame "Hlib". }
+    iDestruct ("HT" with "[//] []") as (?) "HT". { by iFrame "Hlib". }
     iApply wp_cast_ptr_int => //=; first by rewrite val_to_of_loc.
     { rewrite bool_decide_true; naive_solver. }
-    iApply ("HΦ" with "[] [HT]"); last done.
-    iPureIntro. apply val_to_loc_weak_val_of_loc_n. naive_solver.
+    iApply ("HΦ" with "[] HT").
+    iPureIntro. by apply val_to_loc_weak_val_of_loc_n.
   Qed.
   Global Instance type_cast_ptr_intptr_val_inst (v : val) (p : loc) it (n : nat):
     TypedUnOp v (v ◁ᵥ p @ ptr n)%I (CastOp (IntOp it)) PtrOp :=

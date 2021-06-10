@@ -50,3 +50,4 @@
 -Q _build/default/linux/proofs/early_alloc_simplified refinedc.linux.early_alloc_simplified
 -Q _build/default/linux/casestudies/proofs/early_alloc refinedc.linux.casestudies.early_alloc
 -Q _build/default/examples/proofs/quick_sort refinedc.examples.quick_sort
+-Q _build/default/examples/proofs/tagged_ptr refinedc.examples.tagged_ptr

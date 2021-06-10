@@ -59,6 +59,10 @@ Section padded.
     constructor. by iIntros (l) "(_&_&H&_)".
   Qed.
 
+  Global Program Instance learn_align_padded β ty ly lyty
+    : LearnAlignment β (padded ty lyty ly) (Some (ly_align ly)).
+  Next Obligation. by iIntros (β ty ly lyty l) "(_&%&_)". Qed.
+
   Lemma simpl_padded_hyp_eq_layout l β ty ly T:
     (l ◁ₗ{β} ty -∗ T) -∗
     simplify_hyp (l ◁ₗ{β} padded ty ly ly) T.
@@ -203,12 +207,6 @@ Section padded.
   Global Instance type_add_padded_inst v2 β ly lyty ty (p : loc) n it:
     TypedBinOp v2 (v2 ◁ᵥ n @ int it)%I p (p ◁ₗ{β} padded ty lyty ly)%I (PtrOffsetOp u8) (IntOp it) PtrOp :=
     λ T, i2p (type_add_padded v2 β ly lyty ty p n it T).
-
-  Global Program Instance learn_align_padded β ty ly lyty : LearnAlignment β (padded ty lyty ly) := {|
-    learnalign_align := ly_align ly
-  |}.
-  Next Obligation. by iIntros (β ty ly lyty l) "(_&%&_)". Qed.
-
 
 End padded.
 Notation "padded< ty , lyty , ly >" := (padded ty lyty ly)

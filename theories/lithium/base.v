@@ -62,6 +62,32 @@ Tactic Notation "reduce_closed" constr(x) :=
   change_no_check x with r in *
 .
 
+(*
+The following tactics are currently not used.
+
+(* TODO: This tactic is quite inefficient (it calls unification for
+every subterm in the goal and hyps). Can we do something about this? *)
+Tactic Notation "select" "subterm" open_constr(pat) tactic3(tac) :=
+  match goal with
+  | |- context H [?x]       => unify x pat; tac x
+  | _ : context H [?x] |- _ => unify x pat; tac x
+  end.
+
+Tactic Notation "reduce" "pattern" open_constr(pat) :=
+  repeat select subterm pat (fun x => reduce_closed x).
+
+(* TODO: This tactic is quite inefficient (it calls unification for
+every subterm in the goal and hyps). Can we do something about this? *)
+Tactic Notation "select" "closed" "subterm" "of" "type" constr(T) tactic3(tac) :=
+  match goal with
+  | |- context H [?x]       => let ty := type of x in unify ty T; check_closed x; tac x
+  | _ : context H [?x] |- _ => let ty := type of x in unify ty T; check_closed x; tac x
+  end.
+
+Ltac evalZ :=
+  repeat select closed subterm of type Z (fun x => progress reduce_closed x).
+ *)
+
 Definition Z_of_bool (b : bool) : Z :=
   if b then 1 else 0.
 Typeclasses Opaque Z_of_bool.
@@ -797,6 +823,3 @@ Proof.
   apply: Z.mod_pos_bound.
   by apply: Z.pow_pos_nonneg.
 Qed.
-
-
-(** What follows are random things where is is not clear where to put them*)

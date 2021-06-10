@@ -55,16 +55,17 @@ Notation "e1 'at_neg_offset{' ly , ot1 , ot2 } e2" := (BinOp (PtrNegOffsetOp ly)
   (at level 70, format "e1  at_neg_offset{ ly ,  ot1 ,  ot2 }  e2") : expr_scope.
 (* The unicode ← is already part of the notation "_ ← _; _" for bind. *)
 Notation "e1 <-{ ly , o } e2 ; s" := (Assign o ly e1%E e2%E s%E)
-  (at level 80, s at level 200, format "e1  <-{ ly ,  o }  e2 ;  s") : expr_scope.
+  (at level 80, s at level 200, format "'[v' e1  '<-{' ly ',' o '}'  e2 ';' '/' s ']'") : expr_scope.
 Notation "e1 <-{ ly } e2 ; s" := (Assign Na1Ord ly e1%E e2%E s%E)
-  (at level 80, s at level 200, format "e1  <-{ ly }  e2 ;  s") : expr_scope.
+  (at level 80, s at level 200, format "'[v' e1  '<-{' ly '}'  e2 ';' '/' s ']'") : expr_scope.
 Notation "'if:' e1 'then' s1 'else' s2" := (Switch bool_it e1%E {[ 0 := 0%nat ]} [s2%E] s1%E)
-  (at level 102, e1, s1, s2 at level 150) : expr_scope.
+  (at level 102, e1, s1, s2 at level 150, format "'[v' 'if:'  e1  'then' '/  ' s1 '/' 'else' '/  ' s2 ']'") : expr_scope.
 Notation "'expr:' e ; s" := (ExprS e%E s%E)
-  (at level 80, s at level 200, format "'expr:'  e ;  s") : expr_scope.
+  (at level 80, s at level 200, format "'[v' 'expr:'  e ';' '/' s ']'") : expr_scope.
 
 Definition Assert (e : expr) (s : stmt) : stmt := (if: e then s else StuckS)%E.
-Notation "'assert:' e ; s" := (Assert e%E s%E) (at level 80, s at level 200, format "'assert:'  e ;  s") : expr_scope.
+Notation "'assert:' e ; s" := (Assert e%E s%E)
+  (at level 80, s at level 200, format "'[v' 'assert:'  e ';' '/' s ']'") : expr_scope.
 Arguments Assert : simpl never.
 Typeclasses Opaque Assert.
 
@@ -100,7 +101,7 @@ Definition LocInfo {B} (a : location_info) (b : B) := b.
 Arguments LocInfo : simpl never.
 Typeclasses Opaque LocInfo.
 Notation "'locinfo:' a ; b" := (LocInfo (B:=stmt) a b%E)
-  (at level 80, b at level 200, format "'locinfo:'  a ;  b") : expr_scope.
+  (at level 80, b at level 200, format "'[v' 'locinfo:'  a ';' '/' b ']'") : expr_scope.
 Notation LocInfoE := (LocInfo (B:=expr)).
 
 Definition MacroE (m : list expr → expr) (es : list expr) := m es.

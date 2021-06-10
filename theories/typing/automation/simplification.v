@@ -31,6 +31,9 @@ Qed.
 Global Instance simpl_offset_inj l1 l2 sl n : SimplBothRel (=) (l1 at{sl}ₗ n) (l2 at{sl}ₗ n) (l1 = l2).
 Proof. unfold GetMemberLoc. split; [apply shift_loc_inj1| naive_solver]. Qed.
 
+Global Instance simpl_shift_loc_eq l n : SimplBothRel (=) l (l +ₗ n) (n = 0).
+Proof. split; [by rewrite -{1}(shift_loc_0 l)=> /shift_loc_inj2 | move => ->; by rewrite shift_loc_0 ]. Qed.
+
 (** * NULL *)
 Global Instance simpl_to_NULL_val_of_loc (l : loc):
   SimplAndRel (=) NULL (l) (λ T, False).
@@ -40,4 +43,3 @@ Proof. split; naive_solver. Qed.
 Global Instance simpl_and_eq_val_of_loc l1 l2:
   SimplAnd (val_of_loc l1 = val_of_loc l2) (λ T, l1 = l2 ∧ T).
 Proof. split; naive_solver. Qed.
-

@@ -101,6 +101,9 @@ Proof. unfold CanSolve in *; split; destruct n2 as [|[]]; naive_solver lia. Qed.
 Global Instance simpl_mult_0 n m : SimplBothRel (=) (n * m) (0) (n = 0 ∨ m = 0).
 Proof. split; destruct n, m; naive_solver lia. Qed.
 
+Global Instance simpl_nat_le_0 (n : nat) : SimplBoth (n ≤ 0)%nat (n = 0)%nat.
+Proof. split; lia. Qed.
+
 Global Instance simpl_mult_neq_0 n m : SimplBoth (n * m ≠ 0) (n ≠ 0 ∧ m ≠ 0).
 Proof. split; destruct n, m; naive_solver lia. Qed.
 Global Instance simpl_mult_le z1 z2:

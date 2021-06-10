@@ -45,6 +45,10 @@ Section int.
     iApply loc_in_bounds_shorten; last done. lia.
   Qed.
 
+  Global Program Instance learn_align_int β it n
+    : LearnAlignment β (n @ int it) (Some (ly_align it)).
+  Next Obligation. by iIntros (β it n ?) "(%&%&%&?)". Qed.
+
   Lemma ty_own_int_in_range l β n it : l ◁ₗ{β} n @ int it -∗ ⌜n ∈ it⌝.
   Proof.
     iIntros "Hl". destruct β.
