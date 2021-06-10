@@ -125,7 +125,7 @@ Definition partitioned (l s t r : nat) (key : Z) (xs : list Z) :=
 From stdpp Require Import natmap.
 
 Section natmap_lemmas.
-    
+
   Lemma natmap_elem_of_to_list {A : Type} (m : natmap A) i x :
     (i, x) ∈ natmap_to_list m ↔ m !! i = Some x.
   Proof.
@@ -238,8 +238,8 @@ Definition filter_out_range (I : range) {A : Type} (xs : list A) :=
 Lemma filter_in_out_range_perm I {A : Type} (xs : list A) :
    filter_in_range I xs ++ filter_out_range I xs ≡ₚ xs.
 Proof.
-  rewrite -fmap_app -natmap_to_list_disjoint_maps ?map_union_filter;
-    last by apply map_disjoint_filter.
+  rewrite -fmap_app -natmap_to_list_disjoint_maps ?map_filter_union_complement;
+    last by apply map_disjoint_filter_complement.
   by rewrite <- indexed_unindexed.
 Qed.
 
@@ -250,7 +250,7 @@ Lemma filter_in_range_perm I {A : Type} (xs ys : list A) :
 Proof.
   move => Hp Heq.
   apply Permutation_app_inv_r with (l := filter_out_range I xs).
-  by rewrite {2}/filter_out_range (filter_index_eq _ _ _ Heq) 
+  by rewrite {2}/filter_out_range (filter_index_eq _ _ _ Heq)
     !filter_in_out_range_perm.
 Qed.
 
@@ -306,7 +306,7 @@ Ltac solve_perm_by_trans :=
 Definition sorted (l r : Z) (xs : list Z) :=
   ∀ (i j : nat) x y, l ≤ i ∧ i < j ∧ j ≤ r →
     xs !! i = Some x → xs !! j = Some y → x ≤ y.
-    
+
 Lemma sorted_nil xs l r :
   r ≤ l → sorted l r xs.
 Proof.
@@ -361,7 +361,7 @@ Proof.
       eapply Permutation_Forall in Hle; last by apply Hp21.
       apply range_forall_iff_Forall in Hle.
       by apply (Hle i).
-      { rewrite /range_forall /elem_of /interval_eq => j Hj. 
+      { rewrite /range_forall /elem_of /interval_eq => j Hj.
         destruct (decide (j < lo)). apply (Heq21 j); solve_goal.
         apply (Heq21' j); solve_goal. }
     - eapply filter_in_range_perm in Hp32.
@@ -372,7 +372,7 @@ Proof.
       rewrite /range_forall /elem_of => i x Hi Hx.
       rewrite Heq21' in Hx; last solve_goal.
       by apply (Hge i).
-      { rewrite /range_forall /elem_of /interval_eq => j Hj. 
+      { rewrite /range_forall /elem_of /interval_eq => j Hj.
         destruct (decide (j > hi)). apply (Heq32' j); solve_goal.
         apply (Heq32 j); solve_goal. }
   + move => i j x y ? Hx Hy.
