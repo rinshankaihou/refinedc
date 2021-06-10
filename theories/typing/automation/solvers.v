@@ -8,6 +8,8 @@ Proof. done. Qed.
 
 Ltac unfold_common_defs :=
   unfold
+  (* Unfold [aligned_to] and [Z.divide] as lia can work with the underlying multiplication. *)
+    aligned_to, Z.divide,
   (* Unfold [addr] since [lia] may get stuck due to [addr]/[Z] mismatches. *)
     addr,
   (* Layout *)
