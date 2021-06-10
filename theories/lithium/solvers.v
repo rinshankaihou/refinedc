@@ -176,6 +176,7 @@ Ltac reduce_closed_Z :=
 
 
 Ltac solve_goal :=
+  simpl;
   try fast_done;
   solve_goal_prepare_tac;
   normalize_and_simpl_goal;
