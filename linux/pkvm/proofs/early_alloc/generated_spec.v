@@ -31,6 +31,7 @@ Section spec.
     ]) (
       ⌜0 ≤ given⌝ ∗
       ⌜0 ≤ remaining⌝ ∗
+      (alloc_global base) ∗
       ⌜base.2 + (given + remaining) * PAGE_SIZE <= max_int u64⌝
     )
   )%I.
@@ -58,6 +59,7 @@ Section spec.
       ]) (
         ⌜0 ≤ given⌝ ∗
         ⌜0 ≤ remaining⌝ ∗
+        (alloc_global base) ∗
         ⌜base.2 + (given + remaining) * PAGE_SIZE <= max_int u64⌝
       )
     )%I.
@@ -108,7 +110,7 @@ Section spec.
 
   (* Specifications for function [hyp_early_alloc_init]. *)
   Definition type_of_hyp_early_alloc_init :=
-    fn(∀ (l, n, s) : loc * Z * Z; (l @ (&own (uninit (PAGES (Z.to_nat n))))), (s @ (int (u32))); ⌜s = (n * PAGE_SIZE)%Z⌝ ∗ (global_with_type "mem" Own (uninit (struct_region))))
+    fn(∀ (l, n, s) : loc * Z * Z; (l @ (&own (uninit (PAGES (Z.to_nat n))))), (s @ (int (u32))); ⌜s = (n * PAGE_SIZE)%Z⌝ ∗ (alloc_global l) ∗ (global_with_type "mem" Own (uninit (struct_region))))
       → ∃ () : (), (void); (global_with_type "mem" Own (((l, 0, n)) @ (region))).
 End spec.
 

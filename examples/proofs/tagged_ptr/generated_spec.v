@@ -19,12 +19,12 @@ Section spec.
 
   (* Specifications for function [tag]. *)
   Definition type_of_tag :=
-    fn(∀ (r, t, ty) : (loc * Z) * Z * type; (r @ (tagged_ptr (Own) (TAG_MOD) (ty))), (t @ (int (u8))); ⌜0 ≤ t < TAG_MOD⌝)
+    fn(∀ (r, t, ty, P) : (loc * Z) * Z * type * (iProp Σ); (r @ (tagged_ptr (Own) (TAG_MOD) (ty))), (t @ (int (u8))); ⌜0 ≤ t < TAG_MOD⌝ ∗ ⌜AllocAlive ty Own P⌝ ∗ (P))
       → ∃ () : (), (((r.1, t)) @ (tagged_ptr (Own) (TAG_MOD) (ty))); True.
 
   (* Specifications for function [untag]. *)
   Definition type_of_untag :=
-    fn(∀ (r, ty) : (loc * Z) * type; (r @ (tagged_ptr (Own) (TAG_MOD) (ty))); True)
+    fn(∀ (r, ty, P) : (loc * Z) * type * (iProp Σ); (r @ (tagged_ptr (Own) (TAG_MOD) (ty))); ⌜AllocAlive ty Own P⌝ ∗ (P))
       → ∃ () : (), ((r.1) @ (&own (ty))); True.
 
   (* Specifications for function [test]. *)

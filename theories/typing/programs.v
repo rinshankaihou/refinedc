@@ -400,7 +400,9 @@ Definition FindValOrLoc {Σ} (v : val) (l : loc) :=
   {| fic_A := iProp Σ; fic_Prop P := P; |}.
 Definition FindLocInBounds {Σ} (l : loc) :=
     {| fic_A := iProp Σ; fic_Prop P := P |}.
-Typeclasses Opaque FindLoc FindVal FindValP FindValOrLoc FindLocInBounds.
+Definition FindAllocAlive {Σ} (l : loc) :=
+    {| fic_A := iProp Σ; fic_Prop P := P |}.
+Typeclasses Opaque FindLoc FindVal FindValP FindValOrLoc FindLocInBounds FindAllocAlive.
 
 Section typing.
   Context `{!typeG Σ}.
@@ -477,10 +479,26 @@ Section typing.
     FindInContext (FindLocInBounds l) 1 FICSyntactic :=
     λ T, i2p (find_in_context_loc_in_bounds_loc l T).
 
+  Lemma find_in_context_alloc_alive_global l T :
+    (alloc_global l ∗ T (alloc_global l)) -∗
+    find_in_context (FindAllocAlive l) T.
+  Proof. iDestruct 1 as "?". iExists _ => /=. iFrame. Qed.
+  Global Instance find_in_context_alloc_alive_global_inst l :
+    FindInContext (FindAllocAlive l) 0 FICSyntactic :=
+    λ T, i2p (find_in_context_alloc_alive_global l T).
+
+  Lemma find_in_context_alloc_alive_loc l T :
+    (∃ β ty, l ◁ₗ{β} ty ∗ T (l ◁ₗ{β} ty)) -∗
+    find_in_context (FindAllocAlive l) T.
+  Proof. iDestruct 1 as (β ty) "[??]". iExists (ty_own _ _ _) => /=. iFrame. Qed.
+  Global Instance find_in_context_alloc_alive_loc_inst l :
+    FindInContext (FindAllocAlive l) 1 FICSyntactic :=
+    λ T, i2p (find_in_context_alloc_alive_loc l T).
+
   Global Instance related_to_loc l β ty : RelatedTo (l ◁ₗ{β} ty)  | 100 := {| rt_fic := FindLoc l |}.
   Global Instance related_to_val v ty `{!Movable ty} : RelatedTo (v ◁ᵥ ty)  | 100 := {| rt_fic := FindValP v |}.
   Global Instance related_to_loc_in_bounds l n : RelatedTo (loc_in_bounds l n)  | 100 := {| rt_fic := FindLocInBounds l |}.
-  Global Instance related_to_alloc_alive l : RelatedTo (alloc_alive_loc l)  | 100 := {| rt_fic := FindLoc l |}.
+  Global Instance related_to_alloc_alive l : RelatedTo (alloc_alive_loc l)  | 100 := {| rt_fic := FindAllocAlive l |}.
 
   Global Program Instance learnalignment_none β ty : LearnAlignment β ty None | 1000.
   Next Obligation. iIntros (???) "?". done. Qed.
@@ -508,6 +526,14 @@ Section typing.
   Global Instance subsume_loc_in_bounds_evar_inst ty β l n m `{!LocInBounds ty β m} `{!IsProtected n} :
     Subsume (l ◁ₗ{β} ty) (loc_in_bounds l n) | 10 :=
     λ T, i2p (subsume_loc_in_bounds_evar ty β l n m T).
+
+  Lemma subsume_alloc_alive_global l T :
+    T -∗
+    subsume (alloc_global l) (alloc_alive_loc l) T.
+  Proof. iIntros "$ Hl". by iApply (alloc_global_alive). Qed.
+  Global Instance subsume_alloc_alive_global_inst l :
+    Subsume (alloc_global l) (alloc_alive_loc l) :=
+    λ T, i2p (subsume_alloc_alive_global l T).
 
   Lemma subsume_alloc_alive ty β l P `{!AllocAlive ty β P} T :
     (* You don't get l ◁ₗ{β} ty back because alloc_alive is not persistent. *)

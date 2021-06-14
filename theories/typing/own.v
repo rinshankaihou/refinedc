@@ -216,21 +216,22 @@ Section own.
     TypedUnOp v (v ◁ᵥ n @ int it)%I (CastOp PtrOp) (IntOp it) :=
     λ T, i2p (type_cast_int_ptr n v it T).
 
-  Lemma type_copy_aid v1 v2 P1 P2 T:
-    (∃ p1 p2, subsume P1 (v1 ◁ᵥ p1 @ frac_ptr Own (place p1)) (
-              subsume P2 (v2 ◁ᵥ p2 @ frac_ptr Own (place p2)) (
-                   T (val_of_loc (p2.1, p1.2)) (t2mt (value void* (val_of_loc (p2.1, p1.2))))))) -∗
-    typed_copy_alloc_id v1 P1 v2 P2 PtrOp T.
+  Lemma type_copy_aid l1 β1 ty1 l2 β2 ty2 T:
+    (l1 ◁ₗ{β1} ty1 -∗ l2 ◁ₗ{β2} ty2 -∗
+      (loc_in_bounds (l2.1, l1.2) 0 ∗ True) ∧
+      (alloc_alive_loc l2 ∗ True) ∧
+      T (val_of_loc (l2.1, l1.2)) (t2mt (value void* (val_of_loc (l2.1, l1.2))))) -∗
+    typed_copy_alloc_id l1 (l1 ◁ₗ{β1} ty1) l2 (l2 ◁ₗ{β2} ty2) PtrOp T.
   Proof.
-    iIntros "HT Hp1 Hp2" (Φ) "HΦ". iDestruct "HT" as (p1 p2) "HT".
-    iDestruct ("HT" with "Hp1") as "[Hp1 HT]". iDestruct "Hp1" as (->) "Hp1".
-    iDestruct ("HT" with "Hp2") as "[Hp2 HT]". iDestruct "Hp2" as (->) "Hp2".
-    iApply wp_copy_alloc_id; try by rewrite val_to_of_loc.
-    by iApply ("HΦ" with "[] HT").
+    iIntros "HT Hp1 Hp2" (Φ) "HΦ". iDestruct ("HT" with "Hp1 Hp2") as "HT".
+    rewrite !right_id. iDestruct "HT" as "[#Hlib HT]".
+    iApply wp_copy_alloc_id; [ by rewrite val_to_of_loc | by rewrite val_to_of_loc | done | ].
+    iSplit; [by iDestruct "HT" as "[$ _]" |].
+    iDestruct "HT" as "[_ HT]". by iApply ("HΦ" with "[] HT").
   Qed.
-  Global Instance type_copy_aid_inst v1 v2 P1 P2:
-    TypedCopyAllocId v1 P1 v2 P2 PtrOp :=
-    λ T, i2p (type_copy_aid v1 v2 P1 P2 T).
+  Global Instance type_copy_aid_inst (l1 : loc) β1 ty1 (l2 : loc) β2 ty2:
+    TypedCopyAllocId l1 (l1 ◁ₗ{β1} ty1) l2 (l2 ◁ₗ{β2} ty2) PtrOp :=
+    λ T, i2p (type_copy_aid l1 β1 ty1 l2 β2 ty2 T).
 
   (* TODO: Is it a good idea to have this general rule or would it be
   better to have more specialized rules? *)
@@ -408,14 +409,6 @@ Section ptr.
     SimplifyGoalVal p (l @ ptr n)%I (Some 10%N) :=
     λ T, i2p (simplify_ptr_goal_val p l n T).
 
-  Lemma simplify_ptr_hyp_val (v : val) (p : loc) n T:
-    (⌜v = p⌝ -∗ loc_in_bounds p n -∗ p ◁ᵥ p @ ptr n -∗ T) -∗
-    simplify_hyp (v ◁ᵥ p @ ptr n) T.
-  Proof. iIntros "HT [% #Hlib]". iApply "HT" => //. by iSplit. Qed.
-  Global Instance simplify_ptr_hyp_val_inst (v : val) (p : loc) n `{!TCUnless (FastDone (v = p))}:
-    SimplifyHypVal v (p @ ptr n)%I (Some 0%N) :=
-    λ T, i2p (simplify_ptr_hyp_val v p n T).
-
   Lemma subsume_own_ptr p l1 l2 ty n T:
     ⌜l1 = l2⌝ ∗ (l1 ◁ₗ ty -∗ loc_in_bounds l1 n ∗ T) -∗
     subsume (p ◁ₗ l1 @ &own ty)%I (p ◁ₗ l2 @ ptr n)%I T.
@@ -430,6 +423,24 @@ Section ptr.
     Subsume (p ◁ₗ l1 @ &own ty)%I (p ◁ₗ l2 @ ptr n)%I :=
     λ T, i2p (subsume_own_ptr p l1 l2 ty n T).
 
+  Lemma type_copy_aid_ptr l1 β1 ty1 v2 l2 n T:
+    (l1 ◁ₗ{β1} ty1 -∗ v2 ◁ᵥ l2 @ ptr n -∗
+      ⌜l2.2 ≤ l1.2 ≤ l2.2 + n⌝ ∗
+      ((alloc_alive_loc l2 ∗ True) ∧
+      T (val_of_loc (l2.1, l1.2)) (t2mt (value void* (val_of_loc (l2.1, l1.2)))))) -∗
+    typed_copy_alloc_id l1 (l1 ◁ₗ{β1} ty1) v2 (v2 ◁ᵥ l2 @ ptr n) PtrOp T.
+  Proof.
+    iIntros "HT Hp1 Hp2" (Φ) "HΦ". iDestruct "Hp2" as (->) "#Hlib".
+    iDestruct ("HT" with "Hp1 [$Hlib]") as ([??]) "HT"; [done|].
+    rewrite !right_id.
+    iApply wp_copy_alloc_id; [ by rewrite val_to_of_loc | by rewrite val_to_of_loc |  | ].
+    { iApply (loc_in_bounds_offset with "Hlib"); simpl; [done | done | etrans; [|done]; lia ]. }
+    iSplit; [by iDestruct "HT" as "[$ _]" |].
+    iDestruct "HT" as "[_ HT]". by iApply ("HΦ" with "[] HT").
+  Qed.
+  Global Instance type_copy_aid_ptr_inst (l1 : loc) β1 ty1 v2 (l2 : loc) n:
+    TypedCopyAllocId l1 (l1 ◁ₗ{β1} ty1) v2 (v2 ◁ᵥ l2 @ ptr n)%I PtrOp :=
+    λ T, i2p (type_copy_aid_ptr l1 β1 ty1 v2 l2 n T).
 End ptr.
 
 Section null.

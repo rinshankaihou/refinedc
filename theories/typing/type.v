@@ -1,6 +1,7 @@
 From iris.bi Require Export fractional.
 From iris.base_logic.lib Require Export invariants.
 From refinedc.lang Require Export proofmode notation.
+From refinedc.lithium Require Import simpl_classes.
 From refinedc.typing Require Export base annotations.
 
 Class typeG Σ := TypeG {
@@ -350,6 +351,14 @@ Section alloc_alive.
   Global Instance movable_alloc_alive_inst ty `{!Movable ty}:
     AllocAlive ty Own (⌜ly_size (ty_layout ty) ≠ 0%nat⌝) | 100.
   Proof. constructor. iIntros (??) "?". by iApply movable_alloc_alive. Qed.
+
+  Global Instance intro_persistent_alloc_global l:
+    IntroPersistent (alloc_global l) (alloc_global l).
+  Proof. constructor. by iIntros "#H !>". Qed.
+
+  Global Instance AllocAlive_simpl_and ty β P P' `{!AllocAlive ty β P'} `{!IsProtected P} :
+    SimplAndUnsafe true (AllocAlive ty β P) (λ T, P = P' ∧ T).
+  Proof. by move => T [-> ?]. Qed.
 End alloc_alive.
 
 Notation "l ◁ₗ{ β } ty" := (ty_own ty β l) (at level 15, format "l  ◁ₗ{ β }  ty") : bi_scope.

@@ -223,9 +223,7 @@ Section array.
     iDestruct "HP" as (? Hlen) "HP".
     have [|ty ?]:= lookup_lt_is_Some_2 tys (Z.to_nat i). lia.
     iApply wp_ptr_offset => //; [by apply val_to_of_loc | | ].
-    { have -> : length tys = (Z.to_nat i + (length tys - Z.to_nat i))%nat by lia.
-      rewrite Nat.mul_add_distr_l -loc_in_bounds_split Nat2Z.inj_mul Z2Nat.id; [|lia].
-      iDestruct "Hb" as "[_ Hb]". iApply (loc_in_bounds_shorten with "Hb"). nia. }
+    { iApply (loc_in_bounds_offset with "Hb"); simpl; [done| destruct l => /=; lia | destruct l => /=; nia]. }
     iIntros "!#". iExists _. iSplit => //.
     iDestruct (big_sepL_insert_acc with "Hl") as "[Hl Hc]" => //. rewrite Z2Nat.id//.
     iApply ("HP" $! ty with "[//] Hl"). iIntros (l' ty2 β2 typ R) "Hl' Htyp HT".

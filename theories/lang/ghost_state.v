@@ -99,6 +99,12 @@ Section definitions.
   Global Instance alloc_alive_tl id dq a : Timeless (alloc_alive id dq a).
   Proof. rewrite alloc_alive_eq. by apply _. Qed.
 
+  Definition alloc_global (l : loc) : iProp Σ :=
+    ∃ id, ⌜l.1 = Some id⌝ ∗ alloc_alive id DfracDiscarded true.
+  Global Instance alloc_global_tl l : Timeless (alloc_global l).
+  Proof. by apply _. Qed.
+  Global Instance alloc_global_pers l : Persistent (alloc_global l).
+  Proof. rewrite /alloc_global alloc_alive_eq. by apply _. Qed.
   (** * Function table stuff. *)
 
   (** [fntbl_entry l f] persistently records the information that function
@@ -356,6 +362,19 @@ Section loc_in_bounds.
     loc_in_bounds l n -∗ loc_in_bounds l m.
   Proof.
     move => ?. rewrite (le_plus_minus m n) // -loc_in_bounds_split. iIntros "[$ _]".
+  Qed.
+
+  Lemma loc_in_bounds_offset l1 l2 (n m : nat):
+    l1.1 = l2.1 →
+    l1.2 ≤ l2.2 ->
+    l2.2 + m ≤ l1.2 + n ->
+    loc_in_bounds l1 n -∗ loc_in_bounds l2 m.
+  Proof.
+    move => ???. have ->: (l2 = l1 +ₗ (l2.2 - l1.2)).
+    { rewrite /shift_loc. destruct l1, l2 => /=. f_equal; [done| lia]. }
+    have -> : n = (Z.to_nat (l2.2 - l1.2) + Z.to_nat (n - (l2.2 - l1.2)))%nat by lia.
+    rewrite -loc_in_bounds_split. iIntros "[_ Hlib]". rewrite Z2Nat.id; [|lia].
+    iApply (loc_in_bounds_shorten with "Hlib"). lia.
   Qed.
 
   Lemma loc_in_bounds_to_heap_loc_in_bounds l σ n:
@@ -774,8 +793,12 @@ Section alloc_alive.
     iRight. iExists a, q, _. iFrame. by destruct v.
   Qed.
 
-  Lemma alloc_alive_loc_to_alloc_id_alive l σ:
-    alloc_alive_loc l -∗ state_ctx σ -∗ ⌜∃ aid, l.1 = Some aid ∧ alloc_id_alive aid σ.(st_heap)⌝.
+  Lemma alloc_global_alive l:
+    alloc_global l -∗ alloc_alive_loc l.
+  Proof. iIntros "(%id&%&Ha)". rewrite alloc_alive_loc_eq. iLeft. eauto. Qed.
+
+  Lemma alloc_alive_loc_to_block_alive l σ:
+    alloc_alive_loc l -∗ state_ctx σ -∗ ⌜block_alive l σ.(st_heap)⌝.
   Proof.
     rewrite alloc_alive_loc_eq.
     iIntros "[H|H]".
@@ -795,9 +818,8 @@ Section alloc_alive.
     loc_in_bounds l 0 -∗ alloc_alive_loc l -∗ state_ctx σ -∗ ⌜valid_ptr l σ.(st_heap)⌝.
   Proof.
     iIntros "Hin Ha Hσ".
-    iDestruct (alloc_alive_loc_to_alloc_id_alive with "Ha Hσ") as %[?[??]].
-    iDestruct (loc_in_bounds_to_heap_loc_in_bounds with "Hin Hσ") as %?.
-    iPureIntro. split; last done. by eexists.
+    iDestruct (alloc_alive_loc_to_block_alive with "Ha Hσ") as %?.
+    by iDestruct (loc_in_bounds_to_heap_loc_in_bounds with "Hin Hσ") as %?.
   Qed.
 End alloc_alive.
 

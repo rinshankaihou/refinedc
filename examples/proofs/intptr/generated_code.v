@@ -188,18 +188,18 @@ Section code.
   Definition loc_249 : location_info := LocationInfo file_0 146 16 146 29.
   Definition loc_250 : location_info := LocationInfo file_0 146 28 146 29.
   Definition loc_251 : location_info := LocationInfo file_0 146 28 146 29.
-  Definition loc_256 : location_info := LocationInfo file_0 156 2 156 28.
-  Definition loc_257 : location_info := LocationInfo file_0 157 2 157 73.
-  Definition loc_258 : location_info := LocationInfo file_0 157 9 157 72.
-  Definition loc_259 : location_info := LocationInfo file_0 157 36 157 39.
-  Definition loc_260 : location_info := LocationInfo file_0 157 36 157 39.
-  Definition loc_261 : location_info := LocationInfo file_0 157 41 157 44.
-  Definition loc_262 : location_info := LocationInfo file_0 157 41 157 44.
-  Definition loc_263 : location_info := LocationInfo file_0 156 12 156 27.
-  Definition loc_264 : location_info := LocationInfo file_0 156 20 156 27.
-  Definition loc_265 : location_info := LocationInfo file_0 156 21 156 22.
-  Definition loc_266 : location_info := LocationInfo file_0 156 21 156 22.
-  Definition loc_267 : location_info := LocationInfo file_0 156 25 156 26.
+  Definition loc_256 : location_info := LocationInfo file_0 158 2 158 28.
+  Definition loc_257 : location_info := LocationInfo file_0 159 2 159 73.
+  Definition loc_258 : location_info := LocationInfo file_0 159 9 159 72.
+  Definition loc_259 : location_info := LocationInfo file_0 159 36 159 39.
+  Definition loc_260 : location_info := LocationInfo file_0 159 36 159 39.
+  Definition loc_261 : location_info := LocationInfo file_0 159 41 159 44.
+  Definition loc_262 : location_info := LocationInfo file_0 159 41 159 44.
+  Definition loc_263 : location_info := LocationInfo file_0 158 12 158 27.
+  Definition loc_264 : location_info := LocationInfo file_0 158 20 158 27.
+  Definition loc_265 : location_info := LocationInfo file_0 158 21 158 22.
+  Definition loc_266 : location_info := LocationInfo file_0 158 21 158 22.
+  Definition loc_267 : location_info := LocationInfo file_0 158 25 158 26.
 
   (* Definition of function [int_ptr1]. *)
   Definition impl_int_ptr1 : function := {|

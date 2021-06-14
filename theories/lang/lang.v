@@ -431,10 +431,12 @@ comparing pointers? (see lambda rust) *)
 | CopyAllocIdPS l1 l2 v1 v2 σ:
     val_to_loc v1 = Some l1 →
     val_to_loc v2 = Some l2 →
+    valid_ptr (l2.1, l1.2) σ.(st_heap) →
     expr_step (CopyAllocId PtrOp (Val v1) (Val v2)) σ [] (Val (val_of_loc (l2.1, l1.2))) σ []
 | CopyAllocIdIS it l1 l2 v1 v2 σ:
     val_to_loc v1 = Some l1 →
     val_to_loc_weak v2 it = Some l2 →
+    valid_ptr (l2.1, l1.2) σ.(st_heap) →
     expr_step (CopyAllocId (IntOp it) (Val v1) (Val v2)) σ [] (Val (val_of_loc (l2.1, l1.2))) σ []
 | IfES v it e1 e2 n σ:
     val_to_Z_weak v it = Some n →

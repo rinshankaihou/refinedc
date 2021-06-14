@@ -10,7 +10,7 @@
 
 /**** Casting a pointer to an integer ***************************************/
 
-// Cast a pointer to an integer, keeping the provenance. 
+// Cast a pointer to an integer, keeping the provenance.
 [[rc::parameters("l : loc")]]
 [[rc::args("l @ &own<int<i32>>")]]
 [[rc::returns("l @ intptr<uintptr_t>")]]
@@ -151,7 +151,9 @@ int roundtrip_and_read4(int* p){
 // Copy the provenance from an int.
 [[rc::parameters("p : loc")]]
 [[rc::args("p @ intptr<uintptr_t>")]]
+[[rc::requires("[alloc_alive_loc p]", "[loc_in_bounds p 0]")]] // TODO: get rid of the loc_in_bounds sidecondition
 [[rc::returns("p @ &own<place<p>>")]]
+[[rc::ensures("[alloc_alive_loc p]")]]
 void* int_to_ptr(uintptr_t p){
   void *q = (void*) (p * 1);
   return (rc_copy_alloc_id(q, p));

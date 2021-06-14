@@ -51,6 +51,12 @@ Inductive FICLocSemantic : Set :=.
 Global Instance find_in_context_type_loc_semantic_inst `{!typeG Σ} l :
   FindInContext (FindLoc l) 2%nat FICLocSemantic :=
   λ T, i2p (find_in_context_type_loc_id l T).
+Global Instance find_in_context_loc_in_bounds_semantic_inst `{!typeG Σ} l :
+  FindInContext (FindLocInBounds l) 2%nat FICLocSemantic :=
+  λ T, i2p (find_in_context_loc_in_bounds l T).
+Global Instance find_in_context_loc_in_bounds_type_semantic_inst `{!typeG Σ} l :
+  FindInContext (FindLocInBounds l) 3%nat FICLocSemantic :=
+  λ T, i2p (find_in_context_loc_in_bounds_loc l T).
 
 Lemma tac_solve_loc_eq `{!typeG Σ} l1 β1 ty1 l2 β2 ty2:
   l1 = l2 →
@@ -59,6 +65,14 @@ Proof. by move => ->. Qed.
 
 Hint Extern 10 (FindHypEqual FICLocSemantic (_ ◁ₗ{_} _) (_ ◁ₗ{_} _) _) =>
   (notypeclasses refine (tac_solve_loc_eq _ _ _ _ _ _ _); solve_loc_eq) : typeclass_instances.
+
+Lemma tac_loc_in_bounds_solve_loc_eq `{!typeG Σ} l1 l2 n1 n2:
+  l1 = l2 →
+  FindHypEqual FICLocSemantic (loc_in_bounds l1 n1) (loc_in_bounds l2 n2) (loc_in_bounds l1 n2).
+Proof. by move => ->. Qed.
+
+Hint Extern 10 (FindHypEqual FICLocSemantic (loc_in_bounds _ _) (loc_in_bounds _ _) _) =>
+  (notypeclasses refine (tac_loc_in_bounds_solve_loc_eq _ _ _ _ _); solve_loc_eq) : typeclass_instances.
 
 Section test.
   Context (l : loc).
@@ -99,5 +113,8 @@ Section test.
   solve_loc_eq. Qed.
 
   Goal ((l +ₗ (n1 + (i + j)%nat) * n2) = (l +ₗ (n1 + i + j) * n2))%Z.
+  solve_loc_eq. Qed.
+
+  Goal (l = (l.1, l.2 * 1))%Z.
   solve_loc_eq. Qed.
 End test.

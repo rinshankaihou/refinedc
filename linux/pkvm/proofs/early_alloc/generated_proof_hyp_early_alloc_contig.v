@@ -26,7 +26,8 @@ Section proof_hyp_early_alloc_contig.
         ((base +ₗ given * PAGE_SIZE) ◁ₗ zeroed (PAGES i)) ∗
         ((base +ₗ (given + i) * PAGE_SIZE) ◁ₗ uninit (PAGES (Z.to_nat n - i)%nat)) ∗
         (global_with_type "mem" Own (((base, given + n, remaining - n)%Z) @ (region))) ∗
-        ⌜i ≤ n⌝
+        ⌜i ≤ n⌝ ∗
+        ⌜0 ≤ given⌝
     ]> $
       ∅
     )%I : gmap label (iProp Σ)) ((

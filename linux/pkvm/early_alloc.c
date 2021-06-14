@@ -15,7 +15,7 @@ struct
 [[rc::refined_by("base : loc", "given : Z", "remaining : Z")]]
 [[rc::let("z_cur : Z = {(base.2 + given * PAGE_SIZE)%Z}")]]
 [[rc::let("z_end : Z = {(base.2 + (given + remaining) * PAGE_SIZE)%Z}")]]
-[[rc::constraints("{0 ≤ given}", "{0 ≤ remaining}",
+[[rc::constraints("{0 ≤ given}", "{0 ≤ remaining}", "[alloc_global base]",
 				  "{base.2 + (given + remaining) * PAGE_SIZE <= max_int u64}")]]
 region {
   [[rc::field("z_end @ int<uintptr_t>")]] uintptr_t end;
@@ -76,7 +76,7 @@ void *hyp_early_alloc_contig(unsigned int nr_pages){
   [[rc::constraints("[(base +ₗ given * PAGE_SIZE) ◁ₗ zeroed (PAGES i)]")]]
   [[rc::constraints("[(base +ₗ (given + i) * PAGE_SIZE) ◁ₗ uninit (PAGES (Z.to_nat n - i)%nat)]")]]
   [[rc::constraints("global mem : {(base, given + n, remaining - n)%Z} @ region")]]
-  [[rc::constraints("{i ≤ n}")]]
+  [[rc::constraints("{i ≤ n}", "{0 ≤ given}")]]
   for (i = 0; i < nr_pages; i++) {
     rc_unfold(base);
     p = ret + (i << PAGE_SHIFT);
@@ -99,7 +99,7 @@ void *hyp_early_alloc_page(void *arg){
 
 [[rc::parameters("l : loc", "n : Z", "s : Z")]]
 [[rc::args("l @ &own<uninit<PAGES<{Z.to_nat n}>>>", "s @ int<u32>")]]
-[[rc::requires("{s = (n * PAGE_SIZE)%Z}")]]
+[[rc::requires("{s = (n * PAGE_SIZE)%Z}", "[alloc_global l]")]]
 [[rc::requires("global mem : uninit<struct_region>")]]
 [[rc::ensures("global mem : {(l, 0, n)} @ region")]]
 [[rc::tactics("all: rewrite -> ly_size_PAGES in *; solve_goal.")]]

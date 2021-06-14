@@ -20,17 +20,18 @@ tag_t tag_of(void* p){
   return ((uintptr_t) p) % TAG_MOD;
 }
 
-[[rc::parameters("r: {loc * Z}", "t: Z", "ty: type")]]
+[[rc::parameters("r: {loc * Z}", "t: Z", "ty: type", "P : {iProp Σ}")]]
 [[rc::args("r @ tagged_ptr<Own, TAG_MOD, ty>", "t @ int<u8>")]]
-[[rc::requires("{0 ≤ t < TAG_MOD}")]]
+[[rc::requires("{0 ≤ t < TAG_MOD}", "{AllocAlive ty Own P}", "[P]")]]
 [[rc::returns("{(r.1, t)} @ tagged_ptr<Own, TAG_MOD, ty>")]]
 void* tag(void* p, tag_t t){
   tag_t old_t = tag_of(p);
   return rc_copy_alloc_id((void*) ((uintptr_t) p - old_t + t), p);
 }
 
-[[rc::parameters("r: {loc * Z}", "ty: type")]]
+[[rc::parameters("r: {loc * Z}", "ty: type", "P : {iProp Σ}")]]
 [[rc::args("r @ tagged_ptr<Own, TAG_MOD, ty>")]]
+[[rc::requires("{AllocAlive ty Own P}", "[P]")]]
 [[rc::returns("{r.1} @ &own<ty>")]]
 void* untag(void* p){
   uintptr_t i = (uintptr_t) p;

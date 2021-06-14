@@ -1,5 +1,5 @@
 From refinedc.typing Require Export type.
-From refinedc.typing Require Import programs own intptr.
+From refinedc.typing Require Import programs own intptr singleton.
 Set Default Proof Using "Type".
 
 Section tagged_ptr.
@@ -93,13 +93,15 @@ Section tagged_ptr.
         ⌜min_alloc_start ≤ r.1.2 ∧ r.1.2 + align ≤ max_alloc_end⌝ -∗
         loc_in_bounds r.1 align -∗
         r.1 ◁ₗ{β} ty -∗
+        v ◁ᵥ r @ tagged_ptr β align (place r.1) -∗
         ⌜(r.1.2 + r.2)%Z ∈ it⌝ ∗ T (val_of_loc_n (bytes_per_int it) (r.1 +ₗ r.2)) (t2mt ((r.1 +ₗ r.2) @ intptr it))
     ) -∗
     typed_un_op v (v ◁ᵥ r @ tagged_ptr β align ty) (CastOp (IntOp it)) PtrOp T.
   Proof.
-    iIntros "HT (->&%&%&Hlib&Hp)" (Φ) "HΦ".
+    iIntros "HT (->&%&%&#Hlib&Hp)" (Φ) "HΦ".
     iDestruct (loc_in_bounds_ptr_in_range with "Hlib") as %Hrange.
-    iDestruct ("HT" with "[//] [//] [//] [//] [$] [$]") as (Hr) "HT".
+    iDestruct ("HT" with "[//] [//] [//] [//] [$] [$] []") as (Hr) "HT".
+    { by iFrame "Hlib". }
     iApply wp_cast_ptr_int => //=; first by rewrite val_to_of_loc.
     { by rewrite bool_decide_true. }
     iApply ("HΦ" with "[] HT").
@@ -109,6 +111,25 @@ Section tagged_ptr.
     TypedUnOp v (v ◁ᵥ r @ tagged_ptr β align ty)%I (CastOp (IntOp it)) PtrOp :=
     λ T, i2p (type_cast_tagged_ptr_intptr_val v r β align it ty T).
 
+  Lemma type_copy_aid_tagged_ptr l1 β1 ty1 v2 r β2 ty2 align T:
+    (l1 ◁ₗ{β1} ty1 -∗ v2 ◁ᵥ r @ tagged_ptr β2 align ty2 -∗
+      ⌜r.1.2 ≤ l1.2 ≤ r.1.2 + align⌝ ∗
+      ((alloc_alive_loc r.1 ∗ True) ∧
+      T (val_of_loc (r.1.1, l1.2)) (t2mt (value void* (val_of_loc (r.1.1, l1.2)))))) -∗
+    typed_copy_alloc_id l1 (l1 ◁ₗ{β1} ty1) v2 (v2 ◁ᵥ r @ tagged_ptr β2 align ty2) PtrOp T.
+  Proof.
+    iIntros "HT Hp1 (->&%&%&#Hlib&Hp)" (Φ) "HΦ".
+    iDestruct ("HT" with "Hp1 [$Hlib $Hp]") as ([??]) "HT"; [done|].
+    rewrite !right_id.
+    iApply wp_copy_alloc_id; [ by rewrite val_to_of_loc | by rewrite val_to_of_loc |  | ].
+    { iApply (loc_in_bounds_offset with "Hlib"); simpl; [done | done | etrans; [|done]; lia]. }
+    iSplit.
+    - iDestruct "HT" as "[Halloc _]". by iApply (alloc_alive_loc_mono with "Halloc").
+    - iDestruct "HT" as "[_ HT]". by iApply ("HΦ" with "[] HT").
+  Qed.
+  Global Instance type_copy_aid_tagged_ptr_inst (l1 : loc) β1 ty1 v2 r β2 ty2 align:
+    TypedCopyAllocId l1 (l1 ◁ₗ{β1} ty1) v2 (v2 ◁ᵥ r @ tagged_ptr β2 align ty2)%I PtrOp :=
+    λ T, i2p (type_copy_aid_tagged_ptr l1 β1 ty1 v2 r β2 ty2 align T).
 End tagged_ptr.
 Typeclasses Opaque tagged_ptr_type.
 
