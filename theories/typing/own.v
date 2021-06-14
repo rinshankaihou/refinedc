@@ -155,13 +155,18 @@ Section own.
   Qed.
 
   Lemma type_offset_of_sub v1 l s m P ly T:
-    ⌜ly_size ly = 1%nat⌝ ∗ (P -∗ T (val_of_loc l) (t2mt (l @ frac_ptr Own (place l)))) -∗
+    ⌜ly_size ly = 1%nat⌝ ∗ (
+      (P -∗ loc_in_bounds l 0 ∗ True) ∧ (P -∗ T (val_of_loc l) (t2mt (l @ frac_ptr Own (place l))))) -∗
     typed_bin_op v1 (v1 ◁ᵥ offsetof s m) (l at{s}ₗ m) P (PtrNegOffsetOp ly) (IntOp size_t) PtrOp T.
   Proof.
     iDestruct 1 as (Hly) "HT". iIntros ([n [Ho Hi]]) "HP". iIntros (Φ) "HΦ".
-    iApply wp_ptr_neg_offset. by apply val_to_of_loc. done. iModIntro.
-    rewrite offset_loc_sz1 // /GetMemberLoc shift_loc_assoc Ho /= Z.add_opp_diag_r shift_loc_0.
-    iApply "HΦ"; [ | by iApply "HT"]. done.
+    iAssert (loc_in_bounds l 0) as "#Hlib".
+    { iDestruct "HT" as "[HT _]". by iDestruct ("HT" with "HP") as "[$ _]". }
+    iDestruct "HT" as "[_ HT]".
+    iApply wp_ptr_neg_offset. by apply val_to_of_loc. done.
+    all: rewrite offset_loc_sz1 // /GetMemberLoc shift_loc_assoc Ho /= Z.add_opp_diag_r shift_loc_0.
+    1: done.
+    iModIntro. iApply "HΦ"; [ | by iApply "HT"]. done.
   Qed.
   Global Instance type_offset_of_sub_inst v1 l s m P ly:
     TypedBinOp v1 (v1 ◁ᵥ offsetof s m) (l at{s}ₗ m) P (PtrNegOffsetOp ly) (IntOp size_t) PtrOp :=

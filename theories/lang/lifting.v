@@ -426,13 +426,15 @@ Qed.
 Lemma wp_ptr_offset Φ vl l E it o ly vo:
   val_to_loc vl = Some l →
   val_to_Z_weak vo it = Some o →
-  0 ≤ o →
+  loc_in_bounds (l offset{ly}ₗ o) 0 -∗
   ▷ Φ (val_of_loc (l offset{ly}ₗ o)) -∗
   WP Val vl at_offset{ ly , PtrOp, IntOp it} Val vo @ E {{ Φ }}.
 Proof.
-  iIntros (Hvl Hvo Ho) "HΦ".
+  iIntros (Hvl Hvo) "Hl HΦ".
   iApply wp_binop_det. iSplit; last done.
-  iIntros (σ v) "_ !%". split.
+  iIntros (σ v) "Hσ".
+  iDestruct (loc_in_bounds_to_heap_loc_in_bounds with "Hl Hσ") as %?.
+  iPureIntro. split.
   - inversion 1. by simplify_eq.
   - move => ->. by apply PtrOffsetOpIP.
 Qed.
@@ -440,12 +442,15 @@ Qed.
 Lemma wp_ptr_neg_offset Φ vl l E it o ly vo:
   val_to_loc vl = Some l →
   val_to_Z_weak vo it = Some o →
+  loc_in_bounds (l offset{ly}ₗ -o) 0 -∗
   ▷ Φ (val_of_loc (l offset{ly}ₗ -o)) -∗
   WP Val vl at_neg_offset{ ly , PtrOp, IntOp it} Val vo @ E {{ Φ }}.
 Proof.
-  iIntros (Hvl Hvo) "HΦ".
+  iIntros (Hvl Hvo) "Hl HΦ".
   iApply wp_binop_det. iSplit; last done.
-  iIntros (σ v) "_ !%". split.
+  iIntros (σ v) "Hσ".
+  iDestruct (loc_in_bounds_to_heap_loc_in_bounds with "Hl Hσ") as %?.
+  iPureIntro. split.
   - inversion 1. by simplify_eq.
   - move => ->. by apply PtrNegOffsetOpIP.
 Qed.
@@ -453,24 +458,23 @@ Qed.
 Lemma wp_get_member Φ vl l sl n E:
   val_to_loc vl = Some l →
   is_Some (index_of sl.(sl_members) n) →
+  loc_in_bounds l (ly_size sl) -∗
   ▷ Φ (val_of_loc (l at{sl}ₗ n)) -∗
   WP Val vl at{sl} n @ E {{ Φ }}.
 Proof.
-  iIntros (Hvl [i Hi]) "HΦ".
+  iIntros (Hvl [i Hi]) "#Hl HΦ".
   rewrite /GetMember/GetMemberLoc/offset_of Hi /=.
   have [|v Hv]:= (val_of_Z_is_Some size_t (offset_of_idx sl.(sl_members) i)). {
-    split; first by rewrite /min_int/=; lia.  by apply offset_of_bound.
+    split; first by rewrite /min_int/=; lia. by apply offset_of_bound.
   }
   rewrite Hv /=. move: Hv => /val_to_of_Z Hv.
-  iApply wp_binop_det. iSplit; last done.
-  iIntros (σ v') "_ !%". split.
-  - inversion 1; simplify_eq. rewrite offset_loc_sz1; last done.
-    apply val_to_Z_to_int_repr_Z in Hv. by simplify_eq.
-  - move => ->. rewrite -(offset_loc_sz1 u8) //.
-    apply: PtrOffsetOpIP => //; last lia.
-    by rewrite /val_to_Z_weak /val_to_int_repr Hv.
+  iApply wp_ptr_offset; [done| by apply: val_to_Z_to_int_repr_Z | | ].
+  { have ? := offset_of_idx_le_size sl i.
+    have -> : (ly_size sl = offset_of_idx (sl_members sl) i + (ly_size sl - offset_of_idx (sl_members sl) i))%nat by lia.
+    rewrite -loc_in_bounds_split offset_loc_sz1 //.
+    iDestruct "Hl" as "[_ Hl]". iApply (loc_in_bounds_shorten with "Hl"). lia. }
+  by rewrite offset_loc_sz1.
 Qed.
-
 Lemma wp_get_member_union Φ vl l ul n E:
   val_to_loc vl = Some l →
   Φ (val_of_loc (l at_union{ul}ₗ n)) -∗ WP Val vl at_union{ul} n @ E {{ Φ }}.

@@ -214,8 +214,9 @@ Section struct.
     iDestruct 1 as (i ty1 Hi Hn) "HP".
     move: (Hi) => /field_index_of_to_index_of[? Hi2].
     iIntros (Φ) "Hs HΦ" => /=.
+    iDestruct (loc_in_bounds_in_bounds with "Hs") as "#Hlib".
     iApply (wp_step_fupd with "[Hs]"). done. 2: by iApply (do_strip_guarded with "Hs"). solve_ndisj.
-    iApply wp_get_member. by apply val_to_of_loc. by eauto.
+    iApply wp_get_member. by apply val_to_of_loc. by eauto. done.
     iIntros "!# [% [% [#Hb Hs]]] !#". iExists _. iSplit => //.
     iDestruct (big_sepL_insert_acc with "Hs") as "[Hl Hs]" => //=. by eapply pad_struct_lookup_field.
     rewrite /GetMemberLoc/offset_of Hi2/=.

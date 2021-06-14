@@ -230,11 +230,12 @@ Inductive eval_bin_op : bin_op → op_type → op_type → state → val → val
     val_to_Z_weak v1 it = Some o →
     val_to_loc v2 = Some l →
     (* TODO: should we have an alignment check here? *)
-    0 ≤ o →
+    heap_state_loc_in_bounds (l offset{ly}ₗ o) 0 σ.(st_heap) →
     eval_bin_op (PtrOffsetOp ly) (IntOp it) PtrOp σ v1 v2 (val_of_loc (l offset{ly}ₗ o))
 | PtrNegOffsetOpIP v1 v2 σ o l ly it:
     val_to_Z_weak v1 it = Some o →
     val_to_loc v2 = Some l →
+    heap_state_loc_in_bounds (l offset{ly}ₗ -o) 0 σ.(st_heap) →
     (* TODO: should we have an alignment check here? *)
     eval_bin_op (PtrNegOffsetOp ly) (IntOp it) PtrOp σ v1 v2 (val_of_loc (l offset{ly}ₗ -o))
 | EqOpPNull v1 v2 σ l v:

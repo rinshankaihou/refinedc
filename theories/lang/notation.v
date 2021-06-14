@@ -290,6 +290,10 @@ Proof.
   naive_solver.
 Qed.
 
+Lemma offset_of_idx_le_size sl i:
+  (offset_of_idx (sl_members sl) i ≤ ly_size sl)%nat.
+Proof. apply: sum_list_with_take. Qed.
+
 Lemma offset_of_bound i sl:
   offset_of_idx sl.(sl_members) i ≤ max_int size_t.
 Proof.

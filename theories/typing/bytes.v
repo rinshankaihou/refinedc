@@ -152,10 +152,13 @@ Section bytewise.
     move: (Hint) => /val_to_Z_weak_in_range?.
     iDestruct ("HT" with "[//]") as (??) "HT".
     iDestruct (split_bytewise (Z.to_nat n) with "Hp") as "[H1 H2]"; [lia..|].
-    iApply wp_ptr_offset. by apply val_to_of_loc. done. done.
-    iModIntro. rewrite offset_loc_sz1//.
-    iApply ("HΦ" with "[H2]"). 2: iApply ("HT" with "H1 []"). rewrite Z2Nat.id; [|lia]. by iFrame.
-    by iPureIntro.
+    rewrite -!(offset_loc_sz1 u8)// Z2Nat.id; [|lia].
+    iDestruct (loc_in_bounds_in_bounds with "H2") as "#?".
+    iApply wp_ptr_offset; [ by apply val_to_of_loc | done | |].
+    { iApply loc_in_bounds_shorten; [|done]; lia. }
+    iModIntro. iApply ("HΦ" with "[H2]"). 2: iApply ("HT" with "H1 []").
+    - by iFrame.
+    - by iPureIntro.
   Qed.
   Global Instance type_add_bytewise_inst v2 β P ly (p : loc) n it:
     TypedBinOp v2 (v2 ◁ᵥ n @ int it)%I p (p ◁ₗ{β} bytewise P ly) (PtrOffsetOp u8) (IntOp it) PtrOp :=
