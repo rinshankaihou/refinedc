@@ -378,7 +378,7 @@ Proof. elim: l y => //=. Qed.
 
 Lemma list_lookup_length_default_last {A} (x : A) (l : list A) :
   (x :: l) !! length l = Some (default x (last l)).
-Proof. elim: l x => //= a l IH x. rewrite IH. f_equal. destruct l => //. apply default_last_cons. Qed.
+Proof. elim: l x => //= a l IH x. rewrite IH. f_equal. destruct l => //=. apply default_last_cons. Qed.
 
 
 Reserved Notation "'[∧' 'map]' k ↦ x ∈ m , P"

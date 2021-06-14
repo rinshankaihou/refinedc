@@ -36,7 +36,7 @@ Section tyfold.
     iDestruct "Htys" as "[H1 Hty2]". iDestruct "H1" as (l1 l2 ??) "H1". simplify_eq.
     iExists l2. rewrite tyexists_eq. iExists ls. rewrite tyexists_eq. iSplit => //.
     iSplitL "H1" => //=. rewrite /tyown_constraint. iSplit => //. iFrame.
-    iStopProof. f_equiv. destruct ls =>//. by apply default_last_cons.
+    iStopProof. f_equiv. destruct ls =>//=. by apply default_last_cons.
   Qed.
   Global Instance simplify_hyp_place_tyfold_optional_inst l β ls tys b:
     SimplifyHypPlace l β (ls @ tyfold tys b) (Some 50%N) :=
@@ -56,7 +56,7 @@ Section tyfold.
     iIntros "HT". iExists _. iFrame. iDestruct 1 as (l2 ls2 ->) "[Hl [% [Htys Hb]]]".
     iSplit => /=. by iPureIntro; f_equal. iFrame.
     iSplitR "Hb"; first by eauto with iFrame.
-    iStopProof. f_equiv. destruct ls2 =>//. by apply default_last_cons.
+    iStopProof. f_equiv. destruct ls2 =>//=. by apply default_last_cons.
   Qed.
   Global Instance simplify_goal_place_tyfold_cons_inst l β ls ty tys b:
     SimplifyGoalPlace l β (ls @ tyfold (ty :: tys) b) (Some 0%N) :=
