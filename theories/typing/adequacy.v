@@ -12,7 +12,7 @@ Class typePreG Σ := PreTypeG {
   type_heap_heap_inG             :> inG Σ (authR heapUR);
   type_heap_alloc_range_map_inG  :> ghost_mapG Σ alloc_id (Z * nat);
   type_heap_alloc_alive_map_inG  :> ghost_mapG Σ alloc_id bool;
-  type_heap_fntbl_inG            :> ghost_mapG Σ loc function;
+  type_heap_fntbl_inG            :> ghost_mapG Σ addr function;
 }.
 
 Definition typeΣ : gFunctors :=
@@ -20,7 +20,7 @@ Definition typeΣ : gFunctors :=
    GFunctor (constRF (authR heapUR));
    ghost_mapΣ alloc_id (Z * nat);
    ghost_mapΣ alloc_id bool;
-   ghost_mapΣ loc function].
+   ghost_mapΣ addr function].
 Instance subG_typePreG {Σ} : subG typeΣ Σ → typePreG Σ.
 Proof. solve_inG. Qed.
 
@@ -30,20 +30,20 @@ Definition initial_prog (main : loc) : runtime_expr :=
 Definition initial_heap_state :=
   {| hs_heap := ∅; hs_allocs := ∅; |}.
 
-Definition initial_state (fns : gmap loc function) :=
+Definition initial_state (fns : gmap addr function) :=
   {| st_heap := initial_heap_state; st_fntbl := fns; |}.
 
 Definition main_type `{!typeG Σ} (P : iProp Σ) :=
   fn(∀ () : (); P) → ∃ () : (), int i32; True.
 
 (** * The main adequacy lemma *)
-Lemma refinedc_adequacy Σ `{!typePreG Σ} (thread_mains : list loc) (fns : gmap loc function) (gls : list loc) (gvs : list val.val) n t2 σ2 κs hs σ:
+Lemma refinedc_adequacy Σ `{!typePreG Σ} (thread_mains : list loc) (fns : gmap addr function) (gls : list loc) (gvs : list val.val) n t2 σ2 κs hs σ:
   alloc_new_blocks initial_heap_state gls gvs hs →
   σ = {| st_heap := hs; st_fntbl := fns; |} →
   (∀ {HtypeG : typeG Σ}, ∃ gl gt,
   let Hglobals : globalG Σ := {| global_locs := gl; global_initialized_types := gt; |} in
     ([∗ list] l; v ∈ gls; gvs, l ↦ v) -∗
-    ([∗ map] k↦qs∈fns, fntbl_entry k qs) ={⊤}=∗
+    ([∗ map] k↦qs∈fns, fntbl_entry (fn_loc k) qs) ={⊤}=∗
       [∗ list] main ∈ thread_mains, ∃ P, main ◁ᵥ main @ function_ptr (main_type P) ∗ P) →
   nsteps (Λ := c_lang) n (initial_prog <$> thread_mains, σ) κs (t2, σ2) →
   ∀ e2, e2 ∈ t2 → not_stuck e2 σ2.
@@ -66,10 +66,10 @@ Proof.
     by iFrame.
   }
   rewrite big_sepL2_sep. iDestruct "Hmt" as "[Hmt Hfree]".
-  iAssert (|==> [∗ map] k↦qs ∈ fns, fntbl_entry k qs)%I with "[Hfm]" as ">Hfm". {
+  iAssert (|==> [∗ map] k↦qs ∈ fns, fntbl_entry (fn_loc k) qs)%I with "[Hfm]" as ">Hfm". {
     iApply big_sepM_bupd. iApply (big_sepM_impl with "Hfm").
     iIntros "!>" (???) "Hm". rewrite fntbl_entry_eq.
-    by iApply ghost_map_elem_persist.
+    iExists _. iSplitR; [done|]. by iApply ghost_map_elem_persist.
   }
   iMod (Hwp with "Hmt Hfm") as "Hmains".
 
@@ -86,14 +86,14 @@ Proof.
 Qed.
 
 (** * Helper functions for using the adequacy lemma *)
-Definition fn_lists_to_fns (locs : list loc) (fns : list function) : gmap loc function :=
-  list_to_map (zip locs fns).
+Definition fn_lists_to_fns (addrs : list addr) (fns : list function) : gmap addr function :=
+  list_to_map (zip addrs fns).
 
-Lemma fn_lists_to_fns_cons `{!refinedcG Σ} loc fn locs fns :
-  length locs = length fns →
-  loc ∉ locs →
-  ([∗ map] k↦qs ∈ fn_lists_to_fns (loc :: locs) (fn :: fns), fntbl_entry k qs) -∗
-  fntbl_entry loc fn ∗ ([∗ map] k↦qs ∈ fn_lists_to_fns locs fns, fntbl_entry k qs).
+Lemma fn_lists_to_fns_cons `{!refinedcG Σ} addr fn addrs fns :
+  length addrs = length fns →
+  addr ∉ addrs →
+  ([∗ map] k↦qs ∈ fn_lists_to_fns (addr :: addrs) (fn :: fns), fntbl_entry (fn_loc k) qs) -∗
+  fntbl_entry (ProvFnPtr, addr) fn ∗ ([∗ map] k↦qs ∈ fn_lists_to_fns addrs fns, fntbl_entry (fn_loc k) qs).
 Proof.
   move => Hnotin ?.
   rewrite /fn_lists_to_fns /= big_sepM_insert //.

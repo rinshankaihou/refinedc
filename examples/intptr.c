@@ -83,7 +83,7 @@ int* roundtrip1(int* p){
 // Roundtrip cast with dummy arithmetic.
 [[rc::parameters("p : loc")]]
 [[rc::args("p @ &own<int<i32>>")]]
-[[rc::exists("id : {option alloc_id}")]] // ← Only ∃ on provenance.
+[[rc::exists("id : prov")]] // ← Only ∃ on provenance.
 [[rc::returns("{(id, p.2)} @ &own<place<{(id, p.2)}>>")]]
 int* roundtrip2(int* p){
   uintptr_t i = (uintptr_t) p;

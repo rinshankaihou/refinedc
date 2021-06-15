@@ -47,7 +47,7 @@ Section spec.
   (* Specifications for function [roundtrip2]. *)
   Definition type_of_roundtrip2 :=
     fn(∀ p : loc; (p @ (&own (int (i32)))); True)
-      → ∃ id : (option alloc_id), (((id, p.2)) @ (&own (place ((id, p.2))))); True.
+      → ∃ id : prov, (((id, p.2)) @ (&own (place ((id, p.2))))); True.
 
   (* Specifications for function [roundtrip3]. *)
   Definition type_of_roundtrip3 :=

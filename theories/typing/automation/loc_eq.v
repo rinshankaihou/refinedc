@@ -76,7 +76,7 @@ Hint Extern 10 (FindHypEqual FICLocSemantic (loc_in_bounds _ _) (loc_in_bounds _
 
 Section test.
   Context (l : loc).
-  Context (id : option alloc_id).
+  Context (id : prov).
   Context (a : addr).
   Context (n n1 n2 n3 : Z).
   Context (i j : nat).

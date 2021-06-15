@@ -17,9 +17,42 @@ Definition addr := Z.
 Definition alloc_id := Z.
 Definition dummy_alloc_id : alloc_id := 0.
 
+(** Provenances *)
+Inductive prov :=
+| ProvNull
+| ProvAlloc (aid : option alloc_id)
+| ProvFnPtr.
+Global Instance prov_inhabited : Inhabited prov := populate ProvNull.
+Global Instance prov_eq_dec : EqDecision prov.
+Proof. solve_decision. Qed.
+Global Instance prov_countable : Countable prov.
+Proof.
+  refine (inj_countable'
+    (λ prov,
+     match prov with
+     | ProvNull => inl (inl tt)
+     | ProvAlloc aid => inl (inr aid)
+     | ProvFnPtr => inr tt
+     end
+    )
+    (λ prov,
+     match prov with
+     | inl (inl _) => ProvNull
+     | inl (inr aid) => ProvAlloc aid
+     | inr _ => ProvFnPtr
+     end) _); abstract by intros [].
+Defined.
+
+Definition prov_alloc_id (p : prov) : option alloc_id :=
+  if p is ProvAlloc aid then aid else None.
+
 (** Memory location. *)
-Definition loc : Set := option alloc_id * addr.
+Definition loc : Set := prov * addr.
 Bind Scope loc_scope with loc.
+
+Definition fn_loc (a : addr) : loc := (ProvFnPtr, a).
+Definition NULL_loc : loc := (ProvNull, 0).
+Typeclasses Opaque NULL_loc fn_loc.
 
 (** Shifts location [l] by offset [z]. *)
 Definition shift_loc (l : loc) (z : Z) : loc := (l.1, l.2 + z).

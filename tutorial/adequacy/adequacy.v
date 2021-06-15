@@ -21,36 +21,36 @@ From refinedc.typing Require Import adequacy.
 Section adequate.
   Context (loc_allocator_data loc_allocator_state loc_initialized : loc).
 
-  Context (loc_sl_init loc_sl_lock loc_sl_unlock
-           loc_latch_wait loc_latch_release
-           loc_init loc_is_empty loc_push loc_pop loc_member loc_reverse loc_test
-           loc_alloc loc_free loc_init_alloc
-           loc_main loc_main2 : loc).
+  Context (addr_sl_init addr_sl_lock addr_sl_unlock
+           addr_latch_wait addr_latch_release
+           addr_init addr_is_empty addr_push addr_pop addr_member addr_reverse addr_test
+           addr_alloc addr_free addr_init_alloc
+           addr_main addr_main2 : addr).
   Definition functions  : list function := [
     impl_sl_init; impl_sl_lock; impl_sl_unlock;
 
     impl_latch_wait; impl_latch_release;
 
-    impl_init; impl_is_empty; impl_push loc_alloc; impl_pop loc_free; impl_member; impl_reverse;
-    impl_test loc_alloc loc_free loc_init loc_is_empty loc_member loc_pop loc_push loc_reverse;
+    impl_init; impl_is_empty; impl_push (fn_loc addr_alloc); impl_pop (fn_loc addr_free); impl_member; impl_reverse;
+    impl_test (fn_loc addr_alloc) (fn_loc addr_free) (fn_loc addr_init) (fn_loc addr_is_empty) (fn_loc addr_member) (fn_loc addr_pop) (fn_loc addr_push) (fn_loc addr_reverse);
 
-    impl_alloc loc_allocator_state loc_sl_lock loc_sl_unlock;
-    impl_free loc_allocator_state loc_sl_lock loc_sl_unlock;
-    impl_init_alloc loc_allocator_state loc_sl_init;
+    impl_alloc loc_allocator_state (fn_loc addr_sl_lock) (fn_loc addr_sl_unlock);
+    impl_free loc_allocator_state (fn_loc addr_sl_lock) (fn_loc addr_sl_unlock);
+    impl_init_alloc loc_allocator_state (fn_loc addr_sl_init);
 
-    impl_main loc_allocator_data loc_initialized loc_free loc_init_alloc loc_latch_release loc_test;
-    impl_main2 loc_initialized loc_latch_wait loc_test
+    impl_main loc_allocator_data loc_initialized (fn_loc addr_free) (fn_loc addr_init_alloc) (fn_loc addr_latch_release) (fn_loc addr_test);
+    impl_main2 loc_initialized (fn_loc addr_latch_wait) (fn_loc addr_test)
   ].
-  Definition function_locs : list loc := [
-    loc_sl_init; loc_sl_lock; loc_sl_unlock;
+  Definition function_addrs : list addr := [
+    addr_sl_init; addr_sl_lock; addr_sl_unlock;
 
-    loc_latch_wait; loc_latch_release;
+    addr_latch_wait; addr_latch_release;
 
-    loc_init; loc_is_empty; loc_push; loc_pop; loc_member; loc_reverse; loc_test;
+    addr_init; addr_is_empty; addr_push; addr_pop; addr_member; addr_reverse; addr_test;
 
-    loc_alloc; loc_free; loc_init_alloc;
+    addr_alloc; addr_free; addr_init_alloc;
 
-    loc_main; loc_main2
+    addr_main; addr_main2
   ].
 
   Definition initial_heap_locs : list loc := [
@@ -86,9 +86,9 @@ Section adequate.
     loc_initialized `has_layout_loc` struct_latch →
     (* TODO: Should we try to show that this assumption is provable? *)
     alloc_new_blocks initial_heap_state initial_heap_locs initial_heap_values hs →
-    σ = {| st_heap := hs; st_fntbl := fn_lists_to_fns function_locs functions; |} →
-    NoDup function_locs →
-    nsteps (Λ := c_lang) n (initial_prog <$> [loc_main; loc_main2], σ) κs (t2, σ2) →
+    σ = {| st_heap := hs; st_fntbl := fn_lists_to_fns function_addrs functions; |} →
+    NoDup function_addrs →
+    nsteps (Λ := c_lang) n (initial_prog <$> [(fn_loc addr_main); (fn_loc addr_main2)], σ) κs (t2, σ2) →
     ∀ e2, e2 ∈ t2 → not_stuck e2 σ2.
   Proof.
     move => Hly1 Hly2 Hly3 Halloc -> HNDfns.

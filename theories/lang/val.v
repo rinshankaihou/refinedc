@@ -44,6 +44,9 @@ Definition val_to_loc_n (n : nat) (v : val) : option loc :=
 Definition val_to_loc : val → option loc :=
   val_to_loc_n bytes_per_addr.
 
+Definition NULL : val := val_of_loc NULL_loc.
+Typeclasses Opaque NULL.
+
 Lemma val_of_loc_n_length n l:
   length (val_of_loc_n n l) = n.
 Proof.
@@ -92,6 +95,9 @@ Lemma val_to_loc_length v:
 Proof.
   apply val_to_loc_n_length.
 Qed.
+
+Global Instance val_of_loc_inj : Inj (=) (=) val_of_loc.
+Proof. move => x y Heq. have := val_to_of_loc x. have := val_to_of_loc y. rewrite Heq. by simplify_eq. Qed.
 
 Typeclasses Opaque val_of_loc_n val_to_loc_n val_of_loc val_to_loc.
 Arguments val_of_loc : simpl never.
@@ -328,7 +334,7 @@ Definition int_repr_to_Z (i : int_repr) : Z :=
 
 Definition int_repr_to_loc (i : int_repr) : loc :=
   match i with
-  | IRInt z => (None, z)
+  | IRInt z => (ProvAlloc None, z)
   | IRLoc l => l
   end.
 

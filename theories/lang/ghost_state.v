@@ -26,7 +26,7 @@ Class heapG Σ := HeapG {
   heap_alloc_range_map_name  : gname;
   heap_alloc_alive_map_inG  :> ghost_mapG Σ alloc_id bool;
   heap_alloc_alive_map_name : gname;
-  heap_fntbl_inG             :> ghost_mapG Σ loc function;
+  heap_fntbl_inG             :> ghost_mapG Σ addr function;
   heap_fntbl_name            : gname;
 }.
 
@@ -74,7 +74,7 @@ Section definitions.
   the fact that this allocation is in bounds of allocatable memory. *)
   Definition loc_in_bounds_def (l : loc) (n : nat) : iProp Σ :=
     ∃ (id : alloc_id) (al : allocation),
-      ⌜l.1 = Some id⌝ ∗ ⌜al.(al_start) ≤ l.2⌝ ∗ ⌜l.2 + n ≤ al_end al⌝ ∗
+      ⌜l.1 = ProvAlloc (Some id)⌝ ∗ ⌜al.(al_start) ≤ l.2⌝ ∗ ⌜l.2 + n ≤ al_end al⌝ ∗
       ⌜allocation_in_range al⌝ ∗ alloc_range id al.
   Definition loc_in_bounds_aux : seal (@loc_in_bounds_def). by eexists. Qed.
   Definition loc_in_bounds := unseal loc_in_bounds_aux.
@@ -100,7 +100,7 @@ Section definitions.
   Proof. rewrite alloc_alive_eq. by apply _. Qed.
 
   Definition alloc_global (l : loc) : iProp Σ :=
-    ∃ id, ⌜l.1 = Some id⌝ ∗ alloc_alive id DfracDiscarded true.
+    ∃ id, ⌜l.1 = ProvAlloc (Some id)⌝ ∗ alloc_alive id DfracDiscarded true.
   Global Instance alloc_global_tl l : Timeless (alloc_global l).
   Proof. by apply _. Qed.
   Global Instance alloc_global_pers l : Persistent (alloc_global l).
@@ -111,7 +111,7 @@ Section definitions.
   [f] is stored at location [l]. NOTE: we use locations, but do not really
   store the code on the actual heap. *)
   Definition fntbl_entry_def (l : loc) (f: function) : iProp Σ :=
-    l ↪[ heap_fntbl_name ]□ f.
+    ∃ a, ⌜l = fn_loc a⌝ ∗ a ↪[ heap_fntbl_name ]□ f.
   Definition fntbl_entry_aux : seal (@fntbl_entry_def). by eexists. Qed.
   Definition fntbl_entry := unseal fntbl_entry_aux.
   Definition fntbl_entry_eq : @fntbl_entry = @fntbl_entry_def :=
@@ -130,7 +130,7 @@ Section definitions.
     own heap_heap_name (◯ {[ l.2 := (q, to_lock_stateR st, to_agree (id, b)) ]}).
 
   Definition heap_mapsto_mbyte_def (l : loc) (q : Qp) (b : mbyte) : iProp Σ :=
-    ∃ id, ⌜l.1 = Some id⌝ ∗ heap_mapsto_mbyte_st (RSt 0) l id q b.
+    ∃ id, ⌜l.1 = ProvAlloc (Some id)⌝ ∗ heap_mapsto_mbyte_st (RSt 0) l id q b.
   Definition heap_mapsto_mbyte_aux : seal (@heap_mapsto_mbyte_def). by eexists. Qed.
   Definition heap_mapsto_mbyte := unseal heap_mapsto_mbyte_aux.
   Definition heap_mapsto_mbyte_eq : @heap_mapsto_mbyte = @heap_mapsto_mbyte_def :=
@@ -147,7 +147,7 @@ Section definitions.
 
   (** Token witnessing that [l] has an allocation identifier that is alive. *)
   Definition alloc_alive_loc_def (l : loc) : iProp Σ :=
-    (∃ id q, ⌜l.1 = Some id⌝ ∗ alloc_alive id q true) ∨
+    (∃ id q, ⌜l.1 = ProvAlloc (Some id)⌝ ∗ alloc_alive id q true) ∨
     (∃ a q v, ⌜v ≠ []⌝ ∗ heap_mapsto (l.1, a) q v).
   Definition alloc_alive_loc_aux : seal (@alloc_alive_loc_def). by eexists. Qed.
   Definition alloc_alive_loc := unseal alloc_alive_loc_aux.
@@ -157,7 +157,7 @@ Section definitions.
   (** * Freeable *)
 
   Definition freeable_def (l : loc) (n : nat) : iProp Σ :=
-    ∃ id, ⌜l.1 = Some id⌝ ∗ alloc_range id {| al_start := l.2; al_len := n; al_alive := true |} ∗
+    ∃ id, ⌜l.1 = ProvAlloc (Some id)⌝ ∗ alloc_range id {| al_start := l.2; al_len := n; al_alive := true |} ∗
      alloc_alive id (DfracOwn 1) true.
   Definition freeable_aux : seal (@freeable_def). by eexists. Qed.
   Definition freeable := unseal freeable_aux.
@@ -175,7 +175,7 @@ Section definitions.
   Definition alloc_alive_ctx (ub : allocs) : iProp Σ :=
     ghost_map_auth heap_alloc_alive_map_name 1 (to_alloc_alive_map ub).
 
-  Definition fntbl_ctx (fns : gmap loc function) : iProp Σ :=
+  Definition fntbl_ctx (fns : gmap addr function) : iProp Σ :=
     ghost_map_auth heap_fntbl_name 1 fns.
 
   Definition heap_state_ctx (st : heap_state) : iProp Σ :=
@@ -232,8 +232,13 @@ Section fntbl.
   Implicit Types E : coPset.
 
   Lemma fntbl_entry_lookup t f fn :
-    fntbl_ctx t -∗ fntbl_entry f fn -∗ ⌜t !! f = Some fn⌝.
-  Proof. rewrite fntbl_entry_eq. by apply ghost_map_lookup. Qed.
+    fntbl_ctx t -∗ fntbl_entry f fn -∗ ⌜∃ a, f = fn_loc a ∧ t !! a = Some fn⌝.
+  Proof.
+    rewrite fntbl_entry_eq.
+    iIntros "Hctx (%a&->&Hentry)".
+    iDestruct (ghost_map_lookup with "Hctx Hentry") as %?.
+    by eauto.
+  Qed.
 End fntbl.
 
 Section alloc_range.
@@ -263,7 +268,7 @@ Section alloc_range.
   Qed.
 
   Lemma alloc_range_to_loc_in_bounds l id (n : nat) al:
-    l.1 = Some id →
+    l.1 = ProvAlloc (Some id) →
     al.(al_start) ≤ l.2 ∧ l.2 + n ≤ al_end al →
     allocation_in_range al →
     alloc_range id al -∗ loc_in_bounds l n.
@@ -343,7 +348,7 @@ Section loc_in_bounds.
       iDestruct "H1" as (id al Hl1 ???) "#H1".
       iDestruct "H2" as (?? Hl2 ? Hend ?) "#H2".
       move: Hl1 Hl2 => /= Hl1 Hl2. iExists id, al.
-      unfold al_end in *. simpl in *. simplify_eq.
+      destruct l. unfold al_end in *. simpl in *. simplify_eq.
       iDestruct (alloc_range_agree with "H2 H1") as %[? <-].
       iFrame "H1". iPureIntro. rewrite /shift_loc /= in Hend. naive_solver lia.
     - iIntros "H". iDestruct "H" as (id al ????) "#H".
@@ -418,7 +423,7 @@ Section heap.
     intros p q. rewrite heap_mapsto_mbyte_eq. iSplit.
     - iDestruct 1 as (??) "[H1 H2]". iSplitL "H1"; iExists id; by iSplit.
     - iIntros "[H1 H2]". iDestruct "H1" as (??) "H1". iDestruct "H2" as (??) "H2".
-      simplify_eq. iExists id. iSplit; first done. by iSplitL "H1".
+      destruct l; simplify_eq/=. iExists _. iSplit; first done. by iSplitL "H1".
   Qed.
 
   Global Instance heap_mapsto_mbyte_as_fractional l q v:
@@ -439,13 +444,13 @@ Section heap.
     l ↦{q} v -∗ loc_in_bounds l (length v).
   Proof. rewrite heap_mapsto_eq. iIntros "[$ _]". Qed.
 
-  Lemma loc_in_bounds_has_alloc_id l n: loc_in_bounds l n -∗ ⌜is_Some l.1⌝.
+  Lemma loc_in_bounds_has_alloc_id l n: loc_in_bounds l n -∗ ⌜∃ aid, l.1 = ProvAlloc (Some aid)⌝.
   Proof.
     rewrite loc_in_bounds_eq. iIntros "H". iDestruct "H" as (id ?????) "H".
     iPureIntro. by exists id.
   Qed.
 
-  Lemma heap_mapsto_has_alloc_id l q v : l ↦{q} v -∗ ⌜is_Some l.1⌝.
+  Lemma heap_mapsto_has_alloc_id l q v : l ↦{q} v -∗ ⌜∃ aid, l.1 = ProvAlloc (Some aid)⌝.
   Proof.
     iIntros "Hl". iApply loc_in_bounds_has_alloc_id.
     by iApply heap_mapsto_loc_in_bounds.
@@ -519,7 +524,7 @@ Section heap.
   Qed.
 
   Lemma heap_alloc_st l h v aid :
-    l.1 = Some aid →
+    l.1 = ProvAlloc (Some aid) →
     heap_range_free h l.2 (length v) →
     heap_ctx h ==∗
       heap_ctx (heap_alloc l.2 v aid h) ∗
@@ -544,7 +549,7 @@ Section heap.
   Qed.
 
   Lemma heap_alloc l h v id al :
-    l.1 = Some id →
+    l.1 = ProvAlloc (Some id) →
     heap_range_free h l.2 (length v) →
     al.(al_start) = l.2 →
     al.(al_len) = length v →
@@ -654,9 +659,9 @@ Section heap.
     { iFrame. by iIntros "!#" (?) "$ !#". }
     rewrite ->heap_mapsto_cons_mbyte, heap_mapsto_mbyte_eq.
     iDestruct "Hv" as "[Hb [? Hl]]". iDestruct "Hb" as (? Heq) "Hb".
-    rewrite /heap_lookup_loc Heq.
-    move: Hat => /= -[[? [? [Hin [?[n ?]]]]] ?]; simplify_eq.
-    iMod ("IH" with "[] Hh Hl") as "{IH}[Hh IH]" => //.
+    move: Hat. rewrite /heap_lookup_loc Heq /= => -[[? [? [Hin [?[n ?]]]]] ?]; simplify_eq/=.
+    iMod ("IH" with "[] Hh Hl") as "{IH}[Hh IH]".
+    { iPureIntro => /=. by destruct l; simplify_eq/=. }
     iMod (heap_read_mbyte_vs _ 0 1 with "Hh Hb") as "[Hh Hb]".
     { rewrite heap_update_lookup_not_in_range // /shift_loc /=. lia. }
     iModIntro. iSplitL "Hh".
@@ -717,9 +722,9 @@ Section heap.
     move: Hlen => -[] Hlen.
     rewrite heap_mapsto_cons_mbyte heap_mapsto_mbyte_eq.
     iDestruct "Hv" as "[Hb [? Hl]]". iDestruct "Hb" as (? Heq) "Hb".
-    rewrite /heap_lookup_loc Heq.
-    move: Hat => /= -[[? [? [Hin [??]]]] ?]; simplify_eq.
-    iMod ("IH" with "[] [] Hh Hl") as "{IH}[Hh IH]" => //.
+    move: Hat. rewrite /heap_lookup_loc Heq /= => -[[? [? [Hin [??]]]] ?]; simplify_eq/=.
+    iMod ("IH" with "[] [] Hh Hl") as "{IH}[Hh IH]"; [|done|].
+    { iPureIntro => /=. by destruct l; simplify_eq/=. }
     iMod (heap_write_mbyte_vs with "Hh Hb") as "[Hh Hb]".
     { rewrite heap_update_lookup_not_in_range /shift_loc /= ?Hin ?Heq //=. lia. }
     iSplitL "Hh". { rewrite /heap_upd /=. erewrite partial_alter_to_insert; first done.
@@ -737,7 +742,7 @@ Section heap.
   Qed.
 
   Lemma heap_free_free_st l h v aid :
-    l.1 = Some aid →
+    l.1 = ProvAlloc (Some aid) →
     heap_ctx h ∗ ([∗ list] i↦b ∈ v, heap_mapsto_mbyte_st (RSt 0) (l +ₗ i) aid 1 b) ==∗
       heap_ctx (heap_free l.2 (length v) h).
   Proof.
@@ -770,7 +775,7 @@ Section heap.
     rewrite heap_mapsto_eq /heap_mapsto_def. iDestruct "Hl" as "[_ Hl]".
     iApply (big_sepL_impl with "Hl"). iIntros (???) "!> H".
     rewrite heap_mapsto_mbyte_eq /heap_mapsto_mbyte_def /=.
-    iDestruct "H" as (?) "[% H]". by simplify_eq.
+    iDestruct "H" as (?) "[% H]". by destruct l; simplify_eq/=.
   Qed.
 End heap.
 

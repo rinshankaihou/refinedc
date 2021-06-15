@@ -209,7 +209,7 @@ Section own.
     { iPureIntro. by eapply val_to_int_repr_in_range. }
     iApply wp_cast_int_ptr => //. { by rewrite /val_to_loc_weak Hi. }
     rewrite /int_repr_to_loc /int_repr_to_Z. destruct i as [z|[id p]]=> /=.
-    - iApply ("HΦ" with "[]"); last by iApply ("HT" $! None). done.
+    - iApply ("HΦ" with "[]"); last by iApply ("HT" $! (ProvAlloc None)). done.
     - iApply ("HΦ" with "[]"); last by iApply ("HT" $! id). done.
   Qed.
   Global Instance type_cast_int_ptr_inst n v it:
@@ -486,8 +486,10 @@ Section null.
     eval_bin_op op PtrOp PtrOp h p NULL v
      ↔ val_of_Z (Z_of_bool b) i32 = Some v.
   Proof.
-    move => ??.
-    destruct b => //; split => Heq; subst; try by [inversion Heq; simplify_eq].
+    move => Hlib ?. have [??]:= heap_state_loc_in_bounds_has_alloc_id _ _ _ Hlib.
+    destruct b => //; split => Heq; subst.
+    1, 3: inversion Heq; unfold NULL in *; rewrite ->?val_to_of_loc in *; simplify_eq => //.
+    1, 2: by match goal with | H : valid_ptr NULL_loc _ |- _ => have [??]:= valid_ptr_has_alloc_id _ _ H end.
     all: econstructor; rewrite ?val_to_of_loc /val_of_bool/i2v ?Heq //.
   Qed.
 
@@ -497,7 +499,9 @@ Section null.
      ↔ val_of_Z (Z_of_bool b) i32 = Some v.
   Proof.
     move => ?.
-    destruct b => //; split => Heq; subst; try by [inversion Heq; simplify_eq].
+    destruct b => //; split => Heq; subst.
+    1, 3: inversion Heq; unfold NULL in *; rewrite ->?val_to_of_loc in *; simplify_eq => //.
+    1, 2: by match goal with | H : heap_state_loc_in_bounds NULL_loc _ _ |- _ => have [??]:= heap_state_loc_in_bounds_has_alloc_id _ _ _ H end.
     all: by constructor => //; rewrite /i2v Heq.
   Qed.
 
@@ -507,8 +511,11 @@ Section null.
     typed_bin_op v1 (v1 ◁ᵥ null) v2 (v2 ◁ᵥ null) op PtrOp PtrOp T.
   Proof.
     iIntros "[% HT]" (-> -> Φ) "HΦ".
-    iApply (wp_binop_det (i2v (Z_of_bool (if op is EqOp then true else false)) i32)). iSplit.
-    { iIntros (??) "_ !%". destruct op => //; split => Heq; subst; try by [inversion Heq]; by constructor. }
+    have ?:= val_of_Z_bool (if op is EqOp then true else false) i32.
+    iApply (wp_binop_det (i2v (Z_of_bool (if op is EqOp then true else false)) i32)). iSplit. {
+      iIntros (??) "_ !%".
+      rewrite (eval_bin_op_null_null (if op is EqOp then true else false)); destruct op => //; naive_solver.
+    }
     iApply "HΦ" => //. by destruct op.
   Qed.
   Global Instance type_binop_null_null_inst v1 v2 op:
@@ -523,11 +530,12 @@ Section null.
     iIntros "[% HT] Hl" (-> Φ) "HΦ".
     iDestruct (loc_in_bounds_in_bounds with "Hl") as "#Hb".
     iDestruct (loc_in_bounds_shorten _ _ 0 with "Hb") as "#Hb0"; first by lia.
-    iApply (wp_binop_det (i2v (Z_of_bool (if op is EqOp then false else true)) i32)). iSplit.
-    { iIntros (??) "Hctx".
-      iDestruct (loc_in_bounds_to_heap_loc_in_bounds with "Hb0 Hctx") as %?.
-      iPureIntro. destruct op => //; split => Heq; subst; try by [inversion Heq].
-      all: econstructor; rewrite ?val_to_of_loc /val_of_bool/i2v//. }
+    have ?:= val_of_Z_bool (if op is EqOp then false else true) i32.
+    iApply (wp_binop_det (i2v (Z_of_bool (if op is EqOp then false else true)) i32)). iSplit. {
+      iIntros (??) "Hctx". iDestruct (loc_in_bounds_to_heap_loc_in_bounds with "Hb0 Hctx") as %?.
+      iPureIntro.
+      rewrite (eval_bin_op_ptr_null (if op is EqOp then false else true)); destruct op => //; naive_solver.
+    }
     iApply "HΦ". 2: by iApply "HT". by destruct op.
   Qed.
   Global Instance type_binop_ptr_null_inst v2 op (l : loc) ty β n `{!LocInBounds ty β n}:

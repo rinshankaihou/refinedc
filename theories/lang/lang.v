@@ -95,7 +95,7 @@ Record function := {
 (* TODO: put both function and bytes in the same heap or make pointers disjoint *)
 Record state := {
   st_heap: heap_state;
-  st_fntbl: gmap loc function;
+  st_fntbl: gmap addr function;
 }.
 
 Definition heap_fmap (f : heap → heap) (σ : state) := {|
@@ -241,24 +241,24 @@ Inductive eval_bin_op : bin_op → op_type → op_type → state → val → val
 | EqOpPNull v1 v2 σ l v:
     heap_state_loc_in_bounds l 0%nat σ.(st_heap) →
     val_to_loc v1 = Some l →
-    val_to_Z v2 size_t = Some 0 →
+    v2 = NULL →
     (* TODO ( see below ): Should we really hard code i32 here because of C? *)
     i2v (Z_of_bool false) i32 = v →
     eval_bin_op EqOp PtrOp PtrOp σ v1 v2 v
 | NeOpPNull v1 v2 σ l v:
     heap_state_loc_in_bounds l 0%nat σ.(st_heap) →
     val_to_loc v1 = Some l →
-    val_to_Z v2 size_t = Some 0 →
+    v2 = NULL →
     i2v (Z_of_bool true) i32 = v →
     eval_bin_op NeOp PtrOp PtrOp σ v1 v2 v
 | EqOpNullNull v1 v2 σ v:
-    val_to_Z v1 size_t = Some 0 →
-    val_to_Z v2 size_t = Some 0 →
+    v1 = NULL →
+    v2 = NULL →
     i2v (Z_of_bool true) i32 = v →
     eval_bin_op EqOp PtrOp PtrOp σ v1 v2 v
 | NeOpNullNull v1 v2 σ v:
-    val_to_Z v1 size_t = Some 0 →
-    val_to_Z v2 size_t = Some 0 →
+    v1 = NULL →
+    v2 = NULL →
     i2v (Z_of_bool false) i32 = v →
     eval_bin_op NeOp PtrOp PtrOp σ v1 v2 v
 | RelOpPP v1 v2 σ l1 l2 v b op:
@@ -402,9 +402,10 @@ comparing pointers? (see lambda rust) *)
     z1 = z2 →
     expr_step (CAS (IntOp it) (Val v1) (Val v2) (Val v3)) σ []
               (Val (val_of_bool true)) (heap_fmap (heap_upd l1 v3 (λ _, RSt 0%nat)) σ) []
-| CallS lsa lsv σ hs' hs'' vf vs f rf fn fn' :
+| CallS lsa lsv σ hs' hs'' vf vs f rf fn fn' a:
     val_to_loc vf = Some f →
-    σ.(st_fntbl) !! f = Some fn →
+    f = fn_loc a →
+    σ.(st_fntbl) !! a = Some fn →
     length lsa = length fn.(f_args) →
     length lsv = length fn.(f_local_vars) →
     (* substitute the variables in fn with the corresponding locations *)
@@ -421,9 +422,10 @@ comparing pointers? (see lambda rust) *)
     (* add used blocks allocations  *)
     rf = {| rf_fn := fn'; rf_locs := zip lsa fn.(f_args).*2 ++ zip lsv fn.(f_local_vars).*2; |} →
     expr_step (Call (Val vf) (Val <$> vs)) σ [] (to_rtstmt rf (Goto fn'.(f_init))) {| st_heap := hs''; st_fntbl := σ.(st_fntbl)|} []
-| CallFailS σ vf vs f fn:
+| CallFailS σ vf vs f fn a:
     val_to_loc vf = Some f →
-    σ.(st_fntbl) !! f = Some fn →
+    f = fn_loc a →
+    σ.(st_fntbl) !! a = Some fn →
     Forall2 has_layout_val vs fn.(f_args).*2 →
     expr_step (Call (Val vf) (Val <$> vs)) σ [] AllocFailed σ []
 | ConcatS vs σ:

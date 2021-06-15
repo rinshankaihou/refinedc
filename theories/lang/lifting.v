@@ -427,6 +427,8 @@ Lemma wp_ptr_relop Φ op v1 v2 l1 l2 E b:
   WP BinOp op PtrOp PtrOp (Val v1) (Val v2) @ E {{ Φ }}.
 Proof.
   iIntros (Hv1 Hv2 Hop) "#Hl1 #Hl2 HΦ".
+  iDestruct (loc_in_bounds_has_alloc_id with "Hl1") as %[??].
+  iDestruct (loc_in_bounds_has_alloc_id with "Hl2") as %[??].
   iApply wp_binop. iIntros (σ) "Hσ".
   iAssert ⌜valid_ptr l1 σ.(st_heap)⌝%I as %?. {
     iApply (alloc_alive_loc_to_valid_ptr with "Hl1 [HΦ] Hσ").
@@ -438,7 +440,9 @@ Proof.
   }
   iSplit; first by iPureIntro; eexists _; econstructor.
   iDestruct "HΦ" as "(_&_&HΦ)". iIntros "!>" (v' Hstep). iFrame.
-  inversion Hstep; simplify_eq => //; by move: Hv1 Hv2 => /val_of_to_loc ?/val_of_to_loc?; subst.
+  inversion Hstep; simplify_eq => //.
+  all: try rewrite val_to_of_loc in Hv1; simplify_eq.
+  all: try rewrite val_to_of_loc in Hv2; simplify_eq.
 Qed.
 
 Lemma wp_ptr_offset Φ vl l E it o ly vo:
@@ -688,7 +692,7 @@ Proof.
   move => Hf Hly. move: (Hly) => /Forall2_length. rewrite fmap_length => Hlen_vs.
   iIntros "Hf HWP". iApply wp_lift_expr_step; first done.
   iIntros (σ1) "((%&Hhctx&Hbctx)&Hfctx)".
-  iDestruct (fntbl_entry_lookup with "Hfctx Hf") as %Hfn. iModIntro.
+  iDestruct (fntbl_entry_lookup with "Hfctx Hf") as %[a [? Hfn]]; subst. iModIntro.
   iSplit; first by eauto 10 using CallFailS.
   iIntros (??[??]? Hstep _) "!>". inv_expr_step; last first. {
     (* Alloc failure case. *)

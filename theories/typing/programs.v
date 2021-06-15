@@ -623,6 +623,15 @@ Section typing.
     SimplifyGoalPlace l (match β with | Own => Own | Shr => Shr end) ty (Some 0%N) :=
     λ T, i2p (simplify_bad_own_state_goal l β ty T).
 
+  (* This rule is complete as [LocInBounds] implies that the location cannot be NULL. *)
+  Lemma simplify_goal_NULL_loc_in_bounds β ty n `{!LocInBounds ty β n} T:
+    False -∗
+    simplify_goal (NULL_loc ◁ₗ{β} ty) T.
+  Proof. by iIntros (?). Qed.
+  Global Instance simplify_goal_NULL_loc_in_bounds_inst β ty n `{!LocInBounds ty β n} :
+    SimplifyGoalPlace NULL_loc β ty (Some 0%N) :=
+    λ T, i2p (simplify_goal_NULL_loc_in_bounds β ty n T).
+
   Global Instance simple_subsume_place_id ty : SimpleSubsumePlace ty ty True | 1.
   Proof. iIntros (??) "_ $". Qed.
   Global Instance simple_subsume_place_r_id ty x : SimpleSubsumePlaceR ty ty x x True | 1.

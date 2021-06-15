@@ -50,18 +50,18 @@ Fixpoint heap_update (a : addr) (v : val) (faid : option alloc_id → alloc_id)
 
 Definition heap_lookup_loc (l : loc) (v : val) (Plk : lock_state → Prop)
                            (h : heap) : Prop :=
-  heap_lookup l.2 v (λ aid, l.1 = Some aid) Plk h.
+  heap_lookup l.2 v (λ aid, l.1 = ProvAlloc (Some aid)) Plk h.
 
 Definition heap_alloc (a : addr) (v : val) (aid : alloc_id) (h : heap) : heap :=
   heap_update a v (λ _, aid) (λ _, RSt 0%nat) h.
 
 Definition heap_at (l : loc) (ly : layout) (v : val) (Plk : lock_state → Prop)
                    (h : heap) : Prop :=
-  is_Some l.1 ∧ l `has_layout_loc` ly ∧ v `has_layout_val` ly ∧
+  (∃ aid, l.1 = ProvAlloc (Some aid))  ∧ l `has_layout_loc` ly ∧ v `has_layout_val` ly ∧
   heap_lookup_loc l v Plk h.
 
-Definition heap_upd l v flk h :=
-  heap_update l.2 v (default (default dummy_alloc_id l.1)) flk h.
+Definition heap_upd (l : loc) v flk h :=
+  heap_update l.2 v (default (default dummy_alloc_id (prov_alloc_id l.1))) flk h.
 
 (** Predicate stating that the [n] first bytes from address [a] in [h] have
 not been allocated. *)
@@ -229,14 +229,14 @@ Definition alloc_id_alive (aid : alloc_id) (st : heap_state) : Prop :=
   ∃ alloc, st.(hs_allocs) !! aid = Some alloc ∧ alloc.(al_alive).
 
 Definition block_alive (l : loc) (st : heap_state) : Prop :=
-  ∃ aid, l.1 = Some aid ∧ alloc_id_alive aid st.
+  ∃ aid, l.1 = ProvAlloc (Some aid) ∧ alloc_id_alive aid st.
 
 (** The address range between [l] and [l +ₗ n] (included) is in range of the
     allocation that contains [l]. Note that we consider the 1-past-the-end
     pointer to be in range of an allocation. *)
 Definition heap_state_loc_in_bounds (l : loc) (n : nat) (st : heap_state) : Prop :=
   ∃ alloc_id al,
-    l.1 = Some alloc_id ∧
+    l.1 = ProvAlloc (Some alloc_id) ∧
     st.(hs_allocs) !! alloc_id = Some al ∧
     al.(al_start) ≤ l.2 ∧
     l.2 + n ≤ al_end al.
@@ -252,7 +252,7 @@ Definition addr_in_range_alloc (a : addr) (aid : alloc_id) (st : heap_state) : P
 Inductive alloc_new_block : heap_state → loc → val → heap_state → Prop :=
 | AllocNewBlock σ l aid v:
     let alloc := Allocation l.2 (length v) true in
-    l.1 = Some aid →
+    l.1 = ProvAlloc (Some aid) →
     σ.(hs_allocs) !! aid = None →
     allocation_in_range alloc →
     heap_range_free σ.(hs_heap) l.2 (length v) →
@@ -273,7 +273,7 @@ Inductive free_block : heap_state → loc → layout → heap_state → Prop :=
 | FreeBlock σ l aid ly v:
     let al_alive := Allocation l.2 ly.(ly_size) true  in
     let al_dead  := Allocation l.2 ly.(ly_size) false in
-    l.1 = Some aid →
+    l.1 = ProvAlloc (Some aid) →
     σ.(hs_allocs) !! aid = Some al_alive →
     length v = ly.(ly_size) →
     heap_lookup_loc l v (λ st, st = RSt 0%nat) σ.(hs_heap) →
@@ -290,9 +290,17 @@ Inductive free_blocks : heap_state → list (loc * layout) → heap_state → Pr
     free_blocks σ' ls σ'' →
     free_blocks σ ((l, ly) :: ls) σ''.
 
+Lemma heap_state_loc_in_bounds_has_alloc_id l n σ:
+  heap_state_loc_in_bounds l n σ → ∃ aid, l.1 = ProvAlloc (Some aid).
+Proof. rewrite /heap_state_loc_in_bounds. naive_solver. Qed.
+
+Lemma valid_ptr_has_alloc_id l σ:
+  valid_ptr l σ → ∃ aid, l.1 = ProvAlloc (Some aid).
+Proof. rewrite /valid_ptr => ?. apply: heap_state_loc_in_bounds_has_alloc_id. naive_solver. Qed.
+
 Lemma free_block_inj hs l ly hs1 hs2:
   free_block hs l ly hs1 → free_block hs l ly hs2 → hs1 = hs2.
-Proof. inversion 1; simplify_eq. by inversion 1; simplify_eq. Qed.
+Proof. destruct l. inversion 1; simplify_eq. by inversion 1; simplify_eq/=. Qed.
 
 Lemma free_blocks_inj hs1 hs2 hs ls:
   free_blocks hs ls hs1 → free_blocks hs ls hs2 → hs1 = hs2.

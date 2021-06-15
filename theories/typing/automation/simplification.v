@@ -35,9 +35,10 @@ Global Instance simpl_shift_loc_eq l n : SimplBothRel (=) l (l +ₗ n) (n = 0).
 Proof. split; [by rewrite -{1}(shift_loc_0 l)=> /shift_loc_inj2 | move => ->; by rewrite shift_loc_0 ]. Qed.
 
 (** * NULL *)
+
 Global Instance simpl_to_NULL_val_of_loc (l : loc):
-  SimplAndRel (=) NULL (l) (λ T, False).
-Proof. split; naive_solver. Qed.
+  SimplAndRel (=) NULL (l) (λ T, l = NULL_loc ∧ T).
+Proof. split; unfold NULL; naive_solver. Qed.
 
 (** * value representation *)
 Global Instance simpl_and_eq_val_of_loc l1 l2:

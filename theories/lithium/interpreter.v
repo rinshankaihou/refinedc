@@ -524,6 +524,7 @@ Ltac liTrue :=
 
 Ltac liFalse :=
   lazymatch goal with
+  | |- envs_entails _ False => exfalso; shelve
   | |- False => shelve
   end.
 
