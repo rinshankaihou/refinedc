@@ -47,8 +47,8 @@ Section function.
       iPureIntro. apply: Forall2_same_length_lookup_2. { rewrite -Hlen. symmetry. by apply: length_proper. }
       move => i ty [??] Haty Harg.
       move: Hatys => /list_equiv_lookup Hatys.
-      have := Hatys i. rewrite Haty => /(equiv_Some_inv_r' _ _)[? [? [?->?]]].
-        by apply: (Hall _ _ (_, _)).
+      have := Hatys i. rewrite Haty => /(Some_equiv_eq _ _)[? [? [?<-?]]].
+      by apply: (Hall _ _ (_, _)).
     }
     iIntros "!>" (lsa lsv) "[Hv Ha] %". rewrite -HPa.
     have [|lsa' Hlsa]:= vec_cast _ lsa (length (fp_atys (fp1 x))). { by rewrite Hatys. }
@@ -57,8 +57,8 @@ Section function.
         iFrame. iApply (big_sepL2_impl' with "Hv") => //. by rewrite Hatys.
         move: Hatys => /list_equiv_lookup Hatys.
         iIntros "!>" (k ????? Haty2 ? Haty1) "?".
-        have := Hatys k. rewrite Haty1 Haty2=> /(equiv_Some_inv_r' _ _)[? [? [Heql ??]]].
-        rewrite Heql. by simplify_eq.
+        have := Hatys k. rewrite Haty1 Haty2=> /(Some_equiv_eq _ _)[?[? [Heql ? ?]]].
+        rewrite -Heql. by simplify_eq.
       }
       iApply "HT". by rewrite -Hlsa.
     - rewrite /typed_stmt_post_cond. iIntros (v).

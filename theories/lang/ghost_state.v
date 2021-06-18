@@ -539,7 +539,7 @@ Section heap.
     rewrite (big_opL_consZ_l (λ k _, _ (_ k) _ )) /= Z.add_0_r.
     etrans. { apply (IH (a + 1)). move => a' Ha'. apply Hfree => /=. lia. }
     rewrite -insert_singleton_op; last first.
-    { rewrite -equiv_None big_opL_commute equiv_None big_opL_None=> l' v' ?.
+    { rewrite -None_equiv_eq big_opL_commute None_equiv_eq big_opL_None=> l' v' ?.
       rewrite lookup_singleton_None. lia. }
     rewrite /heap_alloc /heap_update -/heap_update.
     rewrite to_heapUR_insert. setoid_rewrite Z.add_assoc.
