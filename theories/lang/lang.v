@@ -335,6 +335,7 @@ Inductive eval_un_op : un_op → op_type → state → val → val → Prop :=
 | CastOpPI it σ vs vt l:
     val_to_loc vs = Some l →
     val_of_int_repr (IRLoc l) it = Some vt →
+    block_alive l σ.(st_heap) →
     eval_un_op (CastOp (IntOp it)) PtrOp σ vs vt
 | CastOpIP it σ vs vt l:
     val_to_loc_weak vs it = Some l →

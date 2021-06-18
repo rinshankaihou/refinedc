@@ -350,11 +350,13 @@ Qed.
 Lemma wp_cast_ptr_int Φ v v' l E it:
   val_to_loc v = Some l →
   val_of_int_repr (IRLoc l) it = Some v' →
-  ▷ Φ (v') -∗ WP UnOp (CastOp (IntOp it)) PtrOp (Val v) @ E {{ Φ }}.
+  alloc_alive_loc l ∧ ▷ Φ (v') -∗
+  WP UnOp (CastOp (IntOp it)) PtrOp (Val v) @ E {{ Φ }}.
 Proof.
   iIntros (Hv Hv') "HΦ".
-  iApply wp_unop_det. iSplit => //.
-  iIntros (σ ?) "_ !%". split.
+  iApply wp_unop_det. iSplit; [iDestruct "HΦ" as "[HΦ _]" | iDestruct "HΦ" as "[_ $]"].
+  iIntros (σ ?) "Hctx". iDestruct (alloc_alive_loc_to_block_alive with "HΦ Hctx") as %?.
+  iPureIntro. split.
   - by inversion 1; simplify_eq.
   - move => ->. by econstructor.
 Qed.

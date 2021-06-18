@@ -94,7 +94,9 @@ Section tagged_ptr.
         loc_in_bounds r.1 align -∗
         r.1 ◁ₗ{β} ty -∗
         v ◁ᵥ r @ tagged_ptr β align (place r.1) -∗
-        ⌜(r.1.2 + r.2)%Z ∈ it⌝ ∗ T (val_of_loc_n (bytes_per_int it) (r.1 +ₗ r.2)) (t2mt ((r.1 +ₗ r.2) @ intptr it))
+        ⌜(r.1.2 + r.2)%Z ∈ it⌝ ∗
+        ((alloc_alive_loc r.1 ∗ True) ∧
+        T (val_of_loc_n (bytes_per_int it) (r.1 +ₗ r.2)) (t2mt ((r.1 +ₗ r.2) @ intptr it)))
     ) -∗
     typed_un_op v (v ◁ᵥ r @ tagged_ptr β align ty) (CastOp (IntOp it)) PtrOp T.
   Proof.
@@ -104,7 +106,9 @@ Section tagged_ptr.
     { by iFrame "Hlib". }
     iApply wp_cast_ptr_int => //=; first by rewrite val_to_of_loc.
     { by rewrite bool_decide_true. }
-    iApply ("HΦ" with "[] HT").
+    iSplit.
+    { iDestruct "HT" as "[[HT _] _]". by iApply (alloc_alive_loc_mono with "HT"). }
+    iDestruct "HT" as "[_ HT]". iApply ("HΦ" with "[] HT").
     iPureIntro. by apply val_to_loc_weak_val_of_loc_n.
   Qed.
   Global Instance type_cast_tagged_ptr_intptr_val_inst (v : val) (r : loc * Z) β (align : nat) it ty:

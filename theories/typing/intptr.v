@@ -73,10 +73,12 @@ Section programs.
   Context `{!typeG Σ}.
 
   Lemma type_cast_ptr_intptr (p : loc) β it ty T:
-    (∃ n, (p ◁ₗ{β} ty -∗ loc_in_bounds p n ∗ True) ∧
+    (∃ n,
+      (p ◁ₗ{β} ty -∗ loc_in_bounds p n ∗ True) ∧
       (⌜min_alloc_start ≤ p.2 ∧ p.2 + n ≤ max_alloc_end⌝ -∗
        p ◁ₗ{β} ty -∗
-       ⌜p.2 ∈ it⌝ ∗ T (val_of_loc_n (bytes_per_int it) p) (t2mt (p @ intptr it)))
+       ⌜p.2 ∈ it⌝ ∗
+         ((alloc_alive_loc p ∗ True) ∧ T (val_of_loc_n (bytes_per_int it) p) (t2mt (p @ intptr it))))
     ) -∗
     typed_un_op p (p ◁ₗ{β} ty) (CastOp (IntOp it)) PtrOp T.
   Proof.
@@ -88,6 +90,7 @@ Section programs.
     iDestruct ("HT" with "[//] Hp") as (?) "HT".
     iApply wp_cast_ptr_int => //=; first by rewrite val_to_of_loc.
     { rewrite bool_decide_true; naive_solver. }
+    iSplit; [by iDestruct "HT" as "[[$ _] _]" | iDestruct "HT" as "[_ HT]"].
     iApply ("HΦ" with "[] HT").
     iPureIntro. by apply val_to_loc_weak_val_of_loc_n.
   Qed.
@@ -98,7 +101,8 @@ Section programs.
   Lemma type_cast_ptr_intptr_val (v : val) (p : loc) it (n : nat) T:
     (⌜min_alloc_start ≤ p.2 ∧ p.2 + n ≤ max_alloc_end⌝ -∗
       v ◁ᵥ p @ ptr n -∗
-      ⌜p.2 ∈ it⌝ ∗ T (val_of_loc_n (bytes_per_int it) p) (t2mt (p @ intptr it))
+      ⌜p.2 ∈ it⌝ ∗
+       (alloc_alive_loc p ∗ True) ∧ T (val_of_loc_n (bytes_per_int it) p) (t2mt (p @ intptr it))
     ) -∗
     typed_un_op v (v ◁ᵥ p @ ptr n) (CastOp (IntOp it)) PtrOp T.
   Proof.
@@ -107,6 +111,7 @@ Section programs.
     iDestruct ("HT" with "[//] []") as (?) "HT". { by iFrame "Hlib". }
     iApply wp_cast_ptr_int => //=; first by rewrite val_to_of_loc.
     { rewrite bool_decide_true; naive_solver. }
+    iSplit; [by iDestruct "HT" as "[[$ _] _]" | iDestruct "HT" as "[_ HT]"].
     iApply ("HΦ" with "[] HT").
     iPureIntro. by apply val_to_loc_weak_val_of_loc_n.
   Qed.

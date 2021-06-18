@@ -12,7 +12,7 @@ Section proof_tag_of.
     ⊢ typed_function impl_tag_of type_of_tag_of.
   Proof.
     Open Scope printing_sugar.
-    start_function "tag_of" ([[r ty] v]) => arg_p.
+    start_function "tag_of" ([[[r ty] v] P]) => arg_p.
     split_blocks ((
       ∅
     )%I : gmap label (iProp Σ)) ((

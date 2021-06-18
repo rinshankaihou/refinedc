@@ -12,7 +12,7 @@ Section proof_is_aligned.
     ⊢ typed_function impl_is_aligned type_of_is_aligned.
   Proof.
     Open Scope printing_sugar.
-    start_function "is_aligned" ([[l beta] n]) => arg_p local_i.
+    start_function "is_aligned" ([l n]) => arg_p local_i.
     split_blocks ((
       ∅
     )%I : gmap label (iProp Σ)) ((
