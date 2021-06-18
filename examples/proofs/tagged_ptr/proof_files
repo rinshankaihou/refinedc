@@ -3,3 +3,4 @@ generated_proof_tag.v
 generated_proof_tag_of.v
 generated_proof_test.v
 generated_proof_untag.v
+generated_proof_untag2.v

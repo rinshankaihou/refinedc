@@ -85,6 +85,17 @@ Section tagged_ptr.
     Subsume (l ◁ₗ{β} ty1)%I (v ◁ᵥ r @ tagged_ptr β n ty2)%I :=
     λ T, i2p (subsume_frac_ptr_tagged_ptr l β v r n ty1 ty2 m T).
 
+  Lemma simplify_hyp_tagged_ptr_0 v r β n ty `{!CanSolve (r.2 = 0)} T:
+    (v ◁ᵥ r.1 @ frac_ptr β ty -∗ T) -∗
+    simplify_hyp (v ◁ᵥ r @ tagged_ptr β n ty) T.
+  Proof.
+    unfold CanSolve in *. destruct r as [l ?]. simpl in *. simplify_eq.
+    iIntros "HT (->&%&%&?&?)". iApply "HT". rewrite /= shift_loc_0. by iFrame.
+  Qed.
+  Global Instance simplify_hyp_tagged_ptr_0_inst v r β n ty `{!CanSolve (r.2 = 0)}:
+    SimplifyHypVal v (r @ tagged_ptr β n ty) (Some 0%N) :=
+    λ T, i2p (simplify_hyp_tagged_ptr_0 v r β n ty T).
+
   Lemma type_cast_tagged_ptr_intptr_val (v : val) (r : loc * Z) β (align : nat) it ty T:
     (
         ⌜v = r.1 +ₗ r.2⌝ -∗

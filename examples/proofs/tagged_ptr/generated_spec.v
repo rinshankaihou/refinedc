@@ -27,6 +27,11 @@ Section spec.
     fn(∀ (r, ty, P) : (loc * Z) * type * (iProp Σ); (r @ (tagged_ptr (Own) (TAG_MOD) (ty))); ⌜AllocAlive ty Own P⌝ ∗ (P))
       → ∃ () : (), ((r.1) @ (&own (ty))); (P).
 
+  (* Specifications for function [untag2]. *)
+  Definition type_of_untag2 :=
+    fn(∀ (r, ty, P) : (loc * Z) * type * (iProp Σ); (r @ (tagged_ptr (Own) (TAG_MOD) (ty))); ⌜AllocAlive ty Own P⌝ ∗ (P))
+      → ∃ () : (), ((r.1) @ (&own (ty))); (P).
+
   (* Specifications for function [test]. *)
   Definition type_of_test :=
     fn(∀ () : (); True) → ∃ () : (), ((0) @ (int (size_t))); True.

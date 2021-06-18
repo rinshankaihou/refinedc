@@ -4,24 +4,23 @@ From refinedc.examples.tagged_ptr Require Import generated_spec.
 Set Default Proof Using "Type".
 
 (* Generated from [examples/tagged_ptr.c]. *)
-Section proof_untag.
+Section proof_untag2.
   Context `{!typeG Σ} `{!globalG Σ}.
 
-  (* Typing proof for [untag]. *)
-  Lemma type_untag (global_tag : loc) :
-    global_tag ◁ᵥ global_tag @ function_ptr type_of_tag -∗
-    typed_function (impl_untag global_tag) type_of_untag.
+  (* Typing proof for [untag2]. *)
+  Lemma type_untag2 :
+    ⊢ typed_function impl_untag2 type_of_untag2.
   Proof.
     Open Scope printing_sugar.
-    start_function "untag" ([[r ty] P]) => arg_p.
+    start_function "untag2" ([[r ty] P]) => arg_p local_i.
     split_blocks ((
       ∅
     )%I : gmap label (iProp Σ)) ((
       ∅
     )%I : gmap label (iProp Σ)).
     - repeat liRStep; liShow.
-      all: print_typesystem_goal "untag" "#0".
+      all: print_typesystem_goal "untag2" "#0".
     Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
-    all: print_sidecondition_goal "untag".
+    all: print_sidecondition_goal "untag2".
   Qed.
-End proof_untag.
+End proof_untag2.

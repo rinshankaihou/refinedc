@@ -36,6 +36,15 @@ void* tag(void* p, tag_t t){
 [[rc::returns("{r.1} @ &own<ty>")]]
 [[rc::ensures("[P]")]]
 void* untag(void* p){
+  return tag(p, 0);
+}
+
+[[rc::parameters("r: {loc * Z}", "ty: type", "P : {iProp Σ}")]]
+[[rc::args("r @ tagged_ptr<Own, TAG_MOD, ty>")]]
+[[rc::requires("{AllocAlive ty Own P}", "[P]")]]
+[[rc::returns("{r.1} @ &own<ty>")]]
+[[rc::ensures("[P]")]]
+void* untag2(void* p){
   uintptr_t i = (uintptr_t) p;
   return rc_copy_alloc_id((void*) (i - i % TAG_MOD), p);
 }
