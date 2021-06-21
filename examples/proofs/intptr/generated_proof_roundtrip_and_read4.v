@@ -12,7 +12,7 @@ Section proof_roundtrip_and_read4.
     ⊢ typed_function impl_roundtrip_and_read4 type_of_roundtrip_and_read4.
   Proof.
     Open Scope printing_sugar.
-    start_function "roundtrip_and_read4" ([p n]) => arg_p local_i local_q.
+    start_function "roundtrip_and_read4" ([p n]) => arg_p local_i local_q local_j.
     split_blocks ((
       ∅
     )%I : gmap label (iProp Σ)) ((

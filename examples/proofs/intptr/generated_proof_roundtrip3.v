@@ -12,7 +12,7 @@ Section proof_roundtrip3.
     ⊢ typed_function impl_roundtrip3 type_of_roundtrip3.
   Proof.
     Open Scope printing_sugar.
-    start_function "roundtrip3" ([p n]) => arg_p local_i local_q.
+    start_function "roundtrip3" ([p n]) => arg_p local_i local_k.
     split_blocks ((
       ∅
     )%I : gmap label (iProp Σ)) ((

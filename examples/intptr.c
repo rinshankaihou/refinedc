@@ -97,8 +97,8 @@ int* roundtrip2(int* p){
 [[rc::returns("p @ &own<n @ int<i32>>")]]
 int* roundtrip3(int* p){
   uintptr_t i = (uintptr_t) p;
-  int *q = (void*) (i + 0); // ← The provenance is lost here.
-  return rc_copy_alloc_id(q, p); // ← Copy provenance from [p].
+  uintptr_t k = i + 0; // ← The provenance is lost here.
+  return rc_copy_alloc_id(k, p); // ← Copy provenance from [p].
 }
 
 // Roundrip cast with flow of ownership.
@@ -118,10 +118,10 @@ int roundtrip_and_read1(int* p){
 [[rc::args("l @ &own<n @ int<i32>>")]]
 [[rc::returns("n @ int<i32>")]]
 [[rc::ensures("own l : n @ int<i32>")]]
-int roundtrip_and_read2(int* p){
+int roundtrip_and_read2(int *p){
   uintptr_t i = (uintptr_t) p;
-  int *q = (int*) (i * 1);
-  q = rc_copy_alloc_id(q, p);
+  uintptr_t j = i * 1;
+  int *q = (int*) rc_copy_alloc_id(j, p);
   int r = *q;
   return r;
 }
@@ -131,9 +131,9 @@ int roundtrip_and_read2(int* p){
 [[rc::args("p @ &own<n @ int<i32>>")]]
 [[rc::returns("n @ int<i32>")]]
 [[rc::ensures("own p : n @ int<i32>")]]
-int roundtrip_and_read3(int* p){
+int roundtrip_and_read3(int *p){
   uintptr_t i = (uintptr_t) p;
-  int *q = rc_copy_alloc_id((int*) (i * 1), p);
+  int *q = (int*) rc_copy_alloc_id(i * 1, p);
   return *q;
 }
 
@@ -144,17 +144,7 @@ int roundtrip_and_read3(int* p){
 [[rc::ensures("own p : n @ int<i32>")]]
 int roundtrip_and_read4(int* p){
   uintptr_t i = (uintptr_t) p;
-  int *q = (int*) (i * 1);
-  return *(rc_copy_alloc_id(q, p));
-}
-
-// Copy the provenance from an int.
-[[rc::parameters("p : loc")]]
-[[rc::args("p @ intptr<uintptr_t>")]]
-[[rc::requires("[alloc_alive_loc p]", "[loc_in_bounds p 0]")]] // TODO: get rid of the loc_in_bounds sidecondition
-[[rc::returns("p @ &own<place<p>>")]]
-[[rc::ensures("[alloc_alive_loc p]")]]
-void* int_to_ptr(uintptr_t p){
-  void *q = (void*) (p * 1);
-  return (rc_copy_alloc_id(q, p));
+  uintptr_t j = i * 1;
+  int *q = (int*) rc_copy_alloc_id(j, p);
+  return *q;
 }

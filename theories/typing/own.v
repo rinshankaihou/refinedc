@@ -216,22 +216,25 @@ Section own.
     TypedUnOp v (v ◁ᵥ n @ int it)%I (CastOp PtrOp) (IntOp it) :=
     λ T, i2p (type_cast_int_ptr n v it T).
 
-  Lemma type_copy_aid l1 β1 ty1 l2 β2 ty2 T:
-    (l1 ◁ₗ{β1} ty1 -∗ l2 ◁ₗ{β2} ty2 -∗
-      (loc_in_bounds (l2.1, l1.2) 0 ∗ True) ∧
-      (alloc_alive_loc l2 ∗ True) ∧
-      T (val_of_loc (l2.1, l1.2)) (t2mt (value void* (val_of_loc (l2.1, l1.2))))) -∗
-    typed_copy_alloc_id l1 (l1 ◁ₗ{β1} ty1) l2 (l2 ◁ₗ{β2} ty2) PtrOp T.
+  Lemma type_copy_aid v a it l β ty T:
+    (
+      v ◁ᵥ a @ int it -∗
+      l ◁ₗ{β} ty -∗
+      (loc_in_bounds (l.1, a) 0 ∗ True) ∧
+      (alloc_alive_loc l ∗ True) ∧
+      T (val_of_loc (l.1, a)) (t2mt (value void* (val_of_loc (l.1, a))))
+    ) -∗
+    typed_copy_alloc_id v (v ◁ᵥ a @ int it) l (l ◁ₗ{β} ty) (IntOp it) T.
   Proof.
-    iIntros "HT Hp1 Hp2" (Φ) "HΦ". iDestruct ("HT" with "Hp1 Hp2") as "HT".
+    iIntros "HT %Hv Hl" (Φ) "HΦ". iDestruct ("HT" with "[//] Hl") as "HT".
     rewrite !right_id. iDestruct "HT" as "[#Hlib HT]".
-    iApply wp_copy_alloc_id; [ by rewrite val_to_of_loc | by rewrite val_to_of_loc | done | ].
+    iApply wp_copy_alloc_id; [ done | by rewrite val_to_of_loc | done | ].
     iSplit; [by iDestruct "HT" as "[$ _]" |].
     iDestruct "HT" as "[_ HT]". by iApply ("HΦ" with "[] HT").
   Qed.
-  Global Instance type_copy_aid_inst (l1 : loc) β1 ty1 (l2 : loc) β2 ty2:
-    TypedCopyAllocId l1 (l1 ◁ₗ{β1} ty1) l2 (l2 ◁ₗ{β2} ty2) PtrOp :=
-    λ T, i2p (type_copy_aid l1 β1 ty1 l2 β2 ty2 T).
+  Global Instance type_copy_aid_inst (v : val) a it (l : loc) β ty:
+    TypedCopyAllocId v (v ◁ᵥ a @ int it)%I l (l ◁ₗ{β} ty) (IntOp it) :=
+    λ T, i2p (type_copy_aid v a it l β ty T).
 
   (* TODO: Is it a good idea to have this general rule or would it be
   better to have more specialized rules? *)
@@ -350,7 +353,7 @@ Section own.
     find_in_context (FindValP l) T.
   Proof. rewrite /place'. iIntros "[_ HT]". iExists _. iFrame "HT" => //=. Qed.
   Global Instance find_in_context_type_val_P_own_singleton_inst (l : loc):
-    FindInContext (FindValP l) 2%nat FICSyntactic :=
+    FindInContext (FindValP l) 3%nat FICSyntactic :=
     λ T, i2p (find_in_context_type_val_P_own_singleton l T).
 End own.
 Typeclasses Opaque place'.
@@ -423,24 +426,27 @@ Section ptr.
     Subsume (p ◁ₗ l1 @ &own ty)%I (p ◁ₗ l2 @ ptr n)%I :=
     λ T, i2p (subsume_own_ptr p l1 l2 ty n T).
 
-  Lemma type_copy_aid_ptr l1 β1 ty1 v2 l2 n T:
-    (l1 ◁ₗ{β1} ty1 -∗ v2 ◁ᵥ l2 @ ptr n -∗
-      ⌜l2.2 ≤ l1.2 ≤ l2.2 + n⌝ ∗
-      ((alloc_alive_loc l2 ∗ True) ∧
-      T (val_of_loc (l2.1, l1.2)) (t2mt (value void* (val_of_loc (l2.1, l1.2)))))) -∗
-    typed_copy_alloc_id l1 (l1 ◁ₗ{β1} ty1) v2 (v2 ◁ᵥ l2 @ ptr n) PtrOp T.
+  Lemma type_copy_aid_ptr v1 a it v2 l n T:
+    (
+      v1 ◁ᵥ a @ int it -∗
+      v2 ◁ᵥ l @ ptr n -∗
+      ⌜l.2 ≤ a ≤ l.2 + n⌝ ∗
+      (alloc_alive_loc l ∗ True) ∧
+      T (val_of_loc (l.1, a)) (t2mt (value void* (val_of_loc (l.1, a))))
+    ) -∗
+    typed_copy_alloc_id v1 (v1 ◁ᵥ a @ int it) v2 (v2 ◁ᵥ l @ ptr n) (IntOp it) T.
   Proof.
-    iIntros "HT Hp1 Hp2" (Φ) "HΦ". iDestruct "Hp2" as (->) "#Hlib".
-    iDestruct ("HT" with "Hp1 [$Hlib]") as ([??]) "HT"; [done|].
+    iIntros "HT %Hv1 Hv2" (Φ) "HΦ". iDestruct "Hv2" as "[-> #Hlib]".
+    iDestruct ("HT" with "[//] [$Hlib]") as ([??]) "HT"; [done|].
     rewrite !right_id.
-    iApply wp_copy_alloc_id; [ by rewrite val_to_of_loc | by rewrite val_to_of_loc |  | ].
+    iApply wp_copy_alloc_id; [ done | by rewrite val_to_of_loc |  | ].
     { iApply (loc_in_bounds_offset with "Hlib"); simpl; [done | done | etrans; [|done]; lia ]. }
     iSplit; [by iDestruct "HT" as "[$ _]" |].
     iDestruct "HT" as "[_ HT]". by iApply ("HΦ" with "[] HT").
   Qed.
-  Global Instance type_copy_aid_ptr_inst (l1 : loc) β1 ty1 v2 (l2 : loc) n:
-    TypedCopyAllocId l1 (l1 ◁ₗ{β1} ty1) v2 (v2 ◁ᵥ l2 @ ptr n)%I PtrOp :=
-    λ T, i2p (type_copy_aid_ptr l1 β1 ty1 v2 l2 n T).
+  Global Instance type_copy_aid_ptr_inst v1 a it v2 (l : loc) n:
+    TypedCopyAllocId v1 (v1 ◁ᵥ a @ int it)%I v2 (v2 ◁ᵥ l @ ptr n)%I (IntOp it) :=
+    λ T, i2p (type_copy_aid_ptr v1 a it v2 l n T).
 End ptr.
 
 Section null.

@@ -80,10 +80,10 @@ void *hyp_early_alloc_contig(unsigned int nr_pages){
   for (i = 0; i < nr_pages; i++) {
     rc_unfold(base);
     p = ret + (i << PAGE_SHIFT);
-    clear_page(rc_copy_alloc_id((void *)(p), base));
+    clear_page(rc_copy_alloc_id(p, base));
   }
 
-  return rc_copy_alloc_id((void *) ret, base);
+  return rc_copy_alloc_id(ret, base);
 }
 
 [[rc::parameters("base : loc", "given : Z", "remaining : Z")]]

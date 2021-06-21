@@ -1,5 +1,5 @@
 From refinedc.typing Require Export type.
-From refinedc.typing Require Import programs own intptr singleton.
+From refinedc.typing Require Import programs own intptr singleton int.
 Set Default Proof Using "Type".
 
 Section tagged_ptr.
@@ -126,25 +126,28 @@ Section tagged_ptr.
     TypedUnOp v (v ◁ᵥ r @ tagged_ptr β align ty)%I (CastOp (IntOp it)) PtrOp :=
     λ T, i2p (type_cast_tagged_ptr_intptr_val v r β align it ty T).
 
-  Lemma type_copy_aid_tagged_ptr l1 β1 ty1 v2 r β2 ty2 align T:
-    (l1 ◁ₗ{β1} ty1 -∗ v2 ◁ᵥ r @ tagged_ptr β2 align ty2 -∗
-      ⌜r.1.2 ≤ l1.2 ≤ r.1.2 + align⌝ ∗
-      ((alloc_alive_loc r.1 ∗ True) ∧
-      T (val_of_loc (r.1.1, l1.2)) (t2mt (value void* (val_of_loc (r.1.1, l1.2)))))) -∗
-    typed_copy_alloc_id l1 (l1 ◁ₗ{β1} ty1) v2 (v2 ◁ᵥ r @ tagged_ptr β2 align ty2) PtrOp T.
+  Lemma type_copy_aid_tagged_ptr v1 a it v2 r β align ty T:
+    (
+      v1 ◁ᵥ a @ int it -∗
+      v2 ◁ᵥ r @ tagged_ptr β align ty -∗
+      ⌜r.1.2 ≤ a ≤ r.1.2 + align⌝ ∗
+      (alloc_alive_loc r.1 ∗ True) ∧
+      T (val_of_loc (r.1.1, a)) (t2mt (value void* (val_of_loc (r.1.1, a))))
+    ) -∗
+    typed_copy_alloc_id v1 (v1 ◁ᵥ a @ int it) v2 (v2 ◁ᵥ r @ tagged_ptr β align ty) (IntOp it) T.
   Proof.
-    iIntros "HT Hp1 (->&%&%&#Hlib&Hp)" (Φ) "HΦ".
-    iDestruct ("HT" with "Hp1 [$Hlib $Hp]") as ([??]) "HT"; [done|].
+    iIntros "HT %Hv1 (->&%&%&#Hlib&Hp)" (Φ) "HΦ".
+    iDestruct ("HT" with "[//] [$Hlib $Hp]") as ([??]) "HT"; [done|].
     rewrite !right_id.
-    iApply wp_copy_alloc_id; [ by rewrite val_to_of_loc | by rewrite val_to_of_loc |  | ].
+    iApply wp_copy_alloc_id; [ done | by rewrite val_to_of_loc |  | ].
     { iApply (loc_in_bounds_offset with "Hlib"); simpl; [done | done | etrans; [|done]; lia]. }
     iSplit.
     - iDestruct "HT" as "[Halloc _]". by iApply (alloc_alive_loc_mono with "Halloc").
     - iDestruct "HT" as "[_ HT]". by iApply ("HΦ" with "[] HT").
   Qed.
-  Global Instance type_copy_aid_tagged_ptr_inst (l1 : loc) β1 ty1 v2 r β2 ty2 align:
-    TypedCopyAllocId l1 (l1 ◁ₗ{β1} ty1) v2 (v2 ◁ᵥ r @ tagged_ptr β2 align ty2)%I PtrOp :=
-    λ T, i2p (type_copy_aid_tagged_ptr l1 β1 ty1 v2 r β2 ty2 align T).
+  Global Instance type_copy_aid_tagged_ptr_inst v1 a it v2 r β align ty:
+    TypedCopyAllocId v1 (v1 ◁ᵥ a @ int it)%I v2 (v2 ◁ᵥ r @ tagged_ptr β align ty)%I (IntOp it) :=
+    λ T, i2p (type_copy_aid_tagged_ptr v1 a it v2 r β align ty T).
 End tagged_ptr.
 Typeclasses Opaque tagged_ptr_type.
 

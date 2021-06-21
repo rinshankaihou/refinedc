@@ -12,7 +12,7 @@ Inductive expr :=
 | Val (v : val)
 | UnOp (op : un_op) (ot : op_type) (e : expr)
 | BinOp (op : bin_op) (ot1 ot2 : op_type) (e1 e2 : expr)
-| CopyAllocId (ot2 : op_type) (e1 e2 : expr)
+| CopyAllocId (ot1 : op_type) (e1 e2 : expr)
 | Deref (o : order) (ly : layout) (e : expr)
 | CAS (ot : op_type) (e1 e2 e3 : expr)
 | Call (f : expr) (args : list expr)
@@ -43,7 +43,7 @@ Lemma expr_ind (P : expr → Prop) :
   (∀ (v : val), P (Val v)) →
   (∀ (op : un_op) (ot : op_type) (e : expr), P e → P (UnOp op ot e)) →
   (∀ (op : bin_op) (ot1 ot2 : op_type) (e1 e2 : expr), P e1 → P e2 → P (BinOp op ot1 ot2 e1 e2)) →
-  (∀ (ot2 : op_type) (e1 e2 : expr), P e1 → P e2 → P (CopyAllocId ot2 e1 e2)) →
+  (∀ (ot1 : op_type) (e1 e2 : expr), P e1 → P e2 → P (CopyAllocId ot1 e1 e2)) →
   (∀ (o : order) (ly : layout) (e : expr), P e → P (Deref o ly e)) →
   (∀ (ot : op_type) (e1 e2 e3 : expr), P e1 → P e2 → P e3 → P (CAS ot e1 e2 e3)) →
   (∀ (f : expr) (args : list expr), P f → Forall P args → P (Call f args)) →
@@ -88,7 +88,7 @@ Fixpoint to_expr (e : expr) : lang.expr :=
   | Var x => lang.Var x
   | UnOp op ot e  => lang.UnOp op ot (to_expr e)
   | BinOp op ot1 ot2 e1 e2 => lang.BinOp op ot1 ot2 (to_expr e1) (to_expr e2)
-  | CopyAllocId ot2 e1 e2 => lang.CopyAllocId ot2 (to_expr e1) (to_expr e2)
+  | CopyAllocId ot1 e1 e2 => lang.CopyAllocId ot1 (to_expr e1) (to_expr e2)
   | Deref o ly e => lang.Deref o ly (to_expr e)
   | CAS ot e1 e2 e3 => lang.CAS ot (to_expr e1) (to_expr e2) (to_expr e3)
   | Call f args => lang.Call (to_expr f) (to_expr <$> args)
@@ -145,8 +145,8 @@ Ltac of_expr e :=
     let e := of_expr e in constr:(UnOp op ot e)
   | lang.BinOp ?op ?ot1 ?ot2 ?e1 ?e2 =>
     let e1 := of_expr e1 in let e2 := of_expr e2 in constr:(BinOp op ot1 ot2 e1 e2)
-  | lang.CopyAllocId ?ot2 ?e1 ?e2 =>
-    let e1 := of_expr e1 in let e2 := of_expr e2 in constr:(CopyAllocId ot2 e1 e2)
+  | lang.CopyAllocId ?ot1 ?e1 ?e2 =>
+    let e1 := of_expr e1 in let e2 := of_expr e2 in constr:(CopyAllocId ot1 e1 e2)
   | lang.Deref ?o ?ly ?e =>
     let e := of_expr e in constr:(Deref o ly e)
   | lang.CAS ?ot ?e1 ?e2 ?e3 =>
@@ -179,8 +179,8 @@ Inductive ectx_item :=
 | UnOpCtx (op : un_op) (ot : op_type)
 | BinOpLCtx (op : bin_op) (ot1 ot2 : op_type) (e2 : expr)
 | BinOpRCtx (op : bin_op) (ot1 ot2 : op_type) (v1 : val)
-| CopyAllocIdLCtx (ot2 : op_type) (e2 : expr)
-| CopyAllocIdRCtx (ot2 : op_type) (v1 : val)
+| CopyAllocIdLCtx (ot1 : op_type) (e2 : expr)
+| CopyAllocIdRCtx (ot1 : op_type) (v1 : val)
 | DerefCtx (o : order) (l : layout)
 | CASLCtx (ot : op_type) (e2 e3 : expr)
 | CASMCtx (ot : op_type) (v1 : val) (e3 : expr)
@@ -207,8 +207,8 @@ Definition fill_item (Ki : ectx_item) (e : expr) : expr :=
   | UnOpCtx op ot => UnOp op ot e
   | BinOpLCtx op ot1 ot2 e2 => BinOp op ot1 ot2 e e2
   | BinOpRCtx op ot1 ot2 v1 => BinOp op ot1 ot2 (Val v1) e
-  | CopyAllocIdLCtx ot2 e2 => CopyAllocId ot2 e e2
-  | CopyAllocIdRCtx ot2 v1 => CopyAllocId ot2 (Val v1) e
+  | CopyAllocIdLCtx ot1 e2 => CopyAllocId ot1 e e2
+  | CopyAllocIdRCtx ot1 v1 => CopyAllocId ot1 (Val v1) e
   | DerefCtx o l => Deref o l e
   | CASLCtx ot e2 e3 => CAS ot e e2 e3
   | CASMCtx ot v1 e3 => CAS ot (Val v1) e e3
@@ -247,11 +247,11 @@ Fixpoint find_expr_fill (e : expr) (bind_val : bool) : option (list ectx_item * 
     else if find_expr_fill e2 bind_val is Some (Ks, e') then
            if e1 is Val v then Some (Ks ++ [BinOpRCtx op ot1 ot2 v], e') else None
          else Some ([], e)
-  | CopyAllocId ot2 e1 e2 =>
+  | CopyAllocId ot1 e1 e2 =>
     if find_expr_fill e1 bind_val is Some (Ks, e') then
-      Some (Ks ++ [CopyAllocIdLCtx ot2 e2], e')
+      Some (Ks ++ [CopyAllocIdLCtx ot1 e2], e')
     else if find_expr_fill e2 bind_val is Some (Ks, e') then
-           if e1 is Val v then Some (Ks ++ [CopyAllocIdRCtx ot2 v], e') else None
+           if e1 is Val v then Some (Ks ++ [CopyAllocIdRCtx ot1 v], e') else None
          else Some ([], e)
   | CAS ot e1 e2 e3 =>
     if find_expr_fill e1 bind_val is Some (Ks, e') then
@@ -512,7 +512,7 @@ Fixpoint subst_l (xs : list (var_name * val)) (e : expr)  : expr :=
   | Val v => Val v
   | UnOp op ot e => UnOp op ot (subst_l xs e)
   | BinOp op ot1 ot2 e1 e2 => BinOp op ot1 ot2 (subst_l xs e1) (subst_l xs e2)
-  | CopyAllocId ot2 e1 e2 => CopyAllocId ot2 (subst_l xs e1) (subst_l xs e2)
+  | CopyAllocId ot1 e1 e2 => CopyAllocId ot1 (subst_l xs e1) (subst_l xs e2)
   | Deref o l e => Deref o l (subst_l xs e)
   | CAS ot e1 e2 e3 => CAS ot (subst_l xs e1) (subst_l xs e2) (subst_l xs e3)
   | Call f args => Call (subst_l xs f) (subst_l xs <$> args)

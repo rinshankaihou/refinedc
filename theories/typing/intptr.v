@@ -131,28 +131,6 @@ Section programs.
     TypedUnOp v (v ◁ᵥ p @ intptr it)%I (CastOp PtrOp) (IntOp it) :=
     λ T, i2p (type_cast_intptr_ptr p v it T).
 
-  Lemma type_copy_aid_intptr v1 P1 v2 p2 it T:
-    (∃ p1,
-      subsume P1 (v1 ◁ᵥ p1 @ frac_ptr Own (place p1)) (
-        (loc_in_bounds (p2.1, p1.2) 0 ∗ True) ∧
-        (alloc_alive_loc p2 ∗ True) ∧
-        T (val_of_loc (p2.1, p1.2)) (t2mt (value void* (val_of_loc (p2.1, p1.2))))
-      )
-    ) -∗
-    typed_copy_alloc_id v1 P1 v2 (v2 ◁ᵥ p2 @ intptr it) (IntOp it) T.
-  Proof.
-    iIntros "HT Hp1 Hp2" (Φ) "HΦ". iDestruct "HT" as (p1) "HT".
-    iDestruct ("HT" with "Hp1") as "[Hp1 HT]". iDestruct "Hp1" as (->) "Hp1".
-    iDestruct "Hp2" as %Hp2.
-    rewrite !right_id. iDestruct "HT" as "[#Hlib HT]".
-    iApply wp_copy_alloc_id_int => //; first by rewrite val_to_of_loc.
-    iSplit; [by iDestruct "HT" as "[$ _]" |].
-    iDestruct "HT" as "[_ HT]". by iApply ("HΦ" with "[] HT").
-  Qed.
-  Global Instance type_copy_aid_intptr_inst v1 P1 v2 p2 it:
-    TypedCopyAllocId v1 P1 v2 (v2 ◁ᵥ p2 @ intptr it)%I (IntOp it) :=
-    λ T, i2p (type_copy_aid_intptr v1 P1 v2 p2 it T).
-
   Lemma intptr_wand_int v p it:
     v ◁ᵥ p @ intptr it -∗ v ◁ᵥ p.2 @ int it.
   Proof.

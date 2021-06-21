@@ -524,14 +524,14 @@ let rec translate_expr : bool -> op_type option -> ail_expr -> expr =
     | AilEcond(e1,e2,e3) when is_const_0 e1 && is_copy_alloc_id_annot e2 ->
        let (e2, e3) =
          match macro_annot_to_list e2 with
-         | [_; MacroExpr(e2); MacroExpr(e3)] -> (e2, e3)
-         | _                                 ->
+         | [_; MacroExpr(e2); MacroExpr(e3); _] -> (e2, e3)
+         | _                                    ->
              not_impl loc "wrong copy alloc id annotation"
        in
-       let ot2 = op_type_of_tc (loc_of e2) (tc_of e2) in
+       let ot3 = op_type_of_tc (loc_of e3) (tc_of e3) in
        let e2 = translate_expr false None e2 in
        let e3 = translate_expr false None e3 in
-       let e = locate (CopyAID(ot2, e3, e2)) in
+       let e = locate (CopyAID(ot3, e3, e2)) in
        if lval then locate (LValue(e)) else e
     | AilEcond(e1,e2,e3)           ->
        let ty = op_type_of_tc (loc_of e1) (tc_of e1) in

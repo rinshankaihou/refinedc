@@ -42,6 +42,6 @@
 // Note that rc_copy_alloc_id exposes the provenance of [from] by casting it
 // to an integer (throwing away the result).
 #define rc_copy_alloc_id(to, from) \
-  (0 ? ("rc_copy_alloc_id", (from), (to)) : ((uintptr_t) (from), (to)))
+  (0 ? ("rc_copy_alloc_id", (from), (to), (void*) (to)) : ((uintptr_t) (from), (void*) (to)))
 
 #endif

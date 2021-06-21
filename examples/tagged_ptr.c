@@ -27,7 +27,7 @@ tag_t tag_of(void* p){
 [[rc::ensures("[P]")]]
 void* tag(void* p, tag_t t){
   tag_t old_t = tag_of(p);
-  return rc_copy_alloc_id((void*) ((uintptr_t) p - old_t + t), p);
+  return rc_copy_alloc_id((uintptr_t) p - old_t + t, p);
 }
 
 [[rc::parameters("r: {loc * Z}", "ty: type", "P : {iProp Σ}")]]
@@ -46,7 +46,7 @@ void* untag(void* p){
 [[rc::ensures("[P]")]]
 void* untag2(void* p){
   uintptr_t i = (uintptr_t) p;
-  return rc_copy_alloc_id((void*) (i - i % TAG_MOD), p);
+  return rc_copy_alloc_id(i - i % TAG_MOD, p);
 }
 
 [[rc::returns("{0} @ int<size_t>")]]

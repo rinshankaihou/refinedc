@@ -372,42 +372,22 @@ Proof.
   - move => ->. by econstructor.
 Qed.
 
-Lemma wp_copy_alloc_id Φ l1 l2 v1 v2 E:
-  val_to_loc v1 = Some l1 →
-  val_to_loc v2 = Some l2 →
-  loc_in_bounds (l2.1, l1.2) 0 -∗
-  alloc_alive_loc l2 ∧ ▷ Φ (val_of_loc (l2.1, l1.2)) -∗
-  WP CopyAllocId PtrOp (Val v1) (Val v2) @ E {{ Φ }}.
-Proof.
-  iIntros (Hl1 Hl2) "Hl HΦ". iApply wp_lift_expr_step => //.
-  iIntros (σ1) "Hctx !>".
-  iAssert ⌜valid_ptr (l2.1, l1.2) σ1.(st_heap)⌝%I as %?. {
-    iSplit; [ |iApply (loc_in_bounds_to_heap_loc_in_bounds with "Hl Hctx")].
-    iApply (alloc_alive_loc_to_block_alive with "[HΦ] Hctx").
-    iDestruct "HΦ" as "[Halive _]". by iApply alloc_alive_loc_mono; [|done].
-  }
-  iDestruct "HΦ" as "[_ HΦ]".
-  iSplit; first by eauto 8 using CopyAllocIdPS.
-  iIntros "!>" (???? Hstep ?) "!>". inv_expr_step. iSplit => //. iFrame.
-  by iApply wp_value.
-Qed.
-
-Lemma wp_copy_alloc_id_int Φ it l1 l2 v1 v2 E:
-  val_to_loc v1 = Some l1 →
-  val_to_loc_weak v2 it = Some l2 →
-  loc_in_bounds (l2.1, l1.2) 0 -∗
-  alloc_alive_loc l2 ∧ ▷ Φ (val_of_loc (l2.1, l1.2)) -∗
+Lemma wp_copy_alloc_id Φ it a l v1 v2 E:
+  val_to_Z_weak v1 it = Some a →
+  val_to_loc v2 = Some l →
+  loc_in_bounds (l.1, a) 0 -∗
+  alloc_alive_loc l ∧ ▷ Φ (val_of_loc (l.1, a)) -∗
   WP CopyAllocId (IntOp it) (Val v1) (Val v2) @ E {{ Φ }}.
 Proof.
-  iIntros (Hl1 Hl2) "Hl HΦ". iApply wp_lift_expr_step => //.
+  iIntros (Ha Hl) "Hlib HΦ". iApply wp_lift_expr_step => //.
   iIntros (σ1) "Hctx !>".
-  iAssert ⌜valid_ptr (l2.1, l1.2) σ1.(st_heap)⌝%I as %?. {
-    iSplit; [ |iApply (loc_in_bounds_to_heap_loc_in_bounds with "Hl Hctx")].
+  iAssert ⌜valid_ptr (l.1, a) σ1.(st_heap)⌝%I as %?. {
+    iSplit; [ |iApply (loc_in_bounds_to_heap_loc_in_bounds with "Hlib Hctx")].
     iApply (alloc_alive_loc_to_block_alive with "[HΦ] Hctx").
     iDestruct "HΦ" as "[Halive _]". by iApply alloc_alive_loc_mono; [|done].
   }
   iDestruct "HΦ" as "[_ HΦ]".
-  iSplit; first by eauto 8 using CopyAllocIdIS.
+  iSplit; first by eauto 8 using CopyAllocIdS.
   iIntros "!>" (???? Hstep ?) "!>". inv_expr_step. iSplit => //. iFrame.
   by iApply wp_value.
 Qed.

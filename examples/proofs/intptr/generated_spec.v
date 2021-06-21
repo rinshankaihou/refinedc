@@ -73,9 +73,4 @@ Section spec.
   Definition type_of_roundtrip_and_read4 :=
     fn(∀ (p, n) : loc * Z; (p @ (&own (n @ (int (i32))))); True)
       → ∃ () : (), (n @ (int (i32))); (p ◁ₗ (n @ (int (i32)))).
-
-  (* Specifications for function [int_to_ptr]. *)
-  Definition type_of_int_to_ptr :=
-    fn(∀ p : loc; (p @ (intptr (uintptr_t))); (alloc_alive_loc p) ∗ (loc_in_bounds p 0))
-      → ∃ () : (), (p @ (&own (place (p)))); (alloc_alive_loc p).
 End spec.

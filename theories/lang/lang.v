@@ -32,7 +32,7 @@ Inductive expr :=
 | Val (v : val)
 | UnOp (op : un_op) (ot : op_type) (e : expr)
 | BinOp (op : bin_op) (ot1 ot2 : op_type) (e1 e2 : expr)
-| CopyAllocId (ot2 : op_type) (e1 : expr) (e2 : expr)
+| CopyAllocId (ot1 : op_type) (e1 : expr) (e2 : expr)
 | Deref (o : order) (ly : layout) (e : expr)
 | CAS (ot : op_type) (e1 e2 e3 : expr)
 | Call (f : expr) (args : list expr)
@@ -48,7 +48,7 @@ Lemma expr_ind (P : expr → Prop) :
   (∀ (v : val), P (Val v)) →
   (∀ (op : un_op) (ot : op_type) (e : expr), P e → P (UnOp op ot e)) →
   (∀ (op : bin_op) (ot1 ot2 : op_type) (e1 e2 : expr), P e1 → P e2 → P (BinOp op ot1 ot2 e1 e2)) →
-  (∀ (ot2 : op_type) (e1 e2 : expr), P e1 → P e2 → P (CopyAllocId ot2 e1 e2)) →
+  (∀ (ot1 : op_type) (e1 e2 : expr), P e1 → P e2 → P (CopyAllocId ot1 e1 e2)) →
   (∀ (o : order) (ly : layout) (e : expr), P e → P (Deref o ly e)) →
   (∀ (ot : op_type) (e1 e2 e3 : expr), P e1 → P e2 → P e3 → P (CAS ot e1 e2 e3)) →
   (∀ (f : expr) (args : list expr), P f → Forall P args → P (Call f args)) →
@@ -120,7 +120,7 @@ with rtexpr :=
 | RTVal (v : val)
 | RTUnOp (op : un_op) (ot : op_type) (e : runtime_expr)
 | RTBinOp (op : bin_op) (ot1 ot2 : op_type) (e1 e2 : runtime_expr)
-| RTCopyAllocId (ot2 : op_type) (e1 : runtime_expr) (e2 : runtime_expr)
+| RTCopyAllocId (ot1 : op_type) (e1 : runtime_expr) (e2 : runtime_expr)
 | RTDeref (o : order) (ly : layout) (e : runtime_expr)
 | RTCall (f : runtime_expr) (args : list runtime_expr)
 | RTCAS (ot : op_type) (e1 e2 e3 : runtime_expr)
@@ -144,7 +144,7 @@ Fixpoint to_rtexpr (e : expr) : runtime_expr :=
   | Val v => RTVal v
   | UnOp op ot e => RTUnOp op ot (to_rtexpr e)
   | BinOp op ot1 ot2 e1 e2 => RTBinOp op ot1 ot2 (to_rtexpr e1) (to_rtexpr e2)
-  | CopyAllocId ot2 e1 e2 => RTCopyAllocId ot2 (to_rtexpr e1) (to_rtexpr e2)
+  | CopyAllocId ot1 e1 e2 => RTCopyAllocId ot1 (to_rtexpr e1) (to_rtexpr e2)
   | Deref o ly e => RTDeref o ly (to_rtexpr e)
   | Call f args => RTCall (to_rtexpr f) (to_rtexpr <$> args)
   | CAS ot e1 e2 e3 => RTCAS ot (to_rtexpr e1) (to_rtexpr e2) (to_rtexpr e3)
@@ -190,7 +190,7 @@ Fixpoint subst (x : var_name) (v : val) (e : expr)  : expr :=
   | Val v => Val v
   | UnOp op ot e => UnOp op ot (subst x v e)
   | BinOp op ot1 ot2 e1 e2 => BinOp op ot1 ot2 (subst x v e1) (subst x v e2)
-  | CopyAllocId ot2 e1 e2 => CopyAllocId ot2 (subst x v e1) (subst x v e2)
+  | CopyAllocId ot1 e1 e2 => CopyAllocId ot1 (subst x v e1) (subst x v e2)
   | Deref o l e => Deref o l (subst x v e)
   | Call e es => Call (subst x v e) (subst x v <$> es)
   | CAS ly e1 e2 e3 => CAS ly (subst x v e1) (subst x v e2) (subst x v e3)
@@ -431,16 +431,11 @@ comparing pointers? (see lambda rust) *)
     expr_step (Call (Val vf) (Val <$> vs)) σ [] AllocFailed σ []
 | ConcatS vs σ:
     expr_step (Concat (Val <$> vs)) σ [] (Val (mjoin vs)) σ []
-| CopyAllocIdPS l1 l2 v1 v2 σ:
-    val_to_loc v1 = Some l1 →
-    val_to_loc v2 = Some l2 →
-    valid_ptr (l2.1, l1.2) σ.(st_heap) →
-    expr_step (CopyAllocId PtrOp (Val v1) (Val v2)) σ [] (Val (val_of_loc (l2.1, l1.2))) σ []
-| CopyAllocIdIS it l1 l2 v1 v2 σ:
-    val_to_loc v1 = Some l1 →
-    val_to_loc_weak v2 it = Some l2 →
-    valid_ptr (l2.1, l1.2) σ.(st_heap) →
-    expr_step (CopyAllocId (IntOp it) (Val v1) (Val v2)) σ [] (Val (val_of_loc (l2.1, l1.2))) σ []
+| CopyAllocIdS σ v1 v2 a it l:
+    val_to_Z_weak v1 it = Some a →
+    val_to_loc v2 = Some l →
+    valid_ptr (l.1, a) σ.(st_heap) →
+    expr_step (CopyAllocId (IntOp it) (Val v1) (Val v2)) σ [] (Val (val_of_loc (l.1, a))) σ []
 | IfES v it e1 e2 n σ:
     val_to_Z_weak v it = Some n →
     expr_step (IfE (IntOp it) (Val v) e1 e2) σ [] (if bool_decide (n ≠ 0) then e1 else e2)  σ []
@@ -529,8 +524,8 @@ Inductive expr_ectx :=
 | UnOpCtx (op : un_op) (ot : op_type)
 | BinOpLCtx (op : bin_op) (ot1 ot2 : op_type) (e2 : runtime_expr)
 | BinOpRCtx (op : bin_op) (ot1 ot2 : op_type) (v1 : val)
-| CopyAllocIdLCtx (ot2 : op_type) (e2 : runtime_expr)
-| CopyAllocIdRCtx (ot2 : op_type) (v1 : val)
+| CopyAllocIdLCtx (ot1 : op_type) (e2 : runtime_expr)
+| CopyAllocIdRCtx (ot1 : op_type) (v1 : val)
 | DerefCtx (o : order) (l : layout)
 | CallLCtx (args : list runtime_expr)
 | CallRCtx (f : val) (vl : list val) (el : list runtime_expr)
@@ -547,8 +542,8 @@ Definition expr_fill_item (Ki : expr_ectx) (e : runtime_expr) : rtexpr :=
   | UnOpCtx op ot => RTUnOp op ot e
   | BinOpLCtx op ot1 ot2 e2 => RTBinOp op ot1 ot2 e e2
   | BinOpRCtx op ot1 ot2 v1 => RTBinOp op ot1 ot2 (Val v1) e
-  | CopyAllocIdLCtx ot2 e2 => RTCopyAllocId ot2 e e2
-  | CopyAllocIdRCtx ot2 v1 => RTCopyAllocId ot2 (Val v1) e
+  | CopyAllocIdLCtx ot1 e2 => RTCopyAllocId ot1 e e2
+  | CopyAllocIdRCtx ot1 v1 => RTCopyAllocId ot1 (Val v1) e
   | DerefCtx o l => RTDeref o l e
   | CallLCtx args => RTCall e args
   | CallRCtx f vl el => RTCall (Val f) ((Expr <$> (RTVal <$> vl)) ++ e :: el)

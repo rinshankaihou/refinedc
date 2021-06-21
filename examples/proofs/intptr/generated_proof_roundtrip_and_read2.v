@@ -12,7 +12,7 @@ Section proof_roundtrip_and_read2.
     ⊢ typed_function impl_roundtrip_and_read2 type_of_roundtrip_and_read2.
   Proof.
     Open Scope printing_sugar.
-    start_function "roundtrip_and_read2" ([l n]) => arg_p local_i local_r local_q.
+    start_function "roundtrip_and_read2" ([l n]) => arg_p local_i local_r local_q local_j.
     split_blocks ((
       ∅
     )%I : gmap label (iProp Σ)) ((
