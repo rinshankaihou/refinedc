@@ -148,3 +148,12 @@ int roundtrip_and_read4(int* p){
   int *q = (int*) rc_copy_alloc_id(j, p);
   return *q;
 }
+
+/**** Casting NULL and function pointers ***************************************/
+
+[[rc::returns("{0} @ int<i32>")]]
+int cast_NULL() {
+  return (int) NULL;
+}
+
+// TODO: add casting for function pointers

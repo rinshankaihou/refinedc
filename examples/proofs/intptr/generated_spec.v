@@ -73,4 +73,8 @@ Section spec.
   Definition type_of_roundtrip_and_read4 :=
     fn(∀ (p, n) : loc * Z; (p @ (&own (n @ (int (i32))))); True)
       → ∃ () : (), (n @ (int (i32))); (p ◁ₗ (n @ (int (i32)))).
+
+  (* Specifications for function [cast_NULL]. *)
+  Definition type_of_cast_NULL :=
+    fn(∀ () : (); True) → ∃ () : (), ((0) @ (int (i32))); True.
 End spec.

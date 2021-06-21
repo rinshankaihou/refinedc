@@ -548,6 +548,19 @@ Section null.
     TypedBinOp l (l ◁ₗ{β} ty) v2 (v2 ◁ᵥ null) op PtrOp PtrOp :=
     λ T, i2p (type_binop_ptr_null v2 op T l ty β n).
 
+  Lemma type_cast_null_int it v T:
+    (T (i2v 0 it) (t2mt (0 @ int it))) -∗
+    typed_un_op v (v ◁ᵥ null) (CastOp (IntOp it)) PtrOp T.
+  Proof.
+    iIntros "HT" (-> Φ) "HΦ".
+    iApply wp_cast_null_int.
+    { by apply: (val_of_Z_bool false). }
+    iModIntro. iApply ("HΦ" with "[] HT").
+    iPureIntro. apply: val_to_Z_to_int_repr_Z. apply: (i2v_bool_Some false).
+  Qed.
+  Global Instance type_cast_null_int_inst v it:
+    TypedUnOpVal v null (CastOp (IntOp it)) PtrOp :=
+    λ T, i2p (type_cast_null_int it v T).
 End null.
 
 Section optionable.

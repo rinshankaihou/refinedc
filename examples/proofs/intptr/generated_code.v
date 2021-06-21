@@ -189,6 +189,9 @@ Section code.
   Definition loc_254 : location_info := LocationInfo file_0 146 16 146 29.
   Definition loc_255 : location_info := LocationInfo file_0 146 28 146 29.
   Definition loc_256 : location_info := LocationInfo file_0 146 28 146 29.
+  Definition loc_261 : location_info := LocationInfo file_0 156 2 156 30.
+  Definition loc_262 : location_info := LocationInfo file_0 156 9 156 29.
+  Definition loc_263 : location_info := LocationInfo file_0 156 15 156 29.
 
   (* Definition of function [int_ptr1]. *)
   Definition impl_int_ptr1 : function := {|
@@ -491,6 +494,21 @@ Section code.
           LocInfoE loc_240 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_241 (CopyAllocId (IntOp uintptr_t) (LocInfoE loc_244 (use{it_layout uintptr_t} (LocInfoE loc_245 ("j")))) (LocInfoE loc_242 (use{void*} (LocInfoE loc_243 ("p"))))))) ;
         locinfo: loc_235 ;
         Return (LocInfoE loc_236 (use{it_layout i32} (LocInfoE loc_238 (!{void*} (LocInfoE loc_239 ("q"))))))
+      ]> $∅
+    )%E
+  |}.
+
+  (* Definition of function [cast_NULL]. *)
+  Definition impl_cast_NULL : function := {|
+    f_args := [
+    ];
+    f_local_vars := [
+    ];
+    f_init := "#0";
+    f_code := (
+      <[ "#0" :=
+        locinfo: loc_261 ;
+        Return (LocInfoE loc_262 (UnOp (CastOp $ IntOp i32) (PtrOp) (LocInfoE loc_263 (NULL))))
       ]> $∅
     )%E
   |}.

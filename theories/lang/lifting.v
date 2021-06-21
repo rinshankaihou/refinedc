@@ -355,9 +355,22 @@ Lemma wp_cast_ptr_int Φ v v' l E it:
 Proof.
   iIntros (Hv Hv') "HΦ".
   iApply wp_unop_det. iSplit; [iDestruct "HΦ" as "[HΦ _]" | iDestruct "HΦ" as "[_ $]"].
-  iIntros (σ ?) "Hctx". iDestruct (alloc_alive_loc_to_block_alive with "HΦ Hctx") as %?.
+  iIntros (σ ?) "Hctx". iDestruct (alloc_alive_loc_to_block_alive with "HΦ Hctx") as %Hb.
   iPureIntro. split.
-  - by inversion 1; simplify_eq.
+  - move: (Hb) => [?[??]]. have ? := val_to_of_loc NULL_loc. inversion 1; unfold NULL in *; by simplify_eq.
+  - move => ->. by econstructor.
+Qed.
+
+Lemma wp_cast_null_int Φ v E it:
+  val_of_Z 0 it = Some v →
+  ▷ Φ v -∗
+  WP UnOp (CastOp (IntOp it)) PtrOp (Val NULL) @ E {{ Φ }}.
+Proof.
+  iIntros (Hv) "HΦ".
+  iApply wp_unop_det. iSplit; [|done].
+  iIntros (σ ?) "Hctx". iPureIntro. split.
+  - inversion 1; simplify_eq => //. revert select (block_alive _ _) => -[?[??]].
+    have ? := val_to_of_loc NULL_loc. unfold NULL in *; by simplify_eq.
   - move => ->. by econstructor.
 Qed.
 
