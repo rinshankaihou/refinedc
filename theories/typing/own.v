@@ -207,10 +207,10 @@ Section own.
     move: (Hn). rewrite /val_to_Z_weak. move => /fmap_Some [i][Hi ->].
     iDestruct ("HT" with "[]") as "HT".
     { iPureIntro. by eapply val_to_int_repr_in_range. }
-    iApply wp_cast_int_ptr => //. { by rewrite /val_to_loc_weak Hi. }
-    rewrite /int_repr_to_loc /int_repr_to_Z. destruct i as [z|[id p]]=> /=.
-    - iApply ("HΦ" with "[]"); last by iApply ("HT" $! (ProvAlloc None)). done.
-    - iApply ("HΦ" with "[]"); last by iApply ("HT" $! id). done.
+    iApply wp_cast_int_ptr_weak => //. { by rewrite /val_to_loc_weak Hi. }
+    iIntros (i') "!>". rewrite /int_repr_to_loc /int_repr_to_Z. destruct i as [z|[id p]]=> /=.
+    - iApply ("HΦ" with "[]"); last by iApply ("HT"). done.
+    - iApply ("HΦ" with "[]"); last by iApply ("HT"). done.
   Qed.
   Global Instance type_cast_int_ptr_inst n v it:
     TypedUnOp v (v ◁ᵥ n @ int it)%I (CastOp PtrOp) (IntOp it) :=

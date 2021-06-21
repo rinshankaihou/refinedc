@@ -361,15 +361,30 @@ Proof.
   - move => ->. by econstructor.
 Qed.
 
-Lemma wp_cast_int_ptr Φ v l E it:
+Lemma wp_cast_int_ptr_weak Φ v l E it:
   val_to_loc_weak v it = Some l →
-  ▷ Φ (val_of_loc l) -∗ WP UnOp (CastOp PtrOp) (IntOp it) (Val v) @ E {{ Φ }}.
+  (∀ i, ▷ Φ (val_of_loc (i, l.2))) -∗
+  WP UnOp (CastOp PtrOp) (IntOp it) (Val v) @ E {{ Φ }}.
 Proof.
   iIntros (Hv) "HΦ".
-  iApply wp_unop_det. iSplit => //.
-  iIntros (σ ?) "_ !%". split.
-  - by inversion 1; simplify_eq.
-  - move => ->. by econstructor.
+  iApply wp_unop.
+  iIntros (σ) "Hctx". iSplit; [iPureIntro; eexists _; by econstructor |].
+  iIntros "!>" (v' Hv'). iFrame.
+  inversion Hv'; simplify_eq. destruct l; simplify_eq/=; case_bool_decide; [ iApply "HΦ"|].
+  case_bool_decide; simplify_eq; iApply "HΦ".
+Qed.
+
+Lemma wp_cast_int_ptr_alive Φ v l E it:
+  val_to_loc_weak v it = Some l →
+  alloc_alive_loc l ∧ ▷ Φ (val_of_loc l) -∗
+  WP UnOp (CastOp PtrOp) (IntOp it) (Val v) @ E {{ Φ }}.
+Proof.
+  iIntros (Hv) "HΦ".
+  iApply wp_unop_det. iSplit; [iDestruct "HΦ" as "[HΦ _]" | iDestruct "HΦ" as "[_ $]"].
+  iIntros (σ ?) "Hctx". iDestruct (alloc_alive_loc_to_block_alive with "HΦ Hctx") as %?.
+  iPureIntro. split.
+  - by inversion 1; simplify_eq; case_bool_decide.
+  - move => ->. econstructor; [done..|]. by case_bool_decide.
 Qed.
 
 Lemma wp_copy_alloc_id Φ it a l v1 v2 E:

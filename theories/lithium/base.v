@@ -823,3 +823,11 @@ Proof.
   apply: Z.mod_pos_bound.
   by apply: Z.pow_pos_nonneg.
 Qed.
+
+Definition exists_dec_unique {A} (x : A) (P : _ → Prop) : (∀ y, P y → P x) → Decision (P x) → Decision (∃ y, P y).
+Proof.
+  intros Hx Hdec.
+  refine (cast_if (decide (P x))).
+  - abstract by eexists _.
+  - abstract naive_solver.
+Defined.

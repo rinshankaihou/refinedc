@@ -231,6 +231,21 @@ Definition alloc_id_alive (aid : alloc_id) (st : heap_state) : Prop :=
 Definition block_alive (l : loc) (st : heap_state) : Prop :=
   ∃ aid, l.1 = ProvAlloc (Some aid) ∧ alloc_id_alive aid st.
 
+Global Instance alloc_id_alive_dec aid st : Decision (alloc_id_alive aid st).
+Proof.
+  destruct (st.(hs_allocs) !! aid) as [alloc|] eqn: Haid.
+  2: { right. move => [?[??]]. simplify_eq. }
+  destruct (alloc.(al_alive)) eqn:?.
+  - left. eexists _. naive_solver.
+  - right. move => [?[??]]. destruct alloc; naive_solver.
+Qed.
+Global Instance block_alive_dec l st : Decision (block_alive l st).
+Proof.
+  destruct (l.1) as [| [aid|] |] eqn: Hl.
+  1,3,4: try (right => -[?[??]]; destruct l; naive_solver).
+  eapply (exists_dec_unique aid); [| apply _]. destruct l; naive_solver.
+Qed.
+
 (** The address range between [l] and [l +ₗ n] (included) is in range of the
     allocation that contains [l]. Note that we consider the 1-past-the-end
     pointer to be in range of an allocation. *)

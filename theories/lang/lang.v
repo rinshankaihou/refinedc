@@ -337,9 +337,12 @@ Inductive eval_un_op : un_op → op_type → state → val → val → Prop :=
     val_of_int_repr (IRLoc l) it = Some vt →
     block_alive l σ.(st_heap) →
     eval_un_op (CastOp (IntOp it)) PtrOp σ vs vt
-| CastOpIP it σ vs vt l:
+| CastOpIP it σ vs vt l l':
     val_to_loc_weak vs it = Some l →
-    val_of_loc l = vt →
+    val_of_loc l' = vt →
+    (** This is using that the address 0 is never alive. *)
+    l' = (if bool_decide (block_alive l σ.(st_heap)) then l else
+           (if bool_decide (l.2 = 0) then NULL_loc else (ProvAlloc None, l.2))) →
     eval_un_op (CastOp PtrOp) (IntOp it) σ vs vt
 | NegOpI it σ vs vt n:
     val_to_Z_weak vs it = Some n →

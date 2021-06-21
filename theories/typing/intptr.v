@@ -120,11 +120,12 @@ Section programs.
     λ T, i2p (type_cast_ptr_intptr_val v p it n T).
 
   Lemma type_cast_intptr_ptr p v it T:
-    (T (val_of_loc p) (t2mt (p @ frac_ptr Own (place p)))) -∗
+    ((alloc_alive_loc p ∗ True) ∧ T (val_of_loc p) (t2mt (p @ frac_ptr Own (place p)))) -∗
     typed_un_op v (v ◁ᵥ p @ intptr it) (CastOp PtrOp) (IntOp it) T.
   Proof.
     iIntros "HT" (Hn Φ) "HΦ".
-    iApply wp_cast_int_ptr => //.
+    iApply wp_cast_int_ptr_alive => //.
+    iSplit; [by iDestruct "HT" as "[[$ _] _]"| iDestruct "HT" as "[_ HT]"].
     iApply ("HΦ" with "[]"); last iApply "HT". done.
   Qed.
   Global Instance type_cast_intptr_ptr_inst p v it:
