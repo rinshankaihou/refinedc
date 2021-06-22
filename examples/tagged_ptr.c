@@ -11,8 +11,8 @@ typedef unsigned char tag_t;
 //@rc::inlined Notation TAG_MOD := (8%nat) (only parsing).
 
 [[rc::parameters("r: {loc * Z}", "ty: type", "v: val", "P: {iProp Σ}")]]
-[[rc::args("value<void*, v>")]]
-[[rc::requires("v : r @ &tagged<TAG_MOD, ty>", "{AllocAlive ty Own P}", "[P]")]]
+[[rc::args("at_value<v, r @ &tagged<TAG_MOD, ty>>")]]
+[[rc::requires("{AllocAlive ty Own P}", "[P]")]]
 [[rc::returns("{r.2} @ int<u8>")]]
 [[rc::ensures("v : r @ &tagged<TAG_MOD, ty>", "{0 ≤ r.2 < TAG_MOD}", "[P]")]]
 tag_t tag_of(void* p){

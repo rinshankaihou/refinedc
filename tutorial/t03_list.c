@@ -98,8 +98,7 @@ size_t length (list_t *p) {
 }
 
 [[rc::parameters("v : val", "l : {list type}")]]
-[[rc::args("value<void*,v>")]]
-[[rc::requires("v : l @ list_t")]]
+[[rc::args("at_value<v, l @ list_t>")]]
 [[rc::requires("{length l ≤ max_int size_t}")]]
 [[rc::returns("{length l} @ int<size_t>")]]
 [[rc::ensures("v : l @ list_t")]]
@@ -111,16 +110,14 @@ size_t length_val_rec (list_t p) {
 }
 
 [[rc::parameters("v : val", "l : {list type}")]]
-[[rc::args("value<void*,v>")]]
-[[rc::requires("v : l @ list_t")]]
+[[rc::args("at_value<v, l @ list_t>")]]
 [[rc::requires("{length l ≤ max_int size_t}")]]
 [[rc::returns("{length l} @ int<size_t>")]]
 [[rc::ensures("v : l @ list_t")]]
 size_t length_val (list_t p) {
   size_t len = 0;
   [[rc::exists("v2 : val", "l1 : {list type}")]]
-  [[rc::inv_vars("p : own_constrained<nonshr_constraint<{v2 ◁ᵥ l1 @ list_t}>, value<void*,v2>>",
-                 "len : {length l - length l1} @ int<size_t>")]]
+  [[rc::inv_vars("p : at_value<v2, l1 @ list_t>", "len : {length l - length l1} @ int<size_t>")]]
   [[rc::constraints("v : wand_val<void*, {v2 ◁ᵥ l1 @ list_t}, l @ list_t>")]]
   while (p != NULL) {
     p = p->tail;

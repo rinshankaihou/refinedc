@@ -17,7 +17,7 @@ Section proof_length_val.
       <[ "#1" :=
         ∃ v2 : val,
         ∃ l1 : list type,
-        arg_p ◁ₗ (own_constrained (nonshr_constraint (v2 ◁ᵥ l1 @ list_t)) (value (void*) (v2))) ∗
+        arg_p ◁ₗ (at_value (v2) (l1 @ (list_t))) ∗
         local_len ◁ₗ ((length l - length l1) @ (int (size_t))) ∗
         (v ◁ᵥ (wand_val (void*) (v2 ◁ᵥ l1 @ list_t) (l @ (list_t))))
     ]> $

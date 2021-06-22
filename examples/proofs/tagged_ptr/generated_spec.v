@@ -14,7 +14,7 @@ Section spec.
 
   (* Specifications for function [tag_of]. *)
   Definition type_of_tag_of :=
-    fn(∀ (r, ty, v, P) : (loc * Z) * type * val * (iProp Σ); (value (void*) (v)); (v ◁ᵥ (r @ (&tagged (TAG_MOD) (ty)))) ∗ ⌜AllocAlive ty Own P⌝ ∗ (P))
+    fn(∀ (r, ty, v, P) : (loc * Z) * type * val * (iProp Σ); (at_value (v) (r @ (&tagged (TAG_MOD) (ty)))); ⌜AllocAlive ty Own P⌝ ∗ (P))
       → ∃ () : (), ((r.2) @ (int (u8))); (v ◁ᵥ (r @ (&tagged (TAG_MOD) (ty)))) ∗ ⌜0 ≤ r.2 < TAG_MOD⌝ ∗ (P).
 
   (* Specifications for function [tag]. *)

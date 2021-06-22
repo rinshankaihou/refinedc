@@ -105,6 +105,63 @@ Section value.
 End value.
 Notation "value< ly , v >" := (value ly v) (only printing, format "'value<' ly ',' v '>'") : printing_sugar.
 
+Section at_value.
+  Context `{!typeG Σ}.
+
+  Program Definition at_value (v : val) (ty : type) `{!Movable ty} : type := {|
+    ty_own β l := (if β is Own then l ◁ₗ value (ty_layout ty) v ∗ v ◁ᵥ ty else True )%I;
+  |}.
+  Next Obligation. by iIntros (??????) "?". Qed.
+
+  Global Program Instance movable_at_value v ty `{!Movable ty} : Movable (at_value v ty) := {|
+    ty_layout := (ty_layout ty);
+    ty_own_val v' := (v' ◁ᵥ value (ty_layout ty) v ∗ v ◁ᵥ ty)%I;
+  |}.
+  Next Obligation. iIntros (v ty ? l) "[Hv ?]". iApply (ty_aligned with "Hv"). Qed.
+  Next Obligation. iIntros (v ty ? v') "[Hv ?]". iApply (ty_size_eq with "Hv"). Qed.
+  Next Obligation.
+    iIntros (v ty ? l) "[Hv ?]". iDestruct (ty_deref with "Hv") as (v') "[??]". iExists _. by iFrame.
+  Qed.
+  Next Obligation.
+    iIntros (v ty ? l v' ?) "Hl [Hv ?]". iFrame. by iApply (ty_ref with "[] Hl Hv").
+  Qed.
+
+  Lemma at_value_simplify_hyp_val v v' ty `{!Movable ty} T:
+    (v ◁ᵥ value (ty_layout ty) v' -∗ v' ◁ᵥ ty -∗ T) -∗
+    simplify_hyp (v ◁ᵥ at_value v' ty) T.
+  Proof. iIntros "HT [??]". by iApply ("HT" with "[$] [$]"). Qed.
+  Global Instance at_value_simplify_hyp_val_inst v v' ty `{!Movable ty} :
+    SimplifyHypVal v (at_value v' ty) (Some 0%N) :=
+    λ T, i2p (at_value_simplify_hyp_val v v' ty T).
+
+  Lemma at_value_simplify_goal_val v v' ty `{!Movable ty} T:
+    (T (v ◁ᵥ value (ty_layout ty) v' ∗ v' ◁ᵥ ty)) -∗
+    simplify_goal (v ◁ᵥ at_value v' ty) T.
+  Proof. iIntros "HT". iExists _. iFrame. by iIntros "$". Qed.
+  Global Instance at_value_simplify_goal_val_inst v v' ty `{!Movable ty} :
+    SimplifyGoalVal v (at_value v' ty) (Some 0%N) :=
+    λ T, i2p (at_value_simplify_goal_val v v' ty T).
+
+  Lemma at_value_simplify_hyp_loc l v' ty `{!Movable ty} T:
+    (l ◁ₗ value (ty_layout ty) v' -∗ v' ◁ᵥ ty -∗ T) -∗
+    simplify_hyp (l ◁ₗ at_value v' ty) T.
+  Proof. iIntros "HT [??]". by iApply ("HT" with "[$] [$]"). Qed.
+  Global Instance at_value_simplify_hyp_loc_inst l v' ty `{!Movable ty} :
+    SimplifyHypPlace l Own (at_value v' ty) (Some 0%N) :=
+    λ T, i2p (at_value_simplify_hyp_loc l v' ty T).
+
+  Lemma at_value_simplify_goal_loc l v' ty `{!Movable ty} T:
+    (T (l ◁ₗ value (ty_layout ty) v' ∗ v' ◁ᵥ ty)) -∗
+    simplify_goal (l ◁ₗ at_value v' ty) T.
+  Proof. iIntros "HT". iExists _. iFrame. by iIntros "$". Qed.
+  Global Instance at_value_simplify_goal_loc_inst l v' ty `{!Movable ty} :
+    SimplifyGoalPlace l Own (at_value v' ty) (Some 0%N) :=
+    λ T, i2p (at_value_simplify_goal_loc l v' ty T).
+
+End at_value.
+Notation "at_value< v , ty >" := (at_value v ty) (only printing, format "'at_value<' v ',' ty '>'") : printing_sugar.
+Typeclasses Opaque at_value.
+
 Section place.
   Context `{!typeG Σ}.
 
