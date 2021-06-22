@@ -8,12 +8,11 @@ Section proof_tag.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [tag]. *)
-  Lemma type_tag (global_tag_of : loc) :
-    global_tag_of ◁ᵥ global_tag_of @ function_ptr type_of_tag_of -∗
-    typed_function (impl_tag global_tag_of) type_of_tag.
+  Lemma type_tag :
+    ⊢ typed_function impl_tag type_of_tag.
   Proof.
     Open Scope printing_sugar.
-    start_function "tag" ([[r t] ty]) => arg_p arg_t local_old_t.
+    start_function "tag" ([[r t] ty]) => arg_p arg_t local_i local_new_i local_q.
     split_blocks ((
       ∅
     )%I : gmap label (iProp Σ)) ((

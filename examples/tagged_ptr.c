@@ -6,8 +6,6 @@
 #define TAG_MOD  (1 << TAG_SIZE)
 #define TAG_MASK (TAG_MOD - 1)
 
-typedef unsigned char tag_t;
-
 //@rc::inlined Notation TAG_MOD := (8%nat) (only parsing).
 
 [[rc::parameters("r: {loc * Z}", "ty: type", "v: val")]]
@@ -15,17 +13,21 @@ typedef unsigned char tag_t;
 [[rc::requires("[type_alive_own ty]")]]
 [[rc::returns("{r.2} @ int<u8>")]]
 [[rc::ensures("v : r @ &tagged<TAG_MOD, ty>", "{0 ≤ r.2 < TAG_MOD}")]]
-tag_t tag_of(void* p){
-  return ((uintptr_t) p) % TAG_MOD;
+unsigned char tag_of(void* p){
+  uintptr_t i = (uintptr_t) p;
+  unsigned char t = i % TAG_MOD;
+  return t;
 }
 
 [[rc::parameters("r: {loc * Z}", "t: Z", "ty: type")]]
 [[rc::args("r @ &tagged<TAG_MOD, ty>", "t @ int<u8>")]]
 [[rc::requires("{0 ≤ t < TAG_MOD}", "[type_alive_own ty]")]]
 [[rc::returns("{(r.1, t)} @ &tagged<TAG_MOD, ty>")]]
-void* tag(void* p, tag_t t){
-  tag_t old_t = tag_of(p);
-  return rc_copy_alloc_id((uintptr_t) p - old_t + t, p);
+void* tag(void* p, unsigned char t){
+  uintptr_t i = (uintptr_t) p;
+  uintptr_t new_i = i - i % TAG_MOD + t;
+  void* q = rc_copy_alloc_id(new_i, p);
+  return q;
 }
 
 [[rc::parameters("r: {loc * Z}", "ty: type")]]
