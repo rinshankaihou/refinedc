@@ -110,7 +110,6 @@ and ptr_kind = Own | Shr | Frac of coq_expr
 
 and type_expr =
   | Ty_refine of coq_expr * type_expr
-  | Ty_ptr    of ptr_kind * type_expr
   | Ty_dots
   | Ty_exists of pattern * coq_expr option * type_expr
   | Ty_constr of type_expr * constr
@@ -143,6 +142,10 @@ let no_star =
 let parser ident =
   | id:base_ident no_star -> id
   | "void*"               -> "void*"
+
+let parser ty_name =
+  | id:base_ident       -> id
+  | '&' - id:base_ident -> "&" ^ id
 
 (** Integer token (regexp ["[0-9]+"]). *)
 let integer : int Earley.grammar =
@@ -196,9 +199,7 @@ and parser type_expr @(p : [`Atom | `Cstr | `Full]) =
           | (_           , None    ) -> Ty_Coq(c)
           | (_           , Some(ty)) -> Ty_refine(c,ty)
         end
-  | (k,ty):ptr_type
-      when p >= `Atom -> Ty_ptr(k, ty)
-  | id:ident "<" tys:type_args ">"
+  | id:ty_name "<" tys:type_args ">"
       when p >= `Atom -> Ty_params(id,tys)
   | "..."
       when p >= `Atom -> Ty_dots

@@ -522,13 +522,7 @@ and pp_constr_guard : unit pp option -> guard_mode -> bool -> constr pp =
 and pp_type_expr_guard : unit pp option -> guard_mode -> type_expr pp =
     fun pp_dots guard ff ty ->
   let pp_constr = pp_constr_guard pp_dots guard in
-  let rec pp_kind ff k =
-    match k with
-    | Own     -> pp_str ff "&own"
-    | Shr     -> pp_str ff "&shr"
-    | Frac(e) -> fprintf ff "&frac{%a}"
-                   (pp_coq_expr false (pp false false false)) e
-  and pp_ty_annot ff a =
+  let rec pp_ty_annot ff a =
     pp_type_annot (pp false false false) ff a
   and pp wrap rfnd guarded ff ty =
     let pp_coq_expr wrap = pp_coq_expr wrap (pp false rfnd guarded) in
@@ -565,8 +559,6 @@ and pp_type_expr_guard : unit pp option -> guard_mode -> type_expr pp =
               fprintf ff "%a @@ %a" (pp_coq_expr true) e
                 (pp true true guarded) ty
         end
-    | Ty_ptr(k,ty)       ->
-        fprintf ff "%a %a" pp_kind k (pp true false guarded) ty
     | Ty_exists(xs,a,ty) ->
         fprintf ff "tyexists (λ %a%a, %a%a)" (pp_encoded_patt_name false) xs
           pp_ty_annot a pp_encoded_patt_bindings xs
@@ -594,6 +586,15 @@ and pp_type_expr_guard : unit pp option -> guard_mode -> type_expr pp =
             if not guarded then fprintf ff ")"
         | _                           ->
         match id with
+        | "&frac"                  ->
+            let (beta, ty) =
+              match tyas with
+              | [tya1; tya2] -> (tya1, tya2)
+              | _            ->
+                 Panic.panic_no_pos "[%s] expects two arguments." id
+            in
+            fprintf ff "&frac{%a} %a"
+              (pp_arg false guarded) beta (pp_arg true guarded) ty
         | "optional" when not rfnd ->
             let (tya1, tya2) =
               match tyas with

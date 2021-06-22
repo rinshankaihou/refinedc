@@ -390,10 +390,11 @@ Our syntax makes use of the following regular expressions.
 
 ```
 <ident>   ::= Regexp([A-Za-z_][A-Za-z_0-9]+) | "void*"
+<ty_name> ::= Regexp(&?[A-Za-z_][A-Za-z_0-9]+)
 <integer> ::= Regexp([0-9]+)
 ```
-They range over general-purpose identifiers (for `<ident>`), and over positive
-integer respectively (for `<integer>`).
+They range over general-purpose identifiers (for `<ident>`), over "type names"
+(for `<ty_name>`), and over positive integer respectively (for `<integer>`).
 
 We also define the following grammar for Coq import paths.
 
@@ -446,10 +447,7 @@ in annotations. They are defined as follows.
 ```
 <type_expr> ::=
   | <ident (as type name)> {"<" ">"}?
-  | <ident (as type name)> "<" <type_expr_arg> {"," <type_expr_arg>}* ">"
-  | "&own<" <type_expr> ">"
-  | "&shr<" <type_expr> ">"
-  | "&frac<" <coq_expr (as fraction)> "," <type_expr> ">"
+  | <ty_name (as type name)> "<" <type_expr_arg> {"," <type_expr_arg>}* ">"
   | <coq_expr (as Coq value)> "@" <type_expr>
   | "∃" <ident (as variable name)> {":" <coq_expr (as Coq type)>}? "." <type_expr>
   | <type_expr> "&" <constr>
@@ -458,7 +456,7 @@ in annotations. They are defined as follows.
   | "(" <tupe_expr> ")"
 ```
 
-Pointer types are built-in type constructors related to ownership. There are
+Note that type names include type constructors related to ownership. There are
 three forms of pointer types:
  - owned pointers (of the form `&own<T>`),
  - shared pointers (of the form `&shr<T>`),

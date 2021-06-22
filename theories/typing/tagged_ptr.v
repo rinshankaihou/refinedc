@@ -151,6 +151,11 @@ Section tagged_ptr.
 End tagged_ptr.
 Typeclasses Opaque tagged_ptr_type.
 
+Notation "&tagged< align , ty >" :=
+  (tagged_ptr Own align ty)
+  (only printing, format "'&tagged<' align , ty '>'") : printing_sugar.
 Notation "tagged_ptr< β , align , ty >" :=
   (tagged_ptr β align ty)
   (only printing, format "'tagged_ptr<' β , align , ty '>'") : printing_sugar.
+
+Notation "&tagged" := (tagged_ptr Own) (format "&tagged") : bi_scope.
