@@ -12,7 +12,7 @@ Section proof_untag2.
     ⊢ typed_function impl_untag2 type_of_untag2.
   Proof.
     Open Scope printing_sugar.
-    start_function "untag2" ([[r ty] P]) => arg_p local_i.
+    start_function "untag2" ([r ty]) => arg_p local_i.
     split_blocks ((
       ∅
     )%I : gmap label (iProp Σ)) ((

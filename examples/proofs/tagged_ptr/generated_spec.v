@@ -14,23 +14,23 @@ Section spec.
 
   (* Specifications for function [tag_of]. *)
   Definition type_of_tag_of :=
-    fn(∀ (r, ty, v, P) : (loc * Z) * type * val * (iProp Σ); (at_value (v) (r @ (&tagged (TAG_MOD) (ty)))); ⌜AllocAlive ty Own P⌝ ∗ (P))
-      → ∃ () : (), ((r.2) @ (int (u8))); (v ◁ᵥ (r @ (&tagged (TAG_MOD) (ty)))) ∗ ⌜0 ≤ r.2 < TAG_MOD⌝ ∗ (P).
+    fn(∀ (r, ty, v) : (loc * Z) * type * val; (at_value (v) (r @ (&tagged (TAG_MOD) (ty)))); (type_alive_own ty))
+      → ∃ () : (), ((r.2) @ (int (u8))); (v ◁ᵥ (r @ (&tagged (TAG_MOD) (ty)))) ∗ ⌜0 ≤ r.2 < TAG_MOD⌝.
 
   (* Specifications for function [tag]. *)
   Definition type_of_tag :=
-    fn(∀ (r, t, ty, P) : (loc * Z) * Z * type * (iProp Σ); (r @ (&tagged (TAG_MOD) (ty))), (t @ (int (u8))); ⌜0 ≤ t < TAG_MOD⌝ ∗ ⌜AllocAlive ty Own P⌝ ∗ (P))
-      → ∃ () : (), (((r.1, t)) @ (&tagged (TAG_MOD) (ty))); (P).
+    fn(∀ (r, t, ty) : (loc * Z) * Z * type; (r @ (&tagged (TAG_MOD) (ty))), (t @ (int (u8))); ⌜0 ≤ t < TAG_MOD⌝ ∗ (type_alive_own ty))
+      → ∃ () : (), (((r.1, t)) @ (&tagged (TAG_MOD) (ty))); True.
 
   (* Specifications for function [untag]. *)
   Definition type_of_untag :=
-    fn(∀ (r, ty, P) : (loc * Z) * type * (iProp Σ); (r @ (&tagged (TAG_MOD) (ty))); ⌜AllocAlive ty Own P⌝ ∗ (P))
-      → ∃ () : (), ((r.1) @ (&own (ty))); (P).
+    fn(∀ (r, ty) : (loc * Z) * type; (r @ (&tagged (TAG_MOD) (ty))); (type_alive_own ty))
+      → ∃ () : (), ((r.1) @ (&own (ty))); True.
 
   (* Specifications for function [untag2]. *)
   Definition type_of_untag2 :=
-    fn(∀ (r, ty, P) : (loc * Z) * type * (iProp Σ); (r @ (&tagged (TAG_MOD) (ty))); ⌜AllocAlive ty Own P⌝ ∗ (P))
-      → ∃ () : (), ((r.1) @ (&own (ty))); (P).
+    fn(∀ (r, ty) : (loc * Z) * type; (r @ (&tagged (TAG_MOD) (ty))); (type_alive_own ty))
+      → ∃ () : (), ((r.1) @ (&own (ty))); True.
 
   (* Specifications for function [test]. *)
   Definition type_of_test :=

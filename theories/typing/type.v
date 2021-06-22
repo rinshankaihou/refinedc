@@ -336,6 +336,10 @@ Class AllocAlive `{!typeG Σ} (ty : type) (β : own_state) (P : iProp Σ) := {
 Arguments alloc_alive_alive {_ _} _ _ _ {_} _.
 Hint Mode AllocAlive + + + + - : typeclass_instances.
 
+Definition type_alive `{!typeG Σ} (ty : type) (β : own_state) : iProp Σ :=
+  □ (∀ l, ty.(ty_own) β l -∗ alloc_alive_loc l).
+Notation type_alive_own ty := (type_alive ty Own).
+
 Section alloc_alive.
   Context `{!typeG Σ}.
 
@@ -356,10 +360,16 @@ Section alloc_alive.
     IntroPersistent (alloc_global l) (alloc_global l).
   Proof. constructor. by iIntros "#H !>". Qed.
 
+  Global Instance intro_persistent_type_alive ty β:
+    IntroPersistent (type_alive ty β) (type_alive ty β).
+  Proof. constructor. by iIntros "#H !>". Qed.
+
   Global Instance AllocAlive_simpl_and ty β P P' `{!AllocAlive ty β P'} `{!IsProtected P} :
     SimplAndUnsafe true (AllocAlive ty β P) (λ T, P = P' ∧ T).
   Proof. by move => T [-> ?]. Qed.
 End alloc_alive.
+
+Typeclasses Opaque type_alive.
 
 Notation "l ◁ₗ{ β } ty" := (ty_own ty β l) (at level 15, format "l  ◁ₗ{ β }  ty") : bi_scope.
 Notation "l ◁ₗ ty" := (ty_own ty Own l) (at level 15) : bi_scope.

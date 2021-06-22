@@ -13,7 +13,7 @@ Section proof_untag.
     typed_function (impl_untag global_tag) type_of_untag.
   Proof.
     Open Scope printing_sugar.
-    start_function "untag" ([[r ty] P]) => arg_p.
+    start_function "untag" ([r ty]) => arg_p.
     split_blocks ((
       ∅
     )%I : gmap label (iProp Σ)) ((

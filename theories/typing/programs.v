@@ -541,8 +541,27 @@ Section typing.
     subsume (l ◁ₗ{β} ty) (alloc_alive_loc l) T.
   Proof. iIntros "[HP $] Hl". by iApply (alloc_alive_alive with "HP"). Qed.
   Global Instance subsume_alloc_alive_inst ty β l P `{!AllocAlive ty β P} :
-    Subsume (l ◁ₗ{β} ty) (alloc_alive_loc l) :=
+    Subsume (l ◁ₗ{β} ty) (alloc_alive_loc l) | 5 :=
     λ T, i2p (subsume_alloc_alive ty β l P T).
+
+  Lemma subsume_alloc_alive_type_alive ty β l T :
+    type_alive ty β ∗ T -∗
+    subsume (l ◁ₗ{β} ty) (alloc_alive_loc l) T.
+  Proof. iIntros "[Ha $] Hl". rewrite /type_alive. by iApply "Ha". Qed.
+  Global Instance subsume_alloc_alive_type_alive_inst ty β l :
+    Subsume (l ◁ₗ{β} ty) (alloc_alive_loc l) | 50 :=
+    λ T, i2p (subsume_alloc_alive_type_alive ty β l T).
+
+  Lemma simplify_goal_type_alive ty β P `{!AllocAlive ty β P} T :
+    T (□ P) -∗
+    simplify_goal (type_alive ty β) T.
+  Proof.
+    iIntros "HT". iExists _. iFrame. rewrite /type_alive. iIntros "#HP !>" (?) "Hl".
+      by iApply (alloc_alive_alive with "HP Hl").
+  Qed.
+  Global Instance simplify_goal_type_alive_inst ty β P `{!AllocAlive ty β P} :
+    SimplifyGoal (type_alive ty β) (Some 0%N) :=
+    λ T, i2p (simplify_goal_type_alive ty β P T).
 
   Lemma subsume_loc_in_bounds_leq (l : loc) (n1 n2 : nat) T :
     ⌜n2 ≤ n1⌝%nat ∗ T -∗
