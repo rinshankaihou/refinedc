@@ -231,21 +231,6 @@ Definition alloc_id_alive (aid : alloc_id) (st : heap_state) : Prop :=
 Definition block_alive (l : loc) (st : heap_state) : Prop :=
   ∃ aid, l.1 = ProvAlloc (Some aid) ∧ alloc_id_alive aid st.
 
-Global Instance alloc_id_alive_dec aid st : Decision (alloc_id_alive aid st).
-Proof.
-  destruct (st.(hs_allocs) !! aid) as [alloc|] eqn: Haid.
-  2: { right. move => [?[??]]. simplify_eq. }
-  destruct (alloc.(al_alive)) eqn:?.
-  - left. eexists _. naive_solver.
-  - right. move => [?[??]]. destruct alloc; naive_solver.
-Qed.
-Global Instance block_alive_dec l st : Decision (block_alive l st).
-Proof.
-  destruct (l.1) as [| [aid|] |] eqn: Hl.
-  1,3,4: try (right => -[?[??]]; destruct l; naive_solver).
-  eapply (exists_dec_unique aid); [| apply _]. destruct l; naive_solver.
-Qed.
-
 (** The address range between [l] and [l +ₗ n] (included) is in range of the
     allocation that contains [l]. Note that we consider the 1-past-the-end
     pointer to be in range of an allocation. *)
@@ -263,6 +248,33 @@ Definition valid_ptr (l : loc) (st : heap_state) : Prop :=
 
 Definition addr_in_range_alloc (a : addr) (aid : alloc_id) (st : heap_state) : Prop :=
   ∃ alloc, st.(hs_allocs) !! aid = Some alloc ∧ a ∈ alloc.
+
+Global Instance allocation_eq_dec : EqDecision (allocation).
+Proof. solve_decision. Qed.
+Global Instance alloc_id_alive_dec aid st : Decision (alloc_id_alive aid st).
+Proof.
+  destruct (st.(hs_allocs) !! aid) as [alloc|] eqn: Haid.
+  2: { right. move => [?[??]]. simplify_eq. }
+  destruct (alloc.(al_alive)) eqn:?.
+  - left. eexists _. naive_solver.
+  - right. move => [?[??]]. destruct alloc; naive_solver.
+Qed.
+Global Instance block_alive_dec l st : Decision (block_alive l st).
+Proof.
+  destruct (l.1) as [| [aid|] |] eqn: Hl.
+  1,3,4: try (right => -[?[??]]; destruct l; naive_solver).
+  eapply (exists_dec_unique aid); [| apply _]. destruct l; naive_solver.
+Qed.
+Global Instance heap_state_loc_in_bounds_dec l n st : Decision (heap_state_loc_in_bounds l n st).
+Proof.
+  destruct (l.1) as [| [aid|] |] eqn: Hl.
+  1,3,4: (right => -[?[??]]; destruct l; naive_solver).
+  destruct (st.(hs_allocs) !! aid) as [al|] eqn:?.
+  2: right => -[?[?[??]]]; destruct l; naive_solver.
+  eapply (exists_dec_unique aid); [ destruct l; naive_solver|].
+  eapply (exists_dec_unique al); [ destruct l; naive_solver|].
+  apply _.
+Qed.
 
 Inductive alloc_new_block : heap_state → loc → val → heap_state → Prop :=
 | AllocNewBlock σ l aid v:

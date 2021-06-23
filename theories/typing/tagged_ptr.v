@@ -120,7 +120,9 @@ Section tagged_ptr.
     iSplit.
     { iDestruct "HT" as "[[HT _] _]". by iApply (alloc_alive_loc_mono with "HT"). }
     iDestruct "HT" as "[_ HT]". iApply ("HΦ" with "[] HT").
-    iPureIntro. by apply val_to_loc_weak_val_of_loc_n.
+    iSplit.
+    - iPureIntro. by apply val_to_loc_weak_val_of_loc_n.
+    - iApply (loc_in_bounds_offset with "Hlib") => /=; [done | |]; unfold addr in *; lia.
   Qed.
   Global Instance type_cast_tagged_ptr_intptr_val_inst (v : val) (r : loc * Z) β (align : nat) it ty:
     TypedUnOp v (v ◁ᵥ r @ tagged_ptr β align ty)%I (CastOp (IntOp it)) PtrOp :=

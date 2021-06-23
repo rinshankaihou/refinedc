@@ -389,12 +389,17 @@ Qed.
 
 Lemma wp_cast_int_ptr_alive Φ v l E it:
   val_to_loc_weak v it = Some l →
+  loc_in_bounds l 0 -∗
   alloc_alive_loc l ∧ ▷ Φ (val_of_loc l) -∗
   WP UnOp (CastOp PtrOp) (IntOp it) (Val v) @ E {{ Φ }}.
 Proof.
-  iIntros (Hv) "HΦ".
+  iIntros (Hv) "#Hlib HΦ".
   iApply wp_unop_det. iSplit; [iDestruct "HΦ" as "[HΦ _]" | iDestruct "HΦ" as "[_ $]"].
-  iIntros (σ ?) "Hctx". iDestruct (alloc_alive_loc_to_block_alive with "HΦ Hctx") as %?.
+  iIntros (σ ?) "Hctx".
+  iAssert ⌜valid_ptr l σ.(st_heap)⌝%I as %?. {
+    iSplit; [ |iApply (loc_in_bounds_to_heap_loc_in_bounds with "Hlib Hctx")].
+    by iApply (alloc_alive_loc_to_block_alive with "[HΦ] Hctx").
+  }
   iPureIntro. split.
   - by inversion 1; simplify_eq; case_bool_decide.
   - move => ->. econstructor; [done..|]. by case_bool_decide.
