@@ -11,7 +11,7 @@ Class Optionable `{!typeG Σ} (ty : type) `{!Movable ty} (optty : type) `{!Movab
   opt_alt_sz : optty.(ty_layout) = ty.(ty_layout);
   opt_bin_op (bty beq : bool) v1 v2 σ v :
     (⊢ opt_pre v1 v2 -∗ (if bty then v1 ◁ᵥ ty else v1 ◁ᵥ optty) -∗ v2 ◁ᵥ optty -∗ state_ctx σ -∗
-        ⌜eval_bin_op (if beq then EqOp else NeOp) ot1 ot2 σ v1 v2 v ↔ val_of_Z (Z_of_bool (xorb bty beq)) i32 = Some v⌝);
+        ⌜eval_bin_op (if beq then EqOp else NeOp) ot1 ot2 σ v1 v2 v ↔ val_of_Z (Z_of_bool (xorb bty beq)) i32 None = Some v⌝);
 }.
 Arguments opt_pre {_ _} _ {_ _ _ _ _ _} _ _.
 
@@ -172,7 +172,7 @@ Section optional.
         iIntros (σ v) "Hctx". iDestruct "HT" as "[Hpre _]".
         iDestruct (opt_bin_op true true with "Hpre Hv1 Hv2 Hctx") as %->.
         iPureIntro. rewrite /i2v.
-        have [|v' ->] := val_of_Z_is_Some i32 (Z_of_bool false) => //.
+        have [|v' ->] := val_of_Z_is_Some None i32 (Z_of_bool false) => //.
         naive_solver.
       }
       iDestruct "HT" as "[_ [HT _]]".
@@ -182,7 +182,7 @@ Section optional.
         iIntros (σ v) "Hctx". iDestruct "HT" as "[Hpre _]".
         iDestruct (opt_bin_op false true with "Hpre Hv1 Hv2 Hctx") as %->.
         iPureIntro. rewrite /i2v.
-        have [|v' ->] := val_of_Z_is_Some i32 (Z_of_bool true) => //.
+        have [|v' ->] := val_of_Z_is_Some None i32 (Z_of_bool true) => //.
         naive_solver.
       }
       iDestruct "HT" as "[_ [_ HT]]".
@@ -199,15 +199,14 @@ Section optional.
       typed_bin_op v1 (v1 ◁ᵥ ty) v2 (v2 ◁ᵥ optty) EqOp ot1 ot2 T.
   Proof.
     iIntros "HT Hv1 Hv2". iIntros (Φ) "HΦ".
-    have [|v' Hv] := val_of_Z_is_Some i32 (Z_of_bool false) => //.
+    have [|v' Hv] := val_of_Z_is_Some None i32 (Z_of_bool false) => //.
     iApply (wp_binop_det v'). iSplit. {
       iIntros (σ v) "Hctx". iDestruct "HT" as "[Hpre _]".
       iDestruct (opt_bin_op true true with "Hpre Hv1 Hv2 Hctx") as %->.
       iPureIntro. by split => ?; simpl in *; simplify_eq.
     }
     iDestruct ("HT" with "Hv1") as "HT".
-    iApply "HΦ" => //. iPureIntro. apply val_to_of_Z in Hv.
-    by eapply val_to_Z_to_int_repr_Z.
+    iApply "HΦ" => //. iPureIntro. by eapply val_to_of_Z.
   Qed.
 
   Global Instance type_eq_optional_neq_inst v1 v2 ty optty ot1 ot2 `{!Movable ty} `{!Movable optty} `{!Optionable ty optty ot1 ot2} :
@@ -226,7 +225,7 @@ Section optional.
         iIntros (σ v) "Hctx". iDestruct "HT" as "[Hpre _]".
         iDestruct (opt_bin_op true false with "Hpre Hv1 Hv2 Hctx") as %->.
         iPureIntro. rewrite /i2v.
-        have [|v' ->] := val_of_Z_is_Some i32 (Z_of_bool true) => //.
+        have [|v' ->] := val_of_Z_is_Some None i32 (Z_of_bool true) => //.
         naive_solver.
       }
       iDestruct "HT" as "[_ [HT _]]".
@@ -236,7 +235,7 @@ Section optional.
         iIntros (σ v) "Hctx". iDestruct "HT" as "[Hpre _]".
         iDestruct (opt_bin_op false false with "Hpre Hv1 Hv2 Hctx") as %->.
         iPureIntro. rewrite /i2v.
-        have [|v' ->] := val_of_Z_is_Some i32 (Z_of_bool false) => //.
+        have [|v' ->] := val_of_Z_is_Some None i32 (Z_of_bool false) => //.
         naive_solver.
       }
       iDestruct "HT" as "[_ [_ HT]]".
@@ -376,24 +375,22 @@ Section optionalO.
   Proof.
     unfold destruct_hint. iIntros "HT Hv1 Hv2". iIntros (Φ) "HΦ".
     destruct b.
-    - have [|v' Hv] := val_of_Z_is_Some i32 (Z_of_bool false) => //.
+    - have [|v' Hv] := val_of_Z_is_Some None i32 (Z_of_bool false) => //.
       iApply (wp_binop_det v'). iSplit. {
         iIntros (σ v) "Hctx". iDestruct "HT" as "[Hpre _]".
         iDestruct (opt_bin_op true true with "Hpre [Hv1] [Hv2] Hctx") as %->.
         iFrame. iFrame. iPureIntro. by split => ?; simpl in *; simplify_eq.
       }
       iDestruct ("HT" with "Hv1") as "HT".
-      iApply "HΦ" => //. iPureIntro. apply val_to_of_Z in Hv.
-      by eapply val_to_Z_to_int_repr_Z.
-    - have [|v' Hv] := val_of_Z_is_Some i32 (Z_of_bool true) => //.
+      iApply "HΦ" => //. iPureIntro. by apply: val_to_of_Z.
+    - have [|v' Hv] := val_of_Z_is_Some None i32 (Z_of_bool true) => //.
       iApply (wp_binop_det v'). iSplit. {
         iIntros (σ v) "Hctx". iDestruct "HT" as "[Hpre _]".
         iDestruct (opt_bin_op false true with "Hpre [Hv1] [Hv2] Hctx") as %->.
         iFrame. iFrame. iPureIntro. by split => ?; simpl in *; simplify_eq.
       }
       iDestruct ("HT" with "Hv1") as "HT".
-      iApply "HΦ" => //. iPureIntro. apply val_to_of_Z in Hv.
-      by eapply val_to_Z_to_int_repr_Z.
+      iApply "HΦ" => //. iPureIntro. by apply: val_to_of_Z.
   Qed.
 
   Global Instance type_eq_optionalO_inst A v1 v2 (ty : A → type) optty ot1 ot2 `{!∀ x, Movable (ty x)} `{!Movable optty} `{!∀ x, Optionable (ty x) optty ot1 ot2} b `{!Inhabited A} :
@@ -408,24 +405,22 @@ Section optionalO.
   Proof.
     unfold destruct_hint. iIntros "HT Hv1 Hv2". iIntros (Φ) "HΦ".
     destruct b.
-    - have [|v' Hv] := val_of_Z_is_Some i32 (Z_of_bool true) => //.
+    - have [|v' Hv] := val_of_Z_is_Some None i32 (Z_of_bool true) => //.
       iApply (wp_binop_det v'). iSplit. {
         iIntros (σ v) "Hctx". iDestruct "HT" as "[Hpre _]".
         iDestruct (opt_bin_op true false with "Hpre [Hv1] [Hv2] Hctx") as %->.
         iFrame. iFrame. iPureIntro. by split => ?; simpl in *; simplify_eq.
       }
       iDestruct ("HT" with "Hv1") as "HT".
-      iApply "HΦ" => //. iPureIntro. apply val_to_of_Z in Hv.
-      by eapply val_to_Z_to_int_repr_Z.
-    - have [|v' Hv] := val_of_Z_is_Some i32 (Z_of_bool false) => //.
+      iApply "HΦ" => //. iPureIntro. by apply: val_to_of_Z.
+    - have [|v' Hv] := val_of_Z_is_Some None i32 (Z_of_bool false) => //.
       iApply (wp_binop_det v'). iSplit. {
         iIntros (σ v) "Hctx". iDestruct "HT" as "[Hpre _]".
         iDestruct (opt_bin_op false false with "Hpre [Hv1] [Hv2] Hctx") as %->.
         iFrame. iFrame. iPureIntro. by split => ?; simpl in *; simplify_eq.
       }
       iDestruct ("HT" with "Hv1") as "HT".
-      iApply "HΦ" => //. iPureIntro. apply val_to_of_Z in Hv.
-      by eapply val_to_Z_to_int_repr_Z.
+      iApply "HΦ" => //. iPureIntro. by apply: val_to_of_Z.
   Qed.
   Global Instance type_neq_optionalO_inst A v1 v2 (ty : A → type) optty ot1 ot2 `{!∀ x, Movable (ty x)} `{!Movable optty} `{!∀ x, Optionable (ty x) optty ot1 ot2} b `{!Inhabited A} :
     TypedBinOp v1 (v1 ◁ᵥ b @ optionalO ty optty)%I v2 (v2 ◁ᵥ optty) NeOp ot1 ot2 :=

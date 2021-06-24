@@ -107,21 +107,23 @@ Section tagged_ptr.
         v ◁ᵥ r @ tagged_ptr β align (place r.1) -∗
         ⌜(r.1.2 + r.2)%Z ∈ it⌝ ∗
         ((alloc_alive_loc r.1 ∗ True) ∧
-        T (val_of_loc_n (bytes_per_int it) (r.1 +ₗ r.2)) (t2mt ((r.1 +ₗ r.2) @ intptr it)))
+        ∀ v, T v (t2mt ((r.1 +ₗ r.2) @ intptr it)))
     ) -∗
     typed_un_op v (v ◁ᵥ r @ tagged_ptr β align ty) (CastOp (IntOp it)) PtrOp T.
   Proof.
     iIntros "HT (->&%&%&#Hlib&Hp)" (Φ) "HΦ".
     iDestruct (loc_in_bounds_ptr_in_range with "Hlib") as %Hrange.
-    iDestruct ("HT" with "[//] [//] [//] [//] [$] [$] []") as (Hr) "HT".
+    iDestruct (loc_in_bounds_has_alloc_id with "Hlib") as %[aid ?].
+    iDestruct ("HT" with "[//] [//] [//] [//] [$] [$] []") as ([??]%(val_of_Z_is_Some (Some aid))) "HT".
     { by iFrame "Hlib". }
-    iApply wp_cast_ptr_int => //=; first by rewrite val_to_of_loc.
-    { by rewrite bool_decide_true. }
+    iApply wp_cast_ptr_int; [by apply val_to_of_loc|done|done|].
     iSplit.
     { iDestruct "HT" as "[[HT _] _]". by iApply (alloc_alive_loc_mono with "HT"). }
     iDestruct "HT" as "[_ HT]". iApply ("HΦ" with "[] HT").
-    iSplit.
-    - iPureIntro. by apply val_to_loc_weak_val_of_loc_n.
+    iExists _. repeat iSplit; try iPureIntro.
+    - done.
+    - by apply: val_to_of_Z.
+    - by apply: val_of_Z_to_prov.
     - iApply (loc_in_bounds_offset with "Hlib") => /=; [done | |]; unfold addr in *; lia.
   Qed.
   Global Instance type_cast_tagged_ptr_intptr_val_inst (v : val) (r : loc * Z) β (align : nat) it ty:

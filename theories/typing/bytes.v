@@ -149,7 +149,7 @@ Section bytewise.
     typed_bin_op v2 (v2 ◁ᵥ n @ int it) p (p ◁ₗ{β} bytewise P ly) (PtrOffsetOp u8) (IntOp it) PtrOp T.
   Proof.
     iIntros "HT" (Hint) "Hp". iIntros (Φ) "HΦ".
-    move: (Hint) => /val_to_Z_weak_in_range?.
+    move: (Hint) => /val_to_Z_in_range?.
     iDestruct ("HT" with "[//]") as (??) "HT".
     iDestruct (split_bytewise (Z.to_nat n) with "Hp") as "[H1 H2]"; [lia..|].
     rewrite -!(offset_loc_sz1 u8)// Z2Nat.id; [|lia].
@@ -257,7 +257,7 @@ Section void.
     λ T, i2p (type_void T).
 End void.
 
-Notation zeroed := (bytewise (λ b, b = MByte byte0)).
+Notation zeroed := (bytewise (λ b, b = MByte byte0 None)).
 
 Section zeroed.
   Context `{!typeG Σ}.

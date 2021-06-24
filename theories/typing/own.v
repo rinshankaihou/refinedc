@@ -204,13 +204,10 @@ Section own.
     typed_un_op v (v ◁ᵥ n @ int it) (CastOp PtrOp) (IntOp it) T.
   Proof.
     iIntros "HT" (Hn Φ) "HΦ".
-    move: (Hn). rewrite /val_to_Z_weak. move => /fmap_Some [i][Hi ->].
-    iDestruct ("HT" with "[]") as "HT".
-    { iPureIntro. by eapply val_to_int_repr_in_range. }
-    iApply wp_cast_int_ptr_weak => //. { by rewrite /val_to_loc_weak Hi. }
-    iIntros (i') "!>". rewrite /int_repr_to_loc /int_repr_to_Z. destruct i as [z|[id p]]=> /=.
-    - iApply ("HΦ" with "[]"); last by iApply ("HT"). done.
-    - iApply ("HΦ" with "[]"); last by iApply ("HT"). done.
+    iDestruct ("HT" with "[%]") as "HT".
+    { by apply: val_to_Z_in_range. }
+    iApply wp_cast_int_ptr_weak => //.
+    iIntros (i') "!>". by iApply ("HΦ" with "[] HT").
   Qed.
   Global Instance type_cast_int_ptr_inst n v it:
     TypedUnOp v (v ◁ᵥ n @ int it)%I (CastOp PtrOp) (IntOp it) :=
@@ -254,13 +251,16 @@ Section own.
     typed_bin_op l1 (l1 ◁ₗ{β1} ty1) l2 (l2 ◁ₗ{β2} ty2) op PtrOp PtrOp T.
   Proof.
     iIntros (?) "HT Hl1 Hl2". iIntros (Φ) "HΦ". iDestruct ("HT" with "Hl1 Hl2") as (Heq) "([#? _]&[#? _]&HT)".
+    have [v' Hv'] := val_of_Z_bool_is_Some None i32 b.
+    rewrite /i2v Hv' /=.
     destruct op => //; simplify_eq.
-    all: iApply wp_ptr_relop; try by [apply val_to_of_loc]; simpl; try done.
-    all: try by case_bool_decide.
+    all: iApply wp_ptr_relop; [by apply val_to_of_loc|by apply val_to_of_loc|done|simpl|done|done|].
+    all: try by rewrite bool_decide_true.
     all: iSplit; [ iDestruct "HT" as "[[$ _] _]" |].
     all: iSplit; [ iApply alloc_alive_loc_mono;[eassumption|]; iDestruct "HT" as "[[$ _] _]"| ].
     all: iModIntro; iDestruct "HT" as "[_ HT]".
-    all: iApply "HΦ" => //; by case_bool_decide.
+    all: iApply ("HΦ" with "[] HT") => //.
+    all: iPureIntro; by apply: val_to_of_Z.
   Qed.
   Global Program Instance type_lt_ptr_ptr_inst (l1 l2 : loc) β1 β2 ty1 ty2:
     TypedBinOp l1 (l1 ◁ₗ{β1} ty1) l2 (l2 ◁ₗ{β2} ty2) LtOp PtrOp PtrOp :=
@@ -490,7 +490,7 @@ Section null.
     heap_state_loc_in_bounds p 0 h.(st_heap) →
     (if b then op = NeOp else op = EqOp) →
     eval_bin_op op PtrOp PtrOp h p NULL v
-     ↔ val_of_Z (Z_of_bool b) i32 = Some v.
+     ↔ val_of_Z (Z_of_bool b) i32 None = Some v.
   Proof.
     move => Hlib ?. have [??]:= heap_state_loc_in_bounds_has_alloc_id _ _ _ Hlib.
     destruct b => //; split => Heq; subst.
@@ -502,7 +502,7 @@ Section null.
   Lemma eval_bin_op_null_null (b : bool) op h v:
     (if b then op = EqOp else op = NeOp) →
     eval_bin_op op PtrOp PtrOp h NULL NULL v
-     ↔ val_of_Z (Z_of_bool b) i32 = Some v.
+     ↔ val_of_Z (Z_of_bool b) i32 None = Some v.
   Proof.
     move => ?.
     destruct b => //; split => Heq; subst.
@@ -556,7 +556,7 @@ Section null.
     iApply wp_cast_null_int.
     { by apply: (val_of_Z_bool false). }
     iModIntro. iApply ("HΦ" with "[] HT").
-    iPureIntro. apply: val_to_Z_to_int_repr_Z. apply: (i2v_bool_Some false).
+    iPureIntro. apply: (i2v_bool_Some false).
   Qed.
   Global Instance type_cast_null_int_inst v it:
     TypedUnOpVal v null (CastOp (IntOp it)) PtrOp :=

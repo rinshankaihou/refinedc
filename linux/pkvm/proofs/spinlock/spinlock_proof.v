@@ -280,7 +280,7 @@ Section proofs.
           iDestruct "Hcases" as "[[Hticket' %] | Htok]".
           { iExFalso. by iApply (ticket_non_duplicable with "Hticket Hticket'"). }
           iAssert (⌜owner ∈ u16⌝)%I as %[??].
-          { rewrite /ty_own_val /=. by iDestruct "Hv" as %Hv%val_to_Z_weak_in_range. }
+          { rewrite /ty_own_val /=. by iDestruct "Hv" as %Hv%val_to_Z_in_range. }
           iAssert (⌜owner < next⌝)%I as %?.
           { destruct (decide (owner < next)); first done. iExFalso.
             iDestruct (ty_size_eq with "Hv") as %?.
@@ -382,7 +382,7 @@ Section proofs.
         (* Learn that [next'] actually is [max_int u16]. *)
         iAssert ⌜next' = max_int u16⌝%I as %->.
         { iDestruct (ty_deref with "Hnext") as (w) "[_ H]". iDestruct "H" as %Hnext.
-          iPureIntro. apply val_to_Z_weak_in_range in Hnext as [??]. lia. }
+          iPureIntro. apply val_to_Z_in_range in Hnext as [??]. lia. }
         (* We perform the write and close the invariant. *)
         iDestruct (ty_aligned with "Howner") as %?.
         iDestruct (ty_deref with "Howner") as (v') "[Hl Hv]".
@@ -410,7 +410,7 @@ Section proofs.
         iAssert ⌜owner' = 0⌝%I as %->.
         { destruct (decide (owner' = 0)) => //. iExFalso.
           iDestruct (ty_deref with "Howner") as (?) "[? Hv]".
-          iDestruct "Hv" as %Howner%val_to_Z_weak_in_range.
+          iDestruct "Hv" as %Howner%val_to_Z_in_range.
           destruct Howner as [Howner ?].
           iDestruct (overlaping_ticket_ranges with "[] Htk Htr1") as "$".
           iPureIntro. exists 0. split; apply elem_of_seqZ; try done.
@@ -459,7 +459,7 @@ Section proofs.
         iDestruct (ty_aligned with "Howner") as %?.
         iDestruct (ty_deref with "Howner") as (v') "[Hl Hv]".
         iDestruct (ty_size_eq with "Hv") as %?.
-        iDestruct "Hv" as %?%val_to_Z_weak_in_range.
+        iDestruct "Hv" as %?%val_to_Z_in_range.
         iSplitL "Hl". { iExists _. by iFrame "Hl". }
         iIntros "!> Hl".
         iRename select (_ ◁ᵥ (owner + 1) @ int u16)%I into "Howner+1".

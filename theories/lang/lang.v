@@ -227,13 +227,13 @@ Definition subst_function (xs : list (var_name * val)) (f : function) : function
 (* evaluation can be non-deterministic for comparing pointers *)
 Inductive eval_bin_op : bin_op → op_type → op_type → state → val → val → val → Prop :=
 | PtrOffsetOpIP v1 v2 σ o l ly it:
-    val_to_Z_weak v1 it = Some o →
+    val_to_Z v1 it = Some o →
     val_to_loc v2 = Some l →
     (* TODO: should we have an alignment check here? *)
     heap_state_loc_in_bounds (l offset{ly}ₗ o) 0 σ.(st_heap) →
     eval_bin_op (PtrOffsetOp ly) (IntOp it) PtrOp σ v1 v2 (val_of_loc (l offset{ly}ₗ o))
 | PtrNegOffsetOpIP v1 v2 σ o l ly it:
-    val_to_Z_weak v1 it = Some o →
+    val_to_Z v1 it = Some o →
     val_to_loc v2 = Some l →
     heap_state_loc_in_bounds (l offset{ly}ₗ -o) 0 σ.(st_heap) →
     (* TODO: should we have an alignment check here? *)
@@ -243,23 +243,23 @@ Inductive eval_bin_op : bin_op → op_type → op_type → state → val → val
     val_to_loc v1 = Some l →
     v2 = NULL →
     (* TODO ( see below ): Should we really hard code i32 here because of C? *)
-    i2v (Z_of_bool false) i32 = v →
+    val_of_Z (Z_of_bool false) i32 None = Some v →
     eval_bin_op EqOp PtrOp PtrOp σ v1 v2 v
 | NeOpPNull v1 v2 σ l v:
     heap_state_loc_in_bounds l 0%nat σ.(st_heap) →
     val_to_loc v1 = Some l →
     v2 = NULL →
-    i2v (Z_of_bool true) i32 = v →
+    val_of_Z (Z_of_bool true) i32 None = Some v→
     eval_bin_op NeOp PtrOp PtrOp σ v1 v2 v
 | EqOpNullNull v1 v2 σ v:
     v1 = NULL →
     v2 = NULL →
-    i2v (Z_of_bool true) i32 = v →
+    val_of_Z (Z_of_bool true) i32 None = Some v →
     eval_bin_op EqOp PtrOp PtrOp σ v1 v2 v
 | NeOpNullNull v1 v2 σ v:
     v1 = NULL →
     v2 = NULL →
-    i2v (Z_of_bool false) i32 = v →
+    val_of_Z (Z_of_bool false) i32 None = Some v →
     eval_bin_op NeOp PtrOp PtrOp σ v1 v2 v
 | RelOpPP v1 v2 σ l1 l2 v b op:
     val_to_loc v1 = Some l1 →
@@ -274,9 +274,9 @@ Inductive eval_bin_op : bin_op → op_type → op_type → state → val → val
     | GeOp => if bool_decide (l1.1 = l2.1) then Some (bool_decide (l1.2 >= l2.2)) else None
     | _ => None
     end = Some b →
-    i2v (Z_of_bool b) i32 = v →
+    val_of_Z (Z_of_bool b) i32 None = Some v →
     eval_bin_op op PtrOp PtrOp σ v1 v2 v
-| RelOpII op v1 v2 σ n1 n2 it b:
+| RelOpII op v1 v2 v σ n1 n2 it b:
     match op with
     | EqOp => Some (bool_decide (n1 = n2))
     | NeOp => Some (bool_decide (n1 ≠ n2))
@@ -286,11 +286,12 @@ Inductive eval_bin_op : bin_op → op_type → op_type → state → val → val
     | GeOp => Some (bool_decide (n1 >= n2))
     | _ => None
     end = Some b →
-    val_to_Z_weak v1 it = Some n1 →
-    val_to_Z_weak v2 it = Some n2 →
+    val_to_Z v1 it = Some n1 →
+    val_to_Z v2 it = Some n2 →
     (* TODO: What is the right int type of the result here? C seems to
     use i32 but maybe we don't want to hard code that. *)
-    eval_bin_op op (IntOp it) (IntOp it) σ v1 v2 (i2v (Z_of_bool b) i32)
+    val_of_Z (Z_of_bool b) i32 None = Some v →
+    eval_bin_op op (IntOp it) (IntOp it) σ v1 v2 v
 | ArithOpII op v1 v2 σ n1 n2 it n v:
     match op with
     | AddOp => Some (n1 + n2)
@@ -315,9 +316,9 @@ Inductive eval_bin_op : bin_op → op_type → op_type → state → val → val
     | ShrOp => if bool_decide (0 ≤ n1 ∧ 0 ≤ n2 < bits_per_int it) then Some (n1 ≫ n2) else None
     | _ => None
     end = Some n →
-    val_to_Z_weak v1 it = Some n1 →
-    val_to_Z_weak v2 it = Some n2 →
-    val_of_Z (if it_signed it then n else n `mod` int_modulus it) it = Some v →
+    val_to_Z v1 it = Some n1 →
+    val_to_Z v2 it = Some n2 →
+    val_of_Z (if it_signed it then n else n `mod` int_modulus it) it None = Some v →
     eval_bin_op op (IntOp it) (IntOp it) σ v1 v2 v
 | CommaOp ot1 ot2 σ v1 v2:
     eval_bin_op Comma ot1 ot2 σ v1 v2 v2
@@ -325,36 +326,38 @@ Inductive eval_bin_op : bin_op → op_type → op_type → state → val → val
 
 Inductive eval_un_op : un_op → op_type → state → val → val → Prop :=
 | CastOpII itt its σ vs vt i:
-    val_to_int_repr vs its = Some i →
-    val_of_int_repr i itt = Some vt →
+    val_to_Z vs its = Some i →
+    val_of_Z i itt (val_to_byte_prov vs) = Some vt →
     eval_un_op (CastOp (IntOp itt)) (IntOp its) σ vs vt
 | CastOpPP σ vs vt l:
     val_to_loc vs = Some l →
     val_of_loc l = vt →
     eval_un_op (CastOp PtrOp) PtrOp σ vs vt
-| CastOpPI it σ vs vt l:
+| CastOpPI it σ vs vt l p:
     val_to_loc vs = Some l →
-    val_of_int_repr (IRLoc l) it = Some vt →
+    l.1 = ProvAlloc p →
+    val_of_Z l.2 it p = Some vt →
     block_alive l σ.(st_heap) →
     eval_un_op (CastOp (IntOp it)) PtrOp σ vs vt
 | CastOpPINull it σ vs vt:
     vs = NULL →
-    val_of_Z 0 it = Some vt →
+    val_of_Z 0 it None = Some vt →
     eval_un_op (CastOp (IntOp it)) PtrOp σ vs vt
-| CastOpIP it σ vs vt l l':
-    val_to_loc_weak vs it = Some l →
-    val_of_loc l' = vt →
+| CastOpIP it σ vs vt l l' a:
+    val_to_Z vs it = Some a →
+    l = (ProvAlloc (val_to_byte_prov vs), a) →
     (** This is using that the address 0 is never alive. *)
     l' = (if bool_decide (valid_ptr l σ.(st_heap)) then l else
-           (if bool_decide (l.2 = 0) then NULL_loc else (ProvAlloc None, l.2))) →
+           (if bool_decide (a = 0) then NULL_loc else (ProvAlloc None, a))) →
+    val_of_loc l' = vt →
     eval_un_op (CastOp PtrOp) (IntOp it) σ vs vt
 | NegOpI it σ vs vt n:
-    val_to_Z_weak vs it = Some n →
-    val_of_Z (-n) it = Some vt →
+    val_to_Z vs it = Some n →
+    val_of_Z (-n) it None = Some vt →
     eval_un_op NegOp (IntOp it) σ vs vt
 | NotIntOpI it σ vs vt n:
-    val_to_Z_weak vs it = Some n →
-    val_of_Z (if it_signed it then Z.lnot n else Z_lunot (bits_per_int it) n) it = Some vt →
+    val_to_Z vs it = Some n →
+    val_of_Z (if it_signed it then Z.lnot n else Z_lunot (bits_per_int it) n) it None = Some vt →
     eval_un_op NotIntOp (IntOp it) σ vs vt
 .
 
@@ -391,8 +394,8 @@ comparing pointers? (see lambda rust) *)
     heap_at l1 (it_layout it) vo (λ st, ∃ n, st = RSt n) σ.(st_heap).(hs_heap) →
     val_to_loc v2 = Some l2 →
     heap_at l2 (it_layout it) ve (λ st, st = RSt 0%nat) σ.(st_heap).(hs_heap) →
-    val_to_Z_weak vo it = Some z1 →
-    val_to_Z_weak ve it = Some z2 →
+    val_to_Z vo it = Some z1 →
+    val_to_Z ve it = Some z2 →
     v3 `has_layout_val` it_layout it →
     (bytes_per_int it ≤ bytes_per_addr)%nat →
     z1 ≠ z2 →
@@ -403,8 +406,8 @@ comparing pointers? (see lambda rust) *)
     heap_at l1 (it_layout it) vo (λ st, st = RSt 0%nat) σ.(st_heap).(hs_heap) →
     val_to_loc v2 = Some l2 →
     heap_at l2 (it_layout it) ve (λ st, ∃ n, st = RSt n) σ.(st_heap).(hs_heap) →
-    val_to_Z_weak vo it = Some z1 →
-    val_to_Z_weak ve it = Some z2 →
+    val_to_Z vo it = Some z1 →
+    val_to_Z ve it = Some z2 →
     v3 `has_layout_val` it_layout it →
     (bytes_per_int it ≤ bytes_per_addr)%nat →
     z1 = z2 →
@@ -439,12 +442,12 @@ comparing pointers? (see lambda rust) *)
 | ConcatS vs σ:
     expr_step (Concat (Val <$> vs)) σ [] (Val (mjoin vs)) σ []
 | CopyAllocIdS σ v1 v2 a it l:
-    val_to_Z_weak v1 it = Some a →
+    val_to_Z v1 it = Some a →
     val_to_loc v2 = Some l →
     valid_ptr (l.1, a) σ.(st_heap) →
     expr_step (CopyAllocId (IntOp it) (Val v1) (Val v2)) σ [] (Val (val_of_loc (l.1, a))) σ []
 | IfES v it e1 e2 n σ:
-    val_to_Z_weak v it = Some n →
+    val_to_Z v it = Some n →
     expr_step (IfE (IntOp it) (Val v) e1 e2) σ [] (if bool_decide (n ≠ 0) then e1 else e2)  σ []
 (* no rule for StuckE *)
 .
@@ -461,7 +464,7 @@ Inductive stmt_step : stmt → runtime_function → state → list Empty_set →
     heap_at l ly v' start_st σ.(st_heap).(hs_heap) →
     stmt_step (Assign o ly (Val v1) (Val v2) s) rf σ [] (to_rtstmt rf end_stmt) (heap_fmap (heap_upd l end_val end_st) σ) []
 | SwitchS rf σ v n m bs s def it :
-    val_to_Z_weak v it = Some n →
+    val_to_Z v it = Some n →
     (∀ i : nat, m !! n = Some i → is_Some (bs !! i)) →
     stmt_step (Switch it (Val v) m bs def) rf σ [] (to_rtstmt rf (default def (i ← m !! n; bs !! i))) σ []
 | GotoS rf σ b s :

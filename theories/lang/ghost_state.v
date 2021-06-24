@@ -406,6 +406,12 @@ Section loc_in_bounds.
     move => [??]. split; cbn; first by lia.
     rewrite /max_int /= /int_modulus /bits_per_int /bytes_per_int /=. lia.
   Qed.
+
+  Lemma loc_in_bounds_has_alloc_id l n: loc_in_bounds l n -∗ ⌜∃ aid, l.1 = ProvAlloc (Some aid)⌝.
+  Proof.
+    rewrite loc_in_bounds_eq. iIntros "H". iDestruct "H" as (id ?????) "H".
+    iPureIntro. by exists id.
+  Qed.
 End loc_in_bounds.
 
 Section heap.
@@ -443,12 +449,6 @@ Section heap.
   Lemma heap_mapsto_loc_in_bounds l q v:
     l ↦{q} v -∗ loc_in_bounds l (length v).
   Proof. rewrite heap_mapsto_eq. iIntros "[$ _]". Qed.
-
-  Lemma loc_in_bounds_has_alloc_id l n: loc_in_bounds l n -∗ ⌜∃ aid, l.1 = ProvAlloc (Some aid)⌝.
-  Proof.
-    rewrite loc_in_bounds_eq. iIntros "H". iDestruct "H" as (id ?????) "H".
-    iPureIntro. by exists id.
-  Qed.
 
   Lemma heap_mapsto_has_alloc_id l q v : l ↦{q} v -∗ ⌜∃ aid, l.1 = ProvAlloc (Some aid)⌝.
   Proof.

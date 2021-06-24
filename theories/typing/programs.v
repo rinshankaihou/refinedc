@@ -65,7 +65,7 @@ Section judgements.
 
   Definition typed_if (ot : op_type) (v : val) (ty : type) `{!Movable ty} (T1 T2 : iProp Σ) : iProp Σ :=
     (* TODO: generalize this to PtrOp *)
-    (v ◁ᵥ ty -∗ ∃ it z, ⌜ot = IntOp it⌝ ∗ ⌜val_to_Z_weak v it = Some z⌝ ∗ (if decide (z = 0) then T2 else T1)).
+    (v ◁ᵥ ty -∗ ∃ it z, ⌜ot = IntOp it⌝ ∗ ⌜val_to_Z v it = Some z⌝ ∗ (if decide (z = 0) then T2 else T1)).
   Class TypedIf (ot : op_type) (v : val) (ty : type) `{!Movable ty} : Type :=
     typed_if_proof T1 T2 : iProp_to_Prop (typed_if ot v ty T1 T2).
 
@@ -86,7 +86,7 @@ Section judgements.
     (wps_block P b Q (typed_stmt_post_cond fn ls fr)).
 
   Definition typed_switch {B} (v : val) (ty : type) `{!Movable ty} (it : int_type) (m : gmap Z nat) (ss : list stmt) (def : stmt) (fn : function) (ls : list loc) (fr : B → fn_ret) (Q : gmap label stmt) : iProp Σ :=
-    (v ◁ᵥ ty -∗ ∃ z, ⌜val_to_Z_weak v it = Some z⌝ ∗
+    (v ◁ᵥ ty -∗ ∃ z, ⌜val_to_Z v it = Some z⌝ ∗
       match m !! z with
       | Some i => ∃ s, ⌜ss !! i = Some s⌝ ∗ typed_stmt s fn ls fr Q
       | None   => typed_stmt def fn ls fr Q
@@ -95,7 +95,7 @@ Section judgements.
     typed_switch_proof B m ss def fn ls fr Q : iProp_to_Prop (typed_switch (B:=B) v ty it m ss def fn ls fr Q).
 
   Definition typed_assert {B} (v : val) (ty : type) `{!Movable ty} (s : stmt) (fn : function) (ls : list loc) (fr : B → fn_ret) (Q : gmap label stmt) : iProp Σ :=
-    (v ◁ᵥ ty -∗ ∃ z, ⌜val_to_Z_weak v bool_it = Some z⌝ ∗ ⌜z ≠ 0⌝ ∗ typed_stmt s fn ls fr Q)%I.
+    (v ◁ᵥ ty -∗ ∃ z, ⌜val_to_Z v bool_it = Some z⌝ ∗ ⌜z ≠ 0⌝ ∗ typed_stmt s fn ls fr Q)%I.
   Class TypedAssert (v : val) (ty : type) `{!Movable ty} : Type :=
     typed_assert_proof B s fn ls fr Q : iProp_to_Prop (typed_assert (B:=B) v ty s fn ls fr Q).
   (*** expressions *)

@@ -6,12 +6,13 @@ Section intptr.
   Context `{!typeG Σ}.
 
   Program Definition intptr_inner_type (it : int_type) (p : loc) : type := {|
-    ty_own β l := ∃ v, ⌜val_to_loc_weak v it = Some p⌝ ∗ ⌜l `has_layout_loc` it⌝ ∗
+    ty_own β l := ∃ v aid, ⌜p.1 = ProvAlloc (Some aid)⌝ ∗ ⌜val_to_Z v it = Some p.2⌝ ∗
+                      ⌜val_to_byte_prov v = Some aid⌝ ∗ ⌜l `has_layout_loc` it⌝ ∗
                       loc_in_bounds p 0 ∗ l ↦[β] v;
   |}%I.
   Next Obligation.
-    iIntros (it n l ??) "(%v&%Hv&%Hl&#?&H)". iExists v.
-    do 3 (iSplitR; first done). by iApply heap_mapsto_own_state_share.
+    iIntros (it p l ??) "(%v&%aid&%Haid&%Hv&%&%Hl&#?&H)". iExists v, aid.
+    do 5 (iSplitR; first done). by iApply heap_mapsto_own_state_share.
   Qed.
 
   Program Definition intptr (it : int_type) : rtype := {|
@@ -22,19 +23,20 @@ Section intptr.
   Global Program Instance rmovable_intptr it : RMovable (intptr it) := {|
     rmovable p := {|
       ty_layout := it_layout it;
-      ty_own_val v := ⌜val_to_loc_weak v it = Some p⌝ ∗ loc_in_bounds p 0;
+      ty_own_val v := ∃ aid, ⌜p.1 = ProvAlloc (Some aid)⌝ ∗ ⌜val_to_Z v it = Some p.2⌝ ∗
+                      ⌜val_to_byte_prov v = Some aid⌝ ∗ loc_in_bounds p 0;
     |}
   |}%I.
-  Next Obligation. iIntros (???) "(%&%&$&_)". Qed.
-  Next Obligation. iIntros (???) "[% ?] !%". by apply val_to_loc_weak_length in H. Qed.
-  Next Obligation. iIntros (???) "(%v&%&%&Hl&?)". eauto with iFrame. Qed.
-  Next Obligation. iIntros (??? v ?) "Hl [% ?]". iExists v. eauto with iFrame. Qed.
+  Next Obligation. iIntros (???) "(%aid&%&%&%&%&$&_)". Qed.
+  Next Obligation. iIntros (???) "(%aid&%&%&?) !%". by apply: val_to_Z_length. Qed.
+  Next Obligation. iIntros (???) "(%v&%&%&%&%&%&Hl&?)". eauto with iFrame. Qed.
+  Next Obligation. iIntros (??? v ?) "Hl (%&%&%&%&?)". iExists _, _. eauto with iFrame. Qed.
   Next Obligation. iIntros (???). done. Qed.
 
   Lemma intptr_loc_in_bounds l β p it:
      l ◁ₗ{β} p @ intptr it -∗ loc_in_bounds l (bytes_per_int it).
   Proof.
-    iIntros "(%&%Hv&%&?&Hl)". move: Hv => /val_to_loc_weak_length <-.
+    iIntros "(%&%&%&%Hv&%&%&?&Hl)". move: Hv => /val_to_Z_length <-.
     by iApply heap_mapsto_own_state_loc_in_bounds.
   Qed.
 
@@ -48,17 +50,17 @@ Section intptr.
   Lemma ty_own_intptr_in_range l β p it : l ◁ₗ{β} p @ intptr it -∗ ⌜p.2 ∈ it⌝.
   Proof.
     iIntros "Hl". destruct β.
-    - iDestruct (ty_deref with "Hl") as (?) "[_ [% ?]]".
-      iPureIntro. by eapply val_to_loc_weak_in_range.
-    - iDestruct "Hl" as (?) "[% _]".
-      iPureIntro. by eapply val_to_loc_weak_in_range.
+    - iDestruct (ty_deref with "Hl") as (?) "[_ (%&%&%&%&?)]".
+      iPureIntro. by eapply val_to_Z_in_range.
+    - iDestruct "Hl" as (?????) "_".
+      iPureIntro. by eapply val_to_Z_in_range.
   Qed.
 
   (* TODO: make a simple type as in lambda rust such that we do not
   have to reprove this everytime? *)
   Global Program Instance intptr_copyable p it : Copyable (p @ intptr it).
   Next Obligation.
-    iIntros (?????) "(%v&%Hv&%Hl&#?&Hl)".
+    iIntros (?????) "(%v&%aid&%Hv&%Hl&%&%&#?&Hl)".
     iMod (heap_mapsto_own_state_to_mt with "Hl") as (q) "[_ Hl]" => //.
     iSplitR => //. iExists q, v. iFrame "∗#". iModIntro. eauto with iFrame.
   Qed.
@@ -79,7 +81,7 @@ Section programs.
       (⌜min_alloc_start ≤ p.2 ∧ p.2 + n ≤ max_alloc_end⌝ -∗
        p ◁ₗ{β} ty -∗
        ⌜p.2 ∈ it⌝ ∗
-         ((alloc_alive_loc p ∗ True) ∧ T (val_of_loc_n (bytes_per_int it) p) (t2mt (p @ intptr it))))
+         ((alloc_alive_loc p ∗ True) ∧ ∀ v, T v (t2mt (p @ intptr it))))
     ) -∗
     typed_un_op p (p ◁ₗ{β} ty) (CastOp (IntOp it)) PtrOp T.
   Proof.
@@ -88,13 +90,15 @@ Section programs.
     { iDestruct "HT" as "[HT _]". iDestruct ("HT" with "Hp") as "[$ _]". }
     iDestruct "HT" as "[_ HT]".
     iDestruct (loc_in_bounds_ptr_in_range with "Hlib") as %?.
-    iDestruct ("HT" with "[//] Hp") as (?) "HT".
-    iApply wp_cast_ptr_int => //=; first by rewrite val_to_of_loc.
-    { rewrite bool_decide_true; naive_solver. }
+    iDestruct (loc_in_bounds_has_alloc_id with "Hlib") as %[aid ?].
+    iDestruct ("HT" with "[//] Hp") as ([? ?]%(val_of_Z_is_Some (Some aid))) "HT".
+    iApply wp_cast_ptr_int; [by apply val_to_of_loc|done|done|].
     iSplit; [by iDestruct "HT" as "[[$ _] _]" | iDestruct "HT" as "[_ HT]"].
     iApply ("HΦ" with "[] HT").
-    iSplit.
-    - iPureIntro. by apply val_to_loc_weak_val_of_loc_n.
+    iExists _. repeat iSplit; try iPureIntro.
+    - done.
+    - by apply: val_to_of_Z.
+    - by apply: val_of_Z_to_prov.
     - iApply loc_in_bounds_shorten; [|done]. lia.
   Qed.
   Global Instance type_cast_ptr_intptr_inst (p : loc) β it ty:
@@ -105,19 +109,21 @@ Section programs.
     (⌜min_alloc_start ≤ p.2 ∧ p.2 + n ≤ max_alloc_end⌝ -∗
       v ◁ᵥ p @ ptr n -∗
       ⌜p.2 ∈ it⌝ ∗
-       (alloc_alive_loc p ∗ True) ∧ T (val_of_loc_n (bytes_per_int it) p) (t2mt (p @ intptr it))
+       (alloc_alive_loc p ∗ True) ∧ ∀ v, T v (t2mt (p @ intptr it))
     ) -∗
     typed_un_op v (v ◁ᵥ p @ ptr n) (CastOp (IntOp it)) PtrOp T.
   Proof.
     iIntros "HT [-> #Hlib]" (Φ) "HΦ".
     iDestruct (loc_in_bounds_ptr_in_range with "Hlib") as %?.
-    iDestruct ("HT" with "[//] []") as (?) "HT". { by iFrame "Hlib". }
-    iApply wp_cast_ptr_int => //=; first by rewrite val_to_of_loc.
-    { rewrite bool_decide_true; naive_solver. }
+    iDestruct (loc_in_bounds_has_alloc_id with "Hlib") as %[aid ?].
+    iDestruct ("HT" with "[//] []") as ([? ?]%(val_of_Z_is_Some (Some aid))) "HT". { by iFrame "Hlib". }
+    iApply wp_cast_ptr_int; [by apply val_to_of_loc|done|done|].
     iSplit; [by iDestruct "HT" as "[[$ _] _]" | iDestruct "HT" as "[_ HT]"].
     iApply ("HΦ" with "[] HT").
-    iSplit.
-    - iPureIntro. by apply val_to_loc_weak_val_of_loc_n.
+    iExists _. repeat iSplit; try iPureIntro.
+    - done.
+    - by apply: val_to_of_Z.
+    - by apply: val_of_Z_to_prov.
     - iApply loc_in_bounds_shorten; [|done]. lia.
   Qed.
   Global Instance type_cast_ptr_intptr_val_inst (v : val) (p : loc) it (n : nat):
@@ -128,7 +134,8 @@ Section programs.
     ((alloc_alive_loc p ∗ True) ∧ T (val_of_loc p) (t2mt (p @ frac_ptr Own (place p)))) -∗
     typed_un_op v (v ◁ᵥ p @ intptr it) (CastOp PtrOp) (IntOp it) T.
   Proof.
-    iIntros "HT [%Hn #Hlib]" (Φ) "HΦ".
+    iIntros "HT (%aid&%&%&%&#Hlib)" (Φ) "HΦ".
+    destruct p; simplify_eq /=.
     iApply wp_cast_int_ptr_alive => //.
     iSplit; [by iDestruct "HT" as "[[$ _] _]"| iDestruct "HT" as "[_ HT]"].
     iApply ("HΦ" with "[]"); last iApply "HT". done.
@@ -139,10 +146,7 @@ Section programs.
 
   Lemma intptr_wand_int v p it:
     v ◁ᵥ p @ intptr it -∗ v ◁ᵥ p.2 @ int it.
-  Proof.
-    iIntros "[%Hn _]". iPureIntro. move: Hn. rewrite /val_to_loc_weak /val_to_Z_weak.
-    move => /fmap_Some [i][-> ->]. by destruct i.
-  Qed.
+  Proof. iIntros "(%aid&%&%&%&#Hlib)". by iPureIntro. Qed.
 
   Lemma subsume_intptr_int_val v it (n : Z) (p : loc) T:
     ⌜n = p.2⌝ ∗ T -∗
@@ -158,10 +162,8 @@ Section programs.
     ⌜n = p.2⌝ ∗ T -∗
     subsume (l ◁ₗ{β} p @ intptr it) (l ◁ₗ{β} n @ int it) T.
   Proof.
-    iIntros "[-> $]". rewrite /ty_own /=. iIntros "(%v&H&?&?&?)".
-    iExists v. iFrame. iRevert "H". iPureIntro.
-    rewrite /val_to_loc_weak /val_to_Z_weak.
-    move => /fmap_Some [i][-> ->] /=. by destruct i.
+    iIntros "[-> $]". rewrite /ty_own /=. iIntros "(%v&%aid&%&%&%&%&?&?)".
+    iExists v. by iFrame.
   Qed.
   Global Instance subsume_intptr_int_place_inst l β it n p:
     SubsumePlace l β (p @ intptr it) (n @ int it) :=
