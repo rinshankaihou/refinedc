@@ -370,8 +370,10 @@ Proof.
   iIntros (Hv) "HΦ".
   iApply wp_unop_det. iSplit; [|done].
   iIntros (σ ?) "Hctx". iPureIntro. split.
-  - inversion 1; simplify_eq => //. revert select (block_alive _ _) => -[?[??]].
-    have ? := val_to_of_loc NULL_loc. unfold NULL in *; by simplify_eq.
+  - inversion 1; simplify_eq => //.
+    all: destruct l; simplify_eq/=.
+    all: have ? := val_to_of_loc NULL_loc.
+    all: unfold NULL in *; by simplify_eq.
   - move => ->. by econstructor.
 Qed.
 
@@ -386,6 +388,7 @@ Proof.
   iIntros "!>" (v' Hv'). iFrame.
   inversion Hv'; simplify_eq.
   case_bool_decide; [ iApply "HΦ"|].
+  case_bool_decide; simplify_eq; [ iApply "HΦ"|].
   case_bool_decide; simplify_eq; iApply "HΦ".
 Qed.
 

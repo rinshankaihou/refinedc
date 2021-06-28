@@ -376,6 +376,12 @@ Inductive eval_un_op : un_op → op_type → state → val → val → Prop :=
     val_of_Z l.2 it p = Some vt →
     block_alive l σ.(st_heap) →
     eval_un_op (CastOp (IntOp it)) PtrOp σ vs vt
+| CastOpPIFn it σ vs vt l:
+    val_to_loc vs = Some l →
+    l.1 = ProvFnPtr →
+    val_of_Z l.2 it None = Some vt →
+    is_Some (σ.(st_fntbl) !! l.2) →
+    eval_un_op (CastOp (IntOp it)) PtrOp σ vs vt
 | CastOpPINull it σ vs vt:
     vs = NULL →
     val_of_Z 0 it None = Some vt →
@@ -385,7 +391,11 @@ Inductive eval_un_op : un_op → op_type → state → val → val → Prop :=
     l = (ProvAlloc (val_to_byte_prov vs), a) →
     (** This is using that the address 0 is never alive. *)
     l' = (if bool_decide (valid_ptr l σ.(st_heap)) then l else
-           (if bool_decide (a = 0) then NULL_loc else (ProvAlloc None, a))) →
+            (if bool_decide (a = 0) then NULL_loc else
+               if bool_decide (is_Some (σ.(st_fntbl) !! l.2)) then
+                 (ProvFnPtr, a)
+               else
+                 (ProvAlloc None, a))) →
     val_of_loc l' = vt →
     eval_un_op (CastOp PtrOp) (IntOp it) σ vs vt
 | NegOpI it σ vs vt n:
