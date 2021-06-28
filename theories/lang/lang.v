@@ -17,8 +17,10 @@ Inductive op_type : Set :=
 Inductive bin_op : Set :=
 | AddOp | SubOp | MulOp | DivOp | ModOp | AndOp | OrOp | XorOp | ShlOp
 | ShrOp | EqOp | NeOp | LtOp | GtOp | LeOp | GeOp | Comma
-(* Ptr is the second argument and pffset the first *)
-| PtrOffsetOp (ly : layout) | PtrNegOffsetOp (ly : layout).
+(* Ptr is the second argument and offset the first *)
+| PtrOffsetOp (ly : layout) | PtrNegOffsetOp (ly : layout)
+| PtrDiffOp (ly : layout).
+
 
 Inductive un_op : Set :=
 | NotBoolOp | NotIntOp | NegOp | CastOp (ot : op_type).
@@ -238,6 +240,14 @@ Inductive eval_bin_op : bin_op → op_type → op_type → state → val → val
     heap_state_loc_in_bounds (l offset{ly}ₗ -o) 0 σ.(st_heap) →
     (* TODO: should we have an alignment check here? *)
     eval_bin_op (PtrNegOffsetOp ly) (IntOp it) PtrOp σ v1 v2 (val_of_loc (l offset{ly}ₗ -o))
+| PtrDiffOpPP v1 v2 σ l1 l2 ly v:
+    val_to_loc v1 = Some l1 →
+    val_to_loc v2 = Some l2 →
+    l1.1 = l2.1 →
+    valid_ptr l1 σ.(st_heap) →
+    valid_ptr l2 σ.(st_heap) →
+    val_of_Z ((l1.2 - l1.2) `div` ly.(ly_size)) ptrdiff_t None = Some v →
+    eval_bin_op (PtrDiffOp ly) PtrOp PtrOp σ v1 v2 v
 | EqOpPNull v1 v2 σ l v:
     heap_state_loc_in_bounds l 0%nat σ.(st_heap) →
     val_to_loc v1 = Some l →

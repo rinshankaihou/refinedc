@@ -53,6 +53,8 @@ Notation "e1 'at_offset{' ly , ot1 , ot2 } e2" := (BinOp (PtrOffsetOp ly) ot2 ot
   (at level 70, format "e1  at_offset{ ly ,  ot1 ,  ot2 }  e2") : expr_scope.
 Notation "e1 'at_neg_offset{' ly , ot1 , ot2 } e2" := (BinOp (PtrNegOffsetOp ly) ot2 ot1 e2%E e1%E)
   (at level 70, format "e1  at_neg_offset{ ly ,  ot1 ,  ot2 }  e2") : expr_scope.
+Notation "e1 'sub_ptr{' ly , ot1 , ot2 } e2" := (BinOp (PtrDiffOp ly) ot2 ot1 e1%E e2%E)
+  (at level 70, format "e1  sub_ptr{ ly ,  ot1 ,  ot2 }  e2") : expr_scope.
 (* The unicode ← is already part of the notation "_ ← _; _" for bind. *)
 Notation "e1 <-{ ly , o } e2 ; s" := (Assign o ly e1%E e2%E s%E)
   (at level 80, s at level 200, format "'[v' e1  '<-{' ly ',' o '}'  e2 ';' '/' s ']'") : expr_scope.

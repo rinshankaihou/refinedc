@@ -158,6 +158,9 @@ let rec pp_expr : Coq_ast.expr pp = fun ff e ->
           | (OpPtr(l), OpInt(_), SubOp  ) ->
               pp "(%a) at_neg_offset{%a, PtrOp, %a} (%a)" pp_expr e1
                 (pp_layout false) l pp_op_type ty2 pp_expr e2
+          | (OpPtr(l1), OpPtr(l2), SubOp  ) ->
+              pp "(%a) sub_ptr{%a, PtrOp, PtrOp} (%a)" pp_expr e1
+                (pp_layout false) l1 pp_expr e2
           | (OpPtr(_), OpInt(_), _      ) ->
               panic_no_pos "Binop [%a] not supported on pointers."
                 pp_bin_op op
