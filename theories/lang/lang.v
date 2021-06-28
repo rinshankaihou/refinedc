@@ -248,40 +248,67 @@ Inductive eval_bin_op : bin_op → op_type → op_type → state → val → val
     valid_ptr l2 σ.(st_heap) →
     val_of_Z ((l1.2 - l1.2) `div` ly.(ly_size)) ptrdiff_t None = Some v →
     eval_bin_op (PtrDiffOp ly) PtrOp PtrOp σ v1 v2 v
-| EqOpPNull v1 v2 σ l v:
-    heap_state_loc_in_bounds l 0%nat σ.(st_heap) →
+| RelOpPNull v1 v2 σ l v op b p a:
     val_to_loc v1 = Some l →
+    l = (ProvAlloc p, a) →
     v2 = NULL →
-    (* TODO ( see below ): Should we really hard code i32 here because of C? *)
-    val_of_Z (Z_of_bool false) i32 None = Some v →
-    eval_bin_op EqOp PtrOp PtrOp σ v1 v2 v
-| NeOpPNull v1 v2 σ l v:
     heap_state_loc_in_bounds l 0%nat σ.(st_heap) →
-    val_to_loc v1 = Some l →
-    v2 = NULL →
-    val_of_Z (Z_of_bool true) i32 None = Some v→
-    eval_bin_op NeOp PtrOp PtrOp σ v1 v2 v
-| EqOpNullNull v1 v2 σ v:
+    match op with
+    | EqOp => Some false
+    | NeOp => Some true
+    | _ => None
+    end = Some b →
+    val_of_Z (Z_of_bool b) i32 None = Some v →
+    eval_bin_op op PtrOp PtrOp σ v1 v2 v
+| RelOpNullP v1 v2 σ l v op b p a:
+    v1 = NULL →
+    val_to_loc v2 = Some l →
+    l = (ProvAlloc p, a) →
+    heap_state_loc_in_bounds l 0%nat σ.(st_heap) →
+    match op with
+    | EqOp => Some false
+    | NeOp => Some true
+    | _ => None
+    end = Some b →
+    val_of_Z (Z_of_bool b) i32 None = Some v →
+    eval_bin_op op PtrOp PtrOp σ v1 v2 v
+| RelOpNullNull v1 v2 σ v op b:
     v1 = NULL →
     v2 = NULL →
-    val_of_Z (Z_of_bool true) i32 None = Some v →
-    eval_bin_op EqOp PtrOp PtrOp σ v1 v2 v
-| NeOpNullNull v1 v2 σ v:
-    v1 = NULL →
-    v2 = NULL →
-    val_of_Z (Z_of_bool false) i32 None = Some v →
-    eval_bin_op NeOp PtrOp PtrOp σ v1 v2 v
-| RelOpPP v1 v2 σ l1 l2 v b op:
+    match op with
+    | EqOp => Some true
+    | NeOp => Some false
+    | _ => None
+    end = Some b →
+    val_of_Z (Z_of_bool b) i32 None = Some v →
+    eval_bin_op op PtrOp PtrOp σ v1 v2 v
+| RelOpPP v1 v2 σ l1 l2 p1 p2 a1 a2 v b op:
     val_to_loc v1 = Some l1 →
     val_to_loc v2 = Some l2 →
+    (* Note that this is technically redundant due to the valid_ptr,
+    but we still have it for clarity. *)
+    l1 = (ProvAlloc p1, a1) →
+    l2 = (ProvAlloc p2, a2) →
     valid_ptr l1 σ.(st_heap) → valid_ptr l2 σ.(st_heap) →
     match op with
-    | EqOp => Some (bool_decide (l1.2 = l2.2))
-    | NeOp => Some (bool_decide (l1.2 ≠ l2.2))
-    | LtOp => if bool_decide (l1.1 = l2.1) then Some (bool_decide (l1.2 < l2.2)) else None
-    | GtOp => if bool_decide (l1.1 = l2.1) then Some (bool_decide (l1.2 > l2.2)) else None
-    | LeOp => if bool_decide (l1.1 = l2.1) then Some (bool_decide (l1.2 <= l2.2)) else None
-    | GeOp => if bool_decide (l1.1 = l2.1) then Some (bool_decide (l1.2 >= l2.2)) else None
+    | EqOp => Some (bool_decide (a1 = a2))
+    | NeOp => Some (bool_decide (a1 ≠ a2))
+    | LtOp => if bool_decide (p1 = p2) then Some (bool_decide (a1 < a2)) else None
+    | GtOp => if bool_decide (p1 = p2) then Some (bool_decide (a1 > a2)) else None
+    | LeOp => if bool_decide (p1 = p2) then Some (bool_decide (a1 <= a2)) else None
+    | GeOp => if bool_decide (p1 = p2) then Some (bool_decide (a1 >= a2)) else None
+    | _ => None
+    end = Some b →
+    val_of_Z (Z_of_bool b) i32 None = Some v →
+    eval_bin_op op PtrOp PtrOp σ v1 v2 v
+| RelOpFnPP v1 v2 σ l1 l2 a1 a2 v b op:
+    val_to_loc v1 = Some l1 →
+    val_to_loc v2 = Some l2 →
+    l1 = (ProvFnPtr, a1) →
+    l2 = (ProvFnPtr, a2) →
+    match op with
+    | EqOp => Some (bool_decide (a1 = a2))
+    | NeOp => Some (bool_decide (a1 ≠ a2))
     | _ => None
     end = Some b →
     val_of_Z (Z_of_bool b) i32 None = Some v →

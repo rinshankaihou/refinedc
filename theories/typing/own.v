@@ -493,9 +493,8 @@ Section null.
      ↔ val_of_Z (Z_of_bool b) i32 None = Some v.
   Proof.
     move => Hlib ?. have [??]:= heap_state_loc_in_bounds_has_alloc_id _ _ _ Hlib.
-    destruct b => //; split => Heq; subst.
-    1, 3: inversion Heq; unfold NULL in *; rewrite ->?val_to_of_loc in *; simplify_eq => //.
-    1, 2: by match goal with | H : valid_ptr NULL_loc _ |- _ => have [??]:= valid_ptr_has_alloc_id _ _ H end.
+    destruct p; simplify_eq/=. destruct b => //; split => Heq; subst.
+    1, 3: inversion Heq; unfold NULL in *; rewrite ->?val_to_of_loc in *; simplify_eq; done.
     all: econstructor; rewrite ?val_to_of_loc /val_of_bool/i2v ?Heq //.
   Qed.
 
@@ -507,8 +506,7 @@ Section null.
     move => ?.
     destruct b => //; split => Heq; subst.
     1, 3: inversion Heq; unfold NULL in *; rewrite ->?val_to_of_loc in *; simplify_eq => //.
-    1, 2: by match goal with | H : heap_state_loc_in_bounds NULL_loc _ _ |- _ => have [??]:= heap_state_loc_in_bounds_has_alloc_id _ _ _ H end.
-    all: by constructor => //; rewrite /i2v Heq.
+    all: econstructor => //; rewrite /i2v Heq.
   Qed.
 
   Lemma type_binop_null_null v1 v2 op T:

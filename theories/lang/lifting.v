@@ -458,11 +458,13 @@ Proof.
     iApply (alloc_alive_loc_to_valid_ptr with "Hl2 [HΦ] Hσ").
     by iDestruct "HΦ" as "[_ [$ _]]".
   }
-  iSplit; first by iPureIntro; eexists _; econstructor.
+  destruct l1, l2; simplify_eq/=. iSplit.
+  { iPureIntro. destruct op; eexists _; apply: RelOpPP => //; repeat case_bool_decide; naive_solver. }
   iDestruct "HΦ" as "(_&_&HΦ)". iIntros "!>" (v' Hstep). iFrame.
   inversion Hstep; simplify_eq => //.
   all: try rewrite val_to_of_loc in Hv1; simplify_eq.
   all: try rewrite val_to_of_loc in Hv2; simplify_eq.
+  destruct op; repeat case_bool_decide; by simplify_eq.
 Qed.
 
 Lemma wp_ptr_offset Φ vl l E it o ly vo:
