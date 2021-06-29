@@ -1,6 +1,7 @@
 From refinedc.typing Require Import typing.
 From refinedc.examples.tagged_ptr Require Import generated_code.
 From refinedc.examples.tagged_ptr Require Import generated_spec.
+From refinedc.examples.tagged_ptr Require Import tagged_ptr_extra.
 Set Default Proof Using "Type".
 
 (* Generated from [examples/tagged_ptr.c]. *)
@@ -21,6 +22,7 @@ Section proof_tag.
     - repeat liRStep; liShow.
       all: print_typesystem_goal "tag" "#0".
     Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
+    all: rewrite Z_lor_land_not; solve_goal.
     all: print_sidecondition_goal "tag".
   Qed.
 End proof_tag.

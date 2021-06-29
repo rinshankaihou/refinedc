@@ -2,8 +2,10 @@
 #include <stdint.h>
 #include <refinedc.h>
 
-#define TAG_SIZE 3
-#define TAG_MOD  (1 << TAG_SIZE)
+//@rc::import tagged_ptr_extra from refinedc.examples.tagged_ptr (for proofs only)
+
+#define TAG_SIZE 3ULL
+#define TAG_MOD  (1ULL << TAG_SIZE)
 #define TAG_MASK (TAG_MOD - 1)
 
 //@rc::inlined Notation TAG_MOD := (8%nat) (only parsing).
@@ -13,9 +15,10 @@
 [[rc::requires("[type_alive_own ty]")]]
 [[rc::returns("{r.2} @ int<u8>")]]
 [[rc::ensures("v : r @ &tagged<TAG_MOD, ty>", "{0 ≤ r.2 < TAG_MOD}")]]
+[[rc::tactics("all: rewrite Z_land_add_l; solve_goal.")]]
 unsigned char tag_of(void* p){
   uintptr_t i = (uintptr_t) p;
-  unsigned char t = i % TAG_MOD;
+  unsigned char t = i & TAG_MASK;
   return t;
 }
 
@@ -23,9 +26,10 @@ unsigned char tag_of(void* p){
 [[rc::args("r @ &tagged<TAG_MOD, ty>", "t @ int<u8>")]]
 [[rc::requires("{0 ≤ t < TAG_MOD}", "[type_alive_own ty]")]]
 [[rc::returns("{(r.1, t)} @ &tagged<TAG_MOD, ty>")]]
+[[rc::tactics("all: rewrite Z_lor_land_not; solve_goal.")]]
 void* tag(void* p, unsigned char t){
   uintptr_t i = (uintptr_t) p;
-  uintptr_t new_i = i - i % TAG_MOD + t;
+  uintptr_t new_i = (i & ~ TAG_MASK) | t;
   void* q = rc_copy_alloc_id(new_i, p);
   return q;
 }

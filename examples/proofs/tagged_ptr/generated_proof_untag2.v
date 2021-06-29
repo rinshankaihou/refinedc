@@ -1,6 +1,7 @@
 From refinedc.typing Require Import typing.
 From refinedc.examples.tagged_ptr Require Import generated_code.
 From refinedc.examples.tagged_ptr Require Import generated_spec.
+From refinedc.examples.tagged_ptr Require Import tagged_ptr_extra.
 Set Default Proof Using "Type".
 
 (* Generated from [examples/tagged_ptr.c]. *)
