@@ -168,24 +168,28 @@ Section optional.
   Proof.
     unfold destruct_hint. iIntros "HT Hv1 Hv2" (Φ) "HΦ".
     iDestruct "Hv1" as "[[% Hv1]|[% Hv1]]".
-    - iApply (wp_binop_det (i2v (Z_of_bool false) i32)). iSplit. {
-        iIntros (σ v) "Hctx". iDestruct "HT" as "[Hpre _]".
+    - iApply (wp_binop_det (i2v (Z_of_bool false) i32)).
+      iIntros (σ) "Hctx". iApply fupd_mask_intro; [set_solver|]. iIntros "HE".
+      iSplit. {
+        iIntros (v). iDestruct "HT" as "[Hpre _]".
         iDestruct (opt_bin_op true true with "Hpre Hv1 Hv2 Hctx") as %->.
         iPureIntro. rewrite /i2v.
         have [|v' ->] := val_of_Z_is_Some None i32 (Z_of_bool false) => //.
         naive_solver.
       }
-      iDestruct "HT" as "[_ [HT _]]".
+      iDestruct "HT" as "[_ [HT _]]". iModIntro. iMod "HE". iModIntro. iFrame.
       iDestruct ("HT" with "[//] Hv1") as "HT".
       by iApply ("HΦ" with "[] HT").
-    - iApply (wp_binop_det (i2v (Z_of_bool true) i32)). iSplit. {
-        iIntros (σ v) "Hctx". iDestruct "HT" as "[Hpre _]".
+    - iApply (wp_binop_det (i2v (Z_of_bool true) i32)).
+      iIntros (σ) "Hctx". iApply fupd_mask_intro; [set_solver|]. iIntros "HE".
+      iSplit. {
+        iIntros (v). iDestruct "HT" as "[Hpre _]".
         iDestruct (opt_bin_op false true with "Hpre Hv1 Hv2 Hctx") as %->.
         iPureIntro. rewrite /i2v.
         have [|v' ->] := val_of_Z_is_Some None i32 (Z_of_bool true) => //.
         naive_solver.
       }
-      iDestruct "HT" as "[_ [_ HT]]".
+      iDestruct "HT" as "[_ [_ HT]]". iModIntro. iMod "HE". iModIntro. iFrame.
       iDestruct ("HT" with "[//] Hv1") as "HT".
       by iApply ("HΦ" with "[] HT").
   Qed.
@@ -200,12 +204,14 @@ Section optional.
   Proof.
     iIntros "HT Hv1 Hv2". iIntros (Φ) "HΦ".
     have [|v' Hv] := val_of_Z_is_Some None i32 (Z_of_bool false) => //.
-    iApply (wp_binop_det v'). iSplit. {
-      iIntros (σ v) "Hctx". iDestruct "HT" as "[Hpre _]".
+    iApply (wp_binop_det v').
+    iIntros (σ) "Hctx". iApply fupd_mask_intro; [set_solver|]. iIntros "HE".
+    iSplit. {
+      iIntros (v). iDestruct "HT" as "[Hpre _]".
       iDestruct (opt_bin_op true true with "Hpre Hv1 Hv2 Hctx") as %->.
       iPureIntro. by split => ?; simpl in *; simplify_eq.
     }
-    iDestruct ("HT" with "Hv1") as "HT".
+    iDestruct ("HT" with "Hv1") as "HT". iModIntro. iMod "HE". iModIntro. iFrame.
     iApply "HΦ" => //. iPureIntro. by eapply val_to_of_Z.
   Qed.
 
@@ -221,24 +227,28 @@ Section optional.
   Proof.
     unfold destruct_hint. iIntros "HT Hv1 Hv2" (Φ) "HΦ".
     iDestruct "Hv1" as "[[% Hv1]|[% Hv1]]".
-    - iApply (wp_binop_det (i2v (Z_of_bool true) i32)). iSplit. {
-        iIntros (σ v) "Hctx". iDestruct "HT" as "[Hpre _]".
+    - iApply (wp_binop_det (i2v (Z_of_bool true) i32)).
+      iIntros (σ) "Hctx". iApply fupd_mask_intro; [set_solver|]. iIntros "HE".
+      iSplit. {
+        iIntros (v). iDestruct "HT" as "[Hpre _]".
         iDestruct (opt_bin_op true false with "Hpre Hv1 Hv2 Hctx") as %->.
         iPureIntro. rewrite /i2v.
         have [|v' ->] := val_of_Z_is_Some None i32 (Z_of_bool true) => //.
         naive_solver.
       }
-      iDestruct "HT" as "[_ [HT _]]".
+      iDestruct "HT" as "[_ [HT _]]". iModIntro. iMod "HE". iModIntro. iFrame.
       iDestruct ("HT" with "[//] Hv1") as "HT".
       by iApply ("HΦ" with "[] HT").
-    - iApply (wp_binop_det (i2v (Z_of_bool false) i32)). iSplit. {
-        iIntros (σ v) "Hctx". iDestruct "HT" as "[Hpre _]".
+    - iApply (wp_binop_det (i2v (Z_of_bool false) i32)).
+      iIntros (σ) "Hctx". iApply fupd_mask_intro; [set_solver|]. iIntros "HE".
+      iSplit. {
+        iIntros (v). iDestruct "HT" as "[Hpre _]".
         iDestruct (opt_bin_op false false with "Hpre Hv1 Hv2 Hctx") as %->.
         iPureIntro. rewrite /i2v.
         have [|v' ->] := val_of_Z_is_Some None i32 (Z_of_bool false) => //.
         naive_solver.
       }
-      iDestruct "HT" as "[_ [_ HT]]".
+      iDestruct "HT" as "[_ [_ HT]]". iModIntro. iMod "HE". iModIntro. iFrame.
       iDestruct ("HT" with "[//] Hv1") as "HT".
       by iApply ("HΦ" with "[] HT").
   Qed.
@@ -376,20 +386,24 @@ Section optionalO.
     unfold destruct_hint. iIntros "HT Hv1 Hv2". iIntros (Φ) "HΦ".
     destruct b.
     - have [|v' Hv] := val_of_Z_is_Some None i32 (Z_of_bool false) => //.
-      iApply (wp_binop_det v'). iSplit. {
-        iIntros (σ v) "Hctx". iDestruct "HT" as "[Hpre _]".
+      iApply (wp_binop_det v').
+      iIntros (σ) "Hctx". iApply fupd_mask_intro; [set_solver|]. iIntros "HE".
+      iSplit. {
+        iIntros (v). iDestruct "HT" as "[Hpre _]".
         iDestruct (opt_bin_op true true with "Hpre [Hv1] [Hv2] Hctx") as %->.
         iFrame. iFrame. iPureIntro. by split => ?; simpl in *; simplify_eq.
       }
-      iDestruct ("HT" with "Hv1") as "HT".
+      iDestruct ("HT" with "Hv1") as "HT". iModIntro. iMod "HE". iModIntro. iFrame.
       iApply "HΦ" => //. iPureIntro. by apply: val_to_of_Z.
     - have [|v' Hv] := val_of_Z_is_Some None i32 (Z_of_bool true) => //.
-      iApply (wp_binop_det v'). iSplit. {
-        iIntros (σ v) "Hctx". iDestruct "HT" as "[Hpre _]".
+      iApply (wp_binop_det v').
+      iIntros (σ) "Hctx". iApply fupd_mask_intro; [set_solver|]. iIntros "HE".
+      iSplit. {
+        iIntros (v). iDestruct "HT" as "[Hpre _]".
         iDestruct (opt_bin_op false true with "Hpre [Hv1] [Hv2] Hctx") as %->.
         iFrame. iFrame. iPureIntro. by split => ?; simpl in *; simplify_eq.
       }
-      iDestruct ("HT" with "Hv1") as "HT".
+      iDestruct ("HT" with "Hv1") as "HT". iModIntro. iMod "HE". iModIntro. iFrame.
       iApply "HΦ" => //. iPureIntro. by apply: val_to_of_Z.
   Qed.
 
@@ -406,20 +420,24 @@ Section optionalO.
     unfold destruct_hint. iIntros "HT Hv1 Hv2". iIntros (Φ) "HΦ".
     destruct b.
     - have [|v' Hv] := val_of_Z_is_Some None i32 (Z_of_bool true) => //.
-      iApply (wp_binop_det v'). iSplit. {
-        iIntros (σ v) "Hctx". iDestruct "HT" as "[Hpre _]".
+      iApply (wp_binop_det v').
+      iIntros (σ) "Hctx". iApply fupd_mask_intro; [set_solver|]. iIntros "HE".
+      iSplit. {
+        iIntros (v). iDestruct "HT" as "[Hpre _]".
         iDestruct (opt_bin_op true false with "Hpre [Hv1] [Hv2] Hctx") as %->.
         iFrame. iFrame. iPureIntro. by split => ?; simpl in *; simplify_eq.
       }
-      iDestruct ("HT" with "Hv1") as "HT".
+      iDestruct ("HT" with "Hv1") as "HT". iModIntro. iMod "HE". iModIntro. iFrame.
       iApply "HΦ" => //. iPureIntro. by apply: val_to_of_Z.
     - have [|v' Hv] := val_of_Z_is_Some None i32 (Z_of_bool false) => //.
-      iApply (wp_binop_det v'). iSplit. {
-        iIntros (σ v) "Hctx". iDestruct "HT" as "[Hpre _]".
+      iApply (wp_binop_det v').
+      iIntros (σ) "Hctx". iApply fupd_mask_intro; [set_solver|]. iIntros "HE".
+      iSplit. {
+        iIntros (v). iDestruct "HT" as "[Hpre _]".
         iDestruct (opt_bin_op false false with "Hpre [Hv1] [Hv2] Hctx") as %->.
         iFrame. iFrame. iPureIntro. by split => ?; simpl in *; simplify_eq.
       }
-      iDestruct ("HT" with "Hv1") as "HT".
+      iDestruct ("HT" with "Hv1") as "HT". iModIntro. iMod "HE". iModIntro. iFrame.
       iApply "HΦ" => //. iPureIntro. by apply: val_to_of_Z.
   Qed.
   Global Instance type_neq_optionalO_inst A v1 v2 (ty : A → type) optty ot1 ot2 `{!∀ x, Movable (ty x)} `{!Movable optty} `{!∀ x, Optionable (ty x) optty ot1 ot2} b `{!Inhabited A} :

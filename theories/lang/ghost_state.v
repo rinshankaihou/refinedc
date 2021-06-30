@@ -49,7 +49,7 @@ Definition to_alloc_alive_map : allocs → gmap alloc_id bool :=
   fmap al_alive.
 
 Section definitions.
-  Context `{!heapG Σ}.
+  Context `{!heapG Σ} `{!FUpd (iProp Σ)}.
 
   (** * Allocation stuff. *)
 
@@ -147,8 +147,8 @@ Section definitions.
 
   (** Token witnessing that [l] has an allocation identifier that is alive. *)
   Definition alloc_alive_loc_def (l : loc) : iProp Σ :=
-    (∃ id q, ⌜l.1 = ProvAlloc (Some id)⌝ ∗ alloc_alive id q true) ∨
-    (∃ a q v, ⌜v ≠ []⌝ ∗ heap_mapsto (l.1, a) q v).
+    |={⊤, ∅}=> ((∃ id q, ⌜l.1 = ProvAlloc (Some id)⌝ ∗ alloc_alive id q true) ∨
+               (∃ a q v, ⌜v ≠ []⌝ ∗ heap_mapsto (l.1, a) q v)).
   Definition alloc_alive_loc_aux : seal (@alloc_alive_loc_def). by eexists. Qed.
   Definition alloc_alive_loc := unseal alloc_alive_loc_aux.
   Definition alloc_alive_loc_eq : @alloc_alive_loc = @alloc_alive_loc_def :=
@@ -780,38 +780,45 @@ Section heap.
 End heap.
 
 Section alloc_alive.
-  Context `{!heapG Σ}.
-
-  Global Instance alloc_alive_loc_tl l : Timeless (alloc_alive_loc l).
-  Proof. rewrite alloc_alive_loc_eq. by apply _. Qed.
+  Context `{!heapG Σ} `{!BiFUpd (iPropI Σ)}.
 
   Lemma alloc_alive_loc_mono (l1 l2 : loc) :
     l1.1 = l2.1 →
     alloc_alive_loc l1 -∗ alloc_alive_loc l2.
   Proof. by rewrite alloc_alive_loc_eq /alloc_alive_loc_def => ->. Qed.
 
+  Lemma heap_mapsto_alive_strong l :
+    (|={⊤, ∅}=> (∃ q v, ⌜length v ≠ 0%nat⌝ ∗ l ↦{q} v)) -∗ alloc_alive_loc l.
+  Proof.
+    rewrite alloc_alive_loc_eq. move: l => [? a]. iIntros ">(%q&%v&%&?)". iModIntro.
+    iRight. iExists a, q, _. iFrame. by destruct v.
+  Qed.
+
   Lemma heap_mapsto_alive l q v:
     length v ≠ 0%nat →
     l ↦{q} v -∗ alloc_alive_loc l.
   Proof.
-    rewrite alloc_alive_loc_eq. move: l => [? a]. iIntros (?) "H".
-    iRight. iExists a, q, _. iFrame. by destruct v.
+    iIntros (?) "Hl". iApply heap_mapsto_alive_strong.
+    iApply fupd_mask_intro; [set_solver|]. iIntros "?".
+    iExists _, _. by iFrame.
   Qed.
 
   Lemma alloc_global_alive l:
     alloc_global l -∗ alloc_alive_loc l.
-  Proof. iIntros "(%id&%&Ha)". rewrite alloc_alive_loc_eq. iLeft. eauto. Qed.
+  Proof.
+    iIntros "(%id&%&Ha)". rewrite alloc_alive_loc_eq. iApply fupd_mask_intro; [set_solver|].
+    iIntros "_". iLeft. eauto.
+  Qed.
 
   Lemma alloc_alive_loc_to_block_alive l σ:
-    alloc_alive_loc l -∗ state_ctx σ -∗ ⌜block_alive l σ.(st_heap)⌝.
+    alloc_alive_loc l -∗ state_ctx σ ={⊤, ∅}=∗ ⌜block_alive l σ.(st_heap)⌝.
   Proof.
-    rewrite alloc_alive_loc_eq.
-    iIntros "[H|H]".
-    - iDestruct "H" as (???) "Hl". iIntros "((Hinv&_&_&Hctx)&_)".
+    rewrite alloc_alive_loc_eq. iIntros ">[H|H]".
+    - iDestruct "H" as (???) "Hl". iIntros "((Hinv&_&_&Hctx)&_) !>".
       iExists _. iSplit => //.
       iDestruct (alloc_alive_lookup with "Hctx Hl") as %[?[??]]. iPureIntro.
       eexists _. naive_solver.
-    - iIntros "(((?&Halive&?&?)&Hctx&?&?)&?)".
+    - iIntros "(((?&Halive&?&?)&Hctx&?&?)&?) !>".
       iDestruct "H" as (????) "H".
       iDestruct (heap_mapsto_lookup_q (λ _, True) with "Hctx H") as %Hlookup => //.
       destruct v => //. destruct Hlookup as [[id [?[?[??]]]]?].
@@ -820,11 +827,11 @@ Section alloc_alive.
   Qed.
 
   Lemma alloc_alive_loc_to_valid_ptr l σ:
-    loc_in_bounds l 0 -∗ alloc_alive_loc l -∗ state_ctx σ -∗ ⌜valid_ptr l σ.(st_heap)⌝.
+    loc_in_bounds l 0 -∗ alloc_alive_loc l -∗ state_ctx σ ={⊤, ∅}=∗ ⌜valid_ptr l σ.(st_heap)⌝.
   Proof.
     iIntros "Hin Ha Hσ".
-    iDestruct (alloc_alive_loc_to_block_alive with "Ha Hσ") as %?.
-    by iDestruct (loc_in_bounds_to_heap_loc_in_bounds with "Hin Hσ") as %?.
+    iDestruct (loc_in_bounds_to_heap_loc_in_bounds with "Hin Hσ") as %?.
+    by iMod (alloc_alive_loc_to_block_alive with "Ha Hσ") as %?.
   Qed.
 End alloc_alive.
 

@@ -730,9 +730,9 @@ Section typing.
     (P -∗ T v2 (t2mt ty)) -∗
     typed_bin_op v1 P v2 (v2 ◁ᵥ ty) Comma ot1 ot2 T.
   Proof.
-    iIntros "HT H1 H2" (Φ) "HΦ". iApply (wp_binop_det v2). iSplit.
-    - iIntros (??) "_ !%". split; [ by inversion 1 | move => ->; constructor ].
-    - iDestruct ("HT" with "H1") as "HT". iApply ("HΦ" $! v2 (t2mt ty) with "H2 HT").
+    iIntros "HT H1 H2" (Φ) "HΦ". iApply (wp_binop_det_pure v2).
+    { split; [ by inversion 1 | move => ->; constructor ]. }
+    iDestruct ("HT" with "H1") as "HT". iApply ("HΦ" $! v2 (t2mt ty) with "H2 HT").
   Qed.
   Global Instance typed_binop_comma_inst v1 v2 P (ty : type) ot1 ot2 `{!Movable ty}:
     TypedBinOp v1 P v2 (v2 ◁ᵥ ty) Comma ot1 ot2 :=

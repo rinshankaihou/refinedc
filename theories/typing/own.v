@@ -516,8 +516,8 @@ Section null.
   Proof.
     iIntros "[% HT]" (-> -> Φ) "HΦ".
     have ?:= val_of_Z_bool (if op is EqOp then true else false) i32.
-    iApply (wp_binop_det (i2v (Z_of_bool (if op is EqOp then true else false)) i32)). iSplit. {
-      iIntros (??) "_ !%".
+    iApply (wp_binop_det_pure (i2v (Z_of_bool (if op is EqOp then true else false)) i32)). {
+      move => ??.
       rewrite (eval_bin_op_null_null (if op is EqOp then true else false)); destruct op => //; naive_solver.
     }
     iApply "HΦ" => //. by destruct op.
@@ -535,11 +535,14 @@ Section null.
     iDestruct (loc_in_bounds_in_bounds with "Hl") as "#Hb".
     iDestruct (loc_in_bounds_shorten _ _ 0 with "Hb") as "#Hb0"; first by lia.
     have ?:= val_of_Z_bool (if op is EqOp then false else true) i32.
-    iApply (wp_binop_det (i2v (Z_of_bool (if op is EqOp then false else true)) i32)). iSplit. {
-      iIntros (??) "Hctx". iDestruct (loc_in_bounds_to_heap_loc_in_bounds with "Hb0 Hctx") as %?.
-      iPureIntro.
+    iApply (wp_binop_det (i2v (Z_of_bool (if op is EqOp then false else true)) i32)).
+    iIntros (σ) "Hctx". iApply fupd_mask_intro; [set_solver|]. iIntros "HE".
+    iSplit. {
+      iDestruct (loc_in_bounds_to_heap_loc_in_bounds with "Hb0 Hctx") as %?.
+      iPureIntro => ?.
       rewrite (eval_bin_op_ptr_null (if op is EqOp then false else true)); destruct op => //; naive_solver.
     }
+    iModIntro. iMod "HE". iModIntro. iFrame.
     iApply "HΦ". 2: by iApply "HT". by destruct op.
   Qed.
   Global Instance type_binop_ptr_null_inst v2 op (l : loc) ty β n `{!LocInBounds ty β n}:

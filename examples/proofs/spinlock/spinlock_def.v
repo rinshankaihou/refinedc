@@ -10,6 +10,9 @@ Section type.
 
   Global Program Instance movable_spinlock γ : Movable (spinlock γ) := ltac:(apply: movable_struct).
 
+  Global Instance alloc_alive_spinlock γ β : AllocAlive (spinlock γ) β True.
+  Proof. apply: _. Qed.
+
   Lemma spinlock_subsume γ1 γ2 l T β:
     ⌜γ1 = γ2⌝ ∗ T -∗
     subsume (l ◁ₗ{β} spinlock γ1) (l ◁ₗ{β} spinlock γ2) T.

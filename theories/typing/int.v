@@ -140,8 +140,8 @@ Section programs.
     iDestruct ("HT" with "[] []" ) as "HT".
     1-2: iPureIntro; by apply: val_to_Z_in_range.
     have [v Hv]:= val_of_Z_bool_is_Some None i32 b.
-    iApply (wp_binop_det (i2v (Z_of_bool b) i32)). iSplit.
-    { iIntros (??) "_ !%". rewrite /i2v Hv /=.
+    iApply (wp_binop_det_pure (i2v (Z_of_bool b) i32)).
+    { rewrite /i2v Hv /=.
       split; last (move => ->; by econstructor).
       destruct op => //; inversion 1; by simplify_eq. }
     iIntros "!>". iApply "HΦ" => //. by destruct b.
@@ -274,8 +274,8 @@ Section programs.
     assert (n ∈ it) as [v Hv]%(val_of_Z_is_Some None).
     { apply: arith_op_result_in_range => //; by apply: val_to_Z_in_range. }
     move: (Hv) => /val_of_Z_in_range ?. rewrite /i2v Hv /=.
-    iApply (wp_binop_det v). iSplit.
-    - iIntros (??) "_ !%". split.
+    iApply (wp_binop_det_pure v). {
+      split.
       + destruct op => //.
         all: inversion 1; simplify_eq/=.
         all: try case_bool_decide => //.
@@ -284,7 +284,8 @@ Section programs.
       + move => ->. destruct op; (apply: ArithOpII; [try done; case_bool_decide; naive_solver|done|done|]).
         all: destruct it as [? []]; simplify_eq/= => //.
         all: try by rewrite it_in_range_mod.
-    - iIntros "!>". iApply "HΦ"; last done. iPureIntro. by apply: val_to_of_Z.
+    }
+    iIntros "!>". iApply "HΦ"; last done. iPureIntro. by apply: val_to_of_Z.
   Qed.
   Global Program Instance type_add_int_int_inst it v1 n1 v2 n2:
     TypedBinOpVal v1 (n1 @ int it)%I v2 (n2 @ int it)%I AddOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_int_int it v1 n1 v2 n2 T (n1 + n2) _ _).
@@ -405,12 +406,13 @@ Section programs.
         have ? := bits_per_int_gt_0 it.
         apply Z_lunot_range; lia. }
     rewrite /n => /(val_of_Z_is_Some None) [v Hv]. rewrite /i2v Hv /=.
-    iApply (wp_unop_det v). iSplit.
-    - iIntros (σ v') "_ !%". split.
+    iApply (wp_unop_det_pure v). {
+      split.
       + by inversion 1; simplify_eq.
       + move => ->. by econstructor.
-    - iIntros "!>". iApply ("HΦ" with "[] (HT [//])").
-      iPureIntro. by apply: val_to_of_Z.
+    }
+    iIntros "!>". iApply ("HΦ" with "[] (HT [//])").
+    iPureIntro. by apply: val_to_of_Z.
   Qed.
   Global Instance type_not_int_inst n it v:
     TypedUnOpVal v (n @ int it)%I NotIntOp (IntOp it) :=
@@ -471,8 +473,8 @@ Section programs.
   Proof.
     iIntros "%Hop HT %Hv1 %Hv2 %Φ HΦ".
     have [v Hv]:= val_of_Z_bool_is_Some None i32 b.
-    iApply (wp_binop_det (i2v (Z_of_bool b) i32)). iSplit.
-    { iIntros (??) "_ !%". rewrite /i2v Hv /=.
+    iApply (wp_binop_det_pure (i2v (Z_of_bool b) i32)).
+    { rewrite /i2v Hv /=.
       destruct op, b1, b2; simplify_eq.
       all: split; [ inversion 1; simplify_eq/=; done | move => -> ]; simplify_eq/=.
       all: econstructor => //; by case_bool_decide. }

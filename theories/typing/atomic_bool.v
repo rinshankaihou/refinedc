@@ -37,6 +37,21 @@ Section atomic_bool.
     iExists b. iFrame.
   Qed.
 
+  Global Instance alloc_alive_atomic_bool it β PT PF:
+    AllocAlive (atomic_bool it PT PF) β True.
+  Proof.
+    constructor. have ?:= bytes_per_int_gt_0 it. destruct β.
+    - iIntros (l) "? (%b&Hl&?)". iApply (alloc_alive_alive with "[] Hl"). iPureIntro.
+      rewrite /ly_size/=. lia.
+    - iIntros (l) "? (%&Hl)".
+      iApply (heap_mapsto_alive_strong).
+      iInv "Hl" as "(%b&>Hb&?)" "Hclose".
+      iApply fupd_mask_intro; [set_solver|]. iIntros "_".
+      rewrite /ty_own/=.
+      iDestruct "Hb" as "(%v&%&%&?)". iExists _, _. iFrame. iPureIntro.
+      erewrite val_to_Z_length; [|done]. lia.
+  Qed.
+
 End atomic_bool.
 Notation "atomic_bool< it , PT , PF >" := (atomic_bool it PT PF)
   (only printing, format "'atomic_bool<' it ,  PT ,  PF '>'") : printing_sugar.
