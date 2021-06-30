@@ -68,6 +68,23 @@ uintptr_t min_ptr_val2(int *p1, int *p2){
   return i2;
 }
 
+// Checking that casting a pointer to an integer allows
+// deterministic comparison of the address
+// (e.g. CompCertS does not support this)
+[[rc::ensures("[True]")]]
+void pointer_to_integer_comp_det () {
+  int x = 0;
+  int y = 0;
+  uintptr_t i = (uintptr_t)&x;
+  uintptr_t j = (uintptr_t)&y;
+
+  if (i < j) { y = 10; }
+  else       { x = 10; }
+
+  if (i < j) { assert(y == 10); assert(x == 0); }
+  else       { assert(x == 10); assert(y == 0); }
+}
+
 /**** Casting an integer to a pointer ***************************************/
 
 // Simple roundtrip cast.
@@ -146,6 +163,15 @@ int roundtrip_and_read4(int* p){
   uintptr_t i = (uintptr_t) p;
   uintptr_t j = i * 1;
   int *q = (int*) rc_copy_alloc_id(j, p);
+  return *q;
+}
+
+[[rc::returns("{0} @ int<i32>")]]
+int roundtrip_and_read_past_the_end() {
+  int x[1];
+  x[0] = 0;
+  int *p = x + 1;
+  int *q = (int*)((uintptr_t)p) - 1;
   return *q;
 }
 

@@ -39,6 +39,10 @@ Section spec.
     fn(∀ (p1, p2) : loc * loc; (p1 @ (&own (int (i32)))), (p2 @ (&own (int (i32)))); True)
       → ∃ () : (), ((p1.2 ≤ p2.2 ? p1 : p2) @ (intptr (uintptr_t))); True.
 
+  (* Specifications for function [pointer_to_integer_comp_det]. *)
+  Definition type_of_pointer_to_integer_comp_det :=
+    fn(∀ () : (); True) → ∃ () : (), (void); (True).
+
   (* Specifications for function [roundtrip1]. *)
   Definition type_of_roundtrip1 :=
     fn(∀ p : loc; (p @ (&own (int (i32)))); True)
@@ -73,6 +77,10 @@ Section spec.
   Definition type_of_roundtrip_and_read4 :=
     fn(∀ (p, n) : loc * Z; (p @ (&own (n @ (int (i32))))); True)
       → ∃ () : (), (n @ (int (i32))); (p ◁ₗ (n @ (int (i32)))).
+
+  (* Specifications for function [roundtrip_and_read_past_the_end]. *)
+  Definition type_of_roundtrip_and_read_past_the_end :=
+    fn(∀ () : (); True) → ∃ () : (), ((0) @ (int (i32))); True.
 
   (* Specifications for function [cast_NULL]. *)
   Definition type_of_cast_NULL :=

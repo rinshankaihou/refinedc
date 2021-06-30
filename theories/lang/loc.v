@@ -118,6 +118,9 @@ Proof. destruct l. rewrite /offset_loc /shift_loc /=. f_equal. lia. Qed.
 Lemma offset_loc_sz1 ly l n : ly.(ly_size) = 1%nat → l offset{ly}ₗ n = l +ₗ n.
 Proof. rewrite /offset_loc => ->. f_equal. lia. Qed.
 
+Lemma offset_loc_offset_loc l ly n1 n2 : l offset{ly}ₗ n1 offset{ly}ₗ n2 = l offset{ly}ₗ (n1 + n2).
+Proof. destruct l. rewrite /offset_loc /shift_loc /=. f_equal. lia. Qed.
+
 (** ** Properties about alignment. *)
 
 Lemma ly_with_align_aligned_to l m n:
@@ -169,6 +172,15 @@ Lemma has_layout_loc_ly_mult_offset l ly n:
   l `has_layout_loc` ly_mult ly (S n) →
   (l +ₗ ly_size ly) `has_layout_loc` ly_mult ly n.
 Proof. move => ??. rewrite /ly_mult. by apply Z.divide_add_r. Qed.
+
+Lemma has_layout_loc_offset_loc l i ly:
+  layout_wf ly →
+  l `has_layout_loc` ly →
+  (l offset{ly}ₗ i) `has_layout_loc` ly.
+Proof.
+  move => Hwf Hl. apply Z.divide_add_r; [done|]. etrans; [by apply: Hwf|].
+  apply: Z.divide_factor_l.
+Qed.
 
 Lemma aligned_to_offset l n off :
   l `aligned_to` n → (n | off) → (l +ₗ off) `aligned_to` n.
