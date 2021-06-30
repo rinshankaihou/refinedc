@@ -24,14 +24,15 @@ Section type.
     1-2: iPureIntro; by apply: val_to_Z_in_range.
     have /(val_of_Z_is_Some None)[v Hv] : ((n1 + n2) `mod` int_modulus it1) ∈ it1 by apply int_modulus_mod_in_range.
     subst it2.
-    iApply (wp_binop_det v). iSplit.
-    - iIntros (σ v') "_ !%". split.
+    iApply (wp_binop_det_pure v). {
+      move => ??. split.
       + inversion 1; simplify_eq/=.
         by destruct it1 as [? []]; simplify_eq/=.
       + move => ->. apply: ArithOpII => //.
-        by destruct it1 as [? []]; simplify_eq/=.
-    - iIntros "!>". iApply "HΦ"; last done. iPureIntro.
-      by eapply val_to_of_Z.
+          by destruct it1 as [? []]; simplify_eq/=.
+    }
+    iIntros "!>". iApply "HΦ"; last done. iPureIntro.
+    by eapply val_to_of_Z.
   Qed.
 
   Global Instance macro_wrapping_add_inst it1 it2 e1 e2 :
