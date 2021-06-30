@@ -97,6 +97,11 @@ Section spec.
     fn(∀ (p, gamma, beta) : loc * lock_id * own_state; (p @ (&frac{beta} (spinlock (gamma)))); (lock_token gamma []))
       → ∃ () : (), (void); (p ◁ₗ{beta} (spinlock (gamma))).
 
+  (* Specifications for function [sl_lock_both]. *)
+  Definition type_of_sl_lock_both :=
+    fn(∀ (p2, gamma2, beta2, p1, gamma1, beta1) : loc * lock_id * own_state * loc * lock_id * own_state; (p2 @ (&frac{beta2} (spinlock (gamma2)))), (p1 @ (&frac{beta1} (spinlock (gamma1)))); True)
+      → ∃ () : (), (void); (p2 ◁ₗ{beta2} (spinlock (gamma2))) ∗ (lock_token gamma2 []) ∗ (p1 ◁ₗ{beta1} (spinlock (gamma1))) ∗ (lock_token gamma1 []).
+
   (* Specifications for function [free]. *)
   Definition type_of_free :=
     fn(∀ (s, p, n) : (gmultiset nat) * loc * nat; (p @ (&own (s @ (chunks_t)))), (&own (uninit (n))), (n @ (int (size_t))); ⌜sizeof(struct_chunk) ≤ n⌝)

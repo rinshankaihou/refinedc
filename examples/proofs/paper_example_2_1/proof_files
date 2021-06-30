@@ -5,6 +5,7 @@ generated_proof_atomic_thread_fence.v
 generated_proof_fork.v
 generated_proof_sl_init.v
 generated_proof_sl_lock.v
+generated_proof_sl_lock_both.v
 generated_proof_sl_unlock.v
 generated_proof_test_thread_safe_alloc.v
 generated_proof_test_thread_safe_alloc_fork_fn.v
