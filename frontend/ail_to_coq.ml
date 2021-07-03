@@ -208,11 +208,6 @@ let is_macro_annot e =
   | MacroString("rc_macro") :: _ -> true
   | _ -> false
 
-let is_copy_alloc_id_annot e =
-  match macro_annot_to_list e with
-  | MacroString("rc_copy_alloc_id") :: _ -> true
-  | _ -> false
-
 let rec op_type_of loc Ctype.(Ctype(_, c_ty)) =
   match c_ty with
   | Void                -> not_impl loc "op_type_of (Void)"
@@ -521,18 +516,6 @@ let rec translate_expr : bool -> op_type option -> ail_expr -> expr =
           locate (Macro(name, args, es, e3))
        | _ -> not_impl loc "wrong macro"
        end
-    | AilEcond(e1,e2,e3) when is_const_0 e1 && is_copy_alloc_id_annot e2 ->
-       let (e2, e3) =
-         match macro_annot_to_list e2 with
-         | [_; MacroExpr(e2); MacroExpr(e3); _] -> (e2, e3)
-         | _                                    ->
-             not_impl loc "wrong copy alloc id annotation"
-       in
-       let ot3 = op_type_of_tc (loc_of e3) (tc_of e3) in
-       let e2 = translate_expr false None e2 in
-       let e3 = translate_expr false None e3 in
-       let e = locate (CopyAID(ot3, e3, e2)) in
-       if lval then locate (LValue(e)) else e
     | AilEcond(e1,e2,e3)           ->
        let ty = op_type_of_tc (loc_of e1) (tc_of e1) in
        let e1 = translate_expr lval None e1 in
@@ -803,7 +786,17 @@ and translate_call : type a. a call_place -> loc -> bool -> ail_expr
         | AilBlinux(AilBLrmw)                      ->
             not_impl loc "call to linux builtin (rmw)"
         | AilBcopy_alloc_id                        ->
-            not_impl loc "call to a cerberus builtin (copy_alloc_id)"
+            let (e1, e2) =
+              match es with
+              | [e1; e2] -> (e1, e2)
+              | _        -> assert false
+            in
+            let ot = op_type_of_tc (loc_of e1) (tc_of e1) in
+            let e1 = translate_expr false None e1 in
+            let e2 = translate_expr false None e2 in
+            let e = CopyAID(ot, e1, e2) in
+            if lval then not_impl loc "copy_alloc_id as an lvalue";
+            Call_atomic_expr(e) (* FIXME constructor name confusing here. *)
       end
   | _                     ->
       let (_, arg_tys) =
