@@ -30,7 +30,7 @@ unsigned char tag_of(void* p){
 void* tag(void* p, unsigned char t){
   uintptr_t i = (uintptr_t) p;
   uintptr_t new_i = (i & ~ TAG_MASK) | t;
-  void* q = rc_copy_alloc_id(new_i, p);
+  void* q = copy_alloc_id(new_i, p);
   return q;
 }
 
@@ -48,7 +48,7 @@ void* untag(void* p){
 [[rc::returns("{r.1} @ &own<ty>")]]
 void* untag2(void* p){
   uintptr_t i = (uintptr_t) p;
-  return rc_copy_alloc_id(i - i % TAG_MOD, p);
+  return copy_alloc_id(i - i % TAG_MOD, p);
 }
 
 [[rc::returns("{0} @ int<size_t>")]]

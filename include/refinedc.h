@@ -1,6 +1,9 @@
 #ifndef REFINEDC_H
 #define REFINEDC_H
 
+// Required for copy_alloc_id.
+#include <stdint.h>
+
 #define rc_unfold(e)                                     \
     _Pragma("GCC diagnostic push")                       \
     _Pragma("GCC diagnostic ignored \"-Wunused-value\"") \
@@ -39,9 +42,9 @@
 #define RC_MACRO_EXPR(expr) "EXPR", expr
 #define RC_MACRO(name, m, ...) (0 ? ("rc_macro", #name, __VA_ARGS__, (m)) : (m))
 
-// Note that rc_copy_alloc_id exposes the provenance of [from] by casting it
+// Note that copy_alloc_id exposes the provenance of [from] by casting it
 // to an integer (throwing away the result).
-#define rc_copy_alloc_id(to, from) \
+#define copy_alloc_id(to, from) \
   (0 ? ("rc_copy_alloc_id", (from), (to), (void*) (to)) : ((uintptr_t) (from), (void*) (to)))
 
 #endif
