@@ -802,6 +802,8 @@ and translate_call : type a. a call_place -> loc -> bool -> ail_expr
             not_impl loc "call to linux builtin (write)"
         | AilBlinux(AilBLrmw)                      ->
             not_impl loc "call to linux builtin (rmw)"
+        | AilBcopy_alloc_id                        ->
+            not_impl loc "call to a cerberus builtin (copy_alloc_id)"
       end
   | _                     ->
       let (_, arg_tys) =

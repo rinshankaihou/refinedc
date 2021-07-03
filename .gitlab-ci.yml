@@ -33,7 +33,7 @@ variables:
 build-coq.8.12.0-timing:
   <<: *template
   variables:
-    OPAM_PINS: "coq version 8.12.0   cerberus git git+https://github.com/rems-project/cerberus.git#292f30d9d49f3c206aafb61f1a9abfa80c70ace3"
+    OPAM_PINS: "coq version 8.12.0   cerberus git git+https://github.com/rems-project/cerberus.git#8ef169cd84584f3b3e234333d7dd8cfc65c5b78d"
     DENY_WARNINGS: "1"
     OPAM_PKG: "1"
   only:
@@ -46,7 +46,7 @@ build-coq.8.12.0-timing:
 build-coq.8.12.0:
   <<: *template
   variables:
-    OPAM_PINS: "coq version 8.12.0   cerberus git git+https://github.com/rems-project/cerberus.git#292f30d9d49f3c206aafb61f1a9abfa80c70ace3"
+    OPAM_PINS: "coq version 8.12.0   cerberus git git+https://github.com/rems-project/cerberus.git#8ef169cd84584f3b3e234333d7dd8cfc65c5b78d"
     DENY_WARNINGS: "1"
   only:
   - /^ci/@iris/refinedc
@@ -54,7 +54,7 @@ build-coq.8.12.0:
 check-generated:
   <<: *template
   variables:
-    OPAM_PINS: "coq version 8.12.0   cerberus git git+https://github.com/rems-project/cerberus.git#292f30d9d49f3c206aafb61f1a9abfa80c70ace3"
+    OPAM_PINS: "coq version 8.12.0   cerberus git git+https://github.com/rems-project/cerberus.git#8ef169cd84584f3b3e234333d7dd8cfc65c5b78d"
     DENY_WARNINGS: "1"
     MAKE_TARGET: "check_generate_all"
     # necessary because dune does not like running in parallel
@@ -63,7 +63,7 @@ check-generated:
 trigger-iris.dev:
   <<: *template
   variables:
-    OPAM_PINS: "coq version 8.12.dev   coq-stdpp.dev git git+https://gitlab.mpi-sws.org/iris/stdpp.git#$STDPP_REV   coq-iris.dev git git+https://gitlab.mpi-sws.org/iris/iris.git#$IRIS_REV  cerberus git git+https://github.com/rems-project/cerberus.git#292f30d9d49f3c206aafb61f1a9abfa80c70ace3"
+    OPAM_PINS: "coq version 8.12.dev   coq-stdpp.dev git git+https://gitlab.mpi-sws.org/iris/stdpp.git#$STDPP_REV   coq-iris.dev git git+https://gitlab.mpi-sws.org/iris/iris.git#$IRIS_REV  cerberus git git+https://github.com/rems-project/cerberus.git#8ef169cd84584f3b3e234333d7dd8cfc65c5b78d"
   except:
   only:
   - triggers
