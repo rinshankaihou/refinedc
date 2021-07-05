@@ -805,6 +805,69 @@ Proof.
     by apply: He.
 Qed.
 
+Section shifts.
+Local Open Scope Z_scope.
+Lemma Z_shiftl_le_mono_l n a b:
+  0 ≤ n →
+  a ≤ b →
+  a ≪ n ≤ b ≪ n.
+Proof.
+  move => ??. rewrite !Z.shiftl_mul_pow2 //.
+  apply Z.mul_le_mono_nonneg_r => //. by apply: Z.pow_nonneg.
+Qed.
+Lemma Z_shiftr_le_mono_l n a b:
+  0 ≤ n →
+  a ≤ b →
+  a ≫ n ≤ b ≫ n.
+Proof.
+  move => ??. rewrite !Z.shiftr_div_pow2 //.
+  apply: Z.div_le_mono => //. by apply: Z.pow_pos_nonneg.
+Qed.
+Lemma Z_shiftl_lt_mono_l n a b:
+  0 ≤ n →
+  a < b →
+  a ≪ n < b ≪ n.
+Proof.
+  move => ??.
+  rewrite !Z.shiftl_mul_pow2 //. apply Z.mul_lt_mono_pos_r; [|done].
+    by apply: Z.pow_pos_nonneg.
+Qed.
+Lemma Z_shiftr_lt_mono_l n a b:
+  0 ≤ n →
+  a < b →
+  Z.land b (Z.ones n) = 0 →
+  a ≫ n < b ≫ n.
+Proof.
+  move => ???.
+  have ?:= Z.pow_pos_nonneg 2 n.
+  rewrite !Z.shiftr_div_pow2 //.
+  apply: Z.div_lt_upper_bound; [lia|].
+  rewrite -Z_div_exact_2 //; [lia|]. rewrite -Z.land_ones => //.
+Qed.
+Lemma Z_shiftr_shiftl_0 a n :
+  0 ≤ n →
+  (a ≪ n) ≫ n = a.
+Proof. move => ?. by rewrite Z.shiftr_shiftl_l // Z.sub_diag Z.shiftl_0_r. Qed.
+Lemma Z_shiftl_shiftr_0 a n :
+  0 ≤ n →
+  Z.land a (Z.ones n) = 0 →
+  (a ≫ n) ≪ n = a.
+Proof.
+  move => ? Hland.
+  rewrite -Z.ldiff_ones_r //.
+  apply Z.bits_inj_iff' => n' ?.
+  rewrite Z.ldiff_spec Z_ones_spec //. rewrite andb_comm.
+  case_bool_decide => //=. symmetry.
+  move/Z.bits_inj_iff' in Hland. move: (Hland n').
+  rewrite Z.bits_0 Z.land_spec Z_ones_spec//. case_bool_decide => //.
+  rewrite andb_true_r. naive_solver.
+Qed.
+Lemma Z_shiftl_distr_add a b c:
+  0 ≤ c →
+  (a + b) ≪ c = (a ≪ c + b ≪ c).
+Proof. move => ?. rewrite !Z.shiftl_mul_pow2 //. lia. Qed.
+End shifts.
+
 (** Z.lnot (bitwise negation) for unsigned integers with [bits] bits. *)
 Definition Z_lunot (bits n : Z) :=
   (Z.lnot n `mod` 2 ^ bits)%Z.

@@ -216,6 +216,11 @@ Global Instance simpl_and_Z_of_nat n m `{!ContainsProtected n}:
   SimplAndRel (=) (Z.of_nat n) (m) (λ T, 0 ≤ m ∧ n = Z.to_nat m ∧ T).
 Proof. unfold CanSolve in *. split; naive_solver lia. Qed.
 
+Global Instance simpl_both_shiftl_nonneg z n:
+  SimplBoth (0 ≤ z ≪ n) (0 ≤ z).
+Proof. split; by rewrite Z.shiftl_nonneg. Qed.
+
+
 Global Instance simpl_in_nil {A} (x : A):
   SimplBoth (x ∈ []) False.
 Proof. split; set_solver. Qed.
