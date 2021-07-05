@@ -219,7 +219,7 @@ Section own.
       l ◁ₗ{β} ty -∗
       (loc_in_bounds (l.1, a) 0 ∗ True) ∧
       (alloc_alive_loc l ∗ True) ∧
-      T (val_of_loc (l.1, a)) (t2mt (value void* (val_of_loc (l.1, a))))
+      T (val_of_loc (l.1, a)) (t2mt ((l.1, a) @ frac_ptr Own (place (l.1, a))))
     ) -∗
     typed_copy_alloc_id v (v ◁ᵥ a @ int it) l (l ◁ₗ{β} ty) (IntOp it) T.
   Proof.
