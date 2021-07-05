@@ -2,6 +2,11 @@ From refinedc.typing Require Import typing.
 From refinedc.linux.pkvm.early_alloc Require Import generated_spec.
 Set Default Proof Using "Type".
 
+Lemma shift_12_eq_mul_4096 n :
+  (n ≪ 12) = n * 4096.
+Proof. by rewrite Z.shiftl_mul_pow2. Qed.
+Hint Rewrite shift_12_eq_mul_4096 : lithium_rewrite.
+
 Lemma ly_size_PAGES i : ly_size (PAGES i) = (i * Z.to_nat PAGE_SIZE)%nat.
 Proof. by rewrite /PAGES /ly_with_align /ly_size. Qed.
 

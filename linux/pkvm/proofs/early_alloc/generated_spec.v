@@ -25,14 +25,14 @@ Section spec.
     let z_cur : Z := (base.2 + given * PAGE_SIZE)%Z in
     let z_end : Z := (base.2 + (given + remaining) * PAGE_SIZE)%Z in
     constrained (struct struct_region [@{type}
-      (z_end @ (int (uintptr_t))) ;
-      (z_cur @ (int (uintptr_t))) ;
-      (own_constrained (nonshr_constraint ((base.1, z_cur) ◁ₗ uninit (PAGES (Z.to_nat remaining)))) (base @ (ptr (Z.to_nat ((given + remaining) * PAGE_SIZE)))))
+      (z_end @ (int (u64))) ;
+      (z_cur @ (int (u64))) ;
+      (own_constrained (nonshr_constraint ((base.1, z_cur) ◁ₗ uninit (PAGES (Z.to_nat remaining)))) (base @ (intptr (u64))))
     ]) (
       ⌜0 ≤ given⌝ ∗
       ⌜0 ≤ remaining⌝ ∗
       (alloc_global base) ∗
-      ⌜base.2 + (given + remaining) * PAGE_SIZE <= max_int u64⌝
+      ⌜base.2 + (given + remaining) * PAGE_SIZE ≤ max_int u64⌝
     )
   )%I.
   Typeclasses Opaque region_rec.
@@ -53,14 +53,14 @@ Section spec.
       let z_cur : Z := (base.2 + given * PAGE_SIZE)%Z in
       let z_end : Z := (base.2 + (given + remaining) * PAGE_SIZE)%Z in
       constrained (struct struct_region [@{type}
-        (z_end @ (int (uintptr_t))) ;
-        (z_cur @ (int (uintptr_t))) ;
-        (own_constrained (nonshr_constraint ((base.1, z_cur) ◁ₗ uninit (PAGES (Z.to_nat remaining)))) (base @ (ptr (Z.to_nat ((given + remaining) * PAGE_SIZE)))))
+        (z_end @ (int (u64))) ;
+        (z_cur @ (int (u64))) ;
+        (own_constrained (nonshr_constraint ((base.1, z_cur) ◁ₗ uninit (PAGES (Z.to_nat remaining)))) (base @ (intptr (u64))))
       ]) (
         ⌜0 ≤ given⌝ ∗
         ⌜0 ≤ remaining⌝ ∗
         (alloc_global base) ∗
-        ⌜base.2 + (given + remaining) * PAGE_SIZE <= max_int u64⌝
+        ⌜base.2 + (given + remaining) * PAGE_SIZE ≤ max_int u64⌝
       )
     )%I.
   Proof. by rewrite {1}/with_refinement/=fixp_unfold. Qed.
@@ -88,15 +88,15 @@ Section spec.
 
   (* Type definitions. *)
 
-  (* Specifications for function [hyp_early_alloc_nr_pages]. *)
-  Definition type_of_hyp_early_alloc_nr_pages :=
+  (* Specifications for function [memset]. *)
+  Definition type_of_memset :=
+    fn(∀ (p, n) : loc * Z; (&own (place (p))), ((0) @ (int (u8))), (n @ (int (u64))); (p ◁ₗ (uninit (ly_with_align (Z.to_nat n) (Z.to_nat PAGE_SIZE)))))
+      → ∃ () : (), (void); (p ◁ₗ (zeroed (ly_with_align (Z.to_nat n) (Z.to_nat PAGE_SIZE)))).
+
+  (* Specifications for function [hyp_early_alloc_nr_used_pages]. *)
+  Definition type_of_hyp_early_alloc_nr_used_pages :=
     fn(∀ (base, given, remaining) : loc * Z * Z; (global_with_type "mem" Own (((base, given, remaining)) @ (region))))
       → ∃ () : (), (given @ (int (size_t))); (global_with_type "mem" Own (((base, given, remaining)) @ (region))).
-
-  (* Specifications for function [clear_page]. *)
-  Definition type_of_clear_page :=
-    fn(∀ p : loc; (p @ (&own (uninit (PAGE)))); True)
-      → ∃ () : (), (void); (p ◁ₗ (zeroed (PAGE))).
 
   (* Specifications for function [hyp_early_alloc_contig]. *)
   Definition type_of_hyp_early_alloc_contig :=
@@ -105,12 +105,12 @@ Section spec.
 
   (* Specifications for function [hyp_early_alloc_page]. *)
   Definition type_of_hyp_early_alloc_page :=
-    fn(∀ (base, given, remaining) : loc * Z * Z; (uninit (void*)); (global_with_type "mem" Own (((base, given, remaining)) @ (region))) ∗ ⌜0 ≠ remaining⌝)
+    fn(∀ (base, given, remaining) : loc * Z * Z; (uninit (void*)); (global_with_type "mem" Own (((base, given, remaining)) @ (region))) ∗ ⌜0 < remaining⌝)
       → ∃ () : (), (&own (zeroed (PAGE))); (global_with_type "mem" Own (((base, given + 1, remaining - 1)) @ (region))).
 
   (* Specifications for function [hyp_early_alloc_init]. *)
   Definition type_of_hyp_early_alloc_init :=
-    fn(∀ (l, n, s) : loc * Z * Z; (l @ (&own (uninit (PAGES (Z.to_nat n))))), (s @ (int (u32))); ⌜s = (n * PAGE_SIZE)%Z⌝ ∗ (alloc_global l) ∗ (global_with_type "mem" Own (uninit (struct_region))))
+    fn(∀ (l, n, s) : loc * Z * Z; (l @ (&own (uninit (PAGES (Z.to_nat n))))), (s @ (int (u64))); ⌜s = (n * PAGE_SIZE)%Z⌝ ∗ (alloc_global l) ∗ (global_with_type "mem" Own (uninit (struct_region))))
       → ∃ () : (), (void); (global_with_type "mem" Own (((l, 0, n)) @ (region))).
 End spec.
 

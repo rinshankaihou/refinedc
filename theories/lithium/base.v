@@ -26,6 +26,7 @@ Arguments N.shiftl : simpl never.
 Arguments N.shiftr : simpl never.
 Arguments Pos.shiftl : simpl never.
 Arguments Pos.shiftr : simpl never.
+Global Opaque Z.shiftl Z.shiftr.
 
 Notation "'[@{' A '}' x ; y ; .. ; z ]" :=  (@cons A x (@cons A y .. (@cons A z (@nil A)) ..)) (only parsing) : list_scope.
 Notation "'[@{' A '}' x ]" := (@cons A x nil) (only parsing) : list_scope.

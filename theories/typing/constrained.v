@@ -40,6 +40,14 @@ Section own_constrained.
     constructor. iIntros (l) "[Hl _]". by iApply loc_in_bounds_in_bounds.
   Qed.
 
+  Lemma copy_as_own_constrained l β P `{!OwnConstraint P} ty {HC: CopyAs l β ty} T:
+    (P β -∗ (HC T).(i2p_P)) -∗ copy_as l β (own_constrained P ty) T.
+  Proof.
+    iIntros "HT [Hty HP]". iDestruct (i2p_proof with "(HT HP)") as "HT". by iApply "HT".
+  Qed.
+  Global Instance copy_as_own_constrained_inst l β P `{!OwnConstraint P} ty {HC: CopyAs l β ty}:
+    CopyAs l β (own_constrained P ty) := λ T, i2p (copy_as_own_constrained l β P ty T).
+
   Lemma simplify_hyp_place_own_constrained P l β ty T `{!OwnConstraint P}:
     (P β -∗ l ◁ₗ{β} ty -∗ T) -∗ simplify_hyp (l◁ₗ{β} own_constrained P ty) T.
   Proof. iIntros "HT [Hl HP]". by iApply ("HT" with "HP"). Qed.

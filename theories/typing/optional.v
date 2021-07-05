@@ -480,7 +480,7 @@ Section optionalO.
     all: iExists _, _; iFrame.
   Qed.
 End optionalO.
-Notation "optionalO< ty , optty >" := (optional ty optty)
+Notation "optionalO< ty , optty >" := (optionalO ty optty)
   (only printing, format "'optionalO<' ty ,  optty '>'") : printing_sugar.
 
 Section int_optional.
