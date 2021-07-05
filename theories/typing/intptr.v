@@ -75,9 +75,10 @@ Notation "intptr< it >" := (intptr it) (only printing, format "'intptr<' it '>'"
 Section programs.
   Context `{!typeG Σ}.
 
-  Lemma type_cast_ptr_intptr (p : loc) β it ty T:
+  Lemma type_cast_ptr_intptr (p : loc) β it ty m `{!LearnAlignment β ty m} T:
     (∃ n,
       p ◁ₗ{β} ty -∗
+      ⌜if m is Some m' then p `aligned_to` m' else True⌝ -∗
       (loc_in_bounds p n ∗ True) ∧
       (⌜min_alloc_start ≤ p.2 ∧ p.2 + n ≤ max_alloc_end⌝ -∗
        ⌜p.2 ∈ it⌝ ∗
@@ -86,7 +87,8 @@ Section programs.
     typed_un_op p (p ◁ₗ{β} ty) (CastOp (IntOp it)) PtrOp T.
   Proof.
     iIntros "[%n HT] Hp" (Φ) "HΦ".
-    iDestruct ("HT" with "Hp") as "[[#Hlib _] HT]".
+    iDestruct (learnalign_learn with "Hp") as %?.
+    iDestruct ("HT" with "Hp [//]") as "[[#Hlib _] HT]".
     iDestruct (loc_in_bounds_ptr_in_range with "Hlib") as %?.
     iDestruct (loc_in_bounds_has_alloc_id with "Hlib") as %[aid ?].
     iDestruct ("HT" with "[//]") as ([? ?]%(val_of_Z_is_Some (Some aid))) "HT".
@@ -99,9 +101,9 @@ Section programs.
     - by apply: val_of_Z_to_prov.
     - iApply loc_in_bounds_shorten; [|done]. lia.
   Qed.
-  Global Instance type_cast_ptr_intptr_inst (p : loc) β it ty:
+  Global Instance type_cast_ptr_intptr_inst (p : loc) β it ty m `{!LearnAlignment β ty m}:
     TypedUnOp p (p ◁ₗ{β} ty)%I (CastOp (IntOp it)) PtrOp :=
-    λ T, i2p (type_cast_ptr_intptr p β it ty T).
+    λ T, i2p (type_cast_ptr_intptr p β it ty m T).
 
   Lemma type_cast_ptr_intptr_val (v : val) (p : loc) it (n : nat) T:
     (⌜min_alloc_start ≤ p.2 ∧ p.2 + n ≤ max_alloc_end⌝ -∗
