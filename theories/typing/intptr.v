@@ -77,21 +77,19 @@ Section programs.
 
   Lemma type_cast_ptr_intptr (p : loc) β it ty T:
     (∃ n,
-      (p ◁ₗ{β} ty -∗ loc_in_bounds p n ∗ True) ∧
+      p ◁ₗ{β} ty -∗
+      (loc_in_bounds p n ∗ True) ∧
       (⌜min_alloc_start ≤ p.2 ∧ p.2 + n ≤ max_alloc_end⌝ -∗
-       p ◁ₗ{β} ty -∗
        ⌜p.2 ∈ it⌝ ∗
          ((alloc_alive_loc p ∗ True) ∧ ∀ v, T v (t2mt (p @ intptr it))))
     ) -∗
     typed_un_op p (p ◁ₗ{β} ty) (CastOp (IntOp it)) PtrOp T.
   Proof.
     iIntros "[%n HT] Hp" (Φ) "HΦ".
-    iAssert (loc_in_bounds p n) as "#Hlib".
-    { iDestruct "HT" as "[HT _]". iDestruct ("HT" with "Hp") as "[$ _]". }
-    iDestruct "HT" as "[_ HT]".
+    iDestruct ("HT" with "Hp") as "[[#Hlib _] HT]".
     iDestruct (loc_in_bounds_ptr_in_range with "Hlib") as %?.
     iDestruct (loc_in_bounds_has_alloc_id with "Hlib") as %[aid ?].
-    iDestruct ("HT" with "[//] Hp") as ([? ?]%(val_of_Z_is_Some (Some aid))) "HT".
+    iDestruct ("HT" with "[//]") as ([? ?]%(val_of_Z_is_Some (Some aid))) "HT".
     iApply wp_cast_ptr_int; [by apply val_to_of_loc|done|done|].
     iSplit; [by iDestruct "HT" as "[[$ _] _]" | iDestruct "HT" as "[_ HT]"].
     iApply ("HΦ" with "[] HT").
