@@ -51,3 +51,4 @@
 -Q _build/default/linux/casestudies/proofs/early_alloc refinedc.linux.casestudies.early_alloc
 -Q _build/default/examples/proofs/quick_sort refinedc.examples.quick_sort
 -Q _build/default/examples/proofs/tagged_ptr refinedc.examples.tagged_ptr
+-Q _build/default/examples/proofs/ocaml_runtime refinedc.examples.ocaml_runtime
