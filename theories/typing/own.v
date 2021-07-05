@@ -215,7 +215,6 @@ Section own.
 
   Lemma type_copy_aid v a it l β ty T:
     (
-      v ◁ᵥ a @ int it -∗
       l ◁ₗ{β} ty -∗
       (loc_in_bounds (l.1, a) 0 ∗ True) ∧
       (alloc_alive_loc l ∗ True) ∧
@@ -223,7 +222,7 @@ Section own.
     ) -∗
     typed_copy_alloc_id v (v ◁ᵥ a @ int it) l (l ◁ₗ{β} ty) (IntOp it) T.
   Proof.
-    iIntros "HT %Hv Hl" (Φ) "HΦ". iDestruct ("HT" with "[//] Hl") as "HT".
+    iIntros "HT %Hv Hl" (Φ) "HΦ". iDestruct ("HT" with "Hl") as "HT".
     rewrite !right_id. iDestruct "HT" as "[#Hlib HT]".
     iApply wp_copy_alloc_id; [ done | by rewrite val_to_of_loc | done | ].
     iSplit; [by iDestruct "HT" as "[$ _]" |].
