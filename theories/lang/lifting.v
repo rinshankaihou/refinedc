@@ -535,6 +535,38 @@ Proof.
   iModIntro. iMod "HE". by iFrame.
 Qed.
 
+Lemma wp_ptr_diff Φ vl1 l1 vl2 l2 ly vo:
+  val_to_loc vl1 = Some l1 →
+  val_to_loc vl2 = Some l2 →
+  val_of_Z ((l1.2 - l2.2) `div` ly.(ly_size)) ptrdiff_t None = Some vo →
+  l1.1 = l2.1 →
+  0 < ly.(ly_size) →
+  loc_in_bounds l1 0 -∗
+  loc_in_bounds l2 0 -∗
+  (alloc_alive_loc l1 ∧ ▷ Φ vo) -∗
+  WP Val vl1 sub_ptr{ly , PtrOp, PtrOp} Val vl2 {{ Φ }}.
+Proof.
+  iIntros (Hvl1 Hvl2 Hvo ??) "Hl1 Hl2 HΦ".
+  iApply wp_binop_det. iIntros (σ) "Hσ".
+  destruct (decide (valid_ptr l1 σ.(st_heap))). 2: {
+    iDestruct "HΦ" as "[Ha _]".
+    by iMod (alloc_alive_loc_to_valid_ptr with "Hl1 Ha Hσ") as %?.
+  }
+  destruct (decide (valid_ptr l2 σ.(st_heap))). 2: {
+    iDestruct "HΦ" as "[Ha _]".
+    iMod (alloc_alive_loc_to_valid_ptr with "Hl2 [Ha] Hσ") as %?; [|done].
+    by iApply alloc_alive_loc_mono.
+  }
+  iDestruct "HΦ" as "[_ ?]".
+  iApply fupd_mask_intro; [set_solver|]. iIntros "HE".
+  iSplit. {
+    iPureIntro. split.
+    - inversion 1; by simplify_eq.
+    - move => ->. by apply: PtrDiffOpPP.
+  }
+  iModIntro. iMod "HE". by iFrame.
+Qed.
+
 Lemma wp_get_member Φ vl l sl n E:
   val_to_loc vl = Some l →
   is_Some (index_of sl.(sl_members) n) →

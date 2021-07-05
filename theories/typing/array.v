@@ -307,6 +307,42 @@ Section array.
     TypedBinOp v (v ◁ᵥ i @ int it)%I l (l ◁ₗ{β} array_ptr ly base idx len) (PtrNegOffsetOp ly) (IntOp it) PtrOp :=
     λ T, i2p (type_bin_op_neg_offset_array_ptr l β T ly it v i idx len base).
 
+  Lemma type_bin_op_diff_array_ptr_array l1 β l2 T ly idx (len : nat) tys:
+    (l1 ◁ₗ{β} array_ptr ly l2 idx len -∗
+     ⌜0 < ly.(ly_size)⌝ ∗
+     ⌜0 < length tys⌝ ∗
+     ⌜idx ≤ max_int ptrdiff_t⌝ ∗
+     (∀ ty, ⌜tys !! 0%nat = Some ty⌝ -∗ l2 ◁ₗ{β} ty -∗ alloc_alive_loc l2 ∗ True) ∧
+     (l2 ◁ₗ{β} array ly tys -∗ T (i2v idx ptrdiff_t) (t2mt (idx @ int ptrdiff_t)))) -∗
+     typed_bin_op l1 (l1 ◁ₗ{β} array_ptr ly l2 idx len) l2 (l2 ◁ₗ{β} array ly tys) (PtrDiffOp ly) PtrOp PtrOp T.
+  Proof.
+    iIntros "HT (->&%&%&#Hlib) Hl2" (Φ) "HΦ".
+    iDestruct ("HT" with "[$Hlib//]") as (? ? ?) "HT".
+    have /(val_of_Z_is_Some None) [vo Hvo] : idx ∈ ptrdiff_t. {
+      split; [|done].
+      rewrite /min_int/=/int_half_modulus/=/bits_per_int/bytes_per_int/=/bits_per_byte. lia.
+    }
+    rewrite /i2v Hvo/=.
+    iApply wp_ptr_diff; [by apply: val_to_of_loc|by apply: val_to_of_loc| |done|done| | |].
+    { rewrite /= Z.add_simpl_l Z.mul_comm Z.div_mul //. lia. }
+    { iApply (loc_in_bounds_offset with "Hlib"); simpl; unfold addr in *; [done|nia|].
+      rewrite {2}/ly_size/=. nia. }
+    { iApply (loc_in_bounds_shorten with "Hlib"). lia. }
+    iSplit. {
+      iDestruct "HT" as "[HT _]".
+      destruct tys as [|ty tys] => //=.
+      iDestruct "Hl2" as "(?&?&[Hty _])".
+      rewrite offset_loc_0. iApply alloc_alive_loc_mono; [simpl; done|].
+      iDestruct ("HT" with "[//] Hty") as "[$ _]". }
+    iDestruct "HT" as "[_ HT]". iSpecialize ("HT" with "Hl2").
+    iModIntro. iApply "HΦ"; [|iApply "HT"].
+    iPureIntro. by apply: val_to_of_Z.
+  Qed.
+  Global Instance type_bin_op_diff_array_ptr_array_inst (l1 : loc) β l2 ly idx (len : nat) tys:
+    TypedBinOp l1 (l1 ◁ₗ{β} array_ptr ly l2 idx len)%I l2 (l2 ◁ₗ{β} array ly tys) (PtrDiffOp ly) PtrOp PtrOp :=
+    λ T, i2p (type_bin_op_diff_array_ptr_array l1 β l2 T ly idx len tys).
+
+
   Lemma subsume_array_ptr_alloc_alive β l ly base idx len T:
     alloc_alive_loc base ∗ T -∗
     subsume (l ◁ₗ{β} array_ptr ly base idx len) (alloc_alive_loc l) T.

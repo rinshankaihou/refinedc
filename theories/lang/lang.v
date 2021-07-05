@@ -244,9 +244,10 @@ Inductive eval_bin_op : bin_op → op_type → op_type → state → val → val
     val_to_loc v1 = Some l1 →
     val_to_loc v2 = Some l2 →
     l1.1 = l2.1 →
+    0 < ly.(ly_size) →
     valid_ptr l1 σ.(st_heap) →
     valid_ptr l2 σ.(st_heap) →
-    val_of_Z ((l1.2 - l1.2) `div` ly.(ly_size)) ptrdiff_t None = Some v →
+    val_of_Z ((l1.2 - l2.2) `div` ly.(ly_size)) ptrdiff_t None = Some v →
     eval_bin_op (PtrDiffOp ly) PtrOp PtrOp σ v1 v2 v
 | RelOpPNull v1 v2 σ l v op b p a:
     val_to_loc v1 = Some l →
