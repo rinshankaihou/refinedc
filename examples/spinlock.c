@@ -21,8 +21,9 @@ void sl_unlock(struct spinlock* lock) {
   atomic_store(&lock->lock, 0);
 }
 
-void sl_lock_both(struct spinlock* a, struct spinlock* b) {
-  if ((uintptr_t)a < (uintptr_t)b) {
+// Original version from Hafnium (locks must come from the same allocation).
+void sl_lock_both_same_prov(struct spinlock* a, struct spinlock* b) {
+  if (a < b) {
 		sl_lock(a);
 		sl_lock(b);
 	} else {
@@ -30,3 +31,16 @@ void sl_lock_both(struct spinlock* a, struct spinlock* b) {
 		sl_lock(a);
 	}
 }
+
+// More general version allowing locks from different allocations.
+void sl_lock_both(struct spinlock* a, struct spinlock* b) {
+  if ((uintptr_t) a < (uintptr_t) b) {
+		sl_lock(a);
+		sl_lock(b);
+	} else {
+		sl_lock(b);
+		sl_lock(a);
+	}
+}
+
+

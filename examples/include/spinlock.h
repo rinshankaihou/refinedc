@@ -32,7 +32,7 @@ void sl_lock(struct spinlock* lock);
 [[rc::annot_args("0 : 1 LockA")]]
 void sl_unlock(struct spinlock* lock);
 
-/* Locks both a and b in a determinitic order (can be used to avoid deadlocks) */
+// Locks both a and b in a determinitic order (used to avoid deadlocks).
 [[rc::parameters("p1 : loc", "gamma1 : lock_id", "beta1 : own_state")]]
 [[rc::parameters("p2 : loc", "gamma2 : lock_id", "beta2 : own_state")]]
 [[rc::args("p1 @ &frac<beta1, spinlock<gamma1>>")]]
@@ -40,4 +40,14 @@ void sl_unlock(struct spinlock* lock);
 [[rc::ensures("frac beta1 p1 : spinlock<gamma1>", "[lock_token gamma1 []]")]]
 [[rc::ensures("frac beta2 p2 : spinlock<gamma2>", "[lock_token gamma2 []]")]]
 void sl_lock_both(struct spinlock* a, struct spinlock* b);
+
+// Same but with implementation assuming locks to be in the same allocaiton.
+[[rc::parameters("p1 : loc", "gamma1 : lock_id", "beta1 : own_state")]]
+[[rc::parameters("p2 : loc", "gamma2 : lock_id", "beta2 : own_state")]]
+[[rc::args("p1 @ &frac<beta1, spinlock<gamma1>>")]]
+[[rc::args("p2 @ &frac<beta2, spinlock<gamma2>>")]]
+[[rc::requires("{p1.1 = p2.1}")]]
+[[rc::ensures("frac beta1 p1 : spinlock<gamma1>", "[lock_token gamma1 []]")]]
+[[rc::ensures("frac beta2 p2 : spinlock<gamma2>", "[lock_token gamma2 []]")]]
+void sl_lock_both_same_prov(struct spinlock* a, struct spinlock* b);
 #endif
