@@ -175,6 +175,16 @@ int roundtrip_and_read_past_the_end() {
   return *q;
 }
 
+[[rc::returns("{0} @ int<i32>")]]
+int roundtrip_and_read_past_the_end_copy_alloc_id() {
+  int x[1];
+  x[0] = 0;
+  int *p = x + 1;
+  uintptr_t pi = (uintptr_t)p + 0;
+  int *q = (int*)copy_alloc_id(pi, &x) - 1;
+  return *q;
+}
+
 /**** Casting NULL and function pointers ***************************************/
 
 [[rc::returns("{0} @ int<i32>")]]

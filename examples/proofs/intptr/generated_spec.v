@@ -82,6 +82,10 @@ Section spec.
   Definition type_of_roundtrip_and_read_past_the_end :=
     fn(∀ () : (); True) → ∃ () : (), ((0) @ (int (i32))); True.
 
+  (* Specifications for function [roundtrip_and_read_past_the_end_copy_alloc_id]. *)
+  Definition type_of_roundtrip_and_read_past_the_end_copy_alloc_id :=
+    fn(∀ () : (); True) → ∃ () : (), ((0) @ (int (i32))); True.
+
   (* Specifications for function [cast_NULL]. *)
   Definition type_of_cast_NULL :=
     fn(∀ () : (); True) → ∃ () : (), ((0) @ (int (i32))); True.

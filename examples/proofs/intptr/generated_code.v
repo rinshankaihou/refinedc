@@ -271,9 +271,42 @@ Section code.
   Definition loc_354 : location_info := LocationInfo file_0 172 2 172 3.
   Definition loc_355 : location_info := LocationInfo file_0 172 4 172 5.
   Definition loc_356 : location_info := LocationInfo file_0 172 9 172 10.
-  Definition loc_359 : location_info := LocationInfo file_0 182 2 182 30.
-  Definition loc_360 : location_info := LocationInfo file_0 182 9 182 29.
-  Definition loc_361 : location_info := LocationInfo file_0 182 15 182 29.
+  Definition loc_359 : location_info := LocationInfo file_0 181 2 181 11.
+  Definition loc_360 : location_info := LocationInfo file_0 182 2 182 17.
+  Definition loc_361 : location_info := LocationInfo file_0 183 2 183 34.
+  Definition loc_362 : location_info := LocationInfo file_0 184 2 184 57.
+  Definition loc_363 : location_info := LocationInfo file_0 185 2 185 12.
+  Definition loc_364 : location_info := LocationInfo file_0 185 9 185 11.
+  Definition loc_365 : location_info := LocationInfo file_0 185 9 185 11.
+  Definition loc_366 : location_info := LocationInfo file_0 185 10 185 11.
+  Definition loc_367 : location_info := LocationInfo file_0 185 10 185 11.
+  Definition loc_368 : location_info := LocationInfo file_0 184 11 184 56.
+  Definition loc_369 : location_info := LocationInfo file_0 184 11 184 52.
+  Definition loc_370 : location_info := LocationInfo file_0 184 17 184 52.
+  Definition loc_371 : location_info := LocationInfo file_0 184 17 184 40.
+  Definition loc_372 : location_info := LocationInfo file_0 184 41 184 45.
+  Definition loc_373 : location_info := LocationInfo file_0 184 41 184 45.
+  Definition loc_374 : location_info := LocationInfo file_0 184 47 184 51.
+  Definition loc_375 : location_info := LocationInfo file_0 184 49 184 50.
+  Definition loc_376 : location_info := LocationInfo file_0 184 55 184 56.
+  Definition loc_379 : location_info := LocationInfo file_0 183 17 183 33.
+  Definition loc_380 : location_info := LocationInfo file_0 183 17 183 29.
+  Definition loc_381 : location_info := LocationInfo file_0 183 28 183 29.
+  Definition loc_382 : location_info := LocationInfo file_0 183 28 183 29.
+  Definition loc_383 : location_info := LocationInfo file_0 183 32 183 33.
+  Definition loc_386 : location_info := LocationInfo file_0 182 11 182 16.
+  Definition loc_387 : location_info := LocationInfo file_0 182 11 182 12.
+  Definition loc_388 : location_info := LocationInfo file_0 182 11 182 12.
+  Definition loc_389 : location_info := LocationInfo file_0 182 15 182 16.
+  Definition loc_392 : location_info := LocationInfo file_0 181 2 181 6.
+  Definition loc_393 : location_info := LocationInfo file_0 181 2 181 6.
+  Definition loc_394 : location_info := LocationInfo file_0 181 2 181 3.
+  Definition loc_395 : location_info := LocationInfo file_0 181 2 181 3.
+  Definition loc_396 : location_info := LocationInfo file_0 181 4 181 5.
+  Definition loc_397 : location_info := LocationInfo file_0 181 9 181 10.
+  Definition loc_400 : location_info := LocationInfo file_0 192 2 192 30.
+  Definition loc_401 : location_info := LocationInfo file_0 192 9 192 29.
+  Definition loc_402 : location_info := LocationInfo file_0 192 15 192 29.
 
   (* Definition of function [int_ptr1]. *)
   Definition impl_int_ptr1 : function := {|
@@ -674,6 +707,34 @@ Section code.
     )%E
   |}.
 
+  (* Definition of function [roundtrip_and_read_past_the_end_copy_alloc_id]. *)
+  Definition impl_roundtrip_and_read_past_the_end_copy_alloc_id : function := {|
+    f_args := [
+    ];
+    f_local_vars := [
+      ("x", mk_array_layout (it_layout i32) 1);
+      ("q", void*);
+      ("p", void*);
+      ("pi", it_layout uintptr_t)
+    ];
+    f_init := "#0";
+    f_code := (
+      <[ "#0" :=
+        locinfo: loc_359 ;
+        LocInfoE loc_393 ((LocInfoE loc_395 ("x")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_396 (i2v 0 i32))) <-{ it_layout i32 }
+          LocInfoE loc_397 (i2v 0 i32) ;
+        "p" <-{ void* }
+          LocInfoE loc_386 ((LocInfoE loc_387 (&(LocInfoE loc_388 ("x")))) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_389 (i2v 1 i32))) ;
+        "pi" <-{ it_layout uintptr_t }
+          LocInfoE loc_379 ((LocInfoE loc_380 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_381 (use{void*} (LocInfoE loc_382 ("p")))))) +{IntOp uintptr_t, IntOp uintptr_t} (LocInfoE loc_383 (UnOp (CastOp $ IntOp uintptr_t) (IntOp i32) (LocInfoE loc_383 (i2v 0 i32))))) ;
+        "q" <-{ void* }
+          LocInfoE loc_368 ((LocInfoE loc_369 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_370 (CopyAllocId (IntOp uintptr_t) (LocInfoE loc_372 (use{it_layout uintptr_t} (LocInfoE loc_373 ("pi")))) (LocInfoE loc_374 (&(LocInfoE loc_375 ("x")))))))) at_neg_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_376 (i2v 1 i32))) ;
+        locinfo: loc_363 ;
+        Return (LocInfoE loc_364 (use{it_layout i32} (LocInfoE loc_366 (!{void*} (LocInfoE loc_367 ("q"))))))
+      ]> $∅
+    )%E
+  |}.
+
   (* Definition of function [cast_NULL]. *)
   Definition impl_cast_NULL : function := {|
     f_args := [
@@ -683,8 +744,8 @@ Section code.
     f_init := "#0";
     f_code := (
       <[ "#0" :=
-        locinfo: loc_359 ;
-        Return (LocInfoE loc_360 (UnOp (CastOp $ IntOp i32) (PtrOp) (LocInfoE loc_361 (NULL))))
+        locinfo: loc_400 ;
+        Return (LocInfoE loc_401 (UnOp (CastOp $ IntOp i32) (PtrOp) (LocInfoE loc_402 (NULL))))
       ]> $∅
     )%E
   |}.
