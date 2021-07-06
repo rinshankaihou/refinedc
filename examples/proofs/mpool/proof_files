@@ -14,4 +14,5 @@ generated_proof_round_pointer_up.v
 generated_proof_sl_init.v
 generated_proof_sl_lock.v
 generated_proof_sl_lock_both.v
+generated_proof_sl_lock_both_same_prov.v
 generated_proof_sl_unlock.v

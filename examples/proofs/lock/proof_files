@@ -7,6 +7,7 @@ generated_proof_read_outside.v
 generated_proof_sl_init.v
 generated_proof_sl_lock.v
 generated_proof_sl_lock_both.v
+generated_proof_sl_lock_both_same_prov.v
 generated_proof_sl_unlock.v
 generated_proof_write_locked.v
 generated_proof_write_outside.v
