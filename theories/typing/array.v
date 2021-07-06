@@ -312,15 +312,16 @@ Section array.
 
   Lemma type_bin_op_diff_array_ptr_array l1 β l2 T ly idx (len : nat) tys:
     (l1 ◁ₗ{β} array_ptr ly l2 idx len -∗
+     l2 ◁ₗ{β} array ly tys -∗
      ⌜0 < ly.(ly_size)⌝ ∗
      ⌜0 < length tys⌝ ∗
      ⌜idx ≤ max_int ptrdiff_t⌝ ∗
-     (∀ ty, ⌜tys !! 0%nat = Some ty⌝ -∗ l2 ◁ₗ{β} ty -∗ alloc_alive_loc l2 ∗ True) ∧
-     (l2 ◁ₗ{β} array ly tys -∗ T (i2v idx ptrdiff_t) (t2mt (idx @ int ptrdiff_t)))) -∗
+     (alloc_alive_loc l2 ∗ True) ∧
+     (T (i2v idx ptrdiff_t) (t2mt (idx @ int ptrdiff_t)))) -∗
      typed_bin_op l1 (l1 ◁ₗ{β} array_ptr ly l2 idx len) l2 (l2 ◁ₗ{β} array ly tys) (PtrDiffOp ly) PtrOp PtrOp T.
   Proof.
     iIntros "HT (->&%&%&#Hlib) Hl2" (Φ) "HΦ".
-    iDestruct ("HT" with "[$Hlib//]") as (? ? ?) "HT".
+    iDestruct ("HT" with "[$Hlib//] Hl2") as (? ? ?) "HT".
     have /(val_of_Z_is_Some None) [vo Hvo] : idx ∈ ptrdiff_t. {
       split; [|done].
       rewrite /min_int/=/int_half_modulus/=/bits_per_int/bytes_per_int/=/bits_per_byte. lia.
@@ -332,12 +333,10 @@ Section array.
       rewrite {2}/ly_size/=. nia. }
     { iApply (loc_in_bounds_shorten with "Hlib"). lia. }
     iSplit. {
-      iDestruct "HT" as "[HT _]".
-      destruct tys as [|ty tys] => //=.
-      iDestruct "Hl2" as "(?&?&[Hty _])".
-      rewrite offset_loc_0. iApply alloc_alive_loc_mono; [simpl; done|].
-      iDestruct ("HT" with "[//] Hty") as "[$ _]". }
-    iDestruct "HT" as "[_ HT]". iSpecialize ("HT" with "Hl2").
+      iApply alloc_alive_loc_mono; [simpl; done|].
+      iDestruct "HT" as "[[$ _] _]".
+    }
+    iDestruct "HT" as "[_ HT]".
     iModIntro. iApply "HΦ"; [|iApply "HT"].
     iPureIntro. by apply: val_to_of_Z.
   Qed.
