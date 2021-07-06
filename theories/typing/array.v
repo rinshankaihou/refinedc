@@ -85,6 +85,9 @@ Section array.
     rewrite Hv. repeat unfold ly_size => /=; lia.
   Qed.
 
+  Global Instance array_loc_in_bounds ly β tys : LocInBounds (array ly tys) β (ly_size ly * length tys).
+  Proof. constructor. iIntros (?) "(?&$&?)". Qed.
+
   Lemma array_get_type (i : nat) ly tys ty l β:
     tys !! i = Some ty →
     l ◁ₗ{β} array ly tys -∗ (l offset{ly}ₗ i) ◁ₗ{β} ty ∗ l ◁ₗ{β} array ly (<[ i := place (l offset{ly}ₗ i)]>tys).

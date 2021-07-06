@@ -531,7 +531,15 @@ let rec translate_expr : bool -> op_type option -> ail_expr -> expr =
           | _                                                   ->
           let ty = op_type_of_tc (loc_of e) (tc_of e) in
           let op_ty = op_type_of loc c_ty in
-          let e = translate e in
+          let new_lval =
+            begin
+              (* Casting a integer to a pointer turns an lexpression into
+                 an rexpression. *)
+              match ty, op_ty with
+              | OpInt _, OpPtr _ -> false
+              | _      , _       -> lval
+            end in
+          let e = translate_expr new_lval None e in
           locate (UnOp(CastOp(op_ty), ty, e))
         end
     | AilEcall(e,es)               ->

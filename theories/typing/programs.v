@@ -249,6 +249,7 @@ Section judgements.
     | W.BinOp op ot PtrOp e1 e2 => T' ← find_place_ctx e2; Some (λ T, typed_val_expr (W.to_expr e1) (λ v ty, T' (λ K l, T (K ++ [BinOpPCtx op ot v ty]) l)))
     | W.UnOp op PtrOp e => T' ← find_place_ctx e; Some (λ T, T' (λ K l, T (K ++ [UnOpPCtx op]) l))
     (* TODO: Is the existential quantifier here a good idea or should this be a fullblown judgment? *)
+    | W.UnOp op (IntOp it) e => Some (λ T, typed_val_expr (UnOp op (IntOp it) (W.to_expr e)) (λ v ty, v ◁ᵥ ty -∗ ∃ l, ⌜v = val_of_loc l⌝ ∗ T [] l)%I)
     | W.LValue e => Some (λ T, typed_val_expr (W.to_expr e) (λ v ty, v ◁ᵥ ty -∗ ∃ l, ⌜v = val_of_loc l⌝ ∗ T [] l)%I)
     | _ => None
     end.
@@ -272,6 +273,11 @@ Section judgements.
     |  H : context [IntoPlaceCtx _ _] |- _ => rename H into IH
     end.
     1: iApply @wp_value; by iApply ("HΦ'" with "HT").
+    1: {
+      iApply "HT". iIntros (v ty) "Hv HT".
+      iDestruct ("HT" with "Hv") as (l ?) "HT". subst.
+        by iApply ("HΦ'" $! []).
+    }
     4: {
       rewrite /LValue. iApply "HT". iIntros (v ty) "Hv HT".
       iDestruct ("HT" with "Hv") as (l ?) "HT". subst.
