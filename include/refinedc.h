@@ -48,7 +48,8 @@
 #define copy_alloc_id(to, from) __cerbvar_copy_alloc_id((to), (from))
 #else
 static inline void *copy_alloc_id(uintptr_t to, void *from) {
-  return ((uintptr_t) (from), (void*) (to));
+  (uintptr_t) from;
+  return (void*) to;
 }
 #endif
 
