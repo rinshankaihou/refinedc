@@ -370,6 +370,8 @@ Section array.
     SubsumePlace l β (array_ptr ly1 base1 idx1 len1) (array_ptr ly2 base2 idx2 len2) :=
     λ T, i2p (subsume_array_ptr ly1 ly2 base1 base2 idx1 idx2 len1 len2 l β T).
 
+  (*
+  TODO: The following rule easily leads to diverging if the hypothesis is simplified before it is introduced into the context.
   Lemma simplify_array_ptr_hyp_learn_loc l β ly base idx len T:
     (⌜l = base offset{ly}ₗ idx⌝ -∗ l ◁ₗ{β} array_ptr ly base idx len -∗ T) -∗
     simplify_hyp (l ◁ₗ{β} array_ptr ly base idx len) T.
@@ -377,7 +379,7 @@ Section array.
   Global Instance simplify_array_ptr_hyp_learn_loc_inst l β ly base idx len `{!TCUnless (FastDone (l = base offset{ly}ₗ idx))}:
     SimplifyHypPlace l β (array_ptr ly base idx len) (Some 0%N) | 10 :=
     λ T, i2p (simplify_array_ptr_hyp_learn_loc l β ly base idx len T).
-
+*)
 
   Lemma simplify_hyp_array_ptr ly l β base idx len T:
     (⌜l = (base offset{ly}ₗ idx)⌝ -∗
