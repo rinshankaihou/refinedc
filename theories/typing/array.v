@@ -132,6 +132,16 @@ Section array.
     by iApply (alloc_alive_loc_mono with "Hl").
   Qed.
 
+  Lemma subsume_array_alloc_alive l ly tys β T :
+    (⌜0 < length tys⌝ ∗ (∀ ty, ⌜tys !! 0%nat = Some ty⌝ -∗ l ◁ₗ{β} ty -∗ alloc_alive_loc l ∗ T)) -∗
+    subsume (l ◁ₗ{β} array ly tys) (alloc_alive_loc l) T.
+  Proof.
+    iIntros "[% HT]". destruct tys => //=. iIntros "(%&?&[Hty Htys])".
+    rewrite offset_loc_0. iDestruct ("HT" with "[//] Hty") as "[$ $]".
+  Qed.
+  Global Instance subsume_array_alloc_alive_inst l ly tys β:
+    Subsume (l ◁ₗ{β} array ly tys) (alloc_alive_loc l) | 10 :=
+    λ T, i2p (subsume_array_alloc_alive l ly tys β T).
   (*** array_ptr *)
   Program Definition array_ptr (ly : layout) (base : loc) (idx : Z) (len : nat) : type := {|
     ty_own β l := (
