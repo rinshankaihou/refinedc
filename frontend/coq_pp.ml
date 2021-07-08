@@ -291,7 +291,8 @@ type import = string * string
 let pp_import ff (from, mod_name) =
   Format.fprintf ff "From %s Require Import %s.@;" from mod_name
 
-let pp_code : import list -> Coq_ast.t pp = fun imports ff ast ->
+let pp_code : string -> import list -> Coq_ast.t pp =
+    fun root_dir imports ff ast ->
   (* Formatting utilities. *)
   let pp fmt = Format.fprintf ff fmt in
 
@@ -325,6 +326,10 @@ let pp_code : import list -> Coq_ast.t pp = fun imports ff ast ->
         (locs, files)
       in
       let pp_file_def (file, key) =
+        let file =
+          try Filename.relative_path root_dir file
+          with Invalid_argument(_) -> file
+        in
         fprintf ff "@;Definition file_%i : string := \"%s\"." key file
       in
       List.iter pp_file_def all_files;
@@ -1075,6 +1080,8 @@ let pp_spec : string -> import list -> inlined_code ->
       Panic.panic_no_pos "Annotations on function [%s] are invalid." id
     in
     match annot.fa_proof_kind with
+    | Proof_inlined ->
+        ()
     | Proof_skipped ->
         pp "\n@;(* Function [%s] has been skipped. *)" id
     | _             ->
@@ -1162,10 +1169,20 @@ let pp_proof : string -> func_def -> import list -> string list -> proof_kind
   if List.length def.func_args <> List.length func_annot.fa_args then
     Panic.panic_no_pos "Argument number missmatch between code and spec.";
   pp "\n@;(* Typing proof for [%s]. *)@;" def.func_name;
-  let (used_globals, used_functions) = def.func_deps in
-  let deps =
-    used_globals @ used_functions
+  (* Get all globals, including those needed for inlined functions. *)
+  let (used_globals, used_functions) =
+    let merge (g1, f1) (g2, f2) =
+      let dedup = List.dedup String.compare in
+      (dedup (g1 @ g2), dedup (f1 @ f2))
+    in
+    let fn acc f =
+      match List.assoc_opt f ast.functions with
+      | Some(FDef(def)) when is_inlined def -> merge acc def.func_deps
+      | _                                   -> acc
+    in
+    List.fold_left fn def.func_deps (snd def.func_deps)
   in
+  let deps = used_globals @ used_functions in
   let pp_args ff xs =
     let xs = List.map (fun s -> "global_" ^ s) xs in
     match xs with
@@ -1175,10 +1192,11 @@ let pp_proof : string -> func_def -> import list -> string list -> proof_kind
   pp "@[<v 2>Lemma type_%s%a :@;" def.func_name pp_args deps;
   begin
     let prefix = if used_functions = [] then "⊢ " else "" in
-    let pp_impl ff id =
+    let pp_impl ff def =
+      let (used_globals, used_functions) = def.func_deps in
       let wrap = used_globals <> [] || used_functions <> [] in
       if wrap then fprintf ff "(";
-      fprintf ff "impl_%s" id;
+      fprintf ff "impl_%s" def.func_name;
       List.iter (fprintf ff " global_%s") used_globals;
       List.iter (fprintf ff " global_%s") used_functions;
       if wrap then fprintf ff ")"
@@ -1187,18 +1205,34 @@ let pp_proof : string -> func_def -> import list -> string list -> proof_kind
     List.iter pp_global used_globals;
     let pp_prod = pp_as_prod (pp_simple_coq_expr true) in
     let pp_global_type f =
-      match List.find_opt (fun (name, _) -> name = f) ast.global_vars with
-      | Some(_, Some(global_type)) ->
-         let (param_names, param_types) = List.split global_type.ga_parameters in
-          pp "global_initialized_types !! \"%s\" = Some (GT %a (λ '%a, %a : type)%%I) →@;"
-            f pp_prod param_types (pp_as_tuple pp_str) param_names (pp_type_expr_guard None Guard_none) global_type.ga_type
-      | _                 -> ()
+      match List.assoc_opt f ast.global_vars with
+      | Some(Some(global_type)) ->
+          let (param_names, param_types) =
+            List.split global_type.ga_parameters
+          in
+          pp "global_initialized_types !! \"%s\" = " f;
+          pp "Some (GT %a (λ '%a, %a : type)%%I) →@;" pp_prod param_types
+            (pp_as_tuple pp_str) param_names
+            (pp_type_expr_guard None Guard_none) global_type.ga_type
+      | _                       -> ()
     in
     List.iter pp_global_type used_globals;
-    let pp_dep f = pp "global_%s ◁ᵥ global_%s @@ function_ptr type_of_%s -∗@;" f f f in
+    let pp_dep f =
+      let inlined_def =
+        match List.assoc_opt f ast.functions with
+        | Some(FDef(def)) when is_inlined def -> Some(def)
+        | _                                   -> None
+      in
+      pp "global_%s ◁ᵥ global_%s @@ " f f;
+      begin
+        match inlined_def with
+        | Some(def) -> pp "inline_function_ptr %a" pp_impl def
+        | None      -> pp "function_ptr type_of_%s" f
+      end;
+      pp " -∗@;"
+    in
     List.iter pp_dep used_functions;
-    pp "%styped_function %a type_of_%s.@]@;" prefix pp_impl
-      def.func_name def.func_name
+    pp "%styped_function %a type_of_%s.@]@;" prefix pp_impl def def.func_name
   end;
 
   (* We have a manual proof. *)
@@ -1356,15 +1390,15 @@ let pp_proof : string -> func_def -> import list -> string list -> proof_kind
   pp "@]@;End proof_%s.@]" def.func_name
 
 type mode =
-  | Code of import list
+  | Code of string * import list
   | Spec of string * import list * inlined_code * typedef list * string list
   | Fprf of string * func_def * import list * string list * proof_kind
 
 let write : mode -> string -> Coq_ast.t -> unit = fun mode fname ast ->
   let pp =
     match mode with
-    | Code(imports)                          ->
-        pp_code imports
+    | Code(root_dir,imports)                 ->
+        pp_code root_dir imports
     | Spec(path,imports,inlined,tydefs,ctxt) ->
         pp_spec path imports inlined tydefs ctxt
     | Fprf(path,def,imports,ctxt,kind)       ->

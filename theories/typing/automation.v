@@ -5,13 +5,6 @@ From refinedc.typing.automation Require Export normalize solvers simplification 
 From refinedc.typing Require Import programs function singleton own struct bytes int.
 Set Default Proof Using "Type".
 
-(** Wrapper identity function for code (introduced by [split_bocks]). *)
-Definition CODE_MARKER (bs : gmap label stmt) : gmap label stmt := bs.
-Notation "'HIDDEN'" := (CODE_MARKER _) (only printing).
-
-Ltac unfold_code_marker_and_compute_map_lookup :=
-  unfold CODE_MARKER in *; compute_map_lookup.
-
 (** * Registering extensions *)
 (** More automation for modular arithmetics. *)
 Ltac Zify.zify_post_hook ::= Z.to_euclidean_division_equations.
@@ -66,11 +59,12 @@ Ltac convert_to_i2p_tac P ::=
   | typed_value ?v ?T => uconstr:(((_ : TypedValue _) _).(i2p_proof))
   | typed_bin_op ?v1 ?ty1 ?v2 ?ty2 ?o ?ot1 ?ot2 ?T => uconstr:(((_ : TypedBinOp _ _ _ _ _ _ _) _).(i2p_proof))
   | typed_un_op ?v ?ty ?o ?ot ?T => uconstr:(((_ : TypedUnOp _ _ _ _) _).(i2p_proof))
+  | typed_call ?v ?P ?vl ?tys ?T => uconstr:(((_ : TypedCall _ _ _ _) _).(i2p_proof))
   | typed_copy_alloc_id ?v1 ?ty1 ?v2 ?ty2 ?ot ?T => uconstr:(((_ : TypedCopyAllocId _ _ _ _ _) _).(i2p_proof))
   | typed_place ?P ?l1 ?β1 ?ty1 ?T => uconstr:(((_ : TypedPlace _ _ _ _) _).(i2p_proof))
   | typed_if ?ot ?v ?ty ?T1 ?T2 => uconstr:(((_ : TypedIf _ _ _) _ _).(i2p_proof))
-  | typed_switch ?v ?ty ?it ?m ?ss ?def ?fn ?ls ?fr ?Q => uconstr:(((_ : TypedSwitch _ _ _) _ _ _ _ _ _ _ _).(i2p_proof))
-  | typed_assert ?v ?ty ?s ?fn ?ls ?fr ?Q => uconstr:(((_ : TypedAssert _ _) _ _ _ _ _ _).(i2p_proof))
+  | typed_switch ?v ?ty ?it ?m ?ss ?def ?fn ?ls ?fr ?Q => uconstr:(((_ : TypedSwitch _ _ _) _ _ _ _ _ _ _).(i2p_proof))
+  | typed_assert ?v ?ty ?s ?fn ?ls ?fr ?Q => uconstr:(((_ : TypedAssert _ _) _ _ _ _ _).(i2p_proof))
   | typed_read_end ?a ?l ?β ?ty ?ly ?T => uconstr:(((_ : TypedReadEnd _ _ _ _ _) _).(i2p_proof))
   | typed_write_end ?a ?ly ?v1 ?ty1 ?l2 ?β2 ?ty2 ?T => uconstr:(((_ : TypedWriteEnd _ _ _ _ _ _ _) _).(i2p_proof))
   | typed_addr_of_end ?l ?β ?ty ?T => uconstr:(((_ : TypedAddrOfEnd _ _ _) _).(i2p_proof))
@@ -84,15 +78,15 @@ Ltac convert_to_i2p_tac P ::=
 Section automation.
   Context `{!typeG Σ}.
 
-  Lemma tac_simpl_subst {B} xs s fn ls Q (fr : B → _):
-    typed_stmt (W.to_stmt (W.subst_stmt xs s)) fn ls fr Q -∗
-    typed_stmt (subst_stmt xs (W.to_stmt s)) fn ls fr Q.
+  Lemma tac_simpl_subst xs s fn ls Q R:
+    typed_stmt (W.to_stmt (W.subst_stmt xs s)) fn ls R Q -∗
+    typed_stmt (subst_stmt xs (W.to_stmt s)) fn ls R Q.
   Proof. by rewrite W.to_stmt_subst. Qed.
 
-  Lemma tac_typed_single_block_rec {B} P b Q fn ls (fr : B → _) s:
+  Lemma tac_typed_single_block_rec P b Q fn ls R s:
     Q !! b = Some s →
-    (P ∗ accu (λ A, typed_block (P ∗ A) b fn ls fr Q -∗ P -∗ A -∗ typed_stmt s fn ls fr Q)) -∗
-    typed_stmt (Goto b) fn ls fr Q.
+    (P ∗ accu (λ A, typed_block (P ∗ A) b fn ls R Q -∗ P -∗ A -∗ typed_stmt s fn ls R Q)) -∗
+    typed_stmt (Goto b) fn ls R Q.
   Proof.
     iIntros (HQ) "[HP Hs]". iIntros (Hls). unfold accu, typed_block.
     iDestruct "Hs" as (A) "[HA #Hs]". iLöb as "Hl".
@@ -182,6 +176,21 @@ Ltac liRStmt :=
     end
   end.
 
+Ltac liRIntroduceTypedStmt :=
+  lazymatch goal with
+  | |- @envs_entails ?PROP ?Δ (introduce_typed_stmt ?fn ?ls ?R) =>
+    iEval (rewrite /introduce_typed_stmt !fmap_insert fmap_empty; simpl_subst);
+      lazymatch goal with
+      | |- @envs_entails ?PROP ?Δ (@typed_stmt ?Σ ?tG ?s ?fn ?ls ?R ?Q) =>
+        let HQ := fresh "Q" in
+        let HR := fresh "R" in
+        pose (HQ := (CODE_MARKER Q));
+        pose (HR := (RETURN_MARKER R));
+        change_no_check (@envs_entails PROP Δ (@typed_stmt Σ tG s fn ls HR HQ));
+        iEval (simpl) (* To simplify f_init *)
+      end
+  end.
+
 Ltac liRPopLocationInfo :=
   lazymatch goal with
   (* TODO: don't hardcode this for two arguments *)
@@ -227,7 +236,6 @@ Ltac liRJudgement :=
   lazymatch goal with
     | |- envs_entails _ (typed_write _ _ _ _ _ _) => notypeclasses refine (tac_fast_apply (type_write _ _ _ _ _ _ _ _) _); [ solve [refine _ ] |]
     | |- envs_entails _ (typed_read _ _ _ _) => notypeclasses refine (tac_fast_apply (type_read _ _ _ _ _ _) _); [ solve [refine _ ] |]
-    | |- envs_entails _ (typed_callable _ _ _) => notypeclasses refine (tac_fast_apply (type_callable _ _ _ _) _)
     | |- envs_entails _ (typed_addr_of _ _) => notypeclasses refine (tac_fast_apply (type_addr_of_place _ _ _ _) _); [solve [refine _] |]
   end.
 
@@ -239,6 +247,7 @@ Ltac liRStep :=
    liRInstantiateEvars (* must be before do_side_cond and do_extensible_judgement *)
  | liRPopLocationInfo
  | liRStmt
+ | liRIntroduceTypedStmt
  | liRExpr
  | liRJudgement
  | liStep
@@ -315,20 +324,11 @@ Ltac liRSplitBlocksIntro :=
         | liUnfoldLetGoal]; liSimpl);
   liShow.
 
-
 (* TODO: don't use i... tactics here *)
 Ltac split_blocks Pfull Ps :=
-  (* simpl can be very slow if Q is large. The rewrites distribute the
-  subst_stmt. *)
   (* cbn in * is important here to simplify the types of local
   variables, otherwise unification gets confused later *)
-  cbn -[union] in *; rewrite !fmap_insert fmap_empty;
-  simpl_subst;
-  let Q := fresh "Q" in
-  lazymatch goal with
-  | |- @envs_entails ?PROP ?Δ (@bi_wand _ ?P (@typed_stmt ?Σ ?tG ?B ?s ?fn ?ls ?fr ?Q')) =>
-    pose (Q := (CODE_MARKER Q')); change_no_check (@envs_entails PROP Δ (@bi_wand PROP P (@typed_stmt Σ tG B s fn ls fr Q)))
-  end;
+  cbn -[union] in *;
   let rec pose_Ps Ps :=
       lazymatch Ps with
       | <[?bid:=?P]>?m =>
@@ -344,6 +344,7 @@ Ltac split_blocks Pfull Ps :=
   subst and we want to subst in Ps as well. *)
   pose (Hfull := Pfull);
   liRSplitBlocksIntro;
+  liRIntroduceTypedStmt;
   iApply (typed_block_rec Hfull); unfold Hfull; clear Hfull; last first; [|
   repeat (iApply big_sepM_insert; [reflexivity|]; iSplitL); last by [iApply big_sepM_empty];
   iExists _; (iSplitR; [iPureIntro; unfold_code_marker_and_compute_map_lookup|]); iModIntro ];

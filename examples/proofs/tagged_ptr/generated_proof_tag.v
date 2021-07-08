@@ -9,8 +9,9 @@ Section proof_tag.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [tag]. *)
-  Lemma type_tag :
-    ⊢ typed_function impl_tag type_of_tag.
+  Lemma type_tag (global_copy_alloc_id : loc) :
+    global_copy_alloc_id ◁ᵥ global_copy_alloc_id @ inline_function_ptr impl_copy_alloc_id -∗
+    typed_function (impl_tag global_copy_alloc_id) type_of_tag.
   Proof.
     Open Scope printing_sugar.
     start_function "tag" ([[r t] ty]) => arg_p arg_t local_i local_new_i local_q.

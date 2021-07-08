@@ -204,15 +204,22 @@ let run : config -> string -> unit = fun cfg c_file ->
   let coq_ast = Ail_to_coq.translate c_file ail_ast in
   (* Generate the code file. *)
   let open Coq_pp in
-  let mode = Code(ca.ca_code_imports) in
+  let mode = Code(root_dir, ca.ca_code_imports) in
   write mode code_file coq_ast;
   (* Generate the spec file. *)
   let mode = Spec(path, ca.ca_imports, ca.ca_inlined, ca.ca_typedefs, ctxt) in
   write mode spec_file coq_ast;
   (* Compute the list of proof files to generate. *)
   let to_generate =
-    let fn (id, _) = proof_of_file id in
-    List.sort_uniq String.compare (List.map fn coq_ast.functions)
+    let not_inlined (_, def_or_decl) =
+      let open Coq_ast in
+      match def_or_decl with
+      | FDef(def) when is_inlined def -> false
+      | _                             -> true
+    in
+    let fs = List.filter not_inlined coq_ast.functions in
+    let files = List.map (fun (id, _) -> proof_of_file id) fs in
+    List.sort_uniq String.compare files
   in
   (* Delete obsolete proof files. *)
   let already_generated =
@@ -230,7 +237,10 @@ let run : config -> string -> unit = fun cfg c_file ->
   let proof_imports = ca.ca_imports @ ca.ca_proof_imports in
   let write_proof (id, def_or_decl) =
     let open Coq_ast in
-    match def_or_decl with FDec(_) -> () | FDef(def) ->
+    match def_or_decl with
+    | FDec(_)                       -> ()
+    | FDef(def) when is_inlined def -> ()
+    | FDef(def)                     ->
     let mode = Fprf(path, def, proof_imports, ctxt, proof_kind def) in
     write mode (proof_of_file id) coq_ast
   in

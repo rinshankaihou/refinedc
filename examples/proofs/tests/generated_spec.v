@@ -31,4 +31,9 @@ Section spec.
   (* Specifications for function [test_comma]. *)
   Definition type_of_test_comma :=
     fn(∀ () : (); True) → ∃ () : (), ((0) @ (int (i32))); True.
+
+  (* Specifications for function [inline_global2]. *)
+  Definition type_of_inline_global2 :=
+    fn(∀ () : (); (initialized "global" ()))
+      → ∃ () : (), ((1) @ (int (i32))); True.
 End spec.

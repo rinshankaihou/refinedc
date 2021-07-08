@@ -15,6 +15,18 @@ Typeclasses Opaque pop_location_info.
 Definition BLOCK_PRECOND `{!typeG Σ} (bid : label) (P : iProp Σ) : Set := unit.
 Arguments BLOCK_PRECOND : simpl never.
 
+Definition CODE_MARKER (bs : gmap label stmt) : gmap label stmt := bs.
+Notation "'HIDDEN'" := (CODE_MARKER _) (only printing).
+Arguments CODE_MARKER : simpl never.
+Ltac unfold_code_marker_and_compute_map_lookup :=
+  unfold CODE_MARKER in *; compute_map_lookup.
+
+Definition RETURN_MARKER `{!typeG Σ} (R : val → mtype → iProp Σ) : val → mtype → iProp Σ := R.
+Notation "'HIDDEN'" := (RETURN_MARKER _) (only printing).
+(* simplify RETURN_MARKER as soon as it is applied enough in the goal *)
+Arguments RETURN_MARKER _ _ _ _ _ /.
+
+
 (** * Tactics for manipulating location information *)
 Ltac get_loc_info cont :=
   first [ lazymatch reverse goal with
@@ -39,7 +51,9 @@ Ltac update_loc_info i :=
             change (CURRENT_LOCATION _ _) with (CURRENT_LOCATION (iprevh :: iprevt) true) in H
           | [i2] =>
             change (CURRENT_LOCATION _ _) with (CURRENT_LOCATION ([i2]) false) in H
-          | _ => fail 2 "mismatched pop!"
+          | _ =>
+            (* mismatched pop *)
+            change (CURRENT_LOCATION _ _) with (CURRENT_LOCATION ([i2]) false) in H
           end
         | None =>
           change (CURRENT_LOCATION _ _) with (CURRENT_LOCATION icur false) in H
@@ -82,9 +96,8 @@ Ltac prepare_sideconditions :=
   liUnfoldAllEvars;
   repeat match goal with | H : BLOCK_PRECOND _ _ |- _ => clear H end;
   (* get rid of Q *)
-  try match goal with
-      | H : gmap label stmt |- _ => clear H
-      end;
+  repeat match goal with | H := CODE_MARKER _ |- _ => clear H end;
+  repeat match goal with | H := RETURN_MARKER _ |- _ => clear H end;
   clear_unused_vars.
 
 Ltac solve_goal_prepare_tac ::=

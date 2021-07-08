@@ -210,22 +210,23 @@ Section uninit.
     λ T, i2p (uninit_mono l ty ly T).
 
   (* Typing rule for [Return] (used in [theories/typing/automation.v]). *)
-  Lemma type_return {B} Q e fn ls (fr : B → _):
-    typed_val_expr e (λ v ty, v ◁ᵥ ty -∗ ∃ x, v ◁ᵥ (fr x).(fr_rty) ∗
-    foldr (λ (e : (loc * layout)) T, e.1 ◁ₗ uninit e.2 ∗ T)
-    ((fr x).(fr_R) ∗ True) (* ∗ True is for automation *)
-    (zip ls (fn.(f_args) ++ fn.(f_local_vars)).*2)) -∗
-    typed_stmt (Return e) fn ls fr Q.
+  Lemma type_return Q e fn ls R:
+    typed_val_expr e (λ v ty,
+      foldr (λ (e : (loc * layout)) T, e.1 ◁ₗ uninit e.2 ∗ T)
+      (R v ty)
+      (zip ls (fn.(f_args) ++ fn.(f_local_vars)).*2)) -∗
+    typed_stmt (Return e) fn ls R Q.
   Proof.
     iIntros "He" (Hls). wps_bind. iApply "He".
     iIntros (v ty) "Hv HR". iApply wps_return.
-    iDestruct ("HR" with "Hv") as (x) "[? HR]". iExists _. iFrame.
-    move: Hls. move: (f_args fn ++ f_local_vars fn) => lys {fn} Hlys.
-    iInduction ls as [|l ls] "IH" forall (lys Hlys);
-      destruct lys as [|ly lys]=> //; csimpl in *; simplify_eq;
-      [rewrite right_id; by iFrame|].
-    iDestruct "HR" as "[Hl HR]". rewrite /ty_own/=. iDestruct "Hl" as (????) "Hl".
-    iDestruct ("IH" with "[//] HR") as "[$ $]". iExists _. by iFrame.
+    rewrite /typed_stmt_post_cond. move: Hls. move: (f_args fn ++ f_local_vars fn) => lys {fn} Hlys.
+    iInduction ls as [|l ls] "IH" forall (lys Hlys); destruct lys as [|ly lys]=> //; csimpl in *; simplify_eq.
+    { iExists _. iFrame. }
+    iDestruct "HR" as "[Hl HR]".
+    iDestruct ("IH" with "[//] Hv HR") as (ty') "[?[??]]".
+    iExists _. iFrame.
+    rewrite /ty_own/=. iDestruct "Hl" as (????) "Hl".
+    iExists _. by iFrame.
   Qed.
 End uninit.
 

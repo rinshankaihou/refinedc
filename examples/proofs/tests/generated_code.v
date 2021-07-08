@@ -179,6 +179,13 @@ Section code.
   Definition loc_230 : location_info := LocationInfo file_0 64 10 64 30.
   Definition loc_231 : location_info := LocationInfo file_0 64 11 64 25.
   Definition loc_232 : location_info := LocationInfo file_0 64 27 64 29.
+  Definition loc_237 : location_info := LocationInfo file_0 74 2 74 16.
+  Definition loc_238 : location_info := LocationInfo file_0 74 9 74 15.
+  Definition loc_239 : location_info := LocationInfo file_0 74 9 74 15.
+  Definition loc_242 : location_info := LocationInfo file_0 80 2 80 26.
+  Definition loc_243 : location_info := LocationInfo file_0 80 9 80 25.
+  Definition loc_244 : location_info := LocationInfo file_0 80 9 80 23.
+  Definition loc_245 : location_info := LocationInfo file_0 80 9 80 23.
 
   (* Definition of function [test1]. *)
   Definition impl_test1 : function := {|
@@ -505,6 +512,36 @@ Section code.
           LocInfoE loc_230 ((LocInfoE loc_231 (NULL)) ,{PtrOp, IntOp i32} (LocInfoE loc_232 (i2v 42 i32))) ;
         locinfo: loc_218 ;
         Return (LocInfoE loc_219 ((LocInfoE loc_220 ((LocInfoE loc_221 (use{it_layout i32} (LocInfoE loc_222 ("x")))) +{IntOp i32, IntOp i32} (LocInfoE loc_223 (use{it_layout i32} (LocInfoE loc_224 ("x")))))) ,{IntOp i32, IntOp i32} (LocInfoE loc_225 ((LocInfoE loc_226 (use{it_layout i32} (LocInfoE loc_227 ("x")))) -{IntOp i32, IntOp i32} (LocInfoE loc_228 (use{it_layout i32} (LocInfoE loc_229 ("x"))))))))
+      ]> $∅
+    )%E
+  |}.
+
+  (* Definition of function [inline_global1]. *)
+  Definition impl_inline_global1 (global_global : loc): function := {|
+    f_args := [
+    ];
+    f_local_vars := [
+    ];
+    f_init := "#0";
+    f_code := (
+      <[ "#0" :=
+        locinfo: loc_237 ;
+        Return (LocInfoE loc_238 (use{it_layout i32} (LocInfoE loc_239 (global_global))))
+      ]> $∅
+    )%E
+  |}.
+
+  (* Definition of function [inline_global2]. *)
+  Definition impl_inline_global2 (global_inline_global1 : loc): function := {|
+    f_args := [
+    ];
+    f_local_vars := [
+    ];
+    f_init := "#0";
+    f_code := (
+      <[ "#0" :=
+        locinfo: loc_242 ;
+        Return (LocInfoE loc_243 (Call (LocInfoE loc_245 (global_inline_global1)) [@{expr}  ]))
       ]> $∅
     )%E
   |}.

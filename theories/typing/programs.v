@@ -70,34 +70,28 @@ Section judgements.
     typed_if_proof T1 T2 : iProp_to_Prop (typed_if ot v ty T1 T2).
 
   (*** statements *)
-  Record fn_ret := FR {
-    fr_rty : mtype;
-    fr_R : iProp Σ;
-  }.
-  Definition mk_FR (rty : type) `{!Movable rty} (R : iProp Σ) := FR (t2mt rty) R.
+  Definition typed_stmt_post_cond (fn : function) (ls : list loc) (R : val → mtype → iProp Σ) (v : val) : iProp Σ :=
+    (∃ ty : mtype, v ◁ᵥ ty ∗ ([∗ list] l;v ∈ ls;(fn.(f_args) ++ fn.(f_local_vars)), l ↦|v.2|) ∗ R v ty)%I.
+  Definition typed_stmt (s : stmt) (fn : function) (ls : list loc) (R : val → mtype → iProp Σ) (Q : gmap label stmt) : iProp Σ :=
+    (⌜length ls = length (fn.(f_args) ++ fn.(f_local_vars))⌝ -∗ WPs s {{Q, typed_stmt_post_cond fn ls R}})%I.
+  Global Arguments typed_stmt _%E _ _ _%I _.
 
-  Definition typed_stmt_post_cond {B} (fn : function) (ls : list loc) (fr : B → fn_ret) (v : val) : iProp Σ :=
-    (∃ x, v ◁ᵥ (fr x).(fr_rty) ∗ ([∗ list] l;v ∈ ls;(fn.(f_args) ++ fn.(f_local_vars)), l ↦|v.2|) ∗ (fr x).(fr_R))%I.
-  Definition typed_stmt {B} (s : stmt) (fn : function) (ls : list loc) (fr : B → fn_ret) (Q : gmap label stmt) : iProp Σ :=
-    (⌜length ls = length (fn.(f_args) ++ fn.(f_local_vars))⌝ -∗ WPs s {{Q, typed_stmt_post_cond fn ls fr}})%I.
-  Global Arguments typed_stmt {_} _%E _ _ _%I _.
+  Definition typed_block (P : iProp Σ) (b : label) (fn : function) (ls : list loc) (R : val → mtype → iProp Σ) (Q : gmap label stmt) : iProp Σ :=
+    (wps_block P b Q (typed_stmt_post_cond fn ls R)).
 
-  Definition typed_block {B} (P : iProp Σ) (b : label) (fn : function) (ls : list loc) (fr : B → fn_ret) (Q : gmap label stmt) : iProp Σ :=
-    (wps_block P b Q (typed_stmt_post_cond fn ls fr)).
-
-  Definition typed_switch {B} (v : val) (ty : type) `{!Movable ty} (it : int_type) (m : gmap Z nat) (ss : list stmt) (def : stmt) (fn : function) (ls : list loc) (fr : B → fn_ret) (Q : gmap label stmt) : iProp Σ :=
+  Definition typed_switch (v : val) (ty : type) `{!Movable ty} (it : int_type) (m : gmap Z nat) (ss : list stmt) (def : stmt) (fn : function) (ls : list loc) (R : val → mtype → iProp Σ) (Q : gmap label stmt) : iProp Σ :=
     (v ◁ᵥ ty -∗ ∃ z, ⌜val_to_Z v it = Some z⌝ ∗
       match m !! z with
-      | Some i => ∃ s, ⌜ss !! i = Some s⌝ ∗ typed_stmt s fn ls fr Q
-      | None   => typed_stmt def fn ls fr Q
+      | Some i => ∃ s, ⌜ss !! i = Some s⌝ ∗ typed_stmt s fn ls R Q
+      | None   => typed_stmt def fn ls R Q
       end).
   Class TypedSwitch (v : val) (ty : type) `{!Movable ty} (it : int_type) : Type :=
-    typed_switch_proof B m ss def fn ls fr Q : iProp_to_Prop (typed_switch (B:=B) v ty it m ss def fn ls fr Q).
+    typed_switch_proof m ss def fn ls R Q : iProp_to_Prop (typed_switch v ty it m ss def fn ls R Q).
 
-  Definition typed_assert {B} (v : val) (ty : type) `{!Movable ty} (s : stmt) (fn : function) (ls : list loc) (fr : B → fn_ret) (Q : gmap label stmt) : iProp Σ :=
-    (v ◁ᵥ ty -∗ ∃ z, ⌜val_to_Z v bool_it = Some z⌝ ∗ ⌜z ≠ 0⌝ ∗ typed_stmt s fn ls fr Q)%I.
+  Definition typed_assert (v : val) (ty : type) `{!Movable ty} (s : stmt) (fn : function) (ls : list loc) (R : val → mtype → iProp Σ) (Q : gmap label stmt) : iProp Σ :=
+    (v ◁ᵥ ty -∗ ∃ z, ⌜val_to_Z v bool_it = Some z⌝ ∗ ⌜z ≠ 0⌝ ∗ typed_stmt s fn ls R Q)%I.
   Class TypedAssert (v : val) (ty : type) `{!Movable ty} : Type :=
-    typed_assert_proof B s fn ls fr Q : iProp_to_Prop (typed_assert (B:=B) v ty s fn ls fr Q).
+    typed_assert_proof s fn ls R Q : iProp_to_Prop (typed_assert v ty s fn ls R Q).
   (*** expressions *)
   Definition typed_val_expr (e : expr) (T : val → mtype → iProp Σ) : iProp Σ :=
     (∀ Φ, (∀ v (ty : mtype), v ◁ᵥ ty -∗ T v ty -∗ Φ v) -∗ WP e {{ Φ }}).
@@ -123,6 +117,13 @@ Section judgements.
     typed_un_op_proof T : iProp_to_Prop (typed_un_op v P o ot T).
   Class TypedUnOpVal (v : val) (ty : type) `{!Movable ty} (o : un_op) (ot : op_type) : Type :=
     typed_un_op_val :> TypedUnOp v (v ◁ᵥ ty) o ot.
+
+  Definition typed_call (v : val) (P : iProp Σ) (vl : list val) (tys : list mtype) (T : val → mtype → iProp Σ) : iProp Σ :=
+    (P -∗ ([∗ list] v;ty∈vl;tys, v ◁ᵥ (ty : mtype)) -∗ typed_val_expr (Call v (Val <$> vl)) T)%I.
+  Class TypedCall (v : val) (P : iProp Σ) (vl : list val) (tys : list mtype) : Type :=
+    typed_call_proof T : iProp_to_Prop (typed_call v P vl tys T).
+  Class TypedCallVal (v : val) (ty : type) `{!Movable ty} (vl : list val) (tys : list mtype) : Type :=
+    typed_call_val :> TypedCall v (v ◁ᵥ ty) vl tys.
 
   Definition typed_copy_alloc_id (v1 : val) (P1 : iProp Σ) (v2 : val) (P2 : iProp Σ) (ot : op_type) (T : val → mtype → iProp Σ) : iProp Σ :=
     (P1 -∗ P2 -∗ typed_val_expr (CopyAllocId ot v1 v2) T).
@@ -336,6 +337,8 @@ Hint Mode TypedBinOp + + + + + + + + + : typeclass_instances.
 Hint Mode TypedBinOpVal + + + + + + + + + + + : typeclass_instances.
 Hint Mode TypedUnOp + + + + + + : typeclass_instances.
 Hint Mode TypedUnOpVal + + + + + + + : typeclass_instances.
+Hint Mode TypedCall + + + + + + : typeclass_instances.
+Hint Mode TypedCallVal + + + + + + + : typeclass_instances.
 Hint Mode TypedCopyAllocId + + + + + + + : typeclass_instances.
 Hint Mode TypedCopyAllocIdVal + + + + + + + + + : typeclass_instances.
 Hint Mode TypedReadEnd + + + + + + + : typeclass_instances.
@@ -824,41 +827,41 @@ Section typing.
     λ T, i2p (typed_annot_expr_simplify A m a v P T n).
 
   (*** statements *)
-  Global Instance elim_modal_bupd_typed_stmt B p s fn ls R Q P :
-    ElimModal True p false (|==> P) P (typed_stmt (B:=B) s fn ls R Q) (typed_stmt (B:=B) s fn ls R Q).
+  Global Instance elim_modal_bupd_typed_stmt p s fn ls R Q P :
+    ElimModal True p false (|==> P) P (typed_stmt s fn ls R Q) (typed_stmt s fn ls R Q).
   Proof.
     rewrite /ElimModal bi.intuitionistically_if_elim (bupd_fupd ⊤) fupd_frame_r bi.wand_elim_r.
     iIntros "_ Hs ?". iMod "Hs". by iApply "Hs".
   Qed.
 
-  Global Instance elim_modal_fupd_typed_stmt B p s fn ls R Q P :
-    ElimModal True p false (|={⊤}=> P) P (typed_stmt (B:=B) s fn ls R Q) (typed_stmt (B:=B) s fn ls R Q).
+  Global Instance elim_modal_fupd_typed_stmt p s fn ls R Q P :
+    ElimModal True p false (|={⊤}=> P) P (typed_stmt s fn ls R Q) (typed_stmt s fn ls R Q).
   Proof.
     rewrite /ElimModal bi.intuitionistically_if_elim fupd_frame_r bi.wand_elim_r.
     iIntros "_ Hs ?". iMod "Hs". by iApply "Hs".
   Qed.
 
-  Lemma type_goto {B} Q b fn ls (fr : B → _) s:
+  Lemma type_goto Q b fn ls R s:
     Q !! b = Some s →
-    typed_stmt s fn ls fr Q -∗
-    typed_stmt (Goto b) fn ls fr Q.
+    typed_stmt s fn ls R Q -∗
+    typed_stmt (Goto b) fn ls R Q.
   Proof.
     iIntros (HQ) "Hs". iIntros (Hls). iApply wps_goto => //.
     iModIntro. by iApply "Hs".
   Qed.
 
-  Lemma type_goto_precond {B} P Q b fn ls (fr : B → _):
-    (typed_block P b fn ls fr Q ∗ P ∗ True) -∗
-    typed_stmt (Goto b) fn ls fr Q.
+  Lemma type_goto_precond P Q b fn ls R:
+    (typed_block P b fn ls R Q ∗ P ∗ True) -∗
+    typed_stmt (Goto b) fn ls R Q.
   Proof.
     iIntros "[Hblock [HP _]]" (Hls).
     by iApply "Hblock".
   Qed.
 
-  Lemma type_assign {B} ly e1 e2 Q s fn ls (fr : B → _) o:
+  Lemma type_assign ly e1 e2 Q s fn ls R o:
     typed_val_expr e2 (λ v ty, ⌜ty.(ty_has_layout) ly⌝ ∗ ⌜if o is Na2Ord then False else True⌝ ∗
-      typed_write (if o is ScOrd then true else false) e1 ly v ty (typed_stmt s fn ls fr Q)) -∗
-    typed_stmt (e1 <-{ly, o} e2; s) fn ls fr Q.
+      typed_write (if o is ScOrd then true else false) e1 ly v ty (typed_stmt s fn ls R Q)) -∗
+    typed_stmt (e1 <-{ly, o} e2; s) fn ls R Q.
   Proof.
     iIntros "He" (Hls).
     wps_bind. iApply "He". iIntros (v ty) "Hv [% [% He1]]".
@@ -869,10 +872,10 @@ Section typing.
     all: by iApply ("HT" with "Hl").
   Qed.
 
-  Lemma type_if {B} Q e s1 s2 fn ls (fr : B → _):
+  Lemma type_if Q e s1 s2 fn ls R:
     typed_val_expr e (λ v ty, typed_if (IntOp bool_it) v ty
-          (typed_stmt s1 fn ls fr Q) (typed_stmt s2 fn ls fr Q)) -∗
-    typed_stmt (if: e then s1 else s2) fn ls fr Q.
+          (typed_stmt s1 fn ls R Q) (typed_stmt s2 fn ls R Q)) -∗
+    typed_stmt (if: e then s1 else s2) fn ls R Q.
   Proof.
     iIntros "He" (Hls). wps_bind.
     iApply "He". iIntros (v ty) "Hv Hs".
@@ -880,9 +883,9 @@ Section typing.
     iApply wps_if; [done|..]. by case_decide; iApply "Hs".
   Qed.
 
-  Lemma type_switch {B} Q it e m ss def fn ls (fr : B → _):
-    typed_val_expr e (λ v ty, typed_switch v ty it m ss def fn ls fr Q) -∗
-    typed_stmt (Switch it e m ss def) fn ls fr Q.
+  Lemma type_switch Q it e m ss def fn ls R:
+    typed_val_expr e (λ v ty, typed_switch v ty it m ss def fn ls R Q) -∗
+    typed_stmt (Switch it e m ss def) fn ls R Q.
   Proof.
     iIntros "He" (Hls).
     have -> : (Switch it e m ss def) = (W.to_stmt (W.Switch it (W.Expr e) m (W.Stmt <$> ss) (W.Stmt def)))
@@ -901,9 +904,9 @@ Section typing.
     - by iApply "Hs".
   Qed.
 
-  Lemma type_assert {B} Q e s fn ls (fr : B → _):
-    typed_val_expr e (λ v ty, typed_assert v ty s fn ls fr Q) -∗
-    typed_stmt (assert: e; s) fn ls fr Q.
+  Lemma type_assert Q e s fn ls R:
+    typed_val_expr e (λ v ty, typed_assert v ty s fn ls R Q) -∗
+    typed_stmt (assert: e; s) fn ls R Q.
   Proof.
     iIntros "He" (Hls). wps_bind.
     iApply "He". iIntros (v ty) "Hv Hs".
@@ -911,27 +914,27 @@ Section typing.
     iApply wps_assert; [done|done|..]. by iApply "Hs".
   Qed.
 
-  Lemma type_exprs {B} s e fn ls (fr : B → _) Q:
-    (typed_val_expr e (λ v ty, v ◁ᵥ ty -∗ typed_stmt s fn ls fr Q)) -∗ typed_stmt (ExprS e s) fn ls fr Q.
+  Lemma type_exprs s e fn ls R Q:
+    (typed_val_expr e (λ v ty, v ◁ᵥ ty -∗ typed_stmt s fn ls R Q)) -∗ typed_stmt (ExprS e s) fn ls R Q.
   Proof.
     iIntros "Hs ?". wps_bind. iApply "Hs". iIntros (v ty) "Hv Hs".
     iApply wps_exprs. iApply step_fupd_intro => //. iModIntro.
     by iApply ("Hs" with "Hv").
   Qed.
 
-  Lemma type_skips {B} s fn ls Q (fr : B → _):
-    (|={⊤}[∅]▷=> typed_stmt s fn ls fr Q) -∗ typed_stmt (SkipS s) fn ls fr Q.
+  Lemma type_skips s fn ls Q R:
+    (|={⊤}[∅]▷=> typed_stmt s fn ls R Q) -∗ typed_stmt (SkipS s) fn ls R Q.
   Proof.
     iIntros "Hs ?". iApply wps_skip. iApply (step_fupd_wand with "Hs"). iIntros "Hs". by iApply "Hs".
   Qed.
 
-  Lemma type_skips' {B} s fn ls Q (fr : B → _):
-    typed_stmt s fn ls fr Q -∗ typed_stmt (SkipS s) fn ls fr Q.
+  Lemma type_skips' s fn ls Q R:
+    typed_stmt s fn ls R Q -∗ typed_stmt (SkipS s) fn ls R Q.
   Proof. iIntros "Hs". iApply type_skips. by iApply step_fupd_intro. Qed.
 
-  Lemma type_annot_stmt {A B} p (a : A) s fn ls Q (fr : B → _):
-    (typed_addr_of p (λ l β ty, typed_annot_stmt a l (l ◁ₗ{β} ty) (typed_stmt s fn ls fr Q))) -∗
-      typed_stmt (annot: a; expr: &p; s) fn ls fr Q.
+  Lemma type_annot_stmt {A} p (a : A) s fn ls Q R:
+    (typed_addr_of p (λ l β ty, typed_annot_stmt a l (l ◁ₗ{β} ty) (typed_stmt s fn ls R Q))) -∗
+      typed_stmt (annot: a; expr: &p; s) fn ls R Q.
   Proof.
     iIntros "Hs ?". iApply wps_annot => /=.
     wps_bind. rewrite /AddrOf. iApply "Hs".
@@ -939,10 +942,10 @@ Section typing.
       by iApply ("Ha" with "Hl").
   Qed.
 
-  Lemma typed_block_rec {B} Ps Q fn ls (fr : B → _) s:
-    ([∗ map] b ↦ P ∈ Ps, ∃ s, ⌜Q !! b = Some s⌝ ∗ □(([∗ map] b ↦ P ∈ Ps, typed_block P b fn ls fr Q) -∗ P -∗ typed_stmt s fn ls fr Q)) -∗
-    (([∗ map] b ↦ P ∈ Ps, typed_block P b fn ls fr Q) -∗ typed_stmt s fn ls fr Q) -∗
-    typed_stmt s fn ls fr Q.
+  Lemma typed_block_rec Ps Q fn ls R s:
+    ([∗ map] b ↦ P ∈ Ps, ∃ s, ⌜Q !! b = Some s⌝ ∗ □(([∗ map] b ↦ P ∈ Ps, typed_block P b fn ls R Q) -∗ P -∗ typed_stmt s fn ls R Q)) -∗
+    (([∗ map] b ↦ P ∈ Ps, typed_block P b fn ls R Q) -∗ typed_stmt s fn ls R Q) -∗
+    typed_stmt s fn ls R Q.
   Proof.
     iIntros "HQ Hs" (Hls).
     iApply ("Hs" with "[HQ]"); last done.
@@ -1006,6 +1009,24 @@ Section typing.
     typed_un_op v P op ot T.
   Proof.
     iIntros "Hw H HP". iApply "H". by iApply "Hw".
+  Qed.
+
+  Lemma type_call T ef es:
+    typed_val_expr ef (λ vf tyf,
+        foldr (λ e T vl tys, typed_val_expr e (λ v ty,
+             T (vl ++ [v]) (tys ++ [ty])))
+              (λ vl tys, typed_call vf (vf ◁ᵥ tyf) vl tys T)
+              es [] []) -∗
+    typed_val_expr (Call ef es) T.
+  Proof.
+    iIntros "He". iIntros (Φ) "HΦ".
+    iApply wp_call_bind. iApply "He". iIntros (vf tyf) "Hvf HT".
+    iAssert ([∗ list] v;ty∈[];[], v ◁ᵥ (ty : mtype))%I as "-#Htys". { done. }
+    move: {2 3 5}[] => vl. move: {2 3}(@nil mtype) => tys.
+    iInduction es as [|e es] "IH" forall (vl tys) => /=. 2: {
+      iApply "HT". iIntros (v ty) "Hv Hnext". iApply ("IH" with "HΦ Hvf Hnext"). by iFrame.
+    }
+    by iApply ("HT" with "Hvf Htys").
   Qed.
 
   Lemma type_copy_alloc_id e1 e2 ot T:

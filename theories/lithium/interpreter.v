@@ -291,7 +291,7 @@ Ltac liUnfoldLetGoal :=
         | ?Q ?R => go Q tac
         | _ => is_var P; tac P
         end in
-    go P ltac:(fun P => unfold LET_ID in P; unfold P; clear P)
+    go P ltac:(fun P => unfold LET_ID in P; unfold P; try clear P)
   end.
 
 Ltac liUnfoldLetsInContext :=

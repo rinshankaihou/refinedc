@@ -8,8 +8,9 @@ Section proof_roundtrip_and_read_past_the_end_copy_alloc_id.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [roundtrip_and_read_past_the_end_copy_alloc_id]. *)
-  Lemma type_roundtrip_and_read_past_the_end_copy_alloc_id :
-    ⊢ typed_function impl_roundtrip_and_read_past_the_end_copy_alloc_id type_of_roundtrip_and_read_past_the_end_copy_alloc_id.
+  Lemma type_roundtrip_and_read_past_the_end_copy_alloc_id (global_copy_alloc_id : loc) :
+    global_copy_alloc_id ◁ᵥ global_copy_alloc_id @ inline_function_ptr impl_copy_alloc_id -∗
+    typed_function (impl_roundtrip_and_read_past_the_end_copy_alloc_id global_copy_alloc_id) type_of_roundtrip_and_read_past_the_end_copy_alloc_id.
   Proof.
     Open Scope printing_sugar.
     start_function "roundtrip_and_read_past_the_end_copy_alloc_id" ([]) => local_x local_q local_p local_pi.

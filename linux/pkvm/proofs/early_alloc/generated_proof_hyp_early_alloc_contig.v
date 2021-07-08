@@ -9,10 +9,11 @@ Section proof_hyp_early_alloc_contig.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [hyp_early_alloc_contig]. *)
-  Lemma type_hyp_early_alloc_contig (global_mem global_memset : loc) :
+  Lemma type_hyp_early_alloc_contig (global_mem global_copy_alloc_id global_memset : loc) :
     global_locs !! "mem" = Some global_mem →
+    global_copy_alloc_id ◁ᵥ global_copy_alloc_id @ inline_function_ptr impl_copy_alloc_id -∗
     global_memset ◁ᵥ global_memset @ function_ptr type_of_memset -∗
-    typed_function (impl_hyp_early_alloc_contig global_mem global_memset) type_of_hyp_early_alloc_contig.
+    typed_function (impl_hyp_early_alloc_contig global_mem global_copy_alloc_id global_memset) type_of_hyp_early_alloc_contig.
   Proof.
     Open Scope printing_sugar.
     start_function "hyp_early_alloc_contig" ([[[base given] remaining] n]) => arg_nr_pages local_size local_ret.

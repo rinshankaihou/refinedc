@@ -65,3 +65,17 @@ int test_comma(){
 
   return x + x, x - x;
 }
+
+[[rc::global("{1} @ int<i32>")]]
+int global;
+
+[[rc::inlined]]
+int inline_global1() {
+  return global;
+}
+
+[[rc::requires("[initialized \"global\" ()]")]]
+[[rc::returns("{1} @ int<i32>")]]
+int inline_global2() {
+  return inline_global1();
+}

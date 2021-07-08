@@ -9,8 +9,9 @@ Section proof_untag2.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [untag2]. *)
-  Lemma type_untag2 :
-    ⊢ typed_function impl_untag2 type_of_untag2.
+  Lemma type_untag2 (global_copy_alloc_id : loc) :
+    global_copy_alloc_id ◁ᵥ global_copy_alloc_id @ inline_function_ptr impl_copy_alloc_id -∗
+    typed_function (impl_untag2 global_copy_alloc_id) type_of_untag2.
   Proof.
     Open Scope printing_sugar.
     start_function "untag2" ([r ty]) => arg_p local_i.

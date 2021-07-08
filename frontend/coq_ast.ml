@@ -110,3 +110,6 @@ let proof_kind : func_def -> proof_kind = fun def ->
   match def.func_annot with
   | None        -> Proof_normal
   | Some(annot) -> annot.fa_proof_kind
+
+let is_inlined : func_def -> bool = fun def ->
+  proof_kind def = Proof_inlined

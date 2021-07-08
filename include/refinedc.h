@@ -44,13 +44,14 @@
 
 // Note that copy_alloc_id exposes the provenance of [from] by casting it
 // to an integer (throwing away the result).
-#if defined (__cerb__)
-#define copy_alloc_id(to, from) __cerbvar_copy_alloc_id((to), (from))
-#else
+[[rc::inlined]]
 static inline void *copy_alloc_id(uintptr_t to, void *from) {
+#if defined (__cerb__)
+  return __cerbvar_copy_alloc_id((to), (from));
+#else
   (uintptr_t) from;
   return (void*) to;
-}
 #endif
+}
 
 #endif

@@ -8,8 +8,9 @@ Section proof_roundtrip_and_read2.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [roundtrip_and_read2]. *)
-  Lemma type_roundtrip_and_read2 :
-    ⊢ typed_function impl_roundtrip_and_read2 type_of_roundtrip_and_read2.
+  Lemma type_roundtrip_and_read2 (global_copy_alloc_id : loc) :
+    global_copy_alloc_id ◁ᵥ global_copy_alloc_id @ inline_function_ptr impl_copy_alloc_id -∗
+    typed_function (impl_roundtrip_and_read2 global_copy_alloc_id) type_of_roundtrip_and_read2.
   Proof.
     Open Scope printing_sugar.
     start_function "roundtrip_and_read2" ([l n]) => arg_p local_i local_r local_q local_j.

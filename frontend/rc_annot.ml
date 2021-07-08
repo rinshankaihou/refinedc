@@ -346,6 +346,7 @@ type annot =
   | Annot_manual       of manual_proof
   | Annot_block
   | Annot_full_block
+  | Annot_inlined
 
 let annot_lemmas : string list -> string list =
   List.map (Printf.sprintf "all: try by apply: %s; solve_goal.")
@@ -458,6 +459,7 @@ let parse_attr : rc_attr -> annot = fun attr ->
   | "manual_proof" -> single_arg annot_manual (fun e -> Annot_manual(e))
   | "block"        -> no_args Annot_block
   | "full_block"   -> no_args Annot_full_block
+  | "inlined"      -> no_args Annot_inlined
   | _              -> error "undefined"
 
 (** {3 High level parsing of attributes} *)
@@ -467,6 +469,7 @@ type proof_kind =
   | Proof_skipped (* Not even a spec is generated. *)
   | Proof_trusted
   | Proof_manual of manual_proof
+  | Proof_inlined
 
 type function_annot =
   { fa_parameters : (ident * coq_expr) list
@@ -487,12 +490,14 @@ let function_annot : rc_attr list -> function_annot = fun attrs ->
   let ensures = ref [] in
   let tactics = ref [] in
   let proof = ref Proof_normal in
+  let inlined = ref false in
 
   let nb_attrs = ref 0 in
   let handle_attr ({rc_attr_id = id; _} as attr) =
     let error msg =
       invalid_annot id.loc (Printf.sprintf "Annotation [%s] %s." id.elt msg)
     in
+    if !inlined then error "should be the only attribute";
     incr nb_attrs;
     match (parse_attr attr, !returns) with
     | (_                  , _   ) when !proof = Proof_skipped ->
@@ -516,6 +521,10 @@ let function_annot : rc_attr list -> function_annot = fun attrs ->
     | (Annot_exist(l)     , _   ) -> exists := !exists @ l
     | (Annot_annot_args(_), _   ) -> () (* Handled separately. *)
     | (Annot_tactics(l)   , _   ) -> tactics := !tactics @ l
+    | (Annot_inlined      , _   ) ->
+        if !nb_attrs <> 1 then error "should be the only attribute";
+        proof := Proof_inlined;
+        inlined := true
     | (_                  , _   ) -> error "is invalid for a function"
   in
   List.iter handle_attr attrs;

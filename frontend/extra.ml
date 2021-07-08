@@ -129,6 +129,24 @@ module List =
         | x :: l -> if p x then i else find (i+1) l
       in
       find 0 l
+
+    (** [dedup cmp l] filters out dupplicates from list [l] using the function
+        [cmp] to compare elements. It is assumed to be a valid function to use
+        in the instantiation of the [Set.Make] functor. *)
+    let dedup : type a. (a -> a -> int) -> a list -> a list = fun cmp l ->
+      let module S =
+        Set.Make(struct
+          type t = a
+          let compare = cmp
+        end)
+      in
+      let rec dedup elts l =
+        match l with
+        | []                       -> []
+        | x :: l when S.mem x elts -> dedup elts l
+        | x :: l                   -> x :: dedup (S.add x elts) l
+      in
+      dedup S.empty l
   end
 
 module Buffer =

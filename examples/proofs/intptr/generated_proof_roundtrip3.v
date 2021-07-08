@@ -8,8 +8,9 @@ Section proof_roundtrip3.
   Context `{!typeG Σ} `{!globalG Σ}.
 
   (* Typing proof for [roundtrip3]. *)
-  Lemma type_roundtrip3 :
-    ⊢ typed_function impl_roundtrip3 type_of_roundtrip3.
+  Lemma type_roundtrip3 (global_copy_alloc_id : loc) :
+    global_copy_alloc_id ◁ᵥ global_copy_alloc_id @ inline_function_ptr impl_copy_alloc_id -∗
+    typed_function (impl_roundtrip3 global_copy_alloc_id) type_of_roundtrip3.
   Proof.
     Open Scope printing_sugar.
     start_function "roundtrip3" ([p n]) => arg_p local_i local_k.

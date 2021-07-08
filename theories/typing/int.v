@@ -345,12 +345,12 @@ Section programs.
   | DestructHintSwitchIntCase (n : Z)
   | DestructHintSwitchIntDefault.
 
-  Lemma type_switch_int {B} n it m ss def Q fn ls (fr : B → _) v:
+  Lemma type_switch_int n it m ss def Q fn ls R v:
     ([∧ map] i↦mi ∈ m, destruct_hint DHintInfo (DestructHintSwitchIntCase i) (
-             ⌜n = i⌝ -∗ ∃ s, ⌜ss !! mi = Some s⌝ ∗ typed_stmt s fn ls fr Q)) ∧
+             ⌜n = i⌝ -∗ ∃ s, ⌜ss !! mi = Some s⌝ ∗ typed_stmt s fn ls R Q)) ∧
     (destruct_hint DHintInfo (DestructHintSwitchIntDefault) (
-                     ⌜n ∉ (map_to_list m).*1⌝ -∗ typed_stmt def fn ls fr Q)) -∗
-    typed_switch v (n @ int it) it m ss def fn ls fr Q.
+                     ⌜n ∉ (map_to_list m).*1⌝ -∗ typed_stmt def fn ls R Q)) -∗
+    typed_switch v (n @ int it) it m ss def fn ls R Q.
   Proof.
     unfold destruct_hint. iIntros "HT %Hv". iExists n. iSplit; first done.
     iInduction m as [] "IH" using map_ind; simplify_map_eq => //.
@@ -363,7 +363,7 @@ Section programs.
       rewrite map_to_list_insert //. set_solver.
   Qed.
   Global Instance type_switch_int_inst n v it : TypedSwitch v (n @ int it) it :=
-    λ B m ss def fn ls fr Q, i2p (type_switch_int n it m ss def Q fn ls fr v).
+    λ m ss def fn ls R Q, i2p (type_switch_int n it m ss def Q fn ls R v).
 
   Lemma type_neg_int n it v T:
     (⌜n ∈ it⌝ -∗ ⌜it.(it_signed)⌝ ∗ ⌜n ≠ min_int it⌝ ∗ T (i2v (-n) it) (t2mt ((-n) @ int it))) -∗
@@ -507,14 +507,14 @@ Section programs.
   Global Instance type_if_bool_inst it b v : TypedIf (IntOp it) v (b @ boolean it) :=
     λ T1 T2, i2p (type_if_bool it b v T1 T2).
 
-  Lemma type_assert_bool {B} (b : bool) s Q fn ls (fr : B → _) v :
-    (⌜b⌝ ∗ typed_stmt s fn ls fr Q) -∗
-    typed_assert v (b @ boolean bool_it) s fn ls fr Q.
+  Lemma type_assert_bool (b : bool) s Q fn ls R v :
+    (⌜b⌝ ∗ typed_stmt s fn ls R Q) -∗
+    typed_assert v (b @ boolean bool_it) s fn ls R Q.
   Proof.
     iIntros "[% Hs] %Hb". iExists _. iFrame. iSplit; first done. by destruct b.
   Qed.
   Global Instance type_assert_bool_inst b v : TypedAssert v (b @ boolean bool_it) :=
-    λ B s fn ls fr Q, i2p (type_assert_bool _ _ _ _ _ _ _).
+    λ s fn ls R Q, i2p (type_assert_bool _ _ _ _ _ _ _).
 
   Lemma type_cast_bool b it1 it2 v T:
     (∀ v, T v (t2mt (b @ boolean it2))) -∗
