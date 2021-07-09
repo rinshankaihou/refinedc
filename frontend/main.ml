@@ -433,7 +433,8 @@ let run_clean c_file =
   (* Check if the generated directories are empty and if so delete them. *)
   let all_dirs = [gen_dir; rc_dir] in
   let rmdir dir =
-    if Array.length (Sys.readdir dir) = 0 then
+    let files = try Sys.readdir dir with Sys_error(_) -> [||] in
+    if Array.length files = 0 then
       ignore (Sys.command (Printf.sprintf "rm -rf %s" dir))
   in
   List.iter rmdir all_dirs;
