@@ -25,6 +25,7 @@ Hint Rewrite Nat.add_assoc Nat.min_id : lithium_rewrite.
 Hint Rewrite Z.quot_mul using can_solve_tac : lithium_rewrite.
 Hint Rewrite <-Nat.mul_sub_distr_r Z.mul_add_distr_r Z.mul_sub_distr_r : lithium_rewrite.
 Hint Rewrite @bool_decide_eq_x_x_true @if_bool_decide_eq_branches : lithium_rewrite.
+Hint Rewrite @bool_decide_eq_true_2 @bool_decide_eq_false_2 using fast_done : lithium_rewrite.
 Hint Rewrite keep_factor2_is_power_of_two keep_factor2_min_eq using can_solve_tac : lithium_rewrite.
 Hint Rewrite keep_factor2_min_1 keep_factor2_twice : lithium_rewrite.
 
