@@ -234,6 +234,20 @@ Global Instance simpl_not_in_cons {A} (x : A) y ys:
   SimplBoth (x ∉ y :: ys) (x ≠ y ∧ x ∉ ys).
 Proof. split; set_solver. Qed.
 
+Global Instance simpl_both_forall_nil {A} (f : A → Prop):
+  SimplBoth (Forall f []) (True).
+Proof. split; naive_solver. Qed.
+Global Instance simpl_both_forall_cons {A} f (x : A) xs:
+  SimplBoth (Forall f (x::xs)) (f x ∧ Forall f xs).
+Proof. split; [ by move => /(Forall_cons_1 _ _) | naive_solver]. Qed.
+
+Global Instance simpl_both_forall2_nil {A B} (f : A → B → Prop):
+  SimplBoth (Forall2 f [] []) (True).
+Proof. split; [by move => /(Forall2_nil_inv_l _ _)| naive_solver]. Qed.
+Global Instance simpl_both_forall2_cons {A B} f (x : A) (y : B) xs ys:
+  SimplBoth (Forall2 f (x::xs)(y::ys)) (f x y ∧ Forall2 f xs ys).
+Proof. split; [by move => /(Forall2_cons_inv _ _ _ _)|naive_solver]. Qed.
+
 Global Instance simpl_length_0 {A} (l : list A):
   SimplBothRel (=) (length l) (0%nat) (l = []).
 Proof. split; by destruct l. Qed.
