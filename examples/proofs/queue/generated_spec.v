@@ -45,7 +45,6 @@ Section spec.
 
   Global Program Instance queue_elem_rmovable (cont : type) : RMovable (queue_elem cont) :=
     {| rmovable patt__ := movable_eq _ _ (queue_elem_unfold cont patt__) |}.
-  Next Obligation. solve_ty_layout_eq. Qed.
 
   Global Instance queue_elem_simplify_hyp_place_inst_generated l_ β_ (cont : type) patt__:
     SimplifyHypPlace l_ β_ (patt__ @ queue_elem cont)%I (Some 100%N) :=
@@ -96,7 +95,6 @@ Section spec.
 
   Global Program Instance queue_rmovable : RMovable queue :=
     {| rmovable patt__ := movable_eq _ _ (queue_unfold patt__) |}.
-  Next Obligation. solve_ty_layout_eq. Qed.
 
   Global Instance queue_simplify_hyp_place_inst_generated l_ β_ patt__:
     SimplifyHypPlace l_ β_ (patt__ @ queue)%I (Some 100%N) :=

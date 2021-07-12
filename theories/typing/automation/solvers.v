@@ -29,17 +29,3 @@ Ltac solve_goal_normalized_prepare_tac ::=
   rewrite /ly_size/ly_align_log //=.
 
 (** * Tactics for solving sideconditions in ..._spec.v files  *)
-Ltac solve_rmovable :=
-  simple notypeclasses refine ({| rmovable n := _; rmove_layout x1 x2 := _ |}); [
-    unfold with_refinement => /=; by apply _|
-    simpl; solve_typing
-  ].
-
-Ltac solve_ty_layout_eq :=
-  simpl;
-  repeat lazymatch goal with
-    | |- ∀ _ : (), _ => case
-    | |- ∀ _ : (_ * _), _ => case
-    | |- ∀ _ : _, _ => move => ?
-    end;
-  by rewrite /ty_layout.

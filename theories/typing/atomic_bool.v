@@ -16,23 +16,23 @@ Section atomic_bool.
   |}%I.
   Next Obligation.
     iIntros "%it %PT %PF %l %E %HE (%b&Hb&Hown)".
-    iDestruct (ty_aligned with "Hb") as %?. iSplitR => //.
+    iDestruct (ty_aligned with "Hb") as %?; [done|]. iSplitR => //.
     iApply inv_alloc. iNext. iExists b. iFrame.
   Qed.
 
   Global Program Instance movable_atomic_bool it PT PF : Movable (atomic_bool it PT PF) := {|
-    ty_layout := it_layout it;
+    ty_has_layout ly := ly = it_layout it;
     ty_own_val v := ∃ b, v ◁ᵥ b @ boolean it ∗ if b then PT else PF;
   |}%I.
-  Next Obligation. iIntros (????) "[% [Hb _]]". by iApply (ty_aligned with "Hb"). Qed.
-  Next Obligation. iIntros (????) "[% [Hb _]]". by iApply (ty_size_eq with "Hb"). Qed.
+  Next Obligation. iIntros (?????->) "[% [Hb _]]". by iApply (ty_aligned with "Hb"). Qed.
+  Next Obligation. iIntros (?????->) "[% [Hb _]]". by iApply (ty_size_eq with "Hb"). Qed.
   Next Obligation.
-    iIntros (????) "[% [Hb ?]]".
-    iDestruct (ty_deref with "Hb") as (?) "[? ?]".
+    iIntros (?????->) "[% [Hb ?]]".
+    iDestruct (ty_deref with "Hb") as (?) "[? ?]"; [done|].
     eauto with iFrame.
   Qed.
   Next Obligation.
-    iIntros (??????) "Hl [%b [Hb ?]]".
+    iIntros (??????->?) "Hl [%b [Hb ?]]".
     iDestruct (ty_ref with "[] Hl Hb") as "?" => //.
     iExists b. iFrame.
   Qed.
@@ -41,8 +41,7 @@ Section atomic_bool.
     AllocAlive (atomic_bool it PT PF) β True.
   Proof.
     constructor. have ?:= bytes_per_int_gt_0 it. destruct β.
-    - iIntros (l) "? (%b&Hl&?)". iApply (alloc_alive_alive with "[] Hl"). iPureIntro.
-      rewrite /ly_size/=. lia.
+    - iIntros (l) "? (%b&Hl&?)". by iApply (alloc_alive_alive with "[] Hl").
     - iIntros (l) "? (%&Hl)".
       iApply (heap_mapsto_alive_strong).
       iInv "Hl" as "(%b&>Hb&?)" "Hclose".
@@ -84,9 +83,9 @@ Section programs.
     unfold destruct_hint. iIntros "HT Hl". destruct β.
     - iDestruct "Hl" as "[%b [Hl Hif]]".
       iApply fupd_mask_intro => //. iIntros "Hclose".
-      iDestruct (ty_aligned with "Hl") as %?.
-      iDestruct (ty_deref with "Hl") as (v) "[Hl #Hv]".
-      iDestruct (ty_size_eq with "Hv") as %?.
+      iDestruct (ty_aligned with "Hl") as %?; [done|].
+      iDestruct (ty_deref with "Hl") as (v) "[Hl #Hv]"; [done|].
+      iDestruct (ty_size_eq with "Hv") as %?; [done|].
       iExists _, _, _, (t2mt (b @ boolean it)).
       iFrame "∗Hv". do 2 iSplitR => //=.
       iIntros "!# Hl". iMod "Hclose". iModIntro.
@@ -95,9 +94,9 @@ Section programs.
     - iDestruct "Hl" as (Hly) "#Hinv".
       iInv "Hinv" as (b) "[>Hl Hif]" "Hclose".
       iApply fupd_mask_intro. set_solver. iIntros "Hclose2".
-      iDestruct (ty_aligned with "Hl") as %?.
-      iDestruct (ty_deref with "Hl") as (?) "[Hmt #Hv]".
-      iDestruct (ty_size_eq with "Hv") as %?.
+      iDestruct (ty_aligned with "Hl") as %?; [done|].
+      iDestruct (ty_deref with "Hl") as (?) "[Hmt #Hv]"; [done|].
+      iDestruct (ty_size_eq with "Hv") as %?; [done|].
       iExists _, _, _, (t2mt (b @ boolean it)). iFrame "Hmt Hv".
       iSplit; [done|]. iSplit; [done|].
       iIntros "!# Hl". iDestruct ("HT" with "Hif") as "[Hif $]".
@@ -109,24 +108,24 @@ Section programs.
     TypedReadEnd true l β (atomic_bool it PT PF) it | 10 :=
     λ T, i2p (type_read_atomic_bool l β it PT PF T).
 
-  Lemma type_write_atomic_bool l β it PT PF v ty `{!Movable ty} T:
+  Lemma type_write_atomic_bool l β ly it PT PF v ty `{!Movable ty} T:
     (∃ b,
       subsume (v ◁ᵥ ty) (v ◁ᵥ b @ boolean it) (
-        ⌜ty.(ty_layout) = it⌝ ∗
+        ⌜ly = it_layout it⌝ ∗
         (if b then PT else PF) ∗
         T (atomic_bool it PT PF)
       )
     ) -∗
-    typed_write_end true v ty l β (atomic_bool it PT PF) T.
+    typed_write_end true ly v ty l β (atomic_bool it PT PF) T.
   Proof.
-    iIntros "[%bnew Hsub] Hl Hv".
+    iIntros "[%bnew Hsub] % Hl Hv".
     iDestruct ("Hsub" with "Hv") as "(#Hnew&->&Hif_new&HT)".
     destruct β.
     - iDestruct "Hl" as "[%bold [Hl Hif_old]]".
       iApply fupd_mask_intro => //. iIntros "Hc".
-      iDestruct (ty_aligned with "Hl") as %?.
-      iDestruct (ty_deref with "Hl") as (vb) "[Hmt Hold]".
-      iDestruct (ty_size_eq with "Hold") as %?.
+      iDestruct (ty_aligned with "Hl") as %?; [done|].
+      iDestruct (ty_deref with "Hl") as (vb) "[Hmt Hold]"; [done|].
+      iDestruct (ty_size_eq with "Hold") as %?; [done|].
       iSplitL "Hmt". by iExists _; iFrame.
       iIntros "!# Hl". iMod "Hc". iModIntro.
       iExists _. iFrame. iExists bnew. iFrame.
@@ -135,18 +134,18 @@ Section programs.
       iInv "Hinv" as (b) "[>Hmt Hif]" "Hc".
       iApply fupd_mask_intro; first solve_ndisj.
       iIntros "Hc2".
-      iDestruct (ty_aligned with "Hmt") as %?.
-      iDestruct (ty_deref with "Hmt") as (?) "[Hmt #Hv]".
-      iDestruct (ty_size_eq with "Hv") as %?.
+      iDestruct (ty_aligned with "Hmt") as %?; [done|].
+      iDestruct (ty_deref with "Hmt") as (?) "[Hmt #Hv]"; [done|].
+      iDestruct (ty_size_eq with "Hv") as %?; [done|].
       iSplitL "Hmt". { iExists _; by iFrame. }
       iIntros "!# Hl". iMod "Hc2".
       iMod ("Hc" with "[Hif_new Hl]").
       { iModIntro. iExists bnew. iFrame. by iApply (@ty_ref with "[] Hl Hnew"). }
       iModIntro. iExists _. iFrame. by iSplit.
   Qed.
-  Global Instance type_write_atomic_bool_inst l β it PT PF v ty `{!Movable ty}:
-    TypedWriteEnd true v ty l β (atomic_bool it PT PF) | 10 :=
-    λ T, i2p (type_write_atomic_bool l β it PT PF v ty T).
+  Global Instance type_write_atomic_bool_inst l ly β it PT PF v ty `{!Movable ty}:
+    TypedWriteEnd true ly v ty l β (atomic_bool it PT PF) | 10 :=
+    λ T, i2p (type_write_atomic_bool l β ly it PT PF v ty T).
 
   Lemma type_cas_atomic_bool (l : loc) β it PT PF lexp Pexp vnew Pnew T:
     (∃ bexp bnew,

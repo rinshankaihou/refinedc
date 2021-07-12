@@ -58,13 +58,13 @@ Section type.
   Qed.
 
   Global Program Instance movable_tylocked_ex A γ n x (ty : A → type) `{!Movable (ty x)}: Movable (tylocked_ex γ n x ty) := {|
-    ty_layout := (ty x).(ty_layout);
+    ty_has_layout ly := (ty x).(ty_has_layout) ly;
     ty_own_val v := (v ◁ᵥ (ty x))%I;
   |}.
-  Next Obligation. iIntros (A γ n x ty ? v) "Hl". by iApply ty_aligned. Qed.
-  Next Obligation. iIntros (A γ n x ty ? v) "Hl". by iApply ty_size_eq. Qed.
-  Next Obligation. iIntros (A γ n x ty ? l) "Hl". by iApply ty_deref. Qed.
-  Next Obligation. iIntros (A γ n x ty ? l l') "Hl". by iApply ty_ref. Qed.
+  Next Obligation. iIntros (A γ n x ty ? ly v ?) "Hl". by iApply ty_aligned. Qed.
+  Next Obligation. iIntros (A γ n x ty ? ly v ?) "Hl". by iApply ty_size_eq. Qed.
+  Next Obligation. iIntros (A γ n x ty ? ly l ?) "Hl". by iApply ty_deref. Qed.
+  Next Obligation. iIntros (A γ n x ty ? ly l ? ?) "Hl". by iApply ty_ref. Qed.
 
   Lemma tylocked_simplify_hyp_place A γ n x (ty : A → type) T l:
     (l ◁ₗ ty x -∗ T)  -∗

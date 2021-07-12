@@ -45,7 +45,6 @@ Section spec.
 
   Global Program Instance hyp_page_rmovable : RMovable hyp_page :=
     {| rmovable patt__ := movable_eq _ _ (hyp_page_unfold patt__) |}.
-  Next Obligation. solve_ty_layout_eq. Qed.
 
   Global Instance hyp_page_simplify_hyp_place_inst_generated l_ β_ patt__:
     SimplifyHypPlace l_ β_ (patt__ @ hyp_page)%I (Some 100%N) :=
@@ -120,7 +119,6 @@ Section spec.
 
   Global Program Instance hyp_pool_rmovable : RMovable hyp_pool :=
     {| rmovable patt__ := movable_eq _ _ (hyp_pool_unfold patt__) |}.
-  Next Obligation. solve_ty_layout_eq. Qed.
 
   Global Instance hyp_pool_simplify_hyp_place_inst_generated l_ β_ patt__:
     SimplifyHypPlace l_ β_ (patt__ @ hyp_pool)%I (Some 100%N) :=

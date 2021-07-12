@@ -13,7 +13,8 @@ Section type.
     l ↦ LATCH_INIT ={E}=∗ l ◁ₗ{Shr} P @ latch.
   Proof.
     iIntros (? ?) "Hl".
-    iApply ty_share => //. unshelve iApply (@ty_ref with "[] Hl") => //. apply _.  done.
+    iApply ty_share => //. unshelve iApply (@ty_ref with "[] Hl") => //.
+    { apply _. } { solve_goal. }
     rewrite /ty_own_val/=. repeat iSplit => //. rewrite /ty_own_val/=/ty_own_val/=. iSplit => //. by iExists false.
   Qed.
 End type.

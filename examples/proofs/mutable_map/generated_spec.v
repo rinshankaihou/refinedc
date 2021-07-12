@@ -48,19 +48,6 @@ Section spec.
   Next Obligation. done. Qed.
   Next Obligation. by case; eauto. Qed.
 
-  Global Program Instance movable_item_tunion_info : MovableTUnion item_tunion_info := {|
-    mti_movable c :=
-      match c with
-      | Empty => _
-      | Entry key ty => _
-      | Tombstone key => _
-      end;
-  |}.
-  Next Obligation. simpl. apply _. Defined.
-  Next Obligation. simpl. apply _. Defined.
-  Next Obligation. simpl. apply _. Defined.
-  Next Obligation. by case => /=; apply _. Qed.
-
   Program Definition item : rtype := tunion item_tunion_info.
 
   (* Definition of type [fixed_size_map]. *)
@@ -110,7 +97,6 @@ Section spec.
 
   Global Program Instance fixed_size_map_rmovable : RMovable fixed_size_map :=
     {| rmovable patt__ := movable_eq _ _ (fixed_size_map_unfold patt__) |}.
-  Next Obligation. solve_ty_layout_eq. Qed.
 
   Global Instance fixed_size_map_simplify_hyp_place_inst_generated l_ β_ patt__:
     SimplifyHypPlace l_ β_ (patt__ @ fixed_size_map)%I (Some 100%N) :=

@@ -21,15 +21,14 @@ Section int.
 
   Global Program Instance rmovable_int it : RMovable (int it) := {|
     rmovable n := {|
-      ty_layout := it_layout it;
+      ty_has_layout ly := ly = it_layout it;
       ty_own_val v := ⌜val_to_Z v it = Some n⌝;
     |}
   |}%I.
-  Next Obligation. iIntros (???) "(%&%&$&_)". Qed.
-  Next Obligation. iIntros (??? H) "!%". by apply val_to_Z_length in H. Qed.
-  Next Obligation. iIntros (???) "(%v&%&%&Hl)". eauto with iFrame. Qed.
-  Next Obligation. iIntros (??? v ?) "Hl %". iExists v. eauto with iFrame. Qed.
-  Next Obligation. iIntros (???). done. Qed.
+  Next Obligation. iIntros (???? ->) "(%&%&$&_)". Qed.
+  Next Obligation. iIntros (???? ->H) "!%". by apply val_to_Z_length in H. Qed.
+  Next Obligation. iIntros (????->) "(%v&%&%&Hl)". eauto with iFrame. Qed.
+  Next Obligation. iIntros (???? v -> ?) "Hl %". iExists v. eauto with iFrame. Qed.
 
   Lemma int_loc_in_bounds l β n it:
      l ◁ₗ{β} n @ int it -∗ loc_in_bounds l (bytes_per_int it).
@@ -45,6 +44,13 @@ Section int.
     iApply loc_in_bounds_shorten; last done. lia.
   Qed.
 
+  Global Instance alloc_alive_int n it β: AllocAlive (n @ int it) β True.
+  Proof.
+    constructor. iIntros (l ?) "(%&%&%&Hl)".
+    iApply (heap_mapsto_own_state_alloc with "Hl").
+    erewrite val_to_Z_length; [|done]. have := bytes_per_int_gt_0 it. lia.
+  Qed.
+
   Global Program Instance learn_align_int β it n
     : LearnAlignment β (n @ int it) (Some (ly_align it)).
   Next Obligation. by iIntros (β it n ?) "(%&%&%&?)". Qed.
@@ -52,7 +58,7 @@ Section int.
   Lemma ty_own_int_in_range l β n it : l ◁ₗ{β} n @ int it -∗ ⌜n ∈ it⌝.
   Proof.
     iIntros "Hl". destruct β.
-    - iDestruct (ty_deref with "Hl") as (?) "[_ %]".
+    - iDestruct (ty_deref with "Hl") as (?) "[_ %]"; [done|].
       iPureIntro. by eapply val_to_Z_in_range.
     - iDestruct "Hl" as (?) "[% _]".
       iPureIntro. by eapply val_to_Z_in_range.
@@ -62,7 +68,7 @@ Section int.
   have to reprove this everytime? *)
   Global Program Instance int_copyable x it : Copyable (x @ int it).
   Next Obligation.
-    iIntros (?????) "(%v&%Hv&%Hl&Hl)".
+    iIntros (??????->) "(%v&%Hv&%Hl&Hl)".
     iMod (heap_mapsto_own_state_to_mt with "Hl") as (q) "[_ Hl]" => //.
     iSplitR => //. iExists q, v. iFrame. iModIntro. eauto with iFrame.
   Qed.
@@ -91,11 +97,13 @@ Section boolean.
   Global Program Instance rmovable_boolean it : RMovable (boolean it) := {|
     rmovable b := (rmovable (int it)) (Z_of_bool b);
   |}.
-  Next Obligation. iIntros (???). done. Qed.
 
   Lemma boolean_own_val_eq v b it:
     (v ◁ᵥ b @ boolean it)%I ≡ ⌜val_to_Z v it = Some (Z_of_bool b)⌝%I.
   Proof. done. Qed.
+
+  Global Instance alloc_alive_bool b it β: AllocAlive (b @ boolean it) β True.
+  Proof. apply _. Qed.
 
   Global Instance boolean_timeless l b it:
     Timeless (l ◁ₗ b @ boolean it)%I.
@@ -595,18 +603,18 @@ Section offsetof.
   Qed.
 
   Global Program Instance movable_offsetof s m : Movable (offsetof s m) := {|
-    ty_layout := it_layout size_t;
+    ty_has_layout ly := ly = size_t;
     ty_own_val v := ∃ n, ⌜offset_of s.(sl_members) m = Some n⌝ ∗ v ◁ᵥ n @ int size_t
   |}%I.
-  Next Obligation. iIntros (s m l). iDestruct 1 as (??)"Hn". iDestruct (ty_aligned with "Hn") as "$". Qed.
-  Next Obligation. iIntros (s m l). iDestruct 1 as (??)"Hn". iDestruct (ty_size_eq with "Hn") as "$". Qed.
+  Next Obligation. iIntros (s m ly l ->). iDestruct 1 as (??)"Hn". by iDestruct (ty_aligned with "Hn") as "$". Qed.
+  Next Obligation. iIntros (s m ly l ->). iDestruct 1 as (??)"Hn". by iDestruct (ty_size_eq with "Hn") as "$". Qed.
   Next Obligation.
-    iIntros (s m l). iDestruct 1 as (??)"Hn".
-    iDestruct (ty_deref with "Hn") as (v) "[Hl Hi]". iExists _. iFrame.
+    iIntros (s m ly l ->). iDestruct 1 as (??)"Hn".
+    iDestruct (ty_deref with "Hn") as (v) "[Hl Hi]"; [done|]. iExists _. iFrame.
     eauto with iFrame.
   Qed.
   Next Obligation.
-    iIntros (s m l v ?) "Hl". iDestruct 1 as (??)"Hn".
+    iIntros (s m ? l v -> ?) "Hl". iDestruct 1 as (??)"Hn".
     iExists _. iSplit => //. iApply (@ty_ref with "[] Hl") => //. done.
   Qed.
 

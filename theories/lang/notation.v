@@ -156,6 +156,8 @@ Definition VOID : val := [].
 
 Definition field_list := list (option var_name * layout).
 
+Definition field_members (s : field_list) : list (var_name * layout) :=
+  (omap (λ '(n, ly), (λ n', (n', ly)) <$> n) s).
 Definition field_names (s : field_list) : list var_name := omap fst s.
 Definition offset_of_idx (s : field_list) (i : nat) : nat :=
   sum_list (take i (ly_size <$> s.*2)).

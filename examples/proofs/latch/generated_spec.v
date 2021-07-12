@@ -33,7 +33,6 @@ Section spec.
 
   Global Program Instance latch_rmovable : RMovable latch :=
     {| rmovable patt__ := movable_eq _ _ (latch_unfold patt__) |}.
-  Next Obligation. solve_ty_layout_eq. Qed.
 
   Global Instance latch_simplify_hyp_place_inst_generated l_ β_ patt__:
     SimplifyHypPlace l_ β_ (patt__ @ latch)%I (Some 100%N) :=

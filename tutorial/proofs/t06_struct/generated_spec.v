@@ -43,7 +43,6 @@ Section spec.
 
   Global Program Instance color_rmovable : RMovable color :=
     {| rmovable patt__ := movable_eq _ _ (color_unfold patt__) |}.
-  Next Obligation. solve_ty_layout_eq. Qed.
 
   Global Instance color_simplify_hyp_place_inst_generated l_ β_ patt__:
     SimplifyHypPlace l_ β_ (patt__ @ color)%I (Some 100%N) :=

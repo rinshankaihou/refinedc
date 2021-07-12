@@ -54,19 +54,6 @@ Section spec.
   Next Obligation. done. Qed.
   Next Obligation. by case; eauto. Qed.
 
-  Global Program Instance movable_item_tunion_info : MovableTUnion item_tunion_info := {|
-    mti_movable c :=
-      match c with
-      | Empty => _
-      | Entry key ty => _
-      | Tombstone key => _
-      end;
-  |}.
-  Next Obligation. simpl. apply _. Defined.
-  Next Obligation. simpl. apply _. Defined.
-  Next Obligation. simpl. apply _. Defined.
-  Next Obligation. by case => /=; apply _. Qed.
-
   Program Definition item : rtype := tunion item_tunion_info.
 
   (* Type definitions. *)

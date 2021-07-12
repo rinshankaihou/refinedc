@@ -3,6 +3,7 @@ From iris.base_logic.lib Require Export invariants.
 From refinedc.lang Require Export proofmode notation.
 From refinedc.lithium Require Import simpl_classes.
 From refinedc.typing Require Export base annotations.
+Set Default Proof Using "Type".
 
 Class typeG Σ := TypeG {
   type_heapG :> refinedcG Σ;
@@ -196,6 +197,17 @@ Section own_state.
     iApply inv_alloc. iModIntro. rewrite shift_loc_0. iExists _. iFrame.
   Qed.
 
+  Lemma heap_mapsto_own_state_alloc l β v :
+    length v ≠ 0%nat →
+    l ↦[β] v -∗ alloc_alive_loc l.
+  Proof.
+    iIntros (?) "Hl".
+    destruct β; [ by iApply heap_mapsto_alive|].
+    iApply heap_mapsto_alive_strong.
+    iMod (heap_mapsto_own_state_to_mt with "Hl") as (? ?) "?"; [done|].
+    iApply fupd_mask_intro; [done|]. iIntros "_". iExists _, _. by iFrame.
+  Qed.
+
   Lemma heap_mapsto_own_state_share l v E:
     l ↦[Own] v ={E}=∗ l ↦[Shr] v.
   Proof. by apply heap_mapsto_own_state_from_mt. Qed.
@@ -233,14 +245,14 @@ Arguments ty_own : simpl never.
 Existing Instance ty_shr_pers.
 
 Class Movable `{!typeG Σ} (t : type) := {
-  ty_layout : layout;
+  ty_has_layout : layout → Prop;
   ty_own_val : val → iProp Σ;
-  ty_aligned l : t.(ty_own) Own l -∗ ⌜l `has_layout_loc` ty_layout⌝;
-  ty_size_eq v : ty_own_val v -∗ ⌜v `has_layout_val` ty_layout⌝;
-  ty_deref l : t.(ty_own) Own l -∗ l↦: ty_own_val;
-  ty_ref l v : ⌜l `has_layout_loc` ty_layout⌝ -∗ l↦v -∗ ty_own_val v -∗ t.(ty_own) Own l;
+  ty_aligned ly l : ty_has_layout ly → t.(ty_own) Own l -∗ ⌜l `has_layout_loc` ly⌝;
+  ty_size_eq ly v : ty_has_layout ly → ty_own_val v -∗ ⌜v `has_layout_val` ly⌝;
+  ty_deref ly l : ty_has_layout ly → t.(ty_own) Own l -∗ l↦: ty_own_val;
+  ty_ref ly l v : ty_has_layout ly → ⌜l `has_layout_loc` ly⌝ -∗ l↦v -∗ ty_own_val v -∗ t.(ty_own) Own l;
 }.
-Arguments ty_layout {_ _} !_ {_}.
+Arguments ty_has_layout {_ _} _ {_}.
 Arguments ty_own_val {_ _} _ {_} : simpl never.
 
 (* Lift Movable to lists.  We cannot use `Forall` because that one is restricted to Prop. *)
@@ -291,13 +303,13 @@ Section movable.
     @movablelst_to_list (mt_type <$> tys) (list_to_movablelst tys) = tys.
   Proof. elim: tys => //= ty tys ->. f_equal. by case: ty. Qed.
 
-  Definition mty_layout (ty : mtype) : layout := ty.(ty_layout).
 End movable.
 
 Class Copyable `{!typeG Σ} (ty : type) `{!Movable ty} := {
   copy_own_persistent v : Persistent (ty.(ty_own_val) v);
-  copy_shr_acc E l :
-    ↑mtN ⊆ E → ty.(ty_own) Shr l ={E}=∗ ⌜l `has_layout_loc` ty.(ty_layout)⌝ ∗
+  copy_shr_acc E ly l :
+    ↑mtN ⊆ E → ty.(ty_has_layout) ly →
+    ty.(ty_own) Shr l ={E}=∗ ⌜l `has_layout_loc` ly⌝ ∗
        (* TODO: the closing conjuct does not make much sense with True *)
        ∃ q' vl, l ↦{q'} vl ∗ ▷ ty.(ty_own_val) vl ∗ (▷l ↦{q'} vl ={E}=∗ True)
 }.
@@ -312,17 +324,12 @@ Hint Mode LocInBounds + + + + - : typeclass_instances.
 Section loc_in_bounds.
   Context `{!typeG Σ}.
 
-  Lemma movable_loc_in_bounds ty l `{!Movable ty} :
-    ty.(ty_own) Own l -∗ loc_in_bounds l (ly_size (ty_layout ty)).
+  Lemma movable_loc_in_bounds ty l `{!Movable ty} ly:
+    ty.(ty_has_layout) ly →
+    ty.(ty_own) Own l -∗ loc_in_bounds l (ly_size ly).
   Proof.
-    iIntros "Hl". iDestruct (ty_deref with "Hl") as (v) "[Hl Hv]".
-    iDestruct (ty_size_eq with "Hv") as %<-. by iApply heap_mapsto_loc_in_bounds.
-  Qed.
-
-  Global Instance movable_loc_in_bounds_inst ty `{!Movable ty}:
-    LocInBounds ty Own (ly_size (ty_layout ty)) | 100.
-  Proof.
-    constructor. iIntros (?) "?". by iApply movable_loc_in_bounds.
+    iIntros (?) "Hl". iDestruct (ty_deref with "Hl") as (v) "[Hl Hv]"; [done|].
+    iDestruct (ty_size_eq with "Hv") as %<-; [done|]. by iApply heap_mapsto_loc_in_bounds.
   Qed.
 
   Global Instance intro_persistent_loc_in_bounds l n:
@@ -343,18 +350,15 @@ Notation type_alive_own ty := (type_alive ty Own).
 Section alloc_alive.
   Context `{!typeG Σ}.
 
-  Lemma movable_alloc_alive ty l `{!Movable ty} :
-    ty.(ty_layout).(ly_size) ≠ 0%nat →
+  Lemma movable_alloc_alive ty l `{!Movable ty} ly :
+    ly.(ly_size) ≠ 0%nat →
+    ty.(ty_has_layout) ly →
     ty.(ty_own) Own l -∗ alloc_alive_loc l.
   Proof.
-    iIntros (?) "Hl". iDestruct (ty_deref with "Hl") as (v) "[Hl Hv]".
-    iDestruct (ty_size_eq with "Hv") as %Hv.
+    iIntros (??) "Hl". iDestruct (ty_deref with "Hl") as (v) "[Hl Hv]"; [done|].
+    iDestruct (ty_size_eq with "Hv") as %Hv; [done|].
     iApply heap_mapsto_alive => //. by rewrite Hv.
   Qed.
-
-  Global Instance movable_alloc_alive_inst ty `{!Movable ty}:
-    AllocAlive ty Own (⌜ly_size (ty_layout ty) ≠ 0%nat⌝) | 100.
-  Proof. constructor. iIntros (??) "?". by iApply movable_alloc_alive. Qed.
 
   Global Instance intro_persistent_alloc_global l:
     IntroPersistent (alloc_global l) (alloc_global l).
@@ -418,33 +422,30 @@ Coercion ty_of_rty : rtype >-> type.
 
 Class RMovable `{!typeG Σ} (r : rtype) := {
    rmovable x :> Movable (x @ r);
-   rmove_layout x1 x2 : (r.(rty) x1).(ty_layout) = (r.(rty) x2).(ty_layout);
 }.
 Arguments rmovable {_ _} _ {_} : simpl never.
 
 Section rmovable.
   Context `{!typeG Σ}.
 
-  Global Program Instance movable_ty_of_rty r `{!RMovable r} `{!Inhabited (r.(rty_type))} : Movable r := {|
-    ty_layout := (inhabitant @ r).(ty_layout);
+  Global Program Instance movable_ty_of_rty r `{!RMovable r} : Movable r := {|
+    ty_has_layout ly := ∀ x, (x @ r).(ty_has_layout) ly;
     ty_own_val v := (∃ x, (x @ r).(ty_own_val) v)%I;
   |}.
   Next Obligation.
-    iIntros (r ? l β). iDestruct 1 as (x) "Hv". iDestruct (ty_aligned with "Hv") as %Hv.
-    by rewrite (rmove_layout _ inhabitant) in Hv.
+    iIntros (r ? l β Hly). iDestruct 1 as (x) "Hv". by iDestruct (ty_aligned with "Hv") as %Hv; [done|].
   Qed.
   Next Obligation.
-    iIntros (r ? ? v). iDestruct 1 as (x) "Hv". iDestruct (ty_size_eq with "Hv") as %Hv.
-    by rewrite (rmove_layout _ inhabitant) in Hv.
+    iIntros (r ? v ly Hly). iDestruct 1 as (x) "Hv". by iDestruct (ty_size_eq with "Hv") as %Hv.
   Qed.
   Next Obligation.
-    iIntros (r ? ? l). iDestruct 1 as (x) "Hl".
-    iDestruct (ty_deref with "Hl") as (v) "[Hl Hv]".
+    iIntros (r ? ly l Hly). iDestruct 1 as (x) "Hl".
+    iDestruct (ty_deref with "Hl") as (v) "[Hl Hv]"; [done|].
     eauto with iFrame.
   Qed.
   Next Obligation.
-    iIntros (r ? ? l v ?) "Hl". iDestruct 1 as (x) "Hv".
-    iDestruct (ty_ref with "[] Hl Hv") as "Hl". by rewrite (rmove_layout _ inhabitant).
+    iIntros (r ? ly l v Hly ?) "Hl". iDestruct 1 as (x) "Hv".
+    iDestruct (ty_ref with "[] Hl Hv") as "Hl"; [done..|].
     iExists _. iFrame.
   Qed.
 
@@ -455,10 +456,9 @@ Section rmovable.
 
   Global Program Instance copyable_ty_of_rty r `{!RMovable r} `{!Inhabited (r.(rty_type))} `{!∀ x, Copyable (x @ r)} : Copyable r.
   Next Obligation.
-    iIntros (r ? ?? E l ?). iDestruct 1 as (x) "Hl".
+    iIntros (r ? ?? E ly l ??). iDestruct 1 as (x) "Hl".
     iMod (copy_shr_acc with "Hl") as (? q' vl) "(?&?&?)" => //.
-    rewrite (rmove_layout _ x). iSplitR => //. iExists _, _. iFrame.
-      by iExists _.
+    iSplitR => //. iExists _, _. iFrame. by iExists _.
   Qed.
 End rmovable.
 
@@ -573,7 +573,7 @@ Section ofe.
   Inductive mtype_equiv' (ty1 ty2 : mtype) : Prop :=
     MType_equiv :
       ty1.(mt_type) ≡ ty2.(mt_type) →
-      ty1.(ty_layout) = ty2.(ty_layout) →
+      (∀ ly, ty1.(ty_has_layout) ly = ty2.(ty_has_layout) ly) →
       (∀ v, ty1.(ty_own_val) v ≡ ty2.(ty_own_val) v) →
       mtype_equiv' ty1 ty2.
   Global Instance mtype_equiv : Equiv mtype := mtype_equiv'.
@@ -589,18 +589,18 @@ Section ofe.
   Proof.
     constructor => //.
     - move => ?? [? ? ?]. by constructor; intros; symmetry.
-    - move => ??? [?? Hv1] [???]. by constructor; etrans; try eassumption; try apply: Hv1.
+    - move => ??? [? Hly1 Hv1] [???]. by constructor; etrans; try eassumption; try apply: Hv1; try apply: Hly1.
   Qed.
 
   Program Definition movable_eq ty1 ty2 `{!Movable ty2} (_ : ty1 ≡@{type} ty2): Movable ty1 := {|
-    ty_layout := ty2.(ty_layout);
+    ty_has_layout := ty2.(ty_has_layout);
     (* This must be tc_opaque, otherwise Coq likes to unfold ty1 to ty2 via unification. *)
     ty_own_val := tc_opaque (ty2.(ty_own_val));
   |}.
-  Next Obligation. iIntros (ty1 ty2 ? Heq l) "Hv". rewrite Heq. by iApply ty_aligned. Qed.
-  Next Obligation. iIntros (ty1 ty2 ? Heq v) "Hv". by iApply ty_size_eq. Qed.
-  Next Obligation. iIntros (ty1 ty2 ? Heq l). rewrite Heq. by iApply ty_deref. Qed.
-  Next Obligation. iIntros (ty1 ty2 ? Heq l v). rewrite Heq. by iApply ty_ref. Qed.
+  Next Obligation. iIntros (ty1 ty2 ? Heq ly l Hly) "Hv". rewrite Heq. by iApply ty_aligned. Qed.
+  Next Obligation. iIntros (ty1 ty2 ? Heq ly v Hly) "Hv". by iApply ty_size_eq. Qed.
+  Next Obligation. iIntros (ty1 ty2 ? Heq ly l Hly). rewrite Heq. by iApply ty_deref. Qed.
+  Next Obligation. iIntros (ty1 ty2 ? Heq ly l v Hly). rewrite Heq. by iApply ty_ref. Qed.
 End ofe.
 
 

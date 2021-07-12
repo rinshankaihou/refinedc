@@ -28,35 +28,31 @@ Section array.
   Global Instance array_proper : Proper ((=) ==> (≡) ==> (≡)) array.
   Proof. move => ??->. apply ne_proper, _. Qed.
 
-  Lemma movable_array_forall ly tys `{!MovableLst tys}:
-    TCForall (LayoutEq ly) (mty_layout <$> movablelst_to_list tys) →
-    Forall (λ ty, ly = (ty : mtype).(ty_layout)) (movablelst_to_list tys).
-  Proof. move => /TCForall_Forall. rewrite Forall_fmap => ?. by apply: Forall_impl. Qed.
 
-  Program Definition movable_array ly tys `{!MovableLst tys} `{!TCForall (LayoutEq ly) (mty_layout <$> movablelst_to_list tys)} `{LayoutWf ly}: Movable (array ly tys) := {|
-    ty_layout := mk_array_layout ly (length tys);
+  Global Program Instance movable_array ly tys `{!MovableLst tys} : Movable (array ly tys) := {|
+    ty_has_layout ly' := ly' = mk_array_layout ly (length tys) ∧ layout_wf ly ∧ Forall (λ ty, (ty : mtype).(ty_has_layout) ly) (movablelst_to_list tys);
     ty_own_val v :=
       (⌜v `has_layout_val` (mk_array_layout ly (length tys))⌝ ∗
        [∗ list] v';ty∈reshape (replicate (length tys) (ly_size ly)) v;(movablelst_to_list tys), (v' ◁ᵥ (ty : mtype)))%I;
   |}.
-  Next Obligation. by iIntros (ly tys ? Hall%movable_array_forall ? l) "[% _]". Qed.
-  Next Obligation. by iIntros (ly tys ? ? ? v) "(?&_)". Qed.
+  Next Obligation. by iIntros (ly tys ? ly' l [-> ?]) "[% _]". Qed.
+  Next Obligation. by iIntros (ly tys ? ly' v [-> ?]) "(?&_)". Qed.
   Next Obligation.
-    rewrite /LayoutWf. move => ly tys ? /movable_array_forall. rewrite {2}(to_movablelst tys).
+    move => ly tys ? ly' l [? [? ]]. rewrite {2}(to_movablelst tys).
     move Heq: (movablelst_to_list tys) => tys'.
     have ->: (length tys = length tys') by rewrite -Heq movablelst_to_list_length.
-    clear dependent tys. rewrite /ty_own/=. iIntros (Hlys Hly l) "(_&#Hb&Htys)".
+    clear dependent tys. rewrite /ty_own/=. iIntros (Hlys) "(_&#Hb&Htys)".
     iInduction (tys') as [|ty tys] "IH" forall (l); csimpl.
     { iExists []. iSplitR => //.
       - iApply heap_mapsto_nil; first by iApply (loc_in_bounds_shorten with "Hb"); lia.
       - iSplit => //. iPureIntro. rewrite /has_layout_val/ly_size/=. lia. }
-    move: Hlys. intros (->&?)%Forall_cons. csimpl.
+    move: Hlys. intros (?&?)%Forall_cons. csimpl.
     rewrite offset_loc_0. iDestruct "Htys" as "[Hty Htys]".
     iDestruct (loc_in_bounds_split_mul_S with "Hb") as "[Hb1 Hb2]".
-    iDestruct (ty_deref with "Hty") as (v') "[Hl Hty]".
-    iDestruct (ty_size_eq with "Hty") as %Hszv.
+    iDestruct (ty_deref with "Hty") as (v') "[Hl Hty]"; [done|].
+    iDestruct (ty_size_eq with "Hty") as %Hszv; [done|].
     setoid_rewrite offset_loc_S.
-    iDestruct ("IH" $! _ (l offset{ty_layout ty}ₗ 1) with "[Hb2] Htys") as (vs') "(Hl' & Hsz & Htys)".
+    iDestruct ("IH" $! _ (l offset{ly}ₗ 1) with "[Hb2] Htys") as (vs') "(Hl' & Hsz & Htys)".
     { by rewrite /offset_loc Z.mul_1_r. }
     iDestruct "Hsz" as %Hsz. iExists (v' ++ vs').
     rewrite /has_layout_val heap_mapsto_app Hszv offset_loc_1 take_app_alt // drop_app_alt // app_length Hszv Hsz.
@@ -64,15 +60,15 @@ Section array.
     Unshelve. done.
   Qed.
   Next Obligation.
-    rewrite /LayoutWf. move => ly tys ? /movable_array_forall. rewrite {6}(to_movablelst tys).
+    move => ly tys ? ly' l v [-> [? ]]. rewrite {6}(to_movablelst tys).
     move Heq: (movablelst_to_list tys) => tys'.
     have ->: (length tys = length tys') by rewrite -Heq movablelst_to_list_length.
-    clear dependent tys. iIntros (Hlys Hly l v Hl) "Hl". rewrite /ty_own/=.
+    clear dependent tys. iIntros (Hlys Hl) "Hl". rewrite /ty_own/=.
     iDestruct 1 as (Hv) "Htys". iSplit => //.
     iInduction (tys') as [|ty tys] "IH" forall (l v Hv Hl); csimpl in *.
     { rewrite mult_0_r right_id. by iApply heap_mapsto_loc_in_bounds_0. }
-    move: Hlys. intros [-> ?]%Forall_cons. iDestruct "Htys" as "[Hty Htys]".
-    rewrite -{1}(take_drop (ly_size (ty_layout ty)) v).
+    move: Hlys. intros [? ?]%Forall_cons. iDestruct "Htys" as "[Hty Htys]".
+    rewrite -{1}(take_drop (ly_size ly) v).
     rewrite offset_loc_0 heap_mapsto_app take_length_le ?Hv; last by repeat unfold ly_size => /=; lia.
     iDestruct "Hl" as "[Hl Hl']".
     iDestruct (heap_mapsto_loc_in_bounds with "Hl") as "#Hb1".

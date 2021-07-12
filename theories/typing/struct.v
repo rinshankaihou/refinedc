@@ -84,44 +84,44 @@ Section struct.
       rewrite offset_of_cons; eauto. case_decide => //. by rewrite shift_loc_assoc_nat.
   Qed.
 
+  (* We state the sidecondition using foldr instead of Forall since this is faster to solve for the automation. *)
   Lemma movable_struct_forall sl tys `{!MovableLst tys}:
-    TCForall2 LayoutEq sl.(sl_members).*2 (pad_struct sl.(sl_members) (mty_layout <$> movablelst_to_list tys) id) →
-    Forall2 (λ m ty, m.2 = (ty : mtype).(ty_layout)) sl.(sl_members) (pad_struct sl.(sl_members) (movablelst_to_list tys) (λ ly, t2mt (uninit ly))).
+    (length (field_members sl.(sl_members)) = length tys ∧ foldr (λ x, and ((x.1 : mtype).(ty_has_layout) x.2.2)) True (zip (movablelst_to_list tys) (field_members sl.(sl_members)) )) →
+    Forall2 (λ m ty, (ty : mtype).(ty_has_layout) m.2) sl.(sl_members) (pad_struct sl.(sl_members) (movablelst_to_list tys) (λ ly, t2mt (uninit ly))).
   Proof.
-    move => /TCForall2_Forall2. move: (movablelst_to_list tys). clear dependent tys => tys.
-    elim: (sl_members sl) tys. by move => ??; constructor.
-    move => [[?|]?] ? IH tys; csimpl => /(Forall2_cons_inv _ _ _ _)[Heq ?]; eauto.
-    by constructor => /=; destruct tys; inversion Heq; eauto.
+    move => [Hlen /Forall_fold_right Hfold].
+    move: Hlen. rewrite {1}(to_movablelst tys) fmap_length => Hlen.
+    elim: (sl_members sl) (movablelst_to_list tys) Hlen Hfold; clear.
+    { move => [|??]//??. constructor. }
+    move => [n ly] s IH tys//=?. destruct n; simplify_eq/=.
+    - destruct tys => //. move => /Forall_cons/=[? /IH?]. constructor => //. naive_solver.
+    - move => /IH. constructor; [done|]. naive_solver.
   Qed.
 
-  (* MovableLst gets solved to late if we make this an instance (tc
-  search first tries to solve TCForall2 which fails since MovableLst
-  is still an evar) *)
-  Program Definition movable_struct sl tys `{!MovableLst tys} :
-    TCForall2 LayoutEq sl.(sl_members).*2 (pad_struct sl.(sl_members) (mty_layout <$> movablelst_to_list tys) id) →
-    Movable (struct sl tys) := fun P => {|
-    ty_layout := sl;
+  Global Program Instance movable_struct sl tys `{!MovableLst tys} : Movable (struct sl tys) := {|
+    ty_has_layout ly := ly = sl ∧ (length (field_members sl.(sl_members)) = length tys ∧ foldr (λ x, and ((x.1 : mtype).(ty_has_layout) x.2.2)) True (zip (movablelst_to_list tys) (field_members sl.(sl_members)) ))
+ ;
     ty_own_val v :=
       (⌜v `has_layout_val` sl⌝ ∗ ⌜length (field_names sl.(sl_members)) = length tys⌝ ∗
        [∗ list] v';ty∈reshape (ly_size <$> sl.(sl_members).*2) v;pad_struct sl.(sl_members) (movablelst_to_list tys) (λ ly, t2mt (uninit ly)), (v' ◁ᵥ (ty : mtype)))%I;
   |}.
-  Next Obligation. by iIntros (sl tys ? ? l) "(?&_)". Qed.
-  Next Obligation. by iIntros (sl tys ? ? v) "(?&_)". Qed.
+  Next Obligation. iIntros (sl tys ? ly l [->?]) "(?&_)". done. Qed.
+  Next Obligation. iIntros (sl tys ? ly v [-> ?]) "(?&_)". done. Qed.
   Next Obligation.
-    move => sl tys ? /movable_struct_forall. rewrite {2 3}(to_movablelst tys).
+    move => sl tys ? ly' l [? /movable_struct_forall]. rewrite {2 3}(to_movablelst tys).
     move: (movablelst_to_list tys) => tys'. clear dependent tys.
-    iIntros (Hlys l) "Htys". iDestruct "Htys" as (_ Hcount) "[#Hb Htys]".
+    iIntros (Hlys) "Htys". iDestruct "Htys" as (_ Hcount) "[#Hb Htys]".
     rewrite /=/layout_of{1}/has_layout_val{1}/ly_size.
     iInduction (sl_members sl) as [|[n ly] ms] "IH" forall (tys' l Hlys Hcount); csimpl.
     { iExists []. iSplitR; first by iApply heap_mapsto_nil. iSplit => //. }
-    move: Hlys => /=. intros (ty & tys & Hsz &?&?)%Forall2_cons_inv_l. move: Hsz; csimpl => ->.
+    move: Hlys => /=. intros (ty & tys & Hsz &?&[=])%Forall2_cons_inv_l. move: Hsz; csimpl => ?.
     rewrite shift_loc_0. iDestruct "Htys" as "[Hty Htys]". cbn.
     iDestruct (loc_in_bounds_split with "Hb") as "[Hb1 Hb2]".
     setoid_rewrite <-shift_loc_assoc_nat.
     destruct n => /=.
-    1: destruct tys' => //; csimpl.
-    all: iDestruct (ty_deref with "Hty") as (v') "[Hl Hty]".
-    all: iDestruct (ty_size_eq with "Hty") as %Hszv.
+    1: destruct tys' => //; simplify_eq/=.
+    all: iDestruct (ty_deref with "Hty") as (v') "[Hl Hty]"; [done|].
+    all: iDestruct (ty_size_eq with "Hty") as %Hszv; [done|].
     all: iDestruct ("IH" $! _ with "[] [] Hb2 Htys") as (vs') "(Hl' & Hsz & Hf & Htys)";
       try iPureIntro; simplify_eq => //.
     all: iDestruct "Hsz" as %Hsz; iDestruct "Hf" as %Hf.
@@ -133,8 +133,8 @@ Section struct.
     all: by rewrite /ly_size /= Hsz.
   Qed.
   Next Obligation.
-    move => sl tys ? /movable_struct_forall. rewrite {2 4}(to_movablelst tys).
-    move: (movablelst_to_list tys) => tys'. clear dependent tys. iIntros (Hlys l v Hly) "Hl".
+    move => sl tys ? ly' l v [-> /movable_struct_forall]. rewrite {2 4}(to_movablelst tys).
+    move: (movablelst_to_list tys) => tys'. clear dependent tys. iIntros (Hlys Hly) "Hl".
     rewrite /layout_of/has_layout_val{1}/ly_size /=.
     iDestruct 1 as (Hv Hcount) "Htys". do 2 iSplitR => //.
     have {}Hly := check_fields_aligned_alt_correct _ _ Hly.
@@ -148,7 +148,7 @@ Section struct.
     setoid_rewrite <-shift_loc_assoc_nat.
     iSplitR "Htys Hl'".
     - iClear "IH".
-      destruct n; [destruct tys' => //|] => /=; iDestruct (ty_ref with "[] Hl Hty") as "$" => //. by rewrite -Hsz.
+      destruct n; [destruct tys' => //|] => /=; iDestruct (ty_ref with "[] Hl Hty") as "$" => //.
     - destruct n => /=; rewrite -?fmap_tail; iApply ("IH" with "[] [] [] [] Hl' [Htys]") => //;
         iClear "IH"; try iPureIntro; rewrite ?drop_length; try lia.
       all: try by rewrite Hv /struct_size/offset_of_idx; csimpl; lia.
@@ -234,56 +234,46 @@ Section struct.
   the lookup will always succeed. This is nice, because otherwise we
   would get a quadractic blowup when simiplifying the foldr. *)
   Lemma type_struct_init sl fs T:
-    foldr (λ n f, (λ tys, ∃ e : expr, ⌜(list_to_map fs : gmap _ _) !! n = Some e⌝ ∗
-      typed_val_expr e (λ _ ty, f (tys ++ [ty]))))
+    foldr (λ '(n, ly) f, (λ tys, ∃ e : expr, ⌜(list_to_map fs : gmap _ _) !! n = Some e⌝ ∗
+      typed_val_expr e (λ _ ty, ⌜ty.(ty_has_layout) ly⌝ ∗ f (tys ++ [ty]))))
     (λ tys : list mtype, ∀ v, let Hlst := list_to_movablelst tys in
-      ∃ (Hall : TCForall2 LayoutEq sl.(sl_members).*2 (pad_struct sl.(sl_members) (mty_layout <$> movablelst_to_list (mt_type <$> tys)) id)),
-        T v (@t2mt _ _ (struct sl (mt_type <$> tys)) (movable_struct _ _ _))) (omap fst sl.(sl_members)) [] -∗
+         T v (t2mt (struct sl (mt_type <$> tys)))) (field_members sl.(sl_members)) [] -∗
     typed_val_expr (StructInit sl fs) T.
   Proof.
     iIntros "He" (Φ) "HΦ". iApply wp_struct_init.
     iAssert ([∗ list] v';ty∈[];pad_struct ([@{option var_name * layout}]) [] (λ ly, t2mt (uninit ly)), (v' ◁ᵥ (ty : mtype)))%I as "-#Hvs". done.
     have : [] ++ sl.(sl_members) = sl.(sl_members) by simplify_list_eq.
-    have : [] = reshape (ly_size <$> (pad_struct [] (mty_layout <$> []) id)) [@{mbyte}] by [].
-    have : length (@nil mbyte) = sum_list (ly_size <$> (pad_struct [] (mty_layout <$> []) id)) by [].
+    have : [] = reshape (ly_size <$> (snd <$> ([] : field_list))) [@{mbyte}] by [].
+    have : length (@nil mbyte) = sum_list (ly_size <$> (snd <$> ([] : field_list))) by [].
     have : length (field_names []) = length [@{mtype}] by [].
-    move: {1 2 3 5 6}(@nil mtype) => tys.
+    move: {1 3 4}(@nil mtype) => tys.
     move: {1 2 4}(@nil val) => vs.
     move: {1 2}(@nil (mbyte)) => v.
     move: {1 2 3 4 5}(@nil (option var_name * layout)) => s.
-    move: {1 7 8}(sl_members sl) => slm Hf Hv Hvs Hs.
+    move: {1 3 4}(sl_members sl) => slm Hf Hv Hvs Hs.
     iInduction (slm) as [|[n ?] ms] "IH" forall (vs tys v s Hs Hvs Hv Hf); csimpl.
-    - iDestruct ("He" $! (mjoin vs)) as (Hall) "HT". iApply ("HΦ" with "[-HT] HT"). simplify_list_eq.
-      move: (Hall) => Hall1. move: Hall => /movable_struct_forall Hall2. rewrite of_movablelst in Hall2.
-      rewrite {2}/ty_own_val/=/layout_of{3}/ly_size of_movablelst. clear Hall1.
-      rewrite join_reshape // ?fmap_length//.
-      have -> : ((sl_members sl).*2 = pad_struct (sl_members sl) (mty_layout <$> tys) id). {
-        clear Hf Hv.
-        elim: (sl_members sl) tys Hall2 => // -[[?|] ?]; csimpl => ? IH tys => /(Forall2_cons_inv _ _ _ _)/=[Heq Hf];
-          rewrite (IH _ Hf) // Heq.
-        by destruct tys.
-      }
-      by iFrame.
+    - iDestruct ("He" $! (mjoin vs)) as "HT". iApply ("HΦ" with "[-HT] HT"). simplify_list_eq.
+      rewrite {2}/ty_own_val/=/layout_of{3}/ly_size of_movablelst.
+      rewrite join_reshape // ?fmap_length//. by iFrame.
     - rewrite cons_middle assoc in Hs. destruct n => /=.
-      + iDestruct "He" as (e ->) "He". iApply "He". iIntros (v1 ty) "Hv Hf".
-        iDestruct (ty_size_eq with "Hv") as %Hsz.
+      + iDestruct "He" as (e ->) "He". iApply "He". iIntros (v1 ty) "Hv [% Hf]".
+        iDestruct (ty_size_eq with "Hv") as %Hsz; [done|].
         iApply ("IH" $! _ _ (v ++ v1) with "[//] [] [] [] Hf HΦ");
           try iPureIntro; rewrite ?fmap_app ?pad_struct_snoc_Some ?fmap_length //.
-        * by rewrite fmap_app reshape_app take_app_alt ?drop_app_alt /= ?take_ge ?Hsz; subst.
-        * by rewrite app_length fmap_app sum_list_with_app /= Hsz -Hv /mty_layout; lia.
+        * by rewrite /= reshape_app take_app_alt ?drop_app_alt /= ?take_ge ?Hsz; subst.
+        * rewrite app_length sum_list_with_app /= Hsz -Hv; lia.
         * by rewrite /field_names omap_app !app_length Hf.
         * iApply (big_sepL2_app with "Hvs"). by iFrame.
       + iApply @wp_value.
         iApply ("IH" $! _ _ (v ++ replicate (ly_size l) ☠%V) with "[//] [] [] [] He HΦ");
           try iPureIntro; rewrite ?fmap_app ?pad_struct_snoc_None.
-        * by rewrite fmap_app reshape_app take_app_alt ?drop_app_alt /= ?take_ge ?Hsz ?replicate_length; subst.
-        * rewrite app_length fmap_app sum_list_with_app Hv replicate_length /=. lia.
+        * by rewrite reshape_app take_app_alt ?drop_app_alt /= ?take_ge ?Hsz ?replicate_length; subst.
+        * rewrite app_length sum_list_with_app Hv replicate_length /=. lia.
         * by rewrite /field_names omap_app !app_length Hf.
         * iApply (big_sepL2_app with "Hvs"). iSplit => //. iPureIntro.
           split; first by rewrite /has_layout_val replicate_length.
           by apply Forall_forall.
   Qed.
-
 
   Lemma uninit_struct_equiv l β (s : struct_layout) :
     (l ◁ₗ{β} uninit s) ⊣⊢ (l ◁ₗ{β} struct s (uninit <$> omap (λ '(n, ly), const ly <$> n) s.(sl_members))).
@@ -334,6 +324,4 @@ Section struct.
     SimplifyGoalPlace l β (uninit s) (Some 50%N) :=
     λ T, i2p (uninit_struct_simpl_goal l β s T).
 End struct.
-
-Hint Extern 1 (Movable (struct ?s ?tys)) => simple apply (movable_struct s tys) : typeclass_instances.
 Typeclasses Opaque struct.

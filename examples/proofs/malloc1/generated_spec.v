@@ -39,7 +39,6 @@ Section spec.
 
   Global Program Instance freelist_t_rmovable (entry_size : nat) : RMovable (freelist_t entry_size) :=
     {| rmovable patt__ := movable_eq _ _ (freelist_t_unfold entry_size patt__) |}.
-  Next Obligation. solve_ty_layout_eq. Qed.
 
   Global Instance freelist_t_simplify_hyp_place_inst_generated l_ β_ (entry_size : nat) patt__:
     SimplifyHypPlace l_ β_ (patt__ @ freelist_t entry_size)%I (Some 100%N) :=
@@ -104,7 +103,6 @@ Section spec.
 
   Global Program Instance slab_rmovable (entry_size : nat) : RMovable (slab entry_size) :=
     {| rmovable patt__ := movable_eq _ _ (slab_unfold entry_size patt__) |}.
-  Next Obligation. solve_ty_layout_eq. Qed.
 
   Global Instance slab_simplify_hyp_place_inst_generated l_ β_ (entry_size : nat) patt__:
     SimplifyHypPlace l_ β_ (patt__ @ slab entry_size)%I (Some 100%N) :=

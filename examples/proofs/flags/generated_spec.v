@@ -51,7 +51,6 @@ Section spec.
 
   Global Program Instance flags_rmovable : RMovable flags :=
     {| rmovable patt__ := movable_eq _ _ (flags_unfold patt__) |}.
-  Next Obligation. solve_ty_layout_eq. Qed.
 
   Global Instance flags_simplify_hyp_place_inst_generated l_ β_ patt__:
     SimplifyHypPlace l_ β_ (patt__ @ flags)%I (Some 100%N) :=

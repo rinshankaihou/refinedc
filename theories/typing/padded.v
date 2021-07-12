@@ -22,34 +22,34 @@ Section padded.
   Global Instance padded_ne n : Proper ((dist n) ==> (=) ==> (=) ==> (dist n)) padded.
   Proof. solve_type_proper. Qed.
 
-  Global Program Definition movable_padded (ty : type) (lyty ly : layout) `{!Movable ty} `{!LayoutEq (ty.(ty_layout)) lyty} : Movable (padded ty lyty ly) := {|
-    ty_layout := ly;
+  Global Program Instance movable_padded (ty : type) (lyty ly : layout) `{!Movable ty} : Movable (padded ty lyty ly) := {|
+    ty_has_layout ly' := ly' = ly ∧ ty.(ty_has_layout) lyty ;
     ty_own_val v := (∃ v1 v2, ⌜lyty ⊑ ly⌝ ∗ ⌜v = v1 ++ v2⌝ ∗ v1 ◁ᵥ ty ∗ v2 ◁ᵥ uninit (ly_offset ly lyty.(ly_size)))%I;
   |}.
-  Next Obligation. iIntros (??????) "[_ [$ _]]". Qed.
+  Next Obligation. iIntros (?????? [-> ?]) "[_ [$ _]]". Qed.
   Next Obligation.
-    iIntros (ty lyty ly ? Heq v). iDestruct 1 as (v1 v2 [??] ->) "[Hv1 Hv2]".
-    iDestruct (ty_size_eq with "Hv1") as %Heq1.
-    iDestruct (ty_size_eq with "Hv2") as %Heq2.
-    iPureIntro. rewrite /has_layout_val app_length Heq1 Heq2 Heq {2}/ly_size/=. lia.
+    iIntros (ty lyty ly ? ly' v [-> ?]). iDestruct 1 as (v1 v2 [??] ->) "[Hv1 Hv2]".
+    iDestruct (ty_size_eq with "Hv1") as %Heq1; [done|].
+    iDestruct (ty_size_eq with "Hv2") as %Heq2; [done|].
+    iPureIntro. rewrite /has_layout_val app_length Heq1 Heq2 {2}/ly_size/=. lia.
   Qed.
   Next Obligation.
-    iIntros (ty lyty ly ? Heq l). iDestruct 1 as ([??] ?) "[_ [Hl Hpad]]".
-    iDestruct (ty_deref with "Hl") as (v1) "[Hmt1 Hv1]".
-    iDestruct (ty_size_eq with "Hv1") as %Heq1.
-    iDestruct (ty_deref with "Hpad") as (v2) "[Hmt2 Hv2]".
-    iExists (v1 ++ v2). rewrite heap_mapsto_app Heq1 Heq. iFrame.
+    iIntros (ty lyty ly ? ly' l [-> ?]). iDestruct 1 as ([??] ?) "[_ [Hl Hpad]]".
+    iDestruct (ty_deref with "Hl") as (v1) "[Hmt1 Hv1]"; [done|].
+    iDestruct (ty_size_eq with "Hv1") as %Heq1; [done|].
+    iDestruct (ty_deref with "Hpad") as (v2) "[Hmt2 Hv2]"; [done|].
+    iExists (v1 ++ v2). rewrite heap_mapsto_app Heq1. iFrame.
     iExists _, _. by repeat iSplit => //.
   Qed.
   Next Obligation.
-    iIntros (ty lyty ly ? <- l v Hly) "Hmt". iDestruct 1 as (v1 v2 [??] ->) "[Hv1 Hv2]".
-    iDestruct (ty_size_eq with "Hv1") as %Heq1.
-    iDestruct (ty_size_eq with "Hv2") as %Heq2.
+    iIntros (ty lyty ly ? ly' l v [-> ?] Hly) "Hmt". iDestruct 1 as (v1 v2 [??] ->) "[Hv1 Hv2]".
+    iDestruct (ty_size_eq with "Hv1") as %Heq1; [done|].
+    iDestruct (ty_size_eq with "Hv2") as %Heq2; [done|].
     iDestruct (heap_mapsto_loc_in_bounds with "Hmt") as "#Hb".
     rewrite heap_mapsto_app Heq1.
     iDestruct "Hmt" as "[Hmt1 Hmt2]".
-    iDestruct (ty_ref with "[%] Hmt1 Hv1") as "$". by apply: has_layout_loc_trans.
-    iDestruct (ty_ref with "[%] Hmt2 Hv2") as "$" => //. by apply: has_layout_ly_offset.
+    iDestruct (ty_ref with "[%] Hmt1 Hv1") as "$"; [done| by apply: has_layout_loc_trans|].
+    iDestruct (ty_ref with "[%] Hmt2 Hv2") as "$" => //. { by apply: has_layout_ly_offset. }
     iSplit => //. iSplit => //. iApply loc_in_bounds_shorten; last done.
     rewrite app_length Heq1 Heq2 /ly_size /= -!/(ly_size _). lia.
   Qed.
@@ -71,20 +71,19 @@ Section padded.
     SimplifyHypPlace l β (padded ty ly ly) (Some 0%N) :=
     λ T, i2p (simpl_padded_hyp_eq_layout l β ty ly T).
   (* TODO: should this also work for Shr? *)
-  Lemma simpl_padded_goal_eq_layout l ty ly T `{!Movable ty} `{!LayoutEq (ty.(ty_layout)) ly}:
-    T (l ◁ₗ ty) -∗
+  Lemma simpl_padded_goal_eq_layout l ty ly T `{!Movable ty}:
+    T (⌜ty.(ty_has_layout) ly⌝ ∗ l ◁ₗ ty) -∗
     simplify_goal (l ◁ₗ padded ty ly ly) T.
   Proof.
-    revert select (LayoutEq _ _) => <-.
-    iIntros "HT". iExists _. iFrame. iIntros "Hl". iDestruct (ty_aligned with "Hl") as %?.
-    do 2 iSplit => //. iDestruct (movable_loc_in_bounds with "Hl") as "#Hb". iFrame "Hl Hb".
+    iIntros "HT". iExists _. iFrame. iIntros "[% Hl]". iDestruct (ty_aligned with "Hl") as %?; [done|].
+    do 2 iSplit => //. iDestruct (movable_loc_in_bounds with "Hl") as "#Hb"; [done|]. iFrame "Hl Hb".
     iExists []. rewrite heap_mapsto_own_state_nil.
     iSplit. { iPureIntro. rewrite /has_layout_val/ly_offset/ly_size /=. lia. }
     iSplit. { iPureIntro. by apply: has_layout_ly_offset. }
     rewrite -{1}(Nat.add_0_r (ly_size _)) -loc_in_bounds_split.
     by iDestruct "Hb" as "[_$]".
   Qed.
-  Global Instance simpl_padded_goal_eq_layout_inst l ty ly `{!Movable ty} `{!LayoutEq (ty.(ty_layout)) ly}:
+  Global Instance simpl_padded_goal_eq_layout_inst l ty ly `{!Movable ty}:
     SimplifyGoalPlace l Own (padded ty ly ly) (Some 0%N) :=
     λ T, i2p (simpl_padded_goal_eq_layout l ty ly T).
 
@@ -109,16 +108,15 @@ Section padded.
   (* Only works for Own since ty might have interior mutability, but
   uninit ty assumes that the values are frozen *)
   Lemma subsume_padded_uninit l ly1 ly2 lyty ty `{!Movable ty} T:
-    (∀ v, v◁ᵥty -∗ ⌜ty.(ty_layout) = lyty⌝ ∗ subsume (l ◁ₗ uninit ly1) (l ◁ₗ uninit ly2) T) -∗
+    (⌜ty.(ty_has_layout) lyty⌝ ∗ ∀ v, v◁ᵥty -∗ subsume (l ◁ₗ uninit ly1) (l ◁ₗ uninit ly2) T) -∗
     subsume (l ◁ₗ padded ty lyty ly1) (l ◁ₗ uninit ly2) T.
   Proof.
-    iIntros "HT". iDestruct 1 as ([? ?] ?) "(Hb & Hl & Hr)".
-    iDestruct (ty_deref with "Hl") as (v1) "[Hl Hv1]".
-    iDestruct (ty_size_eq with "Hv1") as %Hlen1.
-    iDestruct (ty_deref with "Hr") as (v2) "[Hr Hv2]".
-    iDestruct (ty_size_eq with "Hv2") as %Hlen2.
-    iDestruct ("HT" with "Hv1") as (<-) "HT". iApply "HT".
-    iExists (v1 ++ v2).
+    iIntros "[% HT]". iDestruct 1 as ([? ?] ?) "(Hb & Hl & Hr)".
+    iDestruct (ty_deref with "Hl") as (v1) "[Hl Hv1]"; [done|].
+    iDestruct (ty_size_eq with "Hv1") as %Hlen1; [done|].
+    iDestruct (ty_deref with "Hr") as (v2) "[Hr Hv2]"; [done|].
+    iDestruct (ty_size_eq with "Hv2") as %Hlen2; [done|].
+    iApply ("HT" with "Hv1"). iExists (v1 ++ v2).
     rewrite /= heap_mapsto_app /has_layout_val app_length Forall_forall Hlen1 Hlen2.
     iFrame. iPureIntro; split_and! => //.
     rewrite /= /ly_offset {2}/ly_size. lia.
@@ -211,9 +209,24 @@ Section padded.
     TypedBinOp v2 (v2 ◁ᵥ n @ int it)%I p (p ◁ₗ{β} padded ty lyty ly)%I (PtrOffsetOp u8) (IntOp it) PtrOp :=
     λ T, i2p (type_add_padded v2 β ly lyty ty p n it T).
 
+
+  Lemma annot_to_uninit_padded l ty ly lyty T `{!Movable ty}:
+    (⌜ty.(ty_has_layout) lyty⌝ ∗ (l ◁ₗ uninit ly -∗ T)) -∗
+    typed_annot_stmt ToUninit l (l ◁ₗ padded ty lyty ly) T.
+  Proof.
+    iIntros "[% HT] Hl". iApply step_fupd_intro => //. iModIntro.
+    iDestruct (ty_aligned with "Hl") as %?; [done|].
+    iDestruct (ty_deref with "Hl") as (v) "[Hmt Hv]"; [done|].
+    iDestruct (ty_size_eq with "Hv") as %?; [done|].
+    iApply ("HT").
+    iExists v. rewrite Forall_forall. by iFrame.
+  Qed.
+  Global Instance annot_to_uninit_inst l ty ly lyty `{!Movable ty}:
+    TypedAnnotStmt (ToUninit) l (l ◁ₗ padded ty lyty ly) :=
+    λ T, i2p (annot_to_uninit_padded l ty ly lyty T).
+
 End padded.
 Notation "padded< ty , lyty , ly >" := (padded ty lyty ly)
   (only printing, format "'padded<' ty ,  lyty ,  ly '>'") : printing_sugar.
 
-Hint Extern 1 (Movable (padded ?ty ?lyty ?ly)) => simple apply (movable_padded ty lyty ly) : typeclass_instances.
 Typeclasses Opaque padded.

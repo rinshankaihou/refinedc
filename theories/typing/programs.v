@@ -146,10 +146,10 @@ Section judgements.
     typed_macro_expr_proof T : iProp_to_Prop (typed_macro_expr m es T).
 
   (*** places *)
-  Definition typed_write (atomic : bool) (e : expr) (v : val) (ty : type) `{!Movable ty} (T : iProp Σ) : iProp Σ :=
+  Definition typed_write (atomic : bool) (e : expr) (ly : layout) (v : val) (ty : type) `{!Movable ty} (T : iProp Σ) : iProp Σ :=
     let E := if atomic then ∅ else ⊤ in
     (∀ Φ,
-       (∀ (l : loc), (v ◁ᵥ ty ={⊤, E}=∗ l↦|ty.(ty_layout)| ∗ ▷ (l ↦ v ={E, ⊤}=∗ T)) -∗ Φ (val_of_loc l)) -∗
+        (∀ l, (⌜ty.(ty_has_layout) ly⌝ -∗ v ◁ᵥ ty ={⊤, E}=∗ l↦|ly| ∗ ▷ (l ↦ v ={E, ⊤}=∗ T)) -∗ Φ (val_of_loc l)) -∗
        WP e {{ Φ }}).
 
   Definition typed_read (atomic : bool) (e : expr) (ly : layout) (T : val → mtype → iProp Σ) : iProp Σ :=
@@ -170,11 +170,11 @@ Section judgements.
   Class TypedReadEnd (atomic : bool) (l : loc) (β : own_state) (ty : type) (ly : layout) : Type :=
     typed_read_end_proof T : iProp_to_Prop (typed_read_end atomic l β ty ly T).
 
-  Definition typed_write_end (atomic : bool) (v1 : val) (ty1 : type) `{!Movable ty1} (l2 : loc) (β2 : own_state) (ty2 : type) (T : type → iProp Σ) : iProp Σ :=
+  Definition typed_write_end (atomic : bool) (ly : layout) (v1 : val) (ty1 : type) `{!Movable ty1} (l2 : loc) (β2 : own_state) (ty2 : type) (T : type → iProp Σ) : iProp Σ :=
     let E := if atomic then ∅ else ⊤ in
-    l2 ◁ₗ{β2} ty2 -∗ v1 ◁ᵥ ty1 ={⊤, E}=∗ l2↦|ty1.(ty_layout)| ∗ ▷ (l2↦v1 ={E, ⊤}=∗ ∃ ty3, l2 ◁ₗ{β2} ty3 ∗ T ty3).
-  Class TypedWriteEnd (atomic : bool) (v1 : val) (ty1 : type) `{!Movable ty1} (l2 : loc) (β2 : own_state) (ty2 : type) : Type :=
-    typed_write_end_proof T : iProp_to_Prop (typed_write_end atomic v1 ty1 l2 β2 ty2 T).
+    ⌜ty1.(ty_has_layout) ly⌝ -∗ l2 ◁ₗ{β2} ty2 -∗ v1 ◁ᵥ ty1 ={⊤, E}=∗ l2↦|ly| ∗ ▷ (l2↦v1 ={E, ⊤}=∗ ∃ ty3, l2 ◁ₗ{β2} ty3 ∗ T ty3).
+  Class TypedWriteEnd (atomic : bool) (ly : layout) (v1 : val) (ty1 : type) `{!Movable ty1} (l2 : loc) (β2 : own_state) (ty2 : type) : Type :=
+    typed_write_end_proof T : iProp_to_Prop (typed_write_end atomic ly v1 ty1 l2 β2 ty2 T).
 
   Definition typed_addr_of_end (l : loc) (β : own_state) (ty : type) (T : own_state → type → type → iProp Σ) : iProp Σ :=
     l◁ₗ{β}ty ={⊤}=∗ ∃ β2 ty2 ty', l◁ₗ{β2}ty2 ∗ l◁ₗ{β}ty' ∗ T β2 ty2 ty'.
@@ -339,7 +339,7 @@ Hint Mode TypedUnOpVal + + + + + + + : typeclass_instances.
 Hint Mode TypedCopyAllocId + + + + + + + : typeclass_instances.
 Hint Mode TypedCopyAllocIdVal + + + + + + + + + : typeclass_instances.
 Hint Mode TypedReadEnd + + + + + + + : typeclass_instances.
-Hint Mode TypedWriteEnd + + + + + + + + + : typeclass_instances.
+Hint Mode TypedWriteEnd + + + + + + + + + + : typeclass_instances.
 Hint Mode TypedAddrOfEnd + + + + + : typeclass_instances.
 Hint Mode TypedPlace + + + + + + : typeclass_instances.
 Hint Mode TypedAnnotExpr + + + + + + + : typeclass_instances.
@@ -856,16 +856,16 @@ Section typing.
   Qed.
 
   Lemma type_assign {B} ly e1 e2 Q s fn ls (fr : B → _) o:
-    typed_val_expr e2 (λ v ty, ⌜ty.(ty_layout) = ly⌝ ∗ ⌜if o is Na2Ord then False else True⌝ ∗
-      typed_write (if o is ScOrd then true else false) e1 v ty (typed_stmt s fn ls fr Q)) -∗
+    typed_val_expr e2 (λ v ty, ⌜ty.(ty_has_layout) ly⌝ ∗ ⌜if o is Na2Ord then False else True⌝ ∗
+      typed_write (if o is ScOrd then true else false) e1 ly v ty (typed_stmt s fn ls fr Q)) -∗
     typed_stmt (e1 <-{ly, o} e2; s) fn ls fr Q.
   Proof.
     iIntros "He" (Hls).
-    wps_bind. iApply "He". iIntros (v ty) "Hv [<- [% He1]]".
+    wps_bind. iApply "He". iIntros (v ty) "Hv [% [% He1]]".
     wps_bind. iApply "He1". iIntros (l) "HT".
-    iDestruct (ty_size_eq with "Hv") as %?.
-    iApply wps_assign; rewrite ?val_to_of_loc //. destruct o; naive_solver.
-    iMod ("HT" with "Hv") as "[$ HT]". destruct o; iIntros "!# !# Hl".
+    iDestruct (ty_size_eq with "Hv") as %?; [done|].
+    iApply wps_assign; rewrite ?val_to_of_loc //. { destruct o; naive_solver. }
+    iMod ("HT" with "[//] Hv") as "[$ HT]". destruct o; iIntros "!# !# Hl".
     all: by iApply ("HT" with "Hl").
   Qed.
 
@@ -1091,7 +1091,6 @@ Section typing.
     1: iApply wp_atomic.
     2: iApply fupd_wp; iApply wp_fupd.
     all: iMod "Hl" as (v q ty Hly Hv) "(Hl&Hv&HT)"; iModIntro.
-    all: iDestruct (ty_size_eq with "Hv") as "#>%".
     all: iApply (wp_deref with "Hl") => //; try by eauto using val_to_of_loc.
     all: iIntros "!# Hl".
     all: iMod ("HT" with "Hl"); iModIntro.
@@ -1118,22 +1117,22 @@ Section typing.
   Qed.
 
   Lemma type_read_copy T β l ty ly a {HC: CopyAs l β ty}:
-    ((HC (λ ty', ⌜ty'.(ty_layout) = ly⌝ ∗ ∀ v, T v (ty' : type) ty')).(i2p_P)) -∗
+    ((HC (λ ty', ⌜ty'.(ty_has_layout) ly⌝ ∗ ∀ v, T v (ty' : type) ty')).(i2p_P)) -∗
       typed_read_end a l β ty ly T.
   Proof.
-    iIntros "Hs Hl". iDestruct (i2p_proof with "Hs Hl") as (ty') "(Hl&%&<-&HT)".
+    iIntros "Hs Hl". iDestruct (i2p_proof with "Hs Hl") as (ty') "(Hl&%&%&HT)".
     iRevert "Hl". destruct β.
     - iIntros "Hl".
       iApply fupd_mask_intro => //. iIntros "Hclose".
-      iDestruct (ty_aligned with "Hl") as %?.
-      iDestruct (ty_deref with "Hl") as (v) "[Hl #Hv]".
-      iDestruct (ty_size_eq with "Hv") as %?.
+      iDestruct (ty_aligned with "Hl") as %?; [done|].
+      iDestruct (ty_deref with "Hl") as (v) "[Hl #Hv]"; [done|].
+      iDestruct (ty_size_eq with "Hv") as %?; [done|].
       iExists _, _, _, _. iFrame "∗Hv". do 2 iSplitR => //=.
       iIntros "!# Hl". iMod "Hclose". iModIntro. iSplitR "HT" => //.
         by iApply (ty_ref with "[//] Hl Hv").
     - iIntros "#Hl".
       iMod (copy_shr_acc with "Hl") as (? q' v) "[Hmt [Hv Hc]]" => //.
-      iDestruct (ty_size_eq with "Hv") as "#>%".
+      iDestruct (ty_size_eq with "Hv") as "#>%"; [done|].
       iApply fupd_mask_intro => //. iIntros "Hclose".
       iExists _, _, _, _. iFrame. do 2 iSplit => //=.
       iIntros "!# Hmt". iMod "Hclose". iModIntro. by iSplitR "HT".
@@ -1143,17 +1142,17 @@ Section typing.
     TypedReadEnd a l β ty ly | 10 :=
     λ T, i2p (type_read_copy T β l ty ly a).
 
-  Lemma type_write a ty `{!Movable ty} T T' e v:
+  Lemma type_write a ty `{!Movable ty} T T' e v ly:
     IntoPlaceCtx e T' →
     T' (λ K l, find_in_context (FindLoc l) (λ '(β1, ty1),
       typed_place K l β1 ty1 (λ l2 β2 ty2 typ R,
-         typed_write_end a v ty l2 β2 ty2 (λ ty3, l ◁ₗ{β1} typ ty3 -∗ R ty3 -∗ T)))) -∗
-    typed_write a e v ty T.
+         typed_write_end a ly v ty l2 β2 ty2 (λ ty3, l ◁ₗ{β1} typ ty3 -∗ R ty3 -∗ T)))) -∗
+    typed_write a e ly v ty T.
   Proof.
     iIntros (HT') "HT'". iIntros (Φ) "HΦ".
     iApply (HT' with "HT'"). iIntros (K l). iDestruct 1 as ([β1 ty1]) "[Hl HK]".
     iApply ("HK" with "Hl"). iIntros (l2 β2 ty2 typ R) "Hl' Hc He".
-    iApply "HΦ". iIntros "Hv". iMod ("He" with "Hl' Hv") as "[$ Hc2]". iModIntro.
+    iApply "HΦ". iIntros (?) "Hv". iMod ("He" with "[//] Hl' Hv") as "[$ Hc2]". iModIntro.
     iIntros "!# Hl".
     iMod ("Hc2" with "Hl") as (ty3) "[Hl HT]".
     iMod ("Hc" with "Hl") as "[? ?]". by iApply ("HT" with "[$]").
@@ -1161,24 +1160,24 @@ Section typing.
 
   (* TODO: this constraint on the layout is too strong, we only need
   that the length is the same and the alignment is lower. Adapt when necessary. *)
-  Lemma type_write_own_copy a ty `{!Movable ty} T l2 ty2 v `{!Movable ty2} `{!Copyable ty}:
-    ⌜ty2.(ty_layout) = ty.(ty_layout)⌝ ∗ (v ◁ᵥ ty -∗ T ty) -∗
-    typed_write_end a v ty l2 Own ty2 T.
+  Lemma type_write_own_copy a ty `{!Movable ty} T l2 ty2 v `{!Movable ty2} `{!Copyable ty} ly:
+    ⌜ty2.(ty_has_layout) ly⌝ ∗ (v ◁ᵥ ty -∗ T ty) -∗
+    typed_write_end a ly v ty l2 Own ty2 T.
   Proof.
-    iDestruct 1 as (Heq) "HT". iIntros "Hl #Hv".
-    iDestruct (ty_aligned with "Hl") as %?.
-    iDestruct (ty_deref with "Hl") as (v') "[Hl Hv']".
-    iDestruct (ty_size_eq with "Hv'") as %?.
+    iDestruct 1 as (?) "HT". iIntros (?) "Hl #Hv".
+    iDestruct (ty_aligned with "Hl") as %?; [done|].
+    iDestruct (ty_deref with "Hl") as (v') "[Hl Hv']"; [done|].
+    iDestruct (ty_size_eq with "Hv'") as %?; [done|].
     iApply fupd_mask_intro => //. iIntros "Hmask".
-    iSplitL "Hl". by iExists _; iFrame; rewrite -Heq.
+    iSplitL "Hl". { iExists _. by iFrame. }
     iIntros "!# Hl". iMod "Hmask". iModIntro.
-    iDestruct (ty_size_eq with "Hv") as %?.
+    iDestruct (ty_size_eq with "Hv") as %?; [done|].
     iExists _. iDestruct ("HT" with "Hv") as "$".
-    iApply (ty_ref with "[] Hl Hv"). by rewrite -Heq.
+    by iApply (ty_ref with "[] Hl Hv").
   Qed.
-  Global Instance type_write_own_copy_inst a ty `{!Movable ty} l2 ty2 v `{!Movable ty2} `{!Copyable ty}:
-    TypedWriteEnd a v ty l2 Own ty2 | 20 :=
-    λ T, i2p (type_write_own_copy a ty T l2 ty2 v).
+  Global Instance type_write_own_copy_inst a ty `{!Movable ty} l2 ty2 v `{!Movable ty2} `{!Copyable ty} ly:
+    TypedWriteEnd a ly v ty l2 Own ty2 | 20 :=
+    λ T, i2p (type_write_own_copy a ty T l2 ty2 v ly).
 
   Lemma type_addr_of_place T T' e:
     IntoPlaceCtx e T' →

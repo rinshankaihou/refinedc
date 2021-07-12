@@ -23,13 +23,13 @@ Section bytewise.
   Qed.
 
   Global Program Instance movable_bytewise ly P : Movable (bytewise P ly) := {|
-    ty_layout := ly;
+    ty_has_layout ly' := ly' = ly;
     ty_own_val v := ⌜v `has_layout_val` ly⌝ ∗ ⌜Forall P v⌝;
   |}%I.
-  Next Obligation. iIntros (???). by iDestruct 1 as (????) "_". Qed.
-  Next Obligation. by iIntros (??? [??]). Qed.
-  Next Obligation. iIntros (???). iDestruct 1 as (????) "?". by eauto. Qed.
-  Next Obligation. iIntros (??? v ?) "? [%%]". iExists v. by iFrame. Qed.
+  Next Obligation. iIntros (????->). by iDestruct 1 as (????) "_". Qed.
+  Next Obligation. by iIntros (????-> [??]). Qed.
+  Next Obligation. iIntros (????->). iDestruct 1 as (????) "?". by eauto. Qed.
+  Next Obligation. iIntros (???? v -> ?) "? [%%]". iExists v. by iFrame. Qed.
 
   Lemma bytewise_weaken l β P1 P2 ly:
     (∀ b, P1 b → P2 b) →
@@ -184,23 +184,28 @@ Section uninit.
   Qed.
 
   (* This only works for [Own] since [ty] might have interior mutability. *)
-  Lemma uninit_mono l ty ly `{!Movable ty} `{!FastDone (ty.(ty_layout) = ly)} T:
+  Lemma uninit_mono l ty ly `{!Movable ty} `{!CanSolve (ty.(ty_has_layout) ly)} T:
     (∀ v, v ◁ᵥ ty -∗ T) -∗
     subsume (l ◁ₗ ty) (l ◁ₗ uninit ly) T.
   Proof.
-    unfold FastDone in *; subst. iIntros "HT Hl".
-    iDestruct (ty_aligned with "Hl") as %?.
-    iDestruct (ty_deref with "Hl") as (v) "[Hl Hv]".
-    iDestruct (ty_size_eq with "Hv") as %?.
+    unfold CanSolve in *; subst. iIntros "HT Hl".
+    iDestruct (ty_aligned with "Hl") as %?; [done|].
+    iDestruct (ty_deref with "Hl") as (v) "[Hl Hv]"; [done|].
+    iDestruct (ty_size_eq with "Hv") as %?; [done|].
     iSplitL "Hl".
     - iExists v. iFrame. by rewrite Forall_forall.
     - by iApply "HT".
   Qed.
-  (* This rule is handled with a definition and an [Hint Extern] (not with an
-  instance) since [Movable] is a dependent subgoal (used by [ty.(ty_layout)]
-  in the [FastDone] instance), and it is thus shelved according to heuristics
-  used by Coq. We thus use [unshleve] in the [Hint Extern] to prevent that. *)
-  Definition uninit_mono_inst l ty ly `{!Movable ty} `{!FastDone (ty.(ty_layout) = ly)}:
+  (* This rule is handled with a definition and an [Hint Extern] (not
+  with an instance) since [Movable] is a dependent subgoal (used by
+  [ty.(ty_has_layout)] in the [CanSolve] instance), and it is thus
+  shelved according to heuristics used by Coq. We thus use [unshleve]
+  in the [Hint Extern] to prevent that.
+
+  Also this rule should only apply ty is not uninit as this case is
+  covered by the rules for bytes and the CanSolve can be quite
+  expensive. *)
+  Definition uninit_mono_inst l ty ly `{!Movable ty} `{!CanSolve (ty.(ty_has_layout) ly)}:
     SubsumePlace l Own ty (uninit ly) :=
     λ T, i2p (uninit_mono l ty ly T).
 
@@ -222,28 +227,18 @@ Section uninit.
     iDestruct "HR" as "[Hl HR]". rewrite /ty_own/=. iDestruct "Hl" as (????) "Hl".
     iDestruct ("IH" with "[//] HR") as "[$ $]". iExists _. by iFrame.
   Qed.
-
-  Lemma annot_to_uninit l ty T `{!Movable ty}:
-    (∀ v, v ◁ᵥ ty -∗ l ◁ₗ uninit ty.(ty_layout) -∗ T) -∗
-    typed_annot_stmt ToUninit l (l ◁ₗ ty) T.
-  Proof.
-    iIntros "HT Hl". iApply step_fupd_intro => //. iModIntro.
-    iDestruct (ty_aligned with "Hl") as %?.
-    iDestruct (ty_deref with "Hl") as (v) "[Hmt Hv]".
-    iDestruct (ty_size_eq with "Hv") as %?.
-    iApply ("HT" with "Hv").
-    iExists v. rewrite Forall_forall. by iFrame.
-  Qed.
-  Global Instance annot_to_uninit_inst l ty `{!Movable ty}:
-    TypedAnnotStmt (ToUninit) l (l ◁ₗ ty) :=
-    λ T, i2p (annot_to_uninit l ty T).
 End uninit.
 
 Notation "uninit< ly >" := (uninit ly) (only printing, format "'uninit<' ly '>'") : printing_sugar.
 
-(* See the definition of [uninit_mono_inst]. *)
-Hint Extern 5 (SubsumePlace _ Own _ (uninit _)) =>
-  unshelve notypeclasses refine (uninit_mono_inst _ _ _ ) : typeclass_instances.
+(* See the definition of [uninit_mono_inst].
+   This hint should only apply ty is not uninit as this case is covered by the rules for bytes. *)
+Hint Extern 5 (SubsumePlace _ Own ?ty (uninit _)) =>
+  lazymatch ty with
+  | uninit _ => fail
+  | _ => unshelve notypeclasses refine (uninit_mono_inst _ _ _)
+  end
+  : typeclass_instances.
 
 Section void.
   Context `{!typeG Σ}.
@@ -267,7 +262,7 @@ Section zeroed.
     subsume (p ◁ₗ uninit ly1)%I (p ◁ₗ zeroed ly2)%I T.
   Proof.
     iDestruct 1 as (H1 H2) "HT". iIntros "Hp".
-    iDestruct (ty_aligned with "Hp") as %Hal.
+    iDestruct (ty_aligned with "Hp") as %Hal; [done|].
     iDestruct (loc_in_bounds_in_bounds with "Hp") as "#Hlib".
     iSplitR; last by iApply "HT".
     iExists []. rewrite Forall_nil /has_layout_loc -H1. repeat iSplit => //.

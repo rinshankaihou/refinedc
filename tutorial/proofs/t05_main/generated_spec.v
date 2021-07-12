@@ -39,7 +39,6 @@ Section spec.
 
   Global Program Instance latch_rmovable : RMovable latch :=
     {| rmovable patt__ := movable_eq _ _ (latch_unfold patt__) |}.
-  Next Obligation. solve_ty_layout_eq. Qed.
 
   Global Instance latch_simplify_hyp_place_inst_generated l_ β_ patt__:
     SimplifyHypPlace l_ β_ (patt__ @ latch)%I (Some 100%N) :=
@@ -102,7 +101,6 @@ Section spec.
 
   Global Program Instance alloc_entry_t_rmovable : RMovable alloc_entry_t :=
     {| rmovable patt__ := movable_eq _ _ (alloc_entry_t_unfold patt__) |}.
-  Next Obligation. solve_ty_layout_eq. Qed.
 
   Global Instance alloc_entry_t_simplify_hyp_place_inst_generated l_ β_ patt__:
     SimplifyHypPlace l_ β_ (patt__ @ alloc_entry_t)%I (Some 100%N) :=
@@ -155,7 +153,6 @@ Section spec.
 
   Global Program Instance alloc_state_rmovable : RMovable alloc_state :=
     {| rmovable patt__ := movable_eq _ _ (alloc_state_unfold patt__) |}.
-  Next Obligation. solve_ty_layout_eq. Qed.
 
   Global Instance alloc_state_simplify_hyp_place_inst_generated l_ β_ patt__:
     SimplifyHypPlace l_ β_ (patt__ @ alloc_state)%I (Some 100%N) :=

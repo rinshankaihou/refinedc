@@ -883,7 +883,7 @@ let pp_spec : string -> import list -> inlined_code ->
         id pp_params params (pp_id_args true id) par_names;
       pp "  {| rmovable patt__ := movable_eq _ _ (%s_unfold" id;
       List.iter (fun n -> pp " %s" n) par_names;
-      pp " patt__) |}.@;Next Obligation. solve_ty_layout_eq. Qed.\n";
+      pp " patt__) |}.\n";
     in
     if not annot.st_immovable then pp_movable_instance ();
 
@@ -1037,21 +1037,6 @@ let pp_spec : string -> import list -> inlined_code ->
     pp "|}.@;";
     pp "Next Obligation. done. Qed.@;";
     pp "Next Obligation. by case; eauto. Qed.\n@;";
-    (* Movable instance. *)
-    pp "Global Program Instance movable_%s_tunion_info : MovableTUnion \
-      %s_tunion_info := {|@;" id id;
-    pp "  mti_movable c :=@;";
-    pp "    match c with@;";
-    let fn (_, (c, args), _) =
-      pp "    | %s" c;
-      List.iter (fun (x,_) -> pp " %s" x) args; pp " => _@;"
-    in
-    List.iter fn union_cases;
-    pp "    end;@;";
-    pp "|}.@;";
-    let fn _ = pp "Next Obligation. simpl. apply _. Defined.@;" in
-    List.iter fn union_cases;
-    pp "Next Obligation. by case => /=; apply _. Qed.\n@;";
     (* Actual definition of the type. *)
     pp "Program Definition %s : rtype := tunion %s_tunion_info." id id
   in

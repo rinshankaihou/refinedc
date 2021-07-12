@@ -68,7 +68,6 @@ Section spec.
 
   Global Program Instance region_rmovable : RMovable region :=
     {| rmovable patt__ := movable_eq _ _ (region_unfold patt__) |}.
-  Next Obligation. solve_ty_layout_eq. Qed.
 
   Global Instance region_simplify_hyp_place_inst_generated l_ β_ patt__:
     SimplifyHypPlace l_ β_ (patt__ @ region)%I (Some 100%N) :=

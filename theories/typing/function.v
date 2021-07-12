@@ -16,7 +16,7 @@ Section function.
     FP (movablelst_to_list atys) Pa B fr.
 
   Definition typed_function (fn : function) (fp : A → fn_params) : iProp Σ :=
-    (∀ x, ⌜Forall2 (λ (ty : mtype) '(_, p), ty.(ty_layout) = p) (fp x).(fp_atys) (f_args fn)⌝ ∗
+    (∀ x, ⌜Forall2 (λ (ty : mtype) '(_, p), ty.(ty_has_layout) p) (fp x).(fp_atys) (f_args fn)⌝ ∗
       □ ∀ (lsa : vec loc (length (fp x).(fp_atys))) (lsv : vec loc (length fn.(f_local_vars))),
           let Qinit := ([∗list] l;t∈lsa;(fp x).(fp_atys), l ◁ₗ (t:mtype)) ∗
                        ([∗list] l;p∈lsv;fn.(f_local_vars), l ◁ₗ uninit (p.2)) ∗ (fp x).(fp_Pa) in
@@ -77,18 +77,17 @@ Section function.
 
   Global Program Instance rmovable_function_ptr fp : RMovable (function_ptr fp) := {|
     rmovable f := {|
-      ty_layout := void*;
+      ty_has_layout ly := ly = void*;
       ty_own_val v := (∃ fn, ⌜v = val_of_loc f⌝  ∗ fntbl_entry f fn ∗ ▷ typed_function fn fp)%I;
   |} |}.
-  Next Obligation. iIntros (? f l). by iDestruct 1 as (??) "?". Qed.
-  Next Obligation. iIntros (f v ?). by iDestruct 1 as (? ->) "?". Qed.
-  Next Obligation. iIntros (f v ?). iDestruct 1 as (??) "(?&?)". eauto with iFrame. Qed.
-  Next Obligation. iIntros (f v ???) "?". iDestruct 1 as (? ->) "?". iFrame. iExists _. by iFrame. Qed.
-  Next Obligation. by iIntros (f v). Qed.
+  Next Obligation. iIntros (? f ly l ->). by iDestruct 1 as (??) "?". Qed.
+  Next Obligation. iIntros (fp f ly v ->). by iDestruct 1 as (? ->) "?". Qed.
+  Next Obligation. iIntros (fp f ly v ->). iDestruct 1 as (??) "(?&?)". eauto with iFrame. Qed.
+  Next Obligation. iIntros (fp f ly v ? -> ?) "?". iDestruct 1 as (? ->) "?". iFrame. iExists _. by iFrame. Qed.
 
   Global Program Instance copyable_function_ptr p fp : Copyable (p @ function_ptr fp).
   Next Obligation.
-    iIntros (p fp E l ?). iDestruct 1 as (fn Hl) "(Hl&?&?)".
+    iIntros (p fp E ly l ? ->). iDestruct 1 as (fn Hl) "(Hl&?&?)".
     iMod (heap_mapsto_own_state_to_mt with "Hl") as (q) "[_ Hl]" => //. iSplitR => //.
     iExists _, _. iFrame. iModIntro. iSplit. by iExists _; iFrame.
     by iIntros "_".
@@ -142,8 +141,8 @@ Section function.
       move: Hl. intros (?&?&Heq&?&->)%Forall2_cons_inv_r.
       destruct vl => //=. iDestruct "Hvl" as "[Hv Hvl]".
       iDestruct ("IH" with "[//] HΦ Hvl") as %?.
-      iDestruct (ty_size_eq with "Hv") as %?.
-      iPureIntro. constructor => //. by rewrite -Heq.
+      iDestruct (ty_size_eq with "Hv") as %?; [done|].
+      iPureIntro. constructor => //.
     }
     iApply (wp_call with "[//]") => //. by apply val_to_of_loc.
     iIntros "!#" (lsa lsv Hly) "Ha Hv".
@@ -170,7 +169,7 @@ Section function.
       move: Hly => /(Forall2_cons_inv _ _ _ _)[??].
       iDestruct "Hvl" as "[Hvl ?]".
       iDestruct "Ha" as "[Ha ?]".
-      iDestruct (ty_ref with "[] Ha Hvl") as "$". done.
+      iDestruct (ty_ref with "[] Ha Hvl") as "$"; [done..|].
       by iApply ("IH" with "[] [] [] [] [$] [$]").
     - iIntros (v). iDestruct 1 as (x') "[Hv [Hls HPr]]".
       iDestruct (big_sepL2_app_inv with "Hls") as "[$ $]".

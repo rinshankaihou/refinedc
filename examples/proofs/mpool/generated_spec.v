@@ -61,7 +61,6 @@ Section spec.
 
   Global Program Instance mpool_chunk_t_rmovable (entry_size : nat) : RMovable (mpool_chunk_t entry_size) :=
     {| rmovable patt__ := movable_eq _ _ (mpool_chunk_t_unfold entry_size patt__) |}.
-  Next Obligation. solve_ty_layout_eq. Qed.
 
   Global Instance mpool_chunk_t_simplify_hyp_place_inst_generated l_ β_ (entry_size : nat) patt__:
     SimplifyHypPlace l_ β_ (patt__ @ mpool_chunk_t entry_size)%I (Some 100%N) :=
@@ -112,7 +111,6 @@ Section spec.
 
   Global Program Instance mpool_entry_t_rmovable (entry_size : nat) : RMovable (mpool_entry_t entry_size) :=
     {| rmovable patt__ := movable_eq _ _ (mpool_entry_t_unfold entry_size patt__) |}.
-  Next Obligation. solve_ty_layout_eq. Qed.
 
   Global Instance mpool_entry_t_simplify_hyp_place_inst_generated l_ β_ (entry_size : nat) patt__:
     SimplifyHypPlace l_ β_ (patt__ @ mpool_entry_t entry_size)%I (Some 100%N) :=
@@ -197,7 +195,6 @@ Section spec.
 
   Global Program Instance mpool_rmovable (entry_size : nat) : RMovable (mpool entry_size) :=
     {| rmovable patt__ := movable_eq _ _ (mpool_unfold entry_size patt__) |}.
-  Next Obligation. solve_ty_layout_eq. Qed.
 
   Global Instance mpool_simplify_hyp_place_inst_generated l_ β_ (entry_size : nat) patt__:
     SimplifyHypPlace l_ β_ (patt__ @ mpool entry_size)%I (Some 100%N) :=

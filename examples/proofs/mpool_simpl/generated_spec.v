@@ -37,7 +37,6 @@ Section spec.
 
   Global Program Instance mpool_entry_rmovable : RMovable mpool_entry :=
     {| rmovable patt__ := movable_eq _ _ (mpool_entry_unfold patt__) |}.
-  Next Obligation. solve_ty_layout_eq. Qed.
 
   Global Instance mpool_entry_simplify_hyp_place_inst_generated l_ β_ patt__:
     SimplifyHypPlace l_ β_ (patt__ @ mpool_entry)%I (Some 100%N) :=
@@ -82,7 +81,6 @@ Section spec.
 
   Global Program Instance mpool_rmovable : RMovable mpool :=
     {| rmovable patt__ := movable_eq _ _ (mpool_unfold patt__) |}.
-  Next Obligation. solve_ty_layout_eq. Qed.
 
   Global Instance mpool_simplify_hyp_place_inst_generated l_ β_ patt__:
     SimplifyHypPlace l_ β_ (patt__ @ mpool)%I (Some 100%N) :=

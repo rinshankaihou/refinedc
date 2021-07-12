@@ -11,13 +11,13 @@ Section value.
   Next Obligation. iIntros (?????) "[$ [$ ?]]". by iApply heap_mapsto_own_state_share. Qed.
 
   Global Program Instance movable_value ly v : Movable (value ly v) := {|
-    ty_layout := ly;
+    ty_has_layout ly' := ly' = ly;
     ty_own_val v' := (⌜v `has_layout_val` ly⌝ ∗ ⌜v' = v⌝)%I;
   |}.
-  Next Obligation. by iIntros (ly v' l) "[%?]". Qed.
-  Next Obligation. by iIntros (ly v' v) "[% ->]". Qed.
-  Next Obligation. iIntros (ly v' l) "(%&%&?)". eauto with iFrame. Qed.
-  Next Obligation. iIntros (ly v' l v ?) "Hl [? ->]". by iFrame. Qed.
+  Next Obligation. iIntros (ly v ly' l ->) "[%?]". done. Qed.
+  Next Obligation. iIntros (ly v ly' v' ->) "[% ->]". done. Qed.
+  Next Obligation. iIntros (ly v ly' l ->) "(%&%&?)". eauto with iFrame. Qed.
+  Next Obligation. iIntros (ly v ly' l v' -> ?) "Hl [? ->]". by iFrame. Qed.
 
   Lemma value_simplify v T ly p:
     (⌜v = p⌝ -∗ ⌜v `has_layout_val` ly⌝ -∗ T) -∗
@@ -28,25 +28,25 @@ Section value.
     λ T, i2p (value_simplify v T ly p).
 
   Lemma value_subsume_goal v v' ly ty `{!Movable ty} T:
-    (v ◁ᵥ ty -∗ ⌜ty.(ty_layout) = ly⌝ ∗ ⌜v = v'⌝ ∗ T) -∗
+    (⌜ty.(ty_has_layout) ly⌝ ∗ (v ◁ᵥ ty -∗ ⌜v = v'⌝ ∗ T)) -∗
     subsume (v ◁ᵥ ty) (v ◁ᵥ value ly v') T.
   Proof.
-    iIntros "HT Hty". iDestruct (ty_size_eq with "Hty") as %Hly.
-    by iDestruct ("HT" with "Hty") as (<- ->) "$".
+    iIntros "[% HT] Hty". iDestruct (ty_size_eq with "Hty") as %Hly; [done|].
+    by iDestruct ("HT" with "Hty") as (->) "$".
   Qed.
   Global Instance value_subsume_goal_inst v v' ly ty `{!Movable ty}:
     SubsumeVal v ty (value ly v') :=
     λ T, i2p (value_subsume_goal v v' ly ty T).
 
   Lemma value_subsume_goal_loc l v' ly ty `{!Movable ty} T:
-    (∀ v, v ◁ᵥ ty -∗ ⌜ty.(ty_layout) = ly⌝ ∗ ⌜v = v'⌝ ∗ T) -∗
+    (⌜ty.(ty_has_layout) ly⌝ ∗ ∀ v, v ◁ᵥ ty -∗ ⌜v = v'⌝ ∗ T) -∗
     subsume (l ◁ₗ ty) (l ◁ₗ value ly v') T.
   Proof.
-    iIntros "HT Hty".
-    iDestruct (ty_aligned with "Hty") as %Hal.
-    iDestruct (ty_deref with "Hty") as (v) "[Hmt Hty]".
-    iDestruct (ty_size_eq with "Hty") as %Hly.
-    iDestruct ("HT" with "Hty") as (<- ->) "$".
+    iIntros "[% HT] Hty".
+    iDestruct (ty_aligned with "Hty") as %Hal; [done|].
+    iDestruct (ty_deref with "Hty") as (v) "[Hmt Hty]"; [done|].
+    iDestruct (ty_size_eq with "Hty") as %Hly; [done|].
+    iDestruct ("HT" with "Hty") as (->) "$".
     by iFrame.
   Qed.
   Global Instance value_subsume_goal_loc_inst l v' ly ty `{!Movable ty}:
@@ -54,10 +54,10 @@ Section value.
     λ T, i2p (value_subsume_goal_loc l v' ly ty T).
 
   Lemma value_merge v l ly T:
-    (find_in_context (FindVal v) (λ ty:mtype, ⌜ty.(ty_layout) = ly⌝ ∗ (l ◁ₗ ty -∗ T))) -∗
+    (find_in_context (FindVal v) (λ ty:mtype, ⌜ty.(ty_has_layout) ly⌝ ∗ (l ◁ₗ ty -∗ T))) -∗
       simplify_hyp (l ◁ₗ value ly v) T.
   Proof.
-    iDestruct 1 as (ty) "[Hv [<- HT]]".
+    iDestruct 1 as (ty) "[Hv [% HT]]".
     iIntros "[% [% Hl]]". iApply "HT". by iApply (ty_ref with "[] Hl Hv").
   Qed.
   Global Instance value_merge_inst v l ly:
@@ -65,14 +65,14 @@ Section value.
     λ T, i2p (value_merge v l ly T).
 
   Lemma type_read_move T l ty ly a `{!Movable ty}:
-    (⌜ty.(ty_layout) = ly⌝ ∗ ∀ v, T v (value (ty.(ty_layout)) v) (t2mt ty)) -∗
+    (⌜ty.(ty_has_layout) ly⌝ ∗ ∀ v, T v (value ly v) (t2mt ty)) -∗
       typed_read_end a l Own ty ly T.
   Proof.
-    iIntros "[<- HT] Hl".
+    iIntros "[% HT] Hl".
     iApply fupd_mask_intro => //. iIntros "Hclose".
-    iDestruct (ty_aligned with "Hl") as %?.
-    iDestruct (ty_deref with "Hl") as (v) "[Hl Hv]".
-    iDestruct (ty_size_eq with "Hv") as %?.
+    iDestruct (ty_aligned with "Hl") as %?; [done|].
+    iDestruct (ty_deref with "Hl") as (v) "[Hl Hv]"; [done|].
+    iDestruct (ty_size_eq with "Hv") as %?; [done|].
     iExists _, _, _, (t2mt _). iFrame. do 2 iSplit => //=.
     iIntros "!# Hl". iMod "Hclose". iSplitR "HT" => //.
     by iFrame.
@@ -83,51 +83,52 @@ Section value.
 
   (* TODO: this constraint on the layout is too strong, we only need
   that the length is the same and the alignment is lower. Adapt when necessary. *)
-  Lemma type_write_own a ty `{!Movable ty} T l2 ty2 v `{!Movable ty2}:
-    ⌜ty2.(ty_layout) = ty.(ty_layout)⌝ ∗ (∀ v', v ◁ᵥ ty -∗ v' ◁ᵥ ty2 -∗ T (value ty.(ty_layout) v)) -∗
-    typed_write_end a v ty l2 Own ty2 T.
+  Lemma type_write_own a ty `{!Movable ty} T l2 ty2 v `{!Movable ty2} ly:
+    ⌜ty2.(ty_has_layout) ly⌝ ∗ (∀ v', v ◁ᵥ ty -∗ v' ◁ᵥ ty2 -∗ T (value ly v)) -∗
+    typed_write_end a ly v ty l2 Own ty2 T.
   Proof.
-    iDestruct 1 as (Heq) "HT". iIntros "Hl Hv".
-    iDestruct (ty_aligned with "Hl") as %?.
-    iDestruct (ty_deref with "Hl") as (v') "[Hl Hv']".
-    iDestruct (ty_size_eq with "Hv'") as %?.
+    iDestruct 1 as (?) "HT". iIntros (?) "Hl Hv".
+    iDestruct (ty_aligned with "Hl") as %?; [done|].
+    iDestruct (ty_deref with "Hl") as (v') "[Hl Hv']"; [done|].
+    iDestruct (ty_size_eq with "Hv'") as %?; [done|].
     iApply fupd_mask_intro => //. iIntros "Hmask".
-    iSplitL "Hl". by iExists _; iFrame; rewrite -Heq.
+    iSplitL "Hl". { iExists _. by iFrame. }
     iIntros "!# Hl". iMod "Hmask". iModIntro.
-    iDestruct (ty_size_eq with "Hv") as %?.
-    iExists _. iDestruct ("HT" with "Hv Hv'") as "$".
-    iFrame. iPureIntro. split => //. congruence.
+    iDestruct (ty_size_eq with "Hv") as %?; [done|].
+    iExists _. iDestruct ("HT" with "Hv Hv'") as "$". by iFrame.
   Qed.
-  Global Instance type_write_own_inst a ty `{!Movable ty} l2 ty2 v `{!Movable ty2} :
-    TypedWriteEnd a v ty l2 Own ty2 | 50 :=
-    λ T, i2p (type_write_own a ty T l2 ty2 v).
+  Global Instance type_write_own_inst a ty `{!Movable ty} l2 ty2 v `{!Movable ty2} ly:
+    TypedWriteEnd a ly v ty l2 Own ty2 | 50 :=
+    λ T, i2p (type_write_own a ty T l2 ty2 v ly).
 
 End value.
 Notation "value< ly , v >" := (value ly v) (only printing, format "'value<' ly ',' v '>'") : printing_sugar.
 
+
 Section at_value.
   Context `{!typeG Σ}.
 
+  (* TODO: At the moment this is hard-coded for void*. Generalize it to other layouts as well. *)
   Program Definition at_value (v : val) (ty : type) `{!Movable ty} : type := {|
-    ty_own β l := (if β is Own then l ◁ₗ value (ty_layout ty) v ∗ v ◁ᵥ ty else True )%I;
+    ty_own β l := (if β is Own then l ◁ₗ value void* v ∗ v ◁ᵥ ty else True )%I;
   |}.
   Next Obligation. by iIntros (??????) "?". Qed.
 
   Global Program Instance movable_at_value v ty `{!Movable ty} : Movable (at_value v ty) := {|
-    ty_layout := (ty_layout ty);
-    ty_own_val v' := (v' ◁ᵥ value (ty_layout ty) v ∗ v ◁ᵥ ty)%I;
+    ty_has_layout ly := ly = void*;
+    ty_own_val v' := (v' ◁ᵥ value void* v ∗ v ◁ᵥ ty)%I;
   |}.
-  Next Obligation. iIntros (v ty ? l) "[Hv ?]". iApply (ty_aligned with "Hv"). Qed.
-  Next Obligation. iIntros (v ty ? v') "[Hv ?]". iApply (ty_size_eq with "Hv"). Qed.
+  Next Obligation. iIntros (v ty ? ly l ->) "[Hv ?]". by iApply (ty_aligned with "Hv"). Qed.
+  Next Obligation. iIntros (v ty ? ? v' ->) "[Hv ?]". by iApply (ty_size_eq with "Hv"). Qed.
   Next Obligation.
-    iIntros (v ty ? l) "[Hv ?]". iDestruct (ty_deref with "Hv") as (v') "[??]". iExists _. by iFrame.
+    iIntros (v ty ? ly l ->) "[Hv ?]". iDestruct (ty_deref with "Hv") as (v') "[??]"; [done|]. iExists _. by iFrame.
   Qed.
   Next Obligation.
-    iIntros (v ty ? l v' ?) "Hl [Hv ?]". iFrame. by iApply (ty_ref with "[] Hl Hv").
+    iIntros (v ty ? l v' ? -> ?) "Hl [Hv ?]". iFrame. by iApply (ty_ref with "[] Hl Hv").
   Qed.
 
   Lemma at_value_simplify_hyp_val v v' ty `{!Movable ty} T:
-    (v ◁ᵥ value (ty_layout ty) v' -∗ v' ◁ᵥ ty -∗ T) -∗
+    (v ◁ᵥ value void* v' -∗ v' ◁ᵥ ty -∗ T) -∗
     simplify_hyp (v ◁ᵥ at_value v' ty) T.
   Proof. iIntros "HT [??]". by iApply ("HT" with "[$] [$]"). Qed.
   Global Instance at_value_simplify_hyp_val_inst v v' ty `{!Movable ty} :
@@ -135,7 +136,7 @@ Section at_value.
     λ T, i2p (at_value_simplify_hyp_val v v' ty T).
 
   Lemma at_value_simplify_goal_val v v' ty `{!Movable ty} T:
-    (T (v ◁ᵥ value (ty_layout ty) v' ∗ v' ◁ᵥ ty)) -∗
+    (T (v ◁ᵥ value void* v' ∗ v' ◁ᵥ ty)) -∗
     simplify_goal (v ◁ᵥ at_value v' ty) T.
   Proof. iIntros "HT". iExists _. iFrame. by iIntros "$". Qed.
   Global Instance at_value_simplify_goal_val_inst v v' ty `{!Movable ty} :
@@ -143,7 +144,7 @@ Section at_value.
     λ T, i2p (at_value_simplify_goal_val v v' ty T).
 
   Lemma at_value_simplify_hyp_loc l v' ty `{!Movable ty} T:
-    (l ◁ₗ value (ty_layout ty) v' -∗ v' ◁ᵥ ty -∗ T) -∗
+    (l ◁ₗ value void* v' -∗ v' ◁ᵥ ty -∗ T) -∗
     simplify_hyp (l ◁ₗ at_value v' ty) T.
   Proof. iIntros "HT [??]". by iApply ("HT" with "[$] [$]"). Qed.
   Global Instance at_value_simplify_hyp_loc_inst l v' ty `{!Movable ty} :
@@ -151,7 +152,7 @@ Section at_value.
     λ T, i2p (at_value_simplify_hyp_loc l v' ty T).
 
   Lemma at_value_simplify_goal_loc l v' ty `{!Movable ty} T:
-    (T (l ◁ₗ value (ty_layout ty) v' ∗ v' ◁ᵥ ty)) -∗
+    (T (l ◁ₗ value void* v' ∗ v' ◁ᵥ ty)) -∗
     simplify_goal (l ◁ₗ at_value v' ty) T.
   Proof. iIntros "HT". iExists _. iFrame. by iIntros "$". Qed.
   Global Instance at_value_simplify_goal_loc_inst l v' ty `{!Movable ty} :
@@ -226,18 +227,18 @@ Section place.
     TypedReadEnd a l β ty ly | 1000 :=
     λ T, i2p (typed_read_end_simpl l β ty ly n T a).
 
-  Lemma typed_write_end_simpl b v ty1 `{!Movable ty1} l β ty2 n T {SH:SimplifyHyp (l ◁ₗ{β} ty2) (Some n)}:
+  Lemma typed_write_end_simpl b ly v ty1 `{!Movable ty1} l β ty2 n T {SH:SimplifyHyp (l ◁ₗ{β} ty2) (Some n)}:
     (SH (find_in_context (FindLoc l) (λ '(β3, ty3),
-        typed_write_end b v ty1 l β3 ty3 (λ ty', l ◁ₗ{β3} ty' -∗ T (place l))))).(i2p_P) -∗
-    typed_write_end b v ty1 l β ty2 T.
+        typed_write_end b ly v ty1 l β3 ty3 (λ ty', l ◁ₗ{β3} ty' -∗ T (place l))))).(i2p_P) -∗
+    typed_write_end b ly v ty1 l β ty2 T.
   Proof.
-    iIntros "SH Hl Hv". iDestruct (i2p_proof with "SH Hl") as ([β3 ty3]) "[Hl HP]".
-    iMod ("HP" with "Hl Hv") as "[$ HP]". iIntros "!# !# Hl".
+    iIntros "SH % Hl Hv". iDestruct (i2p_proof with "SH Hl") as ([β3 ty3]) "[Hl HP]".
+    iMod ("HP" with "[//] Hl Hv") as "[$ HP]". iIntros "!# !# Hl".
     iMod ("HP" with "Hl") as (ty') "[Hl HT]". iModIntro. iExists _. iSplitR; last by iApply "HT". done.
   Qed.
-  Global Instance typed_write_end_simpl_inst b v ty1 `{!Movable ty1} l β ty2 n `{!SimplifyHyp (l ◁ₗ{β} ty2) (Some n)}:
-    TypedWriteEnd b v ty1 l β ty2 | 1000 :=
-    λ T, i2p (typed_write_end_simpl b v ty1 l β ty2 n T).
+  Global Instance typed_write_end_simpl_inst b ly v ty1 `{!Movable ty1} l β ty2 n `{!SimplifyHyp (l ◁ₗ{β} ty2) (Some n)}:
+    TypedWriteEnd b ly v ty1 l β ty2 | 1000 :=
+    λ T, i2p (typed_write_end_simpl b ly v ty1 l β ty2 n T).
 
 End place.
 Notation "place< l >" := (place l) (only printing, format "'place<' l '>'") : printing_sugar.

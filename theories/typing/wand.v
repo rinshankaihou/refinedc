@@ -84,13 +84,13 @@ Section wand_val.
 
   Global Program Instance wand_val_movable P ly ty
          `{!∀ x, Movable (ty x)} : Movable (wand_val_ex ly P ty) := {|
-     ty_layout := ly;
+     ty_has_layout ly' := ly' = ly;
      ty_own_val v := (⌜v `has_layout_val` ly⌝ ∗ ∀ x, P x -∗ v ◁ᵥ (ty x))%I;
   |}.
-  Next Obligation. iIntros (?????) "Hl". iDestruct "Hl" as (?) "[$ _]". Qed.
-  Next Obligation. iIntros (?????) "[$ _]". Qed.
-  Next Obligation. iIntros (?????) "Hl". iDestruct "Hl" as (v) "(?&?&?&?)". eauto with iFrame. Qed.
-  Next Obligation. iIntros (????? v) "??[??]". iExists v. iFrame. Qed.
+  Next Obligation. iIntros (??????->) "Hl". iDestruct "Hl" as (?) "[$ _]". Qed.
+  Next Obligation. iIntros (??????->) "[$ _]". Qed.
+  Next Obligation. iIntros (??????->) "Hl". iDestruct "Hl" as (v) "(?&?&?&?)". eauto with iFrame. Qed.
+  Next Obligation. iIntros (?????? v ->) "??[??]". iExists v. iFrame. Qed.
 
   Global Instance wand_val_loc_in_bounds P ly (ty : A → type) `{!∀ x, Movable (ty x)}:
     LocInBounds (wand_val_ex ly P ty) β (ly_size ly).

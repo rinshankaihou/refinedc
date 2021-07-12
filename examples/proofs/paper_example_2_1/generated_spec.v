@@ -48,7 +48,6 @@ Section spec.
 
   Global Program Instance mem_t_rmovable : RMovable mem_t :=
     {| rmovable patt__ := movable_eq _ _ (mem_t_unfold patt__) |}.
-  Next Obligation. solve_ty_layout_eq. Qed.
 
   Global Instance mem_t_simplify_hyp_place_inst_generated l_ β_ patt__:
     SimplifyHypPlace l_ β_ (patt__ @ mem_t)%I (Some 100%N) :=

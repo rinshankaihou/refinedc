@@ -22,16 +22,15 @@ Section intptr.
 
   Global Program Instance rmovable_intptr it : RMovable (intptr it) := {|
     rmovable p := {|
-      ty_layout := it_layout it;
+      ty_has_layout ly := ly = it_layout it;
       ty_own_val v := ∃ aid, ⌜p.1 = ProvAlloc (Some aid)⌝ ∗ ⌜val_to_Z v it = Some p.2⌝ ∗
                       ⌜val_to_byte_prov v = Some aid⌝ ∗ loc_in_bounds p 0;
     |}
   |}%I.
-  Next Obligation. iIntros (???) "(%aid&%&%&%&%&$&_)". Qed.
-  Next Obligation. iIntros (???) "(%aid&%&%&?) !%". by apply: val_to_Z_length. Qed.
-  Next Obligation. iIntros (???) "(%v&%&%&%&%&%&Hl&?)". eauto with iFrame. Qed.
-  Next Obligation. iIntros (??? v ?) "Hl (%&%&%&%&?)". iExists _, _. eauto with iFrame. Qed.
-  Next Obligation. iIntros (???). done. Qed.
+  Next Obligation. iIntros (????->) "(%aid&%&%&%&%&$&_)". Qed.
+  Next Obligation. iIntros (????->) "(%aid&%&%&?) !%". by apply: val_to_Z_length. Qed.
+  Next Obligation. iIntros (????->) "(%v&%&%&%&%&%&Hl&?)". eauto with iFrame. Qed.
+  Next Obligation. iIntros (?????->?) "Hl (%&%&%&%&?)". iExists _, _. eauto with iFrame. Qed.
 
   Lemma intptr_loc_in_bounds l β p it:
      l ◁ₗ{β} p @ intptr it -∗ loc_in_bounds l (bytes_per_int it).
@@ -50,7 +49,7 @@ Section intptr.
   Lemma ty_own_intptr_in_range l β p it : l ◁ₗ{β} p @ intptr it -∗ ⌜p.2 ∈ it⌝.
   Proof.
     iIntros "Hl". destruct β.
-    - iDestruct (ty_deref with "Hl") as (?) "[_ (%&%&%&%&?)]".
+    - iDestruct (ty_deref with "Hl") as (?) "[_ (%&%&%&%&?)]"; [done|].
       iPureIntro. by eapply val_to_Z_in_range.
     - iDestruct "Hl" as (?????) "_".
       iPureIntro. by eapply val_to_Z_in_range.
@@ -60,7 +59,7 @@ Section intptr.
   have to reprove this everytime? *)
   Global Program Instance intptr_copyable p it : Copyable (p @ intptr it).
   Next Obligation.
-    iIntros (?????) "(%v&%aid&%Hv&%Hl&%&%&#?&Hl)".
+    iIntros (??????->) "(%v&%aid&%Hv&%Hl&%&%&#?&Hl)".
     iMod (heap_mapsto_own_state_to_mt with "Hl") as (q) "[_ Hl]" => //.
     iSplitR => //. iExists q, v. iFrame "∗#". iModIntro. eauto with iFrame.
   Qed.

@@ -31,7 +31,7 @@ Section tagged_ptr.
 
   Global Program Instance rmovable_tagged_ptr β align ty : RMovable (tagged_ptr β align ty) := {|
     rmovable r := {|
-      ty_layout := void*;
+      ty_has_layout ly := ly = void*;
       ty_own_val v :=
         ⌜v = val_of_loc (r.1 +ₗ r.2)⌝ ∗
         ⌜r.1 `aligned_to` align⌝ ∗
@@ -40,11 +40,10 @@ Section tagged_ptr.
         r.1 ◁ₗ{β} ty;
     |}
   |}%I.
-  Next Obligation. iIntros (?????) "($&_)". Qed.
-  Next Obligation. iIntros (?????) "(->&_)". done. Qed.
-  Next Obligation. iIntros (?????) "(%&%&%&?&?)". rewrite left_id. eauto with iFrame. Qed.
-  Next Obligation. iIntros (???????) "? (->&%&%&?)". iFrame. rewrite left_id. eauto with iFrame. Qed.
-  Next Obligation. done. Qed.
+  Next Obligation. iIntros (??????->) "($&_)". Qed.
+  Next Obligation. iIntros (??????->) "(->&_)". done. Qed.
+  Next Obligation. iIntros (??????->) "(%&%&%&?&?)". rewrite left_id. eauto with iFrame. Qed.
+  Next Obligation. iIntros (???????->?) "? (->&%&%&?)". iFrame. rewrite left_id. eauto with iFrame. Qed.
 
   Global Instance tagged_ptr_loc_in_bounds r ty align β1 β2 :
     LocInBounds (r @ tagged_ptr β1 align ty) β2 bytes_per_addr.

@@ -26,13 +26,13 @@ Section own_constrained.
   Proof. solve_type_proper. Qed.
 
   Global Program Instance own_constrained_movable ty P `{!Movable ty} `{!OwnConstraint P} : Movable (own_constrained P ty) := {|
-     ty_layout := ty.(ty_layout);
+     ty_has_layout ly := ty.(ty_has_layout) ly;
      ty_own_val v := (v ◁ᵥ ty ∗ P Own)%I;
   |}.
-  Next Obligation. iIntros (?????) "[? _]". by iApply ty_aligned. Qed.
-  Next Obligation. iIntros (?????) "[? _]". by iApply ty_size_eq. Qed.
-  Next Obligation. iIntros (?????) "[? $]". by iApply ty_deref. Qed.
-  Next Obligation. iIntros (???????) "Hl [? $]". by iApply (ty_ref with "[//] [Hl]"). Qed.
+  Next Obligation. iIntros (???????) "[? _]". by iApply ty_aligned. Qed.
+  Next Obligation. iIntros (???????) "[? _]". by iApply ty_size_eq. Qed.
+  Next Obligation. iIntros (???????) "[? $]". by iApply ty_deref. Qed.
+  Next Obligation. iIntros (?????????) "Hl [? $]". by iApply (ty_ref with "[//] [Hl]"). Qed.
 
   Global Instance own_constrained_loc_in_bounds ty β n P `{!OwnConstraint P} `{!LocInBounds ty β n} :
     LocInBounds (own_constrained P ty) β n.
@@ -79,7 +79,6 @@ Section own_constrained.
   Global Program Instance own_constrained_optional ty P optty ot1 ot2 `{!Movable ty} `{!Movable optty} `{!OwnConstraint P} `{!Optionable ty optty ot1 ot2} : Optionable (own_constrained P ty) optty ot1 ot2 := {|
     opt_pre v1 v2 := opt_pre ty v1 v2
   |}.
-  Next Obligation. move => ????????? /=. apply opt_alt_sz. Qed.
   Next Obligation.
     iIntros (?????????[]?????) "Hpre H1 H2". 1: iDestruct "H1" as "[H1 _]".
     by iApply (opt_bin_op true with "Hpre H1 H2").

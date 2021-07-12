@@ -73,7 +73,6 @@ Section spec.
 
   Global Program Instance lock_test_rmovable : RMovable lock_test :=
     {| rmovable patt__ := movable_eq _ _ (lock_test_unfold patt__) |}.
-  Next Obligation. solve_ty_layout_eq. Qed.
 
   Global Instance lock_test_simplify_hyp_place_inst_generated l_ β_ patt__:
     SimplifyHypPlace l_ β_ (patt__ @ lock_test)%I (Some 100%N) :=

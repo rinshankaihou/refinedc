@@ -8,7 +8,6 @@ uses the same instances as Optionable.
  *)
 Class Optionable `{!typeG Σ} (ty : type) `{!Movable ty} (optty : type) `{!Movable optty} (ot1 ot2 : op_type) := {
   opt_pre : val → val → iProp Σ;
-  opt_alt_sz : optty.(ty_layout) = ty.(ty_layout);
   opt_bin_op (bty beq : bool) v1 v2 σ v :
     (⊢ opt_pre v1 v2 -∗ (if bty then v1 ◁ᵥ ty else v1 ◁ᵥ optty) -∗ v2 ◁ᵥ optty -∗ state_ctx σ -∗
         ⌜eval_bin_op (if beq then EqOp else NeOp) ot1 ot2 σ v1 v2 v ↔ val_of_Z (Z_of_bool (xorb bty beq)) i32 None = Some v⌝);
@@ -28,7 +27,6 @@ Section optional.
   Global Program Instance optionable_ty_of_rty r `{!RMovable r} `{!Inhabited (r.(rty_type))} optty `{!Movable optty} ot1 ot2 `{!ROptionable r optty ot1 ot2}: Optionable r optty ot1 ot2 := {|
     opt_pre v1 v2 := (∀ x, opt_pre (r.(rty) x) v1 v2)%I
   |}.
-  Next Obligation. move => r???????. by rewrite ->opt_alt_sz. Qed.
   Next Obligation.
     iIntros(r??????? bty beq v1 v2 σ v) "Hpre Hv1 Hv2".
     destruct bty. iDestruct "Hv1" as (y) "Hv1".
@@ -68,29 +66,26 @@ Section optional.
   (* it is important that the layout of an optional computes without
   doing case distrinction on the boolean. Otherwise it is very
   annoying to use. *)
-  Global Program Instance rmovable_optional ty  `{!Movable ty} `{!Movable optty} ot1 ot2 `{!Optionable ty optty ot1 ot2} : RMovable (optional ty optty) := {|
+  Global Program Instance rmovable_optional ty  `{!Movable ty} `{!Movable optty} : RMovable (optional ty optty) := {|
     rmovable b := {|
-      ty_layout := optty.(ty_layout);
+      ty_has_layout ly := ty.(ty_has_layout) ly ∧ optty.(ty_has_layout) ly;
       ty_own_val v := (⌜b⌝ ∗ v◁ᵥty ∨ ⌜¬b⌝ ∗ v◁ᵥoptty)%I
   |} |}.
   Next Obligation.
-    iIntros (ty?????? b ?). iDestruct 1 as "[[% Hv]|[% Hv]]";iDestruct (ty_aligned with "Hv") as %? => //.
-      by rewrite opt_alt_sz.
+    iIntros (ty??????[??]). by iDestruct 1 as "[[% Hv]|[% Hv]]";iDestruct (ty_aligned with "Hv") as %?.
   Qed.
   Next Obligation.
-    iIntros (ty?????? b ?). iDestruct 1 as "[[% Hv]|[% Hv]]";iDestruct (ty_size_eq with "Hv") as %? => //.
-      by rewrite opt_alt_sz.
+    iIntros (ty??????[??]). by iDestruct 1 as "[[% Hv]|[% Hv]]";iDestruct (ty_size_eq with "Hv") as %?.
   Qed.
   Next Obligation.
-    iIntros (ty ? optty ???? b l) "Hl".
+    iIntros (ty ? optty ????[??]) "Hl".
     iDestruct "Hl" as "[[% Hl]|[% Hl]]"; iDestruct (ty_deref with "Hl") as (?) "[? ?]"; eauto with iFrame.
   Qed.
   Next Obligation.
-    iIntros (ty ? optty ???? b l v ?) "Hl Hv".
+    iIntros (ty ? optty ?????[??]?) "Hl Hv".
     iDestruct "Hv" as "[[% Hv]|[% Hv]]"; iDestruct (ty_ref with "[] Hl Hv") as "H"; rewrite -?opt_alt_sz//;
        [iLeft | iRight]; by iFrame.
   Qed.
-  Next Obligation. done. Qed.
 
   Global Instance optional_loc_in_bounds ty e ot β n `{!LocInBounds ty β n} `{!LocInBounds ot β n}:
     LocInBounds (e @ optional ty ot) β n.
@@ -117,9 +112,8 @@ Section optional.
     iSplit => //. iApply (@simple_subsume_place with "HP Hl").
   Qed.
 
-  Global Instance simple_subsume_val_optional ty1 ty2 optty b1 b2 ot1 ot2
+  Global Instance simple_subsume_val_optional ty1 ty2 optty b1 b2
        `{!Movable ty1} `{!Movable ty2} `{!Movable optty}
-       `{!Optionable ty1 optty ot1 ot2} `{!Optionable ty2 optty ot1 ot2}
        `{!SimpleSubsumeVal ty1 ty2 P}:
     SimpleSubsumeVal (b1 @ optional ty1 optty) (b2 @ optional ty2 optty) (⌜b1 ↔ b2⌝ ∗ P).
   Proof.
@@ -142,19 +136,19 @@ Section optional.
     SubsumePlace l β ty' (b @ optional ty optty)%I :=
     λ T, i2p (subsume_optional_ty_ref b ty ty' optty l β T).
 
-  Lemma subsume_optional_val_optty_ref b ty optty v T `{!Movable ty} `{!Movable optty} ot1 ot2 `{!Optionable ty optty ot1 ot2}:
+  Lemma subsume_optional_val_optty_ref b ty optty v T `{!Movable ty} `{!Movable optty}:
     ⌜¬ b⌝ ∗ T -∗ subsume (v ◁ᵥ optty) (v ◁ᵥ b @ optional ty optty) T.
   Proof. iIntros "[Hb $] Hl". iRight. by iFrame. Qed.
-  Global Instance subsume_optional_val_optty_ref_inst b ty optty v `{!Movable ty} `{!Movable optty} ot1 ot2 `{!Optionable ty optty ot1 ot2}:
+  Global Instance subsume_optional_val_optty_ref_inst b ty optty v `{!Movable ty} `{!Movable optty}:
     SubsumeVal v (optty) (b @ optional ty optty)%I :=
-    λ T, i2p (subsume_optional_val_optty_ref b ty optty v T ot1 ot2).
+    λ T, i2p (subsume_optional_val_optty_ref b ty optty v T).
 
-  Lemma subsume_optional_val_ty_ref b ty ty' optty v T `{!Movable ty} `{!Movable ty'} `{!Movable optty} ot1 ot2 `{!Optionable ty optty ot1 ot2}:
+  Lemma subsume_optional_val_ty_ref b ty ty' optty v T `{!Movable ty} `{!Movable ty'} `{!Movable optty}:
     ⌜b⌝ ∗ subsume (v ◁ᵥ ty') (v ◁ᵥ ty) T -∗ subsume (v ◁ᵥ ty') (v ◁ᵥ b @ optional ty optty) T.
   Proof. iIntros "[Hb Hsub] Hl". iDestruct ("Hsub" with "Hl") as "[? $]". iLeft. by iFrame. Qed.
-  Global Instance subsume_optional_val_ty_ref_inst b ty ty' optty v `{!Movable ty} `{!Movable ty'} `{!Movable optty} ot1 ot2 `{!Optionable ty optty ot1 ot2} `{!OptionableAgree ty ty'}:
+  Global Instance subsume_optional_val_ty_ref_inst b ty ty' optty v `{!Movable ty} `{!Movable ty'} `{!Movable optty} `{!OptionableAgree ty ty'}:
     SubsumeVal v ty' (b @ optional ty optty)%I :=
-    λ T, i2p (subsume_optional_val_ty_ref b ty ty' optty v T ot1 ot2).
+    λ T, i2p (subsume_optional_val_ty_ref b ty ty' optty v T).
 
   Inductive destruct_hint_optional :=
   | DestructHintOptionalEq (P : Prop)
@@ -265,9 +259,9 @@ Section optional.
     iApply step_fupd_intro => //. solve_ndisj.
   Qed.
 
-  Global Program Instance optional_copyable b ty optty ot1 ot2 `{!Movable ty} `{!Movable optty} `{!Optionable ty optty ot1 ot2} `{!Copyable ty} `{!Copyable optty} : Copyable (b @ optional ty optty).
+  Global Program Instance optional_copyable b ty optty `{!Movable ty} `{!Movable optty} `{!Copyable ty} `{!Copyable optty} : Copyable (b @ optional ty optty).
   Next Obligation.
-    iIntros (b ty optty ot1 ot2 ? ? ? ? ? E l ?) "[[% Hl]|[% Hl]]".
+    iIntros (b ty optty ? ? ? ? E ly l ? [??]) "[[% Hl]|[% Hl]]".
     all: iMod (copy_shr_acc with "Hl") as (?? ?) "[?[??]]" => //.
     all: iModIntro; iSplit => //; rewrite /=?opt_alt_sz => //; iExists _, _; iFrame.
     by iLeft; iFrame.
@@ -290,27 +284,23 @@ Section optionalO.
     rty b := if b is Some x return _ then ty x else optty
   |}.
 
-  Global Program Instance rmovable_optionalO A (ty : A → type) ot1 ot2 `{!∀ x, Movable (ty x)} `{!Movable optty} `{!∀ x, Optionable (ty x) optty ot1 ot2} : RMovable (optionalO ty optty) := {|
+  Global Program Instance rmovable_optionalO A (ty : A → type) `{!∀ x, Movable (ty x)} `{!Movable optty} : RMovable (optionalO ty optty) := {|
     rmovable b := {|
-      ty_layout := optty.(ty_layout);
+      ty_has_layout ly := (∀ x, (ty x).(ty_has_layout) ly) ∧ optty.(ty_has_layout) ly;
       ty_own_val v := (if b is Some x return _ then v◁ᵥ(ty x) else v◁ᵥoptty)%I
   |} |}.
   Next Obligation.
-    iIntros (A ty?????? [x|] ?) "Hv";iDestruct (ty_aligned with "Hv") as %Ha => //.
-    by rewrite -opt_alt_sz in Ha.
+    iIntros (A ty??? [x|] ??[Hty ?]) "Hv";iDestruct (ty_aligned with "Hv") as %Ha => //. apply: Hty.
   Qed.
   Next Obligation.
-    iIntros (A ty?????? [] v) "Hv";iDestruct (ty_size_eq with "Hv") as %Ha => //.
-    by rewrite -opt_alt_sz in Ha.
+    iIntros (A ty??? [x|]?? [??]) "Hv";iDestruct (ty_size_eq with "Hv") as %Ha => //.
   Qed.
   Next Obligation.
-    iIntros (A ty ? optty ???? [] l) "Hl"; rewrite /with_refinement/ty_own/=; iDestruct (ty_deref with "Hl") as (?) "[? ?]"; eauto with iFrame.
+    iIntros (A ty ? optty ? [] ? l[??]) "Hl"; rewrite /with_refinement/ty_own/=; iDestruct (ty_deref with "Hl") as (?) "[? ?]"; eauto with iFrame.
   Qed.
   Next Obligation.
-    iIntros (A ty ? optty ???? [] l v ?) "Hl Hv"; iApply (ty_ref with "[] Hl Hv") => //.
-    by rewrite -opt_alt_sz.
+    iIntros (A ty ? optty ? [] ? l v [??]?) "Hl Hv"; iApply (ty_ref with "[] Hl Hv") => //.
   Qed.
-  Next Obligation. done. Qed.
 
   Global Instance optionalO_loc_in_bounds A (ty : A → type) e ot β n `{!∀ x, LocInBounds (ty x) β n} `{!LocInBounds ot β n}:
     LocInBounds (e @ optionalO ty ot) β n.
@@ -352,27 +342,27 @@ Section optionalO.
     SubsumePlace l β ty' (b @ optionalO ty optty)%I | 20 :=
     λ T, i2p (subsume_optionalO_ty A ty optty l β T b ty').
 
-  Lemma subsume_optionalO_optty_val A (ty : A → type) optty v T b `{!∀ x, Movable (ty x)} `{!Movable optty} `{!∀ x, Optionable (ty x) optty ot1 ot2}:
+  Lemma subsume_optionalO_optty_val A (ty : A → type) optty v T b `{!∀ x, Movable (ty x)} `{!Movable optty}:
     ⌜b = None⌝ ∗ T -∗ subsume (v ◁ᵥ optty) (v ◁ᵥ b @ optionalO ty optty) T.
   Proof. by iIntros "[-> $] Hl". Qed.
-  Global Instance subsume_optionalO_optty_val_inst A (ty : A → type) optty v b `{!∀ x, Movable (ty x)} `{!Movable optty} `{!∀ x, Optionable (ty x) optty ot1 ot2}:
+  Global Instance subsume_optionalO_optty_val_inst A (ty : A → type) optty v b `{!∀ x, Movable (ty x)} `{!Movable optty}:
     SubsumeVal v (optty) (b @ optionalO ty optty)%I | 10 :=
     λ T, i2p (subsume_optionalO_optty_val A ty optty v T b).
 
-  Lemma subsume_optionalO_ty_val A (ty : A → type) optty v T b ty' `{!Movable ty'} `{!∀ x, Movable (ty x)} `{!Movable optty} `{!∀ x, Optionable (ty x) optty ot1 ot2}:
+  Lemma subsume_optionalO_ty_val A (ty : A → type) optty v T b ty' `{!Movable ty'} `{!∀ x, Movable (ty x)} `{!Movable optty}:
     (⌜is_Some b⌝ ∗ ∀ x, ⌜b = Some x⌝ -∗ subsume (v ◁ᵥ ty') (v ◁ᵥ ty x) T) -∗ subsume (v ◁ᵥ ty') (v ◁ᵥ b @ optionalO ty optty) T.
   Proof. iDestruct 1 as ([x ->]) "Hsub". iIntros "Hl". by iApply "Hsub". Qed.
-  Global Instance subsume_optionalO_ty_val_inst A (ty : A → type) optty v b ty' `{!Movable ty'} `{!∀ x, Movable (ty x)} `{!Movable optty} `{!∀ x, Optionable (ty x) optty ot1 ot2} `{!∀ x, OptionableAgree (ty x) ty'}:
+  Global Instance subsume_optionalO_ty_val_inst A (ty : A → type) optty v b ty' `{!Movable ty'} `{!∀ x, Movable (ty x)} `{!Movable optty} `{!∀ x, OptionableAgree (ty x) ty'}:
     SubsumeVal v ty' (b @ optionalO ty optty)%I | 20 :=
     λ T, i2p (subsume_optionalO_ty_val A ty optty v T b ty').
 
-  Lemma subsume_optional_optionalO_val ty optty b T v `{!Movable ty} `{!Movable optty} ot1 ot2 `{!Optionable ty optty ot1 ot2}:
+  Lemma subsume_optional_optionalO_val ty optty b T v `{!Movable ty} `{!Movable optty}:
     T -∗
     subsume (v ◁ᵥ b @ optional ty optty) (v ◁ᵥ optionalO (λ _ : (), ty) optty) T.
   Proof. iIntros "$ [[% ?]|[% ?]]"; [iExists (Some ())|iExists None]; iFrame. Qed.
-  Global Instance subsume_optional_optionalO_val_inst ty optty b v `{!Movable ty} `{!Movable optty} ot1 ot2 `{!Optionable ty optty ot1 ot2} :
+  Global Instance subsume_optional_optionalO_val_inst ty optty b v `{!Movable ty} `{!Movable optty} :
     SubsumeVal v (b @ optional ty optty) (optionalO (λ _ : (), ty) optty) :=
-    λ T, i2p (subsume_optional_optionalO_val ty optty b T v ot1 ot2).
+    λ T, i2p (subsume_optional_optionalO_val ty optty b T v).
 
   Inductive destruct_hint_optionalO :=
   | DestructHintOptionalO.
@@ -470,30 +460,14 @@ Section optionalO.
     iFrame. iApply step_fupd_intro => //. solve_ndisj.
   Qed.
 
-  Global Program Instance optionalO_copyable A (ty : A → type) optty x ot1 ot2 `{!∀ x, Movable (ty x)} `{!Movable optty} `{!∀ x, Optionable (ty x) optty ot1 ot2} `{!∀ x, Copyable (ty x)} `{!Copyable optty} : Copyable (x @ optionalO ty optty).
+  Global Program Instance optionalO_copyable A (ty : A → type) optty x `{!∀ x, Movable (ty x)} `{!Movable optty} `{!∀ x, Copyable (ty x)} `{!Copyable optty} : Copyable (x @ optionalO ty optty).
   Next Obligation.
-    iIntros (A ty optty x ot1 ot2 ? ? ? ? ? E l ?). destruct x.
+    iIntros (A ty optty x ? ? ? ? E ly l ? [Hty ?]). destruct x.
     all: iIntros "Hl".
-    all: iMod (copy_shr_acc with "Hl") as (Hl ? ?) "[?[??]]" => //.
+    all: iMod (copy_shr_acc with "Hl") as (Hl ? ?) "[?[??]]" => //; try apply: Hty.
     all: iModIntro; iSplit => //=.
-    1: by rewrite -opt_alt_sz in Hl.
     all: iExists _, _; iFrame.
   Qed.
 End optionalO.
 Notation "optionalO< ty , optty >" := (optionalO ty optty)
   (only printing, format "'optionalO<' ty ,  optty '>'") : printing_sugar.
-
-Section int_optional.
-  Context `{!typeG Σ}.
-
-  Global Program Instance int_neg_optional (n : nat) it :
-    Optionable (n @ int it) ((-1) @ int it)%I (IntOp it) (IntOp it) := {|
-    opt_pre _ _ := True%I
-  |}.
-  Next Obligation. by move => ??. Qed.
-  Next Obligation.
-    iIntros (?? [] [] ????) "_ %Hv1 %Hv2 _ !%".
-    all: split; first by (move => Hstep; inversion Hstep; simplify_eq; case_bool_decide => //=; lia).
-    all: rewrite val_of_Z_bool => ?; simplify_eq; econstructor => //; case_bool_decide => //; lia.
-  Qed.
-End int_optional.

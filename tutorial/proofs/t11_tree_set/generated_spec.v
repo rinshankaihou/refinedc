@@ -59,7 +59,6 @@ Section spec.
 
   Global Program Instance tree_t_rmovable : RMovable tree_t :=
     {| rmovable patt__ := movable_eq _ _ (tree_t_unfold patt__) |}.
-  Next Obligation. solve_ty_layout_eq. Qed.
 
   Global Instance tree_t_simplify_hyp_place_inst_generated l_ β_ patt__:
     SimplifyHypPlace l_ β_ (patt__ @ tree_t)%I (Some 100%N) :=

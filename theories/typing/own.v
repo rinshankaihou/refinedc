@@ -27,14 +27,13 @@ Section own.
 
   Global Program Instance rmovable_frac_ptr β ty : RMovable (frac_ptr β ty) := {|
     rmovable l := {|
-      ty_layout := void*;
+      ty_has_layout ly := ly = void*;
       ty_own_val v := (⌜v = val_of_loc l⌝ ∗ l ◁ₗ{β} ty)%I;
   |} |}.
-  Next Obligation. iIntros (β ty l l'). by iDestruct 1 as (?) "_". Qed.
-  Next Obligation. iIntros (β ty). by iDestruct 1 as (->) "_". Qed.
-  Next Obligation. iIntros (β ty l l') "(%&Hl&Hl')". rewrite left_id. eauto with iFrame. Qed.
-  Next Obligation. iIntros (β ty l l' v ?) "Hl [-> Hl']". iFrame. iSplit => //. by rewrite left_id. Qed.
-  Next Obligation. done. Qed.
+  Next Obligation. iIntros (β ty l ly l' ->). by iDestruct 1 as (?) "_". Qed.
+  Next Obligation. iIntros (β ty l ly v ->). by iDestruct 1 as (->) "_". Qed.
+  Next Obligation. iIntros (β ty l ly l' ->) "(%&Hl&Hl')". rewrite left_id. eauto with iFrame. Qed.
+  Next Obligation. iIntros (β ty l ly l' v -> ?) "Hl [-> Hl']". iFrame. iSplit => //. by rewrite left_id. Qed.
 
   Global Instance frac_ptr_loc_in_bounds l ty β1 β2 : LocInBounds (l @ frac_ptr β1 ty) β2 bytes_per_addr.
   Proof.
@@ -307,7 +306,7 @@ Section own.
 
   Global Program Instance shr_copyable p ty : Copyable (p @ frac_ptr Shr ty).
   Next Obligation.
-    iIntros (p ty E l ?) "(%&#Hmt&#Hty)".
+    iIntros (p ty E ly l ? ->) "(%&#Hmt&#Hty)".
     iMod (heap_mapsto_own_state_to_mt with "Hmt") as (q) "[_ Hl]" => //. iSplitR => //.
     iExists _, _. iFrame. iModIntro. iSplit => //. by iSplit.
     by iIntros "_".
@@ -378,14 +377,13 @@ Section ptr.
 
   Global Program Instance rmovable_ptr n : RMovable (ptr n) := {|
     rmovable l := {|
-      ty_layout := void*;
+      ty_has_layout ly := ly = void*;
       ty_own_val v := (⌜v = val_of_loc l⌝ ∗ loc_in_bounds l n)%I;
   |} |}.
-  Next Obligation. iIntros (l l'). by iDestruct 1 as (?) "_". Qed.
-  Next Obligation. iIntros (n l v) "[Hv _]". by iDestruct "Hv" as %->. Qed.
-  Next Obligation. iIntros (n l v) "[_ [? Hl]]". eauto with iFrame. Qed.
-  Next Obligation. iIntros (n l l' v ?) "Hl [-> $]". by iFrame. Qed.
-  Next Obligation. done. Qed.
+  Next Obligation. iIntros (l ly l' ? ->). by iDestruct 1 as (?) "_". Qed.
+  Next Obligation. iIntros (n l ly v ->) "[Hv _]". by iDestruct "Hv" as %->. Qed.
+  Next Obligation. iIntros (n l ly v ->) "[_ [? Hl]]". eauto with iFrame. Qed.
+  Next Obligation. iIntros (n l ly l' v -> ?) "Hl [-> $]". by iFrame. Qed.
 
   Instance ptr_loc_in_bounds l n β : LocInBounds (l @ ptr n) β bytes_per_addr.
   Proof.
@@ -416,8 +414,8 @@ Section ptr.
     subsume (p ◁ₗ l1 @ &own ty)%I (p ◁ₗ l2 @ ptr n)%I T.
   Proof.
     iIntros "[-> HT] Hp".
-    iDestruct (ty_aligned with "Hp") as %?.
-    iDestruct (ty_deref with "Hp") as (v) "[Hp [-> Hl]]".
+    iDestruct (ty_aligned with "Hp") as %?; [done|].
+    iDestruct (ty_deref with "Hp") as (v) "[Hp [-> Hl]]"; [done|].
     iDestruct ("HT" with "Hl") as "[#Hlib $]".
     iFrame "Hp Hlib". done.
   Qed.
@@ -456,13 +454,13 @@ Section null.
   Next Obligation. iIntros (???). iDestruct 1 as "[$ ?]". by iApply heap_mapsto_own_state_share. Qed.
 
   Global Program Instance movable_null : Movable null := {|
-    ty_layout := void*;
+    ty_has_layout ly := ly = void*;
     ty_own_val v := ⌜v = NULL⌝%I;
   |}.
-  Next Obligation. by iIntros (?) "[% _]". Qed.
-  Next Obligation. by iIntros (? ->). Qed.
-  Next Obligation. iIntros (?) "[% ?]". iExists _. by iFrame. Qed.
-  Next Obligation. iIntros (???) "? ->". by iFrame. Qed.
+  Next Obligation. by iIntros (??->) "[% _]". Qed.
+  Next Obligation. by iIntros (??->->). Qed.
+  Next Obligation. iIntros (??->) "[% ?]". iExists _. by iFrame. Qed.
+  Next Obligation. iIntros (???->?) "? ->". by iFrame. Qed.
 
   Global Instance null_loc_in_bounds β : LocInBounds null β bytes_per_addr.
   Proof.
@@ -479,7 +477,7 @@ Section null.
 
   Global Program Instance null_copyable : Copyable (null).
   Next Obligation.
-    iIntros (E l ?) "[% Hl]".
+    iIntros (E l ??->) "[% Hl]".
     iMod (heap_mapsto_own_state_to_mt with "Hl") as (q) "[_ Hl]" => //. iSplitR => //.
     iExists _, _. iFrame. iModIntro. iSplit => //.
     by iIntros "_".
@@ -569,7 +567,6 @@ Section optionable.
   Global Program Instance frac_ptr_optional ty β: ROptionable (frac_ptr β ty) null PtrOp PtrOp := {|
     ropt_opt p := {| opt_pre v1 v2 := (p ◁ₗ{β} ty -∗ loc_in_bounds p 0 ∗ True)%I |}
   |}.
-  Next Obligation. move => ty ??. done. Qed.
   Next Obligation.
     iIntros (ty β p bty beq v1 v2 σ v) "Hpre H1 -> Hctx".
     destruct bty; [ iDestruct "H1" as (->) "Hty" | iDestruct "H1" as %-> ].
