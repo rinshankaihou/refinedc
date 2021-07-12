@@ -405,6 +405,24 @@ Ltac solve_protected_eq :=
 Ltac liEnforceInvariantAndUnfoldInstantiatedEvars :=
   unfold_instantiated_evars; try liEnforceInvariant.
 
+(** * Checking if the context contains ownership of a certain assertion
+
+  Note that this implementation requires that liEnforceInvariant has been called
+  previously when there was a envs_entails goal.
+ *)
+Ltac liCheckOwnInContext P :=
+  let rec go Hs :=
+      lazymatch Hs with
+      | Esnoc ?Hs2 ?id ?Q =>
+        first [ unify Q P with typeclass_instances | go Hs2 ]
+      end in
+  match goal with
+  | H := Envs ?Δi ?Δs _ |- _ =>
+      lazymatch (type of H) with | IPM_STATE _ => idtac end;
+      first [ go Δs | go Δi ]
+  end.
+Hint Extern 1 (CheckOwnInContext ?P) => (liCheckOwnInContext P; constructor; exact: I) : typeclass_instances.
+
 (** * Main lithium tactics *)
 Ltac convert_to_i2p_tac P := fail "No convert_to_i2p_tac provided!".
 Ltac convert_to_i2p P cont :=

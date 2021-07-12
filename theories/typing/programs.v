@@ -554,8 +554,8 @@ Section typing.
     type_alive ty β ∗ T -∗
     subsume (l ◁ₗ{β} ty) (alloc_alive_loc l) T.
   Proof. iIntros "[Ha $] Hl". rewrite /type_alive. by iApply "Ha". Qed.
-  Global Instance subsume_alloc_alive_type_alive_inst ty β l :
-    Subsume (l ◁ₗ{β} ty) (alloc_alive_loc l) | 50 :=
+  Global Instance subsume_alloc_alive_type_alive_inst ty β l `{!CheckOwnInContext (type_alive ty β)} :
+    Subsume (l ◁ₗ{β} ty) (alloc_alive_loc l) | 10 :=
     λ T, i2p (subsume_alloc_alive_type_alive ty β l T).
 
   Lemma simplify_goal_type_alive ty β P `{!AllocAlive ty β P} T :

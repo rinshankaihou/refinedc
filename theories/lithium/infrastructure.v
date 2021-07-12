@@ -1,4 +1,5 @@
 (** General infrastructure *)
+From iris.base_logic.lib Require Import iprop.
 From refinedc.lithium Require Import base.
 
 (** * [protected] *)
@@ -26,6 +27,10 @@ Ltac check_hyp_not_exists P :=
   assert_fails (assert (P) as _;[fast_done|]).
 Class CheckHypNotExists (P : Prop) : Prop := check_hyp_not_exists : True.
 Hint Extern 1 (CheckHypNotExists ?P) => (check_hyp_not_exists P; change True; fast_done) : typeclass_instances.
+
+(** * Checking if a hyp in the context
+  The implementation can be found in interpreter.v *)
+Class CheckOwnInContext {Σ} (P : iProp Σ) : Prop := { check_own_in_context : True }.
 
 (** * Different ways of checking if a property holds  *)
 (** ** [FastDone]
