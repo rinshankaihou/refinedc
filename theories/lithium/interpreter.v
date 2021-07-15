@@ -664,7 +664,10 @@ Ltac liSideCond :=
         | _ => fail "could not simplify goal with evar"
         end
       ]
-    | _ => split; [ first [ fast_done | shelve ] | ]
+     (* We use done instead of fast_done here because solving more
+     sideconditions here is a bigger performance win than the overhead
+     of done. *)
+    | _ => split; [ first [ done | shelve ] | ]
     end ] end
   | _ => fail "do_side_cond: unknown goal"
   end.
