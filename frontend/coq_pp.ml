@@ -92,11 +92,12 @@ let rec pp_layout : bool -> Coq_ast.layout pp = fun wrap ff layout ->
   | LArray(layout, n)  -> pp "mk_array_layout %a %s"
                             (pp_layout true) layout n
 
-let pp_op_type : Coq_ast.op_type pp = fun ff ty ->
+let rec pp_op_type : Coq_ast.op_type pp = fun ff ty ->
   let pp fmt = Format.fprintf ff fmt in
   match ty with
-  | OpInt(i) -> pp "IntOp %a" pp_int_type i
-  | OpPtr(_) -> pp "PtrOp" (* FIXME *)
+  | OpInt(i)         -> pp "IntOp %a" pp_int_type i
+  | OpPtr(_)         -> pp "PtrOp" (* FIXME *)
+  | OpStruct(id, os) -> pp "StructOp struct_%s ([ %a ])" id (pp_sep " ; " pp_op_type) os
 
 let pp_un_op : Coq_ast.un_op pp = fun ff op ->
   let pp fmt = Format.fprintf ff fmt in
@@ -141,7 +142,7 @@ let rec pp_expr : Coq_ast.expr pp = fun ff e ->
         pp "VOID"
     | Val(Int(s,it))                ->
         pp "i2v %s %a" s pp_int_type it
-    | Val(SizeOf(ly))                ->
+    | Val(SizeOf(ly))               ->
         pp "i2v (%a).(ly_size) %a" (pp_layout false) ly
           pp_int_type (ItSize_t false)
     | UnOp(op,ty,e)                 ->
@@ -158,7 +159,7 @@ let rec pp_expr : Coq_ast.expr pp = fun ff e ->
           | (OpPtr(l), OpInt(_), SubOp  ) ->
               pp "(%a) at_neg_offset{%a, PtrOp, %a} (%a)" pp_expr e1
                 (pp_layout false) l pp_op_type ty2 pp_expr e2
-          | (OpPtr(l1), OpPtr(l2), SubOp  ) ->
+          | (OpPtr(l1), OpPtr(l2), SubOp) ->
               pp "(%a) sub_ptr{%a, PtrOp, PtrOp} (%a)" pp_expr e1
                 (pp_layout false) l1 pp_expr e2
           | (OpPtr(_), OpInt(_), _      ) ->
@@ -171,11 +172,11 @@ let rec pp_expr : Coq_ast.expr pp = fun ff e ->
               pp "(%a) %a{%a, %a} (%a)" pp_expr e1 pp_bin_op op
                 pp_op_type ty1 pp_op_type ty2 pp_expr e2
         end
-    | Deref(atomic,lay,e)           ->
+    | Deref(atomic,ty,e)            ->
         if atomic then
-          pp "!{%a, ScOrd} (%a)" (pp_layout false) lay pp_expr e
+          pp "!{%a, ScOrd} (%a)" pp_op_type ty pp_expr e
         else
-          pp "!{%a} (%a)" (pp_layout false) lay pp_expr e
+          pp "!{%a} (%a)" pp_op_type ty pp_expr e
     | CAS(ty,e1,e2,e3)              ->
         pp "CAS@ (%a)@ (%a)@ (%a)@ (%a)" pp_op_type ty
           pp_expr e1 pp_expr e2 pp_expr e3
@@ -193,11 +194,11 @@ let rec pp_expr : Coq_ast.expr pp = fun ff e ->
           pp_expr e1 pp_expr e2 pp_expr e3
     | SkipE(e)                      ->
         pp "SkipE (%a)" pp_expr e
-    | Use(atomic,lay,e)             ->
+    | Use(atomic,ty,e)              ->
         if atomic then
-          pp "use{%a, ScOrd} (%a)" (pp_layout false) lay pp_expr e
+          pp "use{%a, ScOrd} (%a)" pp_op_type ty pp_expr e
         else
-          pp "use{%a} (%a)" (pp_layout false) lay pp_expr e
+          pp "use{%a} (%a)" pp_op_type ty pp_expr e
     | AddrOf(e)                     ->
         pp "&(%a)" pp_expr e
     | LValue(e)                     ->
@@ -206,9 +207,9 @@ let rec pp_expr : Coq_ast.expr pp = fun ff e ->
         pp "(%a) at{struct_%s} %S" pp_expr e name field
     | GetMember(e,name,true ,field) ->
         pp "(%a) at_union{union_%s} %S" pp_expr e name field
-    | OffsetOf(name,false,field) ->
+    | OffsetOf(name,false,field)    ->
         pp "(OffsetOf (struct_%s) (%S))" name field
-    | OffsetOf(name,true,field) ->
+    | OffsetOf(name,true ,field)    ->
         pp "(OffsetOfUnion (union_%s) (%S))" name field
     | AnnotExpr(i,coq_e,e)          ->
         pp "AnnotExpr %i%%nat %a (%a)" i
@@ -271,10 +272,10 @@ let rec pp_stmt : Coq_ast.stmt pp = fun ff stmt ->
         pp " :: []@]@;)@;"
       end;
       pp "(%a)@]" pp_stmt def
-  | Assign(atomic,lay,e1,e2,stmt) ->
+  | Assign(atomic,ot,e1,e2,stmt) ->
       let order = if atomic then ", ScOrd" else "" in
       pp "@[<hov 2>%a <-{ %a%s }@ %a ;@]@;%a"
-        pp_expr e1 (pp_layout false) lay order pp_expr e2 pp_stmt stmt
+        pp_expr e1 pp_op_type ot order pp_expr e2 pp_stmt stmt
   | SkipS(stmt)                   ->
       pp_stmt ff stmt
   | If(e,stmt1,stmt2)             ->

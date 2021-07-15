@@ -85,36 +85,69 @@ Section struct.
   Qed.
 
   (* We state the sidecondition using foldr instead of Forall since this is faster to solve for the automation. *)
-  Lemma movable_struct_forall sl tys `{!MovableLst tys}:
-    (length (field_members sl.(sl_members)) = length tys ∧ foldr (λ x, and ((x.1 : mtype).(ty_has_layout) x.2.2)) True (zip (movablelst_to_list tys) (field_members sl.(sl_members)) )) →
-    Forall2 (λ m ty, (ty : mtype).(ty_has_layout) m.2) sl.(sl_members) (pad_struct sl.(sl_members) (movablelst_to_list tys) (λ ly, t2mt (uninit ly))).
+  Definition is_struct_ot (sl : struct_layout) (tys : list type) `{!MovableLst tys} (ot : op_type) (mt : memcast_compat_type) :=
+    length (field_names sl.(sl_members)) = length tys ∧
+    match ot with
+    | StructOp sl' ots => sl' = sl ∧ mt ≠ MCId ∧ length ots = length tys ∧
+      foldr (λ x, and ((x.1.1 : mtype).(ty_has_op_type) x.2 mt ∧ ot_layout x.2 = x.1.2.2))
+            True (zip (zip (movablelst_to_list tys) (field_members sl.(sl_members)) ) ots)
+    | UntypedOp ly => ly = sl ∧
+      foldr (λ x, and ((x.1 : mtype).(ty_has_op_type) (UntypedOp x.2.2) mt))
+            True (zip (movablelst_to_list tys) (field_members sl.(sl_members)) )
+    | _ => False
+    end.
+
+  Lemma is_struct_ot_layout sl tys `{!MovableLst tys} ot mt:
+    is_struct_ot sl tys ot mt → ot_layout ot = sl.
+  Proof. move => [?]. destruct ot => //; naive_solver. Qed.
+
+  Lemma is_struct_ot_forall sl tys `{!MovableLst tys} ot mt:
+    is_struct_ot sl tys ot mt →
+    ot_layout ot = sl ∧
+    Forall2 (λ m ty, ∃ ot mt, ot_layout ot = m.2 ∧ (ty : mtype).(ty_has_op_type) ot mt) sl.(sl_members) (pad_struct sl.(sl_members) (movablelst_to_list tys) (λ ly, t2mt (uninit ly))).
   Proof.
-    move => [Hlen /Forall_fold_right Hfold].
-    move: Hlen. rewrite {1}(to_movablelst tys) fmap_length => Hlen.
-    elim: (sl_members sl) (movablelst_to_list tys) Hlen Hfold; clear.
-    { move => [|??]//??. constructor. }
-    move => [n ly] s IH tys//=?. destruct n; simplify_eq/=.
-    - destruct tys => //. move => /Forall_cons/=[? /IH?]. constructor => //. naive_solver.
-    - move => /IH. constructor; [done|]. naive_solver.
+    move => [Hlen]. destruct ot => //.
+    - move => [-> [? [? /Forall_fold_right Hall]]]. split; [done|].
+      apply: Forall2_same_length_lookup_2. { by rewrite pad_struct_length. }
+      move => i [n ly] ty Hm /pad_struct_lookup_Some[|?[?[Hl1 Hor]]]; simplify_eq.
+      { rewrite movablelst_to_list_length. lia. }
+      rewrite Hl1 in Hm. simplify_eq.
+      move: Hor => [[??] |[??]]; simplify_eq/=. 2: eexists (UntypedOp _), MCNone; naive_solver.
+      destruct n as [n|] => //.
+      have [|ot ?]:= lookup_lt_is_Some_2 ots (field_idx_of_idx (sl_members sl) i).
+      { have := field_idx_of_idx_bound sl i n ly ltac:(done). lia. }
+      move: Hall => /(Forall_lookup_1 _ _ (field_idx_of_idx (sl_members sl) i) (ty, (n, ly), ot)) [|/=?<-].
+      2: naive_solver.
+      apply/lookup_zip_with_Some. eexists (_, _), _. split_and!; [done| |done].
+      apply/lookup_zip_with_Some. eexists _, _. split_and!; [done..|].
+      by apply: field_members_idx_lookup.
+    - move => [-> /Forall_fold_right Hfold]. split; [done|].
+      move: Hlen. rewrite {1}(to_movablelst tys) fmap_length => Hlen.
+      elim: (sl_members sl) (movablelst_to_list tys) Hlen Hfold; clear.
+      { move => [|??]//??. by constructor. }
+      move => [n ly] s IH tys//=?. destruct n; simplify_eq/=.
+      + destruct tys => //. move => /Forall_cons/=[? /IH?]. constructor => //; [|naive_solver].
+        eexists _, _. split; [|done]. done.
+      + move => /IH. constructor; [| naive_solver]. eexists (UntypedOp ly), MCNone. done.
   Qed.
 
   Global Program Instance movable_struct sl tys `{!MovableLst tys} : Movable (struct sl tys) := {|
-    ty_has_layout ly := ly = sl ∧ (length (field_members sl.(sl_members)) = length tys ∧ foldr (λ x, and ((x.1 : mtype).(ty_has_layout) x.2.2)) True (zip (movablelst_to_list tys) (field_members sl.(sl_members)) ))
+    ty_has_op_type := is_struct_ot sl tys
  ;
     ty_own_val v :=
       (⌜v `has_layout_val` sl⌝ ∗ ⌜length (field_names sl.(sl_members)) = length tys⌝ ∗
        [∗ list] v';ty∈reshape (ly_size <$> sl.(sl_members).*2) v;pad_struct sl.(sl_members) (movablelst_to_list tys) (λ ly, t2mt (uninit ly)), (v' ◁ᵥ (ty : mtype)))%I;
   |}.
-  Next Obligation. iIntros (sl tys ? ly l [->?]) "(?&_)". done. Qed.
-  Next Obligation. iIntros (sl tys ? ly v [-> ?]) "(?&_)". done. Qed.
+  Next Obligation. iIntros (sl tys ? ot mt l ->%is_struct_ot_layout) "(?&_)". done. Qed.
+  Next Obligation. iIntros (sl tys ? ot mt v ->%is_struct_ot_layout) "(?&_)". done. Qed.
   Next Obligation.
-    move => sl tys ? ly' l [? /movable_struct_forall]. rewrite {2 3}(to_movablelst tys).
+    move => sl tys ? ot mt l /is_struct_ot_forall[_ ]. rewrite {2 3}(to_movablelst tys).
     move: (movablelst_to_list tys) => tys'. clear dependent tys.
     iIntros (Hlys) "Htys". iDestruct "Htys" as (_ Hcount) "[#Hb Htys]".
-    rewrite /=/layout_of{1}/has_layout_val{1}/ly_size.
+    rewrite /=/layout_of{1}/has_layout_val{2}/ly_size.
     iInduction (sl_members sl) as [|[n ly] ms] "IH" forall (tys' l Hlys Hcount); csimpl.
     { iExists []. iSplitR; first by iApply heap_mapsto_nil. iSplit => //. }
-    move: Hlys => /=. intros (ty & tys & Hsz &?&[=])%Forall2_cons_inv_l. move: Hsz; csimpl => ?.
+    move: Hlys => /=. intros (ty & tys & [?[?[??]]] &?&[=])%Forall2_cons_inv_l.
     rewrite shift_loc_0. iDestruct "Htys" as "[Hty Htys]". cbn.
     iDestruct (loc_in_bounds_split with "Hb") as "[Hb1 Hb2]".
     setoid_rewrite <-shift_loc_assoc_nat.
@@ -123,17 +156,16 @@ Section struct.
     all: iDestruct (ty_deref with "Hty") as (v') "[Hl Hty]"; [done|].
     all: iDestruct (ty_size_eq with "Hty") as %Hszv; [done|].
     all: iDestruct ("IH" $! _ with "[] [] Hb2 Htys") as (vs') "(Hl' & Hsz & Hf & Htys)";
-      try iPureIntro; simplify_eq => //.
+      try iPureIntro; simplify_eq/= => //.
     all: iDestruct "Hsz" as %Hsz; iDestruct "Hf" as %Hf.
     all: iExists (v' ++ vs').
-    all: rewrite heap_mapsto_app -Hsz -Hszv take_app drop_app app_length; iFrame.
+    all: rewrite heap_mapsto_app -Hsz take_app_alt // drop_app_alt // app_length; iFrame.
     all: rewrite Hszv; iFrame "Hl'".
     all: iPureIntro; eauto with lia.
-    all: split; last by f_equal.
-    all: by rewrite /ly_size /= Hsz.
+    Unshelve. all: apply: MCNone.
   Qed.
   Next Obligation.
-    move => sl tys ? ly' l v [-> /movable_struct_forall]. rewrite {2 4}(to_movablelst tys).
+    move => sl tys ? ot mt l v /is_struct_ot_forall[-> ]. rewrite {2 4}(to_movablelst tys).
     move: (movablelst_to_list tys) => tys'. clear dependent tys. iIntros (Hlys Hly) "Hl".
     rewrite /layout_of/has_layout_val{1}/ly_size /=.
     iDestruct 1 as (Hv Hcount) "Htys". do 2 iSplitR => //.
@@ -141,10 +173,10 @@ Section struct.
     iSplit. { rewrite -Hv. by iApply heap_mapsto_loc_in_bounds. }
     iInduction (sl_members sl) as [|[n ly] ms] "IH" forall (tys' l v Hlys Hv Hcount Hly); csimpl in * => //.
     iDestruct "Htys" as "[Hty Htys]".
-    move: Hlys. intros [Hsz ?]%Forall2_cons_inv. move: Hly => [??].
+    move: Hlys. intros [[?[?[??]]] ?]%Forall2_cons_inv. move: Hly => [??].
     rewrite -(take_drop (ly_size ly) v).
     rewrite shift_loc_0 heap_mapsto_app take_app_alt ?take_length_le // ?Hv; try by cbn; lia.
-    iDestruct "Hl" as "[Hl Hl']". cbn.
+    iDestruct "Hl" as "[Hl Hl']". cbn. simplify_eq/=.
     setoid_rewrite <-shift_loc_assoc_nat.
     iSplitR "Htys Hl'".
     - iClear "IH".
@@ -154,6 +186,44 @@ Section struct.
       all: try by rewrite Hv /struct_size/offset_of_idx; csimpl; lia.
       1: destruct tys'; naive_solver.
       all: rewrite drop_app_alt ?take_length// Hv; cbn; lia.
+  Qed.
+  Next Obligation.
+    iIntros (sl tys ? v ot mt st Hot). apply: mem_cast_compat_Untyped => ?.
+    destruct ot => //; try by destruct Hot.
+    destruct mt => //; try by destruct Hot; naive_solver.
+    move: Hot => [? [-> [? [? /Forall_fold_right Hall]]]].
+    iIntros "(%&%&Htys)". iSplit. { by rewrite /has_layout_val mem_cast_length. } iSplit. { done. }
+    iAssert ⌜∀ i v' n ly,
+         reshape (ly_size <$> (sl_members sl).*2) v !! i = Some v' →
+         sl_members sl !! i = Some (Some n, ly) → v' `has_layout_val` ly⌝%I as %?. {
+      iIntros (i v' n ly Hv' Hly).
+      have [|ty ?]:= lookup_lt_is_Some_2 (movablelst_to_list tys) (field_idx_of_idx (sl_members sl) i).
+      { rewrite movablelst_to_list_length. have := field_idx_of_idx_bound sl i _ _ ltac:(done). lia. }
+      iDestruct (big_sepL2_lookup with "Htys") as "Hv"; [done| |].
+      { apply/pad_struct_lookup_Some. { by rewrite movablelst_to_list_length. } naive_solver. }
+      have [|ot ?]:= lookup_lt_is_Some_2 ots (field_idx_of_idx (sl_members sl) i).
+      { have := field_idx_of_idx_bound sl i _ _ ltac:(done). lia. }
+      move: Hall => /(Forall_lookup_1 _ _ (field_idx_of_idx (sl_members sl) i) (ty, (n, ly), ot)) [|/=?<-].
+      { apply/lookup_zip_with_Some. eexists (_, _), _. split_and!; [done| |done].
+        apply/lookup_zip_with_Some. eexists _, _. split_and!; [done..|]. by apply: field_members_idx_lookup. }
+      by iApply (ty_size_eq with "Hv").
+    }
+    iApply (big_sepL2_impl' with "Htys"); [by rewrite !reshape_length |done|].
+    iIntros "!>" (k v1 ty1 v2 ty2 Hv1 Hty1 Hv2 Hty2) "Hv"; simplify_eq.
+    rewrite mem_cast_struct_reshape // in Hv2; [|congruence].
+    move: Hv2 => /lookup_zip_with_Some [?[?[?[Hpad Hv']]]]. simplify_eq.
+    rewrite Hv1 in Hv'. simplify_eq.
+    move: Hty1 => /pad_struct_lookup_Some[|n[?[? Hor1]]]. { by rewrite movablelst_to_list_length. }
+    move: Hpad => /pad_struct_lookup_Some[|?[?[? Hor2]]]. { rewrite fmap_length. congruence. } simplify_eq.
+    destruct Hor1 as [[??] |[??]], Hor2 as [[? Hl] |[??]]; simplify_eq.
+    - rewrite list_lookup_fmap in Hl. move: Hl => /fmap_Some[ot [??]]. simplify_eq.
+      iApply ty_memcast_compat_copy; [|done]. destruct n as [n|] => //.
+      have [|p ?]:= lookup_lt_is_Some_2 (field_members (sl_members sl)) (field_idx_of_idx (sl_members sl) k).
+      { have := field_idx_of_idx_bound sl k _ _ ltac:(done). rewrite field_members_length. lia. }
+      move: Hall => /(Forall_lookup_1 _ _ (field_idx_of_idx (sl_members sl) k) (ty1, p, ot))[|??]. 2: naive_solver.
+      apply/lookup_zip_with_Some. eexists (_, _), _. split_and!; [done| |done].
+      apply/lookup_zip_with_Some. eexists _, _. naive_solver.
+    - iPureIntro. rewrite /has_layout_val replicate_length. split; [done|]. by apply: Forall_true.
   Qed.
 
   Global Instance struct_loc_in_bounds sl tys β : LocInBounds (struct sl tys) β (ly_size sl).
@@ -235,7 +305,7 @@ Section struct.
   would get a quadractic blowup when simiplifying the foldr. *)
   Lemma type_struct_init sl fs T:
     foldr (λ '(n, ly) f, (λ tys, ∃ e : expr, ⌜(list_to_map fs : gmap _ _) !! n = Some e⌝ ∗
-      typed_val_expr e (λ _ ty, ⌜ty.(ty_has_layout) ly⌝ ∗ f (tys ++ [ty]))))
+      typed_val_expr e (λ _ ty, ⌜ty.(ty_has_op_type) (UntypedOp ly) MCNone⌝ ∗ f (tys ++ [ty]))))
     (λ tys : list mtype, ∀ v, let Hlst := list_to_movablelst tys in
          T v (t2mt (struct sl (mt_type <$> tys)))) (field_members sl.(sl_members)) [] -∗
     typed_val_expr (StructInit sl fs) T.
@@ -261,7 +331,7 @@ Section struct.
         iApply ("IH" $! _ _ (v ++ v1) with "[//] [] [] [] Hf HΦ");
           try iPureIntro; rewrite ?fmap_app ?pad_struct_snoc_Some ?fmap_length //.
         * by rewrite /= reshape_app take_app_alt ?drop_app_alt /= ?take_ge ?Hsz; subst.
-        * rewrite app_length sum_list_with_app /= Hsz -Hv; lia.
+        * rewrite app_length sum_list_with_app /= Hsz -Hv/=; lia.
         * by rewrite /field_names omap_app !app_length Hf.
         * iApply (big_sepL2_app with "Hvs"). by iFrame.
       + iApply @wp_value.

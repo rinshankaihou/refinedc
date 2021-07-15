@@ -96,9 +96,9 @@ Section code.
       <[ "#0" :=
         locinfo: loc_2 ;
         Return (StructInit struct_color [
-                  ("r", LocInfoE loc_6 (use{it_layout u8} (LocInfoE loc_7 ("r"))) : expr) ;
-                  ("g", LocInfoE loc_8 (use{it_layout u8} (LocInfoE loc_9 ("g"))) : expr) ;
-                  ("b", LocInfoE loc_10 (use{it_layout u8} (LocInfoE loc_11 ("b"))) : expr)
+                  ("r", LocInfoE loc_6 (use{IntOp u8} (LocInfoE loc_7 ("r"))) : expr) ;
+                  ("g", LocInfoE loc_8 (use{IntOp u8} (LocInfoE loc_9 ("g"))) : expr) ;
+                  ("b", LocInfoE loc_10 (use{IntOp u8} (LocInfoE loc_11 ("b"))) : expr)
                 ])
       ]> $∅
     )%E
@@ -115,14 +115,14 @@ Section code.
     f_init := "#0";
     f_code := (
       <[ "#0" :=
-        "c" <-{ layout_of struct_color }
+        "c" <-{ StructOp struct_color ([ IntOp u8 ; IntOp u8 ; IntOp u8 ]) }
           StructInit struct_color [
-            ("r", LocInfoE loc_19 (use{it_layout u8} (LocInfoE loc_20 ("r"))) : expr) ;
+            ("r", LocInfoE loc_19 (use{IntOp u8} (LocInfoE loc_20 ("r"))) : expr) ;
             ("g", UnOp (CastOp $ IntOp u8) (IntOp i32) (i2v 0 i32) : expr) ;
             ("b", UnOp (CastOp $ IntOp u8) (IntOp i32) (i2v 0 i32) : expr)
           ] ;
         locinfo: loc_15 ;
-        Return (LocInfoE loc_16 (use{layout_of struct_color} (LocInfoE loc_17 ("c"))))
+        Return (LocInfoE loc_16 (use{StructOp struct_color ([ IntOp u8 ; IntOp u8 ; IntOp u8 ])} (LocInfoE loc_17 ("c"))))
       ]> $∅
     )%E
   |}.
@@ -140,7 +140,7 @@ Section code.
         locinfo: loc_27 ;
         Return (StructInit struct_color [
                   ("r", UnOp (CastOp $ IntOp u8) (IntOp i32) (i2v 0 i32) : expr) ;
-                  ("g", LocInfoE loc_32 (use{it_layout u8} (LocInfoE loc_33 ("g"))) : expr) ;
+                  ("g", LocInfoE loc_32 (use{IntOp u8} (LocInfoE loc_33 ("g"))) : expr) ;
                   ("b", UnOp (CastOp $ IntOp u8) (IntOp i32) (i2v 0 i32) : expr)
                 ])
       ]> $∅
@@ -159,14 +159,14 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_37 ;
-        LocInfoE loc_41 ("c") <-{ layout_of struct_color }
+        LocInfoE loc_41 ("c") <-{ StructOp struct_color ([ IntOp u8 ; IntOp u8 ; IntOp u8 ]) }
           StructInit struct_color [
             ("r", UnOp (CastOp $ IntOp u8) (IntOp i32) (i2v 0 i32) : expr) ;
             ("g", UnOp (CastOp $ IntOp u8) (IntOp i32) (i2v 0 i32) : expr) ;
-            ("b", LocInfoE loc_47 (use{it_layout u8} (LocInfoE loc_48 ("b"))) : expr)
+            ("b", LocInfoE loc_47 (use{IntOp u8} (LocInfoE loc_48 ("b"))) : expr)
           ] ;
         locinfo: loc_38 ;
-        Return (LocInfoE loc_39 (use{layout_of struct_color} (LocInfoE loc_40 ("c"))))
+        Return (LocInfoE loc_39 (use{StructOp struct_color ([ IntOp u8 ; IntOp u8 ; IntOp u8 ])} (LocInfoE loc_40 ("c"))))
       ]> $∅
     )%E
   |}.
@@ -182,7 +182,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_51 ;
-        Return (LocInfoE loc_52 (use{it_layout u8} (LocInfoE loc_53 ((LocInfoE loc_54 ("b")) at{struct_color} "b"))))
+        Return (LocInfoE loc_52 (use{IntOp u8} (LocInfoE loc_53 ((LocInfoE loc_54 ("b")) at{struct_color} "b"))))
       ]> $∅
     )%E
   |}.
@@ -199,8 +199,8 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_57 ;
-        LocInfoE loc_58 ((LocInfoE loc_60 (!{void*} (LocInfoE loc_61 ("c")))) at{struct_color} "r") <-{ it_layout u8 }
-          LocInfoE loc_62 (use{it_layout u8} (LocInfoE loc_63 ("r"))) ;
+        LocInfoE loc_58 ((LocInfoE loc_60 (!{PtrOp} (LocInfoE loc_61 ("c")))) at{struct_color} "r") <-{ IntOp u8 }
+          LocInfoE loc_62 (use{IntOp u8} (LocInfoE loc_63 ("r"))) ;
         Return (VOID)
       ]> $∅
     )%E
@@ -218,8 +218,8 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_66 ;
-        LocInfoE loc_67 ((LocInfoE loc_69 (!{void*} (LocInfoE loc_70 ("c")))) at{struct_color} "g") <-{ it_layout u8 }
-          LocInfoE loc_71 (use{it_layout u8} (LocInfoE loc_72 ("g"))) ;
+        LocInfoE loc_67 ((LocInfoE loc_69 (!{PtrOp} (LocInfoE loc_70 ("c")))) at{struct_color} "g") <-{ IntOp u8 }
+          LocInfoE loc_71 (use{IntOp u8} (LocInfoE loc_72 ("g"))) ;
         Return (VOID)
       ]> $∅
     )%E
@@ -237,8 +237,8 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_75 ;
-        LocInfoE loc_76 ((LocInfoE loc_78 (!{void*} (LocInfoE loc_79 ("c")))) at{struct_color} "b") <-{ it_layout u8 }
-          LocInfoE loc_80 (use{it_layout u8} (LocInfoE loc_81 ("b"))) ;
+        LocInfoE loc_76 ((LocInfoE loc_78 (!{PtrOp} (LocInfoE loc_79 ("c")))) at{struct_color} "b") <-{ IntOp u8 }
+          LocInfoE loc_80 (use{IntOp u8} (LocInfoE loc_81 ("b"))) ;
         Return (VOID)
       ]> $∅
     )%E

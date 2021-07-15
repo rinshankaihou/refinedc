@@ -146,12 +146,6 @@ let layout_of : bool -> c_type -> Coq_ast.layout = fun fa c_ty ->
   in
   layout_of c_ty
 
-(* Get a layout under a pointer indirection in the type of [e]. *)
-let ptr_layout_of : ail_expr -> Coq_ast.layout = fun e ->
-  match c_type_of_type_cat (tc_of e) with
-  | Ctype(_, Pointer(_,c_ty)) -> layout_of false c_ty
-  | _                         -> assert false
-
 (* Hashtable of local variables to distinguish global ones. *)
 let local_vars = Hashtbl.create 17
 
@@ -166,9 +160,6 @@ let (fresh_block_id, reset_block_id) =
   let fresh () = incr counter; Printf.sprintf "#%i" !counter in
   let reset () = counter := -1 in
   (fresh, reset)
-
-let layout_of_tc : type_cat -> Coq_ast.layout = fun tc ->
-  layout_of false (c_type_of_type_cat tc)
 
 let is_atomic : c_type -> bool = AilTypesAux.is_atomic
 
@@ -208,52 +199,6 @@ let is_macro_annot e =
   | MacroString("rc_macro") :: _ -> true
   | _ -> false
 
-let rec op_type_of loc Ctype.(Ctype(_, c_ty)) =
-  match c_ty with
-  | Void                -> not_impl loc "op_type_of (Void)"
-  | Basic(Integer(i))   -> OpInt(translate_int_type loc i)
-  | Basic(Floating(_))  -> not_impl loc "op_type_of (Basic float)"
-  | Array(_,_)          -> not_impl loc "op_type_of (Array)"
-  | Function(_,_,_,_)   -> not_impl loc "op_type_of (Function)"
-  | Pointer(_,c_ty)     -> OpPtr(layout_of false c_ty)
-  | Atomic(c_ty)        ->
-      begin
-        match op_type_of loc c_ty with
-        | OpInt(_) as op_ty -> op_ty
-        | _                 -> not_impl loc "op_type_of (Atomic not an int)"
-      end
-  | Struct(_)           -> not_impl loc "op_type_of (Struct)"
-  | Union(_)            -> not_impl loc "op_type_of (Union)"
-
-(* Get an op_type under a pointer indirection in the type of [e]. *)
-let ptr_op_type_of : ail_expr -> Coq_ast.op_type = fun e ->
-  match c_type_of_type_cat (tc_of e) with
-  | Ctype(_, Pointer(_,c_ty)) -> op_type_of (loc_of e) c_ty
-  | _                         -> assert false
-
-let op_type_of_tc : loc -> type_cat -> Coq_ast.op_type = fun loc tc ->
-  op_type_of loc (c_type_of_type_cat tc)
-
-(* We need similar function returning options for casts. *)
-let rec op_type_opt loc Ctype.(Ctype(_, c_ty)) =
-  match c_ty with
-  | Void                -> None
-  | Basic(Integer(i))   -> Some(OpInt(translate_int_type loc i))
-  | Basic(Floating(_))  -> None
-  | Array(_,_)          -> None
-  | Function(_,_,_,_)   -> None
-  | Pointer(_,c_ty)     -> Some(OpPtr(layout_of false c_ty))
-  | Atomic(c_ty)        ->
-      begin
-        match op_type_opt loc c_ty with
-        | Some(OpInt(_)) as op_ty -> op_ty
-        | _                       -> None
-      end
-  | Struct(_)           -> None
-  | Union(_)            -> None
-
-let op_type_tc_opt : loc -> type_cat -> Coq_ast.op_type option = fun loc tc ->
-  op_type_opt loc (c_type_of_type_cat tc)
 
 (* Getting return and argument types for a function. *)
 let rec get_function_type loc Ctype.(Ctype(_, c_ty)) =
@@ -293,7 +238,7 @@ let rec function_decls decls =
 let global_fun_decls = ref []
 let global_tag_defs = ref []
 
-let tag_def_data : loc -> string -> (string * op_type) list = fun loc id ->
+let rec tag_def_data : loc -> string -> (string * op_type) list = fun loc id ->
   let fs =
     match List.find (fun (s,_) -> sym_to_str s = id) !global_tag_defs with
     | (_, (_, Ctype.StructDef(fs,_)))
@@ -301,6 +246,53 @@ let tag_def_data : loc -> string -> (string * op_type) list = fun loc id ->
   in
   let fn (s, (_, _, c_ty)) = (id_to_str s, op_type_of loc c_ty) in
   List.map fn fs
+and op_type_of loc Ctype.(Ctype(_, c_ty)) =
+  match c_ty with
+  | Void                -> not_impl loc "op_type_of (Void)"
+  | Basic(Integer(i))   -> OpInt(translate_int_type loc i)
+  | Basic(Floating(_))  -> not_impl loc "op_type_of (Basic float)"
+  | Array(_,_)          -> not_impl loc "op_type_of (Array)"
+  | Function(_,_,_,_)   -> not_impl loc "op_type_of (Function)"
+  | Pointer(_,c_ty)     -> OpPtr(layout_of false c_ty)
+  | Atomic(c_ty)        ->
+      begin
+        match op_type_of loc c_ty with
+        | OpInt(_) as op_ty -> op_ty
+        | _                 -> not_impl loc "op_type_of (Atomic not an int)"
+      end
+  | Struct(sym)           ->
+     OpStruct(sym_to_str sym, List.map snd (tag_def_data loc (sym_to_str sym)))
+  | Union(_)            -> not_impl loc "op_type_of (Union)"
+
+(* Get an op_type under a pointer indirection in the type of [e]. *)
+let ptr_op_type_of : ail_expr -> Coq_ast.op_type = fun e ->
+  match c_type_of_type_cat (tc_of e) with
+  | Ctype(_, Pointer(_,c_ty)) -> op_type_of (loc_of e) c_ty
+  | _                         -> assert false
+
+let op_type_of_tc : loc -> type_cat -> Coq_ast.op_type = fun loc tc ->
+  op_type_of loc (c_type_of_type_cat tc)
+
+(* We need similar function returning options for casts. *)
+let rec op_type_opt loc Ctype.(Ctype(_, c_ty)) =
+  match c_ty with
+  | Void                -> None
+  | Basic(Integer(i))   -> Some(OpInt(translate_int_type loc i))
+  | Basic(Floating(_))  -> None
+  | Array(_,_)          -> None
+  | Function(_,_,_,_)   -> None
+  | Pointer(_,c_ty)     -> Some(OpPtr(layout_of false c_ty))
+  | Atomic(c_ty)        ->
+      begin
+        match op_type_opt loc c_ty with
+        | Some(OpInt(_)) as op_ty -> op_ty
+        | _                       -> None
+      end
+  | Struct(_)           -> None
+  | Union(_)            -> None
+
+let op_type_tc_opt : loc -> type_cat -> Coq_ast.op_type option = fun loc tc ->
+  op_type_opt loc (c_type_of_type_cat tc)
 
 let rec align_of : c_type -> int = fun c_ty ->
   let Ctype.(Ctype(annots, c_ty)) = c_ty in
@@ -419,9 +411,9 @@ type _ call_place =
   | In_Stmt : stmt call_place (* Call at the top level. *)
 
 type _ call_res =
-  | Call_simple       : expr * expr list     -> 'a   call_place call_res
-  | Call_atomic_expr  : expr_aux             -> 'a   call_place call_res
-  | Call_atomic_store : layout * expr * expr -> stmt call_place call_res
+  | Call_simple       : expr * expr list      -> 'a   call_place call_res
+  | Call_atomic_expr  : expr_aux              -> 'a   call_place call_res
+  | Call_atomic_store : op_type * expr * expr -> stmt call_place call_res
 
 let rec translate_expr : bool -> op_type option -> ail_expr -> expr =
   fun lval goal_ty e ->
@@ -634,12 +626,12 @@ let rec translate_expr : bool -> op_type option -> ail_expr -> expr =
           (* Struct initializers are lvalues for Ail, but rvalues for us. *)
           | AnnotatedExpression(_, _, _, AilEcompound(_, _, _)) -> translate e
           | _                                                   ->
-          let layout = layout_of_tc (tc_of e) in
           let atomic = is_atomic_tc (tc_of e) in
+          let ty = op_type_of_tc (loc_of e) (tc_of e) in
           let e = translate_expr true None e in
           let gen =
-            if lval then Deref(atomic, layout, e)
-            else Use(atomic, layout, e)
+            if lval then Deref(atomic, ty, e)
+            else Use(atomic, ty, e)
           in
           locate gen
         in res
@@ -715,7 +707,6 @@ and translate_call : type a. a call_place -> loc -> bool -> ail_expr
               | [e1; e2; e3] -> (e1, e2, e3)
               | _            -> assert false
             in
-            let layout = ptr_layout_of e1 in
             let op_type = ptr_op_type_of e1 in
             let e1 = translate_expr true None e1 in
             let e2 = translate_expr false (Some(op_type)) e2 in
@@ -733,7 +724,7 @@ and translate_call : type a. a call_place -> loc -> bool -> ail_expr
                     | _         -> forbidden loc "atomic store whose LHS is \
                                      not of the form [&e]"
                   in
-                  Call_atomic_store(layout, e1, e2)
+                  Call_atomic_store(op_type, e1, e2)
             end
         | AilBatomic(AilBAload)                    ->
             let (e1, e2) =
@@ -741,13 +732,13 @@ and translate_call : type a. a call_place -> loc -> bool -> ail_expr
               | [e1; e2] -> (e1, e2)
               | _        -> assert false
             in
-            let layout = ptr_layout_of e1 in
+            let op_type = ptr_op_type_of e1 in
             let e1 = translate_expr true None e1 in
             let mo = memory_order_of_expr e2 in
             if mo <> Cmm_csem.Seq_cst then
               Panic.panic loc "Only the Seq_cst memory order is supported.";
             begin
-              ignore (e1, layout);
+              ignore (e1, op_type);
               match place with
               | In_Expr ->
                  let e1 =
@@ -757,8 +748,8 @@ and translate_call : type a. a call_place -> loc -> bool -> ail_expr
                                                  not of the form [&e]"
                  in
                  let gen =
-                   if lval then Deref(true, layout, e1)
-                   else Use(true, layout, e1)
+                   if lval then Deref(true, op_type, e1)
+                   else Use(true, op_type, e1)
                  in
                  Call_atomic_expr(gen)
               | In_Stmt -> not_impl loc "call to builtin atomic (load)"
@@ -1066,7 +1057,7 @@ let translate_block stmts blocks ret_ty =
             | AilEassign(e1,e2)                    ->
                 let atomic = is_atomic_tc (tc_of e1) in
                 let e1 = translate_expr true None e1 in
-                let layout = layout_of_tc (tc_of e) in
+                let ot = op_type_of_tc (loc_of e) (tc_of e) in
                 let goal_ty =
                   let ty_opt = op_type_tc_opt (loc_of e) (tc_of e) in
                   match ty_opt with
@@ -1074,10 +1065,10 @@ let translate_block stmts blocks ret_ty =
                   | _              -> None
                 in
                 let e2 = translate_expr false goal_ty e2 in
-                locate (Assign(atomic, layout, e1, e2, stmt))
+                locate (Assign(atomic, ot, e1, e2, stmt))
             | AilEunary(op,e) when incr_or_decr op ->
                 let atomic = is_atomic_tc (tc_of e) in
-                let layout = layout_of_tc (tc_of e) in
+                let op_type = op_type_of_tc (loc_of e) (tc_of e) in
                 let (res_ty, int_ty) =
                   let ty_opt = op_type_tc_opt (loc_of e) (tc_of e) in
                   match ty_opt with
@@ -1089,10 +1080,10 @@ let translate_block stmts blocks ret_ty =
                 let e1 = translate_expr true None e in
                 let e2 =
                   let one = locate (Val(Int("1", int_ty))) in
-                  let use = locate (Use(atomic, layout, e1)) in
+                  let use = locate (Use(atomic, op_type, e1)) in
                   locate (BinOp(op, res_ty, OpInt(int_ty), use, one))
                 in
-                locate (Assign(atomic, layout, e1, e2, stmt))
+                locate (Assign(atomic, op_type, e1, e2, stmt))
             | AilEcall(e,es)                       ->
                 let call = translate_call In_Stmt loc_full false e es in
                 let stmt =
@@ -1323,12 +1314,11 @@ let translate_block stmts blocks ret_ty =
               try snd (Hashtbl.find local_vars id)
               with Not_found -> assert false
             in
-            let layout = layout_of false ty in
             let atomic = is_atomic ty in
-            let goal_ty = op_type_opt Location_ocaml.unknown ty in
-            let e = translate_expr false goal_ty e in
+            let goal_ty = op_type_of Location_ocaml.unknown ty in
+            let e = translate_expr false (Some goal_ty) e in
             let var = noloc (Var(Some(id), false)) in
-            noloc (Assign(atomic, layout, var, e, stmt))
+            noloc (Assign(atomic, goal_ty, var, e, stmt))
           in
           (List.fold_right add_decl ls stmt, blocks)
       | AilSpar(_)          -> not_impl loc "statement par"

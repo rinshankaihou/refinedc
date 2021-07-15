@@ -11,6 +11,9 @@ Record int_type :=
     it_signed : signed;
   }.
 
+Global Instance int_type_dec : EqDecision int_type.
+Proof. solve_decision. Defined.
+
 Definition bytes_per_int (it : int_type) : nat :=
   2 ^ it.(it_byte_size_log).
 
@@ -49,6 +52,9 @@ Definition u64 := IntType 3 false.
 (* hardcoding 64bit pointers for now *)
 Definition bytes_per_addr_log : nat := 3%nat.
 Definition bytes_per_addr : nat := (2 ^ bytes_per_addr_log)%nat.
+
+Definition void_ptr : layout := {| ly_size := bytes_per_addr; ly_align_log := bytes_per_addr_log |}.
+Notation "'void*'" := (void_ptr).
 
 Definition intptr_t  := IntType bytes_per_addr_log true.
 Definition uintptr_t := IntType bytes_per_addr_log false.

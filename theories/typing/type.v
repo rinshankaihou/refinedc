@@ -244,15 +244,36 @@ Record type `{!typeG Σ} := {
 Arguments ty_own : simpl never.
 Existing Instance ty_shr_pers.
 
+(** [memcast_compat_type] describes how a type can transfered via a
+mem_cast (see also [ty_memcast_compat] below):
+- MCNone: The type cannot be transferred across a mem_cast.
+- MCCopy: The value type can be transferred to a mem_casted value.
+- MCId: mem_cast on a value of this type is the identity.
+
+MCId implies the other two and MCCopy implies MCNone.
+  *)
+Inductive memcast_compat_type : Set :=
+| MCNone | MCCopy | MCId.
+
 Class Movable `{!typeG Σ} (t : type) := {
-  ty_has_layout : layout → Prop;
+  (** ty_has_op_type should be written such that it computes well and can be solved by solve_goal.
+   Also ty_has_op_type should be defined for UntypedOp. *)
+  ty_has_op_type : op_type → memcast_compat_type → Prop;
   ty_own_val : val → iProp Σ;
-  ty_aligned ly l : ty_has_layout ly → t.(ty_own) Own l -∗ ⌜l `has_layout_loc` ly⌝;
-  ty_size_eq ly v : ty_has_layout ly → ty_own_val v -∗ ⌜v `has_layout_val` ly⌝;
-  ty_deref ly l : ty_has_layout ly → t.(ty_own) Own l -∗ l↦: ty_own_val;
-  ty_ref ly l v : ty_has_layout ly → ⌜l `has_layout_loc` ly⌝ -∗ l↦v -∗ ty_own_val v -∗ t.(ty_own) Own l;
+  ty_aligned ot mt l : ty_has_op_type ot mt → t.(ty_own) Own l -∗ ⌜l `has_layout_loc` ot_layout ot⌝;
+  ty_size_eq ot mt v : ty_has_op_type ot mt → ty_own_val v -∗ ⌜v `has_layout_val` ot_layout ot⌝;
+  ty_deref ot mt l : ty_has_op_type ot mt → t.(ty_own) Own l -∗ l↦: ty_own_val;
+  ty_ref ot mt l v : ty_has_op_type ot mt → ⌜l `has_layout_loc` ot_layout ot⌝ -∗ l↦v -∗ ty_own_val v -∗ t.(ty_own) Own l;
+  ty_memcast_compat v ot mt st:
+    ty_has_op_type ot mt →
+    ty_own_val v -∗
+    match mt with
+    | MCNone => True
+    | MCCopy => ty_own_val (mem_cast v ot st)
+    | MCId => ⌜mem_cast_id v ot⌝
+    end;
 }.
-Arguments ty_has_layout {_ _} _ {_}.
+Arguments ty_has_op_type {_ _} _ {_}.
 Arguments ty_own_val {_ _} _ {_} : simpl never.
 
 (* Lift Movable to lists.  We cannot use `Forall` because that one is restricted to Prop. *)
@@ -303,13 +324,72 @@ Section movable.
     @movablelst_to_list (mt_type <$> tys) (list_to_movablelst tys) = tys.
   Proof. elim: tys => //= ty tys ->. f_equal. by case: ty. Qed.
 
+  Lemma ty_memcast_compat_copy v ot ty `{!Movable ty} st:
+    ty.(ty_has_op_type) ot MCCopy →
+    ty.(ty_own_val) v -∗ ty.(ty_own_val) (mem_cast v ot st).
+  Proof. move => ?. by apply: (ty_memcast_compat _ _ MCCopy). Qed.
+
+  Lemma ty_memcast_compat_id v ot ty `{!Movable ty}:
+    ty.(ty_has_op_type) ot MCId →
+    ty.(ty_own_val) v -∗ ⌜mem_cast_id v ot⌝.
+  Proof. move => ?. by apply: (ty_memcast_compat _ _ MCId inhabitant). Qed.
+
+  Lemma mem_cast_compat_id (P : val → iProp Σ) v ot st mt:
+    (P v ⊢ ⌜mem_cast_id v ot⌝) →
+    (P v ⊢ match mt with | MCNone => True | MCCopy => P (mem_cast v ot st) | MCId => ⌜mem_cast_id v ot⌝ end).
+  Proof. iIntros (HP) "HP". iDestruct (HP with "HP") as %Hm. rewrite Hm. by destruct mt. Qed.
+
+  Lemma mem_cast_compat_Untyped (P : val → iProp Σ) v ot st mt:
+    ((if ot is UntypedOp _ then False else True) → P v ⊢ match mt with | MCNone => True | MCCopy => P (mem_cast v ot st) | MCId => ⌜mem_cast_id v ot⌝ end) →
+    P v ⊢ match mt with | MCNone => True | MCCopy => P (mem_cast v ot st) | MCId => ⌜mem_cast_id v ot⌝ end.
+  Proof. move => Hot. destruct ot; try by apply: Hot. apply: mem_cast_compat_id. by iIntros "?". Qed.
+
+  (* It is important this this computes well so that it can be solved automatically. *)
+  Definition is_int_ot (ot : op_type) (it : int_type) : Prop:=
+    match ot with | IntOp it' => it = it' | UntypedOp ly => ly = it_layout it | _ => False end.
+  Definition is_ptr_ot (ot : op_type) : Prop:=
+    match ot with | PtrOp => True | UntypedOp ly => ly = void* | _ => False end.
+  Definition is_value_ot (ot : op_type) (ot' : op_type) :=
+    if ot' is UntypedOp ly then ly = ot_layout ot else ot' = ot.
+
+  Lemma is_int_ot_layout it ot:
+    is_int_ot ot it → ot_layout ot = it.
+  Proof. by destruct ot => //= ->. Qed.
+
+  Lemma is_ptr_ot_layout ot:
+    is_ptr_ot ot → ot_layout ot = void*.
+  Proof. by destruct ot => //= ->. Qed.
+
+  Lemma is_value_ot_layout ot ot':
+    is_value_ot ot ot' → ot_layout ot' = ot_layout ot.
+  Proof. by destruct ot' => //= <-. Qed.
+
+  Lemma mem_cast_compat_int (P : val → iProp Σ) v ot st mt it:
+    is_int_ot ot it →
+    (P v ⊢ ⌜∃ z, val_to_Z v it = Some z⌝) →
+    (P v ⊢ match mt with | MCNone => True | MCCopy => P (mem_cast v ot st) | MCId => ⌜mem_cast_id v ot⌝ end).
+  Proof.
+    move => ? HT. apply: mem_cast_compat_Untyped => ?.
+    apply: mem_cast_compat_id. destruct ot => //; simplify_eq/=.
+    etrans; [done|]. iPureIntro => -[??]. by apply: mem_cast_id_int.
+  Qed.
+
+  Lemma mem_cast_compat_loc (P : val → iProp Σ) v ot st mt:
+    is_ptr_ot ot →
+    (P v ⊢ ⌜∃ l, v = val_of_loc l⌝) →
+    (P v ⊢ match mt with | MCNone => True | MCCopy => P (mem_cast v ot st) | MCId => ⌜mem_cast_id v ot⌝ end).
+  Proof.
+    move => ? HT. apply: mem_cast_compat_Untyped => ?.
+    apply: mem_cast_compat_id. destruct ot => //; simplify_eq/=.
+    etrans; [done|]. iPureIntro => -[? ->]. by apply: mem_cast_id_loc.
+  Qed.
 End movable.
 
 Class Copyable `{!typeG Σ} (ty : type) `{!Movable ty} := {
   copy_own_persistent v : Persistent (ty.(ty_own_val) v);
-  copy_shr_acc E ly l :
-    ↑mtN ⊆ E → ty.(ty_has_layout) ly →
-    ty.(ty_own) Shr l ={E}=∗ ⌜l `has_layout_loc` ly⌝ ∗
+  copy_shr_acc E ot l :
+    ↑mtN ⊆ E → ty.(ty_has_op_type) ot MCCopy →
+    ty.(ty_own) Shr l ={E}=∗ ⌜l `has_layout_loc` ot_layout ot⌝ ∗
        (* TODO: the closing conjuct does not make much sense with True *)
        ∃ q' vl, l ↦{q'} vl ∗ ▷ ty.(ty_own_val) vl ∗ (▷l ↦{q'} vl ={E}=∗ True)
 }.
@@ -324,9 +404,9 @@ Hint Mode LocInBounds + + + + - : typeclass_instances.
 Section loc_in_bounds.
   Context `{!typeG Σ}.
 
-  Lemma movable_loc_in_bounds ty l `{!Movable ty} ly:
-    ty.(ty_has_layout) ly →
-    ty.(ty_own) Own l -∗ loc_in_bounds l (ly_size ly).
+  Lemma movable_loc_in_bounds ty l `{!Movable ty} ot mt:
+    ty.(ty_has_op_type) ot mt →
+    ty.(ty_own) Own l -∗ loc_in_bounds l (ly_size (ot_layout ot)).
   Proof.
     iIntros (?) "Hl". iDestruct (ty_deref with "Hl") as (v) "[Hl Hv]"; [done|].
     iDestruct (ty_size_eq with "Hv") as %<-; [done|]. by iApply heap_mapsto_loc_in_bounds.
@@ -350,9 +430,9 @@ Notation type_alive_own ty := (type_alive ty Own).
 Section alloc_alive.
   Context `{!typeG Σ}.
 
-  Lemma movable_alloc_alive ty l `{!Movable ty} ly :
-    ly.(ly_size) ≠ 0%nat →
-    ty.(ty_has_layout) ly →
+  Lemma movable_alloc_alive ty l `{!Movable ty} ot mt :
+    (ot_layout ot).(ly_size) ≠ 0%nat →
+    ty.(ty_has_op_type) ot mt →
     ty.(ty_own) Own l -∗ alloc_alive_loc l.
   Proof.
     iIntros (??) "Hl". iDestruct (ty_deref with "Hl") as (v) "[Hl Hv]"; [done|].
@@ -429,24 +509,29 @@ Section rmovable.
   Context `{!typeG Σ}.
 
   Global Program Instance movable_ty_of_rty r `{!RMovable r} : Movable r := {|
-    ty_has_layout ly := ∀ x, (x @ r).(ty_has_layout) ly;
+    ty_has_op_type ot mt := ∀ x, (x @ r).(ty_has_op_type) ot mt;
     ty_own_val v := (∃ x, (x @ r).(ty_own_val) v)%I;
   |}.
   Next Obligation.
-    iIntros (r ? l β Hly). iDestruct 1 as (x) "Hv". by iDestruct (ty_aligned with "Hv") as %Hv; [done|].
+    iIntros (r ? l β mt Hly). iDestruct 1 as (x) "Hv". by iDestruct (ty_aligned with "Hv") as %Hv; [done|].
   Qed.
   Next Obligation.
-    iIntros (r ? v ly Hly). iDestruct 1 as (x) "Hv". by iDestruct (ty_size_eq with "Hv") as %Hv.
+    iIntros (r ? ot mt v Hly). iDestruct 1 as (x) "Hv". by iDestruct (ty_size_eq with "Hv") as %Hv.
   Qed.
   Next Obligation.
-    iIntros (r ? ly l Hly). iDestruct 1 as (x) "Hl".
+    iIntros (r ? ot mt l Hly). iDestruct 1 as (x) "Hl".
     iDestruct (ty_deref with "Hl") as (v) "[Hl Hv]"; [done|].
     eauto with iFrame.
   Qed.
   Next Obligation.
-    iIntros (r ? ly l v Hly ?) "Hl". iDestruct 1 as (x) "Hv".
+    iIntros (r ? ot mt l v Hly ?) "Hl". iDestruct 1 as (x) "Hv".
     iDestruct (ty_ref with "[] Hl Hv") as "Hl"; [done..|].
     iExists _. iFrame.
+  Qed.
+  Next Obligation.
+    iIntros (r ? v ot mt st Hot) "[%x Hv]".
+    iDestruct (ty_memcast_compat with "Hv") as "?"; [done|].
+    case_match => //. iExists _. iFrame.
   Qed.
 
   (* Global Program Instance rmovable_rty_of_refined (r : refined) `{!RMovable r.(r_rty)} : RMovable r := {| *)
@@ -454,9 +539,9 @@ Section rmovable.
   (* |}. *)
   (* Next Obligation. move => r ? x1 x2 => /=. apply rmove_layout. Qed. *)
 
-  Global Program Instance copyable_ty_of_rty r `{!RMovable r} `{!Inhabited (r.(rty_type))} `{!∀ x, Copyable (x @ r)} : Copyable r.
+  Global Program Instance copyable_ty_of_rty r `{!RMovable r} `{!∀ x, Copyable (x @ r)} : Copyable r.
   Next Obligation.
-    iIntros (r ? ?? E ly l ??). iDestruct 1 as (x) "Hl".
+    iIntros (r ? ? E ly l ??). iDestruct 1 as (x) "Hl".
     iMod (copy_shr_acc with "Hl") as (? q' vl) "(?&?&?)" => //.
     iSplitR => //. iExists _, _. iFrame. by iExists _.
   Qed.
@@ -573,7 +658,7 @@ Section ofe.
   Inductive mtype_equiv' (ty1 ty2 : mtype) : Prop :=
     MType_equiv :
       ty1.(mt_type) ≡ ty2.(mt_type) →
-      (∀ ly, ty1.(ty_has_layout) ly = ty2.(ty_has_layout) ly) →
+      (∀ ot mt, ty1.(ty_has_op_type) ot mt ↔ ty2.(ty_has_op_type) ot mt) →
       (∀ v, ty1.(ty_own_val) v ≡ ty2.(ty_own_val) v) →
       mtype_equiv' ty1 ty2.
   Global Instance mtype_equiv : Equiv mtype := mtype_equiv'.
@@ -593,14 +678,15 @@ Section ofe.
   Qed.
 
   Program Definition movable_eq ty1 ty2 `{!Movable ty2} (_ : ty1 ≡@{type} ty2): Movable ty1 := {|
-    ty_has_layout := ty2.(ty_has_layout);
+    ty_has_op_type := ty2.(ty_has_op_type);
     (* This must be tc_opaque, otherwise Coq likes to unfold ty1 to ty2 via unification. *)
     ty_own_val := tc_opaque (ty2.(ty_own_val));
   |}.
-  Next Obligation. iIntros (ty1 ty2 ? Heq ly l Hly) "Hv". rewrite Heq. by iApply ty_aligned. Qed.
-  Next Obligation. iIntros (ty1 ty2 ? Heq ly v Hly) "Hv". by iApply ty_size_eq. Qed.
-  Next Obligation. iIntros (ty1 ty2 ? Heq ly l Hly). rewrite Heq. by iApply ty_deref. Qed.
-  Next Obligation. iIntros (ty1 ty2 ? Heq ly l v Hly). rewrite Heq. by iApply ty_ref. Qed.
+  Next Obligation. iIntros (ty1 ty2 ? Heq ot mt l Hly) "Hv". rewrite Heq. by iApply ty_aligned. Qed.
+  Next Obligation. iIntros (ty1 ty2 ? Heq ot mt v Hly) "Hv". by iApply ty_size_eq. Qed.
+  Next Obligation. iIntros (ty1 ty2 ? Heq ot mt l Hly). rewrite Heq. by iApply ty_deref. Qed.
+  Next Obligation. iIntros (ty1 ty2 ? Heq ot mt l v Hly). rewrite Heq. by iApply ty_ref. Qed.
+  Next Obligation. iIntros (ty1 ty2 ? Heq v ot mt st Hly). by iApply ty_memcast_compat. Qed.
 End ofe.
 
 

@@ -82,6 +82,12 @@ Hint Extern 0 (LayoutWf _) => refine (layout_wf_mod _ _); done : typeclass_insta
 Hint Extern 0 (LayoutWf _) => unfold LayoutWf; done : typeclass_instances.
 Hint Extern 0 (LayoutEq _ _) => exact: eq_refl : typeclass_instances.
 
+(*** Notations for specific layouts *)
+Definition void_layout : layout := {| ly_size := 0; ly_align_log := 0 |}.
+
+Definition mk_array_layout := ly_mult.
+Typeclasses Opaque mk_array_layout.
+
 (*** Lemmas about [layout] *)
 
 Lemma ly_align_log_ly_align_eq_iff ly1 ly2:

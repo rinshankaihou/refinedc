@@ -143,7 +143,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_2 ;
-        Return (LocInfoE loc_3 (CopyAllocId (IntOp uintptr_t) (LocInfoE loc_5 (use{it_layout uintptr_t} (LocInfoE loc_6 ("to")))) (LocInfoE loc_7 (use{void*} (LocInfoE loc_8 ("from"))))))
+        Return (LocInfoE loc_3 (CopyAllocId (IntOp uintptr_t) (LocInfoE loc_5 (use{IntOp uintptr_t} (LocInfoE loc_6 ("to")))) (LocInfoE loc_7 (use{PtrOp} (LocInfoE loc_8 ("from"))))))
       ]> $∅
     )%E
   |}.
@@ -159,10 +159,10 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_11 ;
-        LocInfoE loc_19 ((LocInfoE loc_20 (!{void*} (LocInfoE loc_21 ("i")))) at{struct_item} "tag") <-{ it_layout size_t }
+        LocInfoE loc_19 ((LocInfoE loc_20 (!{PtrOp} (LocInfoE loc_21 ("i")))) at{struct_item} "tag") <-{ IntOp size_t }
           LocInfoE loc_22 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_23 (i2v 0 i32))) ;
         locinfo: loc_12 ;
-        LocInfoE loc_13 ((LocInfoE loc_14 ((LocInfoE loc_15 ((LocInfoE loc_16 (!{void*} (LocInfoE loc_17 ("i")))) at{struct_item} "u")) at_union{union_item_union} "empty")) at{struct_empty} "dummy") <-{ it_layout size_t }
+        LocInfoE loc_13 ((LocInfoE loc_14 ((LocInfoE loc_15 ((LocInfoE loc_16 (!{PtrOp} (LocInfoE loc_17 ("i")))) at{struct_item} "u")) at_union{union_item_union} "empty")) at{struct_empty} "dummy") <-{ IntOp size_t }
           LocInfoE loc_18 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_18 (i2v 0 i32))) ;
         Return (VOID)
       ]> $∅
@@ -182,14 +182,14 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_26 ;
-        LocInfoE loc_43 ((LocInfoE loc_44 (!{void*} (LocInfoE loc_45 ("i")))) at{struct_item} "tag") <-{ it_layout size_t }
+        LocInfoE loc_43 ((LocInfoE loc_44 (!{PtrOp} (LocInfoE loc_45 ("i")))) at{struct_item} "tag") <-{ IntOp size_t }
           LocInfoE loc_46 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_47 (i2v 1 i32))) ;
         locinfo: loc_27 ;
-        LocInfoE loc_36 ((LocInfoE loc_37 ((LocInfoE loc_38 ((LocInfoE loc_39 (!{void*} (LocInfoE loc_40 ("i")))) at{struct_item} "u")) at_union{union_item_union} "entry")) at{struct_entry} "key") <-{ it_layout size_t }
-          LocInfoE loc_41 (use{it_layout size_t} (LocInfoE loc_42 ("key"))) ;
+        LocInfoE loc_36 ((LocInfoE loc_37 ((LocInfoE loc_38 ((LocInfoE loc_39 (!{PtrOp} (LocInfoE loc_40 ("i")))) at{struct_item} "u")) at_union{union_item_union} "entry")) at{struct_entry} "key") <-{ IntOp size_t }
+          LocInfoE loc_41 (use{IntOp size_t} (LocInfoE loc_42 ("key"))) ;
         locinfo: loc_28 ;
-        LocInfoE loc_29 ((LocInfoE loc_30 ((LocInfoE loc_31 ((LocInfoE loc_32 (!{void*} (LocInfoE loc_33 ("i")))) at{struct_item} "u")) at_union{union_item_union} "entry")) at{struct_entry} "value") <-{ void* }
-          LocInfoE loc_34 (use{void*} (LocInfoE loc_35 ("val"))) ;
+        LocInfoE loc_29 ((LocInfoE loc_30 ((LocInfoE loc_31 ((LocInfoE loc_32 (!{PtrOp} (LocInfoE loc_33 ("i")))) at{struct_item} "u")) at_union{union_item_union} "entry")) at{struct_entry} "value") <-{ PtrOp }
+          LocInfoE loc_34 (use{PtrOp} (LocInfoE loc_35 ("val"))) ;
         Return (VOID)
       ]> $∅
     )%E
@@ -208,7 +208,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_81 ;
-        if: LocInfoE loc_81 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_81 ((LocInfoE loc_82 (use{it_layout size_t} (LocInfoE loc_83 ((LocInfoE loc_84 (!{void*} (LocInfoE loc_85 ("i")))) at{struct_item} "tag")))) ={IntOp size_t, IntOp size_t} (LocInfoE loc_86 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_87 (i2v 1 i32)))))))
+        if: LocInfoE loc_81 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_81 ((LocInfoE loc_82 (use{IntOp size_t} (LocInfoE loc_83 ((LocInfoE loc_84 (!{PtrOp} (LocInfoE loc_85 ("i")))) at{struct_item} "tag")))) ={IntOp size_t, IntOp size_t} (LocInfoE loc_86 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_87 (i2v 1 i32)))))))
         then
         locinfo: loc_55 ;
           Goto "#2"
@@ -218,20 +218,20 @@ Section code.
       ]> $
       <[ "#1" :=
         locinfo: loc_51 ;
-        Return (LocInfoE loc_52 (use{it_layout size_t} (LocInfoE loc_53 ("key"))))
+        Return (LocInfoE loc_52 (use{IntOp size_t} (LocInfoE loc_53 ("key"))))
       ]> $
       <[ "#2" :=
         locinfo: loc_55 ;
-        LocInfoE loc_73 ("old_key") <-{ it_layout size_t }
-          LocInfoE loc_74 (use{it_layout size_t} (LocInfoE loc_75 ((LocInfoE loc_76 ((LocInfoE loc_77 ((LocInfoE loc_78 (!{void*} (LocInfoE loc_79 ("i")))) at{struct_item} "u")) at_union{union_item_union} "entry")) at{struct_entry} "key"))) ;
+        LocInfoE loc_73 ("old_key") <-{ IntOp size_t }
+          LocInfoE loc_74 (use{IntOp size_t} (LocInfoE loc_75 ((LocInfoE loc_76 ((LocInfoE loc_77 ((LocInfoE loc_78 (!{PtrOp} (LocInfoE loc_79 ("i")))) at{struct_item} "u")) at_union{union_item_union} "entry")) at{struct_entry} "key"))) ;
         locinfo: loc_56 ;
-        LocInfoE loc_68 ((LocInfoE loc_69 (!{void*} (LocInfoE loc_70 ("i")))) at{struct_item} "tag") <-{ it_layout size_t }
+        LocInfoE loc_68 ((LocInfoE loc_69 (!{PtrOp} (LocInfoE loc_70 ("i")))) at{struct_item} "tag") <-{ IntOp size_t }
           LocInfoE loc_71 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_72 (i2v 2 i32))) ;
         locinfo: loc_57 ;
-        LocInfoE loc_61 ((LocInfoE loc_62 ((LocInfoE loc_63 ((LocInfoE loc_64 (!{void*} (LocInfoE loc_65 ("i")))) at{struct_item} "u")) at_union{union_item_union} "tombstone")) at{struct_tombstone} "key") <-{ it_layout size_t }
-          LocInfoE loc_66 (use{it_layout size_t} (LocInfoE loc_67 ("key"))) ;
+        LocInfoE loc_61 ((LocInfoE loc_62 ((LocInfoE loc_63 ((LocInfoE loc_64 (!{PtrOp} (LocInfoE loc_65 ("i")))) at{struct_item} "u")) at_union{union_item_union} "tombstone")) at{struct_tombstone} "key") <-{ IntOp size_t }
+          LocInfoE loc_66 (use{IntOp size_t} (LocInfoE loc_67 ("key"))) ;
         locinfo: loc_58 ;
-        Return (LocInfoE loc_59 (use{it_layout size_t} (LocInfoE loc_60 ("old_key"))))
+        Return (LocInfoE loc_59 (use{IntOp size_t} (LocInfoE loc_60 ("old_key"))))
       ]> $
       <[ "#3" :=
         locinfo: loc_51 ;

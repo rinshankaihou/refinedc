@@ -21,6 +21,7 @@ type layout =
 type op_type =
   | OpInt of int_type
   | OpPtr of layout
+  | OpStruct of string * op_type list
 
 type un_op =
   | NotBoolOp
@@ -46,12 +47,12 @@ and expr_aux =
   | Val       of value
   | UnOp      of un_op * op_type * expr
   | BinOp     of bin_op * op_type * op_type * expr * expr
-  | Deref     of bool (* Atomic? *) * layout * expr
+  | Deref     of bool (* Atomic? *) * op_type * expr
   | CAS       of op_type * expr * expr * expr
   | Call      of expr * expr list
   | IfE       of op_type * expr * expr * expr
   | SkipE     of expr
-  | Use       of bool (* Atomic? *) * layout * expr
+  | Use       of bool (* Atomic? *) * op_type * expr
   | AddrOf    of expr
   | LValue    of expr
   | GetMember of expr * string * bool (* From_union? *) * string
@@ -66,7 +67,7 @@ and stmt_aux =
   | Goto   of string (* Block index in the [IMap.t]. *)
   | Return of expr
   | Switch of int_type * expr * (string * int) list * stmt list * stmt
-  | Assign of bool (* Atomic? *) * layout * expr * expr * stmt
+  | Assign of bool (* Atomic? *) * op_type * expr * expr * stmt
   | SkipS  of stmt
   | If     of expr * stmt * stmt
   | Assert of expr * stmt

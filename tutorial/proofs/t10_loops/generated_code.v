@@ -54,7 +54,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_2 ;
-        Return (LocInfoE loc_3 (CopyAllocId (IntOp uintptr_t) (LocInfoE loc_5 (use{it_layout uintptr_t} (LocInfoE loc_6 ("to")))) (LocInfoE loc_7 (use{void*} (LocInfoE loc_8 ("from"))))))
+        Return (LocInfoE loc_3 (CopyAllocId (IntOp uintptr_t) (LocInfoE loc_5 (use{IntOp uintptr_t} (LocInfoE loc_6 ("to")))) (LocInfoE loc_7 (use{PtrOp} (LocInfoE loc_8 ("from"))))))
       ]> $∅
     )%E
   |}.
@@ -74,7 +74,7 @@ Section code.
       ]> $
       <[ "#1" :=
         locinfo: loc_34 ;
-        if: LocInfoE loc_34 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_34 ((LocInfoE loc_35 (use{it_layout i32} (LocInfoE loc_36 ("a")))) ={IntOp i32, IntOp i32} (LocInfoE loc_37 (i2v 1 i32)))))
+        if: LocInfoE loc_34 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_34 ((LocInfoE loc_35 (use{IntOp i32} (LocInfoE loc_36 ("a")))) ={IntOp i32, IntOp i32} (LocInfoE loc_37 (i2v 1 i32)))))
         then
         locinfo: loc_32 ;
           Goto "#2"
@@ -92,7 +92,7 @@ Section code.
       ]> $
       <[ "#4" :=
         locinfo: loc_26 ;
-        if: LocInfoE loc_26 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_26 ((LocInfoE loc_27 (use{it_layout i32} (LocInfoE loc_28 ("a")))) ={IntOp i32, IntOp i32} (LocInfoE loc_29 (i2v 1 i32)))))
+        if: LocInfoE loc_26 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_26 ((LocInfoE loc_27 (use{IntOp i32} (LocInfoE loc_28 ("a")))) ={IntOp i32, IntOp i32} (LocInfoE loc_29 (i2v 1 i32)))))
         then
         locinfo: loc_24 ;
           Goto "#5"
@@ -110,7 +110,7 @@ Section code.
       ]> $
       <[ "#7" :=
         locinfo: loc_18 ;
-        if: LocInfoE loc_18 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_18 ((LocInfoE loc_19 (use{it_layout i32} (LocInfoE loc_20 ("a")))) ={IntOp i32, IntOp i32} (LocInfoE loc_21 (i2v 1 i32)))))
+        if: LocInfoE loc_18 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_18 ((LocInfoE loc_19 (use{IntOp i32} (LocInfoE loc_20 ("a")))) ={IntOp i32, IntOp i32} (LocInfoE loc_21 (i2v 1 i32)))))
         then
         locinfo: loc_16 ;
           Goto "#8"

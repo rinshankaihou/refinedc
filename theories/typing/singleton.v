@@ -5,130 +5,145 @@ Set Default Proof Using "Type".
 Section value.
   Context `{!typeG Σ}.
 
-  Program Definition value (ly : layout) (v : val) : type := {|
-    ty_own β l := (⌜l `has_layout_loc` ly⌝ ∗ ⌜v `has_layout_val` ly⌝ ∗ l ↦[β] v)%I;
+  Program Definition value (ot : op_type) (v : val) : type := {|
+    ty_own β l := (⌜l `has_layout_loc` ot_layout ot⌝ ∗ ⌜v `has_layout_val` ot_layout ot⌝ ∗ ⌜mem_cast_id v ot⌝ ∗ l ↦[β] v)%I;
   |}.
-  Next Obligation. iIntros (?????) "[$ [$ ?]]". by iApply heap_mapsto_own_state_share. Qed.
+  Next Obligation. iIntros (?????) "[$ [$ [$ ?]]]". by iApply heap_mapsto_own_state_share. Qed.
 
-  Global Program Instance movable_value ly v : Movable (value ly v) := {|
-    ty_has_layout ly' := ly' = ly;
-    ty_own_val v' := (⌜v `has_layout_val` ly⌝ ∗ ⌜v' = v⌝)%I;
+  Global Program Instance movable_value ot v : Movable (value ot v) := {|
+    ty_has_op_type ot' mt := is_value_ot ot ot';
+    ty_own_val v' := (⌜mem_cast_id v ot⌝ ∗ ⌜v `has_layout_val` ot_layout ot⌝ ∗ ⌜v' = v⌝)%I;
   |}.
-  Next Obligation. iIntros (ly v ly' l ->) "[%?]". done. Qed.
-  Next Obligation. iIntros (ly v ly' v' ->) "[% ->]". done. Qed.
-  Next Obligation. iIntros (ly v ly' l ->) "(%&%&?)". eauto with iFrame. Qed.
-  Next Obligation. iIntros (ly v ly' l v' -> ?) "Hl [? ->]". by iFrame. Qed.
+  Next Obligation. iIntros (ot v ot' mt l ->%is_value_ot_layout) "[%?]". done. Qed.
+  Next Obligation. iIntros (ot v ot' mt v' ->%is_value_ot_layout) "[% [% ->]]". done. Qed.
+  Next Obligation. iIntros (ot v ot' mt l _) "(%&%&%&?)". eauto with iFrame. Qed.
+  Next Obligation. iIntros (ot v ot' mt l v' ->%is_value_ot_layout ?) "Hl [? [? ->]]". by iFrame. Qed.
+  Next Obligation. iIntros (ot v v' ot' mt st ?). apply: mem_cast_compat_id. iPureIntro.
+    move => [?[? ->]]. by destruct ot' => //; simplify_eq/=.
+  Qed.
 
-  Lemma value_simplify v T ly p:
-    (⌜v = p⌝ -∗ ⌜v `has_layout_val` ly⌝ -∗ T) -∗
-    simplify_hyp (v ◁ᵥ  value ly p) T.
-  Proof. iIntros "HT [% ->]". by iApply "HT". Qed.
-  Global Instance value_simplify_inst v ly p :
-    SimplifyHypVal v (value ly p) (Some 0%N) :=
-    λ T, i2p (value_simplify v T ly p).
+  Lemma value_simplify v T ot p:
+    (⌜v = p⌝ -∗ ⌜v `has_layout_val` ot_layout ot⌝ -∗ ⌜mem_cast_id v ot⌝ -∗ T) -∗
+    simplify_hyp (v ◁ᵥ  value ot p) T.
+  Proof. iIntros "HT [% [% ->]]". by iApply "HT". Qed.
+  Global Instance value_simplify_inst v ot p :
+    SimplifyHypVal v (value ot p) (Some 0%N) :=
+    λ T, i2p (value_simplify v T ot p).
 
   Lemma value_subsume_goal v v' ly ty `{!Movable ty} T:
-    (⌜ty.(ty_has_layout) ly⌝ ∗ (v ◁ᵥ ty -∗ ⌜v = v'⌝ ∗ T)) -∗
+    (⌜ty.(ty_has_op_type) ly MCId⌝ ∗ (v ◁ᵥ ty -∗ ⌜v = v'⌝ ∗ T)) -∗
     subsume (v ◁ᵥ ty) (v ◁ᵥ value ly v') T.
   Proof.
     iIntros "[% HT] Hty". iDestruct (ty_size_eq with "Hty") as %Hly; [done|].
+    iDestruct (ty_memcast_compat_id with "Hty") as %?; [done|].
     by iDestruct ("HT" with "Hty") as (->) "$".
   Qed.
-  Global Instance value_subsume_goal_inst v v' ly ty `{!Movable ty}:
-    SubsumeVal v ty (value ly v') :=
-    λ T, i2p (value_subsume_goal v v' ly ty T).
+  Global Instance value_subsume_goal_inst v v' ot ty `{!Movable ty}:
+    SubsumeVal v ty (value ot v') :=
+    λ T, i2p (value_subsume_goal v v' ot ty T).
 
-  Lemma value_subsume_goal_loc l v' ly ty `{!Movable ty} T:
-    (⌜ty.(ty_has_layout) ly⌝ ∗ ∀ v, v ◁ᵥ ty -∗ ⌜v = v'⌝ ∗ T) -∗
-    subsume (l ◁ₗ ty) (l ◁ₗ value ly v') T.
+  Lemma value_subsume_goal_loc l v' ot ty `{!Movable ty} T:
+    (⌜ty.(ty_has_op_type) ot MCId⌝ ∗ ∀ v, v ◁ᵥ ty -∗ ⌜v = v'⌝ ∗ T) -∗
+    subsume (l ◁ₗ ty) (l ◁ₗ value ot v') T.
   Proof.
     iIntros "[% HT] Hty".
     iDestruct (ty_aligned with "Hty") as %Hal; [done|].
     iDestruct (ty_deref with "Hty") as (v) "[Hmt Hty]"; [done|].
     iDestruct (ty_size_eq with "Hty") as %Hly; [done|].
+    iDestruct (ty_memcast_compat_id with "Hty") as %?; [done|].
     iDestruct ("HT" with "Hty") as (->) "$".
     by iFrame.
   Qed.
-  Global Instance value_subsume_goal_loc_inst l v' ly ty `{!Movable ty}:
-    SubsumePlace l Own ty (value ly v') :=
-    λ T, i2p (value_subsume_goal_loc l v' ly ty T).
+  Global Instance value_subsume_goal_loc_inst l v' ot ty `{!Movable ty}:
+    SubsumePlace l Own ty (value ot v') :=
+    λ T, i2p (value_subsume_goal_loc l v' ot ty T).
 
-  Lemma value_merge v l ly T:
-    (find_in_context (FindVal v) (λ ty:mtype, ⌜ty.(ty_has_layout) ly⌝ ∗ (l ◁ₗ ty -∗ T))) -∗
-      simplify_hyp (l ◁ₗ value ly v) T.
+  Lemma value_merge v l ot T:
+    (find_in_context (FindVal v) (λ ty:mtype, ⌜ty.(ty_has_op_type) (UntypedOp (ot_layout ot)) MCNone⌝ ∗ (l ◁ₗ ty -∗ T))) -∗
+      simplify_hyp (l ◁ₗ value ot v) T.
   Proof.
     iDestruct 1 as (ty) "[Hv [% HT]]".
-    iIntros "[% [% Hl]]". iApply "HT". by iApply (ty_ref with "[] Hl Hv").
+    iIntros "[% [% [% Hl]]]". iApply "HT". by iApply (ty_ref with "[] Hl Hv").
   Qed.
-  Global Instance value_merge_inst v l ly:
-    SimplifyHypPlace l Own (value ly v)%I (Some 50%N) | 20 :=
-    λ T, i2p (value_merge v l ly T).
+  Global Instance value_merge_inst v l ot:
+    SimplifyHypPlace l Own (value ot v)%I (Some 50%N) | 20 :=
+    λ T, i2p (value_merge v l ot T).
 
-  Lemma type_read_move T l ty ly a `{!Movable ty}:
-    (⌜ty.(ty_has_layout) ly⌝ ∗ ∀ v, T v (value ly v) (t2mt ty)) -∗
-      typed_read_end a l Own ty ly T.
+  Lemma type_read_move T l ty ot a `{!Movable ty} `{!CanSolve (ty.(ty_has_op_type) ot MCId)}:
+    (∀ v, T v (value ot v) (t2mt ty)) -∗
+      typed_read_end a l Own ty ot T.
   Proof.
-    iIntros "[% HT] Hl".
+    unfold CanSolve in *. iIntros "HT Hl".
     iApply fupd_mask_intro => //. iIntros "Hclose".
     iDestruct (ty_aligned with "Hl") as %?; [done|].
     iDestruct (ty_deref with "Hl") as (v) "[Hl Hv]"; [done|].
     iDestruct (ty_size_eq with "Hv") as %?; [done|].
+    iDestruct (ty_memcast_compat_id with "Hv") as %Hid; [done|].
     iExists _, _, _, (t2mt _). iFrame. do 2 iSplit => //=.
-    iIntros "!# Hl". iMod "Hclose". iSplitR "HT" => //.
+    iIntros "!# %st Hl Hv". iMod "Hclose".
+    iExists (t2mt ty). rewrite Hid. iFrame "Hv". iSplitR "HT" => //.
     by iFrame.
   Qed.
-  Global Instance type_read_move_inst l ty ly a `{!Movable ty} :
-    TypedReadEnd a l Own ty ly | 50 :=
-    λ T, i2p (type_read_move T l ty ly a).
+  (* This needs to be a Hint Extern because the CanSolve depends on Movable *)
+  Global Definition type_read_move_inst l ty ot a `{!Movable ty} `{!CanSolve (ty.(ty_has_op_type) ot MCId)}:
+    TypedReadEnd a l Own ty ot :=
+    λ T, i2p (type_read_move T l ty ot a).
 
   (* TODO: this constraint on the layout is too strong, we only need
   that the length is the same and the alignment is lower. Adapt when necessary. *)
-  Lemma type_write_own a ty `{!Movable ty} T l2 ty2 v `{!Movable ty2} ly:
-    ⌜ty2.(ty_has_layout) ly⌝ ∗ (∀ v', v ◁ᵥ ty -∗ v' ◁ᵥ ty2 -∗ T (value ly v)) -∗
-    typed_write_end a ly v ty l2 Own ty2 T.
+  Lemma type_write_own a ty `{!Movable ty} T l2 ty2 v `{!Movable ty2} ot `{!CanSolve (ty.(ty_has_op_type) ot MCId)}:
+    ⌜ty2.(ty_has_op_type) (UntypedOp (ot_layout ot)) MCNone⌝ ∗ (∀ v', v ◁ᵥ ty -∗ v' ◁ᵥ ty2 -∗ T (value ot v)) -∗
+    typed_write_end a ot v ty l2 Own ty2 T.
   Proof.
-    iDestruct 1 as (?) "HT". iIntros (?) "Hl Hv".
+    unfold CanSolve in *. iDestruct 1 as (?) "HT". iIntros "Hl Hv".
     iDestruct (ty_aligned with "Hl") as %?; [done|].
     iDestruct (ty_deref with "Hl") as (v') "[Hl Hv']"; [done|].
-    iDestruct (ty_size_eq with "Hv'") as %?; [done|].
-    iApply fupd_mask_intro => //. iIntros "Hmask".
-    iSplitL "Hl". { iExists _. by iFrame. }
-    iIntros "!# Hl". iMod "Hmask". iModIntro.
     iDestruct (ty_size_eq with "Hv") as %?; [done|].
+    iDestruct (ty_size_eq with "Hv'") as %?; [done|].
+    iDestruct (ty_memcast_compat_id with "Hv") as %Hid; [done|].
+    iApply fupd_mask_intro => //. iIntros "Hmask".
+    iSplit; [done|]. iSplitL "Hl". { iExists _. by iFrame. }
+    iIntros "!# Hl". iMod "Hmask". iModIntro.
     iExists _. iDestruct ("HT" with "Hv Hv'") as "$". by iFrame.
   Qed.
-  Global Instance type_write_own_inst a ty `{!Movable ty} l2 ty2 v `{!Movable ty2} ly:
-    TypedWriteEnd a ly v ty l2 Own ty2 | 50 :=
-    λ T, i2p (type_write_own a ty T l2 ty2 v ly).
-
+  (* This needs to be a Hint Extern because the CanSolve depends on Movable *)
+  Global Definition type_write_own_inst a ty `{!Movable ty} l2 ty2 v `{!Movable ty2} ot `{!CanSolve (ty.(ty_has_op_type) ot MCId)}:
+    TypedWriteEnd a ot v ty l2 Own ty2 :=
+    λ T, i2p (type_write_own a ty T l2 ty2 v ot).
 End value.
-Notation "value< ly , v >" := (value ly v) (only printing, format "'value<' ly ',' v '>'") : printing_sugar.
+Notation "value< ot , v >" := (value ot v) (only printing, format "'value<' ot ',' v '>'") : printing_sugar.
+
+Hint Extern 50 (TypedReadEnd _ _ Own _ _) =>
+  unshelve notypeclasses refine (type_read_move_inst _ _ _ _ ) : typeclass_instances.
+Hint Extern 50 (TypedWriteEnd _ _ _ _ _ Own _) =>
+  unshelve notypeclasses refine (type_write_own_inst _ _ _ _ _ _) : typeclass_instances.
 
 
 Section at_value.
   Context `{!typeG Σ}.
 
-  (* TODO: At the moment this is hard-coded for void*. Generalize it to other layouts as well. *)
+  (* TODO: At the moment this is hard-coded for PtrOp. Generalize it to other layouts as well. *)
   Program Definition at_value (v : val) (ty : type) `{!Movable ty} : type := {|
-    ty_own β l := (if β is Own then l ◁ₗ value void* v ∗ v ◁ᵥ ty else True )%I;
+    ty_own β l := (if β is Own then l ◁ₗ value PtrOp v ∗ v ◁ᵥ ty else True )%I;
   |}.
   Next Obligation. by iIntros (??????) "?". Qed.
 
   Global Program Instance movable_at_value v ty `{!Movable ty} : Movable (at_value v ty) := {|
-    ty_has_layout ly := ly = void*;
-    ty_own_val v' := (v' ◁ᵥ value void* v ∗ v ◁ᵥ ty)%I;
+    ty_has_op_type ot mt := is_value_ot PtrOp ot;
+    ty_own_val v' := (v' ◁ᵥ value PtrOp v ∗ v ◁ᵥ ty)%I;
   |}.
-  Next Obligation. iIntros (v ty ? ly l ->) "[Hv ?]". by iApply (ty_aligned with "Hv"). Qed.
-  Next Obligation. iIntros (v ty ? ? v' ->) "[Hv ?]". by iApply (ty_size_eq with "Hv"). Qed.
+  Next Obligation. iIntros (v ty ? ot mt l ?) "[Hv ?]". by iApply (ty_aligned with "Hv"). Qed.
+  Next Obligation. iIntros (v ty ? ot mt v' ?) "[Hv ?]". by iApply (ty_size_eq with "Hv"). Qed.
+  Next Obligation. iIntros (v ty ? ot mt l ?) "[Hv $]". by iApply (ty_deref with "Hv"). Qed.
+  Next Obligation. iIntros (v ty ? ot mt l v' ? ?) "Hl [Hv $]". by iApply (ty_ref with "[] Hl Hv"). Qed.
   Next Obligation.
-    iIntros (v ty ? ly l ->) "[Hv ?]". iDestruct (ty_deref with "Hv") as (v') "[??]"; [done|]. iExists _. by iFrame.
-  Qed.
-  Next Obligation.
-    iIntros (v ty ? l v' ? -> ?) "Hl [Hv ?]". iFrame. by iApply (ty_ref with "[] Hl Hv").
+    iIntros (v ty ? v' ot mt st ?) "[Hv ?]".
+    iDestruct (ty_memcast_compat with "Hv") as "?"; [done|]. destruct mt => //. iFrame.
   Qed.
 
+
   Lemma at_value_simplify_hyp_val v v' ty `{!Movable ty} T:
-    (v ◁ᵥ value void* v' -∗ v' ◁ᵥ ty -∗ T) -∗
+    (v ◁ᵥ value PtrOp v' -∗ v' ◁ᵥ ty -∗ T) -∗
     simplify_hyp (v ◁ᵥ at_value v' ty) T.
   Proof. iIntros "HT [??]". by iApply ("HT" with "[$] [$]"). Qed.
   Global Instance at_value_simplify_hyp_val_inst v v' ty `{!Movable ty} :
@@ -136,7 +151,7 @@ Section at_value.
     λ T, i2p (at_value_simplify_hyp_val v v' ty T).
 
   Lemma at_value_simplify_goal_val v v' ty `{!Movable ty} T:
-    (T (v ◁ᵥ value void* v' ∗ v' ◁ᵥ ty)) -∗
+    (T (v ◁ᵥ value PtrOp v' ∗ v' ◁ᵥ ty)) -∗
     simplify_goal (v ◁ᵥ at_value v' ty) T.
   Proof. iIntros "HT". iExists _. iFrame. by iIntros "$". Qed.
   Global Instance at_value_simplify_goal_val_inst v v' ty `{!Movable ty} :
@@ -144,7 +159,7 @@ Section at_value.
     λ T, i2p (at_value_simplify_goal_val v v' ty T).
 
   Lemma at_value_simplify_hyp_loc l v' ty `{!Movable ty} T:
-    (l ◁ₗ value void* v' -∗ v' ◁ᵥ ty -∗ T) -∗
+    (l ◁ₗ value PtrOp v' -∗ v' ◁ᵥ ty -∗ T) -∗
     simplify_hyp (l ◁ₗ at_value v' ty) T.
   Proof. iIntros "HT [??]". by iApply ("HT" with "[$] [$]"). Qed.
   Global Instance at_value_simplify_hyp_loc_inst l v' ty `{!Movable ty} :
@@ -152,7 +167,7 @@ Section at_value.
     λ T, i2p (at_value_simplify_hyp_loc l v' ty T).
 
   Lemma at_value_simplify_goal_loc l v' ty `{!Movable ty} T:
-    (T (l ◁ₗ value void* v' ∗ v' ◁ᵥ ty)) -∗
+    (T (l ◁ₗ value PtrOp v' ∗ v' ◁ᵥ ty)) -∗
     simplify_goal (l ◁ₗ at_value v' ty) T.
   Proof. iIntros "HT". iExists _. iFrame. by iIntros "$". Qed.
   Global Instance at_value_simplify_goal_loc_inst l v' ty `{!Movable ty} :
@@ -220,25 +235,26 @@ Section place.
   Proof.
     iIntros "SH Hl". iDestruct (i2p_proof with "SH Hl") as ([β2 ty2]) "[Hl HP]".
     iMod ("HP" with "Hl") as (q v ty' ty3 ? ?) "(Hl & Hv & HP)". iIntros "!#".
-    iExists _, _, _, _. iFrame. do 2 iSplit => //. iIntros "!# Hl".
-    iMod ("HP" with "Hl") as "[Hl HT]". iModIntro. iSplitR; last by iApply "HT". done.
+    iExists _, _, _, _. iFrame "Hl Hv". do 2 (iSplit;[done|]).  iIntros "!# %st Hl Hv".
+    iMod ("HP" with "Hl Hv") as (ty4) "(Hv & Hl & HT)". iModIntro. iExists _. iFrame.
+    iSplitR; last by iApply "HT". done.
   Qed.
   Global Instance typed_read_end_simpl_inst l β ty ly n a `{!SimplifyHyp (l ◁ₗ{β} ty) (Some n)}:
     TypedReadEnd a l β ty ly | 1000 :=
     λ T, i2p (typed_read_end_simpl l β ty ly n T a).
 
-  Lemma typed_write_end_simpl b ly v ty1 `{!Movable ty1} l β ty2 n T {SH:SimplifyHyp (l ◁ₗ{β} ty2) (Some n)}:
+  Lemma typed_write_end_simpl b ot v ty1 `{!Movable ty1} l β ty2 n T {SH:SimplifyHyp (l ◁ₗ{β} ty2) (Some n)}:
     (SH (find_in_context (FindLoc l) (λ '(β3, ty3),
-        typed_write_end b ly v ty1 l β3 ty3 (λ ty', l ◁ₗ{β3} ty' -∗ T (place l))))).(i2p_P) -∗
-    typed_write_end b ly v ty1 l β ty2 T.
+        typed_write_end b ot v ty1 l β3 ty3 (λ ty', l ◁ₗ{β3} ty' -∗ T (place l))))).(i2p_P) -∗
+    typed_write_end b ot v ty1 l β ty2 T.
   Proof.
-    iIntros "SH % Hl Hv". iDestruct (i2p_proof with "SH Hl") as ([β3 ty3]) "[Hl HP]".
-    iMod ("HP" with "[//] Hl Hv") as "[$ HP]". iIntros "!# !# Hl".
+    iIntros "SH Hl Hv". iDestruct (i2p_proof with "SH Hl") as ([β3 ty3]) "[Hl HP]".
+    iMod ("HP" with "Hl Hv") as "[$ [$ HP]]". iIntros "!# !# Hl".
     iMod ("HP" with "Hl") as (ty') "[Hl HT]". iModIntro. iExists _. iSplitR; last by iApply "HT". done.
   Qed.
-  Global Instance typed_write_end_simpl_inst b ly v ty1 `{!Movable ty1} l β ty2 n `{!SimplifyHyp (l ◁ₗ{β} ty2) (Some n)}:
-    TypedWriteEnd b ly v ty1 l β ty2 | 1000 :=
-    λ T, i2p (typed_write_end_simpl b ly v ty1 l β ty2 n T).
+  Global Instance typed_write_end_simpl_inst b ot v ty1 `{!Movable ty1} l β ty2 n `{!SimplifyHyp (l ◁ₗ{β} ty2) (Some n)}:
+    TypedWriteEnd b ot v ty1 l β ty2 | 1000 :=
+    λ T, i2p (typed_write_end_simpl b ot v ty1 l β ty2 n T).
 
 End place.
 Notation "place< l >" := (place l) (only printing, format "'place<' l '>'") : printing_sugar.

@@ -108,7 +108,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_2 ;
-        Return (LocInfoE loc_3 (CopyAllocId (IntOp uintptr_t) (LocInfoE loc_5 (use{it_layout uintptr_t} (LocInfoE loc_6 ("to")))) (LocInfoE loc_7 (use{void*} (LocInfoE loc_8 ("from"))))))
+        Return (LocInfoE loc_3 (CopyAllocId (IntOp uintptr_t) (LocInfoE loc_5 (use{IntOp uintptr_t} (LocInfoE loc_6 ("to")))) (LocInfoE loc_7 (use{PtrOp} (LocInfoE loc_8 ("from"))))))
       ]> $∅
     )%E
   |}.
@@ -127,14 +127,14 @@ Section code.
     f_init := "#0";
     f_code := (
       <[ "#0" :=
-        "cur" <-{ void* }
-          LocInfoE loc_68 (use{void*} (LocInfoE loc_69 ("list"))) ;
+        "cur" <-{ PtrOp }
+          LocInfoE loc_68 (use{PtrOp} (LocInfoE loc_69 ("list"))) ;
         locinfo: loc_12 ;
         Goto "#1"
       ]> $
       <[ "#1" :=
         locinfo: loc_62 ;
-        if: LocInfoE loc_62 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_62 ((LocInfoE loc_63 (use{void*} (LocInfoE loc_65 (!{void*} (LocInfoE loc_66 ("cur")))))) !={PtrOp, PtrOp} (LocInfoE loc_67 (NULL)))))
+        if: LocInfoE loc_62 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_62 ((LocInfoE loc_63 (use{PtrOp} (LocInfoE loc_65 (!{PtrOp} (LocInfoE loc_66 ("cur")))))) !={PtrOp, PtrOp} (LocInfoE loc_67 (NULL)))))
         then
         locinfo: loc_53 ;
           Goto "#2"
@@ -143,7 +143,7 @@ Section code.
       ]> $
       <[ "#2" :=
         locinfo: loc_53 ;
-        if: LocInfoE loc_53 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_53 ((LocInfoE loc_54 (use{it_layout size_t} (LocInfoE loc_55 ("sz")))) ≤{IntOp size_t, IntOp size_t} (LocInfoE loc_56 (use{it_layout size_t} (LocInfoE loc_57 ((LocInfoE loc_58 (!{void*} (LocInfoE loc_60 (!{void*} (LocInfoE loc_61 ("cur")))))) at{struct_chunk} "size")))))))
+        if: LocInfoE loc_53 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_53 ((LocInfoE loc_54 (use{IntOp size_t} (LocInfoE loc_55 ("sz")))) ≤{IntOp size_t, IntOp size_t} (LocInfoE loc_56 (use{IntOp size_t} (LocInfoE loc_57 ((LocInfoE loc_58 (!{PtrOp} (LocInfoE loc_60 (!{PtrOp} (LocInfoE loc_61 ("cur")))))) at{struct_chunk} "size")))))))
         then
         Goto "#5"
         else
@@ -151,23 +151,23 @@ Section code.
           Goto "#6"
       ]> $
       <[ "#3" :=
-        "entry" <-{ void* }
-          LocInfoE loc_34 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_34 (use{void*} (LocInfoE loc_35 ("data"))))) ;
+        "entry" <-{ PtrOp }
+          LocInfoE loc_34 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_34 (use{PtrOp} (LocInfoE loc_35 ("data"))))) ;
         locinfo: loc_14 ;
-        LocInfoE loc_29 ((LocInfoE loc_30 (!{void*} (LocInfoE loc_31 ("entry")))) at{struct_chunk} "size") <-{ it_layout size_t }
-          LocInfoE loc_32 (use{it_layout size_t} (LocInfoE loc_33 ("sz"))) ;
+        LocInfoE loc_29 ((LocInfoE loc_30 (!{PtrOp} (LocInfoE loc_31 ("entry")))) at{struct_chunk} "size") <-{ IntOp size_t }
+          LocInfoE loc_32 (use{IntOp size_t} (LocInfoE loc_33 ("sz"))) ;
         locinfo: loc_15 ;
-        LocInfoE loc_22 ((LocInfoE loc_23 (!{void*} (LocInfoE loc_24 ("entry")))) at{struct_chunk} "next") <-{ void* }
-          LocInfoE loc_25 (use{void*} (LocInfoE loc_27 (!{void*} (LocInfoE loc_28 ("cur"))))) ;
+        LocInfoE loc_22 ((LocInfoE loc_23 (!{PtrOp} (LocInfoE loc_24 ("entry")))) at{struct_chunk} "next") <-{ PtrOp }
+          LocInfoE loc_25 (use{PtrOp} (LocInfoE loc_27 (!{PtrOp} (LocInfoE loc_28 ("cur"))))) ;
         locinfo: loc_16 ;
-        LocInfoE loc_18 (!{void*} (LocInfoE loc_19 ("cur"))) <-{ void* }
-          LocInfoE loc_20 (use{void*} (LocInfoE loc_21 ("entry"))) ;
+        LocInfoE loc_18 (!{PtrOp} (LocInfoE loc_19 ("cur"))) <-{ PtrOp }
+          LocInfoE loc_20 (use{PtrOp} (LocInfoE loc_21 ("entry"))) ;
         Return (VOID)
       ]> $
       <[ "#4" :=
         locinfo: loc_41 ;
-        LocInfoE loc_44 ("cur") <-{ void* }
-          LocInfoE loc_45 (&(LocInfoE loc_46 ((LocInfoE loc_47 (!{void*} (LocInfoE loc_49 (!{void*} (LocInfoE loc_50 ("cur")))))) at{struct_chunk} "next"))) ;
+        LocInfoE loc_44 ("cur") <-{ PtrOp }
+          LocInfoE loc_45 (&(LocInfoE loc_46 ((LocInfoE loc_47 (!{PtrOp} (LocInfoE loc_49 (!{PtrOp} (LocInfoE loc_50 ("cur")))))) at{struct_chunk} "next"))) ;
         locinfo: loc_42 ;
         Goto "continue4"
       ]> $

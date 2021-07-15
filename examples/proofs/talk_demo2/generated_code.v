@@ -106,7 +106,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_2 ;
-        Return (LocInfoE loc_3 (CopyAllocId (IntOp uintptr_t) (LocInfoE loc_5 (use{it_layout uintptr_t} (LocInfoE loc_6 ("to")))) (LocInfoE loc_7 (use{void*} (LocInfoE loc_8 ("from"))))))
+        Return (LocInfoE loc_3 (CopyAllocId (IntOp uintptr_t) (LocInfoE loc_5 (use{IntOp uintptr_t} (LocInfoE loc_6 ("to")))) (LocInfoE loc_7 (use{PtrOp} (LocInfoE loc_8 ("from"))))))
       ]> $∅
     )%E
   |}.
@@ -123,7 +123,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_31 ;
-        if: LocInfoE loc_31 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_31 ((LocInfoE loc_32 (use{void*} (LocInfoE loc_34 (!{void*} (LocInfoE loc_35 ("l")))))) ={PtrOp, PtrOp} (LocInfoE loc_36 (NULL)))))
+        if: LocInfoE loc_31 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_31 ((LocInfoE loc_32 (use{PtrOp} (LocInfoE loc_34 (!{PtrOp} (LocInfoE loc_35 ("l")))))) ={PtrOp, PtrOp} (LocInfoE loc_36 (NULL)))))
         then
         locinfo: loc_13 ;
           Goto "#1"
@@ -133,14 +133,14 @@ Section code.
       ]> $
       <[ "#1" :=
         locinfo: loc_13 ;
-        LocInfoE loc_15 (!{void*} (LocInfoE loc_16 ("l"))) <-{ void* }
-          LocInfoE loc_17 (use{void*} (LocInfoE loc_18 ("k"))) ;
+        LocInfoE loc_15 (!{PtrOp} (LocInfoE loc_16 ("l"))) <-{ PtrOp }
+          LocInfoE loc_17 (use{PtrOp} (LocInfoE loc_18 ("k"))) ;
         Return (VOID)
       ]> $
       <[ "#2" :=
         locinfo: loc_20 ;
-        expr: (LocInfoE loc_20 (Call (LocInfoE loc_22 (global_append)) [@{expr} LocInfoE loc_23 (&(LocInfoE loc_24 ((LocInfoE loc_25 (!{void*} (LocInfoE loc_27 (!{void*} (LocInfoE loc_28 ("l")))))) at{struct_list_node} "next"))) ;
-        LocInfoE loc_29 (use{void*} (LocInfoE loc_30 ("k"))) ])) ;
+        expr: (LocInfoE loc_20 (Call (LocInfoE loc_22 (global_append)) [@{expr} LocInfoE loc_23 (&(LocInfoE loc_24 ((LocInfoE loc_25 (!{PtrOp} (LocInfoE loc_27 (!{PtrOp} (LocInfoE loc_28 ("l")))))) at{struct_list_node} "next"))) ;
+        LocInfoE loc_29 (use{PtrOp} (LocInfoE loc_30 ("k"))) ])) ;
         Return (VOID)
       ]> $∅
     )%E
@@ -157,27 +157,27 @@ Section code.
     f_init := "#0";
     f_code := (
       <[ "#0" :=
-        "node1" <-{ void* }
+        "node1" <-{ PtrOp }
           LocInfoE loc_81 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_81 (Call (LocInfoE loc_83 (global_alloc)) [@{expr} LocInfoE loc_84 (i2v (layout_of struct_list_node).(ly_size) size_t) ]))) ;
         locinfo: loc_40 ;
-        LocInfoE loc_77 ((LocInfoE loc_78 (!{void*} (LocInfoE loc_79 ("node1")))) at{struct_list_node} "val") <-{ it_layout i32 }
+        LocInfoE loc_77 ((LocInfoE loc_78 (!{PtrOp} (LocInfoE loc_79 ("node1")))) at{struct_list_node} "val") <-{ IntOp i32 }
           LocInfoE loc_80 (i2v 1 i32) ;
         locinfo: loc_41 ;
-        LocInfoE loc_73 ((LocInfoE loc_74 (!{void*} (LocInfoE loc_75 ("node1")))) at{struct_list_node} "next") <-{ void* }
+        LocInfoE loc_73 ((LocInfoE loc_74 (!{PtrOp} (LocInfoE loc_75 ("node1")))) at{struct_list_node} "next") <-{ PtrOp }
           LocInfoE loc_76 (NULL) ;
-        "node2" <-{ void* }
+        "node2" <-{ PtrOp }
           LocInfoE loc_67 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_67 (Call (LocInfoE loc_69 (global_alloc)) [@{expr} LocInfoE loc_70 (i2v (layout_of struct_list_node).(ly_size) size_t) ]))) ;
         locinfo: loc_43 ;
-        LocInfoE loc_63 ((LocInfoE loc_64 (!{void*} (LocInfoE loc_65 ("node2")))) at{struct_list_node} "val") <-{ it_layout i32 }
+        LocInfoE loc_63 ((LocInfoE loc_64 (!{PtrOp} (LocInfoE loc_65 ("node2")))) at{struct_list_node} "val") <-{ IntOp i32 }
           LocInfoE loc_66 (i2v 2 i32) ;
         locinfo: loc_44 ;
-        LocInfoE loc_59 ((LocInfoE loc_60 (!{void*} (LocInfoE loc_61 ("node2")))) at{struct_list_node} "next") <-{ void* }
+        LocInfoE loc_59 ((LocInfoE loc_60 (!{PtrOp} (LocInfoE loc_61 ("node2")))) at{struct_list_node} "next") <-{ PtrOp }
           LocInfoE loc_62 (NULL) ;
         locinfo: loc_45 ;
         expr: (LocInfoE loc_45 (Call (LocInfoE loc_54 (global_append)) [@{expr} LocInfoE loc_55 (&(LocInfoE loc_56 ("node1"))) ;
-        LocInfoE loc_57 (use{void*} (LocInfoE loc_58 ("node2"))) ])) ;
+        LocInfoE loc_57 (use{PtrOp} (LocInfoE loc_58 ("node2"))) ])) ;
         locinfo: loc_49 ;
-        if: LocInfoE loc_49 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_49 ((LocInfoE loc_50 (use{void*} (LocInfoE loc_51 ("node1")))) !={PtrOp, PtrOp} (LocInfoE loc_52 (NULL)))))
+        if: LocInfoE loc_49 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_49 ((LocInfoE loc_50 (use{PtrOp} (LocInfoE loc_51 ("node1")))) !={PtrOp, PtrOp} (LocInfoE loc_52 (NULL)))))
         then
         Goto "#1"
         else

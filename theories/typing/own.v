@@ -27,13 +27,17 @@ Section own.
 
   Global Program Instance rmovable_frac_ptr β ty : RMovable (frac_ptr β ty) := {|
     rmovable l := {|
-      ty_has_layout ly := ly = void*;
+      ty_has_op_type ot mt := is_ptr_ot ot;
       ty_own_val v := (⌜v = val_of_loc l⌝ ∗ l ◁ₗ{β} ty)%I;
   |} |}.
-  Next Obligation. iIntros (β ty l ly l' ->). by iDestruct 1 as (?) "_". Qed.
-  Next Obligation. iIntros (β ty l ly v ->). by iDestruct 1 as (->) "_". Qed.
-  Next Obligation. iIntros (β ty l ly l' ->) "(%&Hl&Hl')". rewrite left_id. eauto with iFrame. Qed.
-  Next Obligation. iIntros (β ty l ly l' v -> ?) "Hl [-> Hl']". iFrame. iSplit => //. by rewrite left_id. Qed.
+  Next Obligation. iIntros (β ty l ot mt l' ->%is_ptr_ot_layout). by iDestruct 1 as (?) "_". Qed.
+  Next Obligation. iIntros (β ty l ot mt v ->%is_ptr_ot_layout). by iDestruct 1 as (->) "_". Qed.
+  Next Obligation. iIntros (β ty l ot mt l' ?) "(%&Hl&Hl')". rewrite left_id. eauto with iFrame. Qed.
+  Next Obligation. iIntros (β ty l ot mt l' v ->%is_ptr_ot_layout ?) "Hl [-> Hl']". iFrame. iSplit => //. by rewrite left_id. Qed.
+  Next Obligation.
+    iIntros (β ty l v ot mt st ?). apply: mem_cast_compat_loc; [done|].
+    iIntros "[-> ?]". iPureIntro. naive_solver.
+  Qed.
 
   Global Instance frac_ptr_loc_in_bounds l ty β1 β2 : LocInBounds (l @ frac_ptr β1 ty) β2 bytes_per_addr.
   Proof.
@@ -56,19 +60,19 @@ Section own.
 
   Lemma type_place_frac p β K β1 ty1 T l:
     typed_place K p (own_state_min β1 β) ty1 (λ l2 β2 ty2 typ, T l2 β2 ty2 (λ t, (p @ (frac_ptr β (typ t))))) -∗
-    typed_place (DerefPCtx Na1Ord void* :: K) l β1 (p @ (frac_ptr β ty1)) T.
+    typed_place (DerefPCtx Na1Ord PtrOp :: K) l β1 (p @ (frac_ptr β ty1)) T.
   Proof.
     iIntros "HP" (Φ) "(%&Hm&Hl) HΦ" => /=.
     iMod (heap_mapsto_own_state_to_mt with "Hm") as (q Hq) "Hm" => //.
     iApply (wp_deref with "Hm") => //; [naive_solver| by apply val_to_of_loc|].
-    iIntros "!# Hm". iExists _. iSplit => //.
+    iIntros "!# %st Hm". iExists _. rewrite mem_cast_id_loc. iSplit => //.
     iApply ("HP" with "Hl"). iIntros (l' ty2 β2 typ R) "Hl' Htyp HT".
     iApply ("HΦ" with "Hl' [-HT] HT"). iIntros (ty') "Hl'".
     iMod ("Htyp" with "Hl'") as "[? $]". iFrame. iSplitR => //.
     by iApply heap_mapsto_own_state_from_mt.
   Qed.
   Global Instance type_place_frac_inst p β K β1 ty1 l :
-    TypedPlace (DerefPCtx Na1Ord void* :: K) l β1 (p @ (frac_ptr β ty1)) :=
+    TypedPlace (DerefPCtx Na1Ord PtrOp :: K) l β1 (p @ (frac_ptr β ty1)) :=
     λ T, i2p (type_place_frac _ _ _ _ _ _ _).
 
   Lemma type_addr_of (T : val → _) e:
@@ -176,7 +180,7 @@ Section own.
     typed_un_op p (p ◁ₗ{β} ty) (CastOp PtrOp) PtrOp T.
   Proof.
     iIntros "HT Hp" (Φ) "HΦ".
-    iApply wp_cast_loc. by apply val_to_of_loc.
+    iApply wp_cast_loc; [by apply val_to_of_loc|].
     iApply ("HΦ" with "[Hp] HT") => //. by iFrame.
   Qed.
   Global Instance type_cast_ptr_ptr_inst (p : loc) β ty:
@@ -225,7 +229,8 @@ Section own.
     rewrite !right_id. iDestruct "HT" as "[#Hlib HT]".
     iApply wp_copy_alloc_id; [ done | by rewrite val_to_of_loc | done | ].
     iSplit; [by iDestruct "HT" as "[$ _]" |].
-    iDestruct "HT" as "[_ HT]". by iApply ("HΦ" with "[] HT").
+    iDestruct "HT" as "[_ HT]".
+    by iApply ("HΦ" with "[] HT").
   Qed.
   Global Instance type_copy_aid_inst (v : val) a it (l : loc) β ty:
     TypedCopyAllocId v (v ◁ᵥ a @ int it)%I l (l ◁ₗ{β} ty) (IntOp it) :=
@@ -306,7 +311,7 @@ Section own.
 
   Global Program Instance shr_copyable p ty : Copyable (p @ frac_ptr Shr ty).
   Next Obligation.
-    iIntros (p ty E ly l ? ->) "(%&#Hmt&#Hty)".
+    iIntros (p ty E ot l ? ->%is_ptr_ot_layout) "(%&#Hmt&#Hty)".
     iMod (heap_mapsto_own_state_to_mt with "Hmt") as (q) "[_ Hl]" => //. iSplitR => //.
     iExists _, _. iFrame. iModIntro. iSplit => //. by iSplit.
     by iIntros "_".
@@ -377,13 +382,17 @@ Section ptr.
 
   Global Program Instance rmovable_ptr n : RMovable (ptr n) := {|
     rmovable l := {|
-      ty_has_layout ly := ly = void*;
+      ty_has_op_type ot mt := is_ptr_ot ot;
       ty_own_val v := (⌜v = val_of_loc l⌝ ∗ loc_in_bounds l n)%I;
   |} |}.
-  Next Obligation. iIntros (l ly l' ? ->). by iDestruct 1 as (?) "_". Qed.
-  Next Obligation. iIntros (n l ly v ->) "[Hv _]". by iDestruct "Hv" as %->. Qed.
-  Next Obligation. iIntros (n l ly v ->) "[_ [? Hl]]". eauto with iFrame. Qed.
-  Next Obligation. iIntros (n l ly l' v -> ?) "Hl [-> $]". by iFrame. Qed.
+  Next Obligation. iIntros (n l ot mt l' ->%is_ptr_ot_layout). by iDestruct 1 as (?) "_". Qed.
+  Next Obligation. iIntros (n l ot mt v ->%is_ptr_ot_layout) "[Hv _]". by iDestruct "Hv" as %->. Qed.
+  Next Obligation. iIntros (n l ot mt v ?) "[_ [? Hl]]". eauto with iFrame. Qed.
+  Next Obligation. iIntros (n l ot mt l' v ->%is_ptr_ot_layout ?) "Hl [-> $]". by iFrame. Qed.
+  Next Obligation.
+    iIntros (n l v ot mt st ?). apply mem_cast_compat_loc; [done|].
+    iIntros "[-> ?]". iPureIntro. naive_solver.
+  Qed.
 
   Instance ptr_loc_in_bounds l n β : LocInBounds (l @ ptr n) β bytes_per_addr.
   Proof.
@@ -393,10 +402,11 @@ Section ptr.
   Qed.
 
   Lemma simplify_ptr_hyp_place (p:loc) l n T:
-    (loc_in_bounds p n -∗ l ◁ₗ value void* (val_of_loc p) -∗ T) -∗
+    (loc_in_bounds p n -∗ l ◁ₗ value PtrOp (val_of_loc p) -∗ T) -∗
       simplify_hyp (l ◁ₗ p @ ptr n) T.
   Proof.
-    iIntros "HT [% [#? Hl]]". iApply "HT"; first done. by repeat iSplit.
+    iIntros "HT [% [#? Hl]]". iApply "HT"; first done.
+    repeat iSplit => //. iPureIntro. by apply: mem_cast_id_loc.
   Qed.
   Global Instance simplify_ptr_hyp_place_inst p l n:
     SimplifyHypPlace l Own (p @ ptr n)%I (Some 0%N) :=
@@ -414,8 +424,8 @@ Section ptr.
     subsume (p ◁ₗ l1 @ &own ty)%I (p ◁ₗ l2 @ ptr n)%I T.
   Proof.
     iIntros "[-> HT] Hp".
-    iDestruct (ty_aligned with "Hp") as %?; [done|].
-    iDestruct (ty_deref with "Hp") as (v) "[Hp [-> Hl]]"; [done|].
+    iDestruct (ty_aligned PtrOp MCNone with "Hp") as %?; [done|].
+    iDestruct (ty_deref PtrOp MCNone with "Hp") as (v) "[Hp [-> Hl]]"; [done|].
     iDestruct ("HT" with "Hl") as "[#Hlib $]".
     iFrame "Hp Hlib". done.
   Qed.
@@ -429,7 +439,7 @@ Section ptr.
       v2 ◁ᵥ l @ ptr n -∗
       ⌜l.2 ≤ a ≤ l.2 + n⌝ ∗
       (alloc_alive_loc l ∗ True) ∧
-      T (val_of_loc (l.1, a)) (t2mt (value void* (val_of_loc (l.1, a))))
+      T (val_of_loc (l.1, a)) (t2mt (value PtrOp (val_of_loc (l.1, a))))
     ) -∗
     typed_copy_alloc_id v1 (v1 ◁ᵥ a @ int it) v2 (v2 ◁ᵥ l @ ptr n) (IntOp it) T.
   Proof.
@@ -439,7 +449,8 @@ Section ptr.
     iApply wp_copy_alloc_id; [ done | by rewrite val_to_of_loc |  | ].
     { iApply (loc_in_bounds_offset with "Hlib"); simpl; [done | done | etrans; [|done]; lia ]. }
     iSplit; [by iDestruct "HT" as "[$ _]" |].
-    iDestruct "HT" as "[_ HT]". by iApply ("HΦ" with "[] HT").
+    iDestruct "HT" as "[_ HT]". iApply ("HΦ" with "[] HT").
+    iSplit => //. iPureIntro. apply: mem_cast_id_loc.
   Qed.
   Global Instance type_copy_aid_ptr_inst v1 a it v2 (l : loc) n:
     TypedCopyAllocId v1 (v1 ◁ᵥ a @ int it)%I v2 (v2 ◁ᵥ l @ ptr n)%I (IntOp it) :=
@@ -454,13 +465,14 @@ Section null.
   Next Obligation. iIntros (???). iDestruct 1 as "[$ ?]". by iApply heap_mapsto_own_state_share. Qed.
 
   Global Program Instance movable_null : Movable null := {|
-    ty_has_layout ly := ly = void*;
+    ty_has_op_type ot mt := is_ptr_ot ot;
     ty_own_val v := ⌜v = NULL⌝%I;
   |}.
-  Next Obligation. by iIntros (??->) "[% _]". Qed.
-  Next Obligation. by iIntros (??->->). Qed.
-  Next Obligation. iIntros (??->) "[% ?]". iExists _. by iFrame. Qed.
-  Next Obligation. iIntros (???->?) "? ->". by iFrame. Qed.
+  Next Obligation. by iIntros (???->%is_ptr_ot_layout) "[% _]". Qed.
+  Next Obligation. by iIntros (???->%is_ptr_ot_layout->). Qed.
+  Next Obligation. iIntros (????) "[% ?]". iExists _. by iFrame. Qed.
+  Next Obligation. iIntros (????->%is_ptr_ot_layout?) "? ->". by iFrame. Qed.
+  Next Obligation. iIntros (v ot mt st ?). apply mem_cast_compat_loc; [done|]. iPureIntro. naive_solver. Qed.
 
   Global Instance null_loc_in_bounds β : LocInBounds null β bytes_per_addr.
   Proof.
@@ -477,7 +489,7 @@ Section null.
 
   Global Program Instance null_copyable : Copyable (null).
   Next Obligation.
-    iIntros (E l ??->) "[% Hl]".
+    iIntros (E l ??->%is_ptr_ot_layout) "[% Hl]".
     iMod (heap_mapsto_own_state_to_mt with "Hl") as (q) "[_ Hl]" => //. iSplitR => //.
     iExists _, _. iFrame. iModIntro. iSplit => //.
     by iIntros "_".

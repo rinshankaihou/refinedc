@@ -333,7 +333,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_2 ;
-        Return (LocInfoE loc_3 (CopyAllocId (IntOp uintptr_t) (LocInfoE loc_5 (use{it_layout uintptr_t} (LocInfoE loc_6 ("to")))) (LocInfoE loc_7 (use{void*} (LocInfoE loc_8 ("from"))))))
+        Return (LocInfoE loc_3 (CopyAllocId (IntOp uintptr_t) (LocInfoE loc_5 (use{IntOp uintptr_t} (LocInfoE loc_6 ("to")))) (LocInfoE loc_7 (use{PtrOp} (LocInfoE loc_8 ("from"))))))
       ]> $∅
     )%E
   |}.
@@ -349,10 +349,10 @@ Section code.
     f_init := "#0";
     f_code := (
       <[ "#0" :=
-        "i" <-{ it_layout uintptr_t }
-          LocInfoE loc_15 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_16 (use{void*} (LocInfoE loc_17 ("p"))))) ;
+        "i" <-{ IntOp uintptr_t }
+          LocInfoE loc_15 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_16 (use{PtrOp} (LocInfoE loc_17 ("p"))))) ;
         locinfo: loc_12 ;
-        Return (LocInfoE loc_13 (use{it_layout uintptr_t} (LocInfoE loc_14 ("i"))))
+        Return (LocInfoE loc_13 (use{IntOp uintptr_t} (LocInfoE loc_14 ("i"))))
       ]> $∅
     )%E
   |}.
@@ -368,10 +368,10 @@ Section code.
     f_init := "#0";
     f_code := (
       <[ "#0" :=
-        "i" <-{ it_layout uintptr_t }
-          LocInfoE loc_26 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_27 (use{void*} (LocInfoE loc_28 ("p"))))) ;
+        "i" <-{ IntOp uintptr_t }
+          LocInfoE loc_26 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_27 (use{PtrOp} (LocInfoE loc_28 ("p"))))) ;
         locinfo: loc_23 ;
-        Return (LocInfoE loc_24 (use{it_layout uintptr_t} (LocInfoE loc_25 ("i"))))
+        Return (LocInfoE loc_24 (use{IntOp uintptr_t} (LocInfoE loc_25 ("i"))))
       ]> $∅
     )%E
   |}.
@@ -387,10 +387,10 @@ Section code.
     f_init := "#0";
     f_code := (
       <[ "#0" :=
-        "i" <-{ it_layout uintptr_t }
-          LocInfoE loc_39 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_40 (use{void*} (LocInfoE loc_41 ("p"))))) ;
+        "i" <-{ IntOp uintptr_t }
+          LocInfoE loc_39 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_40 (use{PtrOp} (LocInfoE loc_41 ("p"))))) ;
         locinfo: loc_34 ;
-        Return (LocInfoE loc_35 ((LocInfoE loc_36 (use{it_layout uintptr_t} (LocInfoE loc_37 ("i")))) +{IntOp uintptr_t, IntOp uintptr_t} (LocInfoE loc_38 (UnOp (CastOp $ IntOp uintptr_t) (IntOp i32) (LocInfoE loc_38 (i2v 0 i32))))))
+        Return (LocInfoE loc_35 ((LocInfoE loc_36 (use{IntOp uintptr_t} (LocInfoE loc_37 ("i")))) +{IntOp uintptr_t, IntOp uintptr_t} (LocInfoE loc_38 (UnOp (CastOp $ IntOp uintptr_t) (IntOp i32) (LocInfoE loc_38 (i2v 0 i32))))))
       ]> $∅
     )%E
   |}.
@@ -408,12 +408,12 @@ Section code.
     f_init := "#0";
     f_code := (
       <[ "#0" :=
-        "i1" <-{ it_layout uintptr_t }
-          LocInfoE loc_67 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_68 (use{void*} (LocInfoE loc_69 ("p1"))))) ;
-        "i2" <-{ it_layout uintptr_t }
-          LocInfoE loc_62 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_63 (use{void*} (LocInfoE loc_64 ("p2"))))) ;
+        "i1" <-{ IntOp uintptr_t }
+          LocInfoE loc_67 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_68 (use{PtrOp} (LocInfoE loc_69 ("p1"))))) ;
+        "i2" <-{ IntOp uintptr_t }
+          LocInfoE loc_62 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_63 (use{PtrOp} (LocInfoE loc_64 ("p2"))))) ;
         locinfo: loc_57 ;
-        if: LocInfoE loc_57 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_57 ((LocInfoE loc_58 (use{it_layout uintptr_t} (LocInfoE loc_59 ("i1")))) ≤{IntOp uintptr_t, IntOp uintptr_t} (LocInfoE loc_60 (use{it_layout uintptr_t} (LocInfoE loc_61 ("i2")))))))
+        if: LocInfoE loc_57 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_57 ((LocInfoE loc_58 (use{IntOp uintptr_t} (LocInfoE loc_59 ("i1")))) ≤{IntOp uintptr_t, IntOp uintptr_t} (LocInfoE loc_60 (use{IntOp uintptr_t} (LocInfoE loc_61 ("i2")))))))
         then
         locinfo: loc_53 ;
           Goto "#2"
@@ -423,11 +423,11 @@ Section code.
       ]> $
       <[ "#1" :=
         locinfo: loc_49 ;
-        Return (LocInfoE loc_50 (use{it_layout uintptr_t} (LocInfoE loc_51 ("i2"))))
+        Return (LocInfoE loc_50 (use{IntOp uintptr_t} (LocInfoE loc_51 ("i2"))))
       ]> $
       <[ "#2" :=
         locinfo: loc_53 ;
-        Return (LocInfoE loc_54 (use{it_layout uintptr_t} (LocInfoE loc_55 ("i1"))))
+        Return (LocInfoE loc_54 (use{IntOp uintptr_t} (LocInfoE loc_55 ("i1"))))
       ]> $
       <[ "#3" :=
         locinfo: loc_49 ;
@@ -449,12 +449,12 @@ Section code.
     f_init := "#0";
     f_code := (
       <[ "#0" :=
-        "i1" <-{ it_layout uintptr_t }
-          LocInfoE loc_95 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_96 (use{void*} (LocInfoE loc_97 ("p1"))))) ;
-        "i2" <-{ it_layout uintptr_t }
-          LocInfoE loc_90 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_91 (use{void*} (LocInfoE loc_92 ("p2"))))) ;
+        "i1" <-{ IntOp uintptr_t }
+          LocInfoE loc_95 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_96 (use{PtrOp} (LocInfoE loc_97 ("p1"))))) ;
+        "i2" <-{ IntOp uintptr_t }
+          LocInfoE loc_90 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_91 (use{PtrOp} (LocInfoE loc_92 ("p2"))))) ;
         locinfo: loc_85 ;
-        if: LocInfoE loc_85 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_85 ((LocInfoE loc_86 (use{it_layout uintptr_t} (LocInfoE loc_87 ("i1")))) ≤{IntOp uintptr_t, IntOp uintptr_t} (LocInfoE loc_88 (use{it_layout uintptr_t} (LocInfoE loc_89 ("i2")))))))
+        if: LocInfoE loc_85 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_85 ((LocInfoE loc_86 (use{IntOp uintptr_t} (LocInfoE loc_87 ("i1")))) ≤{IntOp uintptr_t, IntOp uintptr_t} (LocInfoE loc_88 (use{IntOp uintptr_t} (LocInfoE loc_89 ("i2")))))))
         then
         locinfo: loc_81 ;
           Goto "#2"
@@ -464,11 +464,11 @@ Section code.
       ]> $
       <[ "#1" :=
         locinfo: loc_77 ;
-        Return (LocInfoE loc_78 (use{it_layout uintptr_t} (LocInfoE loc_79 ("i2"))))
+        Return (LocInfoE loc_78 (use{IntOp uintptr_t} (LocInfoE loc_79 ("i2"))))
       ]> $
       <[ "#2" :=
         locinfo: loc_81 ;
-        Return (LocInfoE loc_82 (use{it_layout uintptr_t} (LocInfoE loc_83 ("i1"))))
+        Return (LocInfoE loc_82 (use{IntOp uintptr_t} (LocInfoE loc_83 ("i1"))))
       ]> $
       <[ "#3" :=
         locinfo: loc_77 ;
@@ -490,14 +490,14 @@ Section code.
     f_init := "#0";
     f_code := (
       <[ "#0" :=
-        "x" <-{ it_layout i32 } LocInfoE loc_161 (i2v 0 i32) ;
-        "y" <-{ it_layout i32 } LocInfoE loc_158 (i2v 0 i32) ;
-        "i" <-{ it_layout uintptr_t }
+        "x" <-{ IntOp i32 } LocInfoE loc_161 (i2v 0 i32) ;
+        "y" <-{ IntOp i32 } LocInfoE loc_158 (i2v 0 i32) ;
+        "i" <-{ IntOp uintptr_t }
           LocInfoE loc_153 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_154 (&(LocInfoE loc_155 ("x"))))) ;
-        "j" <-{ it_layout uintptr_t }
+        "j" <-{ IntOp uintptr_t }
           LocInfoE loc_148 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_149 (&(LocInfoE loc_150 ("y"))))) ;
         locinfo: loc_143 ;
-        if: LocInfoE loc_143 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_143 ((LocInfoE loc_144 (use{it_layout uintptr_t} (LocInfoE loc_145 ("i")))) <{IntOp uintptr_t, IntOp uintptr_t} (LocInfoE loc_146 (use{it_layout uintptr_t} (LocInfoE loc_147 ("j")))))))
+        if: LocInfoE loc_143 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_143 ((LocInfoE loc_144 (use{IntOp uintptr_t} (LocInfoE loc_145 ("i")))) <{IntOp uintptr_t, IntOp uintptr_t} (LocInfoE loc_146 (use{IntOp uintptr_t} (LocInfoE loc_147 ("j")))))))
         then
         locinfo: loc_136 ;
           Goto "#4"
@@ -507,7 +507,7 @@ Section code.
       ]> $
       <[ "#1" :=
         locinfo: loc_130 ;
-        if: LocInfoE loc_130 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_130 ((LocInfoE loc_131 (use{it_layout uintptr_t} (LocInfoE loc_132 ("i")))) <{IntOp uintptr_t, IntOp uintptr_t} (LocInfoE loc_133 (use{it_layout uintptr_t} (LocInfoE loc_134 ("j")))))))
+        if: LocInfoE loc_130 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_130 ((LocInfoE loc_131 (use{IntOp uintptr_t} (LocInfoE loc_132 ("i")))) <{IntOp uintptr_t, IntOp uintptr_t} (LocInfoE loc_133 (use{IntOp uintptr_t} (LocInfoE loc_134 ("j")))))))
         then
         locinfo: loc_109 ;
           Goto "#2"
@@ -517,28 +517,28 @@ Section code.
       ]> $
       <[ "#2" :=
         locinfo: loc_109 ;
-        assert: (LocInfoE loc_115 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_115 ((LocInfoE loc_116 (use{it_layout i32} (LocInfoE loc_117 ("y")))) ={IntOp i32, IntOp i32} (LocInfoE loc_118 (i2v 10 i32)))))) ;
+        assert: (LocInfoE loc_115 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_115 ((LocInfoE loc_116 (use{IntOp i32} (LocInfoE loc_117 ("y")))) ={IntOp i32, IntOp i32} (LocInfoE loc_118 (i2v 10 i32)))))) ;
         locinfo: loc_110 ;
-        assert: (LocInfoE loc_111 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_111 ((LocInfoE loc_112 (use{it_layout i32} (LocInfoE loc_113 ("x")))) ={IntOp i32, IntOp i32} (LocInfoE loc_114 (i2v 0 i32)))))) ;
+        assert: (LocInfoE loc_111 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_111 ((LocInfoE loc_112 (use{IntOp i32} (LocInfoE loc_113 ("x")))) ={IntOp i32, IntOp i32} (LocInfoE loc_114 (i2v 0 i32)))))) ;
         Return (VOID)
       ]> $
       <[ "#3" :=
         locinfo: loc_120 ;
-        assert: (LocInfoE loc_126 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_126 ((LocInfoE loc_127 (use{it_layout i32} (LocInfoE loc_128 ("x")))) ={IntOp i32, IntOp i32} (LocInfoE loc_129 (i2v 10 i32)))))) ;
+        assert: (LocInfoE loc_126 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_126 ((LocInfoE loc_127 (use{IntOp i32} (LocInfoE loc_128 ("x")))) ={IntOp i32, IntOp i32} (LocInfoE loc_129 (i2v 10 i32)))))) ;
         locinfo: loc_121 ;
-        assert: (LocInfoE loc_122 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_122 ((LocInfoE loc_123 (use{it_layout i32} (LocInfoE loc_124 ("y")))) ={IntOp i32, IntOp i32} (LocInfoE loc_125 (i2v 0 i32)))))) ;
+        assert: (LocInfoE loc_122 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_122 ((LocInfoE loc_123 (use{IntOp i32} (LocInfoE loc_124 ("y")))) ={IntOp i32, IntOp i32} (LocInfoE loc_125 (i2v 0 i32)))))) ;
         Return (VOID)
       ]> $
       <[ "#4" :=
         locinfo: loc_136 ;
-        LocInfoE loc_137 ("y") <-{ it_layout i32 }
+        LocInfoE loc_137 ("y") <-{ IntOp i32 }
           LocInfoE loc_138 (i2v 10 i32) ;
         locinfo: loc_130 ;
         Goto "#1"
       ]> $
       <[ "#5" :=
         locinfo: loc_140 ;
-        LocInfoE loc_141 ("x") <-{ it_layout i32 }
+        LocInfoE loc_141 ("x") <-{ IntOp i32 }
           LocInfoE loc_142 (i2v 10 i32) ;
         locinfo: loc_130 ;
         Goto "#1"
@@ -558,12 +558,12 @@ Section code.
     f_init := "#0";
     f_code := (
       <[ "#0" :=
-        "i" <-{ it_layout uintptr_t }
-          LocInfoE loc_176 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_177 (use{void*} (LocInfoE loc_178 ("p"))))) ;
-        "q" <-{ void* }
-          LocInfoE loc_171 (UnOp (CastOp $ PtrOp) (IntOp uintptr_t) (LocInfoE loc_172 (use{it_layout uintptr_t} (LocInfoE loc_173 ("i"))))) ;
+        "i" <-{ IntOp uintptr_t }
+          LocInfoE loc_176 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_177 (use{PtrOp} (LocInfoE loc_178 ("p"))))) ;
+        "q" <-{ PtrOp }
+          LocInfoE loc_171 (UnOp (CastOp $ PtrOp) (IntOp uintptr_t) (LocInfoE loc_172 (use{IntOp uintptr_t} (LocInfoE loc_173 ("i"))))) ;
         locinfo: loc_168 ;
-        Return (LocInfoE loc_169 (use{void*} (LocInfoE loc_170 ("q"))))
+        Return (LocInfoE loc_169 (use{PtrOp} (LocInfoE loc_170 ("q"))))
       ]> $∅
     )%E
   |}.
@@ -580,12 +580,12 @@ Section code.
     f_init := "#0";
     f_code := (
       <[ "#0" :=
-        "i" <-{ it_layout uintptr_t }
-          LocInfoE loc_195 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_196 (use{void*} (LocInfoE loc_197 ("p"))))) ;
-        "q" <-{ void* }
-          LocInfoE loc_188 (UnOp (CastOp $ PtrOp) (IntOp uintptr_t) (LocInfoE loc_189 ((LocInfoE loc_190 (use{it_layout uintptr_t} (LocInfoE loc_191 ("i")))) +{IntOp uintptr_t, IntOp uintptr_t} (LocInfoE loc_192 (UnOp (CastOp $ IntOp uintptr_t) (IntOp i32) (LocInfoE loc_192 (i2v 0 i32))))))) ;
+        "i" <-{ IntOp uintptr_t }
+          LocInfoE loc_195 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_196 (use{PtrOp} (LocInfoE loc_197 ("p"))))) ;
+        "q" <-{ PtrOp }
+          LocInfoE loc_188 (UnOp (CastOp $ PtrOp) (IntOp uintptr_t) (LocInfoE loc_189 ((LocInfoE loc_190 (use{IntOp uintptr_t} (LocInfoE loc_191 ("i")))) +{IntOp uintptr_t, IntOp uintptr_t} (LocInfoE loc_192 (UnOp (CastOp $ IntOp uintptr_t) (IntOp i32) (LocInfoE loc_192 (i2v 0 i32))))))) ;
         locinfo: loc_185 ;
-        Return (LocInfoE loc_186 (use{void*} (LocInfoE loc_187 ("q"))))
+        Return (LocInfoE loc_186 (use{PtrOp} (LocInfoE loc_187 ("q"))))
       ]> $∅
     )%E
   |}.
@@ -602,13 +602,13 @@ Section code.
     f_init := "#0";
     f_code := (
       <[ "#0" :=
-        "i" <-{ it_layout uintptr_t }
-          LocInfoE loc_218 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_219 (use{void*} (LocInfoE loc_220 ("p"))))) ;
-        "k" <-{ it_layout uintptr_t }
-          LocInfoE loc_212 ((LocInfoE loc_213 (use{it_layout uintptr_t} (LocInfoE loc_214 ("i")))) +{IntOp uintptr_t, IntOp uintptr_t} (LocInfoE loc_215 (UnOp (CastOp $ IntOp uintptr_t) (IntOp i32) (LocInfoE loc_215 (i2v 0 i32))))) ;
+        "i" <-{ IntOp uintptr_t }
+          LocInfoE loc_218 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_219 (use{PtrOp} (LocInfoE loc_220 ("p"))))) ;
+        "k" <-{ IntOp uintptr_t }
+          LocInfoE loc_212 ((LocInfoE loc_213 (use{IntOp uintptr_t} (LocInfoE loc_214 ("i")))) +{IntOp uintptr_t, IntOp uintptr_t} (LocInfoE loc_215 (UnOp (CastOp $ IntOp uintptr_t) (IntOp i32) (LocInfoE loc_215 (i2v 0 i32))))) ;
         locinfo: loc_204 ;
-        Return (LocInfoE loc_205 (Call (LocInfoE loc_207 (global_copy_alloc_id)) [@{expr} LocInfoE loc_208 (use{it_layout uintptr_t} (LocInfoE loc_209 ("k"))) ;
-               LocInfoE loc_210 (use{void*} (LocInfoE loc_211 ("p"))) ]))
+        Return (LocInfoE loc_205 (Call (LocInfoE loc_207 (global_copy_alloc_id)) [@{expr} LocInfoE loc_208 (use{IntOp uintptr_t} (LocInfoE loc_209 ("k"))) ;
+               LocInfoE loc_210 (use{PtrOp} (LocInfoE loc_211 ("p"))) ]))
       ]> $∅
     )%E
   |}.
@@ -626,14 +626,14 @@ Section code.
     f_init := "#0";
     f_code := (
       <[ "#0" :=
-        "i" <-{ it_layout uintptr_t }
-          LocInfoE loc_242 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_243 (use{void*} (LocInfoE loc_244 ("p"))))) ;
-        "q" <-{ void* }
-          LocInfoE loc_237 (UnOp (CastOp $ PtrOp) (IntOp uintptr_t) (LocInfoE loc_238 (use{it_layout uintptr_t} (LocInfoE loc_239 ("i"))))) ;
-        "r" <-{ it_layout i32 }
-          LocInfoE loc_231 (use{it_layout i32} (LocInfoE loc_233 (!{void*} (LocInfoE loc_234 ("q"))))) ;
+        "i" <-{ IntOp uintptr_t }
+          LocInfoE loc_242 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_243 (use{PtrOp} (LocInfoE loc_244 ("p"))))) ;
+        "q" <-{ PtrOp }
+          LocInfoE loc_237 (UnOp (CastOp $ PtrOp) (IntOp uintptr_t) (LocInfoE loc_238 (use{IntOp uintptr_t} (LocInfoE loc_239 ("i"))))) ;
+        "r" <-{ IntOp i32 }
+          LocInfoE loc_231 (use{IntOp i32} (LocInfoE loc_233 (!{PtrOp} (LocInfoE loc_234 ("q"))))) ;
         locinfo: loc_228 ;
-        Return (LocInfoE loc_229 (use{it_layout i32} (LocInfoE loc_230 ("r"))))
+        Return (LocInfoE loc_229 (use{IntOp i32} (LocInfoE loc_230 ("r"))))
       ]> $∅
     )%E
   |}.
@@ -652,17 +652,17 @@ Section code.
     f_init := "#0";
     f_code := (
       <[ "#0" :=
-        "i" <-{ it_layout uintptr_t }
-          LocInfoE loc_278 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_279 (use{void*} (LocInfoE loc_280 ("p"))))) ;
-        "j" <-{ it_layout uintptr_t }
-          LocInfoE loc_272 ((LocInfoE loc_273 (use{it_layout uintptr_t} (LocInfoE loc_274 ("i")))) ×{IntOp uintptr_t, IntOp uintptr_t} (LocInfoE loc_275 (UnOp (CastOp $ IntOp uintptr_t) (IntOp i32) (LocInfoE loc_275 (i2v 1 i32))))) ;
-        "q" <-{ void* }
-          LocInfoE loc_262 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_263 (Call (LocInfoE loc_265 (global_copy_alloc_id)) [@{expr} LocInfoE loc_266 (use{it_layout uintptr_t} (LocInfoE loc_267 ("j"))) ;
-          LocInfoE loc_268 (use{void*} (LocInfoE loc_269 ("p"))) ]))) ;
-        "r" <-{ it_layout i32 }
-          LocInfoE loc_256 (use{it_layout i32} (LocInfoE loc_258 (!{void*} (LocInfoE loc_259 ("q"))))) ;
+        "i" <-{ IntOp uintptr_t }
+          LocInfoE loc_278 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_279 (use{PtrOp} (LocInfoE loc_280 ("p"))))) ;
+        "j" <-{ IntOp uintptr_t }
+          LocInfoE loc_272 ((LocInfoE loc_273 (use{IntOp uintptr_t} (LocInfoE loc_274 ("i")))) ×{IntOp uintptr_t, IntOp uintptr_t} (LocInfoE loc_275 (UnOp (CastOp $ IntOp uintptr_t) (IntOp i32) (LocInfoE loc_275 (i2v 1 i32))))) ;
+        "q" <-{ PtrOp }
+          LocInfoE loc_262 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_263 (Call (LocInfoE loc_265 (global_copy_alloc_id)) [@{expr} LocInfoE loc_266 (use{IntOp uintptr_t} (LocInfoE loc_267 ("j"))) ;
+          LocInfoE loc_268 (use{PtrOp} (LocInfoE loc_269 ("p"))) ]))) ;
+        "r" <-{ IntOp i32 }
+          LocInfoE loc_256 (use{IntOp i32} (LocInfoE loc_258 (!{PtrOp} (LocInfoE loc_259 ("q"))))) ;
         locinfo: loc_253 ;
-        Return (LocInfoE loc_254 (use{it_layout i32} (LocInfoE loc_255 ("r"))))
+        Return (LocInfoE loc_254 (use{IntOp i32} (LocInfoE loc_255 ("r"))))
       ]> $∅
     )%E
   |}.
@@ -679,13 +679,13 @@ Section code.
     f_init := "#0";
     f_code := (
       <[ "#0" :=
-        "i" <-{ it_layout uintptr_t }
-          LocInfoE loc_304 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_305 (use{void*} (LocInfoE loc_306 ("p"))))) ;
-        "q" <-{ void* }
-          LocInfoE loc_292 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_293 (Call (LocInfoE loc_295 (global_copy_alloc_id)) [@{expr} LocInfoE loc_296 ((LocInfoE loc_297 (use{it_layout uintptr_t} (LocInfoE loc_298 ("i")))) ×{IntOp uintptr_t, IntOp uintptr_t} (LocInfoE loc_299 (UnOp (CastOp $ IntOp uintptr_t) (IntOp i32) (LocInfoE loc_299 (i2v 1 i32))))) ;
-          LocInfoE loc_300 (use{void*} (LocInfoE loc_301 ("p"))) ]))) ;
+        "i" <-{ IntOp uintptr_t }
+          LocInfoE loc_304 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_305 (use{PtrOp} (LocInfoE loc_306 ("p"))))) ;
+        "q" <-{ PtrOp }
+          LocInfoE loc_292 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_293 (Call (LocInfoE loc_295 (global_copy_alloc_id)) [@{expr} LocInfoE loc_296 ((LocInfoE loc_297 (use{IntOp uintptr_t} (LocInfoE loc_298 ("i")))) ×{IntOp uintptr_t, IntOp uintptr_t} (LocInfoE loc_299 (UnOp (CastOp $ IntOp uintptr_t) (IntOp i32) (LocInfoE loc_299 (i2v 1 i32))))) ;
+          LocInfoE loc_300 (use{PtrOp} (LocInfoE loc_301 ("p"))) ]))) ;
         locinfo: loc_287 ;
-        Return (LocInfoE loc_288 (use{it_layout i32} (LocInfoE loc_290 (!{void*} (LocInfoE loc_291 ("q"))))))
+        Return (LocInfoE loc_288 (use{IntOp i32} (LocInfoE loc_290 (!{PtrOp} (LocInfoE loc_291 ("q"))))))
       ]> $∅
     )%E
   |}.
@@ -703,15 +703,15 @@ Section code.
     f_init := "#0";
     f_code := (
       <[ "#0" :=
-        "i" <-{ it_layout uintptr_t }
-          LocInfoE loc_335 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_336 (use{void*} (LocInfoE loc_337 ("p"))))) ;
-        "j" <-{ it_layout uintptr_t }
-          LocInfoE loc_329 ((LocInfoE loc_330 (use{it_layout uintptr_t} (LocInfoE loc_331 ("i")))) ×{IntOp uintptr_t, IntOp uintptr_t} (LocInfoE loc_332 (UnOp (CastOp $ IntOp uintptr_t) (IntOp i32) (LocInfoE loc_332 (i2v 1 i32))))) ;
-        "q" <-{ void* }
-          LocInfoE loc_319 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_320 (Call (LocInfoE loc_322 (global_copy_alloc_id)) [@{expr} LocInfoE loc_323 (use{it_layout uintptr_t} (LocInfoE loc_324 ("j"))) ;
-          LocInfoE loc_325 (use{void*} (LocInfoE loc_326 ("p"))) ]))) ;
+        "i" <-{ IntOp uintptr_t }
+          LocInfoE loc_335 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_336 (use{PtrOp} (LocInfoE loc_337 ("p"))))) ;
+        "j" <-{ IntOp uintptr_t }
+          LocInfoE loc_329 ((LocInfoE loc_330 (use{IntOp uintptr_t} (LocInfoE loc_331 ("i")))) ×{IntOp uintptr_t, IntOp uintptr_t} (LocInfoE loc_332 (UnOp (CastOp $ IntOp uintptr_t) (IntOp i32) (LocInfoE loc_332 (i2v 1 i32))))) ;
+        "q" <-{ PtrOp }
+          LocInfoE loc_319 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_320 (Call (LocInfoE loc_322 (global_copy_alloc_id)) [@{expr} LocInfoE loc_323 (use{IntOp uintptr_t} (LocInfoE loc_324 ("j"))) ;
+          LocInfoE loc_325 (use{PtrOp} (LocInfoE loc_326 ("p"))) ]))) ;
         locinfo: loc_314 ;
-        Return (LocInfoE loc_315 (use{it_layout i32} (LocInfoE loc_317 (!{void*} (LocInfoE loc_318 ("q"))))))
+        Return (LocInfoE loc_315 (use{IntOp i32} (LocInfoE loc_317 (!{PtrOp} (LocInfoE loc_318 ("q"))))))
       ]> $∅
     )%E
   |}.
@@ -729,14 +729,14 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_342 ;
-        LocInfoE loc_365 ((LocInfoE loc_367 ("x")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_368 (i2v 0 i32))) <-{ it_layout i32 }
+        LocInfoE loc_365 ((LocInfoE loc_367 ("x")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_368 (i2v 0 i32))) <-{ IntOp i32 }
           LocInfoE loc_369 (i2v 0 i32) ;
-        "p" <-{ void* }
+        "p" <-{ PtrOp }
           LocInfoE loc_358 ((LocInfoE loc_359 (&(LocInfoE loc_360 ("x")))) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_361 (i2v 1 i32))) ;
-        "q" <-{ void* }
-          LocInfoE loc_350 ((LocInfoE loc_351 (UnOp (CastOp $ PtrOp) (IntOp uintptr_t) (LocInfoE loc_352 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_353 (use{void*} (LocInfoE loc_354 ("p")))))))) at_neg_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_355 (i2v 1 i32))) ;
+        "q" <-{ PtrOp }
+          LocInfoE loc_350 ((LocInfoE loc_351 (UnOp (CastOp $ PtrOp) (IntOp uintptr_t) (LocInfoE loc_352 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_353 (use{PtrOp} (LocInfoE loc_354 ("p")))))))) at_neg_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_355 (i2v 1 i32))) ;
         locinfo: loc_345 ;
-        Return (LocInfoE loc_346 (use{it_layout i32} (LocInfoE loc_348 (!{void*} (LocInfoE loc_349 ("q"))))))
+        Return (LocInfoE loc_346 (use{IntOp i32} (LocInfoE loc_348 (!{PtrOp} (LocInfoE loc_349 ("q"))))))
       ]> $∅
     )%E
   |}.
@@ -755,17 +755,17 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_372 ;
-        LocInfoE loc_407 ((LocInfoE loc_409 ("x")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_410 (i2v 0 i32))) <-{ it_layout i32 }
+        LocInfoE loc_407 ((LocInfoE loc_409 ("x")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_410 (i2v 0 i32))) <-{ IntOp i32 }
           LocInfoE loc_411 (i2v 0 i32) ;
-        "p" <-{ void* }
+        "p" <-{ PtrOp }
           LocInfoE loc_400 ((LocInfoE loc_401 (&(LocInfoE loc_402 ("x")))) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_403 (i2v 1 i32))) ;
-        "pi" <-{ it_layout uintptr_t }
-          LocInfoE loc_393 ((LocInfoE loc_394 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_395 (use{void*} (LocInfoE loc_396 ("p")))))) +{IntOp uintptr_t, IntOp uintptr_t} (LocInfoE loc_397 (UnOp (CastOp $ IntOp uintptr_t) (IntOp i32) (LocInfoE loc_397 (i2v 0 i32))))) ;
-        "q" <-{ void* }
-          LocInfoE loc_381 ((LocInfoE loc_382 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_383 (Call (LocInfoE loc_385 (global_copy_alloc_id)) [@{expr} LocInfoE loc_386 (use{it_layout uintptr_t} (LocInfoE loc_387 ("pi"))) ;
+        "pi" <-{ IntOp uintptr_t }
+          LocInfoE loc_393 ((LocInfoE loc_394 (UnOp (CastOp $ IntOp uintptr_t) (PtrOp) (LocInfoE loc_395 (use{PtrOp} (LocInfoE loc_396 ("p")))))) +{IntOp uintptr_t, IntOp uintptr_t} (LocInfoE loc_397 (UnOp (CastOp $ IntOp uintptr_t) (IntOp i32) (LocInfoE loc_397 (i2v 0 i32))))) ;
+        "q" <-{ PtrOp }
+          LocInfoE loc_381 ((LocInfoE loc_382 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_383 (Call (LocInfoE loc_385 (global_copy_alloc_id)) [@{expr} LocInfoE loc_386 (use{IntOp uintptr_t} (LocInfoE loc_387 ("pi"))) ;
           LocInfoE loc_388 (&(LocInfoE loc_389 ("x"))) ])))) at_neg_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_390 (i2v 1 i32))) ;
         locinfo: loc_376 ;
-        Return (LocInfoE loc_377 (use{it_layout i32} (LocInfoE loc_379 (!{void*} (LocInfoE loc_380 ("q"))))))
+        Return (LocInfoE loc_377 (use{IntOp i32} (LocInfoE loc_379 (!{PtrOp} (LocInfoE loc_380 ("q"))))))
       ]> $∅
     )%E
   |}.

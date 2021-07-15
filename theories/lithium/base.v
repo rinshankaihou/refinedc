@@ -895,3 +895,21 @@ Proof.
   - abstract by eexists _.
   - abstract naive_solver.
 Defined.
+
+Lemma join_length {A} (l : list (list A)) :
+  length (mjoin l) = sum_list (length <$> l).
+Proof. elim: l => // ?? IH; csimpl. rewrite app_length IH //. Qed.
+
+Lemma sum_list_eq l1 l2:
+  Forall2 eq l1 l2 →
+  sum_list l1 = sum_list l2.
+Proof. by elim => // ???? -> /= ? ->. Qed.
+
+Lemma reshape_join {A} szs (ls : list (list A)) :
+  Forall2 (λ l sz, length l = sz) ls szs →
+  reshape szs (mjoin ls) = ls.
+Proof.
+  revert ls. induction szs as [|sz szs IH]; simpl; intros ls; [by inversion 1|].
+  intros (?&?&?&?&?)%Forall2_cons_inv_r; simplify_eq/=. rewrite take_app drop_app. f_equal.
+  naive_solver.
+Qed.

@@ -120,7 +120,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_2 ;
-        Return (LocInfoE loc_3 (CopyAllocId (IntOp uintptr_t) (LocInfoE loc_5 (use{it_layout uintptr_t} (LocInfoE loc_6 ("to")))) (LocInfoE loc_7 (use{void*} (LocInfoE loc_8 ("from"))))))
+        Return (LocInfoE loc_3 (CopyAllocId (IntOp uintptr_t) (LocInfoE loc_5 (use{IntOp uintptr_t} (LocInfoE loc_6 ("to")))) (LocInfoE loc_7 (use{PtrOp} (LocInfoE loc_8 ("from"))))))
       ]> $∅
     )%E
   |}.
@@ -136,7 +136,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_11 ;
-        Return (LocInfoE loc_12 (use{it_layout i32} (LocInfoE loc_13 ("a"))))
+        Return (LocInfoE loc_12 (use{IntOp i32} (LocInfoE loc_13 ("a"))))
       ]> $∅
     )%E
   |}.
@@ -152,7 +152,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_16 ;
-        Return (LocInfoE loc_17 (use{it_layout i32} (LocInfoE loc_18 ("a"))))
+        Return (LocInfoE loc_17 (use{IntOp i32} (LocInfoE loc_18 ("a"))))
       ]> $∅
     )%E
   |}.
@@ -168,7 +168,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_21 ;
-        Return (LocInfoE loc_22 ((LocInfoE loc_23 (use{it_layout i32} (LocInfoE loc_24 ("a")))) +{IntOp i32, IntOp i32} (LocInfoE loc_25 (i2v 1 i32))))
+        Return (LocInfoE loc_22 ((LocInfoE loc_23 (use{IntOp i32} (LocInfoE loc_24 ("a")))) +{IntOp i32, IntOp i32} (LocInfoE loc_25 (i2v 1 i32))))
       ]> $∅
     )%E
   |}.
@@ -186,7 +186,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_54 ;
-        if: LocInfoE loc_54 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_54 ((LocInfoE loc_55 (use{it_layout i32} (LocInfoE loc_56 ("a")))) <{IntOp i32, IntOp i32} (LocInfoE loc_57 (use{it_layout i32} (LocInfoE loc_58 ("b")))))))
+        if: LocInfoE loc_54 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_54 ((LocInfoE loc_55 (use{IntOp i32} (LocInfoE loc_56 ("a")))) <{IntOp i32, IntOp i32} (LocInfoE loc_57 (use{IntOp i32} (LocInfoE loc_58 ("b")))))))
         then
         locinfo: loc_45 ;
           Goto "#2"
@@ -196,23 +196,23 @@ Section code.
       ]> $
       <[ "#1" :=
         locinfo: loc_29 ;
-        assert: (LocInfoE loc_39 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_39 ((LocInfoE loc_40 (use{it_layout i32} (LocInfoE loc_41 ("r")))) ≤{IntOp i32, IntOp i32} (LocInfoE loc_42 (use{it_layout i32} (LocInfoE loc_43 ("b")))))))) ;
+        assert: (LocInfoE loc_39 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_39 ((LocInfoE loc_40 (use{IntOp i32} (LocInfoE loc_41 ("r")))) ≤{IntOp i32, IntOp i32} (LocInfoE loc_42 (use{IntOp i32} (LocInfoE loc_43 ("b")))))))) ;
         locinfo: loc_30 ;
-        assert: (LocInfoE loc_34 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_34 ((LocInfoE loc_35 (use{it_layout i32} (LocInfoE loc_36 ("r")))) ≤{IntOp i32, IntOp i32} (LocInfoE loc_37 (use{it_layout i32} (LocInfoE loc_38 ("a")))))))) ;
+        assert: (LocInfoE loc_34 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_34 ((LocInfoE loc_35 (use{IntOp i32} (LocInfoE loc_36 ("r")))) ≤{IntOp i32, IntOp i32} (LocInfoE loc_37 (use{IntOp i32} (LocInfoE loc_38 ("a")))))))) ;
         locinfo: loc_31 ;
-        Return (LocInfoE loc_32 (use{it_layout i32} (LocInfoE loc_33 ("r"))))
+        Return (LocInfoE loc_32 (use{IntOp i32} (LocInfoE loc_33 ("r"))))
       ]> $
       <[ "#2" :=
         locinfo: loc_45 ;
-        LocInfoE loc_46 ("r") <-{ it_layout i32 }
-          LocInfoE loc_47 (use{it_layout i32} (LocInfoE loc_48 ("a"))) ;
+        LocInfoE loc_46 ("r") <-{ IntOp i32 }
+          LocInfoE loc_47 (use{IntOp i32} (LocInfoE loc_48 ("a"))) ;
         locinfo: loc_29 ;
         Goto "#1"
       ]> $
       <[ "#3" :=
         locinfo: loc_50 ;
-        LocInfoE loc_51 ("r") <-{ it_layout i32 }
-          LocInfoE loc_52 (use{it_layout i32} (LocInfoE loc_53 ("b"))) ;
+        LocInfoE loc_51 ("r") <-{ IntOp i32 }
+          LocInfoE loc_52 (use{IntOp i32} (LocInfoE loc_53 ("b"))) ;
         locinfo: loc_29 ;
         Goto "#1"
       ]> $∅
@@ -235,7 +235,7 @@ Section code.
       ]> $
       <[ "#1" :=
         locinfo: loc_73 ;
-        if: LocInfoE loc_73 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_73 ((LocInfoE loc_74 (use{it_layout i32} (LocInfoE loc_75 ("a")))) >{IntOp i32, IntOp i32} (LocInfoE loc_76 (i2v 0 i32)))))
+        if: LocInfoE loc_73 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_73 ((LocInfoE loc_74 (use{IntOp i32} (LocInfoE loc_75 ("a")))) >{IntOp i32, IntOp i32} (LocInfoE loc_76 (i2v 0 i32)))))
         then
         locinfo: loc_67 ;
           Goto "#2"
@@ -245,17 +245,17 @@ Section code.
       ]> $
       <[ "#2" :=
         locinfo: loc_67 ;
-        LocInfoE loc_72 ("b") <-{ it_layout i32 }
-          LocInfoE loc_67 ((LocInfoE loc_67 (use{it_layout i32} (LocInfoE loc_72 ("b")))) +{IntOp i32, IntOp i32} (LocInfoE loc_67 (i2v 1 i32))) ;
+        LocInfoE loc_72 ("b") <-{ IntOp i32 }
+          LocInfoE loc_67 ((LocInfoE loc_67 (use{IntOp i32} (LocInfoE loc_72 ("b")))) +{IntOp i32, IntOp i32} (LocInfoE loc_67 (i2v 1 i32))) ;
         locinfo: loc_68 ;
-        LocInfoE loc_71 ("a") <-{ it_layout i32 }
-          LocInfoE loc_68 ((LocInfoE loc_68 (use{it_layout i32} (LocInfoE loc_71 ("a")))) -{IntOp i32, IntOp i32} (LocInfoE loc_68 (i2v 1 i32))) ;
+        LocInfoE loc_71 ("a") <-{ IntOp i32 }
+          LocInfoE loc_68 ((LocInfoE loc_68 (use{IntOp i32} (LocInfoE loc_71 ("a")))) -{IntOp i32, IntOp i32} (LocInfoE loc_68 (i2v 1 i32))) ;
         locinfo: loc_69 ;
         Goto "continue14"
       ]> $
       <[ "#3" :=
         locinfo: loc_62 ;
-        Return (LocInfoE loc_63 (use{it_layout i32} (LocInfoE loc_64 ("b"))))
+        Return (LocInfoE loc_63 (use{IntOp i32} (LocInfoE loc_64 ("b"))))
       ]> $
       <[ "continue14" :=
         locinfo: loc_61 ;
@@ -275,7 +275,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_79 ;
-        LocInfoE loc_81 (!{void*} (LocInfoE loc_82 ("out"))) <-{ it_layout i32 }
+        LocInfoE loc_81 (!{PtrOp} (LocInfoE loc_82 ("out"))) <-{ IntOp i32 }
           LocInfoE loc_83 (i2v 1 i32) ;
         Return (VOID)
       ]> $∅
@@ -313,14 +313,14 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_98 ;
-        LocInfoE loc_104 (!{void*} (LocInfoE loc_105 ("out"))) <-{ layout_of struct_basic }
+        LocInfoE loc_104 (!{PtrOp} (LocInfoE loc_105 ("out"))) <-{ StructOp struct_basic ([ IntOp i32 ; IntOp i32 ]) }
           StructInit struct_basic [
             ("a", LocInfoE loc_109 (i2v 1 i32) : expr) ;
             ("b", i2v 0 i32 : expr)
           ] ;
         locinfo: loc_99 ;
-        LocInfoE loc_100 ((LocInfoE loc_101 (!{void*} (LocInfoE loc_102 ("out")))) at{struct_basic} "a") <-{ it_layout i32 }
-          LocInfoE loc_99 ((LocInfoE loc_99 (use{it_layout i32} (LocInfoE loc_100 ((LocInfoE loc_101 (!{void*} (LocInfoE loc_102 ("out")))) at{struct_basic} "a")))) +{IntOp i32, IntOp i32} (LocInfoE loc_99 (i2v 1 i32))) ;
+        LocInfoE loc_100 ((LocInfoE loc_101 (!{PtrOp} (LocInfoE loc_102 ("out")))) at{struct_basic} "a") <-{ IntOp i32 }
+          LocInfoE loc_99 ((LocInfoE loc_99 (use{IntOp i32} (LocInfoE loc_100 ((LocInfoE loc_101 (!{PtrOp} (LocInfoE loc_102 ("out")))) at{struct_basic} "a")))) +{IntOp i32, IntOp i32} (LocInfoE loc_99 (i2v 1 i32))) ;
         Return (VOID)
       ]> $∅
     )%E

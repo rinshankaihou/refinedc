@@ -130,10 +130,10 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_2 ;
-        LocInfoE loc_8 ((LocInfoE loc_9 (!{void*} (LocInfoE loc_10 ("lock")))) at{struct_hyp_spinlock} "owner") <-{ it_layout u16, ScOrd }
+        LocInfoE loc_8 ((LocInfoE loc_9 (!{PtrOp} (LocInfoE loc_10 ("lock")))) at{struct_hyp_spinlock} "owner") <-{ IntOp u16, ScOrd }
           LocInfoE loc_11 (UnOp (CastOp $ IntOp u16) (IntOp i32) (LocInfoE loc_11 (i2v 0 i32))) ;
         locinfo: loc_3 ;
-        LocInfoE loc_4 ((LocInfoE loc_5 (!{void*} (LocInfoE loc_6 ("lock")))) at{struct_hyp_spinlock} "next") <-{ it_layout u16, ScOrd }
+        LocInfoE loc_4 ((LocInfoE loc_5 (!{PtrOp} (LocInfoE loc_6 ("lock")))) at{struct_hyp_spinlock} "next") <-{ IntOp u16, ScOrd }
           LocInfoE loc_7 (UnOp (CastOp $ IntOp u16) (IntOp i32) (LocInfoE loc_7 (i2v 0 i32))) ;
         Return (VOID)
       ]> $∅
@@ -158,7 +158,7 @@ Section code.
       ]> $
       <[ "#1" :=
         locinfo: loc_66 ;
-        if: LocInfoE loc_66 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_66 ((i2v 0 i32) ={IntOp i32, IntOp i32} (LocInfoE loc_68 (UnOp (CastOp $ IntOp i32) (IntOp bool_it) (LocInfoE loc_68 (use{it_layout bool_it} (LocInfoE loc_69 ("got_it")))))))))
+        if: LocInfoE loc_66 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_66 ((i2v 0 i32) ={IntOp i32, IntOp i32} (LocInfoE loc_68 (UnOp (CastOp $ IntOp i32) (IntOp bool_it) (LocInfoE loc_68 (use{IntOp bool_it} (LocInfoE loc_69 ("got_it")))))))))
         then
         locinfo: loc_14 ;
           Goto "#2"
@@ -176,7 +176,7 @@ Section code.
       ]> $
       <[ "#4" :=
         locinfo: loc_20 ;
-        if: LocInfoE loc_20 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_20 ((LocInfoE loc_21 (UnOp (CastOp $ IntOp i32) (IntOp u16) (LocInfoE loc_21 (use{it_layout u16, ScOrd} (LocInfoE loc_22 ((LocInfoE loc_23 (!{void*} (LocInfoE loc_24 ("lock")))) at{struct_hyp_spinlock} "owner")))))) !={IntOp i32, IntOp i32} (LocInfoE loc_25 (UnOp (CastOp $ IntOp i32) (IntOp u16) (LocInfoE loc_25 (use{it_layout u16} (LocInfoE loc_26 ("ticket")))))))))
+        if: LocInfoE loc_20 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_20 ((LocInfoE loc_21 (UnOp (CastOp $ IntOp i32) (IntOp u16) (LocInfoE loc_21 (use{IntOp u16, ScOrd} (LocInfoE loc_22 ((LocInfoE loc_23 (!{PtrOp} (LocInfoE loc_24 ("lock")))) at{struct_hyp_spinlock} "owner")))))) !={IntOp i32, IntOp i32} (LocInfoE loc_25 (UnOp (CastOp $ IntOp i32) (IntOp u16) (LocInfoE loc_25 (use{IntOp u16} (LocInfoE loc_26 ("ticket")))))))))
         then
         locinfo: loc_18 ;
           Goto "#5"
@@ -192,7 +192,7 @@ Section code.
       ]> $
       <[ "#7" :=
         locinfo: loc_62 ;
-        if: LocInfoE loc_62 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_62 ((LocInfoE loc_63 (UnOp (CastOp $ IntOp i32) (IntOp u16) (LocInfoE loc_63 (use{it_layout u16} (LocInfoE loc_64 ("ticket")))))) ={IntOp i32, IntOp i32} (LocInfoE loc_65 (UnOp (CastOp $ IntOp i32) (IntOp u16) (LocInfoE loc_65 (i2v (max_int u16) u16)))))))
+        if: LocInfoE loc_62 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_62 ((LocInfoE loc_63 (UnOp (CastOp $ IntOp i32) (IntOp u16) (LocInfoE loc_63 (use{IntOp u16} (LocInfoE loc_64 ("ticket")))))) ={IntOp i32, IntOp i32} (LocInfoE loc_65 (UnOp (CastOp $ IntOp i32) (IntOp u16) (LocInfoE loc_65 (i2v (max_int u16) u16)))))))
         then
         locinfo: loc_30 ;
           Goto "#8"
@@ -202,21 +202,21 @@ Section code.
       ]> $
       <[ "#8" :=
         locinfo: loc_54 ;
-        LocInfoE loc_57 ("ticket") <-{ it_layout u16 }
-          LocInfoE loc_58 (use{it_layout u16, ScOrd} (LocInfoE loc_59 ((LocInfoE loc_60 (!{void*} (LocInfoE loc_61 ("lock")))) at{struct_hyp_spinlock} "next"))) ;
+        LocInfoE loc_57 ("ticket") <-{ IntOp u16 }
+          LocInfoE loc_58 (use{IntOp u16, ScOrd} (LocInfoE loc_59 ((LocInfoE loc_60 (!{PtrOp} (LocInfoE loc_61 ("lock")))) at{struct_hyp_spinlock} "next"))) ;
         locinfo: loc_55 ;
         Goto "continue6"
       ]> $
       <[ "#9" :=
         locinfo: loc_31 ;
-        LocInfoE loc_46 ("next") <-{ it_layout u16 }
-          LocInfoE loc_47 (UnOp (CastOp $ IntOp u16) (IntOp i32) (LocInfoE loc_47 ((LocInfoE loc_48 (UnOp (CastOp $ IntOp i32) (IntOp u16) (LocInfoE loc_48 (use{it_layout u16} (LocInfoE loc_49 ("ticket")))))) +{IntOp i32, IntOp i32} (LocInfoE loc_50 (i2v 1 i32))))) ;
+        LocInfoE loc_46 ("next") <-{ IntOp u16 }
+          LocInfoE loc_47 (UnOp (CastOp $ IntOp u16) (IntOp i32) (LocInfoE loc_47 ((LocInfoE loc_48 (UnOp (CastOp $ IntOp i32) (IntOp u16) (LocInfoE loc_48 (use{IntOp u16} (LocInfoE loc_49 ("ticket")))))) +{IntOp i32, IntOp i32} (LocInfoE loc_50 (i2v 1 i32))))) ;
         locinfo: loc_32 ;
-        LocInfoE loc_35 ("got_it") <-{ it_layout bool_it }
-          LocInfoE loc_36 (CAS (IntOp u16)
-          (LocInfoE loc_38 (&(LocInfoE loc_39 ((LocInfoE loc_40 (!{void*} (LocInfoE loc_41 ("lock")))) at{struct_hyp_spinlock} "next"))))
+        LocInfoE loc_35 ("got_it") <-{ IntOp bool_it } LocInfoE loc_36 (CAS
+          (IntOp u16)
+          (LocInfoE loc_38 (&(LocInfoE loc_39 ((LocInfoE loc_40 (!{PtrOp} (LocInfoE loc_41 ("lock")))) at{struct_hyp_spinlock} "next"))))
           (LocInfoE loc_42 (&(LocInfoE loc_43 ("ticket"))))
-          (LocInfoE loc_44 (use{it_layout u16} (LocInfoE loc_45 ("next"))))) ;
+          (LocInfoE loc_44 (use{IntOp u16} (LocInfoE loc_45 ("next"))))) ;
         locinfo: loc_33 ;
         Goto "continue4"
       ]> $
@@ -244,10 +244,10 @@ Section code.
     f_init := "#0";
     f_code := (
       <[ "#0" :=
-        "ticket" <-{ it_layout u16 }
-          LocInfoE loc_100 (use{it_layout u16, ScOrd} (LocInfoE loc_101 ((LocInfoE loc_102 (!{void*} (LocInfoE loc_103 ("lock")))) at{struct_hyp_spinlock} "owner"))) ;
+        "ticket" <-{ IntOp u16 }
+          LocInfoE loc_100 (use{IntOp u16, ScOrd} (LocInfoE loc_101 ((LocInfoE loc_102 (!{PtrOp} (LocInfoE loc_103 ("lock")))) at{struct_hyp_spinlock} "owner"))) ;
         locinfo: loc_94 ;
-        if: LocInfoE loc_94 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_94 ((LocInfoE loc_95 (UnOp (CastOp $ IntOp i32) (IntOp u16) (LocInfoE loc_95 (use{it_layout u16} (LocInfoE loc_96 ("ticket")))))) ={IntOp i32, IntOp i32} (LocInfoE loc_97 ((LocInfoE loc_98 (UnOp (CastOp $ IntOp i32) (IntOp u16) (LocInfoE loc_98 (i2v (max_int u16) u16)))) -{IntOp i32, IntOp i32} (LocInfoE loc_99 (i2v 1 i32)))))))
+        if: LocInfoE loc_94 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_94 ((LocInfoE loc_95 (UnOp (CastOp $ IntOp i32) (IntOp u16) (LocInfoE loc_95 (use{IntOp u16} (LocInfoE loc_96 ("ticket")))))) ={IntOp i32, IntOp i32} (LocInfoE loc_97 ((LocInfoE loc_98 (UnOp (CastOp $ IntOp i32) (IntOp u16) (LocInfoE loc_98 (i2v (max_int u16) u16)))) -{IntOp i32, IntOp i32} (LocInfoE loc_99 (i2v 1 i32)))))))
         then
         locinfo: loc_75 ;
           Goto "#1"
@@ -257,17 +257,17 @@ Section code.
       ]> $
       <[ "#1" :=
         locinfo: loc_75 ;
-        LocInfoE loc_81 ((LocInfoE loc_82 (!{void*} (LocInfoE loc_83 ("lock")))) at{struct_hyp_spinlock} "owner") <-{ it_layout u16, ScOrd }
+        LocInfoE loc_81 ((LocInfoE loc_82 (!{PtrOp} (LocInfoE loc_83 ("lock")))) at{struct_hyp_spinlock} "owner") <-{ IntOp u16, ScOrd }
           LocInfoE loc_84 (UnOp (CastOp $ IntOp u16) (IntOp i32) (LocInfoE loc_84 (i2v 0 i32))) ;
         locinfo: loc_76 ;
-        LocInfoE loc_77 ((LocInfoE loc_78 (!{void*} (LocInfoE loc_79 ("lock")))) at{struct_hyp_spinlock} "next") <-{ it_layout u16, ScOrd }
+        LocInfoE loc_77 ((LocInfoE loc_78 (!{PtrOp} (LocInfoE loc_79 ("lock")))) at{struct_hyp_spinlock} "next") <-{ IntOp u16, ScOrd }
           LocInfoE loc_80 (UnOp (CastOp $ IntOp u16) (IntOp i32) (LocInfoE loc_80 (i2v 0 i32))) ;
         Return (VOID)
       ]> $
       <[ "#2" :=
         locinfo: loc_86 ;
-        LocInfoE loc_87 ((LocInfoE loc_88 (!{void*} (LocInfoE loc_89 ("lock")))) at{struct_hyp_spinlock} "owner") <-{ it_layout u16, ScOrd }
-          LocInfoE loc_90 (UnOp (CastOp $ IntOp u16) (IntOp i32) (LocInfoE loc_90 ((LocInfoE loc_91 (UnOp (CastOp $ IntOp i32) (IntOp u16) (LocInfoE loc_91 (use{it_layout u16} (LocInfoE loc_92 ("ticket")))))) +{IntOp i32, IntOp i32} (LocInfoE loc_93 (i2v 1 i32))))) ;
+        LocInfoE loc_87 ((LocInfoE loc_88 (!{PtrOp} (LocInfoE loc_89 ("lock")))) at{struct_hyp_spinlock} "owner") <-{ IntOp u16, ScOrd }
+          LocInfoE loc_90 (UnOp (CastOp $ IntOp u16) (IntOp i32) (LocInfoE loc_90 ((LocInfoE loc_91 (UnOp (CastOp $ IntOp i32) (IntOp u16) (LocInfoE loc_91 (use{IntOp u16} (LocInfoE loc_92 ("ticket")))))) +{IntOp i32, IntOp i32} (LocInfoE loc_93 (i2v 1 i32))))) ;
         Return (VOID)
       ]> $∅
     )%E

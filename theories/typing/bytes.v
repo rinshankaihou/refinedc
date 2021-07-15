@@ -23,13 +23,14 @@ Section bytewise.
   Qed.
 
   Global Program Instance movable_bytewise ly P : Movable (bytewise P ly) := {|
-    ty_has_layout ly' := ly' = ly;
-    ty_own_val v := ⌜v `has_layout_val` ly⌝ ∗ ⌜Forall P v⌝;
-  |}%I.
-  Next Obligation. iIntros (????->). by iDestruct 1 as (????) "_". Qed.
-  Next Obligation. by iIntros (????-> [??]). Qed.
-  Next Obligation. iIntros (????->). iDestruct 1 as (????) "?". by eauto. Qed.
-  Next Obligation. iIntros (???? v -> ?) "? [%%]". iExists v. by iFrame. Qed.
+    ty_has_op_type ot mt := ot = UntypedOp ly;
+    ty_own_val v := (⌜v `has_layout_val` ly⌝ ∗ ⌜Forall P v⌝)%I;
+  |}.
+  Next Obligation. iIntros (?????->). by iDestruct 1 as (????) "_". Qed.
+  Next Obligation. by iIntros (?????-> [??]). Qed.
+  Next Obligation. iIntros (??????). iDestruct 1 as (????) "?". by eauto. Qed.
+  Next Obligation. iIntros (????? v -> ?) "? [%%]". iExists v. by iFrame. Qed.
+  Next Obligation. iIntros (ly P v ot mt st ?). apply mem_cast_compat_Untyped. destruct ot; naive_solver. Qed.
 
   Lemma bytewise_weaken l β P1 P2 ly:
     (∀ b, P1 b → P2 b) →
@@ -184,7 +185,7 @@ Section uninit.
   Qed.
 
   (* This only works for [Own] since [ty] might have interior mutability. *)
-  Lemma uninit_mono l ty ly `{!Movable ty} `{!CanSolve (ty.(ty_has_layout) ly)} T:
+  Lemma uninit_mono l ty ly `{!Movable ty} `{!CanSolve (ty.(ty_has_op_type) (UntypedOp ly) MCNone)} T:
     (∀ v, v ◁ᵥ ty -∗ T) -∗
     subsume (l ◁ₗ ty) (l ◁ₗ uninit ly) T.
   Proof.
@@ -205,7 +206,7 @@ Section uninit.
   Also this rule should only apply ty is not uninit as this case is
   covered by the rules for bytes and the CanSolve can be quite
   expensive. *)
-  Definition uninit_mono_inst l ty ly `{!Movable ty} `{!CanSolve (ty.(ty_has_layout) ly)}:
+  Definition uninit_mono_inst l ty ly `{!Movable ty} `{!CanSolve (ty.(ty_has_op_type) (UntypedOp ly) MCNone)}:
     SubsumePlace l Own ty (uninit ly) :=
     λ T, i2p (uninit_mono l ty ly T).
 
@@ -228,6 +229,25 @@ Section uninit.
     rewrite /ty_own/=. iDestruct "Hl" as (????) "Hl".
     iExists _. by iFrame.
   Qed.
+
+  Lemma type_read_move_copy T l ty ot a `{!Movable ty}:
+    (⌜ty.(ty_has_op_type) ot MCCopy⌝ ∗ ∀ v, T v (uninit (ot_layout ot)) (t2mt ty)) -∗
+      typed_read_end a l Own ty ot T.
+  Proof.
+    iIntros "[% HT] Hl".
+    iApply fupd_mask_intro => //. iIntros "Hclose".
+    iDestruct (ty_aligned with "Hl") as %?; [done|].
+    iDestruct (ty_deref with "Hl") as (v) "[Hl Hv]"; [done|].
+    iDestruct (ty_size_eq with "Hv") as %?; [done|].
+    iExists _, _, _, (t2mt _). iFrame. do 2 iSplit => //=.
+    iIntros "!# %st Hl Hv". iMod "Hclose". iModIntro.
+    iDestruct (ty_memcast_compat_copy with "Hv") as "Hv"; [done|].
+    iExists (t2mt ty). iFrame. iSplitR "HT"; [|done].
+    iExists _. iFrame. iPureIntro. split_and! => //. by apply: Forall_true.
+  Qed.
+  Global Instance type_read_move_copy_inst l ty ot a `{!Movable ty} :
+    TypedReadEnd a l Own ty ot | 70 :=
+    λ T, i2p (type_read_move_copy T l ty ot a).
 End uninit.
 
 Notation "uninit< ly >" := (uninit ly) (only printing, format "'uninit<' ly '>'") : printing_sugar.
@@ -263,7 +283,7 @@ Section zeroed.
     subsume (p ◁ₗ uninit ly1)%I (p ◁ₗ zeroed ly2)%I T.
   Proof.
     iDestruct 1 as (H1 H2) "HT". iIntros "Hp".
-    iDestruct (ty_aligned with "Hp") as %Hal; [done|].
+    iDestruct (ty_aligned (UntypedOp _) MCNone with "Hp") as %Hal; [done|].
     iDestruct (loc_in_bounds_in_bounds with "Hp") as "#Hlib".
     iSplitR; last by iApply "HT".
     iExists []. rewrite Forall_nil /has_layout_loc -H1. repeat iSplit => //.

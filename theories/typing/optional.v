@@ -68,23 +68,29 @@ Section optional.
   annoying to use. *)
   Global Program Instance rmovable_optional ty  `{!Movable ty} `{!Movable optty} : RMovable (optional ty optty) := {|
     rmovable b := {|
-      ty_has_layout ly := ty.(ty_has_layout) ly ∧ optty.(ty_has_layout) ly;
+      ty_has_op_type ot mt := ty.(ty_has_op_type) ot mt ∧ optty.(ty_has_op_type) ot mt;
       ty_own_val v := (⌜b⌝ ∗ v◁ᵥty ∨ ⌜¬b⌝ ∗ v◁ᵥoptty)%I
   |} |}.
   Next Obligation.
-    iIntros (ty??????[??]). by iDestruct 1 as "[[% Hv]|[% Hv]]";iDestruct (ty_aligned with "Hv") as %?.
+    iIntros (ty???????[??]). by iDestruct 1 as "[[% Hv]|[% Hv]]";iDestruct (ty_aligned with "Hv") as %?.
   Qed.
   Next Obligation.
-    iIntros (ty??????[??]). by iDestruct 1 as "[[% Hv]|[% Hv]]";iDestruct (ty_size_eq with "Hv") as %?.
+    iIntros (ty???????[??]). by iDestruct 1 as "[[% Hv]|[% Hv]]";iDestruct (ty_size_eq with "Hv") as %?.
   Qed.
   Next Obligation.
-    iIntros (ty ? optty ????[??]) "Hl".
+    iIntros (ty ? optty ?????[??]) "Hl".
     iDestruct "Hl" as "[[% Hl]|[% Hl]]"; iDestruct (ty_deref with "Hl") as (?) "[? ?]"; eauto with iFrame.
   Qed.
   Next Obligation.
-    iIntros (ty ? optty ?????[??]?) "Hl Hv".
+    iIntros (ty ? optty ??????[??]?) "Hl Hv".
     iDestruct "Hv" as "[[% Hv]|[% Hv]]"; iDestruct (ty_ref with "[] Hl Hv") as "H"; rewrite -?opt_alt_sz//;
        [iLeft | iRight]; by iFrame.
+  Qed.
+  Next Obligation.
+    iIntros (ty ? optty ? b v ot mt st [??]) "[[% Hv]|[% Hv]]".
+    all: iDestruct (ty_memcast_compat with "Hv") as "Hv" => //.
+    all: case_match => //. 1: iLeft. 2: iRight.
+    all: by iFrame.
   Qed.
 
   Global Instance optional_loc_in_bounds ty e ot β n `{!LocInBounds ty β n} `{!LocInBounds ot β n}:
@@ -286,20 +292,24 @@ Section optionalO.
 
   Global Program Instance rmovable_optionalO A (ty : A → type) `{!∀ x, Movable (ty x)} `{!Movable optty} : RMovable (optionalO ty optty) := {|
     rmovable b := {|
-      ty_has_layout ly := (∀ x, (ty x).(ty_has_layout) ly) ∧ optty.(ty_has_layout) ly;
+      ty_has_op_type ot mt := (∀ x, (ty x).(ty_has_op_type) ot mt) ∧ optty.(ty_has_op_type) ot mt;
       ty_own_val v := (if b is Some x return _ then v◁ᵥ(ty x) else v◁ᵥoptty)%I
   |} |}.
   Next Obligation.
-    iIntros (A ty??? [x|] ??[Hty ?]) "Hv";iDestruct (ty_aligned with "Hv") as %Ha => //. apply: Hty.
+    iIntros (A ty??? [x|] ???[Hty ?]) "Hv";iDestruct (ty_aligned with "Hv") as %Ha => //. apply: Hty.
   Qed.
   Next Obligation.
-    iIntros (A ty??? [x|]?? [??]) "Hv";iDestruct (ty_size_eq with "Hv") as %Ha => //.
+    iIntros (A ty??? [x|] ???[??]) "Hv";iDestruct (ty_size_eq with "Hv") as %Ha => //.
   Qed.
   Next Obligation.
-    iIntros (A ty ? optty ? [] ? l[??]) "Hl"; rewrite /with_refinement/ty_own/=; iDestruct (ty_deref with "Hl") as (?) "[? ?]"; eauto with iFrame.
+    iIntros (A ty ? optty ? [] ?? l[??]) "Hl"; rewrite /with_refinement/ty_own/=; iDestruct (ty_deref with "Hl") as (?) "[? ?]"; eauto with iFrame.
   Qed.
   Next Obligation.
-    iIntros (A ty ? optty ? [] ? l v [??]?) "Hl Hv"; iApply (ty_ref with "[] Hl Hv") => //.
+    iIntros (A ty ? optty ? [] ?? l v [??]?) "Hl Hv"; iApply (ty_ref with "[] Hl Hv") => //.
+  Qed.
+  Next Obligation.
+    iIntros (A ty ? optty ? [x|] v ot mt st [??]) "Hl".
+    all: by iDestruct (ty_memcast_compat with "Hl") as "Hl".
   Qed.
 
   Global Instance optionalO_loc_in_bounds A (ty : A → type) e ot β n `{!∀ x, LocInBounds (ty x) β n} `{!LocInBounds ot β n}:

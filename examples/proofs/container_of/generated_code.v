@@ -56,23 +56,23 @@ Section code.
     f_init := "#0";
     f_code := (
       <[ "#0" :=
-        "t" <-{ layout_of struct_test }
+        "t" <-{ StructOp struct_test ([ IntOp i32 ; IntOp i32 ]) }
           StructInit struct_test [
             ("a", LocInfoE loc_33 (i2v 1 i32) : expr) ;
             ("b", LocInfoE loc_34 (i2v 2 i32) : expr)
           ] ;
-        "b" <-{ void* }
+        "b" <-{ PtrOp }
           LocInfoE loc_27 (&(LocInfoE loc_28 ((LocInfoE loc_29 ("t")) at{struct_test} "b"))) ;
         locinfo: loc_4 ;
-        LocInfoE loc_24 (!{void*} (LocInfoE loc_25 ("b"))) <-{ it_layout i32 }
+        LocInfoE loc_24 (!{PtrOp} (LocInfoE loc_25 ("b"))) <-{ IntOp i32 }
           LocInfoE loc_26 (i2v 3 i32) ;
-        "pt" <-{ void* }
-          LocInfoE loc_15 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_16 ((LocInfoE loc_17 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_18 (use{void*} (LocInfoE loc_19 ("b")))))) at_neg_offset{it_layout u8, PtrOp, IntOp size_t} (LocInfoE loc_20 ((OffsetOf (struct_test) ("b"))))))) ;
+        "pt" <-{ PtrOp }
+          LocInfoE loc_15 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_16 ((LocInfoE loc_17 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_18 (use{PtrOp} (LocInfoE loc_19 ("b")))))) at_neg_offset{it_layout u8, PtrOp, IntOp size_t} (LocInfoE loc_20 ((OffsetOf (struct_test) ("b"))))))) ;
         locinfo: loc_6 ;
-        LocInfoE loc_11 ((LocInfoE loc_12 (!{void*} (LocInfoE loc_13 ("pt")))) at{struct_test} "a") <-{ it_layout i32 }
+        LocInfoE loc_11 ((LocInfoE loc_12 (!{PtrOp} (LocInfoE loc_13 ("pt")))) at{struct_test} "a") <-{ IntOp i32 }
           LocInfoE loc_14 (i2v 4 i32) ;
         locinfo: loc_7 ;
-        Return (LocInfoE loc_8 (use{it_layout i32} (LocInfoE loc_9 ((LocInfoE loc_10 ("t")) at{struct_test} "a"))))
+        Return (LocInfoE loc_8 (use{IntOp i32} (LocInfoE loc_9 ((LocInfoE loc_10 ("t")) at{struct_test} "a"))))
       ]> $∅
     )%E
   |}.

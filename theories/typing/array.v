@@ -30,15 +30,15 @@ Section array.
 
 
   Global Program Instance movable_array ly tys `{!MovableLst tys} : Movable (array ly tys) := {|
-    ty_has_layout ly' := ly' = mk_array_layout ly (length tys) ∧ layout_wf ly ∧ Forall (λ ty, (ty : mtype).(ty_has_layout) ly) (movablelst_to_list tys);
+    ty_has_op_type ot mt := ot = UntypedOp (mk_array_layout ly (length tys)) ∧ mt = MCNone ∧ layout_wf ly ∧ Forall (λ ty, (ty : mtype).(ty_has_op_type) (UntypedOp ly) MCNone) (movablelst_to_list tys);
     ty_own_val v :=
       (⌜v `has_layout_val` (mk_array_layout ly (length tys))⌝ ∗
        [∗ list] v';ty∈reshape (replicate (length tys) (ly_size ly)) v;(movablelst_to_list tys), (v' ◁ᵥ (ty : mtype)))%I;
   |}.
-  Next Obligation. by iIntros (ly tys ? ly' l [-> ?]) "[% _]". Qed.
-  Next Obligation. by iIntros (ly tys ? ly' v [-> ?]) "(?&_)". Qed.
+  Next Obligation. by iIntros (ly tys ? ot mt l [-> ?]) "[% _]". Qed.
+  Next Obligation. by iIntros (ly tys ? ot mt v [-> ?]) "(?&_)". Qed.
   Next Obligation.
-    move => ly tys ? ly' l [? [? ]]. rewrite {2}(to_movablelst tys).
+    move => ly tys ? ot mt l [? [? [? ]]]. rewrite {2}(to_movablelst tys).
     move Heq: (movablelst_to_list tys) => tys'.
     have ->: (length tys = length tys') by rewrite -Heq movablelst_to_list_length.
     clear dependent tys. rewrite /ty_own/=. iIntros (Hlys) "(_&#Hb&Htys)".
@@ -60,7 +60,7 @@ Section array.
     Unshelve. done.
   Qed.
   Next Obligation.
-    move => ly tys ? ly' l v [-> [? ]]. rewrite {6}(to_movablelst tys).
+    move => ly tys ? ot mt l v [-> [? [? ]]]. rewrite {6}(to_movablelst tys).
     move Heq: (movablelst_to_list tys) => tys'.
     have ->: (length tys = length tys') by rewrite -Heq movablelst_to_list_length.
     clear dependent tys. iIntros (Hlys Hl) "Hl". rewrite /ty_own/=.
@@ -80,6 +80,7 @@ Section array.
     iApply loc_in_bounds_split_mul_S. rewrite take_length min_l; first by eauto.
     rewrite Hv. repeat unfold ly_size => /=; lia.
   Qed.
+  Next Obligation. iIntros (???????[?[-> ?]]) "?". done. Qed.
 
   Global Instance array_loc_in_bounds ly β tys : LocInBounds (array ly tys) β (ly_size ly * length tys).
   Proof. constructor. iIntros (?) "(?&$&?)". Qed.

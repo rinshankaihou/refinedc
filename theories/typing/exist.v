@@ -31,13 +31,14 @@ Section tyexist.
 
   Global Program Instance tyexists_movable ty `{!∀ x, Movable (ty x)} : RMovable (tyexists ty) := {|
     rmovable x := {|
-      ty_has_layout ly := (ty x).(ty_has_layout) ly;
+      ty_has_op_type ot mt := (ty x).(ty_has_op_type) ot mt;
       ty_own_val := (ty x).(ty_own_val);
   |} |}.
-  Next Obligation. iIntros (ty ? x ly l ?). rewrite tyexists_eq. by apply ty_aligned. Qed.
-  Next Obligation. iIntros (ty ? x ly v ?). by apply ty_size_eq. Qed.
-  Next Obligation. iIntros (ty ? x ly l ?). rewrite tyexists_eq. by apply: ty_deref. Qed.
-  Next Obligation. iIntros (ty ? x ly l v ?). rewrite tyexists_eq. by apply ty_ref. Qed.
+  Next Obligation. iIntros (ty ? x ot mt l ?). rewrite tyexists_eq. by apply: ty_aligned. Qed.
+  Next Obligation. iIntros (ty ? x ot mt v ?). by apply: ty_size_eq. Qed.
+  Next Obligation. iIntros (ty ? x ot mt l ?). rewrite tyexists_eq. by apply: ty_deref. Qed.
+  Next Obligation. iIntros (ty ? x ot mt l v ?). rewrite tyexists_eq. by apply: ty_ref. Qed.
+  Next Obligation. iIntros (ty ? x v ot mt st ?). by apply: ty_memcast_compat. Qed.
 
   Global Instance tyexists_loc_in_bounds ty β n `{!∀ x, LocInBounds (ty x) β n} :
     LocInBounds (tyexists ty) β n.
@@ -90,7 +91,7 @@ Section tyexist.
     ropt_opt x := {| opt_pre v1 v2 := opt_pre (ty x) v1 v2 |}
   |}.
   Next Obligation.
-    move => ?????????. rewrite /rmovable/=/ty_has_layout/ty_own_val. apply opt_bin_op.
+    move => ??????????. rewrite /rmovable/=/ty_has_op_type/ty_own_val. apply opt_bin_op.
   Qed.
 
   Global Instance optionable_agree_tyexists (ty2 : A → type) ty1 `{!∀ x, OptionableAgree (ty2 x) ty1} : OptionableAgree (tyexists ty2) ty1.

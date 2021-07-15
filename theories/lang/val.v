@@ -13,9 +13,22 @@ Inductive mbyte : Set :=
 Instance mbyte_dec_eq : EqDecision mbyte.
 Proof. solve_decision. Qed.
 
+Program Definition mbyte_to_byte (mb : mbyte) : option (byte * option alloc_id) :=
+  match mb with
+  | MByte b p => Some (b, p)
+  | MPtrFrag l n => Some (
+     {| byte_val := ((l.2 `div` 2^(8 * n)) `mod` byte_modulus) |},
+     if l.1 is ProvAlloc a then a else None)
+  | MPoison => None
+  end.
+Next Obligation. move => ? l n. have [] := Z_mod_lt (l.2 `div` 2 ^ (8 * n)) byte_modulus => //*. lia. Qed.
+
 (** Representation of a value (list of bytes). *)
 Definition val : Set := list mbyte.
 Bind Scope val_scope with val.
+
+(** void is the empty list *)
+Definition VOID : val := [].
 
 (** Predicate stating that value [v] has the right size according to layout [ly]. *)
 Definition has_layout_val (v : val) (ly : layout) : Prop := length v = ly.(ly_size).
@@ -126,6 +139,12 @@ Definition val_to_byte_prov (v : val) : option alloc_id :=
   if v is MByte _ (Some p) :: _ then
     guard (Forall (λ e, Is_true (if e is MByte _ (Some p') then bool_decide (p = p') else false)) v); Some p
   else None.
+
+Definition provs_in_bytes (v : val) : list alloc_id :=
+  omap (λ b, if b is MByte _ (Some p) then Some p else None) v.
+
+Definition val_to_bytes (v : val) : option val :=
+  mapM (λ b, (λ '(v, a), MByte v a) <$> mbyte_to_byte b) v.
 
 Program Fixpoint val_of_Z_go (n : Z) (sz : nat) (p : option alloc_id) : val :=
   match sz return _ with
@@ -273,6 +292,12 @@ Proof.
     by case_bool_decide.
 Qed.
 
+Lemma val_to_loc_to_Z_disjoint v l it z:
+  val_to_loc v = Some l →
+  val_to_Z v it = Some z →
+  False.
+Proof. destruct v => //=. rewrite /val_to_loc/val_to_Z/=. destruct m => // _. by case_bool_decide. Qed.
+
 Lemma val_of_Z_bool_is_Some p it b:
   is_Some (val_of_Z (Z_of_bool b) it p).
 Proof. apply: val_of_Z_is_Some. apply: Z_of_bool_elem_of_int_type. Qed.
@@ -293,28 +318,17 @@ Lemma i2v_bool_Some b it:
   val_to_Z (i2v (Z_of_bool b) it) it = Some (Z_of_bool b).
 Proof. apply: val_to_of_Z. apply val_of_Z_bool. Qed.
 
-Lemma val_to_Z_go_Some_inj v1 v2 n:
-  length v1 = length v2 →
-  val_to_Z_go v1 = Some n →
-  val_to_Z_go v2 = Some n →
-  v1 = v2.
+Lemma val_to_bytes_id v it n:
+  val_to_Z v it = Some n →
+  val_to_bytes v = Some v.
 Proof.
-  elim: v1 v2 n; first by destruct v2.
-  move => b1 v1 IH [] b2 v2 // n /= [] Hlen.
-  destruct b1 as [b1|?|] => //. destruct b2 as [b2|?|] => //.
-  destruct (val_to_Z_go v1) as [n1|] eqn:Hn1 => //.
-  destruct (val_to_Z_go v2) as [n2|] eqn:Hn2 => //.
-  move => /= [] <- [] Heq.
-  assert (n1 = n2 ∧ byte_val b1 = byte_val b2) as [??].
-  { move: Heq. clear.
-    have H1 := byte_constr b1.
-    have H2 := byte_constr b2.
-    move: H1 H2. rewrite /byte_modulus. lia. }
-  simplify_eq. f_equal; last by eapply IH. f_equal.
-  by apply byte_eq.
-Abort.
+  rewrite /val_to_Z. case_bool_decide as Heq => // /bind_Some[z [Hgo _]]. clear Heq it.
+  apply mapM_Some.
+  elim: v z Hgo => //= b v IH z. case_match => // /bind_Some[? [? _]]; simplify_eq.
+  constructor. 2: naive_solver. apply fmap_Some. naive_solver.
+Qed.
 
 Arguments val_to_Z : simpl never.
 Arguments val_of_Z : simpl never.
 Arguments val_to_byte_prov : simpl never.
-Typeclasses Opaque val_to_Z val_of_Z val_of_bool val_to_byte_prov.
+Typeclasses Opaque val_to_Z val_of_Z val_of_bool val_to_byte_prov val_to_bytes provs_in_bytes.

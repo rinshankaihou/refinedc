@@ -26,13 +26,14 @@ Section own_constrained.
   Proof. solve_type_proper. Qed.
 
   Global Program Instance own_constrained_movable ty P `{!Movable ty} `{!OwnConstraint P} : Movable (own_constrained P ty) := {|
-     ty_has_layout ly := ty.(ty_has_layout) ly;
+     ty_has_op_type ot mt := ty.(ty_has_op_type) ot mt;
      ty_own_val v := (v ◁ᵥ ty ∗ P Own)%I;
   |}.
-  Next Obligation. iIntros (???????) "[? _]". by iApply ty_aligned. Qed.
-  Next Obligation. iIntros (???????) "[? _]". by iApply ty_size_eq. Qed.
-  Next Obligation. iIntros (???????) "[? $]". by iApply ty_deref. Qed.
-  Next Obligation. iIntros (?????????) "Hl [? $]". by iApply (ty_ref with "[//] [Hl]"). Qed.
+  Next Obligation. iIntros (????????) "[? _]". by iApply ty_aligned. Qed.
+  Next Obligation. iIntros (????????) "[? _]". by iApply ty_size_eq. Qed.
+  Next Obligation. iIntros (????????) "[? $]". by iApply ty_deref. Qed.
+  Next Obligation. iIntros (??????????) "Hl [? $]". by iApply (ty_ref with "[//] [Hl]"). Qed.
+  Next Obligation. iIntros (?????????) "[Hv ?]". iDestruct (ty_memcast_compat with "Hv") as "?"; [done|]. destruct mt => //. by iFrame. Qed.
 
   Global Instance own_constrained_loc_in_bounds ty β n P `{!OwnConstraint P} `{!LocInBounds ty β n} :
     LocInBounds (own_constrained P ty) β n.

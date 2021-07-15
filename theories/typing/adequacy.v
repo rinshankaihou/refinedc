@@ -111,7 +111,7 @@ Ltac adequacy_intro_parameter :=
 
 Ltac adequacy_unfold_equiv :=
   lazymatch goal with
-  | |- Build_mtype _ _ _ _ ≡ Build_mtype _ _ _ _ => constructor => /=; [| |move => ?]
+  | |- Build_mtype _ _ _ _ ≡ Build_mtype _ _ _ _ => constructor => /=; [|move => ??|move => ?]
   | |- fixp _ _ ≡ fixp _ _ => apply: fixp_proper; [|move => ??]
   | |- ty_own_val _ _ ≡ ty_own_val _ _ => unfold ty_own_val => /=
   | |-  _ =@{struct_layout} _ => apply: struct_layout_eq

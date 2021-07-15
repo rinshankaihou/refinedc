@@ -262,7 +262,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_2 ;
-        Return (LocInfoE loc_3 (CopyAllocId (IntOp uintptr_t) (LocInfoE loc_5 (use{it_layout uintptr_t} (LocInfoE loc_6 ("to")))) (LocInfoE loc_7 (use{void*} (LocInfoE loc_8 ("from"))))))
+        Return (LocInfoE loc_3 (CopyAllocId (IntOp uintptr_t) (LocInfoE loc_5 (use{IntOp uintptr_t} (LocInfoE loc_6 ("to")))) (LocInfoE loc_7 (use{PtrOp} (LocInfoE loc_8 ("from"))))))
       ]> $∅
     )%E
   |}.
@@ -298,12 +298,12 @@ Section code.
       ]> $
       <[ "#11" :=
         locinfo: loc_83 ;
-        LocInfoE loc_94 (!{void*} (LocInfoE loc_95 ("prev"))) <-{ void* }
-          LocInfoE loc_96 (use{void*} (LocInfoE loc_97 ((LocInfoE loc_98 (!{void*} (LocInfoE loc_99 ("cur")))) at{struct_alloc_entry} "next"))) ;
+        LocInfoE loc_94 (!{PtrOp} (LocInfoE loc_95 ("prev"))) <-{ PtrOp }
+          LocInfoE loc_96 (use{PtrOp} (LocInfoE loc_97 ((LocInfoE loc_98 (!{PtrOp} (LocInfoE loc_99 ("cur")))) at{struct_alloc_entry} "next"))) ;
         locinfo: loc_84 ;
         expr: (LocInfoE loc_84 (Call (LocInfoE loc_89 (global_sl_unlock)) [@{expr} LocInfoE loc_90 (AnnotExpr 1%nat LockA (LocInfoE loc_90 (&(LocInfoE loc_91 ((LocInfoE loc_92 (global_allocator_state)) at{struct_alloc_state} "lock"))))) ])) ;
         locinfo: loc_85 ;
-        Return (LocInfoE loc_86 (use{void*} (LocInfoE loc_87 ("cur"))))
+        Return (LocInfoE loc_86 (use{PtrOp} (LocInfoE loc_87 ("cur"))))
       ]> $
       <[ "#12" :=
         locinfo: loc_73 ;
@@ -315,7 +315,7 @@ Section code.
         locinfo: loc_15 ;
         annot: (UnlockA) ;
         expr: (LocInfoE loc_125 (&(LocInfoE loc_126 ((LocInfoE loc_127 (global_allocator_state)) at{struct_alloc_state} "data")))) ;
-        "prev" <-{ void* }
+        "prev" <-{ PtrOp }
           LocInfoE loc_120 (&(LocInfoE loc_121 ((LocInfoE loc_122 (global_allocator_state)) at{struct_alloc_state} "data"))) ;
         locinfo: loc_18 ;
         Goto "#4"
@@ -325,7 +325,7 @@ Section code.
       ]> $
       <[ "#4" :=
         locinfo: loc_114 ;
-        if: LocInfoE loc_114 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_114 ((LocInfoE loc_115 (use{void*} (LocInfoE loc_117 (!{void*} (LocInfoE loc_118 ("prev")))))) !={PtrOp, PtrOp} (LocInfoE loc_119 (NULL)))))
+        if: LocInfoE loc_114 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_114 ((LocInfoE loc_115 (use{PtrOp} (LocInfoE loc_117 (!{PtrOp} (LocInfoE loc_118 ("prev")))))) !={PtrOp, PtrOp} (LocInfoE loc_119 (NULL)))))
         then
         Goto "#5"
         else
@@ -333,10 +333,10 @@ Section code.
           Goto "#6"
       ]> $
       <[ "#5" :=
-        "cur" <-{ void* }
-          LocInfoE loc_108 (use{void*} (LocInfoE loc_110 (!{void*} (LocInfoE loc_111 ("prev"))))) ;
+        "cur" <-{ PtrOp }
+          LocInfoE loc_108 (use{PtrOp} (LocInfoE loc_110 (!{PtrOp} (LocInfoE loc_111 ("prev"))))) ;
         locinfo: loc_101 ;
-        if: LocInfoE loc_101 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_101 ((LocInfoE loc_102 (use{it_layout size_t} (LocInfoE loc_103 ((LocInfoE loc_104 (!{void*} (LocInfoE loc_105 ("cur")))) at{struct_alloc_entry} "size")))) ={IntOp size_t, IntOp size_t} (LocInfoE loc_106 (use{it_layout size_t} (LocInfoE loc_107 ("size")))))))
+        if: LocInfoE loc_101 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_101 ((LocInfoE loc_102 (use{IntOp size_t} (LocInfoE loc_103 ((LocInfoE loc_104 (!{PtrOp} (LocInfoE loc_105 ("cur")))) at{struct_alloc_entry} "size")))) ={IntOp size_t, IntOp size_t} (LocInfoE loc_106 (use{IntOp size_t} (LocInfoE loc_107 ("size")))))))
         then
         locinfo: loc_83 ;
           Goto "#11"
@@ -352,7 +352,7 @@ Section code.
       ]> $
       <[ "#7" :=
         locinfo: loc_73 ;
-        if: LocInfoE loc_73 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_73 ((LocInfoE loc_74 (use{it_layout size_t} (LocInfoE loc_75 ((LocInfoE loc_76 (!{void*} (LocInfoE loc_77 ("cur")))) at{struct_alloc_entry} "size")))) ≥{IntOp size_t, IntOp size_t} (LocInfoE loc_78 ((LocInfoE loc_79 (use{it_layout size_t} (LocInfoE loc_80 ("size")))) +{IntOp size_t, IntOp size_t} (LocInfoE loc_81 (i2v (layout_of struct_alloc_entry).(ly_size) size_t)))))))
+        if: LocInfoE loc_73 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_73 ((LocInfoE loc_74 (use{IntOp size_t} (LocInfoE loc_75 ((LocInfoE loc_76 (!{PtrOp} (LocInfoE loc_77 ("cur")))) at{struct_alloc_entry} "size")))) ≥{IntOp size_t, IntOp size_t} (LocInfoE loc_78 ((LocInfoE loc_79 (use{IntOp size_t} (LocInfoE loc_80 ("size")))) +{IntOp size_t, IntOp size_t} (LocInfoE loc_81 (i2v (layout_of struct_alloc_entry).(ly_size) size_t)))))))
         then
         locinfo: loc_41 ;
           Goto "#9"
@@ -362,21 +362,21 @@ Section code.
       ]> $
       <[ "#8" :=
         locinfo: loc_32 ;
-        LocInfoE loc_35 ("prev") <-{ void* }
-          LocInfoE loc_36 (&(LocInfoE loc_37 ((LocInfoE loc_38 (!{void*} (LocInfoE loc_39 ("cur")))) at{struct_alloc_entry} "next"))) ;
+        LocInfoE loc_35 ("prev") <-{ PtrOp }
+          LocInfoE loc_36 (&(LocInfoE loc_37 ((LocInfoE loc_38 (!{PtrOp} (LocInfoE loc_39 ("cur")))) at{struct_alloc_entry} "next"))) ;
         locinfo: loc_33 ;
         Goto "continue6"
       ]> $
       <[ "#9" :=
         locinfo: loc_41 ;
-        LocInfoE loc_62 ((LocInfoE loc_63 (!{void*} (LocInfoE loc_64 ("cur")))) at{struct_alloc_entry} "size") <-{ it_layout size_t }
-          LocInfoE loc_65 ((LocInfoE loc_66 (use{it_layout size_t} (LocInfoE loc_67 ((LocInfoE loc_68 (!{void*} (LocInfoE loc_69 ("cur")))) at{struct_alloc_entry} "size")))) -{IntOp size_t, IntOp size_t} (LocInfoE loc_70 (use{it_layout size_t} (LocInfoE loc_71 ("size"))))) ;
-        "ret" <-{ void* }
-          LocInfoE loc_52 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_52 ((LocInfoE loc_53 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_54 (use{void*} (LocInfoE loc_55 ("cur")))))) at_offset{it_layout u8, PtrOp, IntOp size_t} (LocInfoE loc_56 (use{it_layout size_t} (LocInfoE loc_57 ((LocInfoE loc_58 (!{void*} (LocInfoE loc_59 ("cur")))) at{struct_alloc_entry} "size"))))))) ;
+        LocInfoE loc_62 ((LocInfoE loc_63 (!{PtrOp} (LocInfoE loc_64 ("cur")))) at{struct_alloc_entry} "size") <-{ IntOp size_t }
+          LocInfoE loc_65 ((LocInfoE loc_66 (use{IntOp size_t} (LocInfoE loc_67 ((LocInfoE loc_68 (!{PtrOp} (LocInfoE loc_69 ("cur")))) at{struct_alloc_entry} "size")))) -{IntOp size_t, IntOp size_t} (LocInfoE loc_70 (use{IntOp size_t} (LocInfoE loc_71 ("size"))))) ;
+        "ret" <-{ PtrOp }
+          LocInfoE loc_52 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_52 ((LocInfoE loc_53 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_54 (use{PtrOp} (LocInfoE loc_55 ("cur")))))) at_offset{it_layout u8, PtrOp, IntOp size_t} (LocInfoE loc_56 (use{IntOp size_t} (LocInfoE loc_57 ((LocInfoE loc_58 (!{PtrOp} (LocInfoE loc_59 ("cur")))) at{struct_alloc_entry} "size"))))))) ;
         locinfo: loc_43 ;
         expr: (LocInfoE loc_43 (Call (LocInfoE loc_48 (global_sl_unlock)) [@{expr} LocInfoE loc_49 (AnnotExpr 1%nat LockA (LocInfoE loc_49 (&(LocInfoE loc_50 ((LocInfoE loc_51 (global_allocator_state)) at{struct_alloc_state} "lock"))))) ])) ;
         locinfo: loc_44 ;
-        Return (LocInfoE loc_45 (use{void*} (LocInfoE loc_46 ("ret"))))
+        Return (LocInfoE loc_45 (use{PtrOp} (LocInfoE loc_46 ("ret"))))
       ]> $
       <[ "continue4" :=
         locinfo: loc_11 ;
@@ -402,7 +402,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_181 ;
-        if: LocInfoE loc_181 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_181 ((LocInfoE loc_182 (use{it_layout size_t} (LocInfoE loc_183 ("size")))) <{IntOp size_t, IntOp size_t} (LocInfoE loc_184 (i2v (layout_of struct_alloc_entry).(ly_size) size_t)))))
+        if: LocInfoE loc_181 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_181 ((LocInfoE loc_182 (use{IntOp size_t} (LocInfoE loc_183 ("size")))) <{IntOp size_t, IntOp size_t} (LocInfoE loc_184 (i2v (layout_of struct_alloc_entry).(ly_size) size_t)))))
         then
         locinfo: loc_178 ;
           Goto "#2"
@@ -410,22 +410,22 @@ Section code.
         Goto "#3"
       ]> $
       <[ "#1" :=
-        "entry" <-{ void* }
-          LocInfoE loc_173 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_173 (use{void*} (LocInfoE loc_174 ("ptr"))))) ;
+        "entry" <-{ PtrOp }
+          LocInfoE loc_173 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_173 (use{PtrOp} (LocInfoE loc_174 ("ptr"))))) ;
         locinfo: loc_138 ;
-        LocInfoE loc_168 ((LocInfoE loc_169 (!{void*} (LocInfoE loc_170 ("entry")))) at{struct_alloc_entry} "size") <-{ it_layout size_t }
-          LocInfoE loc_171 (use{it_layout size_t} (LocInfoE loc_172 ("size"))) ;
+        LocInfoE loc_168 ((LocInfoE loc_169 (!{PtrOp} (LocInfoE loc_170 ("entry")))) at{struct_alloc_entry} "size") <-{ IntOp size_t }
+          LocInfoE loc_171 (use{IntOp size_t} (LocInfoE loc_172 ("size"))) ;
         locinfo: loc_139 ;
         expr: (LocInfoE loc_139 (Call (LocInfoE loc_164 (global_sl_lock)) [@{expr} LocInfoE loc_165 (&(LocInfoE loc_166 ((LocInfoE loc_167 (global_allocator_state)) at{struct_alloc_state} "lock"))) ])) ;
         locinfo: loc_140 ;
         annot: (UnlockA) ;
         expr: (LocInfoE loc_160 (&(LocInfoE loc_161 ((LocInfoE loc_162 (global_allocator_state)) at{struct_alloc_state} "data")))) ;
         locinfo: loc_142 ;
-        LocInfoE loc_154 ((LocInfoE loc_155 (!{void*} (LocInfoE loc_156 ("entry")))) at{struct_alloc_entry} "next") <-{ void* }
-          LocInfoE loc_157 (use{void*} (LocInfoE loc_158 ((LocInfoE loc_159 (global_allocator_state)) at{struct_alloc_state} "data"))) ;
+        LocInfoE loc_154 ((LocInfoE loc_155 (!{PtrOp} (LocInfoE loc_156 ("entry")))) at{struct_alloc_entry} "next") <-{ PtrOp }
+          LocInfoE loc_157 (use{PtrOp} (LocInfoE loc_158 ((LocInfoE loc_159 (global_allocator_state)) at{struct_alloc_state} "data"))) ;
         locinfo: loc_143 ;
-        LocInfoE loc_150 ((LocInfoE loc_151 (global_allocator_state)) at{struct_alloc_state} "data") <-{ void* }
-          LocInfoE loc_152 (use{void*} (LocInfoE loc_153 ("entry"))) ;
+        LocInfoE loc_150 ((LocInfoE loc_151 (global_allocator_state)) at{struct_alloc_state} "data") <-{ PtrOp }
+          LocInfoE loc_152 (use{PtrOp} (LocInfoE loc_153 ("entry"))) ;
         locinfo: loc_144 ;
         expr: (LocInfoE loc_144 (Call (LocInfoE loc_146 (global_sl_unlock)) [@{expr} LocInfoE loc_147 (AnnotExpr 1%nat LockA (LocInfoE loc_147 (&(LocInfoE loc_148 ((LocInfoE loc_149 (global_allocator_state)) at{struct_alloc_state} "lock"))))) ])) ;
         Return (VOID)
@@ -452,7 +452,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_187 ;
-        Return (LocInfoE loc_188 (Call (LocInfoE loc_190 (global_alloc)) [@{expr} LocInfoE loc_191 ((LocInfoE loc_192 (use{it_layout size_t} (LocInfoE loc_193 ("n")))) ×{IntOp size_t, IntOp size_t} (LocInfoE loc_194 (use{it_layout size_t} (LocInfoE loc_195 ("size"))))) ]))
+        Return (LocInfoE loc_188 (Call (LocInfoE loc_190 (global_alloc)) [@{expr} LocInfoE loc_191 ((LocInfoE loc_192 (use{IntOp size_t} (LocInfoE loc_193 ("n")))) ×{IntOp size_t, IntOp size_t} (LocInfoE loc_194 (use{IntOp size_t} (LocInfoE loc_195 ("size"))))) ]))
       ]> $∅
     )%E
   |}.
@@ -470,8 +470,8 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_198 ;
-        expr: (LocInfoE loc_198 (Call (LocInfoE loc_200 (global_free)) [@{expr} LocInfoE loc_201 ((LocInfoE loc_202 (use{it_layout size_t} (LocInfoE loc_203 ("n")))) ×{IntOp size_t, IntOp size_t} (LocInfoE loc_204 (use{it_layout size_t} (LocInfoE loc_205 ("size"))))) ;
-        LocInfoE loc_206 (use{void*} (LocInfoE loc_207 ("ptr"))) ])) ;
+        expr: (LocInfoE loc_198 (Call (LocInfoE loc_200 (global_free)) [@{expr} LocInfoE loc_201 ((LocInfoE loc_202 (use{IntOp size_t} (LocInfoE loc_203 ("n")))) ×{IntOp size_t, IntOp size_t} (LocInfoE loc_204 (use{IntOp size_t} (LocInfoE loc_205 ("size"))))) ;
+        LocInfoE loc_206 (use{PtrOp} (LocInfoE loc_207 ("ptr"))) ])) ;
         Return (VOID)
       ]> $∅
     )%E
@@ -489,7 +489,7 @@ Section code.
         locinfo: loc_210 ;
         expr: (LocInfoE loc_210 (Call (LocInfoE loc_227 (global_sl_init)) [@{expr} LocInfoE loc_228 (&(LocInfoE loc_229 ((LocInfoE loc_230 (global_allocator_state)) at{struct_alloc_state} "lock"))) ])) ;
         locinfo: loc_211 ;
-        LocInfoE loc_223 ((LocInfoE loc_224 (global_allocator_state)) at{struct_alloc_state} "data") <-{ void* }
+        LocInfoE loc_223 ((LocInfoE loc_224 (global_allocator_state)) at{struct_alloc_state} "data") <-{ PtrOp }
           LocInfoE loc_225 (NULL) ;
         locinfo: loc_212 ;
         Goto "#1"

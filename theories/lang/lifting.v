@@ -216,12 +216,12 @@ Proof.
   iSplit; [done|]. iModIntro. iMod "He". by iFrame.
 Qed.
 
-Lemma wp_deref v Φ vl l ly q E o:
+Lemma wp_deref v Φ vl l ot q E o:
   o = ScOrd ∨ o = Na1Ord →
   val_to_loc vl = Some l →
-  l `has_layout_loc` ly →
-  v `has_layout_val` ly →
-  l↦{q}v -∗ ▷ (l ↦{q} v -∗ Φ v) -∗ WP !{ly, o} (Val vl) @ E {{ Φ }}.
+  l `has_layout_loc` ot_layout ot →
+  v `has_layout_val` ot_layout ot →
+  l↦{q}v -∗ ▷ (∀ st, l ↦{q} v -∗ Φ (mem_cast v ot st)) -∗ WP !{ot, o} (Val vl) @ E {{ Φ }}.
 Proof.
   iIntros (Ho Hl Hll Hlv) "Hmt HΦ".
   iApply wp_lift_expr_step; auto.
@@ -872,16 +872,15 @@ Proof.
   rewrite /AnnotStmt. iApply wps_skip. by iApply (step_fupd_wand with "Hs IH").
 Qed.
 
-Lemma wps_assign Q Ψ vl ly vr s l o:
+Lemma wps_assign Q Ψ vl ot vr s l o:
   let E := if o is ScOrd then ∅ else ⊤ in
   o = ScOrd ∨ o = Na1Ord →
   val_to_loc vl = Some l →
-  vr `has_layout_val` ly →
-  (|={⊤,E}=> l↦|ly| ∗ ▷ (l↦vr ={E,⊤}=∗ WPs s {{Q, Ψ}}))
-    -∗ WPs (Val vl <-{ly, o} Val vr; s) {{ Q , Ψ }}.
+  (|={⊤,E}=> ⌜vr `has_layout_val` ot_layout ot⌝ ∗ l↦|ot_layout ot| ∗ ▷ (l↦vr ={E,⊤}=∗ WPs s {{Q, Ψ}}))
+    -∗ WPs (Val vl <-{ot, o} Val vr; s) {{ Q , Ψ }}.
 Proof.
-  iIntros (E Ho Hvl Hly) "HWP". rewrite !stmt_wp_eq. iIntros (?? ->) "?".
-  iApply wp_lift_stmt_step_fupd. iIntros ([h1 ?]) "((%&Hhctx&Hfctx)&?) /=". iMod "HWP" as "[Hl HWP]".
+  iIntros (E Ho Hvl) "HWP". rewrite !stmt_wp_eq. iIntros (?? ->) "?".
+  iApply wp_lift_stmt_step_fupd. iIntros ([h1 ?]) "((%&Hhctx&Hfctx)&?) /=". iMod "HWP" as (Hly) "[Hl HWP]".
   iApply (fupd_mask_weaken ∅); first set_solver. iIntros "HE".
   iDestruct "Hl" as (v' Hlyv' ?) "Hl".
   iDestruct (heap_mapsto_has_alloc_id with "Hl") as %Haid.

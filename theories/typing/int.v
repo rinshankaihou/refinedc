@@ -21,14 +21,15 @@ Section int.
 
   Global Program Instance rmovable_int it : RMovable (int it) := {|
     rmovable n := {|
-      ty_has_layout ly := ly = it_layout it;
-      ty_own_val v := ⌜val_to_Z v it = Some n⌝;
+      ty_has_op_type ot mt := is_int_ot ot it;
+      ty_own_val v := ⌜val_to_Z v it = Some n⌝%I;
     |}
-  |}%I.
-  Next Obligation. iIntros (???? ->) "(%&%&$&_)". Qed.
-  Next Obligation. iIntros (???? ->H) "!%". by apply val_to_Z_length in H. Qed.
-  Next Obligation. iIntros (????->) "(%v&%&%&Hl)". eauto with iFrame. Qed.
-  Next Obligation. iIntros (???? v -> ?) "Hl %". iExists v. eauto with iFrame. Qed.
+  |}.
+  Next Obligation. iIntros (????? ->%is_int_ot_layout) "(%&%&$&_)". Qed.
+  Next Obligation. iIntros (????? ->%is_int_ot_layout H) "!%". by apply val_to_Z_length in H. Qed.
+  Next Obligation. iIntros (????? ?) "(%v&%&%&Hl)". eauto with iFrame. Qed.
+  Next Obligation. iIntros (????? v ->%is_int_ot_layout ?) "Hl %". iExists v. eauto with iFrame. Qed.
+  Next Obligation. iIntros (???????). apply: mem_cast_compat_int; [naive_solver|]. iPureIntro. naive_solver. Qed.
 
   Lemma int_loc_in_bounds l β n it:
      l ◁ₗ{β} n @ int it -∗ loc_in_bounds l (bytes_per_int it).
@@ -58,7 +59,7 @@ Section int.
   Lemma ty_own_int_in_range l β n it : l ◁ₗ{β} n @ int it -∗ ⌜n ∈ it⌝.
   Proof.
     iIntros "Hl". destruct β.
-    - iDestruct (ty_deref with "Hl") as (?) "[_ %]"; [done|].
+    - iDestruct (ty_deref (IntOp _) MCNone with "Hl") as (?) "[_ %]"; [done|].
       iPureIntro. by eapply val_to_Z_in_range.
     - iDestruct "Hl" as (?) "[% _]".
       iPureIntro. by eapply val_to_Z_in_range.
@@ -68,7 +69,7 @@ Section int.
   have to reprove this everytime? *)
   Global Program Instance int_copyable x it : Copyable (x @ int it).
   Next Obligation.
-    iIntros (??????->) "(%v&%Hv&%Hl&Hl)".
+    iIntros (??????->%is_int_ot_layout) "(%v&%Hv&%Hl&Hl)".
     iMod (heap_mapsto_own_state_to_mt with "Hl") as (q) "[_ Hl]" => //.
     iSplitR => //. iExists q, v. iFrame. iModIntro. eauto with iFrame.
   Qed.
@@ -76,7 +77,6 @@ Section int.
   Global Instance int_timeless l z it:
     Timeless (l ◁ₗ z @ int it)%I.
   Proof. apply _. Qed.
-
 End int.
 (* Typeclasses Opaque int. *)
 Notation "int< it >" := (int it) (only printing, format "'int<' it '>'") : printing_sugar.
@@ -97,6 +97,9 @@ Section boolean.
   Global Program Instance rmovable_boolean it : RMovable (boolean it) := {|
     rmovable b := (rmovable (int it)) (Z_of_bool b);
   |}.
+
+  Global Program Instance boolean_copyable x it : Copyable (x @ boolean it).
+  Next Obligation. rewrite/with_refinement/=/boolean_inner_type => ???????. by apply: copy_shr_acc. Qed.
 
   Lemma boolean_own_val_eq v b it:
     (v ◁ᵥ b @ boolean it)%I ≡ ⌜val_to_Z v it = Some (Z_of_bool b)⌝%I.
@@ -603,19 +606,23 @@ Section offsetof.
   Qed.
 
   Global Program Instance movable_offsetof s m : Movable (offsetof s m) := {|
-    ty_has_layout ly := ly = size_t;
+    ty_has_op_type ot mt := is_int_ot ot size_t;
     ty_own_val v := ∃ n, ⌜offset_of s.(sl_members) m = Some n⌝ ∗ v ◁ᵥ n @ int size_t
   |}%I.
-  Next Obligation. iIntros (s m ly l ->). iDestruct 1 as (??)"Hn". by iDestruct (ty_aligned with "Hn") as "$". Qed.
-  Next Obligation. iIntros (s m ly l ->). iDestruct 1 as (??)"Hn". by iDestruct (ty_size_eq with "Hn") as "$". Qed.
+  Next Obligation. iIntros (s m ot mt l ?). iDestruct 1 as (??)"Hn". by iDestruct (ty_aligned with "Hn") as "$". Qed.
+  Next Obligation. iIntros (s m ot mt l ?). iDestruct 1 as (??)"Hn". by iDestruct (ty_size_eq with "Hn") as "$". Qed.
   Next Obligation.
-    iIntros (s m ly l ->). iDestruct 1 as (??)"Hn".
+    iIntros (s m ot mt l ?). iDestruct 1 as (??)"Hn".
     iDestruct (ty_deref with "Hn") as (v) "[Hl Hi]"; [done|]. iExists _. iFrame.
     eauto with iFrame.
   Qed.
   Next Obligation.
-    iIntros (s m ? l v -> ?) "Hl". iDestruct 1 as (??)"Hn".
+    iIntros (s m ? l v ???) "Hl". iDestruct 1 as (??)"Hn".
     iExists _. iSplit => //. iApply (@ty_ref with "[] Hl") => //. done.
+  Qed.
+  Next Obligation.
+    iIntros (s m v ot mt st ?). iDestruct 1 as (??)"Hn". iDestruct (ty_memcast_compat with "Hn") as "?"; [done|].
+    case_match => //. iExists _. by iFrame.
   Qed.
 
   Global Program Instance offsetof_copyable s m : Copyable (offsetof s m).

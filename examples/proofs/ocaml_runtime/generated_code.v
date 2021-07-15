@@ -76,7 +76,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_2 ;
-        Return (LocInfoE loc_3 (CopyAllocId (IntOp uintptr_t) (LocInfoE loc_5 (use{it_layout uintptr_t} (LocInfoE loc_6 ("to")))) (LocInfoE loc_7 (use{void*} (LocInfoE loc_8 ("from"))))))
+        Return (LocInfoE loc_3 (CopyAllocId (IntOp uintptr_t) (LocInfoE loc_5 (use{IntOp uintptr_t} (LocInfoE loc_6 ("to")))) (LocInfoE loc_7 (use{PtrOp} (LocInfoE loc_8 ("from"))))))
       ]> $∅
     )%E
   |}.
@@ -95,24 +95,24 @@ Section code.
     f_init := "#0";
     f_code := (
       <[ "#0" :=
-        "large_int" <-{ it_layout u64 }
+        "large_int" <-{ IntOp u64 }
           LocInfoE loc_67 (UnOp (CastOp $ IntOp u64) (IntOp u32) (LocInfoE loc_67 (i2v 3735928559 u32))) ;
-        "small_int" <-{ it_layout u32 }
+        "small_int" <-{ IntOp u32 }
           LocInfoE loc_64 (UnOp (CastOp $ IntOp u32) (IntOp i32) (LocInfoE loc_64 (i2v 42 i32))) ;
-        "v1" <-{ it_layout u64 }
+        "v1" <-{ IntOp u64 }
           LocInfoE loc_59 (UnOp (CastOp $ IntOp u64) (PtrOp) (LocInfoE loc_60 (&(LocInfoE loc_61 ("large_int"))))) ;
-        "v2" <-{ it_layout u64 }
-          LocInfoE loc_49 ((LocInfoE loc_50 (UnOp (CastOp $ IntOp u64) (IntOp u64) (LocInfoE loc_51 ((LocInfoE loc_52 (UnOp (CastOp $ IntOp u64) (IntOp u32) (LocInfoE loc_53 (use{it_layout u32} (LocInfoE loc_54 ("small_int")))))) <<{IntOp u64, IntOp u64} (LocInfoE loc_55 (UnOp (CastOp $ IntOp u64) (IntOp i32) (LocInfoE loc_55 (i2v 1 i32)))))))) +{IntOp u64, IntOp u64} (LocInfoE loc_56 (UnOp (CastOp $ IntOp u64) (IntOp i32) (LocInfoE loc_56 (i2v 1 i32))))) ;
+        "v2" <-{ IntOp u64 }
+          LocInfoE loc_49 ((LocInfoE loc_50 (UnOp (CastOp $ IntOp u64) (IntOp u64) (LocInfoE loc_51 ((LocInfoE loc_52 (UnOp (CastOp $ IntOp u64) (IntOp u32) (LocInfoE loc_53 (use{IntOp u32} (LocInfoE loc_54 ("small_int")))))) <<{IntOp u64, IntOp u64} (LocInfoE loc_55 (UnOp (CastOp $ IntOp u64) (IntOp i32) (LocInfoE loc_55 (i2v 1 i32)))))))) +{IntOp u64, IntOp u64} (LocInfoE loc_56 (UnOp (CastOp $ IntOp u64) (IntOp i32) (LocInfoE loc_56 (i2v 1 i32))))) ;
         locinfo: loc_15 ;
-        assert: (LocInfoE loc_43 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_43 ((LocInfoE loc_44 ((LocInfoE loc_45 (use{it_layout u64} (LocInfoE loc_46 ("v1")))) &{IntOp u64, IntOp u64} (LocInfoE loc_47 (UnOp (CastOp $ IntOp u64) (IntOp i32) (LocInfoE loc_47 (i2v 1 i32)))))) ={IntOp u64, IntOp u64} (LocInfoE loc_48 (UnOp (CastOp $ IntOp u64) (IntOp i32) (LocInfoE loc_48 (i2v 0 i32)))))))) ;
+        assert: (LocInfoE loc_43 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_43 ((LocInfoE loc_44 ((LocInfoE loc_45 (use{IntOp u64} (LocInfoE loc_46 ("v1")))) &{IntOp u64, IntOp u64} (LocInfoE loc_47 (UnOp (CastOp $ IntOp u64) (IntOp i32) (LocInfoE loc_47 (i2v 1 i32)))))) ={IntOp u64, IntOp u64} (LocInfoE loc_48 (UnOp (CastOp $ IntOp u64) (IntOp i32) (LocInfoE loc_48 (i2v 0 i32)))))))) ;
         locinfo: loc_16 ;
-        assert: (LocInfoE loc_37 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_37 ((LocInfoE loc_38 ((LocInfoE loc_39 (use{it_layout u64} (LocInfoE loc_40 ("v2")))) &{IntOp u64, IntOp u64} (LocInfoE loc_41 (UnOp (CastOp $ IntOp u64) (IntOp i32) (LocInfoE loc_41 (i2v 1 i32)))))) !={IntOp u64, IntOp u64} (LocInfoE loc_42 (UnOp (CastOp $ IntOp u64) (IntOp i32) (LocInfoE loc_42 (i2v 0 i32)))))))) ;
-        "large_int_ptr" <-{ void* }
-          LocInfoE loc_32 (UnOp (CastOp $ PtrOp) (IntOp u64) (LocInfoE loc_33 (use{it_layout u64} (LocInfoE loc_34 ("v1"))))) ;
+        assert: (LocInfoE loc_37 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_37 ((LocInfoE loc_38 ((LocInfoE loc_39 (use{IntOp u64} (LocInfoE loc_40 ("v2")))) &{IntOp u64, IntOp u64} (LocInfoE loc_41 (UnOp (CastOp $ IntOp u64) (IntOp i32) (LocInfoE loc_41 (i2v 1 i32)))))) !={IntOp u64, IntOp u64} (LocInfoE loc_42 (UnOp (CastOp $ IntOp u64) (IntOp i32) (LocInfoE loc_42 (i2v 0 i32)))))))) ;
+        "large_int_ptr" <-{ PtrOp }
+          LocInfoE loc_32 (UnOp (CastOp $ PtrOp) (IntOp u64) (LocInfoE loc_33 (use{IntOp u64} (LocInfoE loc_34 ("v1"))))) ;
         locinfo: loc_18 ;
-        assert: (LocInfoE loc_26 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_26 ((LocInfoE loc_27 ((LocInfoE loc_28 (use{it_layout u64} (LocInfoE loc_29 ("v2")))) >>{IntOp u64, IntOp u64} (LocInfoE loc_30 (UnOp (CastOp $ IntOp u64) (IntOp i32) (LocInfoE loc_30 (i2v 1 i32)))))) ={IntOp u64, IntOp u64} (LocInfoE loc_31 (UnOp (CastOp $ IntOp u64) (IntOp i32) (LocInfoE loc_31 (i2v 42 i32)))))))) ;
+        assert: (LocInfoE loc_26 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_26 ((LocInfoE loc_27 ((LocInfoE loc_28 (use{IntOp u64} (LocInfoE loc_29 ("v2")))) >>{IntOp u64, IntOp u64} (LocInfoE loc_30 (UnOp (CastOp $ IntOp u64) (IntOp i32) (LocInfoE loc_30 (i2v 1 i32)))))) ={IntOp u64, IntOp u64} (LocInfoE loc_31 (UnOp (CastOp $ IntOp u64) (IntOp i32) (LocInfoE loc_31 (i2v 42 i32)))))))) ;
         locinfo: loc_19 ;
-        assert: (LocInfoE loc_20 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_20 ((LocInfoE loc_21 (use{it_layout u64} (LocInfoE loc_23 (!{void*} (LocInfoE loc_24 ("large_int_ptr")))))) ={IntOp u64, IntOp u64} (LocInfoE loc_25 (UnOp (CastOp $ IntOp u64) (IntOp u32) (LocInfoE loc_25 (i2v 3735928559 u32)))))))) ;
+        assert: (LocInfoE loc_20 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_20 ((LocInfoE loc_21 (use{IntOp u64} (LocInfoE loc_23 (!{PtrOp} (LocInfoE loc_24 ("large_int_ptr")))))) ={IntOp u64, IntOp u64} (LocInfoE loc_25 (UnOp (CastOp $ IntOp u64) (IntOp u32) (LocInfoE loc_25 (i2v 3735928559 u32)))))))) ;
         Return (VOID)
       ]> $∅
     )%E

@@ -28,7 +28,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_2 ;
-        Return (LocInfoE loc_3 ((LocInfoE loc_4 (use{it_layout u32} (LocInfoE loc_5 ("x")))) <<{IntOp u32, IntOp u32} (LocInfoE loc_6 (UnOp (CastOp $ IntOp u32) (IntOp i32) (LocInfoE loc_6 (i2v 1 i32))))))
+        Return (LocInfoE loc_3 ((LocInfoE loc_4 (use{IntOp u32} (LocInfoE loc_5 ("x")))) <<{IntOp u32, IntOp u32} (LocInfoE loc_6 (UnOp (CastOp $ IntOp u32) (IntOp i32) (LocInfoE loc_6 (i2v 1 i32))))))
       ]> $∅
     )%E
   |}.
@@ -44,7 +44,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_9 ;
-        Return (LocInfoE loc_10 ((LocInfoE loc_11 (use{it_layout u32} (LocInfoE loc_12 ("x")))) >>{IntOp u32, IntOp u32} (LocInfoE loc_13 (UnOp (CastOp $ IntOp u32) (IntOp i32) (LocInfoE loc_13 (i2v 1 i32))))))
+        Return (LocInfoE loc_10 ((LocInfoE loc_11 (use{IntOp u32} (LocInfoE loc_12 ("x")))) >>{IntOp u32, IntOp u32} (LocInfoE loc_13 (UnOp (CastOp $ IntOp u32) (IntOp i32) (LocInfoE loc_13 (i2v 1 i32))))))
       ]> $∅
     )%E
   |}.

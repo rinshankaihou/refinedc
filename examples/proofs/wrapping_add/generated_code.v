@@ -45,7 +45,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_2 ;
-        Return (LocInfoE loc_3 (CopyAllocId (IntOp uintptr_t) (LocInfoE loc_5 (use{it_layout uintptr_t} (LocInfoE loc_6 ("to")))) (LocInfoE loc_7 (use{void*} (LocInfoE loc_8 ("from"))))))
+        Return (LocInfoE loc_3 (CopyAllocId (IntOp uintptr_t) (LocInfoE loc_5 (use{IntOp uintptr_t} (LocInfoE loc_6 ("to")))) (LocInfoE loc_7 (use{PtrOp} (LocInfoE loc_8 ("from"))))))
       ]> $∅
     )%E
   |}.
@@ -64,9 +64,9 @@ Section code.
       <[ "#0" :=
         locinfo: loc_11 ;
         Return (LocInfoE loc_12 (CheckedMacroE (WrappingAdd size_t size_t) [
-                                   (LocInfoE loc_18 (use{it_layout size_t} (LocInfoE loc_19 ("a"))) : expr) ;
-                                   (LocInfoE loc_13 ((LocInfoE loc_14 (use{it_layout size_t} (LocInfoE loc_15 ("b")))) +{IntOp size_t, IntOp size_t} (LocInfoE loc_16 (use{it_layout size_t} (LocInfoE loc_17 ("c"))))) : expr)
-                                 ] (LocInfoE loc_20 ((LocInfoE loc_21 (use{it_layout size_t} (LocInfoE loc_22 ("a")))) +{IntOp size_t, IntOp size_t} (LocInfoE loc_23 ((LocInfoE loc_24 (use{it_layout size_t} (LocInfoE loc_25 ("b")))) +{IntOp size_t, IntOp size_t} (LocInfoE loc_26 (use{it_layout size_t} (LocInfoE loc_27 ("c"))))))) : expr)))
+                                   (LocInfoE loc_18 (use{IntOp size_t} (LocInfoE loc_19 ("a"))) : expr) ;
+                                   (LocInfoE loc_13 ((LocInfoE loc_14 (use{IntOp size_t} (LocInfoE loc_15 ("b")))) +{IntOp size_t, IntOp size_t} (LocInfoE loc_16 (use{IntOp size_t} (LocInfoE loc_17 ("c"))))) : expr)
+                                 ] (LocInfoE loc_20 ((LocInfoE loc_21 (use{IntOp size_t} (LocInfoE loc_22 ("a")))) +{IntOp size_t, IntOp size_t} (LocInfoE loc_23 ((LocInfoE loc_24 (use{IntOp size_t} (LocInfoE loc_25 ("b")))) +{IntOp size_t, IntOp size_t} (LocInfoE loc_26 (use{IntOp size_t} (LocInfoE loc_27 ("c"))))))) : expr)))
       ]> $∅
     )%E
   |}.

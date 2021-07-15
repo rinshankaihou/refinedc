@@ -1,5 +1,5 @@
 From stdpp Require Import gmap list.
-From refinedc.lang Require Export base byte layout int_type loc val.
+From refinedc.lang Require Export base byte layout int_type loc val struct.
 Set Default Proof Using "Type".
 Open Scope Z_scope.
 
@@ -275,6 +275,114 @@ Proof.
   eapply (exists_dec_unique al); [ destruct l; naive_solver|].
   apply _.
 Qed.
+
+(** ** MemCast: Transforming bytes read from memory.
+  [mem_cast] is corresponds to the [abst] function in the VIP paper.
+
+  [mem_cast] should only be called with length of [v] matching [ot] *)
+
+Fixpoint mem_cast (v : val) (ot : op_type) (st : (gset addr * heap_state)) : val :=
+  default (replicate (length v) MPoison) (
+  match ot with
+  | PtrOp =>
+    if val_to_loc v is Some l then Some v else
+      (* The following reimplements integer to pointer casts as described in the VIP paper. *)
+      v' ← val_to_bytes v;
+      a ← val_to_Z v' size_t;
+      if bool_decide (a = 0) then
+        Some (val_of_loc (ProvNull, a))
+      else if bool_decide (a ∈ st.1) then
+        Some (val_of_loc (ProvFnPtr, a))
+      else
+        let l' := (ProvAlloc (head (provs_in_bytes v)), a) in
+        if bool_decide (valid_ptr l' st.2) then
+          Some (val_of_loc l')
+        else
+          Some (val_of_loc (ProvAlloc None, a))
+  | IntOp it => val_to_bytes v
+  (* The resize technically should not be necessary since mem_cast
+  should only be called if the size is equal to the length of the
+  value. But adding it makes proving mem_cast_length a lot easier. *)
+  | StructOp sl ots => Some $ resize (length v) MPoison $ mjoin $ zip_with (λ f x, f x)
+      (pad_struct sl.(sl_members)
+                  (((λ ot, λ v, mem_cast v ot st) <$> ots))
+                  (λ ly _, (replicate (ly_size ly) MPoison)))
+      (reshape (ly_size <$> sl.(sl_members).*2) v)
+  | UntypedOp _ => Some v
+  end).
+
+Definition mem_cast_id (v : val) (ot : op_type) : Prop :=
+  ∀ st, mem_cast v ot st = v.
+
+Lemma mem_cast_length v ot st:
+  length (mem_cast v ot st) = length v.
+Proof.
+  destruct ot => /=.
+  - destruct (val_to_bytes v) eqn:Hv => //=.
+    + move: Hv => /mapM_length. lia.
+    + by rewrite replicate_length.
+  - case_match => //=.
+    destruct (val_to_bytes v) as [v'|] eqn:Hv => //=. 2: by rewrite replicate_length.
+    move: Hv => /mapM_length ->.
+    destruct (val_to_Z v') eqn:Hv' => //=. 2: by rewrite replicate_length.
+    move: Hv' => /val_to_Z_length /=?.
+    by repeat case_match.
+  - by rewrite resize_length.
+  - done.
+Qed.
+
+Lemma mem_cast_id_loc l :
+  mem_cast_id (val_of_loc l) PtrOp.
+Proof. move => st. rewrite /mem_cast /=. by rewrite val_to_of_loc. Qed.
+
+Lemma mem_cast_id_int it v n :
+  val_to_Z v it = Some n →
+  mem_cast_id v (IntOp it).
+Proof. move => Hi st. rewrite /mem_cast /=. by erewrite val_to_bytes_id. Qed.
+
+Lemma mem_cast_struct_reshape sl v st ots:
+  length ots = length (field_names (sl_members sl)) →
+  v `has_layout_val` sl →
+  (∀ i v' n ly,
+      reshape (ly_size <$> (sl_members sl).*2) v !! i = Some v' →
+      sl_members sl !! i = Some (Some n, ly) →
+      v' `has_layout_val` ly) →
+  reshape (ly_size <$> (sl_members sl).*2) (mem_cast v (StructOp sl ots) st) =
+  (zip_with (λ f x, f x)
+            (pad_struct (sl_members sl) ((λ ot v, mem_cast v ot st) <$> ots) (λ ly _, replicate (ly_size ly) MPoison))
+            (reshape (ly_size <$> (sl_members sl).*2) v)).
+Proof.
+  move => ? Hv Hly. rewrite /mem_cast/=-/mem_cast resize_all_alt. 2: {
+    rewrite join_length Hv {1}/ly_size /=.
+    apply: sum_list_eq.
+    (* TODO: This is the same proof as below. Somehow unify these two proofs. *)
+    apply Forall2_same_length_lookup_2.
+    { rewrite !fmap_length zip_with_length reshape_length pad_struct_length !fmap_length. lia. }
+    move => i n1 n2. rewrite !list_lookup_fmap.
+    move => /fmap_Some[?[/fmap_Some[?[??]]?]]; simplify_eq.
+    move => /fmap_Some[?[/lookup_zip_with_Some[?[?[?[Hs?]]]]?]].
+    move: Hs => /pad_struct_lookup_Some[|n[?[? Hor]]]. { by rewrite fmap_length. }
+    unfold field_list, var_name in *. simplify_eq/=.
+    destruct Hor as [[? Hl] | [??]]; simplify_eq/=. 2: by rewrite replicate_length.
+    move: Hl. rewrite list_lookup_fmap. move => /fmap_Some[?[??]]. simplify_eq.
+    destruct n as [n|] => //. rewrite mem_cast_length. by erewrite Hly.
+  }
+  rewrite reshape_join //.
+  apply Forall2_same_length_lookup_2.
+  { rewrite zip_with_length reshape_length pad_struct_length !fmap_length. lia. }
+  move => i v' sz /lookup_zip_with_Some[?[?[?[/pad_struct_lookup_Some Hl ?]]]].
+  move: Hl => [|n[?[Hin2 Hor]]]. { rewrite fmap_length //. } simplify_eq.
+  rewrite !list_lookup_fmap => /fmap_Some[?[/fmap_Some[?[Hin ?]]?]]. rewrite Hin2 in Hin. simplify_eq/=.
+  destruct Hor as [[? Hl] |[??]]; simplify_eq. 2: by rewrite replicate_length.
+  move: Hl. rewrite list_lookup_fmap => /fmap_Some[?[??]]. simplify_eq. rewrite mem_cast_length.
+  destruct n => //. by apply: Hly.
+Qed.
+
+
+Typeclasses Opaque mem_cast_id.
+Arguments mem_cast : simpl never.
+
+(** ** Allocation and deallocation. *)
 
 Inductive alloc_new_block : heap_state → loc → val → heap_state → Prop :=
 | AllocNewBlock σ l aid v:

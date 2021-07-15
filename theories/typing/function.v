@@ -31,7 +31,7 @@ Section function.
     FP (movablelst_to_list atys) Pa B fr.
 
   Definition typed_function (fn : function) (fp : A → fn_params) : iProp Σ :=
-    (∀ x, ⌜Forall2 (λ (ty : mtype) '(_, p), ty.(ty_has_layout) p) (fp x).(fp_atys) (f_args fn)⌝ ∗
+    (∀ x, ⌜Forall2 (λ (ty : mtype) '(_, p), ty.(ty_has_op_type) (UntypedOp p) MCNone) (fp x).(fp_atys) (f_args fn)⌝ ∗
       □ ∀ (lsa : vec loc (length (fp x).(fp_atys))) (lsv : vec loc (length fn.(f_local_vars))),
           let Qinit := ([∗list] l;t∈lsa;(fp x).(fp_atys), l ◁ₗ (t:mtype)) ∗
                        ([∗list] l;p∈lsv;fn.(f_local_vars), l ◁ₗ uninit (p.2)) ∗ (fp x).(fp_Pa) in
@@ -60,8 +60,8 @@ Section function.
       iPureIntro. apply: Forall2_same_length_lookup_2. { rewrite -Hlen. symmetry. by apply: length_proper. }
       move => i ty [??] Haty Harg.
       move: Hatys => /list_equiv_lookup Hatys.
-      have := Hatys i. rewrite Haty => /(Some_equiv_eq _ _)[? [? [?<-?]]].
-      by apply: (Hall _ _ (_, _)).
+      have := Hatys i. rewrite Haty => /(Some_equiv_eq _ _)[? [? [? Hi ?]]].
+      apply Hi. by apply: (Hall _ _ (_, _)).
     }
     rewrite /introduce_typed_stmt.
     iIntros "!>" (lsa lsv) "[Hv Ha] %". rewrite -HPa.
@@ -92,17 +92,21 @@ Section function.
 
   Global Program Instance rmovable_function_ptr fp : RMovable (function_ptr fp) := {|
     rmovable f := {|
-      ty_has_layout ly := ly = void*;
+      ty_has_op_type ot mt := is_ptr_ot ot;
       ty_own_val v := (∃ fn, ⌜v = val_of_loc f⌝  ∗ fntbl_entry f fn ∗ ▷ typed_function fn fp)%I;
   |} |}.
-  Next Obligation. iIntros (? f ly l ->). by iDestruct 1 as (??) "?". Qed.
-  Next Obligation. iIntros (fp f ly v ->). by iDestruct 1 as (? ->) "?". Qed.
-  Next Obligation. iIntros (fp f ly v ->). iDestruct 1 as (??) "(?&?)". eauto with iFrame. Qed.
-  Next Obligation. iIntros (fp f ly v ? -> ?) "?". iDestruct 1 as (? ->) "?". iFrame. iExists _. by iFrame. Qed.
+  Next Obligation. iIntros (fp f ot mt l ->%is_ptr_ot_layout). by iDestruct 1 as (??) "?". Qed.
+  Next Obligation. iIntros (fp f ot mt v ->%is_ptr_ot_layout). by iDestruct 1 as (? ->) "?". Qed.
+  Next Obligation. iIntros (fp f ot mt v ?). iDestruct 1 as (??) "(?&?)". eauto with iFrame. Qed.
+  Next Obligation. iIntros (fp f ot mt v ? ->%is_ptr_ot_layout ?) "?". iDestruct 1 as (? ->) "?". iFrame. iExists _. by iFrame. Qed.
+  Next Obligation.
+    iIntros (fp f v ot mt st ?). apply mem_cast_compat_loc; [done|].
+    iIntros "[%fn [-> ?]]". iPureIntro. naive_solver.
+  Qed.
 
   Global Program Instance copyable_function_ptr p fp : Copyable (p @ function_ptr fp).
   Next Obligation.
-    iIntros (p fp E ly l ? ->). iDestruct 1 as (fn Hl) "(Hl&?&?)".
+    iIntros (p fp E ly l ? ->%is_ptr_ot_layout). iDestruct 1 as (fn Hl) "(Hl&?&?)".
     iMod (heap_mapsto_own_state_to_mt with "Hl") as (q) "[_ Hl]" => //. iSplitR => //.
     iExists _, _. iFrame. iModIntro. iSplit. by iExists _; iFrame.
     by iIntros "_".
@@ -203,24 +207,28 @@ Section inline_function.
 
   Global Program Instance rmovable_inline_function_ptr fn : RMovable (inline_function_ptr fn) := {|
     rmovable f := {|
-      ty_has_layout ly := ly = void*;
+      ty_has_op_type ot mt := is_ptr_ot ot;
       ty_own_val v := (⌜v = val_of_loc f⌝ ∗ fntbl_entry f fn)%I;
   |} |}.
-  Next Obligation. iIntros (? f ly l ->). by iDestruct 1 as (?) "?". Qed.
-  Next Obligation. iIntros (fn f v ly ->). by iDestruct 1 as (->) "?". Qed.
-  Next Obligation. iIntros (fn f v ly ->). iDestruct 1 as (?) "(?&?)". eauto with iFrame. Qed.
-  Next Obligation. iIntros (fn f ly l v -> ?) "?". iDestruct 1 as (->) "?". by iFrame. Qed.
+  Next Obligation. iIntros (fn f ot mt l ->%is_ptr_ot_layout). by iDestruct 1 as (?) "?". Qed.
+  Next Obligation. iIntros (fn f ot mt v ->%is_ptr_ot_layout). by iDestruct 1 as (->) "?". Qed.
+  Next Obligation. iIntros (fn f ot mt v ?). iDestruct 1 as (?) "(?&?)". eauto with iFrame. Qed.
+  Next Obligation. iIntros (fn f ot mt l v ->%is_ptr_ot_layout ?) "?". iDestruct 1 as (->) "?". by iFrame. Qed.
+  Next Obligation.
+    iIntros (fn f v ot mt st ?). apply mem_cast_compat_loc; [done|].
+    iIntros "[-> ?]". iPureIntro. naive_solver.
+  Qed.
 
   Global Program Instance copyable_inline_function_ptr p fn : Copyable (p @ inline_function_ptr fn).
   Next Obligation.
-    iIntros (p fn E l ly ? ->). iDestruct 1 as (Hl) "(Hl&?)".
+    iIntros (p fn E l ly ? ->%is_ptr_ot_layout). iDestruct 1 as (Hl) "(Hl&?)".
     iMod (heap_mapsto_own_state_to_mt with "Hl") as (q) "[_ Hl]" => //. iSplitR => //.
     iExists _, _. iFrame. iModIntro. iSplit; [done|].
     by iIntros "_".
   Qed.
 
   Lemma type_call_inline_fnptr l v vl tys T fn:
-    (⌜Forall2 (λ (ty : mtype) '(_, p), ty.(ty_has_layout) p) tys (f_args fn)⌝ ∗
+    (⌜Forall2 (λ (ty : mtype) '(_, p), ty.(ty_has_op_type) (UntypedOp p) MCNone) tys (f_args fn)⌝ ∗
       foldr (λ '(v, ty) T lsa, ∀ l, l ◁ₗ (ty : mtype) -∗ T (lsa ++ [l]))
       (λ lsa, foldr (λ ly T lsv, ∀ l, l ◁ₗ uninit ly -∗ T (lsv ++ [l]))
                     (λ lsv,

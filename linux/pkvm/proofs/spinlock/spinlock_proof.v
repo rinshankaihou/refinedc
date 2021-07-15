@@ -73,16 +73,19 @@ Section proofs.
         iInv "Hinv" as ">Inv" "Hclose_inv".
         iDestruct "Inv" as (owner next) "(%&Howner&Hnext&Hrest)".
         iApply fupd_mask_intro; first solve_ndisj. iIntros "Hclose".
-        iDestruct (ty_aligned with "Hnext") as %?; [done|].
-        iDestruct (ty_deref with "Hnext") as (v) "[Hl Hv]"; [done|].
-        iDestruct (ty_size_eq with "Hv") as %?; [done|].
+        iDestruct (ty_aligned (IntOp _) MCNone with "Hnext") as %?; [done|].
+        iDestruct (ty_deref (IntOp _) MCNone with "Hnext") as (v) "[Hl Hv]"; [done|].
+        iDestruct (ty_size_eq (IntOp _) MCNone with "Hv") as %?; [done|].
         iExists 1%Qp, v, _, (t2mt (next @ int u16))%I.
-        repeat liRStep; liShow. iSplit; first by iNext. iIntros "!> Hl".
+        repeat liRStep; liShow. iSplit; first by iNext.
+        iIntros "!> %st Hl Hv'".
         iMod "Hclose" as "_". iMod ("Hclose_inv" with "[Howner Hrest Hl Hv]") as "_".
         { iNext. rewrite /hyp_spinlock_t_invariant. iExists owner, next.
           iFrame "Hrest". iSplit; first done. iFrame.
-          by iApply (ty_ref with "[] Hl Hv"). }
-        iModIntro. iFrame select (_ ◁ₗ{Shr} _)%I.
+          by iApply (ty_ref (IntOp _) MCNone with "[] Hl Hv"). }
+        iModIntro. iExists (t2mt (next @ int u16)).
+        iSplit; [ by iApply ty_memcast_compat_copy |].
+        iFrame select (_ ◁ₗ{Shr} _)%I.
         repeat liRStep; liShow.
     - (* #1 First loop (after the initial run), checking if we got the ticket. *)
       destruct s.
@@ -104,16 +107,18 @@ Section proofs.
         iInv "Hinv" as ">Inv" "Hclose_inv".
         iDestruct "Inv" as (owner next) "(%&Howner&Hnext&Hrest)".
         iApply fupd_mask_intro; first solve_ndisj. iIntros "Hclose".
-        iDestruct (ty_aligned with "Hnext") as %?; [done|].
-        iDestruct (ty_deref with "Hnext") as (v') "[Hl Hv]"; [done|].
-        iDestruct (ty_size_eq with "Hv") as %?; [done|].
+        iDestruct (ty_aligned (IntOp _) MCNone with "Hnext") as %?; [done|].
+        iDestruct (ty_deref (IntOp _) MCNone with "Hnext") as (v') "[Hl Hv]"; [done|].
+        iDestruct (ty_size_eq (IntOp _) MCNone with "Hv") as %?; [done|].
         iExists 1%Qp, v', _, (t2mt (next @ int u16))%I.
-        repeat liRStep; liShow. iSplit; first by iNext. iIntros "!> Hl".
+        repeat liRStep; liShow. iSplit; first by iNext. iIntros "!> %st Hl Hv'".
         iMod "Hclose" as "_". iMod ("Hclose_inv" with "[Howner Hrest Hl Hv]") as "_".
         { iNext. rewrite /hyp_spinlock_t_invariant. iExists owner, next.
           iFrame "Hrest". iSplit; first done. iFrame.
-          by iApply (ty_ref with "[] Hl Hv"). }
-        iModIntro. iFrame select (_ ◁ₗ{Shr} _)%I.
+          by iApply (ty_ref (IntOp _) MCNone with "[] Hl Hv"). }
+        iModIntro. iExists (t2mt (next @ int u16)).
+        iSplit; [ by iApply ty_memcast_compat_copy |].
+        iFrame select (_ ◁ₗ{Shr} _)%I.
         repeat liRStep; liShow.
         destruct b => //. iFrame.
     - (* #7 Code that eventually goes to the CAS and takes care of the loop. *)
@@ -175,16 +180,18 @@ Section proofs.
           iInv "Hinv" as ">Inv" "Hclose_inv".
           iDestruct "Inv" as (owner next) "(%&Howner&Hnext&Hrest)".
           iApply fupd_mask_intro; first solve_ndisj. iIntros "Hclose".
-          iDestruct (ty_aligned with "Hnext") as %?; [done|].
-          iDestruct (ty_deref with "Hnext") as (v') "[Hl Hv]"; [done|].
-          iDestruct (ty_size_eq with "Hv") as %?; [done|].
+          iDestruct (ty_aligned (IntOp _) MCNone with "Hnext") as %?; [done|].
+          iDestruct (ty_deref (IntOp _) MCNone with "Hnext") as (v') "[Hl Hv]"; [done|].
+          iDestruct (ty_size_eq (IntOp _) MCNone with "Hv") as %?; [done|].
           iExists 1%Qp, v', _, (t2mt (next @ int u16))%I.
-          repeat liRStep; liShow. iSplit; first by iNext. iIntros "!> Hl".
+          repeat liRStep; liShow. iSplit; first by iNext. iIntros "!> %st Hl Hv'".
           iMod "Hclose" as "_". iMod ("Hclose_inv" with "[Howner Hrest Hl Hv]") as "_".
           { iNext. rewrite /hyp_spinlock_t_invariant. iExists owner, next.
             iFrame "Hrest". iSplit; first done. iFrame.
-            by iApply (ty_ref with "[] Hl Hv"). }
-          iModIntro. iFrame select (_ ◁ₗ{Shr} _)%I.
+            by iApply (ty_ref (IntOp _) MCNone with "[] Hl Hv"). }
+          iModIntro. iExists (t2mt (next @ int u16)).
+          iSplit; [ by iApply ty_memcast_compat_copy |].
+          iFrame select (_ ◁ₗ{Shr} _)%I.
           repeat liRStep; liShow.
         * liRStepUntil typed_cas.
           iIntros "???" (Φ) "HΦ".
@@ -251,16 +258,18 @@ Section proofs.
         iInv "Hinv" as ">Inv" "Hclose_inv".
         iDestruct "Inv" as (owner next) "([%%]&Howner&Hnext&Hrest)".
         iApply fupd_mask_intro; first solve_ndisj. iIntros "Hclose".
-        iDestruct (ty_aligned with "Howner") as %?; [done|].
-        iDestruct (ty_deref with "Howner") as (w) "[Hl Hv]"; [done|].
-        iDestruct (ty_size_eq with "Hv") as %?; [done|].
+        iDestruct (ty_aligned (IntOp _) MCNone with "Howner") as %?; [done|].
+        iDestruct (ty_deref (IntOp _) MCNone with "Howner") as (w) "[Hl Hv]"; [done|].
+        iDestruct (ty_size_eq (IntOp _) MCNone with "Hv") as %?; [done|].
         iExists 1%Qp, w, _, (t2mt (owner @ int u16))%I.
-        repeat liRStep; liShow. iSplit; first by iNext. iIntros "!> Hl".
+        repeat liRStep; liShow. iSplit; first by iNext. iIntros "!> %st Hl Hv'".
         destruct (decide (i ≠ owner)).
         * iMod "Hclose" as "_". iMod ("Hclose_inv" with "[Hnext Hrest Hl Hv]") as "_".
           { iNext. iExists owner, next. iFrame "Hrest". iSplit; first done. iFrame.
-            by iApply (ty_ref with "[] Hl Hv"). }
-          iModIntro. iFrame select (_ ◁ₗ{Shr} _)%I.
+            by iApply (ty_ref (IntOp _) MCNone with "[] Hl Hv"). }
+          iModIntro. iExists (t2mt (owner @ int u16)).
+          iSplit; [ by iApply ty_memcast_compat_copy |].
+          iFrame select (_ ◁ₗ{Shr} _)%I.
           repeat liRStep; liShow.
         * assert (i = owner) as -> by lia.
           iRename select (ticket _ _) into "Hticket".
@@ -271,15 +280,17 @@ Section proofs.
           { rewrite /ty_own_val /=. by iDestruct "Hv" as %Hv%val_to_Z_in_range. }
           iAssert (⌜owner < next⌝)%I as %?.
           { destruct (decide (owner < next)); first done. iExFalso.
-            iDestruct (ty_size_eq with "Hv") as %?; [done|].
+            iDestruct (ty_size_eq (IntOp _) MCNone with "Hv") as %?; [done|].
             iDestruct (ticket_not_NO_TICKET with "Hticket") as %Howner.
             iApply (ticket_already_in_range with "[] Hr2 Hticket").
             iPureIntro. clear Q. apply elem_of_seqZ. lia. }
           iMod "Hclose" as "_". iMod ("Hclose_inv" with "[Hnext Hl Hv Hfrag Hr1 Hr2 Hticket]") as "_".
           { iNext. iExists owner, next. iFrame "Hnext". iFrame "Hfrag". iSplit; first done.
-            iDestruct (ty_ref with "[] Hl Hv") as "$" => //. iFrame "Hr1". iFrame "Hr2".
+            iDestruct (ty_ref (IntOp _) MCNone with "[] Hl Hv") as "$" => //. iFrame "Hr1". iFrame "Hr2".
             iLeft. iSplit; done. }
-          iModIntro. iFrame select (_ ◁ₗ{Shr} _)%I.
+          iModIntro. iExists (t2mt (owner @ int u16)).
+          iSplit; [ by iApply ty_memcast_compat_copy |].
+          iFrame select (_ ◁ₗ{Shr} _)%I.
           repeat liRStep; liShow.
     (* Solving side-conditions. *)
     Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal.
@@ -340,23 +351,25 @@ Section proofs.
       (* We have the token: we are the owner. *)
       iDestruct (owner_auth_agree with "H● H◯") as %<-.
       (* We perform the read. *)
-      iDestruct (ty_aligned with "Howner") as %?;[done|].
-      iDestruct (ty_deref with "Howner") as (v) "[Hl Hv]";[done|].
-      iDestruct (ty_size_eq with "Hv") as %?;[done|].
+      iDestruct (ty_aligned (IntOp _) MCNone with "Howner") as %?;[done|].
+      iDestruct (ty_deref (IntOp _) MCNone with "Howner") as (v) "[Hl Hv]";[done|].
+      iDestruct (ty_size_eq (IntOp _) MCNone with "Hv") as %?;[done|].
       iExists 1%Qp, v, _, (t2mt (owner @ int u16))%I.
-      repeat liRStep; liShow. iSplit; first by iNext. iIntros "!> Hl".
+      repeat liRStep; liShow. iSplit; first by iNext. iIntros "!> %st Hl Hv'".
       (* We must close the invariant. *)
       iMod "Hclose" as "_". iMod ("Hclose_inv" with "[Hnext Hrest Hl Hv H◯]") as "_".
       { iNext. rewrite /hyp_spinlock_t_invariant. iExists owner, next.
         iFrame "Hrest". iFrame. iSplit; first done.
-        by iApply (ty_ref with "[] Hl Hv"). }
-      iModIntro. iFrame select (_ ◁ₗ{Shr} _)%I.
+        by iApply (ty_ref (IntOp _) MCNone with "[] Hl Hv"). }
+      iModIntro. iExists (t2mt (owner @ int u16)).
+      iSplit; [ by iApply ty_memcast_compat_copy |].
+        iFrame select (_ ◁ₗ{Shr} _)%I.
       (* Run the automation to the write to [owner] of each branch. *)
       repeat liRStep; liShow.
       + (* We have the last ticket. The next owner will be 0, we update. *)
         (* We must open the invariant again. *)
         iExists (Shr, place _); iSplitR; first by simpl.
-        rewrite /typed_write_end; iIntros "?_?".
+        rewrite /typed_write_end; iIntros "??".
         iInv "Hinv" as ">Inv" "Hclose_inv".
         iDestruct "Inv" as (owner' next') "([%%]&Howner&Hnext&H◯&Htk1&Htk2&Hcases)".
         (* We have the token: we are the owner and our ticket is in [Hcases]. *)
@@ -367,20 +380,21 @@ Section proofs.
         (* The owner will be 0, update the witness. *)
         iMod (owner_auth_update _ _ _ _ 0%nat with "H● H◯") as "[H● H◯]".
         iApply fupd_mask_intro; first solve_ndisj. iIntros "Hclose".
+        iSplit. { iRename select (_ ◁ᵥ _ @ int u16)%I into "H". by iApply (ty_size_eq _ MCNone with "H"). }
         (* Learn that [next'] actually is [max_int u16]. *)
         iAssert ⌜next' = max_int u16⌝%I as %->.
-        { iDestruct (ty_deref with "Hnext") as (w) "[_ H]"; [done|]. iDestruct "H" as %Hnext.
+        { iDestruct (ty_deref (IntOp _) MCNone with "Hnext") as (w) "[_ H]"; [done|]. iDestruct "H" as %Hnext.
           iPureIntro. apply val_to_Z_in_range in Hnext as [??]. lia. }
         (* We perform the write and close the invariant. *)
-        iDestruct (ty_aligned with "Howner") as %?; [done|].
-        iDestruct (ty_deref with "Howner") as (v') "[Hl Hv]"; [done|].
-        iDestruct (ty_size_eq with "Hv") as %?; [done|].
+        iDestruct (ty_aligned (IntOp _) MCNone with "Howner") as %?; [done|].
+        iDestruct (ty_deref (IntOp _) MCNone with "Howner") as (v') "[Hl Hv]"; [done|].
+        iDestruct (ty_size_eq (IntOp _) MCNone with "Hv") as %?; [done|].
         iSplitL "Hl". { iExists _. by iFrame "Hl". }
         iIntros "!> Hl".
         iRename select (_ ◁ᵥ 0 @ int u16)%I into "H0".
         iMod "Hclose" as "_". iMod ("Hclose_inv" with "[Htok H● H◯ Hnext Hl Hv H0]") as "_".
         { iNext. iExists 0, (LAST_TICKET + 1). iFrame.
-          iDestruct ((ty_ref (t := 0 @ int u16)) with "[] Hl H0") as "$" => //.
+          iDestruct ((ty_ref (t := 0 @ int u16) _ MCNone) with "[] Hl H0") as "$" => //; [done|].
           iSplit. { iPureIntro. split => //. }
           do 2 (iSplitR; first by iApply ticket_range_empty).
           iRight. iFrame "Htok". by iExists _. }
@@ -392,13 +406,13 @@ Section proofs.
         (* Run the automation up to the write to the [next] field, open invariant. *)
         repeat liRStep; liShow.
         iExists (Shr, place _); iSplitR; first by simpl.
-        rewrite /typed_write_end; iIntros "???".
+        rewrite /typed_write_end; iIntros "? ?".
         iInv "Hinv" as ">Inv" "Hclose_inv".
         iDestruct "Inv" as (owner' next'') "([%%]&Howner&Hnext&H◯&Htr1&Htr2&Hcases)".
         (* We can get [owner' = 0] since we have all the tickets. *)
         iAssert ⌜owner' = 0⌝%I as %->.
         { destruct (decide (owner' = 0)) => //. iExFalso.
-          iDestruct (ty_deref with "Howner") as (?) "[? Hv]"; [done|].
+          iDestruct (ty_deref (IntOp _) MCNone with "Howner") as (?) "[? Hv]"; [done|].
           iDestruct "Hv" as %Howner%val_to_Z_in_range.
           destruct Howner as [Howner ?].
           iDestruct (overlaping_ticket_ranges with "[] Htk Htr1") as "$".
@@ -417,23 +431,24 @@ Section proofs.
           iExists next''. iPureIntro. split; apply elem_of_seqZ; lia. }
         (* We perform the write and close the invariant. *)
         iApply fupd_mask_intro; first solve_ndisj. iIntros "Hclose".
-        iDestruct (ty_aligned with "Hnext") as %?; [done|].
-        iDestruct (ty_deref with "Hnext") as (v'') "[Hl Hv]"; [done|].
-        iDestruct (ty_size_eq with "Hv") as %?; [done|].
+        iSplit. { iRename select (_ ◁ᵥ _ @ int u16)%I into "H". by iApply (ty_size_eq _ MCNone with "H"). }
+        iDestruct (ty_aligned (IntOp _) MCNone with "Hnext") as %?; [done|].
+        iDestruct (ty_deref (IntOp _) MCNone with "Hnext") as (v'') "[Hl Hv]"; [done|].
+        iDestruct (ty_size_eq (IntOp _) MCNone with "Hv") as %?; [done|].
         iSplitL "Hl". { iExists _. by iFrame "Hl". }
         iIntros "!> Hl".
         iRename select (ticket ◁ₗ _)%I into "Hticket_var".
         iRename select (_ ◁ᵥ 0 @ int u16)%I into "H0".
         iMod "Hclose" as "_". iMod ("Hclose_inv" with "[- Hticket_var]") as "_".
         { iNext. iExists 0, 0. iFrame. iSplit; first by iPureIntro.
-          iApply ((ty_ref (t := 0 @ int u16)) with "[] Hl H0") => //. }
+          by iApply ((ty_ref (t := 0 @ int u16) _ MCNone) with "[] Hl H0") => //. }
         iModIntro. iExists (place (p at{struct_hyp_spinlock}ₗ "next")).
         (* Run the automation to finish the branch. *)
         repeat liRStep; liShow.
       + (* We do not have the last ticket, we do not reset the queue. *)
         (* We must open the invariant again. *)
         iExists (Shr, place _); iSplitR; first by simpl.
-        rewrite /typed_read_end; iIntros "? ? ?".
+        rewrite /typed_write_end; iIntros "? ?".
         iInv "Hinv" as ">Inv" "Hclose_inv".
         iDestruct "Inv" as (owner' next') "([% %]&Howner&Hnext&H◯&Htk1&Htk2&Hcases)".
         (* We have the token: we are the owner and our ticket is in [Hcases]. *)
@@ -444,10 +459,11 @@ Section proofs.
         (* The owner will be [owner + 1], update the witness. *)
         iMod (owner_auth_update _ _ _ _ (owner + 1) with "H● H◯") as "[H● H◯]".
         iApply fupd_mask_intro; first solve_ndisj. iIntros "Hclose".
+        iSplit. { iRename select (_ ◁ᵥ _ @ int u16)%I into "H". by iApply (ty_size_eq _ MCNone with "H"). }
         (* We perform the write and close the invariant. *)
-        iDestruct (ty_aligned with "Howner") as %?; [done|].
-        iDestruct (ty_deref with "Howner") as (v') "[Hl Hv]"; [done|].
-        iDestruct (ty_size_eq with "Hv") as %?; [done|].
+        iDestruct (ty_aligned (IntOp _) MCNone with "Howner") as %?; [done|].
+        iDestruct (ty_deref (IntOp _) MCNone with "Howner") as (v') "[Hl Hv]"; [done|].
+        iDestruct (ty_size_eq (IntOp _) MCNone with "Hv") as %?; [done|].
         iDestruct "Hv" as %?%val_to_Z_in_range.
         iSplitL "Hl". { iExists _. by iFrame "Hl". }
         iIntros "!> Hl".
@@ -457,7 +473,7 @@ Section proofs.
           iDestruct (ticket_range_insert_r with "Htk1 Hticket") as "$".
           { split; first done. by transitivity (min_int u16). }
           iSplit. { iPureIntro. by lia. }
-          iDestruct ((ty_ref (t := (owner + 1) @ int u16)) with "[] Hl Howner+1") as "$" => //.
+          iDestruct ((ty_ref (t := (owner + 1) @ int u16) _ MCNone) with "[] Hl Howner+1") as "$" => //; [done|].
           iRight. iFrame "Htok". by iExists _. }
         iModIntro.
         (* Run the automation to finish the branch. *)

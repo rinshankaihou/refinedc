@@ -1,17 +1,13 @@
 From iris.program_logic Require Export language ectx_language ectxi_language.
 From stdpp Require Export strings.
 From stdpp Require Import gmap list.
-From refinedc.lang Require Export base byte layout int_type loc val heap.
+From refinedc.lang Require Export base byte layout int_type loc val heap struct.
 Set Default Proof Using "Type".
 Open Scope Z_scope.
 
 (** * Definition of the language *)
 
 Definition label := string.
-Definition var_name := string.
-
-Inductive op_type : Set :=
-| IntOp (i : int_type) | PtrOp.
 
 (* see http://compcert.inria.fr/doc/html/compcert.cfrontend.Cop.html#binary_operation *)
 Inductive bin_op : Set :=
@@ -35,7 +31,7 @@ Inductive expr :=
 | UnOp (op : un_op) (ot : op_type) (e : expr)
 | BinOp (op : bin_op) (ot1 ot2 : op_type) (e1 e2 : expr)
 | CopyAllocId (ot1 : op_type) (e1 : expr) (e2 : expr)
-| Deref (o : order) (ly : layout) (e : expr)
+| Deref (o : order) (ot : op_type) (e : expr)
 | CAS (ot : op_type) (e1 e2 e3 : expr)
 | Call (f : expr) (args : list expr)
 | Concat (es : list expr)
@@ -51,7 +47,7 @@ Lemma expr_ind (P : expr → Prop) :
   (∀ (op : un_op) (ot : op_type) (e : expr), P e → P (UnOp op ot e)) →
   (∀ (op : bin_op) (ot1 ot2 : op_type) (e1 e2 : expr), P e1 → P e2 → P (BinOp op ot1 ot2 e1 e2)) →
   (∀ (ot1 : op_type) (e1 e2 : expr), P e1 → P e2 → P (CopyAllocId ot1 e1 e2)) →
-  (∀ (o : order) (ly : layout) (e : expr), P e → P (Deref o ly e)) →
+  (∀ (o : order) (ot : op_type) (e : expr), P e → P (Deref o ot e)) →
   (∀ (ot : op_type) (e1 e2 e3 : expr), P e1 → P e2 → P e3 → P (CAS ot e1 e2 e3)) →
   (∀ (f : expr) (args : list expr), P f → Forall P args → P (Call f args)) →
   (∀ (es : list expr), Forall P es → P (Concat es)) →
@@ -78,7 +74,7 @@ Inductive stmt :=
 | Return (e : expr)
 (* m: map from values of e to indices into bs, def: default *)
 | Switch (it : int_type) (e : expr) (m : gmap Z nat) (bs : list stmt) (def : stmt)
-| Assign (o : order) (ly : layout) (e1 e2 : expr) (s : stmt)
+| Assign (o : order) (ot : op_type) (e1 e2 : expr) (s : stmt)
 | SkipS (s : stmt)
 | StuckS (* stuck statement *)
 | ExprS (e : expr) (s : stmt)
@@ -123,7 +119,7 @@ with rtexpr :=
 | RTUnOp (op : un_op) (ot : op_type) (e : runtime_expr)
 | RTBinOp (op : bin_op) (ot1 ot2 : op_type) (e1 e2 : runtime_expr)
 | RTCopyAllocId (ot1 : op_type) (e1 : runtime_expr) (e2 : runtime_expr)
-| RTDeref (o : order) (ly : layout) (e : runtime_expr)
+| RTDeref (o : order) (ot : op_type) (e : runtime_expr)
 | RTCall (f : runtime_expr) (args : list runtime_expr)
 | RTCAS (ot : op_type) (e1 e2 e3 : runtime_expr)
 | RTConcat (es : list runtime_expr)
@@ -134,7 +130,7 @@ with rtstmt :=
 | RTGoto (b : label)
 | RTReturn (e : runtime_expr)
 | RTSwitch (it : int_type) (e : runtime_expr) (m : gmap Z nat) (bs : list stmt) (def : stmt)
-| RTAssign (o : order) (ly : layout) (e1 e2 : runtime_expr) (s : stmt)
+| RTAssign (o : order) (ot : op_type) (e1 e2 : runtime_expr) (s : stmt)
 | RTSkipS (s : stmt)
 | RTStuckS
 | RTExprS (e : runtime_expr) (s : stmt)
@@ -147,7 +143,7 @@ Fixpoint to_rtexpr (e : expr) : runtime_expr :=
   | UnOp op ot e => RTUnOp op ot (to_rtexpr e)
   | BinOp op ot1 ot2 e1 e2 => RTBinOp op ot1 ot2 (to_rtexpr e1) (to_rtexpr e2)
   | CopyAllocId ot1 e1 e2 => RTCopyAllocId ot1 (to_rtexpr e1) (to_rtexpr e2)
-  | Deref o ly e => RTDeref o ly (to_rtexpr e)
+  | Deref o ot e => RTDeref o ot (to_rtexpr e)
   | Call f args => RTCall (to_rtexpr f) (to_rtexpr <$> args)
   | CAS ot e1 e2 e3 => RTCAS ot (to_rtexpr e1) (to_rtexpr e2) (to_rtexpr e3)
   | Concat es => RTConcat (to_rtexpr <$> es)
@@ -163,7 +159,7 @@ Definition to_rtstmt (rf : runtime_function) (s : stmt) : runtime_expr :=
   | Goto b => RTGoto b
   | Return e => RTReturn (to_rtexpr e)
   | Switch it e m bs def => RTSwitch it (to_rtexpr e) m bs def
-  | Assign o ly e1 e2 s => RTAssign o ly (to_rtexpr e1) (to_rtexpr e2) s
+  | Assign o ot e1 e2 s => RTAssign o ot (to_rtexpr e1) (to_rtexpr e2) s
   | SkipS s => RTSkipS s
   | StuckS => RTStuckS
   | ExprS e s => RTExprS (to_rtexpr e) s
@@ -213,7 +209,7 @@ Fixpoint subst_stmt (xs : list (var_name * val)) (s : stmt) : stmt :=
   | Goto b => Goto b
   | Return e => Return (subst_l xs e)
   | Switch it e m' bs def => Switch it (subst_l xs e) m' (subst_stmt xs <$> bs) (subst_stmt xs def)
-  | Assign o ly e1 e2 s => Assign o ly (subst_l xs e1) (subst_l xs e2) (subst_stmt xs s)
+  | Assign o ot e1 e2 s => Assign o ot (subst_l xs e1) (subst_l xs e2) (subst_stmt xs s)
   | SkipS s => SkipS (subst_stmt xs s)
   | StuckS => StuckS
   | ExprS e s => ExprS (subst_l xs e) (subst_stmt xs s)
@@ -420,7 +416,7 @@ Inductive expr_step : expr → state → list Empty_set → runtime_expr → sta
 | BinOpS op v1 v2 σ v' ot1 ot2:
     eval_bin_op op ot1 ot2 σ v1 v2 v' →
     expr_step (BinOp op ot1 ot2 (Val v1) (Val v2)) σ [] (Val v') σ []
-| DerefS o v l ly v' σ:
+| DerefS o v l ot v' σ:
     let start_st st := ∃ n, st = if o is Na2Ord then RSt (S n) else RSt n in
     let end_st st :=
       match o, st with
@@ -430,10 +426,10 @@ Inductive expr_step : expr → state → list Empty_set → runtime_expr → sta
       |  _    , _                => WSt (* unreachable *)
       end
     in
-    let end_expr := if o is Na1Ord then Deref Na2Ord ly (Val v) else Val v' in
+    let end_expr := if o is Na1Ord then Deref Na2Ord ot (Val v) else Val (mem_cast v' ot (dom _ σ.(st_fntbl), σ.(st_heap))) in
     val_to_loc v = Some l →
-    heap_at l ly v' start_st σ.(st_heap).(hs_heap) →
-    expr_step (Deref o ly (Val v)) σ [] end_expr (heap_fmap (heap_upd l v' end_st) σ) []
+    heap_at l (ot_layout ot) v' start_st σ.(st_heap).(hs_heap) →
+    expr_step (Deref o ot (Val v)) σ [] end_expr (heap_fmap (heap_upd l v' end_st) σ) []
 (* TODO: look at CAS and see whether it makes sense. Also allow
 comparing pointers? (see lambda rust) *)
 (* corresponds to atomic_compare_exchange_strong, see https://en.cppreference.com/w/c/atomic/atomic_compare_exchange *)
@@ -502,15 +498,15 @@ comparing pointers? (see lambda rust) *)
 
 (*** Evaluation of statements *)
 Inductive stmt_step : stmt → runtime_function → state → list Empty_set → runtime_expr → state → list runtime_expr → Prop :=
-| AssignS (o : order) rf σ s v1 v2 l v' ly:
+| AssignS (o : order) rf σ s v1 v2 l v' ot:
     let start_st st := st = if o is Na2Ord then WSt else RSt 0%nat in
     let end_st _ := if o is Na1Ord then WSt else RSt 0%nat in
     let end_val  := if o is Na1Ord then v' else v2 in
-    let end_stmt := if o is Na1Ord then Assign Na2Ord ly (Val v1) (Val v2) s else s in
+    let end_stmt := if o is Na1Ord then Assign Na2Ord ot (Val v1) (Val v2) s else s in
     val_to_loc v1 = Some l →
-    v2 `has_layout_val` ly →
-    heap_at l ly v' start_st σ.(st_heap).(hs_heap) →
-    stmt_step (Assign o ly (Val v1) (Val v2) s) rf σ [] (to_rtstmt rf end_stmt) (heap_fmap (heap_upd l end_val end_st) σ) []
+    v2 `has_layout_val` (ot_layout ot) →
+    heap_at l (ot_layout ot) v' start_st σ.(st_heap).(hs_heap) →
+    stmt_step (Assign o ot (Val v1) (Val v2) s) rf σ [] (to_rtstmt rf end_stmt) (heap_fmap (heap_upd l end_val end_st) σ) []
 | SwitchS rf σ v n m bs s def it :
     val_to_Z v it = Some n →
     (∀ i : nat, m !! n = Some i → is_Some (bs !! i)) →
@@ -584,7 +580,7 @@ Inductive expr_ectx :=
 | BinOpRCtx (op : bin_op) (ot1 ot2 : op_type) (v1 : val)
 | CopyAllocIdLCtx (ot1 : op_type) (e2 : runtime_expr)
 | CopyAllocIdRCtx (ot1 : op_type) (v1 : val)
-| DerefCtx (o : order) (l : layout)
+| DerefCtx (o : order) (ot : op_type)
 | CallLCtx (args : list runtime_expr)
 | CallRCtx (f : val) (vl : list val) (el : list runtime_expr)
 | CASLCtx (ot : op_type) (e2 e3 : runtime_expr)
@@ -616,8 +612,8 @@ Definition expr_fill_item (Ki : expr_ectx) (e : runtime_expr) : rtexpr :=
 (** Statements *)
 Inductive stmt_ectx :=
 (* Assignment is evalutated right to left, otherwise we need to split contexts *)
-| AssignRCtx (o : order) (ly : layout) (e1 : expr) (s : stmt)
-| AssignLCtx (o : order) (ly : layout) (v2 : val) (s : stmt)
+| AssignRCtx (o : order) (ot : op_type) (e1 : expr) (s : stmt)
+| AssignLCtx (o : order) (ot : op_type) (v2 : val) (s : stmt)
 | ReturnCtx
 | SwitchCtx (it : int_type) (m: gmap Z nat) (bs : list stmt) (def : stmt)
 | ExprSCtx (s : stmt)
@@ -625,8 +621,8 @@ Inductive stmt_ectx :=
 
 Definition stmt_fill_item (Ki : stmt_ectx) (e : runtime_expr) : rtstmt :=
   match Ki with
-  | AssignRCtx o ly e1 s => RTAssign o ly e1 e s
-  | AssignLCtx o ly v2 s => RTAssign o ly e (Val v2) s
+  | AssignRCtx o ot e1 s => RTAssign o ot e1 e s
+  | AssignLCtx o ot v2 s => RTAssign o ot e (Val v2) s
   | ReturnCtx => RTReturn e
   | SwitchCtx it m bs def => RTSwitch it e m bs def
   | ExprSCtx s => RTExprS e s

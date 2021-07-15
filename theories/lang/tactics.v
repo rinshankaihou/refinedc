@@ -13,7 +13,7 @@ Inductive expr :=
 | UnOp (op : un_op) (ot : op_type) (e : expr)
 | BinOp (op : bin_op) (ot1 ot2 : op_type) (e1 e2 : expr)
 | CopyAllocId (ot1 : op_type) (e1 e2 : expr)
-| Deref (o : order) (ly : layout) (e : expr)
+| Deref (o : order) (ot : op_type) (e : expr)
 | CAS (ot : op_type) (e1 e2 e3 : expr)
 | Call (f : expr) (args : list expr)
 | Concat (es : list expr)
@@ -21,7 +21,7 @@ Inductive expr :=
 | SkipE (e : expr)
 | StuckE
 (* new constructors *)
-| Use (o : order) (ly : layout) (e : expr)
+| Use (o : order) (ot : op_type) (e : expr)
 | AddrOf (e : expr)
 | LValue (e : expr)
 | GetMember (e : expr) (s : struct_layout) (m : var_name)
@@ -44,14 +44,14 @@ Lemma expr_ind (P : expr → Prop) :
   (∀ (op : un_op) (ot : op_type) (e : expr), P e → P (UnOp op ot e)) →
   (∀ (op : bin_op) (ot1 ot2 : op_type) (e1 e2 : expr), P e1 → P e2 → P (BinOp op ot1 ot2 e1 e2)) →
   (∀ (ot1 : op_type) (e1 e2 : expr), P e1 → P e2 → P (CopyAllocId ot1 e1 e2)) →
-  (∀ (o : order) (ly : layout) (e : expr), P e → P (Deref o ly e)) →
+  (∀ (o : order) (ot : op_type) (e : expr), P e → P (Deref o ot e)) →
   (∀ (ot : op_type) (e1 e2 e3 : expr), P e1 → P e2 → P e3 → P (CAS ot e1 e2 e3)) →
   (∀ (f : expr) (args : list expr), P f → Forall P args → P (Call f args)) →
   (∀ (es : list expr), Forall P es → P (Concat es)) →
   (∀ (ot : op_type) (e1 e2 e3 : expr), P e1 → P e2 → P e3 → P (IfE ot e1 e2 e3)) →
   (∀ (e : expr), P e → P (SkipE e)) →
   (P StuckE) →
-  (∀ (o : order) (ly : layout) (e : expr), P e → P (Use o ly e)) →
+  (∀ (o : order) (ot : op_type) (e : expr), P e → P (Use o ot e)) →
   (∀ (e : expr), P e → P (AddrOf e)) →
   (∀ (e : expr), P e → P (LValue e)) →
   (∀ (e : expr) (s : struct_layout) (m : var_name), P e → P (GetMember e s m)) →
@@ -89,14 +89,14 @@ Fixpoint to_expr (e : expr) : lang.expr :=
   | UnOp op ot e  => lang.UnOp op ot (to_expr e)
   | BinOp op ot1 ot2 e1 e2 => lang.BinOp op ot1 ot2 (to_expr e1) (to_expr e2)
   | CopyAllocId ot1 e1 e2 => lang.CopyAllocId ot1 (to_expr e1) (to_expr e2)
-  | Deref o ly e => lang.Deref o ly (to_expr e)
+  | Deref o ot e => lang.Deref o ot (to_expr e)
   | CAS ot e1 e2 e3 => lang.CAS ot (to_expr e1) (to_expr e2) (to_expr e3)
   | Call f args => lang.Call (to_expr f) (to_expr <$> args)
   | Concat es => lang.Concat (to_expr <$> es)
   | IfE ot e1 e2 e3 => lang.IfE ot (to_expr e1) (to_expr e2) (to_expr e3)
   | SkipE e => lang.SkipE (to_expr e)
   | StuckE => lang.StuckE
-  | Use o ly e => notation.Use o ly (to_expr e)
+  | Use o ot e => notation.Use o ot (to_expr e)
   | AddrOf e => notation.AddrOf (to_expr e)
   | LValue e => notation.LValue (to_expr e)
   | AnnotExpr n a e => notation.AnnotExpr n a (to_expr e)
@@ -137,8 +137,8 @@ Ltac of_expr e :=
     let e := of_expr e in constr:(GetMemberUnion e ul m)
   | notation.OffsetOf ?s ?m => constr:(OffsetOf s m)
   | notation.OffsetOfUnion ?ul ?m => constr:(OffsetOfUnion ul m)
-  | notation.Use ?o ?ly ?e =>
-    let e := of_expr e in constr:(Use o ly e)
+  | notation.Use ?o ?ot ?e =>
+    let e := of_expr e in constr:(Use o ot e)
   | lang.Val ?x => constr:(Val x)
   | lang.Var ?x => constr:(Var x)
   | lang.UnOp ?op ?ot ?e =>
@@ -147,8 +147,8 @@ Ltac of_expr e :=
     let e1 := of_expr e1 in let e2 := of_expr e2 in constr:(BinOp op ot1 ot2 e1 e2)
   | lang.CopyAllocId ?ot1 ?e1 ?e2 =>
     let e1 := of_expr e1 in let e2 := of_expr e2 in constr:(CopyAllocId ot1 e1 e2)
-  | lang.Deref ?o ?ly ?e =>
-    let e := of_expr e in constr:(Deref o ly e)
+  | lang.Deref ?o ?ot ?e =>
+    let e := of_expr e in constr:(Deref o ot e)
   | lang.CAS ?ot ?e1 ?e2 ?e3 =>
     let e1 := of_expr e1 in let e2 := of_expr e2 in let e3 := of_expr e3 in constr:(CAS ot e1 e2 e3)
   | lang.Call ?f ?args =>
@@ -181,7 +181,7 @@ Inductive ectx_item :=
 | BinOpRCtx (op : bin_op) (ot1 ot2 : op_type) (v1 : val)
 | CopyAllocIdLCtx (ot1 : op_type) (e2 : expr)
 | CopyAllocIdRCtx (ot1 : op_type) (v1 : val)
-| DerefCtx (o : order) (l : layout)
+| DerefCtx (o : order) (l : op_type)
 | CASLCtx (ot : op_type) (e2 e3 : expr)
 | CASMCtx (ot : op_type) (v1 : val) (e3 : expr)
 | CASRCtx (ot : op_type) (v1 v2 : val)
@@ -191,7 +191,7 @@ Inductive ectx_item :=
 | IfECtx (ot : op_type) (e2 e3 : expr)
 | SkipECtx
 (* new constructors *)
-| UseCtx (o : order) (ly : layout)
+| UseCtx (o : order) (ot : op_type)
 | AddrOfCtx
 | LValueCtx
 | AnnotExprCtx (n : nat) {A} (a : A)
@@ -354,7 +354,7 @@ Inductive stmt :=
 | Goto (b : label)
 | Return (e : expr)
 | Switch (it : int_type) (e : expr) (m : gmap Z nat) (bs : list stmt) (def : stmt)
-| Assign (o : order) (ly : layout) (e1 e2 : expr) (s : stmt)
+| Assign (o : order) (ot : op_type) (e1 e2 : expr) (s : stmt)
 | SkipS (s : stmt)
 | StuckS
 | ExprS (e : expr) (s : stmt)
@@ -371,7 +371,7 @@ Lemma stmt_ind (P : stmt → Prop):
   (∀ b : label, P (Goto b)) →
   (∀ e : expr, P (Return e)) →
   (∀ (it : int_type) (e : expr) (m : gmap Z nat) (bs : list stmt) (def : stmt), P def → Forall P bs → P (Switch it e m bs def)) →
-  (∀ (o : order) (ly : layout) (e1 e2 : expr) (s : stmt), P s → P (Assign o ly e1 e2 s)) →
+  (∀ (o : order) (ot : op_type) (e1 e2 : expr) (s : stmt), P s → P (Assign o ot e1 e2 s)) →
   (∀ s : stmt, P s → P (SkipS s)) →
   (P StuckS) →
   (∀ (e : expr) (s : stmt), P s → P (ExprS e s)) →
@@ -394,7 +394,7 @@ Fixpoint to_stmt (s : stmt) : lang.stmt :=
   | Goto b => lang.Goto b
   | Return e => lang.Return (to_expr e)
   | Switch it e m bs def => lang.Switch it (to_expr e) m (to_stmt <$> bs) (to_stmt def)
-  | Assign o ly e1 e2 s => lang.Assign o ly (to_expr e1) (to_expr e2) (to_stmt s)
+  | Assign o ot e1 e2 s => lang.Assign o ot (to_expr e1) (to_expr e2) (to_stmt s)
   | SkipS s => lang.SkipS (to_stmt s)
   | StuckS => lang.StuckS
   | ExprS e s => lang.ExprS (to_expr e) (to_stmt s)
@@ -436,11 +436,11 @@ Ltac of_stmt s :=
     let bs := of_stmt bs in
     let def := of_stmt def in
     constr:(Switch it e m bs def)
-  | lang.Assign ?o ?ly ?e1 ?e2 ?s =>
+  | lang.Assign ?o ?ot ?e1 ?e2 ?s =>
     let e1 := of_expr e1 in
     let e2 := of_expr e2 in
     let s := of_stmt s in
-    constr:(Assign o ly e1 e2 s)
+    constr:(Assign o ot e1 e2 s)
   | lang.SkipS ?s =>
     let s := of_stmt s in
     constr:(SkipS s)
@@ -453,8 +453,8 @@ Ltac of_stmt s :=
   end.
 
 Inductive stmt_ectx :=
-| AssignRCtx (o : order) (ly : layout) (e1 : expr) (s : stmt)
-| AssignLCtx (o : order) (ly : layout) (v2 : val) (s : stmt)
+| AssignRCtx (o : order) (ot : op_type) (e1 : expr) (s : stmt)
+| AssignLCtx (o : order) (ot : op_type) (v2 : val) (s : stmt)
 | ReturnCtx
 | SwitchCtx (it : int_type) (m: gmap Z nat) (bs : list stmt) (def : stmt)
 | ExprSCtx (s : stmt)
@@ -464,8 +464,8 @@ Inductive stmt_ectx :=
 
 Definition stmt_fill (Ki : stmt_ectx) (e : expr) : stmt :=
   match Ki with
-  | AssignRCtx o ly e1 s => Assign o ly e1 e s
-  | AssignLCtx o ly v2 s => Assign o ly e (Val v2) s
+  | AssignRCtx o ot e1 s => Assign o ot e1 e s
+  | AssignLCtx o ot v2 s => Assign o ot e (Val v2) s
   | ReturnCtx => Return e
   | ExprSCtx s => ExprS e s
   | SwitchCtx it m bs def => Switch it e m bs def
@@ -479,7 +479,7 @@ Definition find_stmt_fill (s : stmt) : option (stmt_ectx * expr) :=
   | Return e => if e is (Val v) then None else Some (ReturnCtx, e)
   | ExprS e s => if e is (Val v) then None else Some (ExprSCtx s, e)
   | Switch it e m bs def => if e is (Val v) then None else Some (SwitchCtx it m bs def, e)
-  | Assign o ly e1 e2 s => if e2 is (Val v) then if e1 is (Val v) then None else Some (AssignLCtx o ly v s, e1) else Some (AssignRCtx o ly e1 s, e2)
+  | Assign o ot e1 e2 s => if e2 is (Val v) then if e1 is (Val v) then None else Some (AssignLCtx o ot v s, e1) else Some (AssignRCtx o ot e1 s, e2)
   | If e s1 s2 => if e is (Val v) then None else Some (IfCtx s1 s2, e)
   | Assert e s => if e is (Val v) then None else Some (AssertCtx s, e)
   end.
@@ -520,7 +520,7 @@ Fixpoint subst_l (xs : list (var_name * val)) (e : expr)  : expr :=
   | IfE ot e1 e2 e3 => IfE ot (subst_l xs e1) (subst_l xs e2) (subst_l xs e3)
   | SkipE e => SkipE (subst_l xs e)
   | StuckE => StuckE
-  | Use o ly e => Use o ly (subst_l xs e)
+  | Use o ot e => Use o ot (subst_l xs e)
   | AddrOf e => AddrOf (subst_l xs e)
   | LValue e => LValue (subst_l xs e)
   | AnnotExpr n a e => AnnotExpr n a (subst_l xs e)
@@ -599,7 +599,7 @@ Fixpoint subst_stmt (xs : list (var_name * val)) (s : stmt) : stmt :=
   | Goto b => Goto b
   | Return e => Return (subst_l xs e)
   | Switch it e m' bs def => Switch it (subst_l xs e) m' (subst_stmt xs <$> bs) (subst_stmt xs def)
-  | Assign o ly e1 e2 s => Assign o ly (subst_l xs e1) (subst_l xs e2) (subst_stmt xs s)
+  | Assign o ot e1 e2 s => Assign o ot (subst_l xs e1) (subst_l xs e2) (subst_stmt xs s)
   | SkipS s => SkipS (subst_stmt xs s)
   | StuckS => StuckS
   | ExprS e s => ExprS (subst_l xs e) (subst_stmt xs s)

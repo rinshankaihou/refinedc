@@ -31,7 +31,7 @@ Section tagged_ptr.
 
   Global Program Instance rmovable_tagged_ptr β align ty : RMovable (tagged_ptr β align ty) := {|
     rmovable r := {|
-      ty_has_layout ly := ly = void*;
+      ty_has_op_type ot mt := is_ptr_ot ot;
       ty_own_val v :=
         ⌜v = val_of_loc (r.1 +ₗ r.2)⌝ ∗
         ⌜r.1 `aligned_to` align⌝ ∗
@@ -40,10 +40,14 @@ Section tagged_ptr.
         r.1 ◁ₗ{β} ty;
     |}
   |}%I.
-  Next Obligation. iIntros (??????->) "($&_)". Qed.
-  Next Obligation. iIntros (??????->) "(->&_)". done. Qed.
-  Next Obligation. iIntros (??????->) "(%&%&%&?&?)". rewrite left_id. eauto with iFrame. Qed.
-  Next Obligation. iIntros (???????->?) "? (->&%&%&?)". iFrame. rewrite left_id. eauto with iFrame. Qed.
+  Next Obligation. iIntros (???????->%is_ptr_ot_layout) "($&_)". Qed.
+  Next Obligation. iIntros (???????->%is_ptr_ot_layout) "(->&_)". done. Qed.
+  Next Obligation. iIntros (????????) "(%&%&%&?&?)". rewrite left_id. eauto with iFrame. Qed.
+  Next Obligation. iIntros (????????->%is_ptr_ot_layout?) "? (->&%&%&?)". iFrame. rewrite left_id. eauto with iFrame. Qed.
+  Next Obligation.
+    iIntros (β align ty l v ot mt st ?). apply mem_cast_compat_loc; [done|].
+    iIntros "[-> ?]". iPureIntro. naive_solver.
+  Qed.
 
   Global Instance tagged_ptr_loc_in_bounds r ty align β1 β2 :
     LocInBounds (r @ tagged_ptr β1 align ty) β2 bytes_per_addr.
@@ -135,7 +139,7 @@ Section tagged_ptr.
       v2 ◁ᵥ r @ tagged_ptr β align ty -∗
       ⌜r.1.2 ≤ a ≤ r.1.2 + align⌝ ∗
       (alloc_alive_loc r.1 ∗ True) ∧
-      T (val_of_loc (r.1.1, a)) (t2mt (value void* (val_of_loc (r.1.1, a))))
+      T (val_of_loc (r.1.1, a)) (t2mt (value PtrOp (val_of_loc (r.1.1, a))))
     ) -∗
     typed_copy_alloc_id v1 (v1 ◁ᵥ a @ int it) v2 (v2 ◁ᵥ r @ tagged_ptr β align ty) (IntOp it) T.
   Proof.
@@ -146,7 +150,8 @@ Section tagged_ptr.
     { iApply (loc_in_bounds_offset with "Hlib"); simpl; [done | done | etrans; [|done]; lia]. }
     iSplit.
     - iDestruct "HT" as "[Halloc _]". by iApply (alloc_alive_loc_mono with "Halloc").
-    - iDestruct "HT" as "[_ HT]". by iApply ("HΦ" with "[] HT").
+    - iDestruct "HT" as "[_ HT]". iApply ("HΦ" with "[] HT").
+      iSplit => //. iPureIntro. apply: mem_cast_id_loc.
   Qed.
   Global Instance type_copy_aid_tagged_ptr_inst v1 a it v2 r β align ty:
     TypedCopyAllocId v1 (v1 ◁ᵥ a @ int it)%I v2 (v2 ◁ᵥ r @ tagged_ptr β align ty)%I (IntOp it) :=

@@ -1592,7 +1592,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_2 ;
-        Return (LocInfoE loc_3 (CopyAllocId (IntOp uintptr_t) (LocInfoE loc_5 (use{it_layout uintptr_t} (LocInfoE loc_6 ("to")))) (LocInfoE loc_7 (use{void*} (LocInfoE loc_8 ("from"))))))
+        Return (LocInfoE loc_3 (CopyAllocId (IntOp uintptr_t) (LocInfoE loc_5 (use{IntOp uintptr_t} (LocInfoE loc_6 ("to")))) (LocInfoE loc_7 (use{PtrOp} (LocInfoE loc_8 ("from"))))))
       ]> $∅
     )%E
   |}.
@@ -1607,13 +1607,13 @@ Section code.
     f_init := "#0";
     f_code := (
       <[ "#0" :=
-        "t" <-{ void* }
+        "t" <-{ PtrOp }
           LocInfoE loc_20 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_20 (Call (LocInfoE loc_22 (global_alloc)) [@{expr} LocInfoE loc_23 (i2v (void*).(ly_size) size_t) ]))) ;
         locinfo: loc_12 ;
-        LocInfoE loc_17 (!{void*} (LocInfoE loc_18 ("t"))) <-{ void* }
+        LocInfoE loc_17 (!{PtrOp} (LocInfoE loc_18 ("t"))) <-{ PtrOp }
           LocInfoE loc_19 (NULL) ;
         locinfo: loc_13 ;
-        Return (LocInfoE loc_14 (use{void*} (LocInfoE loc_15 ("t"))))
+        Return (LocInfoE loc_14 (use{PtrOp} (LocInfoE loc_15 ("t"))))
       ]> $∅
     )%E
   |}.
@@ -1629,10 +1629,10 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_28 ;
-        expr: (LocInfoE loc_28 (Call (LocInfoE loc_36 (global_free_btree_nodes)) [@{expr} LocInfoE loc_37 (use{void*} (LocInfoE loc_38 ("t"))) ])) ;
+        expr: (LocInfoE loc_28 (Call (LocInfoE loc_36 (global_free_btree_nodes)) [@{expr} LocInfoE loc_37 (use{PtrOp} (LocInfoE loc_38 ("t"))) ])) ;
         locinfo: loc_29 ;
         expr: (LocInfoE loc_29 (Call (LocInfoE loc_31 (global_free)) [@{expr} LocInfoE loc_32 (i2v (void*).(ly_size) size_t) ;
-        LocInfoE loc_33 (use{void*} (LocInfoE loc_34 ("t"))) ])) ;
+        LocInfoE loc_33 (use{PtrOp} (LocInfoE loc_34 ("t"))) ])) ;
         Return (VOID)
       ]> $∅
     )%E
@@ -1651,16 +1651,16 @@ Section code.
     f_init := "#0";
     f_code := (
       <[ "#0" :=
-        "cur" <-{ void* }
-          LocInfoE loc_122 (&(LocInfoE loc_124 (!{void*} (LocInfoE loc_125 ("t"))))) ;
+        "cur" <-{ PtrOp }
+          LocInfoE loc_122 (&(LocInfoE loc_124 (!{PtrOp} (LocInfoE loc_125 ("t"))))) ;
         locinfo: loc_42 ;
-        expr: (LocInfoE loc_118 ((LocInfoE loc_119 (use{it_layout i32} (LocInfoE loc_120 ("k")))) +{IntOp i32, IntOp i32} (LocInfoE loc_121 (i2v 0 i32)))) ;
+        expr: (LocInfoE loc_118 ((LocInfoE loc_119 (use{IntOp i32} (LocInfoE loc_120 ("k")))) +{IntOp i32, IntOp i32} (LocInfoE loc_121 (i2v 0 i32)))) ;
         locinfo: loc_44 ;
         Goto "#1"
       ]> $
       <[ "#1" :=
         locinfo: loc_112 ;
-        if: LocInfoE loc_112 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_112 ((LocInfoE loc_113 (use{void*} (LocInfoE loc_115 (!{void*} (LocInfoE loc_116 ("cur")))))) !={PtrOp, PtrOp} (LocInfoE loc_117 (NULL)))))
+        if: LocInfoE loc_112 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_112 ((LocInfoE loc_113 (use{PtrOp} (LocInfoE loc_115 (!{PtrOp} (LocInfoE loc_116 ("cur")))))) !={PtrOp, PtrOp} (LocInfoE loc_117 (NULL)))))
         then
         Goto "#2"
         else
@@ -1668,12 +1668,12 @@ Section code.
           Goto "#3"
       ]> $
       <[ "#2" :=
-        "i" <-{ it_layout i32 }
-          LocInfoE loc_93 (Call (LocInfoE loc_95 (global_key_index)) [@{expr} LocInfoE loc_96 (&(LocInfoE loc_97 ((LocInfoE loc_98 (!{void*} (LocInfoE loc_100 (!{void*} (LocInfoE loc_101 ("cur")))))) at{struct_btree} "keys"))) ;
-          LocInfoE loc_102 (use{it_layout i32} (LocInfoE loc_103 ((LocInfoE loc_104 (!{void*} (LocInfoE loc_106 (!{void*} (LocInfoE loc_107 ("cur")))))) at{struct_btree} "nb_keys"))) ;
-          LocInfoE loc_108 (use{it_layout i32} (LocInfoE loc_109 ("k"))) ]) ;
+        "i" <-{ IntOp i32 }
+          LocInfoE loc_93 (Call (LocInfoE loc_95 (global_key_index)) [@{expr} LocInfoE loc_96 (&(LocInfoE loc_97 ((LocInfoE loc_98 (!{PtrOp} (LocInfoE loc_100 (!{PtrOp} (LocInfoE loc_101 ("cur")))))) at{struct_btree} "keys"))) ;
+          LocInfoE loc_102 (use{IntOp i32} (LocInfoE loc_103 ((LocInfoE loc_104 (!{PtrOp} (LocInfoE loc_106 (!{PtrOp} (LocInfoE loc_107 ("cur")))))) at{struct_btree} "nb_keys"))) ;
+          LocInfoE loc_108 (use{IntOp i32} (LocInfoE loc_109 ("k"))) ]) ;
         locinfo: loc_70 ;
-        if: LocInfoE loc_70 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_70 ((LocInfoE loc_71 (use{it_layout i32} (LocInfoE loc_72 ("i")))) <{IntOp i32, IntOp i32} (LocInfoE loc_73 (use{it_layout i32} (LocInfoE loc_74 ((LocInfoE loc_75 (!{void*} (LocInfoE loc_77 (!{void*} (LocInfoE loc_78 ("cur")))))) at{struct_btree} "nb_keys")))))))
+        if: LocInfoE loc_70 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_70 ((LocInfoE loc_71 (use{IntOp i32} (LocInfoE loc_72 ("i")))) <{IntOp i32, IntOp i32} (LocInfoE loc_73 (use{IntOp i32} (LocInfoE loc_74 ((LocInfoE loc_75 (!{PtrOp} (LocInfoE loc_77 (!{PtrOp} (LocInfoE loc_78 ("cur")))))) at{struct_btree} "nb_keys")))))))
         then
         Goto "#7"
         else
@@ -1686,8 +1686,8 @@ Section code.
       ]> $
       <[ "#4" :=
         locinfo: loc_51 ;
-        LocInfoE loc_54 ("cur") <-{ void* }
-          LocInfoE loc_55 (&(LocInfoE loc_57 ((LocInfoE loc_59 ((LocInfoE loc_60 (!{void*} (LocInfoE loc_62 (!{void*} (LocInfoE loc_63 ("cur")))))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_64 (use{it_layout i32} (LocInfoE loc_65 ("i"))))))) ;
+        LocInfoE loc_54 ("cur") <-{ PtrOp }
+          LocInfoE loc_55 (&(LocInfoE loc_57 ((LocInfoE loc_59 ((LocInfoE loc_60 (!{PtrOp} (LocInfoE loc_62 (!{PtrOp} (LocInfoE loc_63 ("cur")))))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_64 (use{IntOp i32} (LocInfoE loc_65 ("i"))))))) ;
         locinfo: loc_52 ;
         Goto "continue17"
       ]> $
@@ -1701,7 +1701,7 @@ Section code.
       ]> $
       <[ "#7" :=
         locinfo: loc_79 ;
-        if: LocInfoE loc_79 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_79 ((LocInfoE loc_80 (use{it_layout i32} (LocInfoE loc_82 ((LocInfoE loc_84 ((LocInfoE loc_85 (!{void*} (LocInfoE loc_87 (!{void*} (LocInfoE loc_88 ("cur")))))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_89 (use{it_layout i32} (LocInfoE loc_90 ("i")))))))) ={IntOp i32, IntOp i32} (LocInfoE loc_91 (use{it_layout i32} (LocInfoE loc_92 ("k")))))))
+        if: LocInfoE loc_79 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_79 ((LocInfoE loc_80 (use{IntOp i32} (LocInfoE loc_82 ((LocInfoE loc_84 ((LocInfoE loc_85 (!{PtrOp} (LocInfoE loc_87 (!{PtrOp} (LocInfoE loc_88 ("cur")))))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_89 (use{IntOp i32} (LocInfoE loc_90 ("i")))))))) ={IntOp i32, IntOp i32} (LocInfoE loc_91 (use{IntOp i32} (LocInfoE loc_92 ("k")))))))
         then
         locinfo: loc_66 ;
           Goto "#5"
@@ -1729,14 +1729,14 @@ Section code.
     f_init := "#0";
     f_code := (
       <[ "#0" :=
-        "cur" <-{ void* }
-          LocInfoE loc_215 (&(LocInfoE loc_217 (!{void*} (LocInfoE loc_218 ("t"))))) ;
+        "cur" <-{ PtrOp }
+          LocInfoE loc_215 (&(LocInfoE loc_217 (!{PtrOp} (LocInfoE loc_218 ("t"))))) ;
         locinfo: loc_131 ;
         Goto "#1"
       ]> $
       <[ "#1" :=
         locinfo: loc_209 ;
-        if: LocInfoE loc_209 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_209 ((LocInfoE loc_210 (use{void*} (LocInfoE loc_212 (!{void*} (LocInfoE loc_213 ("cur")))))) !={PtrOp, PtrOp} (LocInfoE loc_214 (NULL)))))
+        if: LocInfoE loc_209 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_209 ((LocInfoE loc_210 (use{PtrOp} (LocInfoE loc_212 (!{PtrOp} (LocInfoE loc_213 ("cur")))))) !={PtrOp, PtrOp} (LocInfoE loc_214 (NULL)))))
         then
         Goto "#2"
         else
@@ -1744,12 +1744,12 @@ Section code.
           Goto "#3"
       ]> $
       <[ "#2" :=
-        "i" <-{ it_layout i32 }
-          LocInfoE loc_190 (Call (LocInfoE loc_192 (global_key_index)) [@{expr} LocInfoE loc_193 (&(LocInfoE loc_194 ((LocInfoE loc_195 (!{void*} (LocInfoE loc_197 (!{void*} (LocInfoE loc_198 ("cur")))))) at{struct_btree} "keys"))) ;
-          LocInfoE loc_199 (use{it_layout i32} (LocInfoE loc_200 ((LocInfoE loc_201 (!{void*} (LocInfoE loc_203 (!{void*} (LocInfoE loc_204 ("cur")))))) at{struct_btree} "nb_keys"))) ;
-          LocInfoE loc_205 (use{it_layout i32} (LocInfoE loc_206 ("k"))) ]) ;
+        "i" <-{ IntOp i32 }
+          LocInfoE loc_190 (Call (LocInfoE loc_192 (global_key_index)) [@{expr} LocInfoE loc_193 (&(LocInfoE loc_194 ((LocInfoE loc_195 (!{PtrOp} (LocInfoE loc_197 (!{PtrOp} (LocInfoE loc_198 ("cur")))))) at{struct_btree} "keys"))) ;
+          LocInfoE loc_199 (use{IntOp i32} (LocInfoE loc_200 ((LocInfoE loc_201 (!{PtrOp} (LocInfoE loc_203 (!{PtrOp} (LocInfoE loc_204 ("cur")))))) at{struct_btree} "nb_keys"))) ;
+          LocInfoE loc_205 (use{IntOp i32} (LocInfoE loc_206 ("k"))) ]) ;
         locinfo: loc_167 ;
-        if: LocInfoE loc_167 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_167 ((LocInfoE loc_168 (use{it_layout i32} (LocInfoE loc_169 ("i")))) <{IntOp i32, IntOp i32} (LocInfoE loc_170 (use{it_layout i32} (LocInfoE loc_171 ((LocInfoE loc_172 (!{void*} (LocInfoE loc_174 (!{void*} (LocInfoE loc_175 ("cur")))))) at{struct_btree} "nb_keys")))))))
+        if: LocInfoE loc_167 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_167 ((LocInfoE loc_168 (use{IntOp i32} (LocInfoE loc_169 ("i")))) <{IntOp i32, IntOp i32} (LocInfoE loc_170 (use{IntOp i32} (LocInfoE loc_171 ((LocInfoE loc_172 (!{PtrOp} (LocInfoE loc_174 (!{PtrOp} (LocInfoE loc_175 ("cur")))))) at{struct_btree} "nb_keys")))))))
         then
         Goto "#7"
         else
@@ -1762,14 +1762,14 @@ Section code.
       ]> $
       <[ "#4" :=
         locinfo: loc_138 ;
-        LocInfoE loc_141 ("cur") <-{ void* }
-          LocInfoE loc_142 (&(LocInfoE loc_144 ((LocInfoE loc_146 ((LocInfoE loc_147 (!{void*} (LocInfoE loc_149 (!{void*} (LocInfoE loc_150 ("cur")))))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_151 (use{it_layout i32} (LocInfoE loc_152 ("i"))))))) ;
+        LocInfoE loc_141 ("cur") <-{ PtrOp }
+          LocInfoE loc_142 (&(LocInfoE loc_144 ((LocInfoE loc_146 ((LocInfoE loc_147 (!{PtrOp} (LocInfoE loc_149 (!{PtrOp} (LocInfoE loc_150 ("cur")))))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_151 (use{IntOp i32} (LocInfoE loc_152 ("i"))))))) ;
         locinfo: loc_139 ;
         Goto "continue21"
       ]> $
       <[ "#5" :=
         locinfo: loc_153 ;
-        Return (LocInfoE loc_154 (&(LocInfoE loc_156 ((LocInfoE loc_158 ((LocInfoE loc_159 (!{void*} (LocInfoE loc_161 (!{void*} (LocInfoE loc_162 ("cur")))))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_163 (use{it_layout i32} (LocInfoE loc_164 ("i"))))))))
+        Return (LocInfoE loc_154 (&(LocInfoE loc_156 ((LocInfoE loc_158 ((LocInfoE loc_159 (!{PtrOp} (LocInfoE loc_161 (!{PtrOp} (LocInfoE loc_162 ("cur")))))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_163 (use{IntOp i32} (LocInfoE loc_164 ("i"))))))))
       ]> $
       <[ "#6" :=
         locinfo: loc_138 ;
@@ -1777,7 +1777,7 @@ Section code.
       ]> $
       <[ "#7" :=
         locinfo: loc_176 ;
-        if: LocInfoE loc_176 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_176 ((LocInfoE loc_177 (use{it_layout i32} (LocInfoE loc_179 ((LocInfoE loc_181 ((LocInfoE loc_182 (!{void*} (LocInfoE loc_184 (!{void*} (LocInfoE loc_185 ("cur")))))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_186 (use{it_layout i32} (LocInfoE loc_187 ("i")))))))) ={IntOp i32, IntOp i32} (LocInfoE loc_188 (use{it_layout i32} (LocInfoE loc_189 ("k")))))))
+        if: LocInfoE loc_176 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_176 ((LocInfoE loc_177 (use{IntOp i32} (LocInfoE loc_179 ((LocInfoE loc_181 ((LocInfoE loc_182 (!{PtrOp} (LocInfoE loc_184 (!{PtrOp} (LocInfoE loc_185 ("cur")))))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_186 (use{IntOp i32} (LocInfoE loc_187 ("i")))))))) ={IntOp i32, IntOp i32} (LocInfoE loc_188 (use{IntOp i32} (LocInfoE loc_189 ("k")))))))
         then
         locinfo: loc_153 ;
           Goto "#5"
@@ -1817,7 +1817,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_520 ;
-        if: LocInfoE loc_520 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_520 ((LocInfoE loc_521 (use{void*} (LocInfoE loc_523 (!{void*} (LocInfoE loc_524 ("t")))))) ={PtrOp, PtrOp} (LocInfoE loc_525 (NULL)))))
+        if: LocInfoE loc_520 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_520 ((LocInfoE loc_521 (use{PtrOp} (LocInfoE loc_523 (!{PtrOp} (LocInfoE loc_524 ("t")))))) ={PtrOp, PtrOp} (LocInfoE loc_525 (NULL)))))
         then
         locinfo: loc_504 ;
           Goto "#15"
@@ -1825,14 +1825,14 @@ Section code.
         Goto "#16"
       ]> $
       <[ "#1" :=
-        "path_ptrs" <-{ void* }
-          LocInfoE loc_488 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_488 (Call (LocInfoE loc_490 (global_alloc)) [@{expr} LocInfoE loc_491 ((LocInfoE loc_492 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_492 ((LocInfoE loc_493 (use{it_layout i32} (LocInfoE loc_494 ((LocInfoE loc_495 (!{void*} (LocInfoE loc_497 (!{void*} (LocInfoE loc_498 ("t")))))) at{struct_btree} "height")))) +{IntOp i32, IntOp i32} (LocInfoE loc_499 (i2v 1 i32)))))) ×{IntOp size_t, IntOp size_t} (LocInfoE loc_500 (i2v (void*).(ly_size) size_t))) ]))) ;
-        "path_keys" <-{ void* }
-          LocInfoE loc_475 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_475 (Call (LocInfoE loc_477 (global_alloc)) [@{expr} LocInfoE loc_478 ((LocInfoE loc_479 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_479 (use{it_layout i32} (LocInfoE loc_480 ((LocInfoE loc_481 (!{void*} (LocInfoE loc_483 (!{void*} (LocInfoE loc_484 ("t")))))) at{struct_btree} "height")))))) ×{IntOp size_t, IntOp size_t} (LocInfoE loc_485 (i2v (it_layout i32).(ly_size) size_t))) ]))) ;
+        "path_ptrs" <-{ PtrOp }
+          LocInfoE loc_488 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_488 (Call (LocInfoE loc_490 (global_alloc)) [@{expr} LocInfoE loc_491 ((LocInfoE loc_492 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_492 ((LocInfoE loc_493 (use{IntOp i32} (LocInfoE loc_494 ((LocInfoE loc_495 (!{PtrOp} (LocInfoE loc_497 (!{PtrOp} (LocInfoE loc_498 ("t")))))) at{struct_btree} "height")))) +{IntOp i32, IntOp i32} (LocInfoE loc_499 (i2v 1 i32)))))) ×{IntOp size_t, IntOp size_t} (LocInfoE loc_500 (i2v (void*).(ly_size) size_t))) ]))) ;
+        "path_keys" <-{ PtrOp }
+          LocInfoE loc_475 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_475 (Call (LocInfoE loc_477 (global_alloc)) [@{expr} LocInfoE loc_478 ((LocInfoE loc_479 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_479 (use{IntOp i32} (LocInfoE loc_480 ((LocInfoE loc_481 (!{PtrOp} (LocInfoE loc_483 (!{PtrOp} (LocInfoE loc_484 ("t")))))) at{struct_btree} "height")))))) ×{IntOp size_t, IntOp size_t} (LocInfoE loc_485 (i2v (it_layout i32).(ly_size) size_t))) ]))) ;
         locinfo: loc_226 ;
-        LocInfoE loc_467 ((LocInfoE loc_468 (!{void*} (LocInfoE loc_469 ("path_ptrs")))) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_470 (i2v 0 i32))) <-{ void* }
-          LocInfoE loc_471 (&(LocInfoE loc_473 (!{void*} (LocInfoE loc_474 ("t"))))) ;
-        "cur" <-{ it_layout i32 } LocInfoE loc_463 (i2v 0 i32) ;
+        LocInfoE loc_467 ((LocInfoE loc_468 (!{PtrOp} (LocInfoE loc_469 ("path_ptrs")))) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_470 (i2v 0 i32))) <-{ PtrOp }
+          LocInfoE loc_471 (&(LocInfoE loc_473 (!{PtrOp} (LocInfoE loc_474 ("t"))))) ;
+        "cur" <-{ IntOp i32 } LocInfoE loc_463 (i2v 0 i32) ;
         locinfo: loc_228 ;
         Goto "#2"
       ]> $
@@ -1842,21 +1842,21 @@ Section code.
       ]> $
       <[ "#11" :=
         locinfo: loc_353 ;
-        LocInfoE loc_377 ((LocInfoE loc_378 (!{void*} (LocInfoE loc_379 ("path_keys")))) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_380 (use{it_layout i32} (LocInfoE loc_381 ("cur"))))) <-{ it_layout i32 }
-          LocInfoE loc_382 (use{it_layout i32} (LocInfoE loc_383 ("i"))) ;
+        LocInfoE loc_377 ((LocInfoE loc_378 (!{PtrOp} (LocInfoE loc_379 ("path_keys")))) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_380 (use{IntOp i32} (LocInfoE loc_381 ("cur"))))) <-{ IntOp i32 }
+          LocInfoE loc_382 (use{IntOp i32} (LocInfoE loc_383 ("i"))) ;
         locinfo: loc_354 ;
-        LocInfoE loc_375 ("cur") <-{ it_layout i32 }
-          LocInfoE loc_354 ((LocInfoE loc_354 (use{it_layout i32} (LocInfoE loc_375 ("cur")))) +{IntOp i32, IntOp i32} (LocInfoE loc_354 (i2v 1 i32))) ;
+        LocInfoE loc_375 ("cur") <-{ IntOp i32 }
+          LocInfoE loc_354 ((LocInfoE loc_354 (use{IntOp i32} (LocInfoE loc_375 ("cur")))) +{IntOp i32, IntOp i32} (LocInfoE loc_354 (i2v 1 i32))) ;
         locinfo: loc_355 ;
-        LocInfoE loc_359 ((LocInfoE loc_360 (!{void*} (LocInfoE loc_361 ("path_ptrs")))) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_362 (use{it_layout i32} (LocInfoE loc_363 ("cur"))))) <-{ void* }
-          LocInfoE loc_364 (&(LocInfoE loc_366 ((LocInfoE loc_368 ((LocInfoE loc_369 (!{void*} (LocInfoE loc_371 (!{void*} (LocInfoE loc_372 ("cur_node")))))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_373 (use{it_layout i32} (LocInfoE loc_374 ("i"))))))) ;
+        LocInfoE loc_359 ((LocInfoE loc_360 (!{PtrOp} (LocInfoE loc_361 ("path_ptrs")))) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_362 (use{IntOp i32} (LocInfoE loc_363 ("cur"))))) <-{ PtrOp }
+          LocInfoE loc_364 (&(LocInfoE loc_366 ((LocInfoE loc_368 ((LocInfoE loc_369 (!{PtrOp} (LocInfoE loc_371 (!{PtrOp} (LocInfoE loc_372 ("cur_node")))))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_373 (use{IntOp i32} (LocInfoE loc_374 ("i"))))))) ;
         locinfo: loc_356 ;
         Goto "continue47"
       ]> $
       <[ "#12" :=
         locinfo: loc_385 ;
-        LocInfoE loc_388 ((LocInfoE loc_390 ((LocInfoE loc_391 (!{void*} (LocInfoE loc_393 (!{void*} (LocInfoE loc_394 ("cur_node")))))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_395 (use{it_layout i32} (LocInfoE loc_396 ("i"))))) <-{ void* }
-          LocInfoE loc_397 (use{void*} (LocInfoE loc_398 ("v"))) ;
+        LocInfoE loc_388 ((LocInfoE loc_390 ((LocInfoE loc_391 (!{PtrOp} (LocInfoE loc_393 (!{PtrOp} (LocInfoE loc_394 ("cur_node")))))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_395 (use{IntOp i32} (LocInfoE loc_396 ("i"))))) <-{ PtrOp }
+          LocInfoE loc_397 (use{PtrOp} (LocInfoE loc_398 ("v"))) ;
         locinfo: loc_386 ;
         Goto "done"
       ]> $
@@ -1866,7 +1866,7 @@ Section code.
       ]> $
       <[ "#14" :=
         locinfo: loc_410 ;
-        if: LocInfoE loc_410 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_410 ((LocInfoE loc_411 (use{it_layout i32} (LocInfoE loc_413 ((LocInfoE loc_415 ((LocInfoE loc_416 (!{void*} (LocInfoE loc_418 (!{void*} (LocInfoE loc_419 ("cur_node")))))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_420 (use{it_layout i32} (LocInfoE loc_421 ("i")))))))) ={IntOp i32, IntOp i32} (LocInfoE loc_422 (use{it_layout i32} (LocInfoE loc_423 ("k")))))))
+        if: LocInfoE loc_410 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_410 ((LocInfoE loc_411 (use{IntOp i32} (LocInfoE loc_413 ((LocInfoE loc_415 ((LocInfoE loc_416 (!{PtrOp} (LocInfoE loc_418 (!{PtrOp} (LocInfoE loc_419 ("cur_node")))))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_420 (use{IntOp i32} (LocInfoE loc_421 ("i")))))))) ={IntOp i32, IntOp i32} (LocInfoE loc_422 (use{IntOp i32} (LocInfoE loc_423 ("k")))))))
         then
         locinfo: loc_385 ;
           Goto "#12"
@@ -1876,11 +1876,11 @@ Section code.
       ]> $
       <[ "#15" :=
         locinfo: loc_504 ;
-        LocInfoE loc_508 (!{void*} (LocInfoE loc_509 ("t"))) <-{ void* }
+        LocInfoE loc_508 (!{PtrOp} (LocInfoE loc_509 ("t"))) <-{ PtrOp }
           LocInfoE loc_510 (Call (LocInfoE loc_512 (global_btree_make_root)) [@{expr} LocInfoE loc_513 (NULL) ;
           LocInfoE loc_514 (NULL) ;
-          LocInfoE loc_515 (use{it_layout i32} (LocInfoE loc_516 ("k"))) ;
-          LocInfoE loc_517 (use{void*} (LocInfoE loc_518 ("v"))) ]) ;
+          LocInfoE loc_515 (use{IntOp i32} (LocInfoE loc_516 ("k"))) ;
+          LocInfoE loc_517 (use{PtrOp} (LocInfoE loc_518 ("v"))) ]) ;
         locinfo: loc_505 ;
         Return (VOID)
       ]> $
@@ -1889,21 +1889,21 @@ Section code.
       ]> $
       <[ "#2" :=
         locinfo: loc_452 ;
-        if: LocInfoE loc_452 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_452 ((LocInfoE loc_453 (use{void*} (LocInfoE loc_455 (!{void*} (LocInfoE loc_457 ((LocInfoE loc_458 (!{void*} (LocInfoE loc_459 ("path_ptrs")))) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_460 (use{it_layout i32} (LocInfoE loc_461 ("cur")))))))))) !={PtrOp, PtrOp} (LocInfoE loc_462 (NULL)))))
+        if: LocInfoE loc_452 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_452 ((LocInfoE loc_453 (use{PtrOp} (LocInfoE loc_455 (!{PtrOp} (LocInfoE loc_457 ((LocInfoE loc_458 (!{PtrOp} (LocInfoE loc_459 ("path_ptrs")))) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_460 (use{IntOp i32} (LocInfoE loc_461 ("cur")))))))))) !={PtrOp, PtrOp} (LocInfoE loc_462 (NULL)))))
         then
         Goto "#3"
         else
         Goto "#4"
       ]> $
       <[ "#3" :=
-        "cur_node" <-{ void* }
-          LocInfoE loc_443 (use{void*} (LocInfoE loc_445 ((LocInfoE loc_446 (!{void*} (LocInfoE loc_447 ("path_ptrs")))) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_448 (use{it_layout i32} (LocInfoE loc_449 ("cur"))))))) ;
-        "i" <-{ it_layout i32 }
-          LocInfoE loc_424 (Call (LocInfoE loc_426 (global_key_index)) [@{expr} LocInfoE loc_427 (&(LocInfoE loc_428 ((LocInfoE loc_429 (!{void*} (LocInfoE loc_431 (!{void*} (LocInfoE loc_432 ("cur_node")))))) at{struct_btree} "keys"))) ;
-          LocInfoE loc_433 (use{it_layout i32} (LocInfoE loc_434 ((LocInfoE loc_435 (!{void*} (LocInfoE loc_437 (!{void*} (LocInfoE loc_438 ("cur_node")))))) at{struct_btree} "nb_keys"))) ;
-          LocInfoE loc_439 (use{it_layout i32} (LocInfoE loc_440 ("k"))) ]) ;
+        "cur_node" <-{ PtrOp }
+          LocInfoE loc_443 (use{PtrOp} (LocInfoE loc_445 ((LocInfoE loc_446 (!{PtrOp} (LocInfoE loc_447 ("path_ptrs")))) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_448 (use{IntOp i32} (LocInfoE loc_449 ("cur"))))))) ;
+        "i" <-{ IntOp i32 }
+          LocInfoE loc_424 (Call (LocInfoE loc_426 (global_key_index)) [@{expr} LocInfoE loc_427 (&(LocInfoE loc_428 ((LocInfoE loc_429 (!{PtrOp} (LocInfoE loc_431 (!{PtrOp} (LocInfoE loc_432 ("cur_node")))))) at{struct_btree} "keys"))) ;
+          LocInfoE loc_433 (use{IntOp i32} (LocInfoE loc_434 ((LocInfoE loc_435 (!{PtrOp} (LocInfoE loc_437 (!{PtrOp} (LocInfoE loc_438 ("cur_node")))))) at{struct_btree} "nb_keys"))) ;
+          LocInfoE loc_439 (use{IntOp i32} (LocInfoE loc_440 ("k"))) ]) ;
         locinfo: loc_401 ;
-        if: LocInfoE loc_401 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_401 ((LocInfoE loc_402 (use{it_layout i32} (LocInfoE loc_403 ("i")))) <{IntOp i32, IntOp i32} (LocInfoE loc_404 (use{it_layout i32} (LocInfoE loc_405 ((LocInfoE loc_406 (!{void*} (LocInfoE loc_408 (!{void*} (LocInfoE loc_409 ("cur_node")))))) at{struct_btree} "nb_keys")))))))
+        if: LocInfoE loc_401 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_401 ((LocInfoE loc_402 (use{IntOp i32} (LocInfoE loc_403 ("i")))) <{IntOp i32, IntOp i32} (LocInfoE loc_404 (use{IntOp i32} (LocInfoE loc_405 ((LocInfoE loc_406 (!{PtrOp} (LocInfoE loc_408 (!{PtrOp} (LocInfoE loc_409 ("cur_node")))))) at{struct_btree} "nb_keys")))))))
         then
         Goto "#14"
         else
@@ -1911,18 +1911,18 @@ Section code.
           Goto "#13"
       ]> $
       <[ "#4" :=
-        "ins_k" <-{ it_layout i32 }
-          LocInfoE loc_344 (use{it_layout i32} (LocInfoE loc_345 ("k"))) ;
-        "ins_v" <-{ void* }
-          LocInfoE loc_340 (use{void*} (LocInfoE loc_341 ("v"))) ;
-        "ins_b" <-{ void* }
+        "ins_k" <-{ IntOp i32 }
+          LocInfoE loc_344 (use{IntOp i32} (LocInfoE loc_345 ("k"))) ;
+        "ins_v" <-{ PtrOp }
+          LocInfoE loc_340 (use{PtrOp} (LocInfoE loc_341 ("v"))) ;
+        "ins_b" <-{ PtrOp }
           LocInfoE loc_337 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_337 (NULL))) ;
         locinfo: loc_232 ;
         Goto "#5"
       ]> $
       <[ "#5" :=
         locinfo: loc_333 ;
-        if: LocInfoE loc_333 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_333 ((LocInfoE loc_334 (use{it_layout i32} (LocInfoE loc_335 ("cur")))) >{IntOp i32, IntOp i32} (LocInfoE loc_336 (i2v 0 i32)))))
+        if: LocInfoE loc_333 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_333 ((LocInfoE loc_334 (use{IntOp i32} (LocInfoE loc_335 ("cur")))) >{IntOp i32, IntOp i32} (LocInfoE loc_336 (i2v 0 i32)))))
         then
         Goto "#6"
         else
@@ -1930,18 +1930,18 @@ Section code.
           Goto "#7"
       ]> $
       <[ "#6" :=
-        "node" <-{ void* }
-          LocInfoE loc_322 (use{void*} (LocInfoE loc_324 ((LocInfoE loc_325 (!{void*} (LocInfoE loc_326 ("path_ptrs")))) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_327 ((LocInfoE loc_328 (use{it_layout i32} (LocInfoE loc_329 ("cur")))) -{IntOp i32, IntOp i32} (LocInfoE loc_330 (i2v 1 i32))))))) ;
+        "node" <-{ PtrOp }
+          LocInfoE loc_322 (use{PtrOp} (LocInfoE loc_324 ((LocInfoE loc_325 (!{PtrOp} (LocInfoE loc_326 ("path_ptrs")))) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_327 ((LocInfoE loc_328 (use{IntOp i32} (LocInfoE loc_329 ("cur")))) -{IntOp i32, IntOp i32} (LocInfoE loc_330 (i2v 1 i32))))))) ;
         locinfo: loc_282 ;
-        LocInfoE loc_306 ("new") <-{ void* }
-          LocInfoE loc_307 (Call (LocInfoE loc_309 (global_insert_br)) [@{expr} LocInfoE loc_310 (use{void*} (LocInfoE loc_311 ("node"))) ;
-          LocInfoE loc_312 (use{it_layout i32} (LocInfoE loc_313 ("ins_k"))) ;
-          LocInfoE loc_314 (use{void*} (LocInfoE loc_315 ("ins_v"))) ;
-          LocInfoE loc_316 (use{void*} (LocInfoE loc_317 ("ins_b"))) ;
+        LocInfoE loc_306 ("new") <-{ PtrOp }
+          LocInfoE loc_307 (Call (LocInfoE loc_309 (global_insert_br)) [@{expr} LocInfoE loc_310 (use{PtrOp} (LocInfoE loc_311 ("node"))) ;
+          LocInfoE loc_312 (use{IntOp i32} (LocInfoE loc_313 ("ins_k"))) ;
+          LocInfoE loc_314 (use{PtrOp} (LocInfoE loc_315 ("ins_v"))) ;
+          LocInfoE loc_316 (use{PtrOp} (LocInfoE loc_317 ("ins_b"))) ;
           LocInfoE loc_318 (&(LocInfoE loc_319 ("med_k"))) ;
           LocInfoE loc_320 (&(LocInfoE loc_321 ("med_v"))) ]) ;
         locinfo: loc_302 ;
-        if: LocInfoE loc_302 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_302 ((LocInfoE loc_303 (use{void*} (LocInfoE loc_304 ("new")))) ={PtrOp, PtrOp} (LocInfoE loc_305 (NULL)))))
+        if: LocInfoE loc_302 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_302 ((LocInfoE loc_303 (use{PtrOp} (LocInfoE loc_304 ("new")))) ={PtrOp, PtrOp} (LocInfoE loc_305 (NULL)))))
         then
         locinfo: loc_300 ;
           Goto "#9"
@@ -1951,27 +1951,27 @@ Section code.
       ]> $
       <[ "#7" :=
         locinfo: loc_233 ;
-        LocInfoE loc_264 (!{void*} (LocInfoE loc_265 ("t"))) <-{ void* }
-          LocInfoE loc_266 (Call (LocInfoE loc_268 (global_btree_make_root)) [@{expr} LocInfoE loc_269 (use{void*} (LocInfoE loc_271 (!{void*} (LocInfoE loc_272 ("t"))))) ;
-          LocInfoE loc_273 (use{void*} (LocInfoE loc_274 ("new"))) ;
-          LocInfoE loc_275 (use{it_layout i32} (LocInfoE loc_276 ("med_k"))) ;
-          LocInfoE loc_277 (use{void*} (LocInfoE loc_278 ("med_v"))) ]) ;
+        LocInfoE loc_264 (!{PtrOp} (LocInfoE loc_265 ("t"))) <-{ PtrOp }
+          LocInfoE loc_266 (Call (LocInfoE loc_268 (global_btree_make_root)) [@{expr} LocInfoE loc_269 (use{PtrOp} (LocInfoE loc_271 (!{PtrOp} (LocInfoE loc_272 ("t"))))) ;
+          LocInfoE loc_273 (use{PtrOp} (LocInfoE loc_274 ("new"))) ;
+          LocInfoE loc_275 (use{IntOp i32} (LocInfoE loc_276 ("med_k"))) ;
+          LocInfoE loc_277 (use{PtrOp} (LocInfoE loc_278 ("med_v"))) ]) ;
         locinfo: loc_234 ;
         Goto "done"
       ]> $
       <[ "#8" :=
         locinfo: loc_284 ;
-        LocInfoE loc_297 ("ins_k") <-{ it_layout i32 }
-          LocInfoE loc_298 (use{it_layout i32} (LocInfoE loc_299 ("med_k"))) ;
+        LocInfoE loc_297 ("ins_k") <-{ IntOp i32 }
+          LocInfoE loc_298 (use{IntOp i32} (LocInfoE loc_299 ("med_k"))) ;
         locinfo: loc_285 ;
-        LocInfoE loc_294 ("ins_v") <-{ void* }
-          LocInfoE loc_295 (use{void*} (LocInfoE loc_296 ("med_v"))) ;
+        LocInfoE loc_294 ("ins_v") <-{ PtrOp }
+          LocInfoE loc_295 (use{PtrOp} (LocInfoE loc_296 ("med_v"))) ;
         locinfo: loc_286 ;
-        LocInfoE loc_291 ("ins_b") <-{ void* }
-          LocInfoE loc_292 (use{void*} (LocInfoE loc_293 ("new"))) ;
+        LocInfoE loc_291 ("ins_b") <-{ PtrOp }
+          LocInfoE loc_292 (use{PtrOp} (LocInfoE loc_293 ("new"))) ;
         locinfo: loc_287 ;
-        LocInfoE loc_290 ("cur") <-{ it_layout i32 }
-          LocInfoE loc_287 ((LocInfoE loc_287 (use{it_layout i32} (LocInfoE loc_290 ("cur")))) -{IntOp i32, IntOp i32} (LocInfoE loc_287 (i2v 1 i32))) ;
+        LocInfoE loc_290 ("cur") <-{ IntOp i32 }
+          LocInfoE loc_287 ((LocInfoE loc_287 (use{IntOp i32} (LocInfoE loc_290 ("cur")))) -{IntOp i32, IntOp i32} (LocInfoE loc_287 (i2v 1 i32))) ;
         locinfo: loc_288 ;
         Goto "continue50"
       ]> $
@@ -1989,11 +1989,11 @@ Section code.
       ]> $
       <[ "done" :=
         locinfo: loc_235 ;
-        expr: (LocInfoE loc_235 (Call (LocInfoE loc_250 (global_free)) [@{expr} LocInfoE loc_251 ((LocInfoE loc_252 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_252 ((LocInfoE loc_253 (use{it_layout i32} (LocInfoE loc_254 ((LocInfoE loc_255 (!{void*} (LocInfoE loc_257 (!{void*} (LocInfoE loc_258 ("t")))))) at{struct_btree} "height")))) +{IntOp i32, IntOp i32} (LocInfoE loc_259 (i2v 1 i32)))))) ×{IntOp size_t, IntOp size_t} (LocInfoE loc_260 (i2v (void*).(ly_size) size_t))) ;
-        LocInfoE loc_261 (use{void*} (LocInfoE loc_262 ("path_ptrs"))) ])) ;
+        expr: (LocInfoE loc_235 (Call (LocInfoE loc_250 (global_free)) [@{expr} LocInfoE loc_251 ((LocInfoE loc_252 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_252 ((LocInfoE loc_253 (use{IntOp i32} (LocInfoE loc_254 ((LocInfoE loc_255 (!{PtrOp} (LocInfoE loc_257 (!{PtrOp} (LocInfoE loc_258 ("t")))))) at{struct_btree} "height")))) +{IntOp i32, IntOp i32} (LocInfoE loc_259 (i2v 1 i32)))))) ×{IntOp size_t, IntOp size_t} (LocInfoE loc_260 (i2v (void*).(ly_size) size_t))) ;
+        LocInfoE loc_261 (use{PtrOp} (LocInfoE loc_262 ("path_ptrs"))) ])) ;
         locinfo: loc_236 ;
-        expr: (LocInfoE loc_236 (Call (LocInfoE loc_238 (global_free)) [@{expr} LocInfoE loc_239 ((LocInfoE loc_240 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_240 (use{it_layout i32} (LocInfoE loc_241 ((LocInfoE loc_242 (!{void*} (LocInfoE loc_244 (!{void*} (LocInfoE loc_245 ("t")))))) at{struct_btree} "height")))))) ×{IntOp size_t, IntOp size_t} (LocInfoE loc_246 (i2v (it_layout i32).(ly_size) size_t))) ;
-        LocInfoE loc_247 (use{void*} (LocInfoE loc_248 ("path_keys"))) ])) ;
+        expr: (LocInfoE loc_236 (Call (LocInfoE loc_238 (global_free)) [@{expr} LocInfoE loc_239 ((LocInfoE loc_240 (UnOp (CastOp $ IntOp size_t) (IntOp i32) (LocInfoE loc_240 (use{IntOp i32} (LocInfoE loc_241 ((LocInfoE loc_242 (!{PtrOp} (LocInfoE loc_244 (!{PtrOp} (LocInfoE loc_245 ("t")))))) at{struct_btree} "height")))))) ×{IntOp size_t, IntOp size_t} (LocInfoE loc_246 (i2v (it_layout i32).(ly_size) size_t))) ;
+        LocInfoE loc_247 (use{PtrOp} (LocInfoE loc_248 ("path_keys"))) ])) ;
         Return (VOID)
       ]> $∅
     )%E
@@ -2011,7 +2011,7 @@ Section code.
     f_code := (
       <[ "#0" :=
         locinfo: loc_578 ;
-        if: LocInfoE loc_578 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_578 ((LocInfoE loc_579 (use{void*} (LocInfoE loc_581 (!{void*} (LocInfoE loc_582 ("t")))))) ={PtrOp, PtrOp} (LocInfoE loc_583 (NULL)))))
+        if: LocInfoE loc_578 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_578 ((LocInfoE loc_579 (use{PtrOp} (LocInfoE loc_581 (!{PtrOp} (LocInfoE loc_582 ("t")))))) ={PtrOp, PtrOp} (LocInfoE loc_583 (NULL)))))
         then
         locinfo: loc_575 ;
           Goto "#5"
@@ -2019,13 +2019,13 @@ Section code.
         Goto "#6"
       ]> $
       <[ "#1" :=
-        "i" <-{ it_layout i32 } LocInfoE loc_572 (i2v 0 i32) ;
+        "i" <-{ IntOp i32 } LocInfoE loc_572 (i2v 0 i32) ;
         locinfo: loc_531 ;
         Goto "#2"
       ]> $
       <[ "#2" :=
         locinfo: loc_563 ;
-        if: LocInfoE loc_563 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_563 ((LocInfoE loc_564 (use{it_layout i32} (LocInfoE loc_565 ("i")))) ≤{IntOp i32, IntOp i32} (LocInfoE loc_566 (use{it_layout i32} (LocInfoE loc_567 ((LocInfoE loc_568 (!{void*} (LocInfoE loc_570 (!{void*} (LocInfoE loc_571 ("t")))))) at{struct_btree} "nb_keys")))))))
+        if: LocInfoE loc_563 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_563 ((LocInfoE loc_564 (use{IntOp i32} (LocInfoE loc_565 ("i")))) ≤{IntOp i32, IntOp i32} (LocInfoE loc_566 (use{IntOp i32} (LocInfoE loc_567 ((LocInfoE loc_568 (!{PtrOp} (LocInfoE loc_570 (!{PtrOp} (LocInfoE loc_571 ("t")))))) at{struct_btree} "nb_keys")))))))
         then
         locinfo: loc_546 ;
           Goto "#3"
@@ -2035,16 +2035,16 @@ Section code.
       ]> $
       <[ "#3" :=
         locinfo: loc_546 ;
-        expr: (LocInfoE loc_546 (Call (LocInfoE loc_551 (global_free_btree_nodes)) [@{expr} LocInfoE loc_552 (&(LocInfoE loc_554 ((LocInfoE loc_556 ((LocInfoE loc_557 (!{void*} (LocInfoE loc_559 (!{void*} (LocInfoE loc_560 ("t")))))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_561 (use{it_layout i32} (LocInfoE loc_562 ("i"))))))) ])) ;
+        expr: (LocInfoE loc_546 (Call (LocInfoE loc_551 (global_free_btree_nodes)) [@{expr} LocInfoE loc_552 (&(LocInfoE loc_554 ((LocInfoE loc_556 ((LocInfoE loc_557 (!{PtrOp} (LocInfoE loc_559 (!{PtrOp} (LocInfoE loc_560 ("t")))))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_561 (use{IntOp i32} (LocInfoE loc_562 ("i"))))))) ])) ;
         locinfo: loc_547 ;
         Goto "continue6"
       ]> $
       <[ "#4" :=
         locinfo: loc_532 ;
         expr: (LocInfoE loc_532 (Call (LocInfoE loc_539 (global_free)) [@{expr} LocInfoE loc_540 (i2v (layout_of struct_btree).(ly_size) size_t) ;
-        LocInfoE loc_541 (use{void*} (LocInfoE loc_543 (!{void*} (LocInfoE loc_544 ("t"))))) ])) ;
+        LocInfoE loc_541 (use{PtrOp} (LocInfoE loc_543 (!{PtrOp} (LocInfoE loc_544 ("t"))))) ])) ;
         locinfo: loc_533 ;
-        LocInfoE loc_535 (!{void*} (LocInfoE loc_536 ("t"))) <-{ void* }
+        LocInfoE loc_535 (!{PtrOp} (LocInfoE loc_536 ("t"))) <-{ PtrOp }
           LocInfoE loc_537 (NULL) ;
         Return (VOID)
       ]> $
@@ -2056,8 +2056,8 @@ Section code.
         Goto "#1"
       ]> $
       <[ "continue6" :=
-        LocInfoE loc_549 ("i") <-{ it_layout i32 }
-          (use{it_layout i32} (LocInfoE loc_549 ("i"))) +{IntOp i32, IntOp i32} (i2v 1 i32) ;
+        LocInfoE loc_549 ("i") <-{ IntOp i32 }
+          (use{IntOp i32} (LocInfoE loc_549 ("i"))) +{IntOp i32, IntOp i32} (i2v 1 i32) ;
         locinfo: loc_531 ;
         Goto "#2"
       ]> $∅
@@ -2077,13 +2077,13 @@ Section code.
     f_init := "#0";
     f_code := (
       <[ "#0" :=
-        "slot" <-{ it_layout i32 } LocInfoE loc_613 (i2v 0 i32) ;
+        "slot" <-{ IntOp i32 } LocInfoE loc_613 (i2v 0 i32) ;
         locinfo: loc_587 ;
         Goto "#1"
       ]> $
       <[ "#1" :=
         locinfo: loc_598 ;
-        if: LocInfoE loc_598 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_598 ((LocInfoE loc_599 (use{it_layout i32} (LocInfoE loc_600 ("slot")))) <{IntOp i32, IntOp i32} (LocInfoE loc_601 (use{it_layout i32} (LocInfoE loc_602 ("n")))))))
+        if: LocInfoE loc_598 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_598 ((LocInfoE loc_599 (use{IntOp i32} (LocInfoE loc_600 ("slot")))) <{IntOp i32, IntOp i32} (LocInfoE loc_601 (use{IntOp i32} (LocInfoE loc_602 ("n")))))))
         then
         Goto "#4"
         else
@@ -2092,18 +2092,18 @@ Section code.
       ]> $
       <[ "#2" :=
         locinfo: loc_593 ;
-        LocInfoE loc_596 ("slot") <-{ it_layout i32 }
-          LocInfoE loc_593 ((LocInfoE loc_593 (use{it_layout i32} (LocInfoE loc_596 ("slot")))) +{IntOp i32, IntOp i32} (LocInfoE loc_593 (i2v 1 i32))) ;
+        LocInfoE loc_596 ("slot") <-{ IntOp i32 }
+          LocInfoE loc_593 ((LocInfoE loc_593 (use{IntOp i32} (LocInfoE loc_596 ("slot")))) +{IntOp i32, IntOp i32} (LocInfoE loc_593 (i2v 1 i32))) ;
         locinfo: loc_594 ;
         Goto "continue13"
       ]> $
       <[ "#3" :=
         locinfo: loc_588 ;
-        Return (LocInfoE loc_589 (use{it_layout i32} (LocInfoE loc_590 ("slot"))))
+        Return (LocInfoE loc_589 (use{IntOp i32} (LocInfoE loc_590 ("slot"))))
       ]> $
       <[ "#4" :=
         locinfo: loc_603 ;
-        if: LocInfoE loc_603 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_603 ((LocInfoE loc_604 (use{it_layout i32} (LocInfoE loc_606 ((LocInfoE loc_607 (!{void*} (LocInfoE loc_608 ("ar")))) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_609 (use{it_layout i32} (LocInfoE loc_610 ("slot")))))))) <{IntOp i32, IntOp i32} (LocInfoE loc_611 (use{it_layout i32} (LocInfoE loc_612 ("k")))))))
+        if: LocInfoE loc_603 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_603 ((LocInfoE loc_604 (use{IntOp i32} (LocInfoE loc_606 ((LocInfoE loc_607 (!{PtrOp} (LocInfoE loc_608 ("ar")))) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_609 (use{IntOp i32} (LocInfoE loc_610 ("slot")))))))) <{IntOp i32, IntOp i32} (LocInfoE loc_611 (use{IntOp i32} (LocInfoE loc_612 ("k")))))))
         then
         locinfo: loc_593 ;
           Goto "#2"
@@ -2138,14 +2138,14 @@ Section code.
     f_init := "#0";
     f_code := (
       <[ "#0" :=
-        "n" <-{ it_layout i32 }
-          LocInfoE loc_1539 (use{it_layout i32} (LocInfoE loc_1540 ((LocInfoE loc_1541 (!{void*} (LocInfoE loc_1543 (!{void*} (LocInfoE loc_1544 ("node")))))) at{struct_btree} "nb_keys"))) ;
-        "slot" <-{ it_layout i32 }
-          LocInfoE loc_1524 (Call (LocInfoE loc_1526 (global_key_index)) [@{expr} LocInfoE loc_1527 (&(LocInfoE loc_1528 ((LocInfoE loc_1529 (!{void*} (LocInfoE loc_1531 (!{void*} (LocInfoE loc_1532 ("node")))))) at{struct_btree} "keys"))) ;
-          LocInfoE loc_1533 (use{it_layout i32} (LocInfoE loc_1534 ("n"))) ;
-          LocInfoE loc_1535 (use{it_layout i32} (LocInfoE loc_1536 ("k"))) ]) ;
+        "n" <-{ IntOp i32 }
+          LocInfoE loc_1539 (use{IntOp i32} (LocInfoE loc_1540 ((LocInfoE loc_1541 (!{PtrOp} (LocInfoE loc_1543 (!{PtrOp} (LocInfoE loc_1544 ("node")))))) at{struct_btree} "nb_keys"))) ;
+        "slot" <-{ IntOp i32 }
+          LocInfoE loc_1524 (Call (LocInfoE loc_1526 (global_key_index)) [@{expr} LocInfoE loc_1527 (&(LocInfoE loc_1528 ((LocInfoE loc_1529 (!{PtrOp} (LocInfoE loc_1531 (!{PtrOp} (LocInfoE loc_1532 ("node")))))) at{struct_btree} "keys"))) ;
+          LocInfoE loc_1533 (use{IntOp i32} (LocInfoE loc_1534 ("n"))) ;
+          LocInfoE loc_1535 (use{IntOp i32} (LocInfoE loc_1536 ("k"))) ]) ;
         locinfo: loc_1514 ;
-        if: LocInfoE loc_1514 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_1514 ((LocInfoE loc_1515 (use{it_layout i32} (LocInfoE loc_1516 ((LocInfoE loc_1517 (!{void*} (LocInfoE loc_1519 (!{void*} (LocInfoE loc_1520 ("node")))))) at{struct_btree} "nb_keys")))) <{IntOp i32, IntOp i32} (LocInfoE loc_1521 ((LocInfoE loc_1522 (i2v 5 i32)) -{IntOp i32, IntOp i32} (LocInfoE loc_1523 (i2v 1 i32)))))))
+        if: LocInfoE loc_1514 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_1514 ((LocInfoE loc_1515 (use{IntOp i32} (LocInfoE loc_1516 ((LocInfoE loc_1517 (!{PtrOp} (LocInfoE loc_1519 (!{PtrOp} (LocInfoE loc_1520 ("node")))))) at{struct_btree} "nb_keys")))) <{IntOp i32, IntOp i32} (LocInfoE loc_1521 ((LocInfoE loc_1522 (i2v 5 i32)) -{IntOp i32, IntOp i32} (LocInfoE loc_1523 (i2v 1 i32)))))))
         then
         locinfo: loc_1378 ;
           Goto "#23"
@@ -2153,15 +2153,15 @@ Section code.
         Goto "#27"
       ]> $
       <[ "#1" :=
-        "new_node" <-{ void* }
+        "new_node" <-{ PtrOp }
           LocInfoE loc_1371 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_1371 (Call (LocInfoE loc_1373 (global_alloc)) [@{expr} LocInfoE loc_1374 (i2v (layout_of struct_btree).(ly_size) size_t) ]))) ;
         locinfo: loc_622 ;
-        LocInfoE loc_1362 ((LocInfoE loc_1363 (!{void*} (LocInfoE loc_1364 ("new_node")))) at{struct_btree} "height") <-{ it_layout i32 }
-          LocInfoE loc_1365 (use{it_layout i32} (LocInfoE loc_1366 ((LocInfoE loc_1367 (!{void*} (LocInfoE loc_1369 (!{void*} (LocInfoE loc_1370 ("node")))))) at{struct_btree} "height"))) ;
-        "med" <-{ it_layout i32 }
+        LocInfoE loc_1362 ((LocInfoE loc_1363 (!{PtrOp} (LocInfoE loc_1364 ("new_node")))) at{struct_btree} "height") <-{ IntOp i32 }
+          LocInfoE loc_1365 (use{IntOp i32} (LocInfoE loc_1366 ((LocInfoE loc_1367 (!{PtrOp} (LocInfoE loc_1369 (!{PtrOp} (LocInfoE loc_1370 ("node")))))) at{struct_btree} "height"))) ;
+        "med" <-{ IntOp i32 }
           LocInfoE loc_1357 ((LocInfoE loc_1358 (i2v 5 i32)) /{IntOp i32, IntOp i32} (LocInfoE loc_1359 (i2v 2 i32))) ;
         locinfo: loc_1352 ;
-        if: LocInfoE loc_1352 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_1352 ((LocInfoE loc_1353 (use{it_layout i32} (LocInfoE loc_1354 ("slot")))) <{IntOp i32, IntOp i32} (LocInfoE loc_1355 (use{it_layout i32} (LocInfoE loc_1356 ("med")))))))
+        if: LocInfoE loc_1352 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_1352 ((LocInfoE loc_1353 (use{IntOp i32} (LocInfoE loc_1354 ("slot")))) <{IntOp i32, IntOp i32} (LocInfoE loc_1355 (use{IntOp i32} (LocInfoE loc_1356 ("med")))))))
         then
         locinfo: loc_1062 ;
           Goto "#15"
@@ -2171,20 +2171,20 @@ Section code.
       ]> $
       <[ "#10" :=
         locinfo: loc_924 ;
-        LocInfoE loc_1051 (!{void*} (LocInfoE loc_1052 ("med_k"))) <-{ it_layout i32 }
-          LocInfoE loc_1053 (use{it_layout i32} (LocInfoE loc_1054 ("k"))) ;
+        LocInfoE loc_1051 (!{PtrOp} (LocInfoE loc_1052 ("med_k"))) <-{ IntOp i32 }
+          LocInfoE loc_1053 (use{IntOp i32} (LocInfoE loc_1054 ("k"))) ;
         locinfo: loc_925 ;
-        LocInfoE loc_1046 (!{void*} (LocInfoE loc_1047 ("med_v"))) <-{ void* }
-          LocInfoE loc_1048 (use{void*} (LocInfoE loc_1049 ("v"))) ;
+        LocInfoE loc_1046 (!{PtrOp} (LocInfoE loc_1047 ("med_v"))) <-{ PtrOp }
+          LocInfoE loc_1048 (use{PtrOp} (LocInfoE loc_1049 ("v"))) ;
         locinfo: loc_926 ;
-        LocInfoE loc_1042 ("i") <-{ it_layout i32 }
-          LocInfoE loc_1043 (use{it_layout i32} (LocInfoE loc_1044 ("med"))) ;
+        LocInfoE loc_1042 ("i") <-{ IntOp i32 }
+          LocInfoE loc_1043 (use{IntOp i32} (LocInfoE loc_1044 ("med"))) ;
         locinfo: loc_927 ;
         Goto "#11"
       ]> $
       <[ "#11" :=
         locinfo: loc_1036 ;
-        if: LocInfoE loc_1036 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_1036 ((LocInfoE loc_1037 (use{it_layout i32} (LocInfoE loc_1038 ("i")))) <{IntOp i32, IntOp i32} (LocInfoE loc_1039 ((LocInfoE loc_1040 (i2v 5 i32)) -{IntOp i32, IntOp i32} (LocInfoE loc_1041 (i2v 1 i32)))))))
+        if: LocInfoE loc_1036 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_1036 ((LocInfoE loc_1037 (use{IntOp i32} (LocInfoE loc_1038 ("i")))) <{IntOp i32, IntOp i32} (LocInfoE loc_1039 ((LocInfoE loc_1040 (i2v 5 i32)) -{IntOp i32, IntOp i32} (LocInfoE loc_1041 (i2v 1 i32)))))))
         then
         locinfo: loc_960 ;
           Goto "#12"
@@ -2194,29 +2194,29 @@ Section code.
       ]> $
       <[ "#12" :=
         locinfo: loc_960 ;
-        LocInfoE loc_1015 ((LocInfoE loc_1017 ((LocInfoE loc_1018 (!{void*} (LocInfoE loc_1019 ("new_node")))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_1020 ((LocInfoE loc_1021 (use{it_layout i32} (LocInfoE loc_1022 ("i")))) -{IntOp i32, IntOp i32} (LocInfoE loc_1023 (use{it_layout i32} (LocInfoE loc_1024 ("med"))))))) <-{ it_layout i32 }
-          LocInfoE loc_1025 (use{it_layout i32} (LocInfoE loc_1027 ((LocInfoE loc_1029 ((LocInfoE loc_1030 (!{void*} (LocInfoE loc_1032 (!{void*} (LocInfoE loc_1033 ("node")))))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_1034 (use{it_layout i32} (LocInfoE loc_1035 ("i"))))))) ;
+        LocInfoE loc_1015 ((LocInfoE loc_1017 ((LocInfoE loc_1018 (!{PtrOp} (LocInfoE loc_1019 ("new_node")))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_1020 ((LocInfoE loc_1021 (use{IntOp i32} (LocInfoE loc_1022 ("i")))) -{IntOp i32, IntOp i32} (LocInfoE loc_1023 (use{IntOp i32} (LocInfoE loc_1024 ("med"))))))) <-{ IntOp i32 }
+          LocInfoE loc_1025 (use{IntOp i32} (LocInfoE loc_1027 ((LocInfoE loc_1029 ((LocInfoE loc_1030 (!{PtrOp} (LocInfoE loc_1032 (!{PtrOp} (LocInfoE loc_1033 ("node")))))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_1034 (use{IntOp i32} (LocInfoE loc_1035 ("i"))))))) ;
         locinfo: loc_961 ;
-        LocInfoE loc_993 ((LocInfoE loc_995 ((LocInfoE loc_996 (!{void*} (LocInfoE loc_997 ("new_node")))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_998 ((LocInfoE loc_999 (use{it_layout i32} (LocInfoE loc_1000 ("i")))) -{IntOp i32, IntOp i32} (LocInfoE loc_1001 (use{it_layout i32} (LocInfoE loc_1002 ("med"))))))) <-{ void* }
-          LocInfoE loc_1003 (use{void*} (LocInfoE loc_1005 ((LocInfoE loc_1007 ((LocInfoE loc_1008 (!{void*} (LocInfoE loc_1010 (!{void*} (LocInfoE loc_1011 ("node")))))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1012 (use{it_layout i32} (LocInfoE loc_1013 ("i"))))))) ;
+        LocInfoE loc_993 ((LocInfoE loc_995 ((LocInfoE loc_996 (!{PtrOp} (LocInfoE loc_997 ("new_node")))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_998 ((LocInfoE loc_999 (use{IntOp i32} (LocInfoE loc_1000 ("i")))) -{IntOp i32, IntOp i32} (LocInfoE loc_1001 (use{IntOp i32} (LocInfoE loc_1002 ("med"))))))) <-{ PtrOp }
+          LocInfoE loc_1003 (use{PtrOp} (LocInfoE loc_1005 ((LocInfoE loc_1007 ((LocInfoE loc_1008 (!{PtrOp} (LocInfoE loc_1010 (!{PtrOp} (LocInfoE loc_1011 ("node")))))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1012 (use{IntOp i32} (LocInfoE loc_1013 ("i"))))))) ;
         locinfo: loc_962 ;
-        LocInfoE loc_967 ((LocInfoE loc_969 ((LocInfoE loc_970 (!{void*} (LocInfoE loc_971 ("new_node")))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_972 ((LocInfoE loc_973 ((LocInfoE loc_974 (use{it_layout i32} (LocInfoE loc_975 ("i")))) -{IntOp i32, IntOp i32} (LocInfoE loc_976 (use{it_layout i32} (LocInfoE loc_977 ("med")))))) +{IntOp i32, IntOp i32} (LocInfoE loc_978 (i2v 1 i32))))) <-{ void* }
-          LocInfoE loc_979 (use{void*} (LocInfoE loc_981 ((LocInfoE loc_983 ((LocInfoE loc_984 (!{void*} (LocInfoE loc_986 (!{void*} (LocInfoE loc_987 ("node")))))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_988 ((LocInfoE loc_989 (use{it_layout i32} (LocInfoE loc_990 ("i")))) +{IntOp i32, IntOp i32} (LocInfoE loc_991 (i2v 1 i32))))))) ;
+        LocInfoE loc_967 ((LocInfoE loc_969 ((LocInfoE loc_970 (!{PtrOp} (LocInfoE loc_971 ("new_node")))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_972 ((LocInfoE loc_973 ((LocInfoE loc_974 (use{IntOp i32} (LocInfoE loc_975 ("i")))) -{IntOp i32, IntOp i32} (LocInfoE loc_976 (use{IntOp i32} (LocInfoE loc_977 ("med")))))) +{IntOp i32, IntOp i32} (LocInfoE loc_978 (i2v 1 i32))))) <-{ PtrOp }
+          LocInfoE loc_979 (use{PtrOp} (LocInfoE loc_981 ((LocInfoE loc_983 ((LocInfoE loc_984 (!{PtrOp} (LocInfoE loc_986 (!{PtrOp} (LocInfoE loc_987 ("node")))))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_988 ((LocInfoE loc_989 (use{IntOp i32} (LocInfoE loc_990 ("i")))) +{IntOp i32, IntOp i32} (LocInfoE loc_991 (i2v 1 i32))))))) ;
         locinfo: loc_963 ;
         Goto "continue34"
       ]> $
       <[ "#13" :=
         locinfo: loc_928 ;
-        LocInfoE loc_951 ((LocInfoE loc_953 ((LocInfoE loc_954 (!{void*} (LocInfoE loc_955 ("new_node")))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_956 (i2v 0 i32))) <-{ void* }
-          LocInfoE loc_957 (use{void*} (LocInfoE loc_958 ("b"))) ;
+        LocInfoE loc_951 ((LocInfoE loc_953 ((LocInfoE loc_954 (!{PtrOp} (LocInfoE loc_955 ("new_node")))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_956 (i2v 0 i32))) <-{ PtrOp }
+          LocInfoE loc_957 (use{PtrOp} (LocInfoE loc_958 ("b"))) ;
         locinfo: loc_929 ;
-        LocInfoE loc_941 ((LocInfoE loc_942 (!{void*} (LocInfoE loc_943 ("new_node")))) at{struct_btree} "nb_keys") <-{ it_layout i32 }
-          LocInfoE loc_944 ((LocInfoE loc_945 ((LocInfoE loc_946 (i2v 5 i32)) -{IntOp i32, IntOp i32} (LocInfoE loc_947 (use{it_layout i32} (LocInfoE loc_948 ("med")))))) -{IntOp i32, IntOp i32} (LocInfoE loc_949 (i2v 1 i32))) ;
+        LocInfoE loc_941 ((LocInfoE loc_942 (!{PtrOp} (LocInfoE loc_943 ("new_node")))) at{struct_btree} "nb_keys") <-{ IntOp i32 }
+          LocInfoE loc_944 ((LocInfoE loc_945 ((LocInfoE loc_946 (i2v 5 i32)) -{IntOp i32, IntOp i32} (LocInfoE loc_947 (use{IntOp i32} (LocInfoE loc_948 ("med")))))) -{IntOp i32, IntOp i32} (LocInfoE loc_949 (i2v 1 i32))) ;
         locinfo: loc_930 ;
-        LocInfoE loc_934 ((LocInfoE loc_935 (!{void*} (LocInfoE loc_937 (!{void*} (LocInfoE loc_938 ("node")))))) at{struct_btree} "nb_keys") <-{ it_layout i32 }
-          LocInfoE loc_939 (use{it_layout i32} (LocInfoE loc_940 ("med"))) ;
+        LocInfoE loc_934 ((LocInfoE loc_935 (!{PtrOp} (LocInfoE loc_937 (!{PtrOp} (LocInfoE loc_938 ("node")))))) at{struct_btree} "nb_keys") <-{ IntOp i32 }
+          LocInfoE loc_939 (use{IntOp i32} (LocInfoE loc_940 ("med"))) ;
         locinfo: loc_931 ;
-        Return (LocInfoE loc_932 (use{void*} (LocInfoE loc_933 ("new_node"))))
+        Return (LocInfoE loc_932 (use{PtrOp} (LocInfoE loc_933 ("new_node"))))
       ]> $
       <[ "#14" :=
         locinfo: loc_626 ;
@@ -2224,20 +2224,20 @@ Section code.
       ]> $
       <[ "#15" :=
         locinfo: loc_1062 ;
-        LocInfoE loc_1336 (!{void*} (LocInfoE loc_1337 ("med_k"))) <-{ it_layout i32 }
-          LocInfoE loc_1338 (use{it_layout i32} (LocInfoE loc_1340 ((LocInfoE loc_1342 ((LocInfoE loc_1343 (!{void*} (LocInfoE loc_1345 (!{void*} (LocInfoE loc_1346 ("node")))))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_1347 ((LocInfoE loc_1348 (use{it_layout i32} (LocInfoE loc_1349 ("med")))) -{IntOp i32, IntOp i32} (LocInfoE loc_1350 (i2v 1 i32))))))) ;
+        LocInfoE loc_1336 (!{PtrOp} (LocInfoE loc_1337 ("med_k"))) <-{ IntOp i32 }
+          LocInfoE loc_1338 (use{IntOp i32} (LocInfoE loc_1340 ((LocInfoE loc_1342 ((LocInfoE loc_1343 (!{PtrOp} (LocInfoE loc_1345 (!{PtrOp} (LocInfoE loc_1346 ("node")))))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_1347 ((LocInfoE loc_1348 (use{IntOp i32} (LocInfoE loc_1349 ("med")))) -{IntOp i32, IntOp i32} (LocInfoE loc_1350 (i2v 1 i32))))))) ;
         locinfo: loc_1063 ;
-        LocInfoE loc_1320 (!{void*} (LocInfoE loc_1321 ("med_v"))) <-{ void* }
-          LocInfoE loc_1322 (use{void*} (LocInfoE loc_1324 ((LocInfoE loc_1326 ((LocInfoE loc_1327 (!{void*} (LocInfoE loc_1329 (!{void*} (LocInfoE loc_1330 ("node")))))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1331 ((LocInfoE loc_1332 (use{it_layout i32} (LocInfoE loc_1333 ("med")))) -{IntOp i32, IntOp i32} (LocInfoE loc_1334 (i2v 1 i32))))))) ;
+        LocInfoE loc_1320 (!{PtrOp} (LocInfoE loc_1321 ("med_v"))) <-{ PtrOp }
+          LocInfoE loc_1322 (use{PtrOp} (LocInfoE loc_1324 ((LocInfoE loc_1326 ((LocInfoE loc_1327 (!{PtrOp} (LocInfoE loc_1329 (!{PtrOp} (LocInfoE loc_1330 ("node")))))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1331 ((LocInfoE loc_1332 (use{IntOp i32} (LocInfoE loc_1333 ("med")))) -{IntOp i32, IntOp i32} (LocInfoE loc_1334 (i2v 1 i32))))))) ;
         locinfo: loc_1064 ;
-        LocInfoE loc_1316 ("i") <-{ it_layout i32 }
-          LocInfoE loc_1317 (use{it_layout i32} (LocInfoE loc_1318 ("med"))) ;
+        LocInfoE loc_1316 ("i") <-{ IntOp i32 }
+          LocInfoE loc_1317 (use{IntOp i32} (LocInfoE loc_1318 ("med"))) ;
         locinfo: loc_1065 ;
         Goto "#16"
       ]> $
       <[ "#16" :=
         locinfo: loc_1312 ;
-        if: LocInfoE loc_1312 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_1312 ((LocInfoE loc_1313 (use{it_layout i32} (LocInfoE loc_1314 ("i")))) <{IntOp i32, IntOp i32} (LocInfoE loc_1315 (i2v 5 i32)))))
+        if: LocInfoE loc_1312 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_1312 ((LocInfoE loc_1313 (use{IntOp i32} (LocInfoE loc_1314 ("i")))) <{IntOp i32, IntOp i32} (LocInfoE loc_1315 (i2v 5 i32)))))
         then
         locinfo: loc_1236 ;
           Goto "#17"
@@ -2247,30 +2247,30 @@ Section code.
       ]> $
       <[ "#17" :=
         locinfo: loc_1236 ;
-        LocInfoE loc_1291 ((LocInfoE loc_1293 ((LocInfoE loc_1294 (!{void*} (LocInfoE loc_1295 ("new_node")))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_1296 ((LocInfoE loc_1297 (use{it_layout i32} (LocInfoE loc_1298 ("i")))) -{IntOp i32, IntOp i32} (LocInfoE loc_1299 (use{it_layout i32} (LocInfoE loc_1300 ("med"))))))) <-{ it_layout i32 }
-          LocInfoE loc_1301 (use{it_layout i32} (LocInfoE loc_1303 ((LocInfoE loc_1305 ((LocInfoE loc_1306 (!{void*} (LocInfoE loc_1308 (!{void*} (LocInfoE loc_1309 ("node")))))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_1310 (use{it_layout i32} (LocInfoE loc_1311 ("i"))))))) ;
+        LocInfoE loc_1291 ((LocInfoE loc_1293 ((LocInfoE loc_1294 (!{PtrOp} (LocInfoE loc_1295 ("new_node")))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_1296 ((LocInfoE loc_1297 (use{IntOp i32} (LocInfoE loc_1298 ("i")))) -{IntOp i32, IntOp i32} (LocInfoE loc_1299 (use{IntOp i32} (LocInfoE loc_1300 ("med"))))))) <-{ IntOp i32 }
+          LocInfoE loc_1301 (use{IntOp i32} (LocInfoE loc_1303 ((LocInfoE loc_1305 ((LocInfoE loc_1306 (!{PtrOp} (LocInfoE loc_1308 (!{PtrOp} (LocInfoE loc_1309 ("node")))))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_1310 (use{IntOp i32} (LocInfoE loc_1311 ("i"))))))) ;
         locinfo: loc_1237 ;
-        LocInfoE loc_1269 ((LocInfoE loc_1271 ((LocInfoE loc_1272 (!{void*} (LocInfoE loc_1273 ("new_node")))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1274 ((LocInfoE loc_1275 (use{it_layout i32} (LocInfoE loc_1276 ("i")))) -{IntOp i32, IntOp i32} (LocInfoE loc_1277 (use{it_layout i32} (LocInfoE loc_1278 ("med"))))))) <-{ void* }
-          LocInfoE loc_1279 (use{void*} (LocInfoE loc_1281 ((LocInfoE loc_1283 ((LocInfoE loc_1284 (!{void*} (LocInfoE loc_1286 (!{void*} (LocInfoE loc_1287 ("node")))))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1288 (use{it_layout i32} (LocInfoE loc_1289 ("i"))))))) ;
+        LocInfoE loc_1269 ((LocInfoE loc_1271 ((LocInfoE loc_1272 (!{PtrOp} (LocInfoE loc_1273 ("new_node")))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1274 ((LocInfoE loc_1275 (use{IntOp i32} (LocInfoE loc_1276 ("i")))) -{IntOp i32, IntOp i32} (LocInfoE loc_1277 (use{IntOp i32} (LocInfoE loc_1278 ("med"))))))) <-{ PtrOp }
+          LocInfoE loc_1279 (use{PtrOp} (LocInfoE loc_1281 ((LocInfoE loc_1283 ((LocInfoE loc_1284 (!{PtrOp} (LocInfoE loc_1286 (!{PtrOp} (LocInfoE loc_1287 ("node")))))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1288 (use{IntOp i32} (LocInfoE loc_1289 ("i"))))))) ;
         locinfo: loc_1238 ;
-        LocInfoE loc_1243 ((LocInfoE loc_1245 ((LocInfoE loc_1246 (!{void*} (LocInfoE loc_1247 ("new_node")))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1248 ((LocInfoE loc_1249 ((LocInfoE loc_1250 (use{it_layout i32} (LocInfoE loc_1251 ("i")))) -{IntOp i32, IntOp i32} (LocInfoE loc_1252 (use{it_layout i32} (LocInfoE loc_1253 ("med")))))) +{IntOp i32, IntOp i32} (LocInfoE loc_1254 (i2v 1 i32))))) <-{ void* }
-          LocInfoE loc_1255 (use{void*} (LocInfoE loc_1257 ((LocInfoE loc_1259 ((LocInfoE loc_1260 (!{void*} (LocInfoE loc_1262 (!{void*} (LocInfoE loc_1263 ("node")))))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1264 ((LocInfoE loc_1265 (use{it_layout i32} (LocInfoE loc_1266 ("i")))) +{IntOp i32, IntOp i32} (LocInfoE loc_1267 (i2v 1 i32))))))) ;
+        LocInfoE loc_1243 ((LocInfoE loc_1245 ((LocInfoE loc_1246 (!{PtrOp} (LocInfoE loc_1247 ("new_node")))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1248 ((LocInfoE loc_1249 ((LocInfoE loc_1250 (use{IntOp i32} (LocInfoE loc_1251 ("i")))) -{IntOp i32, IntOp i32} (LocInfoE loc_1252 (use{IntOp i32} (LocInfoE loc_1253 ("med")))))) +{IntOp i32, IntOp i32} (LocInfoE loc_1254 (i2v 1 i32))))) <-{ PtrOp }
+          LocInfoE loc_1255 (use{PtrOp} (LocInfoE loc_1257 ((LocInfoE loc_1259 ((LocInfoE loc_1260 (!{PtrOp} (LocInfoE loc_1262 (!{PtrOp} (LocInfoE loc_1263 ("node")))))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1264 ((LocInfoE loc_1265 (use{IntOp i32} (LocInfoE loc_1266 ("i")))) +{IntOp i32, IntOp i32} (LocInfoE loc_1267 (i2v 1 i32))))))) ;
         locinfo: loc_1239 ;
         Goto "continue29"
       ]> $
       <[ "#18" :=
         locinfo: loc_1066 ;
-        LocInfoE loc_1218 ((LocInfoE loc_1220 ((LocInfoE loc_1221 (!{void*} (LocInfoE loc_1222 ("new_node")))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1223 (i2v 0 i32))) <-{ void* }
-          LocInfoE loc_1224 (use{void*} (LocInfoE loc_1226 ((LocInfoE loc_1228 ((LocInfoE loc_1229 (!{void*} (LocInfoE loc_1231 (!{void*} (LocInfoE loc_1232 ("node")))))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1233 (use{it_layout i32} (LocInfoE loc_1234 ("med"))))))) ;
+        LocInfoE loc_1218 ((LocInfoE loc_1220 ((LocInfoE loc_1221 (!{PtrOp} (LocInfoE loc_1222 ("new_node")))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1223 (i2v 0 i32))) <-{ PtrOp }
+          LocInfoE loc_1224 (use{PtrOp} (LocInfoE loc_1226 ((LocInfoE loc_1228 ((LocInfoE loc_1229 (!{PtrOp} (LocInfoE loc_1231 (!{PtrOp} (LocInfoE loc_1232 ("node")))))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1233 (use{IntOp i32} (LocInfoE loc_1234 ("med"))))))) ;
         locinfo: loc_1067 ;
-        LocInfoE loc_1212 ("i") <-{ it_layout i32 }
-          LocInfoE loc_1213 ((LocInfoE loc_1214 (use{it_layout i32} (LocInfoE loc_1215 ("med")))) -{IntOp i32, IntOp i32} (LocInfoE loc_1216 (i2v 1 i32))) ;
+        LocInfoE loc_1212 ("i") <-{ IntOp i32 }
+          LocInfoE loc_1213 ((LocInfoE loc_1214 (use{IntOp i32} (LocInfoE loc_1215 ("med")))) -{IntOp i32, IntOp i32} (LocInfoE loc_1216 (i2v 1 i32))) ;
         locinfo: loc_1068 ;
         Goto "#19"
       ]> $
       <[ "#19" :=
         locinfo: loc_1207 ;
-        if: LocInfoE loc_1207 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_1207 ((LocInfoE loc_1208 (use{it_layout i32} (LocInfoE loc_1209 ("i")))) >{IntOp i32, IntOp i32} (LocInfoE loc_1210 (use{it_layout i32} (LocInfoE loc_1211 ("slot")))))))
+        if: LocInfoE loc_1207 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_1207 ((LocInfoE loc_1208 (use{IntOp i32} (LocInfoE loc_1209 ("i")))) >{IntOp i32, IntOp i32} (LocInfoE loc_1210 (use{IntOp i32} (LocInfoE loc_1211 ("slot")))))))
         then
         locinfo: loc_1132 ;
           Goto "#20"
@@ -2280,7 +2280,7 @@ Section code.
       ]> $
       <[ "#2" :=
         locinfo: loc_1056 ;
-        if: LocInfoE loc_1056 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_1056 ((LocInfoE loc_1057 (use{it_layout i32} (LocInfoE loc_1058 ("slot")))) ={IntOp i32, IntOp i32} (LocInfoE loc_1059 (use{it_layout i32} (LocInfoE loc_1060 ("med")))))))
+        if: LocInfoE loc_1056 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_1056 ((LocInfoE loc_1057 (use{IntOp i32} (LocInfoE loc_1058 ("slot")))) ={IntOp i32, IntOp i32} (LocInfoE loc_1059 (use{IntOp i32} (LocInfoE loc_1060 ("med")))))))
         then
         locinfo: loc_924 ;
           Goto "#10"
@@ -2290,35 +2290,35 @@ Section code.
       ]> $
       <[ "#20" :=
         locinfo: loc_1132 ;
-        LocInfoE loc_1185 ((LocInfoE loc_1187 ((LocInfoE loc_1188 (!{void*} (LocInfoE loc_1190 (!{void*} (LocInfoE loc_1191 ("node")))))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_1192 (use{it_layout i32} (LocInfoE loc_1193 ("i"))))) <-{ it_layout i32 }
-          LocInfoE loc_1194 (use{it_layout i32} (LocInfoE loc_1196 ((LocInfoE loc_1198 ((LocInfoE loc_1199 (!{void*} (LocInfoE loc_1201 (!{void*} (LocInfoE loc_1202 ("node")))))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_1203 ((LocInfoE loc_1204 (use{it_layout i32} (LocInfoE loc_1205 ("i")))) -{IntOp i32, IntOp i32} (LocInfoE loc_1206 (i2v 1 i32))))))) ;
+        LocInfoE loc_1185 ((LocInfoE loc_1187 ((LocInfoE loc_1188 (!{PtrOp} (LocInfoE loc_1190 (!{PtrOp} (LocInfoE loc_1191 ("node")))))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_1192 (use{IntOp i32} (LocInfoE loc_1193 ("i"))))) <-{ IntOp i32 }
+          LocInfoE loc_1194 (use{IntOp i32} (LocInfoE loc_1196 ((LocInfoE loc_1198 ((LocInfoE loc_1199 (!{PtrOp} (LocInfoE loc_1201 (!{PtrOp} (LocInfoE loc_1202 ("node")))))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_1203 ((LocInfoE loc_1204 (use{IntOp i32} (LocInfoE loc_1205 ("i")))) -{IntOp i32, IntOp i32} (LocInfoE loc_1206 (i2v 1 i32))))))) ;
         locinfo: loc_1133 ;
-        LocInfoE loc_1162 ((LocInfoE loc_1164 ((LocInfoE loc_1165 (!{void*} (LocInfoE loc_1167 (!{void*} (LocInfoE loc_1168 ("node")))))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1169 (use{it_layout i32} (LocInfoE loc_1170 ("i"))))) <-{ void* }
-          LocInfoE loc_1171 (use{void*} (LocInfoE loc_1173 ((LocInfoE loc_1175 ((LocInfoE loc_1176 (!{void*} (LocInfoE loc_1178 (!{void*} (LocInfoE loc_1179 ("node")))))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1180 ((LocInfoE loc_1181 (use{it_layout i32} (LocInfoE loc_1182 ("i")))) -{IntOp i32, IntOp i32} (LocInfoE loc_1183 (i2v 1 i32))))))) ;
+        LocInfoE loc_1162 ((LocInfoE loc_1164 ((LocInfoE loc_1165 (!{PtrOp} (LocInfoE loc_1167 (!{PtrOp} (LocInfoE loc_1168 ("node")))))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1169 (use{IntOp i32} (LocInfoE loc_1170 ("i"))))) <-{ PtrOp }
+          LocInfoE loc_1171 (use{PtrOp} (LocInfoE loc_1173 ((LocInfoE loc_1175 ((LocInfoE loc_1176 (!{PtrOp} (LocInfoE loc_1178 (!{PtrOp} (LocInfoE loc_1179 ("node")))))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1180 ((LocInfoE loc_1181 (use{IntOp i32} (LocInfoE loc_1182 ("i")))) -{IntOp i32, IntOp i32} (LocInfoE loc_1183 (i2v 1 i32))))))) ;
         locinfo: loc_1134 ;
-        LocInfoE loc_1139 ((LocInfoE loc_1141 ((LocInfoE loc_1142 (!{void*} (LocInfoE loc_1144 (!{void*} (LocInfoE loc_1145 ("node")))))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1146 ((LocInfoE loc_1147 (use{it_layout i32} (LocInfoE loc_1148 ("i")))) +{IntOp i32, IntOp i32} (LocInfoE loc_1149 (i2v 1 i32))))) <-{ void* }
-          LocInfoE loc_1150 (use{void*} (LocInfoE loc_1152 ((LocInfoE loc_1154 ((LocInfoE loc_1155 (!{void*} (LocInfoE loc_1157 (!{void*} (LocInfoE loc_1158 ("node")))))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1159 (use{it_layout i32} (LocInfoE loc_1160 ("i"))))))) ;
+        LocInfoE loc_1139 ((LocInfoE loc_1141 ((LocInfoE loc_1142 (!{PtrOp} (LocInfoE loc_1144 (!{PtrOp} (LocInfoE loc_1145 ("node")))))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1146 ((LocInfoE loc_1147 (use{IntOp i32} (LocInfoE loc_1148 ("i")))) +{IntOp i32, IntOp i32} (LocInfoE loc_1149 (i2v 1 i32))))) <-{ PtrOp }
+          LocInfoE loc_1150 (use{PtrOp} (LocInfoE loc_1152 ((LocInfoE loc_1154 ((LocInfoE loc_1155 (!{PtrOp} (LocInfoE loc_1157 (!{PtrOp} (LocInfoE loc_1158 ("node")))))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1159 (use{IntOp i32} (LocInfoE loc_1160 ("i"))))))) ;
         locinfo: loc_1135 ;
         Goto "continue31"
       ]> $
       <[ "#21" :=
         locinfo: loc_1069 ;
-        LocInfoE loc_1120 ((LocInfoE loc_1122 ((LocInfoE loc_1123 (!{void*} (LocInfoE loc_1125 (!{void*} (LocInfoE loc_1126 ("node")))))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_1127 (use{it_layout i32} (LocInfoE loc_1128 ("slot"))))) <-{ it_layout i32 }
-          LocInfoE loc_1129 (use{it_layout i32} (LocInfoE loc_1130 ("k"))) ;
+        LocInfoE loc_1120 ((LocInfoE loc_1122 ((LocInfoE loc_1123 (!{PtrOp} (LocInfoE loc_1125 (!{PtrOp} (LocInfoE loc_1126 ("node")))))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_1127 (use{IntOp i32} (LocInfoE loc_1128 ("slot"))))) <-{ IntOp i32 }
+          LocInfoE loc_1129 (use{IntOp i32} (LocInfoE loc_1130 ("k"))) ;
         locinfo: loc_1070 ;
-        LocInfoE loc_1108 ((LocInfoE loc_1110 ((LocInfoE loc_1111 (!{void*} (LocInfoE loc_1113 (!{void*} (LocInfoE loc_1114 ("node")))))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1115 (use{it_layout i32} (LocInfoE loc_1116 ("slot"))))) <-{ void* }
-          LocInfoE loc_1117 (use{void*} (LocInfoE loc_1118 ("v"))) ;
+        LocInfoE loc_1108 ((LocInfoE loc_1110 ((LocInfoE loc_1111 (!{PtrOp} (LocInfoE loc_1113 (!{PtrOp} (LocInfoE loc_1114 ("node")))))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1115 (use{IntOp i32} (LocInfoE loc_1116 ("slot"))))) <-{ PtrOp }
+          LocInfoE loc_1117 (use{PtrOp} (LocInfoE loc_1118 ("v"))) ;
         locinfo: loc_1071 ;
-        LocInfoE loc_1094 ((LocInfoE loc_1096 ((LocInfoE loc_1097 (!{void*} (LocInfoE loc_1099 (!{void*} (LocInfoE loc_1100 ("node")))))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1101 ((LocInfoE loc_1102 (use{it_layout i32} (LocInfoE loc_1103 ("slot")))) +{IntOp i32, IntOp i32} (LocInfoE loc_1104 (i2v 1 i32))))) <-{ void* }
-          LocInfoE loc_1105 (use{void*} (LocInfoE loc_1106 ("b"))) ;
+        LocInfoE loc_1094 ((LocInfoE loc_1096 ((LocInfoE loc_1097 (!{PtrOp} (LocInfoE loc_1099 (!{PtrOp} (LocInfoE loc_1100 ("node")))))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1101 ((LocInfoE loc_1102 (use{IntOp i32} (LocInfoE loc_1103 ("slot")))) +{IntOp i32, IntOp i32} (LocInfoE loc_1104 (i2v 1 i32))))) <-{ PtrOp }
+          LocInfoE loc_1105 (use{PtrOp} (LocInfoE loc_1106 ("b"))) ;
         locinfo: loc_1072 ;
-        LocInfoE loc_1084 ((LocInfoE loc_1085 (!{void*} (LocInfoE loc_1086 ("new_node")))) at{struct_btree} "nb_keys") <-{ it_layout i32 }
-          LocInfoE loc_1087 ((LocInfoE loc_1088 ((LocInfoE loc_1089 (i2v 5 i32)) -{IntOp i32, IntOp i32} (LocInfoE loc_1090 (use{it_layout i32} (LocInfoE loc_1091 ("med")))))) -{IntOp i32, IntOp i32} (LocInfoE loc_1092 (i2v 1 i32))) ;
+        LocInfoE loc_1084 ((LocInfoE loc_1085 (!{PtrOp} (LocInfoE loc_1086 ("new_node")))) at{struct_btree} "nb_keys") <-{ IntOp i32 }
+          LocInfoE loc_1087 ((LocInfoE loc_1088 ((LocInfoE loc_1089 (i2v 5 i32)) -{IntOp i32, IntOp i32} (LocInfoE loc_1090 (use{IntOp i32} (LocInfoE loc_1091 ("med")))))) -{IntOp i32, IntOp i32} (LocInfoE loc_1092 (i2v 1 i32))) ;
         locinfo: loc_1073 ;
-        LocInfoE loc_1077 ((LocInfoE loc_1078 (!{void*} (LocInfoE loc_1080 (!{void*} (LocInfoE loc_1081 ("node")))))) at{struct_btree} "nb_keys") <-{ it_layout i32 }
-          LocInfoE loc_1082 (use{it_layout i32} (LocInfoE loc_1083 ("med"))) ;
+        LocInfoE loc_1077 ((LocInfoE loc_1078 (!{PtrOp} (LocInfoE loc_1080 (!{PtrOp} (LocInfoE loc_1081 ("node")))))) at{struct_btree} "nb_keys") <-{ IntOp i32 }
+          LocInfoE loc_1082 (use{IntOp i32} (LocInfoE loc_1083 ("med"))) ;
         locinfo: loc_1074 ;
-        Return (LocInfoE loc_1075 (use{void*} (LocInfoE loc_1076 ("new_node"))))
+        Return (LocInfoE loc_1075 (use{PtrOp} (LocInfoE loc_1076 ("new_node"))))
       ]> $
       <[ "#22" :=
         locinfo: loc_1056 ;
@@ -2326,14 +2326,14 @@ Section code.
       ]> $
       <[ "#23" :=
         locinfo: loc_1378 ;
-        LocInfoE loc_1510 ("i") <-{ it_layout i32 }
-          LocInfoE loc_1511 (use{it_layout i32} (LocInfoE loc_1512 ("n"))) ;
+        LocInfoE loc_1510 ("i") <-{ IntOp i32 }
+          LocInfoE loc_1511 (use{IntOp i32} (LocInfoE loc_1512 ("n"))) ;
         locinfo: loc_1379 ;
         Goto "#24"
       ]> $
       <[ "#24" :=
         locinfo: loc_1505 ;
-        if: LocInfoE loc_1505 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_1505 ((LocInfoE loc_1506 (use{it_layout i32} (LocInfoE loc_1507 ("i")))) >{IntOp i32, IntOp i32} (LocInfoE loc_1508 (use{it_layout i32} (LocInfoE loc_1509 ("slot")))))))
+        if: LocInfoE loc_1505 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_1505 ((LocInfoE loc_1506 (use{IntOp i32} (LocInfoE loc_1507 ("i")))) >{IntOp i32, IntOp i32} (LocInfoE loc_1508 (use{IntOp i32} (LocInfoE loc_1509 ("slot")))))))
         then
         locinfo: loc_1430 ;
           Goto "#25"
@@ -2343,30 +2343,30 @@ Section code.
       ]> $
       <[ "#25" :=
         locinfo: loc_1430 ;
-        LocInfoE loc_1483 ((LocInfoE loc_1485 ((LocInfoE loc_1486 (!{void*} (LocInfoE loc_1488 (!{void*} (LocInfoE loc_1489 ("node")))))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_1490 (use{it_layout i32} (LocInfoE loc_1491 ("i"))))) <-{ it_layout i32 }
-          LocInfoE loc_1492 (use{it_layout i32} (LocInfoE loc_1494 ((LocInfoE loc_1496 ((LocInfoE loc_1497 (!{void*} (LocInfoE loc_1499 (!{void*} (LocInfoE loc_1500 ("node")))))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_1501 ((LocInfoE loc_1502 (use{it_layout i32} (LocInfoE loc_1503 ("i")))) -{IntOp i32, IntOp i32} (LocInfoE loc_1504 (i2v 1 i32))))))) ;
+        LocInfoE loc_1483 ((LocInfoE loc_1485 ((LocInfoE loc_1486 (!{PtrOp} (LocInfoE loc_1488 (!{PtrOp} (LocInfoE loc_1489 ("node")))))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_1490 (use{IntOp i32} (LocInfoE loc_1491 ("i"))))) <-{ IntOp i32 }
+          LocInfoE loc_1492 (use{IntOp i32} (LocInfoE loc_1494 ((LocInfoE loc_1496 ((LocInfoE loc_1497 (!{PtrOp} (LocInfoE loc_1499 (!{PtrOp} (LocInfoE loc_1500 ("node")))))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_1501 ((LocInfoE loc_1502 (use{IntOp i32} (LocInfoE loc_1503 ("i")))) -{IntOp i32, IntOp i32} (LocInfoE loc_1504 (i2v 1 i32))))))) ;
         locinfo: loc_1431 ;
-        LocInfoE loc_1460 ((LocInfoE loc_1462 ((LocInfoE loc_1463 (!{void*} (LocInfoE loc_1465 (!{void*} (LocInfoE loc_1466 ("node")))))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1467 (use{it_layout i32} (LocInfoE loc_1468 ("i"))))) <-{ void* }
-          LocInfoE loc_1469 (use{void*} (LocInfoE loc_1471 ((LocInfoE loc_1473 ((LocInfoE loc_1474 (!{void*} (LocInfoE loc_1476 (!{void*} (LocInfoE loc_1477 ("node")))))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1478 ((LocInfoE loc_1479 (use{it_layout i32} (LocInfoE loc_1480 ("i")))) -{IntOp i32, IntOp i32} (LocInfoE loc_1481 (i2v 1 i32))))))) ;
+        LocInfoE loc_1460 ((LocInfoE loc_1462 ((LocInfoE loc_1463 (!{PtrOp} (LocInfoE loc_1465 (!{PtrOp} (LocInfoE loc_1466 ("node")))))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1467 (use{IntOp i32} (LocInfoE loc_1468 ("i"))))) <-{ PtrOp }
+          LocInfoE loc_1469 (use{PtrOp} (LocInfoE loc_1471 ((LocInfoE loc_1473 ((LocInfoE loc_1474 (!{PtrOp} (LocInfoE loc_1476 (!{PtrOp} (LocInfoE loc_1477 ("node")))))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1478 ((LocInfoE loc_1479 (use{IntOp i32} (LocInfoE loc_1480 ("i")))) -{IntOp i32, IntOp i32} (LocInfoE loc_1481 (i2v 1 i32))))))) ;
         locinfo: loc_1432 ;
-        LocInfoE loc_1437 ((LocInfoE loc_1439 ((LocInfoE loc_1440 (!{void*} (LocInfoE loc_1442 (!{void*} (LocInfoE loc_1443 ("node")))))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1444 ((LocInfoE loc_1445 (use{it_layout i32} (LocInfoE loc_1446 ("i")))) +{IntOp i32, IntOp i32} (LocInfoE loc_1447 (i2v 1 i32))))) <-{ void* }
-          LocInfoE loc_1448 (use{void*} (LocInfoE loc_1450 ((LocInfoE loc_1452 ((LocInfoE loc_1453 (!{void*} (LocInfoE loc_1455 (!{void*} (LocInfoE loc_1456 ("node")))))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1457 (use{it_layout i32} (LocInfoE loc_1458 ("i"))))))) ;
+        LocInfoE loc_1437 ((LocInfoE loc_1439 ((LocInfoE loc_1440 (!{PtrOp} (LocInfoE loc_1442 (!{PtrOp} (LocInfoE loc_1443 ("node")))))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1444 ((LocInfoE loc_1445 (use{IntOp i32} (LocInfoE loc_1446 ("i")))) +{IntOp i32, IntOp i32} (LocInfoE loc_1447 (i2v 1 i32))))) <-{ PtrOp }
+          LocInfoE loc_1448 (use{PtrOp} (LocInfoE loc_1450 ((LocInfoE loc_1452 ((LocInfoE loc_1453 (!{PtrOp} (LocInfoE loc_1455 (!{PtrOp} (LocInfoE loc_1456 ("node")))))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1457 (use{IntOp i32} (LocInfoE loc_1458 ("i"))))))) ;
         locinfo: loc_1433 ;
         Goto "continue26"
       ]> $
       <[ "#26" :=
         locinfo: loc_1380 ;
-        LocInfoE loc_1418 ((LocInfoE loc_1420 ((LocInfoE loc_1421 (!{void*} (LocInfoE loc_1423 (!{void*} (LocInfoE loc_1424 ("node")))))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_1425 (use{it_layout i32} (LocInfoE loc_1426 ("slot"))))) <-{ it_layout i32 }
-          LocInfoE loc_1427 (use{it_layout i32} (LocInfoE loc_1428 ("k"))) ;
+        LocInfoE loc_1418 ((LocInfoE loc_1420 ((LocInfoE loc_1421 (!{PtrOp} (LocInfoE loc_1423 (!{PtrOp} (LocInfoE loc_1424 ("node")))))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_1425 (use{IntOp i32} (LocInfoE loc_1426 ("slot"))))) <-{ IntOp i32 }
+          LocInfoE loc_1427 (use{IntOp i32} (LocInfoE loc_1428 ("k"))) ;
         locinfo: loc_1381 ;
-        LocInfoE loc_1406 ((LocInfoE loc_1408 ((LocInfoE loc_1409 (!{void*} (LocInfoE loc_1411 (!{void*} (LocInfoE loc_1412 ("node")))))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1413 (use{it_layout i32} (LocInfoE loc_1414 ("slot"))))) <-{ void* }
-          LocInfoE loc_1415 (use{void*} (LocInfoE loc_1416 ("v"))) ;
+        LocInfoE loc_1406 ((LocInfoE loc_1408 ((LocInfoE loc_1409 (!{PtrOp} (LocInfoE loc_1411 (!{PtrOp} (LocInfoE loc_1412 ("node")))))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1413 (use{IntOp i32} (LocInfoE loc_1414 ("slot"))))) <-{ PtrOp }
+          LocInfoE loc_1415 (use{PtrOp} (LocInfoE loc_1416 ("v"))) ;
         locinfo: loc_1382 ;
-        LocInfoE loc_1392 ((LocInfoE loc_1394 ((LocInfoE loc_1395 (!{void*} (LocInfoE loc_1397 (!{void*} (LocInfoE loc_1398 ("node")))))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1399 ((LocInfoE loc_1400 (use{it_layout i32} (LocInfoE loc_1401 ("slot")))) +{IntOp i32, IntOp i32} (LocInfoE loc_1402 (i2v 1 i32))))) <-{ void* }
-          LocInfoE loc_1403 (use{void*} (LocInfoE loc_1404 ("b"))) ;
+        LocInfoE loc_1392 ((LocInfoE loc_1394 ((LocInfoE loc_1395 (!{PtrOp} (LocInfoE loc_1397 (!{PtrOp} (LocInfoE loc_1398 ("node")))))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1399 ((LocInfoE loc_1400 (use{IntOp i32} (LocInfoE loc_1401 ("slot")))) +{IntOp i32, IntOp i32} (LocInfoE loc_1402 (i2v 1 i32))))) <-{ PtrOp }
+          LocInfoE loc_1403 (use{PtrOp} (LocInfoE loc_1404 ("b"))) ;
         locinfo: loc_1383 ;
-        LocInfoE loc_1386 ((LocInfoE loc_1387 (!{void*} (LocInfoE loc_1389 (!{void*} (LocInfoE loc_1390 ("node")))))) at{struct_btree} "nb_keys") <-{ it_layout i32 }
-          LocInfoE loc_1383 ((LocInfoE loc_1383 (use{it_layout i32} (LocInfoE loc_1386 ((LocInfoE loc_1387 (!{void*} (LocInfoE loc_1389 (!{void*} (LocInfoE loc_1390 ("node")))))) at{struct_btree} "nb_keys")))) +{IntOp i32, IntOp i32} (LocInfoE loc_1383 (i2v 1 i32))) ;
+        LocInfoE loc_1386 ((LocInfoE loc_1387 (!{PtrOp} (LocInfoE loc_1389 (!{PtrOp} (LocInfoE loc_1390 ("node")))))) at{struct_btree} "nb_keys") <-{ IntOp i32 }
+          LocInfoE loc_1383 ((LocInfoE loc_1383 (use{IntOp i32} (LocInfoE loc_1386 ((LocInfoE loc_1387 (!{PtrOp} (LocInfoE loc_1389 (!{PtrOp} (LocInfoE loc_1390 ("node")))))) at{struct_btree} "nb_keys")))) +{IntOp i32, IntOp i32} (LocInfoE loc_1383 (i2v 1 i32))) ;
         locinfo: loc_1384 ;
         Return (LocInfoE loc_1385 (NULL))
       ]> $
@@ -2375,20 +2375,20 @@ Section code.
       ]> $
       <[ "#3" :=
         locinfo: loc_626 ;
-        LocInfoE loc_910 (!{void*} (LocInfoE loc_911 ("med_k"))) <-{ it_layout i32 }
-          LocInfoE loc_912 (use{it_layout i32} (LocInfoE loc_914 ((LocInfoE loc_916 ((LocInfoE loc_917 (!{void*} (LocInfoE loc_919 (!{void*} (LocInfoE loc_920 ("node")))))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_921 (use{it_layout i32} (LocInfoE loc_922 ("med"))))))) ;
+        LocInfoE loc_910 (!{PtrOp} (LocInfoE loc_911 ("med_k"))) <-{ IntOp i32 }
+          LocInfoE loc_912 (use{IntOp i32} (LocInfoE loc_914 ((LocInfoE loc_916 ((LocInfoE loc_917 (!{PtrOp} (LocInfoE loc_919 (!{PtrOp} (LocInfoE loc_920 ("node")))))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_921 (use{IntOp i32} (LocInfoE loc_922 ("med"))))))) ;
         locinfo: loc_627 ;
-        LocInfoE loc_896 (!{void*} (LocInfoE loc_897 ("med_v"))) <-{ void* }
-          LocInfoE loc_898 (use{void*} (LocInfoE loc_900 ((LocInfoE loc_902 ((LocInfoE loc_903 (!{void*} (LocInfoE loc_905 (!{void*} (LocInfoE loc_906 ("node")))))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_907 (use{it_layout i32} (LocInfoE loc_908 ("med"))))))) ;
+        LocInfoE loc_896 (!{PtrOp} (LocInfoE loc_897 ("med_v"))) <-{ PtrOp }
+          LocInfoE loc_898 (use{PtrOp} (LocInfoE loc_900 ((LocInfoE loc_902 ((LocInfoE loc_903 (!{PtrOp} (LocInfoE loc_905 (!{PtrOp} (LocInfoE loc_906 ("node")))))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_907 (use{IntOp i32} (LocInfoE loc_908 ("med"))))))) ;
         locinfo: loc_628 ;
-        LocInfoE loc_890 ("i") <-{ it_layout i32 }
-          LocInfoE loc_891 ((LocInfoE loc_892 (use{it_layout i32} (LocInfoE loc_893 ("med")))) +{IntOp i32, IntOp i32} (LocInfoE loc_894 (i2v 1 i32))) ;
+        LocInfoE loc_890 ("i") <-{ IntOp i32 }
+          LocInfoE loc_891 ((LocInfoE loc_892 (use{IntOp i32} (LocInfoE loc_893 ("med")))) +{IntOp i32, IntOp i32} (LocInfoE loc_894 (i2v 1 i32))) ;
         locinfo: loc_629 ;
         Goto "#4"
       ]> $
       <[ "#4" :=
         locinfo: loc_885 ;
-        if: LocInfoE loc_885 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_885 ((LocInfoE loc_886 (use{it_layout i32} (LocInfoE loc_887 ("i")))) <{IntOp i32, IntOp i32} (LocInfoE loc_888 (use{it_layout i32} (LocInfoE loc_889 ("slot")))))))
+        if: LocInfoE loc_885 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_885 ((LocInfoE loc_886 (use{IntOp i32} (LocInfoE loc_887 ("i")))) <{IntOp i32, IntOp i32} (LocInfoE loc_888 (use{IntOp i32} (LocInfoE loc_889 ("slot")))))))
         then
         locinfo: loc_807 ;
           Goto "#5"
@@ -2398,39 +2398,39 @@ Section code.
       ]> $
       <[ "#5" :=
         locinfo: loc_807 ;
-        LocInfoE loc_862 ((LocInfoE loc_864 ((LocInfoE loc_865 (!{void*} (LocInfoE loc_866 ("new_node")))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_867 ((LocInfoE loc_868 (use{it_layout i32} (LocInfoE loc_869 ("i")))) -{IntOp i32, IntOp i32} (LocInfoE loc_870 ((LocInfoE loc_871 (use{it_layout i32} (LocInfoE loc_872 ("med")))) +{IntOp i32, IntOp i32} (LocInfoE loc_873 (i2v 1 i32))))))) <-{ it_layout i32 }
-          LocInfoE loc_874 (use{it_layout i32} (LocInfoE loc_876 ((LocInfoE loc_878 ((LocInfoE loc_879 (!{void*} (LocInfoE loc_881 (!{void*} (LocInfoE loc_882 ("node")))))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_883 (use{it_layout i32} (LocInfoE loc_884 ("i"))))))) ;
+        LocInfoE loc_862 ((LocInfoE loc_864 ((LocInfoE loc_865 (!{PtrOp} (LocInfoE loc_866 ("new_node")))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_867 ((LocInfoE loc_868 (use{IntOp i32} (LocInfoE loc_869 ("i")))) -{IntOp i32, IntOp i32} (LocInfoE loc_870 ((LocInfoE loc_871 (use{IntOp i32} (LocInfoE loc_872 ("med")))) +{IntOp i32, IntOp i32} (LocInfoE loc_873 (i2v 1 i32))))))) <-{ IntOp i32 }
+          LocInfoE loc_874 (use{IntOp i32} (LocInfoE loc_876 ((LocInfoE loc_878 ((LocInfoE loc_879 (!{PtrOp} (LocInfoE loc_881 (!{PtrOp} (LocInfoE loc_882 ("node")))))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_883 (use{IntOp i32} (LocInfoE loc_884 ("i"))))))) ;
         locinfo: loc_808 ;
-        LocInfoE loc_838 ((LocInfoE loc_840 ((LocInfoE loc_841 (!{void*} (LocInfoE loc_842 ("new_node")))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_843 ((LocInfoE loc_844 (use{it_layout i32} (LocInfoE loc_845 ("i")))) -{IntOp i32, IntOp i32} (LocInfoE loc_846 ((LocInfoE loc_847 (use{it_layout i32} (LocInfoE loc_848 ("med")))) +{IntOp i32, IntOp i32} (LocInfoE loc_849 (i2v 1 i32))))))) <-{ void* }
-          LocInfoE loc_850 (use{void*} (LocInfoE loc_852 ((LocInfoE loc_854 ((LocInfoE loc_855 (!{void*} (LocInfoE loc_857 (!{void*} (LocInfoE loc_858 ("node")))))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_859 (use{it_layout i32} (LocInfoE loc_860 ("i"))))))) ;
+        LocInfoE loc_838 ((LocInfoE loc_840 ((LocInfoE loc_841 (!{PtrOp} (LocInfoE loc_842 ("new_node")))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_843 ((LocInfoE loc_844 (use{IntOp i32} (LocInfoE loc_845 ("i")))) -{IntOp i32, IntOp i32} (LocInfoE loc_846 ((LocInfoE loc_847 (use{IntOp i32} (LocInfoE loc_848 ("med")))) +{IntOp i32, IntOp i32} (LocInfoE loc_849 (i2v 1 i32))))))) <-{ PtrOp }
+          LocInfoE loc_850 (use{PtrOp} (LocInfoE loc_852 ((LocInfoE loc_854 ((LocInfoE loc_855 (!{PtrOp} (LocInfoE loc_857 (!{PtrOp} (LocInfoE loc_858 ("node")))))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_859 (use{IntOp i32} (LocInfoE loc_860 ("i"))))))) ;
         locinfo: loc_809 ;
-        LocInfoE loc_814 ((LocInfoE loc_816 ((LocInfoE loc_817 (!{void*} (LocInfoE loc_818 ("new_node")))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_819 ((LocInfoE loc_820 (use{it_layout i32} (LocInfoE loc_821 ("i")))) -{IntOp i32, IntOp i32} (LocInfoE loc_822 (use{it_layout i32} (LocInfoE loc_823 ("med"))))))) <-{ void* }
-          LocInfoE loc_824 (use{void*} (LocInfoE loc_826 ((LocInfoE loc_828 ((LocInfoE loc_829 (!{void*} (LocInfoE loc_831 (!{void*} (LocInfoE loc_832 ("node")))))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_833 ((LocInfoE loc_834 (use{it_layout i32} (LocInfoE loc_835 ("i")))) +{IntOp i32, IntOp i32} (LocInfoE loc_836 (i2v 1 i32))))))) ;
+        LocInfoE loc_814 ((LocInfoE loc_816 ((LocInfoE loc_817 (!{PtrOp} (LocInfoE loc_818 ("new_node")))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_819 ((LocInfoE loc_820 (use{IntOp i32} (LocInfoE loc_821 ("i")))) -{IntOp i32, IntOp i32} (LocInfoE loc_822 (use{IntOp i32} (LocInfoE loc_823 ("med"))))))) <-{ PtrOp }
+          LocInfoE loc_824 (use{PtrOp} (LocInfoE loc_826 ((LocInfoE loc_828 ((LocInfoE loc_829 (!{PtrOp} (LocInfoE loc_831 (!{PtrOp} (LocInfoE loc_832 ("node")))))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_833 ((LocInfoE loc_834 (use{IntOp i32} (LocInfoE loc_835 ("i")))) +{IntOp i32, IntOp i32} (LocInfoE loc_836 (i2v 1 i32))))))) ;
         locinfo: loc_810 ;
         Goto "continue36"
       ]> $
       <[ "#6" :=
         locinfo: loc_630 ;
-        LocInfoE loc_787 ((LocInfoE loc_789 ((LocInfoE loc_790 (!{void*} (LocInfoE loc_791 ("new_node")))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_792 (i2v 0 i32))) <-{ void* }
-          LocInfoE loc_793 (use{void*} (LocInfoE loc_795 ((LocInfoE loc_797 ((LocInfoE loc_798 (!{void*} (LocInfoE loc_800 (!{void*} (LocInfoE loc_801 ("node")))))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_802 ((LocInfoE loc_803 (use{it_layout i32} (LocInfoE loc_804 ("med")))) +{IntOp i32, IntOp i32} (LocInfoE loc_805 (i2v 1 i32))))))) ;
+        LocInfoE loc_787 ((LocInfoE loc_789 ((LocInfoE loc_790 (!{PtrOp} (LocInfoE loc_791 ("new_node")))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_792 (i2v 0 i32))) <-{ PtrOp }
+          LocInfoE loc_793 (use{PtrOp} (LocInfoE loc_795 ((LocInfoE loc_797 ((LocInfoE loc_798 (!{PtrOp} (LocInfoE loc_800 (!{PtrOp} (LocInfoE loc_801 ("node")))))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_802 ((LocInfoE loc_803 (use{IntOp i32} (LocInfoE loc_804 ("med")))) +{IntOp i32, IntOp i32} (LocInfoE loc_805 (i2v 1 i32))))))) ;
         locinfo: loc_631 ;
-        LocInfoE loc_772 ((LocInfoE loc_774 ((LocInfoE loc_775 (!{void*} (LocInfoE loc_776 ("new_node")))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_777 ((LocInfoE loc_778 (use{it_layout i32} (LocInfoE loc_779 ("slot")))) -{IntOp i32, IntOp i32} (LocInfoE loc_780 ((LocInfoE loc_781 (use{it_layout i32} (LocInfoE loc_782 ("med")))) +{IntOp i32, IntOp i32} (LocInfoE loc_783 (i2v 1 i32))))))) <-{ it_layout i32 }
-          LocInfoE loc_784 (use{it_layout i32} (LocInfoE loc_785 ("k"))) ;
+        LocInfoE loc_772 ((LocInfoE loc_774 ((LocInfoE loc_775 (!{PtrOp} (LocInfoE loc_776 ("new_node")))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_777 ((LocInfoE loc_778 (use{IntOp i32} (LocInfoE loc_779 ("slot")))) -{IntOp i32, IntOp i32} (LocInfoE loc_780 ((LocInfoE loc_781 (use{IntOp i32} (LocInfoE loc_782 ("med")))) +{IntOp i32, IntOp i32} (LocInfoE loc_783 (i2v 1 i32))))))) <-{ IntOp i32 }
+          LocInfoE loc_784 (use{IntOp i32} (LocInfoE loc_785 ("k"))) ;
         locinfo: loc_632 ;
-        LocInfoE loc_757 ((LocInfoE loc_759 ((LocInfoE loc_760 (!{void*} (LocInfoE loc_761 ("new_node")))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_762 ((LocInfoE loc_763 (use{it_layout i32} (LocInfoE loc_764 ("slot")))) -{IntOp i32, IntOp i32} (LocInfoE loc_765 ((LocInfoE loc_766 (use{it_layout i32} (LocInfoE loc_767 ("med")))) +{IntOp i32, IntOp i32} (LocInfoE loc_768 (i2v 1 i32))))))) <-{ void* }
-          LocInfoE loc_769 (use{void*} (LocInfoE loc_770 ("v"))) ;
+        LocInfoE loc_757 ((LocInfoE loc_759 ((LocInfoE loc_760 (!{PtrOp} (LocInfoE loc_761 ("new_node")))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_762 ((LocInfoE loc_763 (use{IntOp i32} (LocInfoE loc_764 ("slot")))) -{IntOp i32, IntOp i32} (LocInfoE loc_765 ((LocInfoE loc_766 (use{IntOp i32} (LocInfoE loc_767 ("med")))) +{IntOp i32, IntOp i32} (LocInfoE loc_768 (i2v 1 i32))))))) <-{ PtrOp }
+          LocInfoE loc_769 (use{PtrOp} (LocInfoE loc_770 ("v"))) ;
         locinfo: loc_633 ;
-        LocInfoE loc_744 ((LocInfoE loc_746 ((LocInfoE loc_747 (!{void*} (LocInfoE loc_748 ("new_node")))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_749 ((LocInfoE loc_750 (use{it_layout i32} (LocInfoE loc_751 ("slot")))) -{IntOp i32, IntOp i32} (LocInfoE loc_752 (use{it_layout i32} (LocInfoE loc_753 ("med"))))))) <-{ void* }
-          LocInfoE loc_754 (use{void*} (LocInfoE loc_755 ("b"))) ;
+        LocInfoE loc_744 ((LocInfoE loc_746 ((LocInfoE loc_747 (!{PtrOp} (LocInfoE loc_748 ("new_node")))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_749 ((LocInfoE loc_750 (use{IntOp i32} (LocInfoE loc_751 ("slot")))) -{IntOp i32, IntOp i32} (LocInfoE loc_752 (use{IntOp i32} (LocInfoE loc_753 ("med"))))))) <-{ PtrOp }
+          LocInfoE loc_754 (use{PtrOp} (LocInfoE loc_755 ("b"))) ;
         locinfo: loc_634 ;
-        LocInfoE loc_740 ("i") <-{ it_layout i32 }
-          LocInfoE loc_741 (use{it_layout i32} (LocInfoE loc_742 ("slot"))) ;
+        LocInfoE loc_740 ("i") <-{ IntOp i32 }
+          LocInfoE loc_741 (use{IntOp i32} (LocInfoE loc_742 ("slot"))) ;
         locinfo: loc_635 ;
         Goto "#7"
       ]> $
       <[ "#7" :=
         locinfo: loc_734 ;
-        if: LocInfoE loc_734 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_734 ((LocInfoE loc_735 (use{it_layout i32} (LocInfoE loc_736 ("i")))) <{IntOp i32, IntOp i32} (LocInfoE loc_737 ((LocInfoE loc_738 (i2v 5 i32)) -{IntOp i32, IntOp i32} (LocInfoE loc_739 (i2v 1 i32)))))))
+        if: LocInfoE loc_734 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_734 ((LocInfoE loc_735 (use{IntOp i32} (LocInfoE loc_736 ("i")))) <{IntOp i32, IntOp i32} (LocInfoE loc_737 ((LocInfoE loc_738 (i2v 5 i32)) -{IntOp i32, IntOp i32} (LocInfoE loc_739 (i2v 1 i32)))))))
         then
         locinfo: loc_658 ;
           Goto "#8"
@@ -2440,66 +2440,66 @@ Section code.
       ]> $
       <[ "#8" :=
         locinfo: loc_658 ;
-        LocInfoE loc_713 ((LocInfoE loc_715 ((LocInfoE loc_716 (!{void*} (LocInfoE loc_717 ("new_node")))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_718 ((LocInfoE loc_719 (use{it_layout i32} (LocInfoE loc_720 ("i")))) -{IntOp i32, IntOp i32} (LocInfoE loc_721 (use{it_layout i32} (LocInfoE loc_722 ("med"))))))) <-{ it_layout i32 }
-          LocInfoE loc_723 (use{it_layout i32} (LocInfoE loc_725 ((LocInfoE loc_727 ((LocInfoE loc_728 (!{void*} (LocInfoE loc_730 (!{void*} (LocInfoE loc_731 ("node")))))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_732 (use{it_layout i32} (LocInfoE loc_733 ("i"))))))) ;
+        LocInfoE loc_713 ((LocInfoE loc_715 ((LocInfoE loc_716 (!{PtrOp} (LocInfoE loc_717 ("new_node")))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_718 ((LocInfoE loc_719 (use{IntOp i32} (LocInfoE loc_720 ("i")))) -{IntOp i32, IntOp i32} (LocInfoE loc_721 (use{IntOp i32} (LocInfoE loc_722 ("med"))))))) <-{ IntOp i32 }
+          LocInfoE loc_723 (use{IntOp i32} (LocInfoE loc_725 ((LocInfoE loc_727 ((LocInfoE loc_728 (!{PtrOp} (LocInfoE loc_730 (!{PtrOp} (LocInfoE loc_731 ("node")))))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_732 (use{IntOp i32} (LocInfoE loc_733 ("i"))))))) ;
         locinfo: loc_659 ;
-        LocInfoE loc_691 ((LocInfoE loc_693 ((LocInfoE loc_694 (!{void*} (LocInfoE loc_695 ("new_node")))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_696 ((LocInfoE loc_697 (use{it_layout i32} (LocInfoE loc_698 ("i")))) -{IntOp i32, IntOp i32} (LocInfoE loc_699 (use{it_layout i32} (LocInfoE loc_700 ("med"))))))) <-{ void* }
-          LocInfoE loc_701 (use{void*} (LocInfoE loc_703 ((LocInfoE loc_705 ((LocInfoE loc_706 (!{void*} (LocInfoE loc_708 (!{void*} (LocInfoE loc_709 ("node")))))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_710 (use{it_layout i32} (LocInfoE loc_711 ("i"))))))) ;
+        LocInfoE loc_691 ((LocInfoE loc_693 ((LocInfoE loc_694 (!{PtrOp} (LocInfoE loc_695 ("new_node")))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_696 ((LocInfoE loc_697 (use{IntOp i32} (LocInfoE loc_698 ("i")))) -{IntOp i32, IntOp i32} (LocInfoE loc_699 (use{IntOp i32} (LocInfoE loc_700 ("med"))))))) <-{ PtrOp }
+          LocInfoE loc_701 (use{PtrOp} (LocInfoE loc_703 ((LocInfoE loc_705 ((LocInfoE loc_706 (!{PtrOp} (LocInfoE loc_708 (!{PtrOp} (LocInfoE loc_709 ("node")))))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_710 (use{IntOp i32} (LocInfoE loc_711 ("i"))))))) ;
         locinfo: loc_660 ;
-        LocInfoE loc_665 ((LocInfoE loc_667 ((LocInfoE loc_668 (!{void*} (LocInfoE loc_669 ("new_node")))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_670 ((LocInfoE loc_671 ((LocInfoE loc_672 (use{it_layout i32} (LocInfoE loc_673 ("i")))) -{IntOp i32, IntOp i32} (LocInfoE loc_674 (use{it_layout i32} (LocInfoE loc_675 ("med")))))) +{IntOp i32, IntOp i32} (LocInfoE loc_676 (i2v 1 i32))))) <-{ void* }
-          LocInfoE loc_677 (use{void*} (LocInfoE loc_679 ((LocInfoE loc_681 ((LocInfoE loc_682 (!{void*} (LocInfoE loc_684 (!{void*} (LocInfoE loc_685 ("node")))))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_686 ((LocInfoE loc_687 (use{it_layout i32} (LocInfoE loc_688 ("i")))) +{IntOp i32, IntOp i32} (LocInfoE loc_689 (i2v 1 i32))))))) ;
+        LocInfoE loc_665 ((LocInfoE loc_667 ((LocInfoE loc_668 (!{PtrOp} (LocInfoE loc_669 ("new_node")))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_670 ((LocInfoE loc_671 ((LocInfoE loc_672 (use{IntOp i32} (LocInfoE loc_673 ("i")))) -{IntOp i32, IntOp i32} (LocInfoE loc_674 (use{IntOp i32} (LocInfoE loc_675 ("med")))))) +{IntOp i32, IntOp i32} (LocInfoE loc_676 (i2v 1 i32))))) <-{ PtrOp }
+          LocInfoE loc_677 (use{PtrOp} (LocInfoE loc_679 ((LocInfoE loc_681 ((LocInfoE loc_682 (!{PtrOp} (LocInfoE loc_684 (!{PtrOp} (LocInfoE loc_685 ("node")))))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_686 ((LocInfoE loc_687 (use{IntOp i32} (LocInfoE loc_688 ("i")))) +{IntOp i32, IntOp i32} (LocInfoE loc_689 (i2v 1 i32))))))) ;
         locinfo: loc_661 ;
         Goto "continue38"
       ]> $
       <[ "#9" :=
         locinfo: loc_636 ;
-        LocInfoE loc_648 ((LocInfoE loc_649 (!{void*} (LocInfoE loc_650 ("new_node")))) at{struct_btree} "nb_keys") <-{ it_layout i32 }
-          LocInfoE loc_651 ((LocInfoE loc_652 ((LocInfoE loc_653 (i2v 5 i32)) -{IntOp i32, IntOp i32} (LocInfoE loc_654 (use{it_layout i32} (LocInfoE loc_655 ("med")))))) -{IntOp i32, IntOp i32} (LocInfoE loc_656 (i2v 1 i32))) ;
+        LocInfoE loc_648 ((LocInfoE loc_649 (!{PtrOp} (LocInfoE loc_650 ("new_node")))) at{struct_btree} "nb_keys") <-{ IntOp i32 }
+          LocInfoE loc_651 ((LocInfoE loc_652 ((LocInfoE loc_653 (i2v 5 i32)) -{IntOp i32, IntOp i32} (LocInfoE loc_654 (use{IntOp i32} (LocInfoE loc_655 ("med")))))) -{IntOp i32, IntOp i32} (LocInfoE loc_656 (i2v 1 i32))) ;
         locinfo: loc_637 ;
-        LocInfoE loc_641 ((LocInfoE loc_642 (!{void*} (LocInfoE loc_644 (!{void*} (LocInfoE loc_645 ("node")))))) at{struct_btree} "nb_keys") <-{ it_layout i32 }
-          LocInfoE loc_646 (use{it_layout i32} (LocInfoE loc_647 ("med"))) ;
+        LocInfoE loc_641 ((LocInfoE loc_642 (!{PtrOp} (LocInfoE loc_644 (!{PtrOp} (LocInfoE loc_645 ("node")))))) at{struct_btree} "nb_keys") <-{ IntOp i32 }
+          LocInfoE loc_646 (use{IntOp i32} (LocInfoE loc_647 ("med"))) ;
         locinfo: loc_638 ;
-        Return (LocInfoE loc_639 (use{void*} (LocInfoE loc_640 ("new_node"))))
+        Return (LocInfoE loc_639 (use{PtrOp} (LocInfoE loc_640 ("new_node"))))
       ]> $
       <[ "continue26" :=
         locinfo: loc_1434 ;
-        LocInfoE loc_1435 ("i") <-{ it_layout i32 }
-          LocInfoE loc_1434 ((LocInfoE loc_1434 (use{it_layout i32} (LocInfoE loc_1435 ("i")))) -{IntOp i32, IntOp i32} (LocInfoE loc_1434 (i2v 1 i32))) ;
+        LocInfoE loc_1435 ("i") <-{ IntOp i32 }
+          LocInfoE loc_1434 ((LocInfoE loc_1434 (use{IntOp i32} (LocInfoE loc_1435 ("i")))) -{IntOp i32, IntOp i32} (LocInfoE loc_1434 (i2v 1 i32))) ;
         locinfo: loc_1379 ;
         Goto "#24"
       ]> $
       <[ "continue29" :=
         locinfo: loc_1240 ;
-        LocInfoE loc_1241 ("i") <-{ it_layout i32 }
-          LocInfoE loc_1240 ((LocInfoE loc_1240 (use{it_layout i32} (LocInfoE loc_1241 ("i")))) +{IntOp i32, IntOp i32} (LocInfoE loc_1240 (i2v 1 i32))) ;
+        LocInfoE loc_1241 ("i") <-{ IntOp i32 }
+          LocInfoE loc_1240 ((LocInfoE loc_1240 (use{IntOp i32} (LocInfoE loc_1241 ("i")))) +{IntOp i32, IntOp i32} (LocInfoE loc_1240 (i2v 1 i32))) ;
         locinfo: loc_1065 ;
         Goto "#16"
       ]> $
       <[ "continue31" :=
         locinfo: loc_1136 ;
-        LocInfoE loc_1137 ("i") <-{ it_layout i32 }
-          LocInfoE loc_1136 ((LocInfoE loc_1136 (use{it_layout i32} (LocInfoE loc_1137 ("i")))) -{IntOp i32, IntOp i32} (LocInfoE loc_1136 (i2v 1 i32))) ;
+        LocInfoE loc_1137 ("i") <-{ IntOp i32 }
+          LocInfoE loc_1136 ((LocInfoE loc_1136 (use{IntOp i32} (LocInfoE loc_1137 ("i")))) -{IntOp i32, IntOp i32} (LocInfoE loc_1136 (i2v 1 i32))) ;
         locinfo: loc_1068 ;
         Goto "#19"
       ]> $
       <[ "continue34" :=
         locinfo: loc_964 ;
-        LocInfoE loc_965 ("i") <-{ it_layout i32 }
-          LocInfoE loc_964 ((LocInfoE loc_964 (use{it_layout i32} (LocInfoE loc_965 ("i")))) +{IntOp i32, IntOp i32} (LocInfoE loc_964 (i2v 1 i32))) ;
+        LocInfoE loc_965 ("i") <-{ IntOp i32 }
+          LocInfoE loc_964 ((LocInfoE loc_964 (use{IntOp i32} (LocInfoE loc_965 ("i")))) +{IntOp i32, IntOp i32} (LocInfoE loc_964 (i2v 1 i32))) ;
         locinfo: loc_927 ;
         Goto "#11"
       ]> $
       <[ "continue36" :=
         locinfo: loc_811 ;
-        LocInfoE loc_812 ("i") <-{ it_layout i32 }
-          LocInfoE loc_811 ((LocInfoE loc_811 (use{it_layout i32} (LocInfoE loc_812 ("i")))) +{IntOp i32, IntOp i32} (LocInfoE loc_811 (i2v 1 i32))) ;
+        LocInfoE loc_812 ("i") <-{ IntOp i32 }
+          LocInfoE loc_811 ((LocInfoE loc_811 (use{IntOp i32} (LocInfoE loc_812 ("i")))) +{IntOp i32, IntOp i32} (LocInfoE loc_811 (i2v 1 i32))) ;
         locinfo: loc_629 ;
         Goto "#4"
       ]> $
       <[ "continue38" :=
         locinfo: loc_662 ;
-        LocInfoE loc_663 ("i") <-{ it_layout i32 }
-          LocInfoE loc_662 ((LocInfoE loc_662 (use{it_layout i32} (LocInfoE loc_663 ("i")))) +{IntOp i32, IntOp i32} (LocInfoE loc_662 (i2v 1 i32))) ;
+        LocInfoE loc_663 ("i") <-{ IntOp i32 }
+          LocInfoE loc_662 ((LocInfoE loc_662 (use{IntOp i32} (LocInfoE loc_663 ("i")))) +{IntOp i32, IntOp i32} (LocInfoE loc_662 (i2v 1 i32))) ;
         locinfo: loc_635 ;
         Goto "#7"
       ]> $∅
@@ -2520,10 +2520,10 @@ Section code.
     f_init := "#0";
     f_code := (
       <[ "#0" :=
-        "root" <-{ void* }
+        "root" <-{ PtrOp }
           LocInfoE loc_1630 (UnOp (CastOp $ PtrOp) (PtrOp) (LocInfoE loc_1630 (Call (LocInfoE loc_1632 (global_alloc)) [@{expr} LocInfoE loc_1633 (i2v (layout_of struct_btree).(ly_size) size_t) ]))) ;
         locinfo: loc_1626 ;
-        if: LocInfoE loc_1626 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_1626 ((LocInfoE loc_1627 (use{void*} (LocInfoE loc_1628 ("l")))) ={PtrOp, PtrOp} (LocInfoE loc_1629 (NULL)))))
+        if: LocInfoE loc_1626 (UnOp (CastOp $ IntOp bool_it) (IntOp i32) (LocInfoE loc_1626 ((LocInfoE loc_1627 (use{PtrOp} (LocInfoE loc_1628 ("l")))) ={PtrOp, PtrOp} (LocInfoE loc_1629 (NULL)))))
         then
         locinfo: loc_1610 ;
           Goto "#2"
@@ -2533,39 +2533,39 @@ Section code.
       ]> $
       <[ "#1" :=
         locinfo: loc_1551 ;
-        LocInfoE loc_1605 ((LocInfoE loc_1606 (!{void*} (LocInfoE loc_1607 ("root")))) at{struct_btree} "nb_keys") <-{ it_layout i32 }
+        LocInfoE loc_1605 ((LocInfoE loc_1606 (!{PtrOp} (LocInfoE loc_1607 ("root")))) at{struct_btree} "nb_keys") <-{ IntOp i32 }
           LocInfoE loc_1608 (i2v 1 i32) ;
         locinfo: loc_1552 ;
-        LocInfoE loc_1597 ((LocInfoE loc_1599 ((LocInfoE loc_1600 (!{void*} (LocInfoE loc_1601 ("root")))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_1602 (i2v 0 i32))) <-{ it_layout i32 }
-          LocInfoE loc_1603 (use{it_layout i32} (LocInfoE loc_1604 ("k"))) ;
+        LocInfoE loc_1597 ((LocInfoE loc_1599 ((LocInfoE loc_1600 (!{PtrOp} (LocInfoE loc_1601 ("root")))) at{struct_btree} "keys")) at_offset{it_layout i32, PtrOp, IntOp i32} (LocInfoE loc_1602 (i2v 0 i32))) <-{ IntOp i32 }
+          LocInfoE loc_1603 (use{IntOp i32} (LocInfoE loc_1604 ("k"))) ;
         locinfo: loc_1553 ;
-        LocInfoE loc_1588 ((LocInfoE loc_1590 ((LocInfoE loc_1591 (!{void*} (LocInfoE loc_1592 ("root")))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1593 (i2v 0 i32))) <-{ void* }
-          LocInfoE loc_1594 (use{void*} (LocInfoE loc_1595 ("v"))) ;
+        LocInfoE loc_1588 ((LocInfoE loc_1590 ((LocInfoE loc_1591 (!{PtrOp} (LocInfoE loc_1592 ("root")))) at{struct_btree} "vals")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1593 (i2v 0 i32))) <-{ PtrOp }
+          LocInfoE loc_1594 (use{PtrOp} (LocInfoE loc_1595 ("v"))) ;
         locinfo: loc_1554 ;
-        LocInfoE loc_1579 ((LocInfoE loc_1581 ((LocInfoE loc_1582 (!{void*} (LocInfoE loc_1583 ("root")))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1584 (i2v 0 i32))) <-{ void* }
-          LocInfoE loc_1585 (use{void*} (LocInfoE loc_1586 ("l"))) ;
+        LocInfoE loc_1579 ((LocInfoE loc_1581 ((LocInfoE loc_1582 (!{PtrOp} (LocInfoE loc_1583 ("root")))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1584 (i2v 0 i32))) <-{ PtrOp }
+          LocInfoE loc_1585 (use{PtrOp} (LocInfoE loc_1586 ("l"))) ;
         locinfo: loc_1555 ;
         annot: (LearnAnnot) ;
         expr: (LocInfoE loc_1576 (&(LocInfoE loc_1577 ("r")))) ;
         locinfo: loc_1557 ;
-        LocInfoE loc_1568 ((LocInfoE loc_1570 ((LocInfoE loc_1571 (!{void*} (LocInfoE loc_1572 ("root")))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1573 (i2v 1 i32))) <-{ void* }
-          LocInfoE loc_1574 (use{void*} (LocInfoE loc_1575 ("r"))) ;
+        LocInfoE loc_1568 ((LocInfoE loc_1570 ((LocInfoE loc_1571 (!{PtrOp} (LocInfoE loc_1572 ("root")))) at{struct_btree} "children")) at_offset{void*, PtrOp, IntOp i32} (LocInfoE loc_1573 (i2v 1 i32))) <-{ PtrOp }
+          LocInfoE loc_1574 (use{PtrOp} (LocInfoE loc_1575 ("r"))) ;
         locinfo: loc_1558 ;
-        expr: (LocInfoE loc_1563 ((LocInfoE loc_1564 (use{it_layout i32} (LocInfoE loc_1565 ("k")))) +{IntOp i32, IntOp i32} (LocInfoE loc_1566 (i2v 0 i32)))) ;
+        expr: (LocInfoE loc_1563 ((LocInfoE loc_1564 (use{IntOp i32} (LocInfoE loc_1565 ("k")))) +{IntOp i32, IntOp i32} (LocInfoE loc_1566 (i2v 0 i32)))) ;
         locinfo: loc_1560 ;
-        Return (LocInfoE loc_1561 (use{void*} (LocInfoE loc_1562 ("root"))))
+        Return (LocInfoE loc_1561 (use{PtrOp} (LocInfoE loc_1562 ("root"))))
       ]> $
       <[ "#2" :=
         locinfo: loc_1610 ;
-        LocInfoE loc_1611 ((LocInfoE loc_1612 (!{void*} (LocInfoE loc_1613 ("root")))) at{struct_btree} "height") <-{ it_layout i32 }
+        LocInfoE loc_1611 ((LocInfoE loc_1612 (!{PtrOp} (LocInfoE loc_1613 ("root")))) at{struct_btree} "height") <-{ IntOp i32 }
           LocInfoE loc_1614 (i2v 1 i32) ;
         locinfo: loc_1551 ;
         Goto "#1"
       ]> $
       <[ "#3" :=
         locinfo: loc_1616 ;
-        LocInfoE loc_1617 ((LocInfoE loc_1618 (!{void*} (LocInfoE loc_1619 ("root")))) at{struct_btree} "height") <-{ it_layout i32 }
-          LocInfoE loc_1620 ((LocInfoE loc_1621 (use{it_layout i32} (LocInfoE loc_1622 ((LocInfoE loc_1623 (!{void*} (LocInfoE loc_1624 ("l")))) at{struct_btree} "height")))) +{IntOp i32, IntOp i32} (LocInfoE loc_1625 (i2v 1 i32))) ;
+        LocInfoE loc_1617 ((LocInfoE loc_1618 (!{PtrOp} (LocInfoE loc_1619 ("root")))) at{struct_btree} "height") <-{ IntOp i32 }
+          LocInfoE loc_1620 ((LocInfoE loc_1621 (use{IntOp i32} (LocInfoE loc_1622 ((LocInfoE loc_1623 (!{PtrOp} (LocInfoE loc_1624 ("l")))) at{struct_btree} "height")))) +{IntOp i32, IntOp i32} (LocInfoE loc_1625 (i2v 1 i32))) ;
         locinfo: loc_1551 ;
         Goto "#1"
       ]> $∅

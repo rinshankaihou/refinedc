@@ -89,18 +89,19 @@ Section function.
   Next Obligation. iIntros (?????). by iApply ty_share. Qed.
 
   Global Program Instance movable_tunion_tag ti x : Movable (tunion_tag ti x) := {|
-    ty_has_layout ly := ly = size_t;
+    ty_has_op_type ot mt := is_int_ot ot size_t;
     ty_own_val v := v ◁ᵥ ti.(ti_tag) x @ int size_t;
   |}%I.
-  Next Obligation. iIntros (????->) "Hl". rewrite /ty_own/=. by iDestruct (ty_aligned with "Hl") as %?. Qed.
-  Next Obligation. iIntros (????->) "Hv". by iDestruct (ty_size_eq with "Hv") as %?. Qed.
-  Next Obligation. iIntros (????->) => /=. rewrite /ty_own/=. by apply: ty_deref. Qed.
-  Next Obligation. iIntros (?????->?) "Hl Hv" => /=. rewrite /ty_own/=. by iApply (ty_ref with "[] Hl Hv"). Qed.
+  Next Obligation. iIntros (?????->%is_int_ot_layout) "Hl". rewrite /ty_own/=. by iApply (ty_aligned (IntOp _) MCNone with "Hl").  Qed.
+  Next Obligation. iIntros (?????->%is_int_ot_layout) "Hv". by iDestruct (ty_size_eq (IntOp _) MCNone with "Hv") as %?. Qed.
+  Next Obligation. iIntros (??????) => /=. rewrite /ty_own/=. by apply: ty_deref. Qed.
+  Next Obligation. iIntros (??????->%is_int_ot_layout?) "Hl Hv" => /=. rewrite /ty_own/=. by iApply (ty_ref (IntOp _) MCNone with "[] Hl Hv"). Qed.
+  Next Obligation. iIntros (???????) "Hv" => /=. rewrite /ty_own_val/=. by iApply (ty_memcast_compat (t:=_ @ int size_t) with "[Hv]"). Qed.
 
   Global Program Instance copyable_tunion_tag ti x : Copyable (tunion_tag ti x).
   Next Obligation.
-    rewrite /ty_own/ty_own_val/= => ??????->/=.
-    iIntros "Hl". iMod (copy_shr_acc with "Hl") as (???) "Hc" => //. iSplitR => //. iExists _, _. by iFrame.
+    rewrite /ty_own/ty_own_val/= => ??????/is_int_ot_layout->/=.
+    iIntros "Hl". iMod (copy_shr_acc _ (IntOp _) with "Hl") as (???) "Hc" => //. iSplitR => //. iExists _, _. by iFrame.
   Qed.
 
   Lemma subsume_int_tunion_tag ti x (n : Z) l β T:
@@ -153,13 +154,14 @@ Section function.
   Next Obligation. iIntros (??????). by iApply ty_share. Qed.
 
   Global Program Instance movable_variant ti x ty `{!Movable ty} : Movable (variant ti x ty) := {|
-    ty_has_layout ly := ly = ti.(ti_union_layout) ∧ ty.(ty_has_layout) (ti_member ti x).2;
+    ty_has_op_type ot mt := ot = UntypedOp ti.(ti_union_layout) ∧ ty.(ty_has_op_type) (UntypedOp (ti_member ti x).2) MCNone;
     ty_own_val v := (v ◁ᵥ (padded ty (ti_member ti x).2 (ul_layout ti.(ti_union_layout))))%I;
   |}.
-  Next Obligation. iIntros (??????[-> ?]) "Hv". rewrite /ty_own/=. by iDestruct (ty_aligned with "Hv") as %?. Qed.
-  Next Obligation. iIntros (??????[-> ?]) "Hv". by iDestruct (ty_size_eq with "Hv") as %?. Qed.
-  Next Obligation. iIntros (??????[-> ?]) => /=. rewrite /ty_own/=. by apply: ty_deref. Qed.
-  Next Obligation. iIntros (???????[-> ?]?) "Hl Hv" => /=. rewrite /ty_own/=. by iApply (ty_ref with "[] Hl Hv"). Qed.
+  Next Obligation. iIntros (????????) "Hv". rewrite /ty_own/=. by iDestruct (ty_aligned _ _ with "Hv") as "$".  Qed.
+  Next Obligation. iIntros (????????) "Hv". by iDestruct (ty_size_eq with "Hv") as %?. Qed.
+  Next Obligation. iIntros (????????) => /=. rewrite /ty_own/=. by apply: ty_deref. Qed.
+  Next Obligation. iIntros (??????????) "Hl Hv" => /=. rewrite /ty_own/=. by iApply (ty_ref with "[] Hl Hv"). Qed.
+  Next Obligation. iIntros (?????????) "Hv". rewrite /ty_own/=. by iApply (ty_memcast_compat with "Hv"). Qed.
 
   Lemma subsume_active_union_variant ti ul x l β ty1 ty2 T n:
     ⌜ti.(ti_union_layout) = ul⌝ ∗ ⌜(ti_member ti x).1 = n⌝ ∗
@@ -205,7 +207,7 @@ Section function.
     λ T, i2p (type_place_variant K β T ul n l ty ti x).
 
   Lemma type_place_variant_neq K T ul n l ty `{!Movable ty} ti x :
-    (⌜ul = ti.(ti_union_layout)⌝ ∗ ⌜ty.(ty_has_layout) (ti_member ti x).2⌝ ∗ ∀ v, v◁ᵥty -∗ typed_place (GetMemberUnionPCtx ul n :: K) l Own (uninit ul) T) -∗
+    (⌜ul = ti.(ti_union_layout)⌝ ∗ ⌜ty.(ty_has_op_type) (UntypedOp (ti_member ti x).2) MCNone⌝ ∗ ∀ v, v◁ᵥty -∗ typed_place (GetMemberUnionPCtx ul n :: K) l Own (uninit ul) T) -∗
     typed_place (GetMemberUnionPCtx ul n :: K) l Own (variant ti x ty) T.
   Proof.
     iIntros "[-> [% HP]]". rewrite /variant/=. iApply typed_place_subsume.
@@ -231,26 +233,18 @@ Section tunion.
 
   Global Program Instance movable_tunion ti `{!∀ ir, Movable (ti.(ti_type) ir)} : RMovable (tunion ti) := {|
     rmovable r := {|
-      ty_has_layout ly := ly = ti.(ti_base_layout) ∧ ty_has_layout (ti_type ti r) (ti_member ti r).2;
+      ty_has_op_type :=
+        is_struct_ot ti.(ti_base_layout) [tunion_tag ti r; variant ti r (ti.(ti_type) r)];
       ty_own_val v := ty_own_val (struct ti.(ti_base_layout) [
          tunion_tag ti r;
          variant ti r (ti.(ti_type) r)
    ]) v;
   |} |}.
-  Next Obligation. iIntros (?????[->?]) "Hl". rewrite /ty_own/=/ty_own/=. by iDestruct "Hl" as (?) "?". Qed.
-  Next Obligation.
-    iIntros (?????[->?]) "Hv". iDestruct (ty_size_eq with "Hv") as %?; [|done]. simpl.
-    rewrite ti_base_layout_members/=. naive_solver.
-  Qed.
-  Next Obligation.
-    iIntros (?????[->?]) => /=. rewrite /ty_own. apply: ty_deref => /=.
-    rewrite ti_base_layout_members/=. naive_solver.
-  Qed.
-  Next Obligation.
-    iIntros (??????[->?]?) "Hl Hv" => /=. rewrite /ty_own/=. iApply (ty_ref with "[] Hl Hv"); [|done] => /=.
-    rewrite ti_base_layout_members/=. naive_solver.
-  Qed.
-
+  Next Obligation. iIntros (???????) "Hl". rewrite /ty_own/=. by iApply (ty_aligned with "Hl"). Qed.
+  Next Obligation. iIntros (???????) "Hv". rewrite /ty_own/=. by iApply (ty_size_eq with "Hv"). Qed.
+  Next Obligation. iIntros (???????) "Hl". rewrite /ty_own/=. by iApply (ty_deref with "Hl"). Qed.
+  Next Obligation. iIntros (?????????) "Hl Hv". rewrite /ty_own/=. by iApply (ty_ref with "[] Hl Hv"). Qed.
+  Next Obligation. move => ????????. by apply ty_memcast_compat. Qed.
 
   Lemma simplify_hyp_tunion ti x l β T:
     (l ◁ₗ{β} struct ti.(ti_base_layout) [
