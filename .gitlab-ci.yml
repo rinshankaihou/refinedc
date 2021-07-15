@@ -4,7 +4,8 @@ stages:
   - build
 
 variables:
-  CPU_CORES: "10"
+  # dune takes care of parallelization itself and does not like running in parallel
+  CPU_CORES: "1"
   MAKE_TARGET: "all_with_examples"
   OCAML: "ocaml-base-compiler.4.07.1"
 
@@ -39,7 +40,7 @@ build-coq.8.12.0-timing:
   only:
   - master@iris/refinedc
   - /^time/@iris/refinedc
-  # timing only for master and /time branches
+  # timing only for master and time/ branches
   tags:
   - fp-timing
 
@@ -50,15 +51,6 @@ build-coq.8.12.0:
     DENY_WARNINGS: "1"
   only:
   - /^ci/@iris/refinedc
-
-check-generated:
-  <<: *template
-  variables:
-    OPAM_PINS: "coq version 8.12.0   cerberus git git+https://github.com/rems-project/cerberus.git#7eb94d628845555cb5425f4f4b48890b345efdc5   z3 version 4.8.9-1"
-    DENY_WARNINGS: "1"
-    MAKE_TARGET: "check_generate_all"
-    # necessary because dune does not like running in parallel
-    CPU_CORES: 1
 
 trigger-iris.dev:
   <<: *template

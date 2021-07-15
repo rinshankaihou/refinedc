@@ -378,7 +378,7 @@ let ail_cmd =
 
 (* Cleaning command. *)
 
-let run_clean c_file =
+let run_clean soft c_file =
   (* Split the file path into a file name and absolute directory path. *)
   let c_file_name = Filename.basename c_file in
   let c_file_name_no_ext = Filename.remove_extension c_file_name in
@@ -439,6 +439,7 @@ let run_clean c_file =
   in
   List.iter rmdir all_dirs;
   (* Delete the Coq project mapping for the file. *)
+  if not soft then
   let path = String.concat "." file_coq_dir ^ "." ^ c_file_name_no_ext in
   let dune_dir_path =
     let relative_path = Filename.relative_path root_dir c_file_dir in
@@ -455,9 +456,15 @@ let run_clean c_file =
       write_file coq_project_path new_lines
     end
 
+let soft =
+  let doc =
+    "Do not remove the corresponding entry from the `_CoqProject' file."
+  in
+  Arg.(value & flag & info ["soft"] ~doc)
+
 let clean_cmd =
   let doc = "Delete all the generated files for the given C source file." in
-  Term.(pure run_clean $ c_file),
+  Term.(pure run_clean $ soft $ c_file),
   Term.info "clean" ~version ~doc
 
 (* Project initialization command. *)

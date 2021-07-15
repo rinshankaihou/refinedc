@@ -6,12 +6,11 @@ _build/
 *.bak
 .coq-native/
 builddep/
-Makefile.coq
-.Makefile.coq.d
-Makefile.coq.conf
 _opam
-/theories/examples/tutorial/tutorial
 *.timing
 .lia.cache
 .nia.cache
 .vscode/
+**/proofs/*/generated*
+**/proofs/*/dune
+**/proofs/*/proof_files

@@ -2,13 +2,9 @@ all:
 	@dune build _build/default/refinedc.install --display short
 .PHONY: all
 
-all_with_examples:
+all_with_examples: generate_all
 	@dune build --display short
 .PHONY: all_with_examples
-
-clean:
-	@dune clean
-.PHONY: clean
 
 install:
 	@dune install
@@ -30,6 +26,15 @@ generate_all: $(addsuffix .gen, $(C_SRC))
 check_generate_all: generate_all
 	git diff --exit-code
 .PHONY: check_generate_all
+
+clean_generated:
+	@for FILE in ${C_SRC} ; do dune exec -- refinedc clean --soft $$FILE ; done
+	@rm -f $(addsuffix .gen, $(C_SRC))
+.PHONY: clean_generated
+
+clean: clean_generated
+	@dune clean
+.PHONY: clean
 
 builddep-opamfiles: builddep/refinedc-builddep.opam
 	@true
