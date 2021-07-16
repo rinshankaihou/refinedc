@@ -618,15 +618,14 @@ Proof. by iApply @wp_value. Qed.
 
 Lemma wp_if Φ it v e1 e2 n:
   val_to_Z v it = Some n →
-  (if decide (n = 0) then WP e2 {{ Φ }} else WP e1 {{ Φ }}) -∗
+  (if bool_decide (n ≠ 0) then WP e1 {{ Φ }} else WP e2 {{ Φ }}) -∗
   WP IfE (IntOp it) (Val v) e1 e2 {{ Φ }}.
 Proof.
   iIntros (?) "HΦ".
   iApply wp_lift_expr_step; auto.
   iIntros (σ1) "?". iModIntro. iSplit; first by eauto 8 using IfES.
   iIntros (? ? σ2 efs Hst ?) "!> !>". inv_expr_step.
-  iSplit => //. iFrame.
-  by case_decide; case_bool_decide.
+  iSplit => //. iFrame. by case_bool_decide.
 Qed.
 
 Lemma wp_skip Φ v E:
@@ -944,20 +943,22 @@ Proof.
   - iDestruct "Hs" as "[_ Hs]". by iApply "Hs".
 Qed.
 
-Lemma wps_if Q Ψ v s1 s2 n:
-  val_to_Z v bool_it = Some n →
-  (if decide (n = 0) then WPs s2 {{ Q, Ψ }} else WPs s1 {{ Q, Ψ }}) -∗
-  WPs (if: (Val v) then s1 else s2) {{ Q , Ψ }}.
+Lemma wps_if Q Ψ it v s1 s2 n:
+  val_to_Z v it = Some n →
+  (if bool_decide (n ≠ 0) then WPs s1 {{ Q, Ψ }} else WPs s2 {{ Q, Ψ }}) -∗
+  WPs (if{IntOp it}: (Val v) then s1 else s2) {{ Q , Ψ }}.
 Proof.
-  iIntros (Hn) "Hs". iApply wps_switch' => //=.
-  1: by apply map_Forall_insert_2; eauto; apply map_Forall_empty.
-  rewrite right_id. by iSplit; iIntros (?); simplify_map_eq.
+  iIntros (Hn) "Hs". rewrite !stmt_wp_eq. iIntros (?? ->) "?".
+  iApply wp_lift_stmt_step. iIntros (?) "Hσ".
+  iModIntro. iSplit; first by eauto 8 using IfSS.
+  iIntros (???? Hstep ?) "!> !>". inv_stmt_step. iSplit; first done.
+  iFrame "Hσ". case_bool_decide; by iApply "Hs".
 Qed.
 
-Lemma wps_assert Q Ψ v s n:
-  val_to_Z v bool_it = Some n → n ≠ 0 →
+Lemma wps_assert Q Ψ it v s n:
+  val_to_Z v it = Some n → n ≠ 0 →
   WPs s {{ Q, Ψ }} -∗
-  WPs (assert: Val v; s) {{ Q , Ψ }}.
+  WPs (assert{IntOp it}: Val v; s) {{ Q , Ψ }}.
 Proof.
   iIntros (Hv Hn) "Hs". rewrite /notation.Assert.
   iApply wps_if => //. by case_decide.

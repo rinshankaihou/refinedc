@@ -456,8 +456,8 @@ let rec translate_expr : bool -> op_type option -> ail_expr -> expr =
           | Gt             -> GtOp
           | Le             -> LeOp
           | Ge             -> GeOp
-          | And            -> not_impl loc "nested && operator"
-          | Or             -> not_impl loc "nested || operator"
+          | And            -> LazyAndOp
+          | Or             -> LazyOrOp
           | Comma          -> CommaOp
           | Arithmetic(op) ->
           arith_op := true;
@@ -813,30 +813,6 @@ and translate_call : type a. a call_place -> loc -> bool -> ail_expr
       in
       Call_simple(e, es)
 
-type bool_expr =
-  | BE_leaf of ail_expr
-  | BE_neg  of bool_expr
-  | BE_and  of bool_expr * bool_expr
-  | BE_or   of bool_expr * bool_expr
-
-let rec bool_expr : ail_expr -> bool_expr = fun e ->
-  match strip_expr e with
-  | AilEbinary(e1,And,e2) -> BE_and(bool_expr e1, bool_expr e2)
-  | AilEbinary(e1,Or ,e2) -> BE_or(bool_expr e1, bool_expr e2)
-  | AilEbinary(e1,Eq ,e2) ->
-      begin
-        let be1 = bool_expr e1 in
-        let be2 = bool_expr e2 in
-        match (is_const_0 e1, be1, is_const_0 e2, be2) with
-        | (false, _         , false, _         )
-        | (true , _         , true , _         )
-        | (false, BE_leaf(_), true , _         )
-        | (true , _         , false, BE_leaf(_)) -> BE_leaf(e)
-        | (false, _         , true , _         ) -> BE_neg(be1)
-        | (true , _         , false, _         ) -> BE_neg(be2)
-      end
-  | _                     -> BE_leaf(e)
-
 let add_block ?annots id s blocks =
   if SMap.mem id blocks then assert false;
   let annots =
@@ -845,35 +821,6 @@ let add_block ?annots id s blocks =
     | Some(annots) -> BA_loop(annots)
   in
   SMap.add id (annots, s) blocks
-
-let translate_bool_expr then_goto else_goto blocks e =
-  let rec translate then_goto else_goto blocks be =
-    match be with
-    | BE_leaf(e)      ->
-        let e = translate_expr false (Some(OpInt(ItBool))) e in
-        (mkloc (If(e, then_goto, else_goto)) e.loc, blocks)
-    | BE_neg(be)      ->
-        translate else_goto then_goto blocks be
-    | BE_and(be1,be2) ->
-        let id = fresh_block_id () in
-        let id_goto = noloc (Goto(id)) in (* FIXME loc *)
-        let (s, blocks) = translate id_goto else_goto blocks be1 in
-        let blocks =
-          let (s, blocks) = translate then_goto else_goto blocks be2 in
-          add_block id s blocks
-        in
-        (s, blocks)
-    | BE_or (be1,be2) ->
-        let id = fresh_block_id () in
-        let id_goto = noloc (Goto(id)) in (* FIXME loc *)
-        let (s, blocks) = translate then_goto id_goto blocks be1 in
-        let blocks =
-          let (s, blocks) = translate then_goto else_goto blocks be2 in
-          add_block id s blocks
-        in
-        (s, blocks)
-  in
-  translate then_goto else_goto blocks (bool_expr e)
 
 (* Insert local variables. *)
 let insert_bindings bindings =
@@ -996,6 +943,11 @@ let k_stack_print : out_channel -> k_data list -> unit = fun oc l ->
 
 
 let translate_block stmts blocks ret_ty =
+  let translate_bool_expr then_goto else_goto e =
+    let ot = op_type_of_tc (loc_of e) (tc_of e) in
+    let e = translate_expr false None e in
+    mkloc (If(ot, e, then_goto, else_goto)) e.loc
+  in
   let rec trans extra_attrs swstk ks stmts blocks =
     let open AilSyntax in
     if debug then Printf.eprintf "[trans] %a" k_stack_print ks;
@@ -1052,8 +1004,9 @@ let translate_block stmts blocks ret_ty =
             let loc_full = loc_of e in
             match strip_expr e with
             | AilEassert(e)                        ->
-                let e = translate_expr false (Some(OpInt(ItBool))) e in
-                locate (Assert(e, stmt))
+                let ot = op_type_of_tc (loc_of e) (tc_of e) in
+                let e = translate_expr false None e in
+                locate (Assert(ot, e, stmt))
             | AilEassign(e1,e2)                    ->
                 let atomic = is_atomic_tc (tc_of e1) in
                 let e1 = translate_expr true None e1 in
@@ -1131,7 +1084,7 @@ let translate_block stmts blocks ret_ty =
             let blocks = add_block id_else s blocks in
             (blocks, mkloc (Goto(id_else)) s.loc)
           in
-          translate_bool_expr then_goto else_goto blocks e
+          (translate_bool_expr then_goto else_goto e, blocks)
       | AilSwhile(e,s,_)    ->
           let attrs = extra_attrs @ attrs in
           let id_cond = fresh_block_id () in
@@ -1153,9 +1106,7 @@ let translate_block stmts blocks ret_ty =
             (blocks, mkloc (Goto(id_body)) s.loc)
           in
           (* Translate the condition. *)
-          let (s, blocks) =
-            translate_bool_expr goto_body goto_cont blocks e
-          in
+          let s = translate_bool_expr goto_body goto_cont e in
           let blocks =
             let annots =
               attrs_used := true;
@@ -1188,7 +1139,7 @@ let translate_block stmts blocks ret_ty =
             (blocks, locate (Goto(id_body)))
           in
           (* Translate the condition. *)
-          let (s, blocks) = translate_bool_expr goto_body goto_cont blocks e in
+          let s = translate_bool_expr goto_body goto_cont e in
           let blocks =
             let annots =
               attrs_used := true;

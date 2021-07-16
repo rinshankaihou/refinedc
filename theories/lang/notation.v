@@ -60,14 +60,28 @@ Notation "e1 <-{ ot , o } e2 ; s" := (Assign o ot e1%E e2%E s%E)
   (at level 80, s at level 200, format "'[v' e1  '<-{' ot ',' o '}'  e2 ';' '/' s ']'") : expr_scope.
 Notation "e1 <-{ ot } e2 ; s" := (Assign Na1Ord ot e1%E e2%E s%E)
   (at level 80, s at level 200, format "'[v' e1  '<-{' ot '}'  e2 ';' '/' s ']'") : expr_scope.
-Notation "'if:' e1 'then' s1 'else' s2" := (Switch bool_it e1%E {[ 0 := 0%nat ]} [s2%E] s1%E)
-  (at level 102, e1, s1, s2 at level 150, format "'[v' 'if:'  e1  'then' '/  ' s1 '/' 'else' '/  ' s2 ']'") : expr_scope.
+Notation "'if{' ot '}' ':' e1 'then' s1 'else' s2" := (IfS ot e1%E s1%E s2%E)
+  (at level 102, e1, s1, s2 at level 150, format "'[v' 'if{' ot '}' ':'  e1  'then' '/  ' s1 '/' 'else' '/  ' s2 ']'") : expr_scope.
 Notation "'expr:' e ; s" := (ExprS e%E s%E)
   (at level 80, s at level 200, format "'[v' 'expr:'  e ';' '/' s ']'") : expr_scope.
 
-Definition Assert (e : expr) (s : stmt) : stmt := (if: e then s else StuckS)%E.
-Notation "'assert:' e ; s" := (Assert e%E s%E)
-  (at level 80, s at level 200, format "'[v' 'assert:'  e ';' '/' s ']'") : expr_scope.
+Definition LogicalAnd (ot1 ot2 : op_type) (e1 e2 : expr) : expr :=
+  (IfE ot1 e1 (IfE ot2 e2 (i2v 1 i32) (i2v 0 i32)) (i2v 0 i32)).
+Notation "e1 &&{ ot1 , ot2 } e2" := (LogicalAnd ot1 ot2 e1 e2)
+  (at level 70, format "e1  &&{ ot1 ,  ot2 }  e2") : expr_scope.
+Arguments LogicalAnd : simpl never.
+Typeclasses Opaque LogicalAnd.
+
+Definition LogicalOr (ot1 ot2 : op_type) (e1 e2 : expr) : expr :=
+  (IfE ot1 e1 (i2v 1 i32) (IfE ot2 e2 (i2v 1 i32) (i2v 0 i32))).
+Notation "e1 ||{ ot1 , ot2 } e2" := (LogicalOr ot1 ot2 e1 e2)
+  (at level 70, format "e1  ||{ ot1 ,  ot2 }  e2") : expr_scope.
+Arguments LogicalOr : simpl never.
+Typeclasses Opaque LogicalOr.
+
+Definition Assert (ot : op_type) (e : expr) (s : stmt) : stmt := (if{ ot }: e then s else StuckS)%E.
+Notation "'assert{' ot '}' ':' e ; s" := (Assert ot e%E s%E)
+  (at level 80, s at level 200, format "'[v' 'assert{' ot '}' ':'  e ';' '/' s ']'") : expr_scope.
 Arguments Assert : simpl never.
 Typeclasses Opaque Assert.
 
@@ -180,10 +194,6 @@ Example test1 (l : loc) ly ot :
   (Assign Na1Ord ly l (Use Na1Ord ot (BinOp AddOp PtrOp (IntOp size_t) (AddrOf l) (BinOp EqOp PtrOp PtrOp l l))))
       (ExprS (Call l [ Val (val_of_loc l); Val (val_of_loc l)]) ((Assign ScOrd ly l l) (Goto "a"))).
 Proof. simpl. reflexivity. Abort.
-
-Example test_if (l : loc) :
-  (if: l then Goto "a" else Goto "b")%E = (Switch bool_it l {[ 0 := 0%nat ]} [Goto "b"] (Goto "a")).
-Proof. reflexivity. Abort.
 
 Example test_get_member (l : loc) (s : struct_layout) ot :
   (!{ot} (!{ot, ScOrd} l) at{s} "a")%E = GetMember (Deref Na1Ord ot (Deref ScOrd ot l%E)) s "a".

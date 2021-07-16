@@ -21,6 +21,8 @@ Inductive expr :=
 | SkipE (e : expr)
 | StuckE
 (* new constructors *)
+| LogicalAnd (ot1 ot2 : op_type) (e1 e2 : expr)
+| LogicalOr (ot1 ot2 : op_type) (e1 e2 : expr)
 | Use (o : order) (ot : op_type) (e : expr)
 | AddrOf (e : expr)
 | LValue (e : expr)
@@ -51,6 +53,8 @@ Lemma expr_ind (P : expr → Prop) :
   (∀ (ot : op_type) (e1 e2 e3 : expr), P e1 → P e2 → P e3 → P (IfE ot e1 e2 e3)) →
   (∀ (e : expr), P e → P (SkipE e)) →
   (P StuckE) →
+  (∀ (ot1 ot2 : op_type) (e1 e2 : expr), P e1 → P e2 → P (LogicalAnd ot1 ot2 e1 e2)) →
+  (∀ (ot1 ot2 : op_type) (e1 e2 : expr), P e1 → P e2 → P (LogicalOr ot1 ot2 e1 e2)) →
   (∀ (o : order) (ot : op_type) (e : expr), P e → P (Use o ot e)) →
   (∀ (e : expr), P e → P (AddrOf e)) →
   (∀ (e : expr), P e → P (LValue e)) →
@@ -65,17 +69,17 @@ Lemma expr_ind (P : expr → Prop) :
   (∀ (e : lang.expr), P (Expr e)) → ∀ (e : expr), P e.
 Proof.
   move => *. generalize dependent P => P. match goal with | e : expr |- _ => revert e end.
-  fix FIX 1. move => [ ^e] => ???????? Hcall Hconcat ???????????? Hstruct Hmacro ?.
+  fix FIX 1. move => [ ^e] => ???????? Hcall Hconcat ?????????????? Hstruct Hmacro ?.
   9: {
     apply Hcall; [ |apply Forall_true => ?]; by apply: FIX.
   }
   9: {
     apply Hconcat. apply Forall_true => ?. by apply: FIX.
   }
-  21: {
+  23: {
     apply Hstruct. apply Forall_fmap. apply Forall_true => ?. by apply: FIX.
   }
-  21: {
+  23: {
     apply Hmacro. apply Forall_true => ?. by apply: FIX.
   }
   all: auto.
@@ -96,6 +100,8 @@ Fixpoint to_expr (e : expr) : lang.expr :=
   | IfE ot e1 e2 e3 => lang.IfE ot (to_expr e1) (to_expr e2) (to_expr e3)
   | SkipE e => lang.SkipE (to_expr e)
   | StuckE => lang.StuckE
+  | LogicalAnd ot1 ot2 e1 e2 => notation.LogicalAnd ot1 ot2 (to_expr e1) (to_expr e2)
+  | LogicalOr ot1 ot2 e1 e2 => notation.LogicalOr ot1 ot2 (to_expr e1) (to_expr e2)
   | Use o ot e => notation.Use o ot (to_expr e)
   | AddrOf e => notation.AddrOf (to_expr e)
   | LValue e => notation.LValue (to_expr e)
@@ -137,6 +143,14 @@ Ltac of_expr e :=
     let e := of_expr e in constr:(GetMemberUnion e ul m)
   | notation.OffsetOf ?s ?m => constr:(OffsetOf s m)
   | notation.OffsetOfUnion ?ul ?m => constr:(OffsetOfUnion ul m)
+  | notation.LogicalAnd ?ot1 ?ot2 ?e1 ?e2 =>
+    let e1 := of_expr e1 in
+    let e2 := of_expr e2 in
+    constr:(LogicalAnd ot1 ot2 e1 e2)
+  | notation.LogicalOr ?ot1 ?ot2 ?e1 ?e2 =>
+    let e1 := of_expr e1 in
+    let e2 := of_expr e2 in
+    constr:(LogicalOr ot1 ot2 e1 e2)
   | notation.Use ?o ?ot ?e =>
     let e := of_expr e in constr:(Use o ot e)
   | lang.Val ?x => constr:(Val x)
@@ -265,7 +279,7 @@ Fixpoint find_expr_fill (e : expr) (bind_val : bool) : option (list ectx_item * 
     if find_expr_fill f bind_val is Some (Ks, e') then
       Some (Ks ++ [CallLCtx args], e') else
       (* TODO: handle arguments? *) None
-  | Concat _ | MacroE _ _ _ | OffsetOf _ _ | OffsetOfUnion _ _ => None
+  | Concat _ | MacroE _ _ _ | OffsetOf _ _ | OffsetOfUnion _ _ | LogicalAnd _ _ _ _ | LogicalOr _ _ _ _ => None
   | IfE ot e1 e2 e3 =>
     if find_expr_fill e1 bind_val is Some (Ks, e') then
       Some (Ks ++ [IfECtx ot e2 e3], e') else Some ([], e)
@@ -353,14 +367,14 @@ Local Unset Elimination Schemes.
 Inductive stmt :=
 | Goto (b : label)
 | Return (e : expr)
+| IfS (ot : op_type) (e : expr) (s1 s2 : stmt)
 | Switch (it : int_type) (e : expr) (m : gmap Z nat) (bs : list stmt) (def : stmt)
 | Assign (o : order) (ot : op_type) (e1 e2 : expr) (s : stmt)
 | SkipS (s : stmt)
 | StuckS
 | ExprS (e : expr) (s : stmt)
 
-| If (e : expr) (s1 s2 : stmt)
-| Assert (e : expr) (s : stmt)
+| Assert (ot : op_type) (e : expr) (s : stmt)
 | AnnotStmt (n : nat) {A} (a : A) (s : stmt)
 | LocInfoS (a : location_info) (s : stmt)
 (* for opaque statements *)
@@ -370,19 +384,19 @@ End stmt.
 Lemma stmt_ind (P : stmt → Prop):
   (∀ b : label, P (Goto b)) →
   (∀ e : expr, P (Return e)) →
+  (∀ (ot : op_type) (e : expr) (s1 : stmt), P s1 → ∀ s2 : stmt, P s2 → P (IfS ot e s1 s2)) →
   (∀ (it : int_type) (e : expr) (m : gmap Z nat) (bs : list stmt) (def : stmt), P def → Forall P bs → P (Switch it e m bs def)) →
   (∀ (o : order) (ot : op_type) (e1 e2 : expr) (s : stmt), P s → P (Assign o ot e1 e2 s)) →
   (∀ s : stmt, P s → P (SkipS s)) →
   (P StuckS) →
   (∀ (e : expr) (s : stmt), P s → P (ExprS e s)) →
-  (∀ (e : expr) (s1 : stmt), P s1 → ∀ s2 : stmt, P s2 → P (If e s1 s2)) →
-  (∀ (e : expr) (s : stmt), P s → P (Assert e s)) →
+  (∀ (ot : op_type) (e : expr) (s : stmt), P s → P (Assert ot e s)) →
   (∀ (n : nat) (A : Type) (a : A) (s : stmt), P s → P (AnnotStmt n a s)) →
   (∀ (a : location_info) (s : stmt), P s → P (LocInfoS a s)) →
   (∀ s : lang.stmt, P (Stmt s)) → ∀ s : stmt, P s.
 Proof.
   move => *. generalize dependent P => P. match goal with | s : stmt |- _ => revert s end.
-  fix FIX 1. move => [ ^s] ?? Hswitch *. 3: {
+  fix FIX 1. move => [ ^s] ??? Hswitch *. 4: {
     apply Hswitch; first by apply: FIX. elim: sbs; auto.
   }
   all: auto.
@@ -393,13 +407,13 @@ Fixpoint to_stmt (s : stmt) : lang.stmt :=
   match s with
   | Goto b => lang.Goto b
   | Return e => lang.Return (to_expr e)
+  | IfS ot e s1 s2 => (if{ot}: to_expr e then to_stmt s1 else to_stmt s2)%E
   | Switch it e m bs def => lang.Switch it (to_expr e) m (to_stmt <$> bs) (to_stmt def)
   | Assign o ot e1 e2 s => lang.Assign o ot (to_expr e1) (to_expr e2) (to_stmt s)
   | SkipS s => lang.SkipS (to_stmt s)
   | StuckS => lang.StuckS
   | ExprS e s => lang.ExprS (to_expr e) (to_stmt s)
-  | If e s1 s2 => (if: to_expr e then to_stmt s1 else to_stmt s2)%E
-  | Assert e s => (assert: to_expr e; to_stmt s)%E
+  | Assert ot e s => (assert{ot}: to_expr e; to_stmt s)%E
   | AnnotStmt n a s => notation.AnnotStmt n a (to_stmt s)
   | LocInfoS a s => notation.LocInfo a (to_stmt s)
   | Stmt s => s
@@ -419,15 +433,15 @@ Ltac of_stmt s :=
   | notation.LocInfo ?a ?s =>
     let s := of_stmt s in
     constr:(LocInfoS a s)
-  | (assert: ?e ; ?s)%E =>
+  | (assert{?ot}: ?e ; ?s)%E =>
     let e := of_expr e in
     let s := of_stmt s in
-    constr:(Assert e s)
-  | (if: ?e then ?s1 else ?s2)%E =>
+    constr:(Assert ot e s)
+  | (if{?ot}: ?e then ?s1 else ?s2)%E =>
     let e := of_expr e in
     let s1 := of_stmt s1 in
     let s2 := of_stmt s2 in
-    constr:(If e s1 s2)
+    constr:(IfS ot e s1 s2)
   | lang.Goto ?b => constr:(Goto b)
   | lang.Return ?e =>
     let e := of_expr e in constr:(Return e)
@@ -456,10 +470,10 @@ Inductive stmt_ectx :=
 | AssignRCtx (o : order) (ot : op_type) (e1 : expr) (s : stmt)
 | AssignLCtx (o : order) (ot : op_type) (v2 : val) (s : stmt)
 | ReturnCtx
+| IfSCtx (ot : op_type) (s1 s2 : stmt)
 | SwitchCtx (it : int_type) (m: gmap Z nat) (bs : list stmt) (def : stmt)
 | ExprSCtx (s : stmt)
-| IfCtx (s1 s2 : stmt)
-| AssertCtx (s : stmt)
+| AssertCtx (ot : op_type) (s : stmt)
 .
 
 Definition stmt_fill (Ki : stmt_ectx) (e : expr) : stmt :=
@@ -468,9 +482,9 @@ Definition stmt_fill (Ki : stmt_ectx) (e : expr) : stmt :=
   | AssignLCtx o ot v2 s => Assign o ot e (Val v2) s
   | ReturnCtx => Return e
   | ExprSCtx s => ExprS e s
+  | IfSCtx ot s1 s2 => IfS ot e s1 s2
   | SwitchCtx it m bs def => Switch it e m bs def
-  | IfCtx s1 s2 => If e s1 s2
-  | AssertCtx s => Assert e s
+  | AssertCtx ot s => Assert ot e s
   end.
 
 Definition find_stmt_fill (s : stmt) : option (stmt_ectx * expr) :=
@@ -478,10 +492,10 @@ Definition find_stmt_fill (s : stmt) : option (stmt_ectx * expr) :=
   | Goto _ | Stmt _ | AnnotStmt _ _ _ | LocInfoS _ _ | SkipS _ | StuckS => None
   | Return e => if e is (Val v) then None else Some (ReturnCtx, e)
   | ExprS e s => if e is (Val v) then None else Some (ExprSCtx s, e)
+  | IfS ot e s1 s2 => if e is (Val v) then None else Some (IfSCtx ot s1 s2, e)
   | Switch it e m bs def => if e is (Val v) then None else Some (SwitchCtx it m bs def, e)
   | Assign o ot e1 e2 s => if e2 is (Val v) then if e1 is (Val v) then None else Some (AssignLCtx o ot v s, e1) else Some (AssignRCtx o ot e1 s, e2)
-  | If e s1 s2 => if e is (Val v) then None else Some (IfCtx s1 s2, e)
-  | Assert e s => if e is (Val v) then None else Some (AssertCtx s, e)
+  | Assert ot e s => if e is (Val v) then None else Some (AssertCtx ot s, e)
   end.
 
 Lemma find_stmt_fill_correct s Ks e:
@@ -497,10 +511,10 @@ Proof.
   eexists ([StmtCtx (lang.AssignRCtx _ _ _ _) rf])|
   eexists ([StmtCtx (lang.AssignLCtx _ _ _ _) rf])|
   eexists ([StmtCtx (lang.ReturnCtx) rf])|
+  eexists ([StmtCtx (lang.IfSCtx _ _ _) rf])|
   eexists ([StmtCtx (lang.SwitchCtx _ _ _ _) rf])|
   eexists ([StmtCtx (lang.ExprSCtx _) rf])|
-  eexists ([StmtCtx (lang.SwitchCtx _ _ _ _) rf])|
-  eexists ([StmtCtx (lang.SwitchCtx _ _ _ _) rf])|
+  eexists ([StmtCtx (lang.IfSCtx _ _ _) rf])|
 ..] => //=.
 Qed.
 
@@ -520,6 +534,8 @@ Fixpoint subst_l (xs : list (var_name * val)) (e : expr)  : expr :=
   | IfE ot e1 e2 e3 => IfE ot (subst_l xs e1) (subst_l xs e2) (subst_l xs e3)
   | SkipE e => SkipE (subst_l xs e)
   | StuckE => StuckE
+  | LogicalAnd ot1 ot2 e1 e2 => LogicalAnd ot1 ot2 (subst_l xs e1) (subst_l xs e2)
+  | LogicalOr ot1 ot2 e1 e2 => LogicalOr ot1 ot2 (subst_l xs e1) (subst_l xs e2)
   | Use o ot e => Use o ot (subst_l xs e)
   | AddrOf e => AddrOf (subst_l xs e)
   | LValue e => LValue (subst_l xs e)
@@ -542,6 +558,10 @@ Proof.
     rewrite -!list_fmap_compose. apply list_fmap_ext' => //. by apply Forall_forall.
   - (** Concat *)
     rewrite -!list_fmap_compose. apply list_fmap_ext' => //. by apply Forall_forall.
+  - (** LogicalAnd *)
+    rewrite /notation.LogicalAnd/=. do 2 f_equal; eauto.
+  - (** LogicalOr *)
+    rewrite /notation.LogicalOr/=. do 2 f_equal; eauto.
   - (** GetMember *)
     match goal with
     | _ : ?e1 = ?e2 |- _ => assert (e1 = e2) as -> by assumption
@@ -598,13 +618,13 @@ Fixpoint subst_stmt (xs : list (var_name * val)) (s : stmt) : stmt :=
   match s with
   | Goto b => Goto b
   | Return e => Return (subst_l xs e)
+  | IfS ot e s1 s2 => IfS ot (subst_l xs e) (subst_stmt xs s1) (subst_stmt xs s2)
   | Switch it e m' bs def => Switch it (subst_l xs e) m' (subst_stmt xs <$> bs) (subst_stmt xs def)
   | Assign o ot e1 e2 s => Assign o ot (subst_l xs e1) (subst_l xs e2) (subst_stmt xs s)
   | SkipS s => SkipS (subst_stmt xs s)
   | StuckS => StuckS
   | ExprS e s => ExprS (subst_l xs e) (subst_stmt xs s)
-  | If e s1 s2 => If (subst_l xs e) (subst_stmt xs s1) (subst_stmt xs s2)
-  | Assert e s => Assert (subst_l xs e) (subst_stmt xs s)
+  | Assert ot e s => Assert ot (subst_l xs e) (subst_stmt xs s)
   | AnnotStmt n a s => AnnotStmt n a (subst_stmt xs s)
   | LocInfoS a s => LocInfoS a (subst_stmt xs s)
   | Stmt s => Stmt (lang.subst_stmt xs s)
@@ -615,6 +635,7 @@ Lemma to_stmt_subst xs s :
 Proof.
   elim: s => * //=; repeat rewrite to_expr_subst_l //; repeat f_equal => //; repeat rewrite -list_fmap_compose.
   - by apply Forall_fmap_ext_1.
+  - rewrite /notation.Assert. by f_equal.
   - match goal with
     | |- notation.AnnotStmt ?n _ _ = _ => generalize dependent n
     end.

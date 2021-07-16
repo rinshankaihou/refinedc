@@ -339,6 +339,13 @@ Section programs.
   Global Instance type_if_int_inst n v it : TypedIf (IntOp it) v (n @ int it) :=
     λ T1 T2, i2p (type_if_int it n v T1 T2).
 
+  Lemma type_assert_int it n s Q fn ls R v :
+    (⌜n ≠ 0⌝ ∗ typed_stmt s fn ls R Q) -∗
+    typed_assert (IntOp it) v (n @ int it) s fn ls R Q.
+  Proof. iIntros "[% Hs] %Hb". iExists it, _. by iFrame. Qed.
+  Global Instance type_assert_int_inst it n v : TypedAssert (IntOp it) v (n @ int it) :=
+    λ s fn ls R Q, i2p (type_assert_int _ _ _ _ _ _ _ _).
+
   Inductive destruct_hint_switch_int :=
   | DestructHintSwitchIntCase (n : Z)
   | DestructHintSwitchIntDefault.
@@ -505,14 +512,15 @@ Section programs.
   Global Instance type_if_bool_inst it b v : TypedIf (IntOp it) v (b @ boolean it) :=
     λ T1 T2, i2p (type_if_bool it b v T1 T2).
 
-  Lemma type_assert_bool (b : bool) s Q fn ls R v :
+  Lemma type_assert_bool it (b : bool) s Q fn ls R v :
     (⌜b⌝ ∗ typed_stmt s fn ls R Q) -∗
-    typed_assert v (b @ boolean bool_it) s fn ls R Q.
+    typed_assert (IntOp it) v (b @ boolean it) s fn ls R Q.
   Proof.
-    iIntros "[% Hs] %Hb". iExists _. iFrame. iSplit; first done. by destruct b.
+    iIntros "[% Hs] %Hb". iExists it, _. iFrame "Hs".
+    do 2 (iSplit; first done). by destruct b.
   Qed.
-  Global Instance type_assert_bool_inst b v : TypedAssert v (b @ boolean bool_it) :=
-    λ s fn ls R Q, i2p (type_assert_bool _ _ _ _ _ _ _).
+  Global Instance type_assert_bool_inst it b v : TypedAssert (IntOp it) v (b @ boolean it) :=
+    λ s fn ls R Q, i2p (type_assert_bool _ _ _ _ _ _ _ _).
 
   Lemma type_cast_bool b it1 it2 v T:
     (∀ v, T v (t2mt (b @ boolean it2))) -∗

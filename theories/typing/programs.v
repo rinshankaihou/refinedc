@@ -65,7 +65,7 @@ Section judgements.
 
   Definition typed_if (ot : op_type) (v : val) (ty : type) `{!Movable ty} (T1 T2 : iProp Σ) : iProp Σ :=
     (* TODO: generalize this to PtrOp *)
-    (v ◁ᵥ ty -∗ ∃ it z, ⌜ot = IntOp it⌝ ∗ ⌜val_to_Z v it = Some z⌝ ∗ (if decide (z = 0) then T2 else T1)).
+    (v ◁ᵥ ty -∗ ∃ it z, ⌜ot = IntOp it⌝ ∗ ⌜val_to_Z v it = Some z⌝ ∗ (if bool_decide (z ≠ 0) then T1 else T2)).
   Class TypedIf (ot : op_type) (v : val) (ty : type) `{!Movable ty} : Type :=
     typed_if_proof T1 T2 : iProp_to_Prop (typed_if ot v ty T1 T2).
 
@@ -88,10 +88,10 @@ Section judgements.
   Class TypedSwitch (v : val) (ty : type) `{!Movable ty} (it : int_type) : Type :=
     typed_switch_proof m ss def fn ls R Q : iProp_to_Prop (typed_switch v ty it m ss def fn ls R Q).
 
-  Definition typed_assert (v : val) (ty : type) `{!Movable ty} (s : stmt) (fn : function) (ls : list loc) (R : val → mtype → iProp Σ) (Q : gmap label stmt) : iProp Σ :=
-    (v ◁ᵥ ty -∗ ∃ z, ⌜val_to_Z v bool_it = Some z⌝ ∗ ⌜z ≠ 0⌝ ∗ typed_stmt s fn ls R Q)%I.
-  Class TypedAssert (v : val) (ty : type) `{!Movable ty} : Type :=
-    typed_assert_proof s fn ls R Q : iProp_to_Prop (typed_assert v ty s fn ls R Q).
+  Definition typed_assert (ot : op_type) (v : val) (ty : type) `{!Movable ty} (s : stmt) (fn : function) (ls : list loc) (R : val → mtype → iProp Σ) (Q : gmap label stmt) : iProp Σ :=
+    (v ◁ᵥ ty -∗ ∃ it z, ⌜ot = IntOp it⌝ ∗ ⌜val_to_Z v it = Some z⌝ ∗ ⌜z ≠ 0⌝ ∗ typed_stmt s fn ls R Q)%I.
+  Class TypedAssert (ot : op_type) (v : val) (ty : type) `{!Movable ty} : Type :=
+    typed_assert_proof s fn ls R Q : iProp_to_Prop (typed_assert ot v ty s fn ls R Q).
   (*** expressions *)
   Definition typed_val_expr (e : expr) (T : val → mtype → iProp Σ) : iProp Σ :=
     (∀ Φ, (∀ v (ty : mtype), v ◁ᵥ ty -∗ T v ty -∗ Φ v) -∗ WP e {{ Φ }}).
@@ -331,7 +331,7 @@ Hint Mode SimpleSubsumePlace + + + ! - : typeclass_instances.
 Hint Mode SimpleSubsumePlaceR + + + ! + ! - : typeclass_instances.
 Hint Mode SimpleSubsumeVal + + + ! + ! - : typeclass_instances.
 Hint Mode TypedIf + + + + + + : typeclass_instances.
-Hint Mode TypedAssert + + + + + : typeclass_instances.
+Hint Mode TypedAssert + + + + + + : typeclass_instances.
 Hint Mode TypedValue + + + : typeclass_instances.
 Hint Mode TypedBinOp + + + + + + + + + : typeclass_instances.
 Hint Mode TypedBinOpVal + + + + + + + + + + + : typeclass_instances.
@@ -871,14 +871,14 @@ Section typing.
     all: by iApply ("HT" with "Hl").
   Qed.
 
-  Lemma type_if Q e s1 s2 fn ls R:
-    typed_val_expr e (λ v ty, typed_if (IntOp bool_it) v ty
+  Lemma type_if Q it e s1 s2 fn ls R:
+    typed_val_expr e (λ v ty, typed_if (IntOp it) v ty
           (typed_stmt s1 fn ls R Q) (typed_stmt s2 fn ls R Q)) -∗
-    typed_stmt (if: e then s1 else s2) fn ls R Q.
+    typed_stmt (if{IntOp it}: e then s1 else s2) fn ls R Q.
   Proof.
     iIntros "He" (Hls). wps_bind.
     iApply "He". iIntros (v ty) "Hv Hs".
-    iDestruct ("Hs" with "Hv") as (it z ? Hn) "Hs". simplify_eq.
+    iDestruct ("Hs" with "Hv") as (????) "Hs". simplify_eq.
     iApply wps_if; [done|..]. by case_decide; iApply "Hs".
   Qed.
 
@@ -903,13 +903,13 @@ Section typing.
     - by iApply "Hs".
   Qed.
 
-  Lemma type_assert Q e s fn ls R:
-    typed_val_expr e (λ v ty, typed_assert v ty s fn ls R Q) -∗
-    typed_stmt (assert: e; s) fn ls R Q.
+  Lemma type_assert Q it e s fn ls R:
+    typed_val_expr e (λ v ty, typed_assert (IntOp it) v ty s fn ls R Q) -∗
+    typed_stmt (assert{IntOp it}: e; s) fn ls R Q.
   Proof.
     iIntros "He" (Hls). wps_bind.
     iApply "He". iIntros (v ty) "Hv Hs".
-    iDestruct ("Hs" with "Hv") as (z Hn Hz) "Hs".
+    iDestruct ("Hs" with "Hv") as (?????) "Hs". simplify_eq.
     iApply wps_assert; [done|done|..]. by iApply "Hs".
   Qed.
 
@@ -955,6 +955,27 @@ Section typing.
   Qed.
 
   (*** expressions *)
+  Lemma typed_val_expr_wand e T1 T2:
+    typed_val_expr e T1 -∗
+    (∀ v ty, T1 v ty -∗ T2 v ty) -∗
+    typed_val_expr e T2.
+  Proof.
+    iIntros "He HT" (Φ) "HΦ".
+    iApply "He". iIntros (v ty) "Hv Hty".
+    iApply ("HΦ" with "Hv"). by iApply "HT".
+  Qed.
+
+  Lemma typed_if_wand ot v ty `{!Movable ty} T1 T2 T1' T2':
+    typed_if ot v ty T1 T2 -∗
+    ((T1 -∗ T1') ∧ (T2 -∗ T2')) -∗
+    typed_if ot v ty T1' T2'.
+  Proof.
+    iIntros "Hif HT Hv". iDestruct ("Hif" with "Hv") as (it z ? ?) "HC".
+    iExists _, _. iSplit; [done|]. iSplit; [done|]. case_decide.
+    - iDestruct "HT" as "[_ HT]". by iApply "HT".
+    - iDestruct "HT" as "[HT _]". by iApply "HT".
+  Qed.
+
   Lemma type_val_context v T:
     (find_in_context (FindVal v) T) -∗
     typed_value v T.
@@ -1057,6 +1078,38 @@ Section typing.
     wp_bind. iApply "He1". iIntros (v1 ty1) "Hv1 Hif".
     iDestruct ("Hif" with "Hv1") as (it n -> ?) "HT".
     iApply wp_if; [done|..]. by case_decide; iApply "HT".
+  Qed.
+
+  Lemma type_logical_and ot1 ot2 e1 e2 T:
+    typed_val_expr e1 (λ v1 ty1, typed_if ot1 v1 ty1
+       (typed_val_expr e2 (λ v2 ty2, typed_if ot2 v2 ty2
+           (typed_value (i2v 1 i32) (T (i2v 1 i32))) (typed_value (i2v 0 i32) (T (i2v 0 i32)))))
+       (typed_value (i2v 0 i32) (T (i2v 0 i32)))) -∗
+    typed_val_expr (e1 &&{ot1, ot2} e2) T.
+  Proof.
+    iIntros "HT". rewrite /LogicalAnd. iApply type_ife.
+    iApply (typed_val_expr_wand with "HT"). iIntros (v ty) "HT".
+    iApply (typed_if_wand with "HT"). iSplit; iIntros "HT".
+    2: { by iApply type_val. }
+    iApply type_ife.
+    iApply (typed_val_expr_wand with "HT"). iIntros (v2 ty2) "HT".
+    iApply (typed_if_wand with "HT"). iSplit; iIntros "HT"; by iApply type_val.
+  Qed.
+
+  Lemma type_logical_or ot1 ot2 e1 e2 T:
+    typed_val_expr e1 (λ v1 ty1, typed_if ot1 v1 ty1
+      (typed_value (i2v 1 i32) (T (i2v 1 i32)))
+      (typed_val_expr e2 (λ v2 ty2, typed_if ot2 v2 ty2
+        (typed_value (i2v 1 i32) (T (i2v 1 i32))) (typed_value (i2v 0 i32) (T (i2v 0 i32)))))) -∗
+    typed_val_expr (e1 ||{ot1, ot2} e2) T.
+  Proof.
+    iIntros "HT". rewrite /LogicalOr. iApply type_ife.
+    iApply (typed_val_expr_wand with "HT"). iIntros (v ty) "HT".
+    iApply (typed_if_wand with "HT"). iSplit; iIntros "HT".
+    1: { by iApply type_val. }
+    iApply type_ife.
+    iApply (typed_val_expr_wand with "HT"). iIntros (v2 ty2) "HT".
+    iApply (typed_if_wand with "HT"). iSplit; iIntros "HT"; by iApply type_val.
   Qed.
 
   Lemma type_skipe e T:

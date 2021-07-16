@@ -64,7 +64,7 @@ Ltac convert_to_i2p_tac P ::=
   | typed_place ?P ?l1 ?β1 ?ty1 ?T => uconstr:(((_ : TypedPlace _ _ _ _) _).(i2p_proof))
   | typed_if ?ot ?v ?ty ?T1 ?T2 => uconstr:(((_ : TypedIf _ _ _) _ _).(i2p_proof))
   | typed_switch ?v ?ty ?it ?m ?ss ?def ?fn ?ls ?fr ?Q => uconstr:(((_ : TypedSwitch _ _ _) _ _ _ _ _ _ _).(i2p_proof))
-  | typed_assert ?v ?ty ?s ?fn ?ls ?fr ?Q => uconstr:(((_ : TypedAssert _ _) _ _ _ _ _).(i2p_proof))
+  | typed_assert ?ot ?v ?ty ?s ?fn ?ls ?fr ?Q => uconstr:(((_ : TypedAssert _ _ _) _ _ _ _ _).(i2p_proof))
   | typed_read_end ?a ?l ?β ?ty ?ly ?T => uconstr:(((_ : TypedReadEnd _ _ _ _ _) _).(i2p_proof))
   | typed_write_end ?a ?ot ?v1 ?ty1 ?l2 ?β2 ?ty2 ?T => uconstr:(((_ : TypedWriteEnd _ _ _ _ _ _ _) _).(i2p_proof))
   | typed_addr_of_end ?l ?β ?ty ?T => uconstr:(((_ : TypedAddrOfEnd _ _ _) _).(i2p_proof))
@@ -134,7 +134,6 @@ Ltac liRInstantiateEvars :=
   | |- envs_entails _ (subsume (?x ◁ₗ{?β} ?ty) (_ ◁ₗ{protected ?H} _) _) => liInst H β
   end.
 
-
 Ltac liRStmt :=
   lazymatch goal with
   | |- envs_entails ?Δ (typed_stmt ?s ?fn ?ls ?fr ?Q) =>
@@ -157,9 +156,9 @@ Ltac liRStmt :=
       lazymatch s' with
       | W.Assign _ _ _ _ _ => notypeclasses refine (tac_fast_apply (type_assign _ _ _ _ _ _ _ _ _) _)
       | W.Return _ => notypeclasses refine (tac_fast_apply (type_return _ _ _ _ _) _)
-      | W.If _ _ _ => notypeclasses refine (tac_fast_apply (type_if _ _ _ _ _ _ _) _)
+      | W.IfS _ _ _ _ => notypeclasses refine (tac_fast_apply (type_if _ _ _ _ _ _ _ _) _)
       | W.Switch _ _ _ _ _ => notypeclasses refine (tac_fast_apply (type_switch _ _ _ _ _ _ _ _ _) _)
-      | W.Assert _ _ => notypeclasses refine (tac_fast_apply (type_assert _ _ _ _ _ _) _)
+      | W.Assert _ _ _ => notypeclasses refine (tac_fast_apply (type_assert _ _ _ _ _ _ _) _)
       | W.Goto ?bid => first [
          notypeclasses refine (tac_fast_apply (type_goto_precond _ _ _ _ _ _) _); progress liFindHyp FICSyntactic
        | lazymatch goal with
@@ -226,6 +225,8 @@ Ltac liRExpr :=
     | W.AnnotExpr _ ?a _ => notypeclasses refine (tac_fast_apply (type_annot_expr _ _ _ _) _)
     | W.StructInit _ _ => notypeclasses refine (tac_fast_apply (type_struct_init _ _ _) _)
     | W.IfE _ _ _ _ => notypeclasses refine (tac_fast_apply (type_ife _ _ _ _ _) _)
+    | W.LogicalAnd _ _ _ _ => notypeclasses refine (tac_fast_apply (type_logical_and _ _ _ _ _) _)
+    | W.LogicalOr _ _ _ _ => notypeclasses refine (tac_fast_apply (type_logical_or _ _ _ _ _) _)
     | W.SkipE _ => notypeclasses refine (tac_fast_apply (type_skipe' _ _) _)
     | W.MacroE _ _ _ => notypeclasses refine (tac_fast_apply (type_macro_expr _ _ _) _)
     | _ => fail "do_expr: unknown expr" e

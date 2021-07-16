@@ -32,6 +32,7 @@ type un_op =
 type bin_op =
   | AddOp | SubOp | MulOp | DivOp | ModOp | AndOp | OrOp | XorOp | ShlOp
   | ShrOp | EqOp | NeOp | LtOp | GtOp | LeOp | GeOp | CommaOp
+  | LazyAndOp | LazyOrOp
 
 type value =
   | Null
@@ -69,8 +70,8 @@ and stmt_aux =
   | Switch of int_type * expr * (string * int) list * stmt list * stmt
   | Assign of bool (* Atomic? *) * op_type * expr * expr * stmt
   | SkipS  of stmt
-  | If     of expr * stmt * stmt
-  | Assert of expr * stmt
+  | If     of op_type * expr * stmt * stmt
+  | Assert of op_type * expr * stmt
   | ExprS  of expr_annot option * expr * stmt
 
 (* The integers are respecively the alignment and the size. *)

@@ -1,5 +1,6 @@
 #include <stddef.h>
 #include <stdbool.h>
+#include <stdint.h>
 // Random tests.
 
 [[rc::returns("void")]]
@@ -78,4 +79,16 @@ int inline_global1() {
 [[rc::returns("{1} @ int<i32>")]]
 int inline_global2() {
   return inline_global1();
+}
+
+[[rc::returns("void")]]
+void test_logical(){
+  if ((1 && 2) || 0/0) {
+    assert(1);
+  } else {
+    assert(0);
+  }
+  assert((1 && 2) == 1 && (2 || 0) == 1);
+  if(INT_MAX) { assert(1); } else { assert(0); }
+  assert(UINT_MAX);
 }

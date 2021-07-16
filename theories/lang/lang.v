@@ -72,6 +72,7 @@ hardware threads). *)
 Inductive stmt :=
 | Goto (b : label)
 | Return (e : expr)
+| IfS (ot : op_type) (e : expr) (s1 s2 : stmt)
 (* m: map from values of e to indices into bs, def: default *)
 | Switch (it : int_type) (e : expr) (m : gmap Z nat) (bs : list stmt) (def : stmt)
 | Assign (o : order) (ot : op_type) (e1 e2 : expr) (s : stmt)
@@ -129,6 +130,7 @@ with rtexpr :=
 with rtstmt :=
 | RTGoto (b : label)
 | RTReturn (e : runtime_expr)
+| RTIfS (ot : op_type) (e : runtime_expr) (s1 s2 : stmt)
 | RTSwitch (it : int_type) (e : runtime_expr) (m : gmap Z nat) (bs : list stmt) (def : stmt)
 | RTAssign (o : order) (ot : op_type) (e1 e2 : runtime_expr) (s : stmt)
 | RTSkipS (s : stmt)
@@ -158,6 +160,7 @@ Definition to_rtstmt (rf : runtime_function) (s : stmt) : runtime_expr :=
   Stmt rf $ match s with
   | Goto b => RTGoto b
   | Return e => RTReturn (to_rtexpr e)
+  | IfS ot e s1 s2 => RTIfS ot (to_rtexpr e) s1 s2
   | Switch it e m bs def => RTSwitch it (to_rtexpr e) m bs def
   | Assign o ot e1 e2 s => RTAssign o ot (to_rtexpr e1) (to_rtexpr e2) s
   | SkipS s => RTSkipS s
@@ -208,6 +211,7 @@ Fixpoint subst_stmt (xs : list (var_name * val)) (s : stmt) : stmt :=
   match s with
   | Goto b => Goto b
   | Return e => Return (subst_l xs e)
+  | IfS ot e s1 s2 => IfS ot (subst_l xs e) (subst_stmt xs s1) (subst_stmt xs s2)
   | Switch it e m' bs def => Switch it (subst_l xs e) m' (subst_stmt xs <$> bs) (subst_stmt xs def)
   | Assign o ot e1 e2 s => Assign o ot (subst_l xs e1) (subst_l xs e2) (subst_stmt xs s)
   | SkipS s => SkipS (subst_stmt xs s)
@@ -507,6 +511,9 @@ Inductive stmt_step : stmt → runtime_function → state → list Empty_set →
     v2 `has_layout_val` (ot_layout ot) →
     heap_at l (ot_layout ot) v' start_st σ.(st_heap).(hs_heap) →
     stmt_step (Assign o ot (Val v1) (Val v2) s) rf σ [] (to_rtstmt rf end_stmt) (heap_fmap (heap_upd l end_val end_st) σ) []
+| IfSS it v s1 s2 rf σ n:
+    val_to_Z v it = Some n →
+    stmt_step (IfS (IntOp it) (Val v) s1 s2) rf σ [] (to_rtstmt rf ((if bool_decide (n ≠ 0) then s1 else s2))) σ []
 | SwitchS rf σ v n m bs s def it :
     val_to_Z v it = Some n →
     (∀ i : nat, m !! n = Some i → is_Some (bs !! i)) →
@@ -615,6 +622,7 @@ Inductive stmt_ectx :=
 | AssignRCtx (o : order) (ot : op_type) (e1 : expr) (s : stmt)
 | AssignLCtx (o : order) (ot : op_type) (v2 : val) (s : stmt)
 | ReturnCtx
+| IfSCtx (ot : op_type) (s1 s2 : stmt)
 | SwitchCtx (it : int_type) (m: gmap Z nat) (bs : list stmt) (def : stmt)
 | ExprSCtx (s : stmt)
 .
@@ -624,6 +632,7 @@ Definition stmt_fill_item (Ki : stmt_ectx) (e : runtime_expr) : rtstmt :=
   | AssignRCtx o ot e1 s => RTAssign o ot e1 e s
   | AssignLCtx o ot v2 s => RTAssign o ot e (Val v2) s
   | ReturnCtx => RTReturn e
+  | IfSCtx ot s1 s2 => RTIfS ot e s1 s2
   | SwitchCtx it m bs def => RTSwitch it e m bs def
   | ExprSCtx s => RTExprS e s
   end.
