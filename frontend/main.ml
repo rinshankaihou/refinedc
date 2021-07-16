@@ -43,7 +43,7 @@ let refinedc_include : string option =
    and it also creates a directory ["file"] inside it (having the same name as
    the C source file, without the extension). This directory then contains all
    the generated (Coq) files corresponding to ["src/dir/file.c"]. For example,
-   it would contain the code file ["src/dir/+rc+/file/code.c"].
+   it would contain the code file [code_file_name].
 
    When checking another file of the same directory, a similar directory (with
    the base name of the file) is created under the special RefinedC directory.
@@ -53,48 +53,48 @@ let refinedc_include : string option =
      ├── _CoqProject
      ├── dune-project
      ├── lib
-     │   ├── +rc+
+     │   ├── proofs
      │   │   └── socket
-     │   │       ├── code.v
-     │   │       └── spec.v
+     │   │       ├── generated_code.v
+     │   │       └── generated_spec.v
      │   └── socket.c
      ├── rc-project.toml
      └── src
          ├── client
          │   ├── client.c
          │   ├── lib.c
-         │   └── +rc+
+         │   └── proofs
          │       ├── client
-         │       │   ├── code.v
-         │       │   └── spec.v
+         │       │   ├── generated_code.v
+         │       │   └── generated_spec.v
          │       └── lib
-         │           ├── code.v
-         │           └── spec.v
+         │           ├── generated_code.v
+         │           └── generated_spec.v
          └── server
-             ├── +rc+
+             ├── proofs
              │   └── server
-             │       ├── code.v
-             │       └── spec.v
+             │       ├── generated_code.v
+             │       └── generated_spec.v
              └── server.c
    |}]
    The Coq qualification for each source file is determined by the Coq logical
    directory chosen at project creation (which defaults to something using the
    directory name if possible). Using the example above, and assuming that the
    Coq logical directory name of the project is ["refinedc.project.my_server"]
-   then the file ["src/client/+rc+/client/code.v"] is mapped to the Coq module
-   name ["refinedc.project.my_server.src.client.code"].
+   then ["src/client/proofs/client/generated_code.v"] is mapped to module name
+   ["refinedc.project.my_server.src.client.generated_code"] in Coq.
 
    A directory corresponding to the generated code of a C source file also has
    a ["dune"] file, that controls its building. It is automatically generated,
    and automatically updated in case of changes.
 
    The user can freely add Coq files (provided they do not have reserved names
-   like ["code"], ["spec"] or ["proof_*"]) to directories corresponding to any
-   C source file.
+   like [code_file_name], [spec_file_name] or [proof_file_name s] where [s] is
+   a potential C function name) to directories corresponding to any C file.
 
    TODO Find a better way, with a specific directory?
 
-   RefinedC relies on a file ["proof_files"] next to the generated proof files
+   RefinedC relies on file [proofs_file_name], placed next to generated files,
    to identify the currently valid proof files. When the user removes or moves
    a function spec, a proof file may no longer correspond to anything. In that
    case it is deleted by RefinedC automatically upon generation. *)
