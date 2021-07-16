@@ -8,6 +8,7 @@ From iris.bi Require Import derived_laws.
 Import interface.bi derived_laws.bi.
 From iris.proofmode Require Import tactics.
 From stdpp Require Import natmap.
+Set Default Proof Using "Type".
 
 Global Unset Program Cases.
 Global Set Keyed Unification.
@@ -32,6 +33,7 @@ Notation "'[@{' A '}' x ; y ; .. ; z ]" :=  (@cons A x (@cons A y .. (@cons A z 
 Notation "'[@{' A '}' x ]" := (@cons A x nil) (only parsing) : list_scope.
 Notation "'[@{' A '}' ]" := (@nil A) (only parsing) : list_scope.
 
+(** * tactics *)
 Lemma rel_to_eq {A} (R : A → A → Prop) `{!Reflexive R} x y:
   x = y → R x y.
 Proof. move => ->. reflexivity. Qed.
@@ -63,6 +65,17 @@ Tactic Notation "reduce_closed" constr(x) :=
   change_no_check x with r in *
 .
 
+(* from https://mattermost.mpi-sws.org/iris/pl/dcktjjjpsiycmrieyh74bzoagr *)
+Ltac solve_sep_entails :=
+  try (apply equiv_entails; split);
+  iIntros;
+  repeat iMatchHyp (fun H P =>
+    lazymatch P with
+    | (_ ∗ _)%I => iDestruct H as "[??]"
+    | (∃ _, _)%I => iDestruct H as (?) "?"
+    end);
+  eauto with iFrame.
+
 (*
 The following tactics are currently not used.
 
@@ -89,67 +102,7 @@ Ltac evalZ :=
   repeat select closed subterm of type Z (fun x => progress reduce_closed x).
  *)
 
-Definition Z_of_bool (b : bool) : Z :=
-  if b then 1 else 0.
-Typeclasses Opaque Z_of_bool.
-
-Lemma Z_of_bool_true b: Z_of_bool b ≠ 0 ↔ b = true.
-Proof. destruct b; naive_solver. Qed.
-
-Lemma Z_of_bool_false b: Z_of_bool b = 0 ↔ b = false.
-Proof. destruct b; naive_solver. Qed.
-
-Lemma big_sepL2_fupd `{BiFUpd PROP} {A B} E (Φ : nat → A → B → PROP) l1 l2 :
-  ([∗ list] k↦x;y ∈ l1;l2, |={E}=> Φ k x y) ={E}=∗ [∗ list] k↦x;y ∈ l1;l2, Φ k x y.
-Proof. rewrite !big_sepL2_alt. iIntros "[$ H]". by iApply big_sepL_fupd. Qed.
-Lemma big_sepL2_replicate_2 {A B} {PROP : bi} (l : list A) (x : B) (Φ : nat → A → B → PROP):
-  (([∗ list] k↦x1 ∈ l, Φ k x1 x) ⊣⊢ [∗ list] k↦x1;x2 ∈ l;replicate (length l) x, Φ k x1 x2).
-Proof. elim: l Φ => //= ?? IH Φ. f_equiv. apply: IH. Qed.
-
-
-(* TODO: does something like this exist in Iris? *)
-Definition apply_dfun {A B} (f : A -d> B) (x : A) : B := f x.
-Arguments apply_dfun : simpl never.
-
-Global Instance apply_dfun_ne A B n:
-  Proper ((dist n) ==> (=) ==> (dist n)) (@apply_dfun A B).
-Proof. intros ?? H1 ?? ->. rewrite /apply_dfun. apply H1. Qed.
-
-Global Instance apply_dfun_proper A B :
-  Proper ((≡) ==> (=) ==> (≡)) (@apply_dfun A B).
-Proof. intros ?? H1 ?? ->. rewrite /apply_dfun. apply H1. Qed.
-
-Global Instance discrete_fn_proper A B `{LeibnizEquiv A} (f : A -d> B):
-  Proper ((≡) ==> (≡)) f.
-Proof. by intros ?? ->%leibniz_equiv. Qed.
-
-(* upstream ? *)
-Lemma zip_fmap_r {A B C} (l1 : list A) (l2 : list B) (f : B → C) :
-  zip l1 (f <$> l2) = (λ x, (x.1, f x.2)) <$>  zip l1 l2.
-Proof. rewrite zip_with_fmap_r zip_with_zip. by apply: list_fmap_ext => // [[]]. Qed.
-
-Lemma zip_with_nil_inv' {A B C : Type} (f : A → B → C) (l1 : list A) (l2 : list B) :
-  length l1 = length l2 → zip_with f l1 l2 = [] → l1 = [] ∧ l2 = [].
-Proof.
-  move => Hlen /zip_with_nil_inv [] H; rewrite H /= in Hlen;
-  split => //; by apply nil_length_inv.
-Qed.
-
-Lemma entails_eq {PROP : bi} (P1 P2 : PROP) :
-  P1 = P2 → P1 -∗ P2.
-Proof. move => ->. reflexivity. Qed.
-
-Section list_to_map.
-  Context `{FinMap K M}.
-
-  Lemma list_to_map_app {A} (l1 l2 : list (K * A)):
-    list_to_map (M := M A) (l1 ++ l2) = list_to_map l1 ∪ list_to_map l2.
-  Proof using Type*.
-    elim: l1 => /=. { by rewrite left_id. }
-    move => [??] ? IH /=. by rewrite IH insert_union_l.
-  Qed.
-End list_to_map.
-
+(** * typeclasses *)
 Inductive TCOneIsSome {A} : option A → option A → Prop :=
 | tc_one_is_some_left n1 o2 : TCOneIsSome (Some n1) o2
 | tc_one_is_some_right o1 n2 : TCOneIsSome o1 (Some n2).
@@ -166,6 +119,64 @@ Global Existing Instance tc_one_is_some3_left.
 Global Existing Instance tc_one_is_some3_middle.
 Global Existing Instance tc_one_is_some3_right.
 
+Definition exists_dec_unique {A} (x : A) (P : _ → Prop) : (∀ y, P y → P x) → Decision (P x) → Decision (∃ y, P y).
+Proof.
+  intros Hx Hdec.
+  refine (cast_if (decide (P x))).
+  - abstract by eexists _.
+  - abstract naive_solver.
+Defined.
+
+(** * bool *)
+Definition Z_of_bool (b : bool) : Z :=
+  if b then 1 else 0.
+Typeclasses Opaque Z_of_bool.
+
+Lemma Z_of_bool_true b: Z_of_bool b ≠ 0 ↔ b = true.
+Proof. destruct b; naive_solver. Qed.
+
+Lemma Z_of_bool_false b: Z_of_bool b = 0 ↔ b = false.
+Proof. destruct b; naive_solver. Qed.
+
+Lemma Is_true_eq (b : bool) : b ↔ b = true.
+Proof. by case: b. Qed.
+
+Lemma bool_decide_eq_x_x_true {A} (x : A) `{!Decision (x = x)} :
+  bool_decide (x = x) = true.
+Proof. by case_bool_decide.  Qed.
+Lemma if_bool_decide_eq_branches {A} P `{!Decision P} (x : A) :
+  (if bool_decide P then x else x) = x.
+Proof. by case_bool_decide. Qed.
+
+(** * apply_dfun *)
+(* TODO: does something like this exist in Iris? *)
+Definition apply_dfun {A B} (f : A -d> B) (x : A) : B := f x.
+Arguments apply_dfun : simpl never.
+
+Global Instance apply_dfun_ne A B n:
+  Proper ((dist n) ==> (=) ==> (dist n)) (@apply_dfun A B).
+Proof. intros ?? H1 ?? ->. rewrite /apply_dfun. apply H1. Qed.
+
+Global Instance apply_dfun_proper A B :
+  Proper ((≡) ==> (=) ==> (≡)) (@apply_dfun A B).
+Proof. intros ?? H1 ?? ->. rewrite /apply_dfun. apply H1. Qed.
+
+Global Instance discrete_fn_proper A B `{LeibnizEquiv A} (f : A -d> B):
+  Proper ((≡) ==> (≡)) f.
+Proof. by intros ?? ->%leibniz_equiv. Qed.
+
+(** * list *)
+Lemma zip_fmap_r {A B C} (l1 : list A) (l2 : list B) (f : B → C) :
+  zip l1 (f <$> l2) = (λ x, (x.1, f x.2)) <$>  zip l1 l2.
+Proof. rewrite zip_with_fmap_r zip_with_zip. by apply: list_fmap_ext => // [[]]. Qed.
+
+Lemma zip_with_nil_inv' {A B C : Type} (f : A → B → C) (l1 : list A) (l2 : list B) :
+  length l1 = length l2 → zip_with f l1 l2 = [] → l1 = [] ∧ l2 = [].
+Proof.
+  move => Hlen /zip_with_nil_inv [] H; rewrite H /= in Hlen;
+  split => //; by apply nil_length_inv.
+Qed.
+
 Lemma take_elem_of {A} (x : A) n l:
   x ∈ take n l ↔ ∃ i, (i < n)%nat ∧ l !! i = Some x.
 Proof.
@@ -181,24 +192,6 @@ Proof.
   move => j ? ?. have [|??]:= lookup_lt_is_Some_2 l j. { by apply: lookup_lt_Some. }
   set_solver.
 Qed.
-
-
-Section theorems.
-Context `{FinMap K M}.
-
-Lemma partial_alter_self_alt' {A} (m : M A) i f:
-  m !! i = f (m !! i) → partial_alter f i m = m.
-Proof using Type*.
-  intros. apply map_eq. intros ii. by destruct (decide (i = ii)) as [->|];
-    rewrite ?lookup_partial_alter ?lookup_partial_alter_ne.
-Qed.
-
-Lemma partial_alter_to_insert {A} x (m : M A) f k:
-    f (m !! k) = Some x →
-    partial_alter f k m = <[k := x]> m.
-Proof using Type*. move => ?. by apply: partial_alter_ext => ? <-. Qed.
-
-End theorems.
 
 Lemma replicate_O {A} (x : A) n:
   n = 0%nat -> replicate n x = [].
@@ -230,9 +223,6 @@ Lemma list_elem_of_insert2' {A} (l : list A) i (x1 x2 x3 : A) :
   l !! i = Some x3 → x1 ∈ l → x1 ≠ x3 → x1 ∈ <[i:=x2]> l.
 Proof. move => ???. efeed pose proof (list_elem_of_insert2 (A:=A)) as Hi; naive_solver. Qed.
 
-Lemma apply_default {A B} (f : A → B) (d : A) (o : option A) :
-  f (default d o) = default (f d) (f <$> o).
-Proof. by destruct o. Qed.
 
 Lemma list_fmap_ext' {A B} f (g : A → B) (l1 l2 : list A) :
     (∀ x, x ∈ l1 → f x = g x) → l1 = l2 → f <$> l1 = g <$> l2.
@@ -262,12 +252,91 @@ Lemma list_insert_fold {A} l i (x : A) :
   list_insert i x l = <[i := x]> l.
 Proof. done. Qed.
 
-Lemma Is_true_eq (b : bool) : b ↔ b = true.
-Proof. by case: b. Qed.
+Lemma default_last_cons {A} (x1 x2 y : A) l :
+  default x1 (last (y :: l)) = default x2 (last (y :: l)).
+Proof. elim: l y => //=. Qed.
 
-Lemma bool_decide_eq_x_x_true {A} (x : A) `{!Decision (x = x)} :
-  bool_decide (x = x) = true.
-Proof. by case_bool_decide.  Qed.
+Lemma list_lookup_length_default_last {A} (x : A) (l : list A) :
+  (x :: l) !! length l = Some (default x (last l)).
+Proof. elim: l x => //= a l IH x. rewrite IH. f_equal. destruct l => //=. apply default_last_cons. Qed.
+
+Lemma filter_nil_inv {A} P `{!∀ x, Decision (P x)} (l : list A):
+  filter P l = [] ↔ (∀ x : A, x ∈ l → ¬ P x).
+Proof.
+  elim: l. 1: by rewrite filter_nil; set_solver.
+  move => x l IH. rewrite filter_cons. case_decide; set_solver.
+Qed.
+
+Lemma length_filter_gt {A} P `{!∀ x, Decision (P x)} (l : list A) x:
+  x ∈ l → P x →
+  (0 < length (filter P l))%nat.
+Proof. elim; move => *; rewrite filter_cons; case_decide; naive_solver lia. Qed.
+
+Lemma length_filter_insert {A} P `{!∀ x, Decision (P x)} (l : list A) i x x':
+  l !! i = Some x' →
+  length (filter P (<[i:=x]>l)) =
+  (length (filter P l) + (if bool_decide (P x) then 1 else 0) - (if bool_decide (P x') then 1 else 0))%nat.
+Proof.
+  elim: i l. move => [] //=??[->]. rewrite !filter_cons. by repeat (case_decide; case_bool_decide) => //=; lia.
+  move => i IH [|? l]//=?. rewrite !filter_cons. case_decide => //=; rewrite IH // -minus_Sn_m //.
+  repeat case_bool_decide => //; try lia. feed pose proof (length_filter_gt P l x') => //; try lia.
+    by apply: elem_of_list_lookup_2.
+Qed.
+
+Lemma length_filter_replicate_True {A} P `{!∀ x, Decision (P x)} (x : A) len:
+  P x → length (filter P (replicate len x)) = len.
+Proof. elim: len => //=???. rewrite filter_cons. case_decide => //=. f_equal. naive_solver. Qed.
+
+Lemma reshape_app {A} (ln1 ln2 : list nat) (l : list A) :
+  reshape (ln1 ++ ln2) l = reshape ln1 (take (sum_list ln1) l) ++ reshape ln2 (drop (sum_list ln1) l).
+Proof. elim: ln1 l => //= n ln1 IH l. rewrite take_take skipn_firstn_comm IH drop_drop. repeat f_equal; lia. Qed.
+Lemma omap_app {A B} (f : A → option B) (s1 s2 : list A):
+  omap f (s1 ++ s2) = omap f s1 ++ omap f s2.
+Proof. elim: s1 => //. csimpl => ?? ->. case_match; naive_solver. Qed.
+Lemma sum_list_with_take {A} f (l : list A) i:
+   (sum_list_with f (take i l) ≤ sum_list_with f l)%nat.
+Proof. elim: i l => /=. lia. move => ? IH [|? l2] => //=. move: (IH l2). lia.  Qed.
+
+Lemma omap_length_eq {A B C} (f : A → option B) (g : A → option C) (l : list A):
+  (∀ i x, l !! i = Some x → const () <$> (f x) = const () <$> (g x)) →
+  length (omap f l) = length (omap g l).
+Proof.
+  elim: l => //; csimpl => x ? IH Hx. move: (Hx O x ltac:(done)) => /=?.
+  do 2 case_match => //=; rewrite IH // => i ??; by apply: (Hx (S i)).
+Qed.
+
+Lemma join_length {A} (l : list (list A)) :
+  length (mjoin l) = sum_list (length <$> l).
+Proof. elim: l => // ?? IH; csimpl. rewrite app_length IH //. Qed.
+
+Lemma sum_list_eq l1 l2:
+  Forall2 eq l1 l2 →
+  sum_list l1 = sum_list l2.
+Proof. by elim => // ???? -> /= ? ->. Qed.
+
+Lemma reshape_join {A} szs (ls : list (list A)) :
+  Forall2 (λ l sz, length l = sz) ls szs →
+  reshape szs (mjoin ls) = ls.
+Proof.
+  revert ls. induction szs as [|sz szs IH]; simpl; intros ls; [by inversion 1|].
+  intros (?&?&?&?&?)%Forall2_cons_inv_r; simplify_eq/=. rewrite take_app drop_app. f_equal.
+  naive_solver.
+Qed.
+
+Lemma lookup_eq_app_r {A} (l1 l2 suffix : list A) (i : nat) :
+  length l1 = length l2 →
+  l1 !! i = l2 !! i ↔ (l1 ++ suffix) !! i = (l2 ++ suffix) !! i.
+Proof.
+  move => Hlen. destruct (l1 !! i) as [v|] eqn:HEq.
+  + rewrite lookup_app_l; last by eapply lookup_lt_Some.
+    rewrite lookup_app_l; first by rewrite -HEq.
+    apply lookup_lt_Some in HEq. by rewrite -Hlen.
+  + rewrite lookup_app_r; last by apply lookup_ge_None.
+    apply lookup_ge_None in HEq. rewrite Hlen in HEq.
+    apply lookup_ge_None in HEq. rewrite HEq.
+    split => [_|]//. rewrite lookup_app_r; first by rewrite Hlen.
+    by apply lookup_ge_None.
+Qed.
 
 Lemma StronglySorted_lookup_le {A} R (l : list A) i j x y:
   StronglySorted R l → l !! i = Some x → l !! j = Some y → (i ≤ j)%nat → x = y ∨ R x y.
@@ -278,22 +347,57 @@ Proof.
   - apply: IH => //. lia.
 Qed.
 
+Lemma StronglySorted_lookup_lt {A} R (l : list A) i j x y:
+  StronglySorted R l → l !! i = Some x → l !! j = Some y → ¬ R y x → x ≠ y → (i < j)%nat.
+Proof.
+  move => Hs Hi Hj HR Hneq. elim: Hs j i Hj Hi => // z {}l _ IH /Forall_forall Hall.
+  case => /=.
+  - case; first naive_solver. move => n [?]/= /(elem_of_list_lookup_2 _ _ _)?; subst. naive_solver.
+  - move => n. case; first lia. move => n2 /= ??. apply lt_n_S. naive_solver.
+Qed.
 
-  Lemma StronglySorted_lookup_lt {A} R (l : list A) i j x y:
-    StronglySorted R l → l !! i = Some x → l !! j = Some y → ¬ R y x → x ≠ y → (i < j)%nat.
-  Proof.
-    move => Hs Hi Hj HR Hneq. elim: Hs j i Hj Hi => // z {}l _ IH /Forall_forall Hall.
-    case => /=.
-    - case; first naive_solver. move => n [?]/= /(elem_of_list_lookup_2 _ _ _)?; subst. naive_solver.
-    - move => n. case; first lia. move => n2 /= ??. apply lt_n_S. naive_solver.
-  Qed.
+(** * vec *)
+Lemma vec_cast {A} n (v : vec A n) m:
+  n = m → ∃ v' : vec A m, vec_to_list v = vec_to_list v'.
+Proof.
+  elim: v m => [|??? IH] [|m']// ?.
+  - by eexists vnil.
+  - have [|??]:= IH m'. { lia. }
+    eexists (vcons _ _) => /=. by f_equal.
+Qed.
 
+(** * map *)
 
-  Definition list_subequiv {A} (ignored : list nat) (l1 l2 : list A) : Prop
-    := ∀ i, length l1 = length l2 ∧ (i ∉ ignored → l1 !! i = l2 !! i).
-Typeclasses Opaque list_subequiv.
+Section theorems.
+Context `{FinMap K M}.
 
-  Global Instance list_subequiv_equiv A ig : Equivalence (list_subequiv (A:=A) ig).
+Lemma partial_alter_self_alt' {A} (m : M A) i f:
+  m !! i = f (m !! i) → partial_alter f i m = m.
+Proof using Type*.
+  intros. apply map_eq. intros ii. by destruct (decide (i = ii)) as [->|];
+    rewrite ?lookup_partial_alter ?lookup_partial_alter_ne.
+Qed.
+
+Lemma partial_alter_to_insert {A} x (m : M A) f k:
+    f (m !! k) = Some x →
+    partial_alter f k m = <[k := x]> m.
+Proof using Type*. move => ?. by apply: partial_alter_ext => ? <-. Qed.
+
+End theorems.
+
+(** * option  *)
+Lemma apply_default {A B} (f : A → B) (d : A) (o : option A) :
+  f (default d o) = default (f d) (f <$> o).
+Proof. by destruct o. Qed.
+
+(** * list_subequiv *)
+Definition list_subequiv {A} (ignored : list nat) (l1 l2 : list A) : Prop :=
+  ∀ i, length l1 = length l2 ∧ (i ∉ ignored → l1 !! i = l2 !! i).
+Section list_subequiv.
+  Context {A : Type}.
+  Implicit Type l : list A.
+
+  Global Instance list_subequiv_equiv ig : Equivalence (list_subequiv (A:=A) ig).
   Proof.
     unfold list_subequiv. split => //.
     - move => ?? H i. move: (H i) => [-> ?]. split; first done. symmetry. naive_solver.
@@ -301,15 +405,15 @@ Typeclasses Opaque list_subequiv.
       split; first done. etrans; first exact: H1i. naive_solver.
   Qed.
 
-  Lemma subequiv_nil_l {A} (l : list A) ig:
+  Lemma list_subequiv_nil_l l ig:
     list_subequiv ig [] l ↔ l = [].
   Proof. split => Hs; destruct l => //. by move: (Hs 0) => [??]. Qed.
 
-  Lemma subequiv_nil_r {A} (l : list A) ig:
+  Lemma list_subequiv_nil_r l ig:
     list_subequiv ig l [] ↔ l = [].
   Proof. split => Hs; destruct l => //. by move: (Hs 0) => [??]. Qed.
 
-  Lemma subequiv_insert_in_l {A} (l1 l2 : list A) j x ig:
+  Lemma list_subequiv_insert_in_l l1 l2 j x ig:
     j ∈ ig →
     list_subequiv ig (<[j := x]>l1) l2 ↔ list_subequiv ig l1 l2.
   Proof.
@@ -320,16 +424,16 @@ Typeclasses Opaque list_subequiv.
       rewrite list_lookup_insert_ne; naive_solver.
   Qed.
 
-  Lemma subequiv_insert_in_r {A} (l1 l2 : list A) j x ig:
+  Lemma list_subequiv_insert_in_r l1 l2 j x ig:
     j ∈ ig →
     list_subequiv ig l1 (<[j := x]>l2) ↔ list_subequiv ig l1 l2.
   Proof.
     move => ?.
     rewrite (symmetry_iff (list_subequiv _)) [in X in _ ↔ X](symmetry_iff (list_subequiv _)).
-      by apply subequiv_insert_in_l.
+      by apply list_subequiv_insert_in_l.
   Qed.
 
-  Lemma subequiv_insert_ne_l {A} (l1 l2 : list A) j x ig:
+  Lemma list_subequiv_insert_ne_l l1 l2 j x ig:
     (j < length l1)%nat → j ∉ ig →
     list_subequiv ig (<[j := x]>l1) l2 ↔ l2 !! j = Some x ∧ list_subequiv (j :: ig) l1 l2.
   Proof.
@@ -343,18 +447,37 @@ Typeclasses Opaque list_subequiv.
       + rewrite list_lookup_insert_ne//. move: (Hs i) => [? H]// ?. apply H. set_solver.
   Qed.
 
-  Lemma list_insert_subequiv {A} (l1 l2 : list A) j x1 :
+  Lemma list_subequiv_app_r l1 l2 l3 ig:
+    list_subequiv ig (l1 ++ l3) (l2 ++ l3) ↔ list_subequiv ig l1 l2.
+  Proof.
+  rewrite /list_subequiv. split => H i; move: (H i) => [Hlen Hlookup].
+  - rewrite app_length app_length in Hlen. split; first by lia.
+    move => /Hlookup. apply lookup_eq_app_r. by lia.
+  - split; first by rewrite app_length app_length Hlen.
+    move => /Hlookup. apply lookup_eq_app_r. by lia.
+  Qed.
+
+  Lemma list_subequiv_fmap {B} ig l1 l2 (f : A → B):
+    list_subequiv ig l1 l2 →
+    list_subequiv ig (f <$> l1) (f <$> l2).
+  Proof.
+    move => Hs i. move: (Hs 0%nat) => [Hlen _].
+    do 2 rewrite fmap_length. split => // ?. rewrite !list_lookup_fmap.
+    f_equal. move: (Hs i) => [_ ?]. naive_solver.
+  Qed.
+
+  Lemma list_insert_subequiv l1 l2 j x1 :
     (j < length l1)%nat →
     <[j:=x1]>l1 = l2 ↔ l2 !! j = Some x1 ∧ list_subequiv [j] l1 l2.
   Proof.
     move => ?. split.
-    - move => <-. rewrite list_lookup_insert // subequiv_insert_in_r //. set_solver.
+    - move => <-. rewrite list_lookup_insert // list_subequiv_insert_in_r //. set_solver.
     - move => [? Hsub]. apply list_eq => i. case: (decide (i = j)) => [->|?].
       + by rewrite list_lookup_insert.
       + rewrite list_lookup_insert_ne//. apply Hsub. set_solver.
   Qed.
 
-  Lemma list_subequiv_split {A} (l1 l2 : list A) i :
+  Lemma list_subequiv_split l1 l2 i :
     length l1 = length l2 →
     list_subequiv [i] l1 l2 ↔
     take i l1 = take i l2 ∧ drop (S i) l1 = drop (S i) l2.
@@ -372,24 +495,19 @@ Typeclasses Opaque list_subequiv.
       + have ->:(n = (S i) + (n - (S i)))%nat by lia.
         by rewrite -!lookup_drop Hd.
   Qed.
+End list_subequiv.
+Typeclasses Opaque list_subequiv.
+Global Opaque list_subequiv.
 
-Lemma default_last_cons {A} (x1 x2 y : A) l :
-  default x1 (last (y :: l)) = default x2 (last (y :: l)).
-Proof. elim: l y => //=. Qed.
-
-Lemma list_lookup_length_default_last {A} (x : A) (l : list A) :
-  (x :: l) !! length l = Some (default x (last l)).
-Proof. elim: l x => //= a l IH x. rewrite IH. f_equal. destruct l => //=. apply default_last_cons. Qed.
-
-
+(** * big_andM *)
 Reserved Notation "'[∧' 'map]' k ↦ x ∈ m , P"
-           (at level 200, m at level 10, k, x at level 1, right associativity,
-            format "[∧  map]  k ↦ x  ∈  m ,  P").
-  Reserved Notation "'[∧' 'map]' x ∈ m , P"
-           (at level 200, m at level 10, x at level 1, right associativity,
-            format "[∧  map]  x  ∈  m ,  P").
-  Notation "'[∧' 'map]' k ↦ x ∈ m , P" := (big_opM bi_and (λ k x, P) m) : bi_scope.
-  Notation "'[∧' 'map]' x ∈ m , P" := (big_opM bi_and (λ _ x, P) m) : bi_scope.
+         (at level 200, m at level 10, k, x at level 1, right associativity,
+          format "[∧  map]  k ↦ x  ∈  m ,  P").
+Reserved Notation "'[∧' 'map]' x ∈ m , P"
+         (at level 200, m at level 10, x at level 1, right associativity,
+          format "[∧  map]  x  ∈  m ,  P").
+Notation "'[∧' 'map]' k ↦ x ∈ m , P" := (big_opM bi_and (λ k x, P) m) : bi_scope.
+Notation "'[∧' 'map]' x ∈ m , P" := (big_opM bi_and (λ _ x, P) m) : bi_scope.
 
 Section bi_big_op.
   Context {PROP : bi}.
@@ -402,8 +520,6 @@ Section bi_big_op.
   Implicit Types Φ Ψ : K → A → PROP.
   Lemma big_andM_empty Φ : ([∧ map] k↦y ∈ ∅, Φ k y) ⊣⊢ True.
   Proof. by rewrite big_opM_empty. Qed.
-  (* Lemma big_andL_empty' P Φ : P ⊢ [∧ map] k↦y ∈ ∅, Φ k y. *)
-  (* Proof. rewrite big_sepM_empty. by apply pure_intro. Qed. *)
   Lemma big_andM_insert Φ m i x :
     m !! i = None →
     ([∧ map] k↦y ∈ <[i:=x]> m, Φ k y) ⊣⊢ Φ i x ∧ [∧ map] k↦y ∈ m, Φ k y.
@@ -411,6 +527,7 @@ Section bi_big_op.
   End map.
 End bi_big_op.
 
+(** * big_op *)
 Section big_op.
 Context {PROP : bi}.
 Implicit Types P Q : PROP.
@@ -425,17 +542,14 @@ Section sep_list.
 
   Lemma big_sepL_insert l i x Φ:
     (i < length l)%nat →
- (([∗ list] k↦v ∈ <[i:=x]> l, Φ k v) ⊣⊢ Φ i x ∗ ([∗ list] k↦v ∈ l, if bool_decide (k = i) then emp else Φ k v)).
-Proof.
-  intros Hl.
-  destruct (lookup_lt_is_Some_2 l i Hl) as [y Hy].
-  rewrite -(take_drop_middle l i y) // insert_app_r_alt take_length_le // ?Nat.sub_diag /=; [|lia..].
-  rewrite !big_sepL_app /= take_length_le ?Nat.add_0_r ?bool_decide_true ?left_id //; [|lia].
-  rewrite assoc (comm _ _ (Φ _ _)) -assoc.
-  do 2 f_equiv; apply big_sepL_proper => ?? /(lookup_lt_Some _ _ _) Hin ; rewrite bool_decide_false //.
-  - rewrite take_length in Hin. lia.
-  - rewrite drop_length in Hin. lia.
-Qed.
+    (([∗ list] k↦v ∈ <[i:=x]> l, Φ k v) ⊣⊢ Φ i x ∗ ([∗ list] k↦v ∈ l, if decide (k = i) then emp else Φ k v)).
+  Proof.
+    intros Hl.
+    destruct (lookup_lt_is_Some_2 l i Hl) as [y Hy].
+    rewrite big_sepL_delete; [| by apply list_lookup_insert].
+    rewrite insert_take_drop // -{3}(take_drop_middle l i y) // !big_sepL_app /=.
+    do 3 f_equiv. rewrite take_length. case_decide => //. lia.
+  Qed.
 
 Lemma big_sepL_impl' {B} Φ (Ψ : _ → B → _) (l1 : list A) (l2 : list B) :
     length l1 = length l2 →
@@ -471,65 +585,7 @@ End sep_list.
   Qed.
 End big_op.
 
-Lemma vec_cast {A} n (v : vec A n) m:
-  n = m → ∃ v' : vec A m, vec_to_list v = vec_to_list v'.
-Proof.
-  elim: v m => [|??? IH] [|m']// ?.
-  - by eexists vnil.
-  - have [|??]:= IH m'. { lia. }
-    eexists (vcons _ _) => /=. by f_equal.
-Qed.
-
-
-Lemma filter_nil_inv {A} P `{!∀ x, Decision (P x)} (l : list A):
-  filter P l = [] ↔ (∀ x : A, x ∈ l → ¬ P x).
-Proof.
-  elim: l. 1: by rewrite filter_nil; set_solver.
-  move => x l IH. rewrite filter_cons. case_decide; set_solver.
-Qed.
-
-Lemma length_filter_gt {A} P `{!∀ x, Decision (P x)} (l : list A) x:
-  x ∈ l → P x →
-  (0 < length (filter P l))%nat.
-Proof. elim; move => *; rewrite filter_cons; case_decide; naive_solver lia. Qed.
-
-Lemma length_filter_insert {A} P `{!∀ x, Decision (P x)} (l : list A) i x x':
-  l !! i = Some x' →
-  length (filter P (<[i:=x]>l)) =
-  (length (filter P l) + (if bool_decide (P x) then 1 else 0) - (if bool_decide (P x') then 1 else 0))%nat.
-Proof.
-  elim: i l. move => [] //=??[->]. rewrite !filter_cons. by repeat (case_decide; case_bool_decide) => //=; lia.
-  move => i IH [|? l]//=?. rewrite !filter_cons. case_decide => //=; rewrite IH // -minus_Sn_m //.
-  repeat case_bool_decide => //; try lia. feed pose proof (length_filter_gt P l x') => //; try lia.
-    by apply: elem_of_list_lookup_2.
-Qed.
-
-Lemma length_filter_replicate_True {A} P `{!∀ x, Decision (P x)} (x : A) len:
-  P x → length (filter P (replicate len x)) = len.
-Proof. elim: len => //=???. rewrite filter_cons. case_decide => //=. f_equal. naive_solver. Qed.
-
-Lemma gmultiset_elem_of_equiv_empty {A} `{!EqDecision A} `{!Countable A} (X : gmultiset A):
-  X = ∅ ↔ (∀ x, x ∉ X).
-Proof. split; [set_solver|]. destruct (gmultiset_choose_or_empty X); naive_solver. Qed.
-
-Lemma reshape_app {A} (ln1 ln2 : list nat) (l : list A) :
-  reshape (ln1 ++ ln2) l = reshape ln1 (take (sum_list ln1) l) ++ reshape ln2 (drop (sum_list ln1) l).
-Proof. elim: ln1 l => //= n ln1 IH l. rewrite take_take skipn_firstn_comm IH drop_drop. repeat f_equal; lia. Qed.
-Lemma omap_app {A B} (f : A → option B) (s1 s2 : list A):
-  omap f (s1 ++ s2) = omap f s1 ++ omap f s2.
-Proof. elim: s1 => //. csimpl => ?? ->. case_match; naive_solver. Qed.
-Lemma sum_list_with_take {A} f (l : list A) i:
-   (sum_list_with f (take i l) ≤ sum_list_with f l)%nat.
-Proof. elim: i l => /=. lia. move => ? IH [|? l2] => //=. move: (IH l2). lia.  Qed.
-  Lemma omap_length_eq {A B C} (f : A → option B) (g : A → option C) (l : list A):
-    (∀ i x, l !! i = Some x → const () <$> (f x) = const () <$> (g x)) →
-    length (omap f l) = length (omap g l).
-  Proof.
-    elim: l => //; csimpl => x ? IH Hx. move: (Hx O x ltac:(done)) => /=?.
-    do 2 case_match => //=; rewrite IH // => i ??; by apply: (Hx (S i)).
-  Qed.
-
-
+(** * power_of_two and factor2  *)
 Definition is_power_of_two (n : nat) := ∃ m : nat, n = (2^m)%nat.
 Arguments is_power_of_two : simpl never.
 Typeclasses Opaque is_power_of_two.
@@ -731,80 +787,7 @@ Lemma mult_le_compat_r_1 m p:
   (1 ≤ m)%nat → (p ≤ m * p)%nat.
 Proof. nia. Qed.
 
-
-Lemma if_bool_decide_eq_branches {A} P `{!Decision P} (x : A) :
-  (if bool_decide P then x else x) = x.
-Proof. by case_bool_decide. Qed.
-
-(* from https://mattermost.mpi-sws.org/iris/pl/dcktjjjpsiycmrieyh74bzoagr *)
-Ltac solve_sep_entails :=
-  try (apply equiv_entails; split);
-  iIntros;
-  repeat iMatchHyp (fun H P =>
-    lazymatch P with
-    | (_ ∗ _)%I => iDestruct H as "[??]"
-    | (∃ _, _)%I => iDestruct H as (?) "?"
-    end);
-  eauto with iFrame.
-
-Inductive TCFalse : Prop :=.
-Existing Class TCFalse.
-
-Notation TCUnless P := (TCIf P TCFalse TCTrue).
-
-Inductive TCExists {A} (P : A → Prop) : list A → Prop :=
-| TCExists_cons_hd x l : P x → TCExists P (x :: l)
-| TCExists_cons_tl x l: TCExists P l → TCExists P (x :: l).
-Existing Class TCExists.
-Existing Instance TCExists_cons_hd | 10.
-Existing Instance TCExists_cons_tl | 20.
-Global Hint Mode TCExists ! ! ! : typeclass_instances.
-
-Lemma TCExists_Exists {A} (P : A → Prop) l :
-  TCExists P l ↔ Exists P l.
-Proof.
-  elim: l. { split; inversion 1. }
-  move => ?? IH. split; inversion 1; simplify_eq; constructor => //; by apply IH.
-Qed.
-
-(* Binary representation of bounded integers. *)
-
-Lemma pos_bounded_iff_bits k n :
-  (0 ≤ k → 0 ≤ n → n < 2^k ↔ ∀ l, k ≤ l → Z.testbit n l = false)%Z.
-Proof.
-  move => Hk Hn.
-  destruct (decide (n = 0)) as [->|].
-  - setoid_rewrite Z.bits_0. split => // ?. by apply: Z.pow_pos_nonneg.
-  - split.
-    + move => /Z.log2_lt_pow2 Hb l Hl.
-      apply Z.bits_above_log2 => //. lia.
-    + move => Hl.
-      destruct (decide (n < 2^k)%Z) => //.
-      have : Z.testbit n (Z.log2 n) = false.
-      { apply Hl, Z.log2_le_pow2; lia. }
-      rewrite Z.bit_log2 //. lia.
-Qed.
-
-Lemma bounded_iff_bits k n :
-  (0 ≤ k → -2^k ≤ n < 2^k ↔
-    ∀ l, k ≤ l → Z.testbit n l = bool_decide (n < 0))%Z.
-Proof.
-  move => Hk.
-  case_bool_decide; last by rewrite -pos_bounded_iff_bits; lia.
-  have -> : (n = - Z.abs n)%Z by lia.
-  split.
-  + move => [? _] l Hl.
-    rewrite Z.bits_opp ?negb_true_iff; last lia.
-    eapply pos_bounded_iff_bits => //; lia.
-  + move => He.
-    split; last by etrans; [|apply: Z.pow_pos_nonneg]; lia.
-    rewrite -Z.opp_le_mono.
-    suff : (Z.abs n - 1 < 2 ^ k)%Z by lia.
-    apply pos_bounded_iff_bits; [lia..|] => l Hl.
-    rewrite -negb_true_iff -Z.bits_opp; last lia.
-    by apply: He.
-Qed.
-
+(** * shifts *)
 Section shifts.
 Local Open Scope Z_scope.
 Lemma Z_shiftl_le_mono_l n a b:
@@ -886,30 +869,4 @@ Proof.
   move => ?.
   apply: Z.mod_pos_bound.
   by apply: Z.pow_pos_nonneg.
-Qed.
-
-Definition exists_dec_unique {A} (x : A) (P : _ → Prop) : (∀ y, P y → P x) → Decision (P x) → Decision (∃ y, P y).
-Proof.
-  intros Hx Hdec.
-  refine (cast_if (decide (P x))).
-  - abstract by eexists _.
-  - abstract naive_solver.
-Defined.
-
-Lemma join_length {A} (l : list (list A)) :
-  length (mjoin l) = sum_list (length <$> l).
-Proof. elim: l => // ?? IH; csimpl. rewrite app_length IH //. Qed.
-
-Lemma sum_list_eq l1 l2:
-  Forall2 eq l1 l2 →
-  sum_list l1 = sum_list l2.
-Proof. by elim => // ???? -> /= ? ->. Qed.
-
-Lemma reshape_join {A} szs (ls : list (list A)) :
-  Forall2 (λ l sz, length l = sz) ls szs →
-  reshape szs (mjoin ls) = ls.
-Proof.
-  revert ls. induction szs as [|sz szs IH]; simpl; intros ls; [by inversion 1|].
-  intros (?&?&?&?&?)%Forall2_cons_inv_r; simplify_eq/=. rewrite take_app drop_app. f_equal.
-  naive_solver.
 Qed.

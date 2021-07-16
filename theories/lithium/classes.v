@@ -227,14 +227,14 @@ Proof.
   iDestruct "Hl" as "[Hx Hl]". case_bool_decide => //.
   iDestruct ("Hsub" with "[Hl]") as "[% [Hl HT]]". {
     iApply (big_sepL_impl with "Hl"). iIntros "!>" (???) "?".
-    repeat case_bool_decide => //; set_solver.
+    repeat case_decide => //; set_solver.
   }
   iSplit => //.
   have [//|y ?]:= lookup_lt_is_Some_2 l2 i. { lia. }
   iDestruct ("HT" with "[//] Hx") as "[Hf $]".
   rewrite -{2}(list_insert_id l2 i y) // big_sepL_insert; [|lia]. case_bool_decide => //. iFrame.
   iApply (big_sepL_impl with "Hl"). iIntros "!>" (???) "?".
-  repeat case_bool_decide => //; set_solver.
+  repeat case_decide => //; set_solver.
 Qed.
 Global Instance subsume_list_insert_not_in_ig_inst {Σ} A ig i x (l1 l2 : list A) (f : nat → A → iProp Σ) `{!CanSolve (i ∉ ig)} :
   SubsumeList A ig (<[i := x]>l1) l2 f :=

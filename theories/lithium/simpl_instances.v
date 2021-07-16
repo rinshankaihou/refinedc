@@ -278,7 +278,7 @@ Global Instance simpl_insert_subequiv {A} (l1 l2 : list A) j x1 ig `{!CanSolve (
                                       list_subequiv (j :: ig) l1 l2 ∧ l2 !! j = Some x1).
 Proof.
   unfold CanSolve in *. unfold SimplBothRel.
-  case_bool_decide; [rewrite subequiv_insert_in_l | rewrite subequiv_insert_ne_l ]; naive_solver.
+  case_bool_decide; [rewrite list_subequiv_insert_in_l | rewrite list_subequiv_insert_ne_l ]; naive_solver.
 Qed.
 
 Global Instance simpl_ig_nil_subequiv {A} (l1 l2 : list A) :
@@ -290,32 +290,11 @@ Qed.
 
 Global Instance simpl_nil_subequiv {A} (l : list A) ig :
   SimplBothRel (list_subequiv ig) [] l (l = []).
-Proof. by split; rewrite subequiv_nil_l. Qed.
-
-Lemma lookup_eq_app_r {A} (l1 l2 suffix : list A) (i : nat) :
-  length l1 = length l2 →
-  l1 !! i = l2 !! i ↔ (l1 ++ suffix) !! i = (l2 ++ suffix) !! i.
-Proof.
-  move => Hlen. destruct (l1 !! i) as [v|] eqn:HEq.
-  + rewrite lookup_app_l; last by eapply lookup_lt_Some.
-    rewrite lookup_app_l; first by rewrite -HEq.
-    apply lookup_lt_Some in HEq. by rewrite -Hlen.
-  + rewrite lookup_app_r; last by apply lookup_ge_None.
-    apply lookup_ge_None in HEq. rewrite Hlen in HEq.
-    apply lookup_ge_None in HEq. rewrite HEq.
-    split => [_|]//. rewrite lookup_app_r; first by rewrite Hlen.
-    by apply lookup_ge_None.
-Qed.
+Proof. by split; rewrite list_subequiv_nil_l. Qed.
 
 Global Instance simpl_app_r_subequiv {A} (l1 l2 suffix : list A) ig :
   SimplBothRel (list_subequiv ig) (l1 ++ suffix) (l2 ++ suffix) (list_subequiv ig l1 l2).
-Proof.
-  rewrite /list_subequiv. split => H i; move: (H i) => [Hlen Hlookup].
-  - rewrite app_length app_length in Hlen. split; first by lia.
-    move => /Hlookup. apply lookup_eq_app_r. by lia.
-  - split; first by rewrite app_length app_length Hlen.
-    move => /Hlookup. apply lookup_eq_app_r. by lia.
-Qed.
+Proof. apply: list_subequiv_app_r. Qed.
 
 (* The other direction requires `{!Inj (=) (=) f}, but we cannot prove
 it if f goes into type. Thus we use the AssumeInj typeclass such that
@@ -323,11 +302,7 @@ the user can mark functions which are morally injective, but one
 cannot prove it. *)
 Global Instance simpl_fmap_fmap_subequiv_Unsafe {A B} (l1 l2 : list A) ig (f : A → B) `{!AssumeInj (=) (=) f}:
   SimplAndUnsafe true (list_subequiv ig (f <$> l1) (f <$> l2)) (λ T, list_subequiv ig l1 l2 ∧ T).
-Proof.
-  move => ? [Hs ?]. split => // i. move: (Hs 0%nat) => [Hlen _].
-  do 2 rewrite fmap_length. split => // ?. rewrite !list_lookup_fmap.
- f_equal. move: (Hs i) => [_ ?]. naive_solver.
-Qed.
+Proof. move => ? [Hs ?]. split => //. by apply: list_subequiv_fmap. Qed.
 
 (* The other direction might not hold if ig contains indices which are
 out of bounds, but we don't care about that. *)
@@ -335,11 +310,14 @@ Global Instance simpl_subequiv_protected {A} (l1 l2 : list A) ig `{!IsProtected 
   SimplAndUnsafe true (list_subequiv ig l1 l2) (λ T,
     foldr (λ i f, (λ l', ∃ x, f (<[i:=x]> l'))) (λ l', l2 = l' ∧ T) ig l1).
 Proof.
+  (* TODO: add a lemma for list_subequiv such that this unfolding is not necessary anymore. *)
+  Local Transparent list_subequiv.
   unfold list_subequiv, IsProtected in * => T. elim: ig l1 l2.
   - move => ??/=. move => [??]. naive_solver.
   - move => i ig IH l1 l2/= [x /IH [Hi ?]]. split => // i'.
     move: (Hi i') => [<- Hlookup]. rewrite insert_length. split => //.
     move => Hi'. rewrite -Hlookup ?list_lookup_insert_ne; set_solver.
+  Local Opaque list_subequiv.
 Qed.
 
 Global Instance simpl_fmap_nil {A B} (l : list A) (f : A → B) : SimplBothRel (=) (f <$> l) [] (l = []).
