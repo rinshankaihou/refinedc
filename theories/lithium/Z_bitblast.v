@@ -1,5 +1,9 @@
-From refinedc.lithium Require Import base.
-From Coq.btauto Require Import Btauto.
+From Coq Require Import ssreflect.
+From stdpp Require Import prelude.
+From Coq.btauto Require Export Btauto.
+
+(* set globally in base.v *)
+Local Set Keyed Unification.
 
 Local Open Scope bool_scope.
 Local Open Scope Z_scope.
@@ -99,7 +103,7 @@ Ltac bitblast :=
 
 (** tests **)
 
-Goal ∀ x a k, 
+Goal ∀ x a k,
   Z.land x (Z.land (Z.ones k) (Z.ones k) ≪ a) =
   Z.land (Z.land (x ≫ a) (Z.ones k)) (Z.ones k) ≪ a.
   by intros; bitblast. Abort.

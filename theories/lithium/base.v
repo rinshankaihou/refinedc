@@ -8,6 +8,7 @@ From iris.bi Require Import derived_laws.
 Import interface.bi derived_laws.bi.
 From iris.proofmode Require Import tactics.
 From stdpp Require Import natmap.
+From refinedc.lithium Require Import Z_bitblast.
 Set Default Proof Using "Type".
 
 Global Unset Program Cases.
@@ -838,12 +839,9 @@ Lemma Z_shiftl_shiftr_0 a n :
 Proof.
   move => ? Hland.
   rewrite -Z.ldiff_ones_r //.
-  apply Z.bits_inj_iff' => n' ?.
-  rewrite Z.ldiff_spec Z_ones_spec //. rewrite andb_comm.
-  case_bool_decide => //=. symmetry.
-  move/Z.bits_inj_iff' in Hland. move: (Hland n').
-  rewrite Z.bits_0 Z.land_spec Z_ones_spec//. case_bool_decide => //.
-  rewrite andb_true_r. naive_solver.
+  bitblast.
+  move/Z.bits_inj_iff' in Hland. move: (Hland i ltac:(done)).
+  by rewrite_testbit.
 Qed.
 Lemma Z_shiftl_distr_add a b c:
   0 ≤ c →
