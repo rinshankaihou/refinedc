@@ -23,6 +23,9 @@ Global Opaque iris_invG.
 Instance into_val_val v : IntoVal (to_rtexpr (Val v)) v.
 Proof. done. Qed.
 
+Global Instance wp_expr_wp `{!refinedcG Σ} : Wp (iProp Σ) expr val stuckness :=
+  λ s E e Φ, (WP (coerce_rtexpr e) @ s; E {{ Φ }})%I.
+
 Local Hint Extern 0 (reducible _ _) => eexists _, _, _, _; simpl : core.
 Local Hint Extern 0 (head_reducible _ _) => eexists _, _, _, _; simpl : core.
 Local Hint Unfold heap_at : core.
@@ -615,7 +618,7 @@ Proof. by iApply @wp_value. Qed.
 
 Lemma wp_if Φ it v e1 e2 n:
   val_to_Z v it = Some n →
-  (if decide (n = 0) then WP coerce_rtexpr e2 {{ Φ }} else WP coerce_rtexpr e1 {{ Φ }}) -∗
+  (if decide (n = 0) then WP e2 {{ Φ }} else WP e1 {{ Φ }}) -∗
   WP IfE (IntOp it) (Val v) e1 e2 {{ Φ }}.
 Proof.
   iIntros (?) "HΦ".
@@ -648,8 +651,8 @@ Proof.
 Qed.
 
 Lemma wps_concat_bind_ind vs E Φ es:
-  foldr (λ e f, (λ vl, WP coerce_rtexpr e @ E {{ v, f (vl ++ [v]) }}))
-        (λ vl, WP coerce_rtexpr (Concat (Val <$> (vs ++ vl))) @ E {{ Φ }}) es [] -∗
+  foldr (λ e f, (λ vl, WP e @ E {{ v, f (vl ++ [v]) }}))
+        (λ vl, WP (Concat (Val <$> (vs ++ vl))) @ E {{ Φ }}) es [] -∗
   WP Concat ((Val <$> vs) ++ es) @ E {{ Φ }}.
 Proof.
   rewrite -{2}(app_nil_r vs).
@@ -657,6 +660,7 @@ Proof.
   elim: es vs vl2 => /=.
   - iIntros (vs vl2) "He". by rewrite !app_nil_r.
   - iIntros (e el IH vs vl2) "Hf".
+    rewrite /wp/wp_expr_wp.
     have -> : (coerce_rtexpr (Concat ((Val <$> vs ++ vl2) ++ e :: el)))%E = (fill [ExprCtx (ConcatCtx (vs ++ vl2) (to_rtexpr <$> el))] (to_rtexpr e)). {
         by rewrite /coerce_rtexpr/= fmap_app fmap_cons -!list_fmap_compose.
     }
@@ -668,14 +672,14 @@ Proof.
 Qed.
 
 Lemma wp_concat_bind E Φ es:
-  foldr (λ e f, (λ vl, WP coerce_rtexpr e @ E {{ v, f (vl ++ [v]) }}))
-        (λ vl, WP coerce_rtexpr (Concat (Val <$> vl)) @ E {{ Φ }}) es [] -∗
+  foldr (λ e f, (λ vl, WP e @ E {{ v, f (vl ++ [v]) }}))
+        (λ vl, WP (Concat (Val <$> vl)) @ E {{ Φ }}) es [] -∗
   WP Concat es @ E {{ Φ }}.
 Proof. by iApply (wps_concat_bind_ind []). Qed.
 
 Lemma wp_struct_init E Φ sl fs:
   foldr (λ '(n, ly) f, (λ vl,
-     WP coerce_rtexpr (default (Val (replicate (ly_size ly) MPoison)) (n' ← n; (list_to_map fs : gmap _ _) !! n'))
+     WP (default (Val (replicate (ly_size ly) MPoison)) (n' ← n; (list_to_map fs : gmap _ _) !! n'))
         @ E {{ v, f (vl ++ [v]) }}))
     (λ vl, Φ (mjoin vl)) sl.(sl_members) [] -∗
   WP StructInit sl fs @ E {{ Φ }}.
@@ -687,8 +691,8 @@ Proof.
 Qed.
 
 Lemma wp_call_bind_ind vs E Φ vf el:
-  foldr (λ e f, (λ vl, WP coerce_rtexpr e @ E {{ v, f (vl ++ [v]) }}))
-        (λ vl, WP coerce_rtexpr (Call (Val vf) (Val <$> (vs ++ vl))) @ E {{ Φ }}) el [] -∗
+  foldr (λ e f, (λ vl, WP e @ E {{ v, f (vl ++ [v]) }}))
+        (λ vl, WP Call (Val vf) (Val <$> (vs ++ vl)) @ E {{ Φ }}) el [] -∗
   WP (Call (Val vf) ((Val <$> vs) ++ el)) @ E {{ Φ}}.
 Proof.
   rewrite -{2}(app_nil_r vs).
@@ -696,6 +700,7 @@ Proof.
   elim: el vs vl2 => /=.
   - iIntros (vs vl2) "He". by rewrite !app_nil_r.
   - iIntros (e el IH vs vl2) "Hf".
+    rewrite /wp/wp_expr_wp.
     have -> : (coerce_rtexpr (Call (Val vf) ((Val <$> vs ++ vl2) ++ e :: el)))%E = (fill [ExprCtx (CallRCtx vf (vs ++ vl2) (to_rtexpr <$> el))] (to_rtexpr e)). {
         by rewrite /coerce_rtexpr/= fmap_app fmap_cons -!list_fmap_compose.
     }
@@ -707,11 +712,12 @@ Proof.
 Qed.
 
 Lemma wp_call_bind E Φ el ef:
-  WP (coerce_rtexpr ef) @ E {{ vf, foldr (λ e f, (λ vl, WP coerce_rtexpr e @ E {{ v, f (vl ++ [v]) }}))
-        (λ vl, WP coerce_rtexpr (Call (Val vf) (Val <$> vl)) @ E {{ Φ }}) el [] }} -∗
+  WP ef @ E {{ vf, foldr (λ e f, (λ vl, WP e @ E {{ v, f (vl ++ [v]) }}))
+        (λ vl, WP Call (Val vf) (Val <$> vl) @ E {{ Φ }}) el [] }} -∗
   WP (Call ef el) @ E {{ Φ }}.
 Proof.
   iIntros "HWP".
+  rewrite /wp/wp_expr_wp.
   have -> : coerce_rtexpr (Call ef el) = fill [ExprCtx $ CallLCtx (coerce_rtexpr <$> el)] (coerce_rtexpr ef) by [].
   iApply wp_bind.
   iApply (wp_wand with "HWP"). iIntros (vf) "HWP".

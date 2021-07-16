@@ -35,7 +35,7 @@ Lemma tac_wp_bind' `{refinedcG Σ} e Ks Φ E:
 Proof.
   iIntros "HWP".
   have [Ks' HKs']:= W.ectx_item_correct Ks.
-  rewrite /coerce_rtexpr HKs'. iApply wp_bind.
+  rewrite /wp/wp_expr_wp/coerce_rtexpr HKs'. iApply wp_bind.
   iApply (wp_wand with "HWP"). iIntros (v) "HWP".
   by rewrite HKs'.
 Qed.
@@ -52,8 +52,8 @@ Qed.
 Tactic Notation "wp_bind" :=
   iStartProof;
   lazymatch goal with
-  | |- envs_entails _ (wp ?s ?E (coerce_rtexpr ?e) ?Φ) =>
-    let e' := W.of_expr e in change (wp s E (coerce_rtexpr e) Φ) with (wp s E (coerce_rtexpr (W.to_expr e')) Φ);
+  | |- envs_entails _ (wp ?s ?E ?e ?Φ) =>
+    let e' := W.of_expr e in change (wp s E e Φ) with (wp s E (W.to_expr e') Φ);
     iApply tac_wp_bind; [done |];
     unfold W.to_expr; simpl
   | _ => fail "wp_bind: not a 'wp'"

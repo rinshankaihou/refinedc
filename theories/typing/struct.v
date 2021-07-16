@@ -334,7 +334,7 @@ Section struct.
         * rewrite app_length sum_list_with_app /= Hsz -Hv/=; lia.
         * by rewrite /field_names omap_app !app_length Hf.
         * iApply (big_sepL2_app with "Hvs"). by iFrame.
-      + iApply @wp_value.
+      + iApply wp_value.
         iApply ("IH" $! _ _ (v ++ replicate (ly_size l) ☠%V) with "[//] [] [] [] He HΦ");
           try iPureIntro; rewrite ?fmap_app ?pad_struct_snoc_None.
         * by rewrite reshape_app take_app_alt ?drop_app_alt /= ?take_ge ?Hsz ?replicate_length; subst.
