@@ -161,7 +161,10 @@ let run : config -> string -> unit = fun cfg c_file ->
       (* Add the mapping to the Coq project file for editors. *)
       let dune_dir_path =
         let relative_path = Filename.relative_path root_dir c_file_dir in
-        let path = Filename.concat "_build/default" relative_path in
+        let path =
+          if relative_path = Filename.current_dir_name then "_build/default"
+          else Filename.concat "_build/default" relative_path
+        in
         let path = Filename.concat path rc_dir_name in
         Filename.concat path c_file_name_no_ext
       in

@@ -95,6 +95,7 @@ module Filename =
     let relative_path : string -> string -> string = fun root file ->
       let root = realpath root in
       let file = realpath file in
+      if root = file then "." else
       let root_len = String.length root in
       let full_len = String.length file in
       if root_len > full_len then
