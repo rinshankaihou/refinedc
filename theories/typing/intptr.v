@@ -176,7 +176,7 @@ Section programs.
     typed_un_op v (v ◁ᵥ l.2 @ int    it) op (IntOp it) T -∗
     typed_un_op v (v ◁ᵥ l   @ intptr it) op (IntOp it) T.
   Proof.
-    iApply typed_un_op_wand. iApply intptr_wand_int.
+    iIntros "HT". iApply (typed_un_op_wand with "HT"). iApply intptr_wand_int.
   Qed.
   Global Instance typed_un_op_intptr_inst it v l op:
     TypedUnOpVal v (l @ intptr it)%I op (IntOp it) :=
@@ -186,7 +186,7 @@ Section programs.
     typed_bin_op v1 (v1 ◁ᵥ l.2 @ int    it) v2 (v2 ◁ᵥ ty) op (IntOp it) ot T -∗
     typed_bin_op v1 (v1 ◁ᵥ l   @ intptr it) v2 (v2 ◁ᵥ ty) op (IntOp it) ot T.
   Proof.
-    iApply typed_bin_op_wand; last by iIntros "$".
+    iIntros "HT". iApply (typed_bin_op_wand with "HT"); last by iIntros "$".
     iApply intptr_wand_int.
   Qed.
   Global Instance typed_bin_op_intptr_l_inst it v1 l v2 ty op ot `{!Movable ty}:
@@ -197,7 +197,7 @@ Section programs.
     typed_bin_op v1 (v1 ◁ᵥ ty) v2 (v2 ◁ᵥ l.2 @ int    it) op ot (IntOp it) T -∗
     typed_bin_op v1 (v1 ◁ᵥ ty) v2 (v2 ◁ᵥ l   @ intptr it) op ot (IntOp it) T.
   Proof.
-    iApply typed_bin_op_wand; first by iIntros "$".
+    iIntros "HT". iApply (typed_bin_op_wand with "HT"); first by iIntros "$".
     iApply intptr_wand_int.
   Qed.
   Global Instance typed_bin_op_intptr_r_inst it v1 ty v2 l op ot `{!Movable ty}:

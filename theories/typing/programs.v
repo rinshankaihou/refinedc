@@ -63,11 +63,11 @@ Section judgements.
   Class TypedAnnotStmt {A} (a : A) (l : loc) (P : iProp Σ) : Type :=
     typed_annot_stmt_proof T : iProp_to_Prop (typed_annot_stmt a l P T).
 
-  Definition typed_if (ot : op_type) (v : val) (ty : type) `{!Movable ty} (T1 T2 : iProp Σ) : iProp Σ :=
+  Definition typed_if (ot : op_type) (v : val) (P : iProp Σ) (T1 T2 : iProp Σ) : iProp Σ :=
     (* TODO: generalize this to PtrOp *)
-    (v ◁ᵥ ty -∗ ∃ it z, ⌜ot = IntOp it⌝ ∗ ⌜val_to_Z v it = Some z⌝ ∗ (if bool_decide (z ≠ 0) then T1 else T2)).
-  Class TypedIf (ot : op_type) (v : val) (ty : type) `{!Movable ty} : Type :=
-    typed_if_proof T1 T2 : iProp_to_Prop (typed_if ot v ty T1 T2).
+    (P -∗ ∃ it z, ⌜ot = IntOp it⌝ ∗ ⌜val_to_Z v it = Some z⌝ ∗ (if bool_decide (z ≠ 0) then T1 else T2)).
+  Class TypedIf (ot : op_type) (v : val) (P : iProp Σ) : Type :=
+    typed_if_proof T1 T2 : iProp_to_Prop (typed_if ot v P T1 T2).
 
   (*** statements *)
   Definition typed_stmt_post_cond (fn : function) (ls : list loc) (R : val → mtype → iProp Σ) (v : val) : iProp Σ :=
@@ -88,10 +88,10 @@ Section judgements.
   Class TypedSwitch (v : val) (ty : type) `{!Movable ty} (it : int_type) : Type :=
     typed_switch_proof m ss def fn ls R Q : iProp_to_Prop (typed_switch v ty it m ss def fn ls R Q).
 
-  Definition typed_assert (ot : op_type) (v : val) (ty : type) `{!Movable ty} (s : stmt) (fn : function) (ls : list loc) (R : val → mtype → iProp Σ) (Q : gmap label stmt) : iProp Σ :=
-    (v ◁ᵥ ty -∗ ∃ it z, ⌜ot = IntOp it⌝ ∗ ⌜val_to_Z v it = Some z⌝ ∗ ⌜z ≠ 0⌝ ∗ typed_stmt s fn ls R Q)%I.
-  Class TypedAssert (ot : op_type) (v : val) (ty : type) `{!Movable ty} : Type :=
-    typed_assert_proof s fn ls R Q : iProp_to_Prop (typed_assert ot v ty s fn ls R Q).
+  Definition typed_assert (ot : op_type) (v : val) (P : iProp Σ) (s : stmt) (fn : function) (ls : list loc) (R : val → mtype → iProp Σ) (Q : gmap label stmt) : iProp Σ :=
+    (P -∗ ∃ it z, ⌜ot = IntOp it⌝ ∗ ⌜val_to_Z v it = Some z⌝ ∗ ⌜z ≠ 0⌝ ∗ typed_stmt s fn ls R Q)%I.
+  Class TypedAssert (ot : op_type) (v : val) (P : iProp Σ) : Type :=
+    typed_assert_proof s fn ls R Q : iProp_to_Prop (typed_assert ot v P s fn ls R Q).
   (*** expressions *)
   Definition typed_val_expr (e : expr) (T : val → mtype → iProp Σ) : iProp Σ :=
     (∀ Φ, (∀ v (ty : mtype), v ◁ᵥ ty -∗ T v ty -∗ Φ v) -∗ WP e {{ Φ }}).
@@ -330,8 +330,8 @@ Hint Mode SubsumeVal + + + + ! + ! : typeclass_instances.
 Hint Mode SimpleSubsumePlace + + + ! - : typeclass_instances.
 Hint Mode SimpleSubsumePlaceR + + + ! + ! - : typeclass_instances.
 Hint Mode SimpleSubsumeVal + + + ! + ! - : typeclass_instances.
-Hint Mode TypedIf + + + + + + : typeclass_instances.
-Hint Mode TypedAssert + + + + + + : typeclass_instances.
+Hint Mode TypedIf + + + + : typeclass_instances.
+Hint Mode TypedAssert + + + + + : typeclass_instances.
 Hint Mode TypedValue + + + : typeclass_instances.
 Hint Mode TypedBinOp + + + + + + + + + : typeclass_instances.
 Hint Mode TypedBinOpVal + + + + + + + + + + + : typeclass_instances.
@@ -826,6 +826,30 @@ Section typing.
     TypedAnnotExpr m a v P | 1000 :=
     λ T, i2p (typed_annot_expr_simplify A m a v P T n).
 
+  Lemma typed_if_simplify ot v (P T1 T2 : iProp Σ) n {SH : SimplifyHyp P (Some n)}:
+    (SH (find_in_context (FindValP v) (λ Q,
+       typed_if ot v Q T1 T2))).(i2p_P) -∗
+    typed_if ot v P T1 T2.
+  Proof.
+    iIntros "Hs Hv". iDestruct (i2p_proof with "Hs Hv") as (Q) "[HQ HT]" => /=. simpl in *.
+    iApply ("HT" with "HQ").
+  Qed.
+  Global Instance typed_if_simplify_inst ot v (P T1 T2 : iProp Σ) n {SH : SimplifyHyp P (Some n)}:
+    TypedIf ot v P | 1000 :=
+    λ T1 T2, i2p (typed_if_simplify ot v P T1 T2 n).
+
+  Lemma typed_assert_simplify ot v P s fn ls R Q n {SH : SimplifyHyp P (Some n)}:
+    (SH (find_in_context (FindValP v) (λ P',
+       typed_assert ot v P' s fn ls R Q))).(i2p_P) -∗
+    typed_assert ot v P s fn ls R Q.
+  Proof.
+    iIntros "Hs Hv". iDestruct (i2p_proof with "Hs Hv") as (P') "[HP' HT]" => /=. simpl in *.
+    iApply ("HT" with "HP'").
+  Qed.
+  Global Instance typed_assert_simplify_inst ot v P n {SH : SimplifyHyp P (Some n)}:
+    TypedAssert ot v P | 1000 :=
+    λ s fn ls R Q, i2p (typed_assert_simplify ot v P s fn ls R Q n).
+
   (*** statements *)
   Global Instance elim_modal_bupd_typed_stmt p s fn ls R Q P :
     ElimModal True p false (|==> P) P (typed_stmt s fn ls R Q) (typed_stmt s fn ls R Q).
@@ -872,7 +896,7 @@ Section typing.
   Qed.
 
   Lemma type_if Q it e s1 s2 fn ls R:
-    typed_val_expr e (λ v ty, typed_if (IntOp it) v ty
+    typed_val_expr e (λ v ty, typed_if (IntOp it) v (v ◁ᵥ ty)
           (typed_stmt s1 fn ls R Q) (typed_stmt s2 fn ls R Q)) -∗
     typed_stmt (if{IntOp it}: e then s1 else s2) fn ls R Q.
   Proof.
@@ -904,7 +928,7 @@ Section typing.
   Qed.
 
   Lemma type_assert Q it e s fn ls R:
-    typed_val_expr e (λ v ty, typed_assert (IntOp it) v ty s fn ls R Q) -∗
+    typed_val_expr e (λ v ty, typed_assert (IntOp it) v (v ◁ᵥ ty) s fn ls R Q) -∗
     typed_stmt (assert{IntOp it}: e; s) fn ls R Q.
   Proof.
     iIntros "He" (Hls). wps_bind.
@@ -965,15 +989,33 @@ Section typing.
     iApply ("HΦ" with "Hv"). by iApply "HT".
   Qed.
 
-  Lemma typed_if_wand ot v ty `{!Movable ty} T1 T2 T1' T2':
-    typed_if ot v ty T1 T2 -∗
+  Lemma typed_if_wand ot v (P : iProp Σ) T1 T2 T1' T2':
+    typed_if ot v P T1 T2 -∗
     ((T1 -∗ T1') ∧ (T2 -∗ T2')) -∗
-    typed_if ot v ty T1' T2'.
+    typed_if ot v P T1' T2'.
   Proof.
     iIntros "Hif HT Hv". iDestruct ("Hif" with "Hv") as (it z ? ?) "HC".
     iExists _, _. iSplit; [done|]. iSplit; [done|]. case_decide.
     - iDestruct "HT" as "[_ HT]". by iApply "HT".
     - iDestruct "HT" as "[HT _]". by iApply "HT".
+  Qed.
+
+  Lemma typed_bin_op_wand v1 P1 Q1 v2 P2 Q2 op ot1 ot2 T:
+    typed_bin_op v1 Q1 v2 Q2 op ot1 ot2 T -∗
+    (P1 -∗ Q1) -∗
+    (P2 -∗ Q2) -∗
+    typed_bin_op v1 P1 v2 P2  op ot1 ot2 T.
+  Proof.
+    iIntros "H Hw1 Hw2 H1 H2".
+    iApply ("H" with "[Hw1 H1]"); [by iApply "Hw1"|by iApply "Hw2"].
+  Qed.
+
+  Lemma typed_un_op_wand v P Q op ot T:
+    typed_un_op v Q op ot T -∗
+    (P -∗ Q) -∗
+    typed_un_op v P op ot T.
+  Proof.
+    iIntros "H Hw HP". iApply "H". by iApply "Hw".
   Qed.
 
   Lemma type_val_context v T:
@@ -1005,15 +1047,6 @@ Section typing.
     by iApply ("Hop" with "Hv1 Hv2").
   Qed.
 
-  Lemma typed_bin_op_wand v1 P1 Q1 v2 P2 Q2 op ot1 ot2 T:
-    (P1 -∗ Q1) -∗ (P2 -∗ Q2) -∗
-    typed_bin_op v1 Q1 v2 Q2 op ot1 ot2 T -∗
-    typed_bin_op v1 P1 v2 P2  op ot1 ot2 T.
-  Proof.
-    iIntros "Hw1 Hw2 H H1 H2".
-    iApply ("H" with "[Hw1 H1]"); [by iApply "Hw1"|by iApply "Hw2"].
-  Qed.
-
   Lemma type_un_op o e ot T:
     typed_val_expr e (λ v ty, typed_un_op v (v ◁ᵥ ty) o ot T) -∗
     typed_val_expr (UnOp o ot e) T.
@@ -1021,14 +1054,6 @@ Section typing.
     iIntros "He" (Φ) "HΦ".
     wp_bind. iApply "He". iIntros (v ty) "Hv Hop".
     by iApply ("Hop" with "Hv").
-  Qed.
-
-  Lemma typed_un_op_wand v P Q op ot T:
-    (P -∗ Q) -∗
-    typed_un_op v Q op ot T -∗
-    typed_un_op v P op ot T.
-  Proof.
-    iIntros "Hw H HP". iApply "H". by iApply "Hw".
   Qed.
 
   Lemma type_call T ef es:
@@ -1071,7 +1096,7 @@ Section typing.
   Qed.
 
   Lemma type_ife ot e1 e2 e3 T:
-    typed_val_expr e1 (λ v ty, typed_if ot v ty (typed_val_expr e2 T) (typed_val_expr e3 T)) -∗
+    typed_val_expr e1 (λ v ty, typed_if ot v (v ◁ᵥ ty) (typed_val_expr e2 T) (typed_val_expr e3 T)) -∗
     typed_val_expr (IfE ot e1 e2 e3) T.
   Proof.
     iIntros "He1" (Φ) "HΦ".
@@ -1081,8 +1106,8 @@ Section typing.
   Qed.
 
   Lemma type_logical_and ot1 ot2 e1 e2 T:
-    typed_val_expr e1 (λ v1 ty1, typed_if ot1 v1 ty1
-       (typed_val_expr e2 (λ v2 ty2, typed_if ot2 v2 ty2
+    typed_val_expr e1 (λ v1 ty1, typed_if ot1 v1 (v1 ◁ᵥ ty1)
+       (typed_val_expr e2 (λ v2 ty2, typed_if ot2 v2 (v2 ◁ᵥ ty2)
            (typed_value (i2v 1 i32) (T (i2v 1 i32))) (typed_value (i2v 0 i32) (T (i2v 0 i32)))))
        (typed_value (i2v 0 i32) (T (i2v 0 i32)))) -∗
     typed_val_expr (e1 &&{ot1, ot2} e2) T.
@@ -1097,9 +1122,9 @@ Section typing.
   Qed.
 
   Lemma type_logical_or ot1 ot2 e1 e2 T:
-    typed_val_expr e1 (λ v1 ty1, typed_if ot1 v1 ty1
+    typed_val_expr e1 (λ v1 ty1, typed_if ot1 v1 (v1 ◁ᵥ ty1)
       (typed_value (i2v 1 i32) (T (i2v 1 i32)))
-      (typed_val_expr e2 (λ v2 ty2, typed_if ot2 v2 ty2
+      (typed_val_expr e2 (λ v2 ty2, typed_if ot2 v2 (v2 ◁ᵥ ty2)
         (typed_value (i2v 1 i32) (T (i2v 1 i32))) (typed_value (i2v 0 i32) (T (i2v 0 i32)))))) -∗
     typed_val_expr (e1 ||{ot1, ot2} e2) T.
   Proof.
