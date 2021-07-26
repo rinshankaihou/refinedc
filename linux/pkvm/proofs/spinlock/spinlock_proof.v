@@ -123,7 +123,7 @@ Section proofs.
         destruct b => //. iFrame.
     - (* #7 Code that eventually goes to the CAS and takes care of the loop. *)
       destruct s.
-      + liRStepUntil typed_if. do 2 liRStep; liShow.
+      + liRStepUntil @typed_if. do 2 liRStep; liShow.
         * repeat liRStep; liShow.
           iDestruct select (hyp_spinlock_t_invariant _ _ _) as (owner next) "([%%]&?&?&?&?&?&?)".
           repeat liRStep; liShow.
@@ -172,7 +172,7 @@ Section proofs.
              liInst Hevar2 next.
              liInst Hevar0 next.
              repeat liRStep; liShow.
-      + liRStepUntil typed_if. do 2 liRStep; liShow.
+      + liRStepUntil @typed_if. do 2 liRStep; liShow.
         * repeat liRStep; liShow.
           iExists (Shr, place _); iSplitR; first by simpl.
           rewrite /typed_read_end; iIntros "?".
@@ -233,7 +233,7 @@ Section proofs.
       destruct s.
       + repeat liRStep; liShow.
         iDestruct select (hyp_spinlock_t_invariant _ _ _) as (owner next) "([%%]&?&?&?&?&?&?)".
-        liRStepUntil typed_if. do 2 liRStep; liShow.
+        liRStepUntil @typed_if. do 2 liRStep; liShow.
         * repeat liRStep; liShow. rewrite /hyp_spinlock_t_invariant. repeat liRStep; liShow.
           liInst Hevar0 owner. liInst Hevar1 next.
           repeat liRStep; liShow.
@@ -324,7 +324,7 @@ Section proofs.
       rewrite /min_int /= in Hmin.
       iDestruct (ticket_range_insert_r with "Hr1 Hticket") as "Hr1"; first by lia.
       (* Run the automation up to the [if] statement. *)
-      liRStepUntil typed_if. liRStep; liRStep; liShow.
+      liRStepUntil @typed_if. liRStep; liRStep; liShow.
       + (* We have the last ticket. The next owner will be 0, we update. *)
         iMod (owner_auth_update _ _ _ _ 0%nat with "H● H◯") as "[??]".
         (* Run the automation to the end of the function. *)
