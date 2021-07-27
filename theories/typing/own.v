@@ -240,12 +240,12 @@ Section own.
   better to have more specialized rules? *)
   Lemma type_relop_ptr_ptr op b (l1 l2 : loc) β1 β2 ty1 ty2 T:
     match op with
-    | LtOp => Some (bool_decide (l1.2 < l2.2))
-    | GtOp => Some (bool_decide (l1.2 > l2.2))
-    | LeOp => Some (bool_decide (l1.2 <= l2.2))
-    | GeOp => Some (bool_decide (l1.2 >= l2.2))
+    | LtOp rit => Some (bool_decide (l1.2 < l2.2), rit)
+    | GtOp rit => Some (bool_decide (l1.2 > l2.2), rit)
+    | LeOp rit => Some (bool_decide (l1.2 <= l2.2), rit)
+    | GeOp rit => Some (bool_decide (l1.2 >= l2.2), rit)
     | _ => None
-    end = Some b →
+    end = Some (b, i32) →
     (l1 ◁ₗ{β1} ty1 -∗ l2 ◁ₗ{β2} ty2 -∗ ⌜l1.1 = l2.1⌝ ∗ (
       (loc_in_bounds l1 0 ∗ True) ∧
       (loc_in_bounds l2 0 ∗ True) ∧
@@ -266,20 +266,20 @@ Section own.
     all: iPureIntro; by apply: val_to_of_Z.
   Qed.
   Global Program Instance type_lt_ptr_ptr_inst (l1 l2 : loc) β1 β2 ty1 ty2:
-    TypedBinOp l1 (l1 ◁ₗ{β1} ty1) l2 (l2 ◁ₗ{β2} ty2) LtOp PtrOp PtrOp :=
-    λ T, i2p (type_relop_ptr_ptr LtOp (bool_decide (l1.2 < l2.2)) l1 l2 β1 β2 ty1 ty2 T _).
+    TypedBinOp l1 (l1 ◁ₗ{β1} ty1) l2 (l2 ◁ₗ{β2} ty2) (LtOp i32) PtrOp PtrOp :=
+    λ T, i2p (type_relop_ptr_ptr (LtOp i32) (bool_decide (l1.2 < l2.2)) l1 l2 β1 β2 ty1 ty2 T _).
   Next Obligation. done. Qed.
   Global Program Instance type_gt_ptr_ptr_inst (l1 l2 : loc) β1 β2 ty1 ty2:
-    TypedBinOp l1 (l1 ◁ₗ{β1} ty1) l2 (l2 ◁ₗ{β2} ty2) GtOp PtrOp PtrOp :=
-    λ T, i2p (type_relop_ptr_ptr GtOp (bool_decide (l1.2 > l2.2)) l1 l2 β1 β2 ty1 ty2 T _).
+    TypedBinOp l1 (l1 ◁ₗ{β1} ty1) l2 (l2 ◁ₗ{β2} ty2) (GtOp i32) PtrOp PtrOp :=
+    λ T, i2p (type_relop_ptr_ptr (GtOp i32) (bool_decide (l1.2 > l2.2)) l1 l2 β1 β2 ty1 ty2 T _).
   Next Obligation. done. Qed.
   Global Program Instance type_le_ptr_ptr_inst (l1 l2 : loc) β1 β2 ty1 ty2:
-    TypedBinOp l1 (l1 ◁ₗ{β1} ty1) l2 (l2 ◁ₗ{β2} ty2) LeOp PtrOp PtrOp :=
-    λ T, i2p (type_relop_ptr_ptr LeOp (bool_decide (l1.2 <= l2.2)) l1 l2 β1 β2 ty1 ty2 T _).
+    TypedBinOp l1 (l1 ◁ₗ{β1} ty1) l2 (l2 ◁ₗ{β2} ty2) (LeOp i32) PtrOp PtrOp :=
+    λ T, i2p (type_relop_ptr_ptr (LeOp i32) (bool_decide (l1.2 <= l2.2)) l1 l2 β1 β2 ty1 ty2 T _).
   Next Obligation. done. Qed.
   Global Program Instance type_ge_ptr_ptr_inst (l1 l2 : loc) β1 β2 ty1 ty2:
-    TypedBinOp l1 (l1 ◁ₗ{β1} ty1) l2 (l2 ◁ₗ{β2} ty2) GeOp PtrOp PtrOp :=
-    λ T, i2p (type_relop_ptr_ptr GeOp (bool_decide (l1.2 >= l2.2)) l1 l2 β1 β2 ty1 ty2 T _).
+    TypedBinOp l1 (l1 ◁ₗ{β1} ty1) l2 (l2 ◁ₗ{β2} ty2) (GeOp i32) PtrOp PtrOp :=
+    λ T, i2p (type_relop_ptr_ptr (GeOp i32) (bool_decide (l1.2 >= l2.2)) l1 l2 β1 β2 ty1 ty2 T _).
   Next Obligation. done. Qed.
 
 
@@ -497,7 +497,7 @@ Section null.
 
   Lemma eval_bin_op_ptr_null (b : bool) op h (p : loc) v:
     heap_state_loc_in_bounds p 0 h.(st_heap) →
-    (if b then op = NeOp else op = EqOp) →
+    (if b then op = NeOp i32 else op = EqOp i32) →
     eval_bin_op op PtrOp PtrOp h p NULL v
      ↔ val_of_Z (Z_of_bool b) i32 None = Some v.
   Proof.
@@ -508,7 +508,7 @@ Section null.
   Qed.
 
   Lemma eval_bin_op_null_null (b : bool) op h v:
-    (if b then op = EqOp else op = NeOp) →
+    (if b then op = EqOp i32 else op = NeOp i32) →
     eval_bin_op op PtrOp PtrOp h NULL NULL v
      ↔ val_of_Z (Z_of_bool b) i32 None = Some v.
   Proof.
@@ -519,15 +519,15 @@ Section null.
   Qed.
 
   Lemma type_binop_null_null v1 v2 op T:
-    (⌜match op with | EqOp | NeOp => True | _ => False end⌝ ∗ ∀ v,
-          T v (t2mt ((if op is EqOp then true else false) @ boolean i32))) -∗
+    (⌜match op with | EqOp rit | NeOp rit => rit = i32 | _ => False end⌝ ∗ ∀ v,
+          T v (t2mt ((if op is EqOp i32 then true else false) @ boolean i32))) -∗
     typed_bin_op v1 (v1 ◁ᵥ null) v2 (v2 ◁ᵥ null) op PtrOp PtrOp T.
   Proof.
     iIntros "[% HT]" (-> -> Φ) "HΦ".
-    have ?:= val_of_Z_bool (if op is EqOp then true else false) i32.
-    iApply (wp_binop_det_pure (i2v (Z_of_bool (if op is EqOp then true else false)) i32)). {
+    have ?:= val_of_Z_bool (if op is EqOp i32 then true else false) i32.
+    iApply (wp_binop_det_pure (i2v (Z_of_bool (if op is EqOp i32 then true else false)) i32)). {
       move => ??.
-      rewrite (eval_bin_op_null_null (if op is EqOp then true else false)); destruct op => //; naive_solver.
+      rewrite (eval_bin_op_null_null (if op is EqOp i32 then true else false)); destruct op => //; naive_solver.
     }
     iApply "HΦ" => //. by destruct op.
   Qed.
@@ -536,20 +536,20 @@ Section null.
     λ T, i2p (type_binop_null_null v1 v2 op T).
 
   Lemma type_binop_ptr_null v2 op T (l : loc) ty β n `{!LocInBounds ty β n}:
-    (⌜match op with | EqOp | NeOp => True | _ => False end⌝ ∗ ∀ v, l ◁ₗ{β} ty -∗
-          T v (t2mt ((if op is EqOp then false else true) @ boolean i32))) -∗
+    (⌜match op with | EqOp rit | NeOp rit => rit = i32 | _ => False end⌝ ∗ ∀ v, l ◁ₗ{β} ty -∗
+          T v (t2mt ((if op is EqOp i32 then false else true) @ boolean i32))) -∗
     typed_bin_op l (l ◁ₗ{β} ty) v2 (v2 ◁ᵥ null) op PtrOp PtrOp T.
   Proof.
     iIntros "[% HT] Hl" (-> Φ) "HΦ".
     iDestruct (loc_in_bounds_in_bounds with "Hl") as "#Hb".
     iDestruct (loc_in_bounds_shorten _ _ 0 with "Hb") as "#Hb0"; first by lia.
-    have ?:= val_of_Z_bool (if op is EqOp then false else true) i32.
-    iApply (wp_binop_det (i2v (Z_of_bool (if op is EqOp then false else true)) i32)).
+    have ?:= val_of_Z_bool (if op is EqOp i32 then false else true) i32.
+    iApply (wp_binop_det (i2v (Z_of_bool (if op is EqOp i32 then false else true)) i32)).
     iIntros (σ) "Hctx". iApply fupd_mask_intro; [set_solver|]. iIntros "HE".
     iSplit. {
       iDestruct (loc_in_bounds_to_heap_loc_in_bounds with "Hb0 Hctx") as %?.
       iPureIntro => ?.
-      rewrite (eval_bin_op_ptr_null (if op is EqOp then false else true)); destruct op => //; naive_solver.
+      rewrite (eval_bin_op_ptr_null (if op is EqOp i32 then false else true)); destruct op => //; naive_solver.
     }
     iModIntro. iMod "HE". iModIntro. iFrame.
     iApply "HΦ". 2: by iApply "HT". by destruct op.

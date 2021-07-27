@@ -18,18 +18,18 @@ Notation "e1 '+' '{' ot1 , ot2 } e2" := (BinOp AddOp ot1 ot2 e1%E e2%E)
 (* This conflicts with rewrite -{2}(app_nil_r vs). *)
 Notation "e1 '-' '{' ot1 , ot2 } e2" := (BinOp SubOp ot1 ot2 e1%E e2%E)
   (at level 50, left associativity, format "e1  '-' '{' ot1 ,  ot2 }  e2") : expr_scope.
-Notation "e1 '=' '{' ot1 , ot2 } e2" := (BinOp EqOp ot1 ot2 e1%E e2%E)
-  (at level 70, format "e1  '=' '{' ot1 ,  ot2 }  e2") : expr_scope.
-Notation "e1 '!=' '{' ot1 , ot2 } e2" := (BinOp NeOp ot1 ot2 e1%E e2%E)
-  (at level 70, format "e1  '!=' '{' ot1 ,  ot2 }  e2") : expr_scope.
-Notation "e1 ≤{ ot1 , ot2 } e2" := (BinOp LeOp ot1 ot2 e1%E e2%E)
-  (at level 70, format "e1  ≤{ ot1 ,  ot2 }  e2") : expr_scope.
-Notation "e1 <{ ot1 , ot2 } e2" := (BinOp LtOp ot1 ot2 e1%E e2%E)
-  (at level 70, format "e1  <{ ot1 ,  ot2 }  e2") : expr_scope.
-Notation "e1 ≥{ ot1 , ot2 } e2" := (BinOp GeOp ot1 ot2 e1%E e2%E)
-  (at level 70, format "e1  ≥{ ot1 ,  ot2 }  e2") : expr_scope.
-Notation "e1 >{ ot1 , ot2 } e2" := (BinOp GtOp ot1 ot2 e1%E e2%E)
-  (at level 70, format "e1  >{ ot1 ,  ot2 }  e2") : expr_scope.
+Notation "e1 '=' '{' ot1 , ot2 , rit } e2" := (BinOp (EqOp rit) ot1 ot2 e1%E e2%E)
+  (at level 70, format "e1  '=' '{' ot1 ,  ot2 , rit }  e2") : expr_scope.
+Notation "e1 '!=' '{' ot1 , ot2 , rit } e2" := (BinOp (NeOp rit) ot1 ot2 e1%E e2%E)
+  (at level 70, format "e1  '!=' '{' ot1 ,  ot2 , rit }  e2") : expr_scope.
+Notation "e1 ≤{ ot1 , ot2 , rit } e2" := (BinOp (LeOp rit) ot1 ot2 e1%E e2%E)
+  (at level 70, format "e1  ≤{ ot1 ,  ot2 , rit }  e2") : expr_scope.
+Notation "e1 <{ ot1 , ot2 , rit } e2" := (BinOp (LtOp rit) ot1 ot2 e1%E e2%E)
+  (at level 70, format "e1  <{ ot1 ,  ot2 , rit }  e2") : expr_scope.
+Notation "e1 ≥{ ot1 , ot2 , rit } e2" := (BinOp (GeOp rit) ot1 ot2 e1%E e2%E)
+  (at level 70, format "e1  ≥{ ot1 ,  ot2 , rit }  e2") : expr_scope.
+Notation "e1 >{ ot1 , ot2 , rit } e2" := (BinOp (GtOp rit) ot1 ot2 e1%E e2%E)
+  (at level 70, format "e1  >{ ot1 ,  ot2 , rit }  e2") : expr_scope.
 Notation "e1 ×{ ot1 , ot2 } e2" := (BinOp MulOp ot1 ot2 e1%E e2%E)
   (at level 70, format "e1  ×{ ot1 ,  ot2 }  e2") : expr_scope.
 Notation "e1 /{ ot1 , ot2 } e2" := (BinOp DivOp ot1 ot2 e1%E e2%E)
@@ -65,17 +65,17 @@ Notation "'if{' ot '}' ':' e1 'then' s1 'else' s2" := (IfS ot e1%E s1%E s2%E)
 Notation "'expr:' e ; s" := (ExprS e%E s%E)
   (at level 80, s at level 200, format "'[v' 'expr:'  e ';' '/' s ']'") : expr_scope.
 
-Definition LogicalAnd (ot1 ot2 : op_type) (e1 e2 : expr) : expr :=
-  (IfE ot1 e1 (IfE ot2 e2 (i2v 1 i32) (i2v 0 i32)) (i2v 0 i32)).
-Notation "e1 &&{ ot1 , ot2 } e2" := (LogicalAnd ot1 ot2 e1 e2)
-  (at level 70, format "e1  &&{ ot1 ,  ot2 }  e2") : expr_scope.
+Definition LogicalAnd (ot1 ot2 : op_type) rit (e1 e2 : expr) : expr :=
+  (IfE ot1 e1 (IfE ot2 e2 (i2v 1 rit) (i2v 0 rit)) (i2v 0 rit)).
+Notation "e1 &&{ ot1 , ot2 , rit } e2" := (LogicalAnd ot1 ot2 rit e1 e2)
+  (at level 70, format "e1  &&{ ot1 ,  ot2 , rit }  e2") : expr_scope.
 Arguments LogicalAnd : simpl never.
 Typeclasses Opaque LogicalAnd.
 
-Definition LogicalOr (ot1 ot2 : op_type) (e1 e2 : expr) : expr :=
-  (IfE ot1 e1 (i2v 1 i32) (IfE ot2 e2 (i2v 1 i32) (i2v 0 i32))).
-Notation "e1 ||{ ot1 , ot2 } e2" := (LogicalOr ot1 ot2 e1 e2)
-  (at level 70, format "e1  ||{ ot1 ,  ot2 }  e2") : expr_scope.
+Definition LogicalOr (ot1 ot2 : op_type) rit (e1 e2 : expr) : expr :=
+  (IfE ot1 e1 (i2v 1 rit) (IfE ot2 e2 (i2v 1 rit) (i2v 0 rit))).
+Notation "e1 ||{ ot1 , ot2 , rit } e2" := (LogicalOr ot1 ot2 rit e1 e2)
+  (at level 70, format "e1  ||{ ot1 ,  ot2 , rit }  e2") : expr_scope.
 Arguments LogicalOr : simpl never.
 Typeclasses Opaque LogicalOr.
 
@@ -190,8 +190,8 @@ Arguments OffsetOfUnion : simpl never.
 
 (*** Tests *)
 Example test1 (l : loc) ly ot :
-  (l <-{ly} use{ot}(&l +{PtrOp, IntOp size_t} (l ={PtrOp, PtrOp} l)); ExprS (Call l [ (l : expr); (l : expr)]) (l <-{ly, ScOrd} l; Goto "a"))%E =
-  (Assign Na1Ord ly l (Use Na1Ord ot (BinOp AddOp PtrOp (IntOp size_t) (AddrOf l) (BinOp EqOp PtrOp PtrOp l l))))
+  (l <-{ly} use{ot}(&l +{PtrOp, IntOp size_t} (l ={PtrOp, PtrOp, i32} l)); ExprS (Call l [ (l : expr); (l : expr)]) (l <-{ly, ScOrd} l; Goto "a"))%E =
+  (Assign Na1Ord ly l (Use Na1Ord ot (BinOp AddOp PtrOp (IntOp size_t) (AddrOf l) (BinOp (EqOp i32) PtrOp PtrOp l l))))
       (ExprS (Call l [ Val (val_of_loc l); Val (val_of_loc l)]) ((Assign ScOrd ly l l) (Goto "a"))).
 Proof. simpl. reflexivity. Abort.
 

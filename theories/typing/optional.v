@@ -10,7 +10,7 @@ Class Optionable `{!typeG Σ} (ty : type) `{!Movable ty} (optty : type) `{!Movab
   opt_pre : val → val → iProp Σ;
   opt_bin_op (bty beq : bool) v1 v2 σ v :
     (⊢ opt_pre v1 v2 -∗ (if bty then v1 ◁ᵥ ty else v1 ◁ᵥ optty) -∗ v2 ◁ᵥ optty -∗ state_ctx σ -∗
-        ⌜eval_bin_op (if beq then EqOp else NeOp) ot1 ot2 σ v1 v2 v ↔ val_of_Z (Z_of_bool (xorb bty beq)) i32 None = Some v⌝);
+        ⌜eval_bin_op (if beq then EqOp i32 else NeOp i32) ot1 ot2 σ v1 v2 v ↔ val_of_Z (Z_of_bool (xorb bty beq)) i32 None = Some v⌝);
 }.
 Arguments opt_pre {_ _} _ {_ _ _ _ _ _} _ _.
 
@@ -164,7 +164,7 @@ Section optional.
     opt_pre ty v1 v2 ∧
     destruct_hint DHintInfo (DestructHintOptionalEq b) (⌜b⌝ -∗ v1 ◁ᵥ ty -∗ T (i2v (Z_of_bool false) i32) (t2mt (false @ boolean i32))) ∧
     destruct_hint DHintInfo (DestructHintOptionalEq (¬ b)) (⌜¬ b⌝ -∗ v1 ◁ᵥ optty -∗ T (i2v (Z_of_bool true) i32) (t2mt (true @ boolean i32))) -∗
-      typed_bin_op v1 (v1 ◁ᵥ b @ (optional ty optty)) v2 (v2 ◁ᵥ optty) EqOp ot1 ot2 T.
+      typed_bin_op v1 (v1 ◁ᵥ b @ (optional ty optty)) v2 (v2 ◁ᵥ optty) (EqOp i32) ot1 ot2 T.
   Proof.
     unfold destruct_hint. iIntros "HT Hv1 Hv2" (Φ) "HΦ".
     iDestruct "Hv1" as "[[% Hv1]|[% Hv1]]".
@@ -194,13 +194,13 @@ Section optional.
       by iApply ("HΦ" with "[] HT").
   Qed.
   Global Instance type_eq_optional_refined_inst v1 v2 ty optty `{!Movable ty} `{!Movable optty} ot1 ot2 `{!Optionable ty optty ot1 ot2} b :
-    TypedBinOp v1 (v1 ◁ᵥ b @ (optional ty optty))%I v2 (v2 ◁ᵥ optty) EqOp ot1 ot2 :=
+    TypedBinOp v1 (v1 ◁ᵥ b @ (optional ty optty))%I v2 (v2 ◁ᵥ optty) (EqOp i32) ot1 ot2 :=
     λ T, i2p (type_eq_optional_refined v1 v2 ty optty ot1 ot2 T b).
 
   Lemma type_eq_optional_neq v1 v2 ty optty ot1 ot2 `{!Movable ty} `{!Movable optty} `{!Optionable ty optty ot1 ot2} T :
     opt_pre ty v1 v2 ∧
     (∀ v, v1 ◁ᵥ ty -∗ T v (t2mt (false @ boolean i32)) ) -∗
-      typed_bin_op v1 (v1 ◁ᵥ ty) v2 (v2 ◁ᵥ optty) EqOp ot1 ot2 T.
+      typed_bin_op v1 (v1 ◁ᵥ ty) v2 (v2 ◁ᵥ optty) (EqOp i32) ot1 ot2 T.
   Proof.
     iIntros "HT Hv1 Hv2". iIntros (Φ) "HΦ".
     have [|v' Hv] := val_of_Z_is_Some None i32 (Z_of_bool false) => //.
@@ -216,14 +216,14 @@ Section optional.
   Qed.
 
   Global Instance type_eq_optional_neq_inst v1 v2 ty optty ot1 ot2 `{!Movable ty} `{!Movable optty} `{!Optionable ty optty ot1 ot2} :
-    TypedBinOp v1 (v1 ◁ᵥ ty) v2 (v2 ◁ᵥ optty) EqOp ot1 ot2 :=
+    TypedBinOp v1 (v1 ◁ᵥ ty) v2 (v2 ◁ᵥ optty) (EqOp i32) ot1 ot2 :=
     λ T, i2p (type_eq_optional_neq v1 v2 ty optty ot1 ot2 T).
 
   Lemma type_neq_optional v1 v2 ty optty ot1 ot2 `{!Movable ty} `{!Movable optty} `{!Optionable ty optty ot1 ot2} T b :
     opt_pre ty v1 v2 ∧
     destruct_hint DHintInfo (DestructHintOptionalNe b) (⌜b⌝ -∗ v1 ◁ᵥ ty -∗ T (i2v (Z_of_bool true) i32) (t2mt (true @ boolean i32))) ∧
     destruct_hint DHintInfo (DestructHintOptionalNe (¬ b)) (⌜¬ b⌝ -∗ v1 ◁ᵥ optty -∗ T (i2v (Z_of_bool false) i32) (t2mt (false @ boolean i32))) -∗
-      typed_bin_op v1 (v1 ◁ᵥ b @ (optional ty optty)) v2 (v2 ◁ᵥ optty) NeOp ot1 ot2 T.
+      typed_bin_op v1 (v1 ◁ᵥ b @ (optional ty optty)) v2 (v2 ◁ᵥ optty) (NeOp i32) ot1 ot2 T.
   Proof.
     unfold destruct_hint. iIntros "HT Hv1 Hv2" (Φ) "HΦ".
     iDestruct "Hv1" as "[[% Hv1]|[% Hv1]]".
@@ -253,7 +253,7 @@ Section optional.
       by iApply ("HΦ" with "[] HT").
   Qed.
   Global Instance type_neq_optional_inst v1 v2 ty optty ot1 ot2 `{!Movable ty} `{!Movable optty} `{!Optionable ty optty ot1 ot2} b :
-    TypedBinOp v1 (v1 ◁ᵥ b @ (optional ty optty))%I v2 (v2 ◁ᵥ optty) NeOp ot1 ot2 :=
+    TypedBinOp v1 (v1 ◁ᵥ b @ (optional ty optty))%I v2 (v2 ◁ᵥ optty) (NeOp i32) ot1 ot2 :=
     λ T, i2p (type_neq_optional v1 v2 ty optty ot1 ot2 T b).
 
   Global Instance strip_guarded_optional b ty ty' optty E1 E2 β `{!StripGuarded β E1 E2 ty ty'}:
@@ -381,7 +381,7 @@ Section optionalO.
     opt_pre (ty (default inhabitant b)) v1 v2 ∧
     destruct_hint (DHintDestruct _ b) DestructHintOptionalO
       (∀ v, (if b  is Some x then v1 ◁ᵥ ty x else v1 ◁ᵥ optty) -∗ T v (t2mt ((if b is Some x then false else true) @ boolean i32))) -∗
-      typed_bin_op v1 (v1 ◁ᵥ b @ optionalO ty optty) v2 (v2 ◁ᵥ optty) EqOp ot1 ot2 T.
+      typed_bin_op v1 (v1 ◁ᵥ b @ optionalO ty optty) v2 (v2 ◁ᵥ optty) (EqOp i32) ot1 ot2 T.
   Proof.
     unfold destruct_hint. iIntros "HT Hv1 Hv2". iIntros (Φ) "HΦ".
     destruct b.
@@ -408,14 +408,14 @@ Section optionalO.
   Qed.
 
   Global Instance type_eq_optionalO_inst A v1 v2 (ty : A → type) optty ot1 ot2 `{!∀ x, Movable (ty x)} `{!Movable optty} `{!∀ x, Optionable (ty x) optty ot1 ot2} b `{!Inhabited A} :
-    TypedBinOp v1 (v1 ◁ᵥ b @ optionalO ty optty)%I v2 (v2 ◁ᵥ optty) EqOp ot1 ot2 :=
+    TypedBinOp v1 (v1 ◁ᵥ b @ optionalO ty optty)%I v2 (v2 ◁ᵥ optty) (EqOp i32) ot1 ot2 :=
     λ T, i2p (type_eq_optionalO A v1 v2 ty optty ot1 ot2 T b).
 
   Lemma type_neq_optionalO A v1 v2 (ty : A → type) optty ot1 ot2 `{!∀ x, Movable (ty x)} `{!Movable optty} `{!∀ x, Optionable (ty x) optty ot1 ot2} T b `{!Inhabited A} :
     opt_pre (ty (default inhabitant b)) v1 v2 ∧
     destruct_hint (DHintDestruct _ b) DestructHintOptionalO
       (∀ v, (if b is Some x then v1 ◁ᵥ ty x else v1 ◁ᵥ optty) -∗ T v (t2mt ((if b is Some x then true else false) @ boolean i32))) -∗
-      typed_bin_op v1 (v1 ◁ᵥ b @ optionalO ty optty) v2 (v2 ◁ᵥ optty) NeOp ot1 ot2 T.
+      typed_bin_op v1 (v1 ◁ᵥ b @ optionalO ty optty) v2 (v2 ◁ᵥ optty) (NeOp i32) ot1 ot2 T.
   Proof.
     unfold destruct_hint. iIntros "HT Hv1 Hv2". iIntros (Φ) "HΦ".
     destruct b.
@@ -441,7 +441,7 @@ Section optionalO.
       iApply "HΦ" => //. iPureIntro. by apply: val_to_of_Z.
   Qed.
   Global Instance type_neq_optionalO_inst A v1 v2 (ty : A → type) optty ot1 ot2 `{!∀ x, Movable (ty x)} `{!Movable optty} `{!∀ x, Optionable (ty x) optty ot1 ot2} b `{!Inhabited A} :
-    TypedBinOp v1 (v1 ◁ᵥ b @ optionalO ty optty)%I v2 (v2 ◁ᵥ optty) NeOp ot1 ot2 :=
+    TypedBinOp v1 (v1 ◁ᵥ b @ optionalO ty optty)%I v2 (v2 ◁ᵥ optty) (NeOp i32) ot1 ot2 :=
     λ T, i2p (type_neq_optionalO A v1 v2 ty optty ot1 ot2 T b).
 
   Lemma read_optionalO_case A l b (ty : A → type) optty ly (T : val → type → _) a:

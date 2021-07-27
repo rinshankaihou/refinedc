@@ -134,16 +134,16 @@ Section programs.
   (* TODO: instead of adding it_in_range to the context here, have a
   SimplifyPlace/Val instance for int which adds it to the context if
   it does not yet exist (using check_hyp_not_exists)?! *)
-  Lemma type_relop_int_int it v1 n1 v2 n2 T b op:
+  Lemma type_relop_int_int it v1 n1 v2 n2 T b op :
     match op with
-    | EqOp => Some (bool_decide (n1 = n2))
-    | NeOp => Some (bool_decide (n1 ≠ n2))
-    | LtOp => Some (bool_decide (n1 < n2))
-    | GtOp => Some (bool_decide (n1 > n2))
-    | LeOp => Some (bool_decide (n1 <= n2))
-    | GeOp => Some (bool_decide (n1 >= n2))
+    | EqOp rit => Some (bool_decide (n1 = n2), rit)
+    | NeOp rit => Some (bool_decide (n1 ≠ n2), rit)
+    | LtOp rit => Some (bool_decide (n1 < n2), rit)
+    | GtOp rit => Some (bool_decide (n1 > n2), rit)
+    | LeOp rit => Some (bool_decide (n1 <= n2), rit)
+    | GeOp rit => Some (bool_decide (n1 >= n2), rit)
     | _ => None
-    end = Some b →
+    end = Some (b, i32) →
     (⌜n1 ∈ it⌝ -∗ ⌜n2 ∈ it⌝ -∗ T (i2v (Z_of_bool b) i32) (t2mt (b @ boolean i32))) -∗
       typed_bin_op v1 (v1 ◁ᵥ n1 @ int it) v2 (v2 ◁ᵥ n2 @ int it) op (IntOp it) (IntOp it) T.
   Proof.
@@ -159,22 +159,22 @@ Section programs.
   Qed.
 
   Global Program Instance type_eq_int_int_inst it v1 n1 v2 n2:
-    TypedBinOpVal v1 (n1 @ (int it))%I v2 (n2 @ (int it))%I EqOp (IntOp it) (IntOp it) := λ T, i2p (type_relop_int_int it v1 n1 v2 n2 T (bool_decide (n1 = n2)) _ _).
+    TypedBinOpVal v1 (n1 @ (int it))%I v2 (n2 @ (int it))%I (EqOp i32) (IntOp it) (IntOp it) := λ T, i2p (type_relop_int_int it v1 n1 v2 n2 T (bool_decide (n1 = n2)) _ _).
   Next Obligation. done. Qed.
   Global Program Instance type_ne_int_int_inst it v1 n1 v2 n2:
-    TypedBinOpVal v1 (n1 @ (int it))%I v2 (n2 @ (int it))%I NeOp (IntOp it) (IntOp it) := λ T, i2p (type_relop_int_int it v1 n1 v2 n2 T (bool_decide (n1 ≠ n2)) _ _).
+    TypedBinOpVal v1 (n1 @ (int it))%I v2 (n2 @ (int it))%I (NeOp i32) (IntOp it) (IntOp it) := λ T, i2p (type_relop_int_int it v1 n1 v2 n2 T (bool_decide (n1 ≠ n2)) _ _).
   Next Obligation. done. Qed.
   Global Program Instance type_lt_int_int_inst it v1 n1 v2 n2:
-    TypedBinOpVal v1 (n1 @ (int it))%I v2 (n2 @ (int it))%I LtOp (IntOp it) (IntOp it) := λ T, i2p (type_relop_int_int it v1 n1 v2 n2 T (bool_decide (n1 < n2)) _ _).
+    TypedBinOpVal v1 (n1 @ (int it))%I v2 (n2 @ (int it))%I (LtOp i32) (IntOp it) (IntOp it) := λ T, i2p (type_relop_int_int it v1 n1 v2 n2 T (bool_decide (n1 < n2)) _ _).
   Next Obligation. done. Qed.
   Global Program Instance type_gt_int_int_inst it v1 n1 v2 n2:
-    TypedBinOpVal v1 (n1 @ (int it))%I v2 (n2 @ (int it))%I GtOp (IntOp it) (IntOp it) := λ T, i2p (type_relop_int_int it v1 n1 v2 n2 T (bool_decide (n1 > n2)) _ _).
+    TypedBinOpVal v1 (n1 @ (int it))%I v2 (n2 @ (int it))%I (GtOp i32) (IntOp it) (IntOp it) := λ T, i2p (type_relop_int_int it v1 n1 v2 n2 T (bool_decide (n1 > n2)) _ _).
   Next Obligation. done. Qed.
   Global Program Instance type_le_int_int_inst it v1 n1 v2 n2:
-    TypedBinOpVal v1 (n1 @ (int it))%I v2 (n2 @ (int it))%I LeOp (IntOp it) (IntOp it) := λ T, i2p (type_relop_int_int it v1 n1 v2 n2 T (bool_decide (n1 <= n2)) _ _).
+    TypedBinOpVal v1 (n1 @ (int it))%I v2 (n2 @ (int it))%I (LeOp i32) (IntOp it) (IntOp it) := λ T, i2p (type_relop_int_int it v1 n1 v2 n2 T (bool_decide (n1 <= n2)) _ _).
   Next Obligation. done. Qed.
   Global Program Instance type_ge_int_int_inst it v1 n1 v2 n2:
-    TypedBinOpVal v1 (n1 @ (int it))%I v2 (n2 @ (int it))%I GeOp (IntOp it) (IntOp it) := λ T, i2p (type_relop_int_int it v1 n1 v2 n2 T (bool_decide (n1 >= n2)) _ _).
+    TypedBinOpVal v1 (n1 @ (int it))%I v2 (n2 @ (int it))%I (GeOp i32) (IntOp it) (IntOp it) := λ T, i2p (type_relop_int_int it v1 n1 v2 n2 T (bool_decide (n1 >= n2)) _ _).
   Next Obligation. done. Qed.
 
   Definition arith_op_result (it : int_type) n1 n2 op : option Z :=
@@ -477,10 +477,10 @@ Section programs.
 
   Lemma type_relop_bool_bool it v1 b1 v2 b2 T b op:
     match op with
-    | EqOp => Some (eqb b1 b2)
-    | NeOp => Some (negb (eqb b1 b2))
+    | EqOp rit => Some (eqb b1 b2, rit)
+    | NeOp rit => Some (negb (eqb b1 b2), rit)
     | _ => None
-    end = Some b →
+    end = Some (b, i32) →
     (T (i2v (Z_of_bool b) i32) (t2mt (b @ boolean i32))) -∗
       typed_bin_op v1 (v1 ◁ᵥ b1 @ boolean it) v2 (v2 ◁ᵥ b2 @ boolean it) op (IntOp it) (IntOp it) T.
   Proof.
@@ -495,10 +495,10 @@ Section programs.
   Qed.
 
   Global Program Instance type_eq_bool_bool_inst it v1 b1 v2 b2:
-    TypedBinOpVal v1 (b1 @ (boolean it))%I v2 (b2 @ (boolean it))%I EqOp (IntOp it) (IntOp it) := λ T, i2p (type_relop_bool_bool it v1 b1 v2 b2 T (eqb b1 b2) _ _).
+    TypedBinOpVal v1 (b1 @ (boolean it))%I v2 (b2 @ (boolean it))%I (EqOp i32) (IntOp it) (IntOp it) := λ T, i2p (type_relop_bool_bool it v1 b1 v2 b2 T (eqb b1 b2) _ _).
   Next Obligation. done. Qed.
   Global Program Instance type_ne_bool_bool_inst it v1 b1 v2 b2:
-    TypedBinOpVal v1 (b1 @ (boolean it))%I v2 (b2 @ (boolean it))%I NeOp (IntOp it) (IntOp it) := λ T, i2p (type_relop_bool_bool it v1 b1 v2 b2 T (negb (eqb b1 b2)) _ _).
+    TypedBinOpVal v1 (b1 @ (boolean it))%I v2 (b2 @ (boolean it))%I (NeOp i32) (IntOp it) (IntOp it) := λ T, i2p (type_relop_bool_bool it v1 b1 v2 b2 T (negb (eqb b1 b2)) _ _).
   Next Obligation. done. Qed.
 
   Lemma type_if_bool it (b : bool) v T1 T2 :
@@ -655,7 +655,7 @@ Section tests.
   Example type_eq n1 n3 T:
     n1 ∈ size_t →
     n3 ∈ size_t →
-    ⊢ typed_val_expr ((i2v n1 size_t +{IntOp size_t, IntOp size_t} i2v 0 size_t) = {IntOp size_t, IntOp size_t} i2v n3 size_t ) T.
+    ⊢ typed_val_expr ((i2v n1 size_t +{IntOp size_t, IntOp size_t} i2v 0 size_t) = {IntOp size_t, IntOp size_t, i32} i2v n3 size_t ) T.
   Proof.
     move => Hn1 Hn2.
     iApply type_bin_op.

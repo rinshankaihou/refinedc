@@ -128,22 +128,22 @@ Section function.
     typed_bin_op v1 (v1 ◁ᵥ tunion_tag ti x) v2 (v2 ◁ᵥ n @ int it) op (IntOp size_t) (IntOp it) T.
   Proof. by rewrite /(ty_own_val (tunion_tag _ _))/=. Qed.
   Global Instance type_binop_tunion_tag_int_eq_inst it v1 n v2 ti x:
-    TypedBinOpVal v1 (tunion_tag ti x) v2 (n @ int it)%I EqOp (IntOp size_t) (IntOp it) :=
+    TypedBinOpVal v1 (tunion_tag ti x) v2 (n @ int it)%I (EqOp i32) (IntOp size_t) (IntOp it) :=
     λ T, i2p (type_binop_tunion_tag_int ti x it v1 n v2 T _).
   Global Instance type_binop_tunion_tag_int_ne_inst it v1 n v2 ti x:
-    TypedBinOpVal v1 (tunion_tag ti x) v2 (n @ int it)%I NeOp (IntOp size_t) (IntOp it) :=
+    TypedBinOpVal v1 (tunion_tag ti x) v2 (n @ int it)%I (NeOp i32) (IntOp size_t) (IntOp it) :=
     λ T, i2p (type_binop_tunion_tag_int ti x it v1 n v2 T _).
   Global Instance type_binop_tunion_tag_int_gt_inst it v1 n v2 ti x:
-    TypedBinOpVal v1 (tunion_tag ti x) v2 (n @ int it)%I GtOp (IntOp size_t) (IntOp it) :=
+    TypedBinOpVal v1 (tunion_tag ti x) v2 (n @ int it)%I (GtOp i32) (IntOp size_t) (IntOp it) :=
     λ T, i2p (type_binop_tunion_tag_int ti x it v1 n v2 T _).
   Global Instance type_binop_tunion_tag_int_lt_inst it v1 n v2 ti x:
-    TypedBinOpVal v1 (tunion_tag ti x) v2 (n @ int it)%I LtOp (IntOp size_t) (IntOp it) :=
+    TypedBinOpVal v1 (tunion_tag ti x) v2 (n @ int it)%I (LtOp i32) (IntOp size_t) (IntOp it) :=
     λ T, i2p (type_binop_tunion_tag_int ti x it v1 n v2 T _).
   Global Instance type_binop_tunion_tag_int_ge_inst it v1 n v2 ti x:
-    TypedBinOpVal v1 (tunion_tag ti x) v2 (n @ int it)%I GeOp (IntOp size_t) (IntOp it) :=
+    TypedBinOpVal v1 (tunion_tag ti x) v2 (n @ int it)%I (GeOp i32) (IntOp size_t) (IntOp it) :=
     λ T, i2p (type_binop_tunion_tag_int ti x it v1 n v2 T _).
   Global Instance type_binop_tunion_tag_int_le_inst it v1 n v2 ti x:
-    TypedBinOpVal v1 (tunion_tag ti x) v2 (n @ int it)%I LeOp (IntOp size_t) (IntOp it) :=
+    TypedBinOpVal v1 (tunion_tag ti x) v2 (n @ int it)%I (LeOp i32) (IntOp size_t) (IntOp it) :=
     λ T, i2p (type_binop_tunion_tag_int ti x it v1 n v2 T _).
 
 

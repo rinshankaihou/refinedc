@@ -461,19 +461,19 @@ Proof.
   by iApply wp_value.
 Qed.
 
-Lemma wp_ptr_relop Φ op v1 v2 v l1 l2 b:
+Lemma wp_ptr_relop Φ op v1 v2 v l1 l2 b rit:
   val_to_loc v1 = Some l1 →
   val_to_loc v2 = Some l2 →
-  val_of_Z (Z_of_bool b) i32 None = Some v →
+  val_of_Z (Z_of_bool b) rit None = Some v →
   match op with
-  | EqOp => Some (bool_decide (l1.2 = l2.2))
-  | NeOp => Some (bool_decide (l1.2 ≠ l2.2))
-  | LtOp => if bool_decide (l1.1 = l2.1) then Some (bool_decide (l1.2 < l2.2)) else None
-  | GtOp => if bool_decide (l1.1 = l2.1) then Some (bool_decide (l1.2 > l2.2)) else None
-  | LeOp => if bool_decide (l1.1 = l2.1) then Some (bool_decide (l1.2 <= l2.2)) else None
-  | GeOp => if bool_decide (l1.1 = l2.1) then Some (bool_decide (l1.2 >= l2.2)) else None
+  | EqOp rit => Some (bool_decide (l1.2 = l2.2), rit)
+  | NeOp rit => Some (bool_decide (l1.2 ≠ l2.2), rit)
+  | LtOp rit => if bool_decide (l1.1 = l2.1) then Some (bool_decide (l1.2 < l2.2), rit) else None
+  | GtOp rit => if bool_decide (l1.1 = l2.1) then Some (bool_decide (l1.2 > l2.2), rit) else None
+  | LeOp rit => if bool_decide (l1.1 = l2.1) then Some (bool_decide (l1.2 <= l2.2), rit) else None
+  | GeOp rit => if bool_decide (l1.1 = l2.1) then Some (bool_decide (l1.2 >= l2.2), rit) else None
   | _ => None
-  end = Some b →
+  end = Some (b, rit) →
   loc_in_bounds l1 0 -∗ loc_in_bounds l2 0 -∗
   (alloc_alive_loc l1 ∧ alloc_alive_loc l2 ∧ ▷ Φ v) -∗
   WP BinOp op PtrOp PtrOp (Val v1) (Val v2) {{ Φ }}.

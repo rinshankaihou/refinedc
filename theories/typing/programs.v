@@ -1110,7 +1110,7 @@ Section typing.
        (typed_val_expr e2 (λ v2 ty2, typed_if ot2 v2 (v2 ◁ᵥ ty2)
            (typed_value (i2v 1 i32) (T (i2v 1 i32))) (typed_value (i2v 0 i32) (T (i2v 0 i32)))))
        (typed_value (i2v 0 i32) (T (i2v 0 i32)))) -∗
-    typed_val_expr (e1 &&{ot1, ot2} e2) T.
+    typed_val_expr (e1 &&{ot1, ot2, i32} e2) T.
   Proof.
     iIntros "HT". rewrite /LogicalAnd. iApply type_ife.
     iApply (typed_val_expr_wand with "HT"). iIntros (v ty) "HT".
@@ -1126,7 +1126,7 @@ Section typing.
       (typed_value (i2v 1 i32) (T (i2v 1 i32)))
       (typed_val_expr e2 (λ v2 ty2, typed_if ot2 v2 (v2 ◁ᵥ ty2)
         (typed_value (i2v 1 i32) (T (i2v 1 i32))) (typed_value (i2v 0 i32) (T (i2v 0 i32)))))) -∗
-    typed_val_expr (e1 ||{ot1, ot2} e2) T.
+    typed_val_expr (e1 ||{ot1, ot2, i32} e2) T.
   Proof.
     iIntros "HT". rewrite /LogicalOr. iApply type_ife.
     iApply (typed_val_expr_wand with "HT"). iIntros (v ty) "HT".

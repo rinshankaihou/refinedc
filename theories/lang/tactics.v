@@ -21,8 +21,8 @@ Inductive expr :=
 | SkipE (e : expr)
 | StuckE
 (* new constructors *)
-| LogicalAnd (ot1 ot2 : op_type) (e1 e2 : expr)
-| LogicalOr (ot1 ot2 : op_type) (e1 e2 : expr)
+| LogicalAnd (ot1 ot2 : op_type) (rit : int_type) (e1 e2 : expr)
+| LogicalOr (ot1 ot2 : op_type) (rit : int_type) (e1 e2 : expr)
 | Use (o : order) (ot : op_type) (e : expr)
 | AddrOf (e : expr)
 | LValue (e : expr)
@@ -53,8 +53,8 @@ Lemma expr_ind (P : expr → Prop) :
   (∀ (ot : op_type) (e1 e2 e3 : expr), P e1 → P e2 → P e3 → P (IfE ot e1 e2 e3)) →
   (∀ (e : expr), P e → P (SkipE e)) →
   (P StuckE) →
-  (∀ (ot1 ot2 : op_type) (e1 e2 : expr), P e1 → P e2 → P (LogicalAnd ot1 ot2 e1 e2)) →
-  (∀ (ot1 ot2 : op_type) (e1 e2 : expr), P e1 → P e2 → P (LogicalOr ot1 ot2 e1 e2)) →
+  (∀ (ot1 ot2 : op_type) (rit : int_type) (e1 e2 : expr), P e1 → P e2 → P (LogicalAnd ot1 ot2 rit e1 e2)) →
+  (∀ (ot1 ot2 : op_type) (rit : int_type) (e1 e2 : expr), P e1 → P e2 → P (LogicalOr ot1 ot2 rit e1 e2)) →
   (∀ (o : order) (ot : op_type) (e : expr), P e → P (Use o ot e)) →
   (∀ (e : expr), P e → P (AddrOf e)) →
   (∀ (e : expr), P e → P (LValue e)) →
@@ -100,8 +100,8 @@ Fixpoint to_expr (e : expr) : lang.expr :=
   | IfE ot e1 e2 e3 => lang.IfE ot (to_expr e1) (to_expr e2) (to_expr e3)
   | SkipE e => lang.SkipE (to_expr e)
   | StuckE => lang.StuckE
-  | LogicalAnd ot1 ot2 e1 e2 => notation.LogicalAnd ot1 ot2 (to_expr e1) (to_expr e2)
-  | LogicalOr ot1 ot2 e1 e2 => notation.LogicalOr ot1 ot2 (to_expr e1) (to_expr e2)
+  | LogicalAnd ot1 ot2 rit e1 e2 => notation.LogicalAnd ot1 ot2 rit (to_expr e1) (to_expr e2)
+  | LogicalOr ot1 ot2 rit e1 e2 => notation.LogicalOr ot1 ot2 rit (to_expr e1) (to_expr e2)
   | Use o ot e => notation.Use o ot (to_expr e)
   | AddrOf e => notation.AddrOf (to_expr e)
   | LValue e => notation.LValue (to_expr e)
@@ -143,14 +143,14 @@ Ltac of_expr e :=
     let e := of_expr e in constr:(GetMemberUnion e ul m)
   | notation.OffsetOf ?s ?m => constr:(OffsetOf s m)
   | notation.OffsetOfUnion ?ul ?m => constr:(OffsetOfUnion ul m)
-  | notation.LogicalAnd ?ot1 ?ot2 ?e1 ?e2 =>
+  | notation.LogicalAnd ?ot1 ?ot2 ?rit ?e1 ?e2 =>
     let e1 := of_expr e1 in
     let e2 := of_expr e2 in
-    constr:(LogicalAnd ot1 ot2 e1 e2)
-  | notation.LogicalOr ?ot1 ?ot2 ?e1 ?e2 =>
+    constr:(LogicalAnd ot1 ot2 rit e1 e2)
+  | notation.LogicalOr ?ot1 ?ot2 ?rit ?e1 ?e2 =>
     let e1 := of_expr e1 in
     let e2 := of_expr e2 in
-    constr:(LogicalOr ot1 ot2 e1 e2)
+    constr:(LogicalOr ot1 ot2 rit e1 e2)
   | notation.Use ?o ?ot ?e =>
     let e := of_expr e in constr:(Use o ot e)
   | lang.Val ?x => constr:(Val x)
@@ -279,7 +279,7 @@ Fixpoint find_expr_fill (e : expr) (bind_val : bool) : option (list ectx_item * 
     if find_expr_fill f bind_val is Some (Ks, e') then
       Some (Ks ++ [CallLCtx args], e') else
       (* TODO: handle arguments? *) None
-  | Concat _ | MacroE _ _ _ | OffsetOf _ _ | OffsetOfUnion _ _ | LogicalAnd _ _ _ _ | LogicalOr _ _ _ _ => None
+  | Concat _ | MacroE _ _ _ | OffsetOf _ _ | OffsetOfUnion _ _ | LogicalAnd _ _ _ _ _ | LogicalOr _ _ _ _ _ => None
   | IfE ot e1 e2 e3 =>
     if find_expr_fill e1 bind_val is Some (Ks, e') then
       Some (Ks ++ [IfECtx ot e2 e3], e') else Some ([], e)
@@ -534,8 +534,8 @@ Fixpoint subst_l (xs : list (var_name * val)) (e : expr)  : expr :=
   | IfE ot e1 e2 e3 => IfE ot (subst_l xs e1) (subst_l xs e2) (subst_l xs e3)
   | SkipE e => SkipE (subst_l xs e)
   | StuckE => StuckE
-  | LogicalAnd ot1 ot2 e1 e2 => LogicalAnd ot1 ot2 (subst_l xs e1) (subst_l xs e2)
-  | LogicalOr ot1 ot2 e1 e2 => LogicalOr ot1 ot2 (subst_l xs e1) (subst_l xs e2)
+  | LogicalAnd ot1 ot2 rit e1 e2 => LogicalAnd ot1 ot2 rit (subst_l xs e1) (subst_l xs e2)
+  | LogicalOr ot1 ot2 rit e1 e2 => LogicalOr ot1 ot2 rit (subst_l xs e1) (subst_l xs e2)
   | Use o ot e => Use o ot (subst_l xs e)
   | AddrOf e => AddrOf (subst_l xs e)
   | LValue e => LValue (subst_l xs e)

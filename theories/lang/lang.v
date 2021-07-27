@@ -12,7 +12,8 @@ Definition label := string.
 (* see http://compcert.inria.fr/doc/html/compcert.cfrontend.Cop.html#binary_operation *)
 Inductive bin_op : Set :=
 | AddOp | SubOp | MulOp | DivOp | ModOp | AndOp | OrOp | XorOp | ShlOp
-| ShrOp | EqOp | NeOp | LtOp | GtOp | LeOp | GeOp | Comma
+| ShrOp | EqOp (rit : int_type) | NeOp (rit : int_type) | LtOp (rit : int_type)
+| GtOp (rit : int_type) | LeOp (rit : int_type) | GeOp (rit : int_type) | Comma
 (* Ptr is the second argument and offset the first *)
 | PtrOffsetOp (ly : layout) | PtrNegOffsetOp (ly : layout)
 | PtrDiffOp (ly : layout).
@@ -249,41 +250,41 @@ Inductive eval_bin_op : bin_op → op_type → op_type → state → val → val
     valid_ptr l2 σ.(st_heap) →
     val_of_Z ((l1.2 - l2.2) `div` ly.(ly_size)) ptrdiff_t None = Some v →
     eval_bin_op (PtrDiffOp ly) PtrOp PtrOp σ v1 v2 v
-| RelOpPNull v1 v2 σ l v op b p a:
+| RelOpPNull v1 v2 σ l v op b p a rit:
     val_to_loc v1 = Some l →
     l = (ProvAlloc p, a) →
     v2 = NULL →
     heap_state_loc_in_bounds l 0%nat σ.(st_heap) →
     match op with
-    | EqOp => Some false
-    | NeOp => Some true
+    | EqOp rit => Some (false, rit)
+    | NeOp rit => Some (true, rit)
     | _ => None
-    end = Some b →
-    val_of_Z (Z_of_bool b) i32 None = Some v →
+    end = Some (b, rit) →
+    val_of_Z (Z_of_bool b) rit None = Some v →
     eval_bin_op op PtrOp PtrOp σ v1 v2 v
-| RelOpNullP v1 v2 σ l v op b p a:
+| RelOpNullP v1 v2 σ l v op b p a rit:
     v1 = NULL →
     val_to_loc v2 = Some l →
     l = (ProvAlloc p, a) →
     heap_state_loc_in_bounds l 0%nat σ.(st_heap) →
     match op with
-    | EqOp => Some false
-    | NeOp => Some true
+    | EqOp rit => Some (false, rit)
+    | NeOp rit => Some (true, rit)
     | _ => None
-    end = Some b →
-    val_of_Z (Z_of_bool b) i32 None = Some v →
+    end = Some (b, rit) →
+    val_of_Z (Z_of_bool b) rit None = Some v →
     eval_bin_op op PtrOp PtrOp σ v1 v2 v
-| RelOpNullNull v1 v2 σ v op b:
+| RelOpNullNull v1 v2 σ v op b rit:
     v1 = NULL →
     v2 = NULL →
     match op with
-    | EqOp => Some true
-    | NeOp => Some false
+    | EqOp rit => Some (true, rit)
+    | NeOp rit => Some (false, rit)
     | _ => None
-    end = Some b →
-    val_of_Z (Z_of_bool b) i32 None = Some v →
+    end = Some (b, rit) →
+    val_of_Z (Z_of_bool b) rit None = Some v →
     eval_bin_op op PtrOp PtrOp σ v1 v2 v
-| RelOpPP v1 v2 σ l1 l2 p1 p2 a1 a2 v b op:
+| RelOpPP v1 v2 σ l1 l2 p1 p2 a1 a2 v b op rit:
     val_to_loc v1 = Some l1 →
     val_to_loc v2 = Some l2 →
     (* Note that this is technically redundant due to the valid_ptr,
@@ -292,43 +293,41 @@ Inductive eval_bin_op : bin_op → op_type → op_type → state → val → val
     l2 = (ProvAlloc p2, a2) →
     valid_ptr l1 σ.(st_heap) → valid_ptr l2 σ.(st_heap) →
     match op with
-    | EqOp => Some (bool_decide (a1 = a2))
-    | NeOp => Some (bool_decide (a1 ≠ a2))
-    | LtOp => if bool_decide (p1 = p2) then Some (bool_decide (a1 < a2)) else None
-    | GtOp => if bool_decide (p1 = p2) then Some (bool_decide (a1 > a2)) else None
-    | LeOp => if bool_decide (p1 = p2) then Some (bool_decide (a1 <= a2)) else None
-    | GeOp => if bool_decide (p1 = p2) then Some (bool_decide (a1 >= a2)) else None
+    | EqOp rit => Some (bool_decide (a1 = a2), rit)
+    | NeOp rit => Some (bool_decide (a1 ≠ a2), rit)
+    | LtOp rit => if bool_decide (p1 = p2) then Some (bool_decide (a1 < a2), rit) else None
+    | GtOp rit => if bool_decide (p1 = p2) then Some (bool_decide (a1 > a2), rit) else None
+    | LeOp rit => if bool_decide (p1 = p2) then Some (bool_decide (a1 <= a2), rit) else None
+    | GeOp rit => if bool_decide (p1 = p2) then Some (bool_decide (a1 >= a2), rit) else None
     | _ => None
-    end = Some b →
-    val_of_Z (Z_of_bool b) i32 None = Some v →
+    end = Some (b, rit) →
+    val_of_Z (Z_of_bool b) rit None = Some v →
     eval_bin_op op PtrOp PtrOp σ v1 v2 v
-| RelOpFnPP v1 v2 σ l1 l2 a1 a2 v b op:
+| RelOpFnPP v1 v2 σ l1 l2 a1 a2 v b op rit:
     val_to_loc v1 = Some l1 →
     val_to_loc v2 = Some l2 →
     l1 = (ProvFnPtr, a1) →
     l2 = (ProvFnPtr, a2) →
     match op with
-    | EqOp => Some (bool_decide (a1 = a2))
-    | NeOp => Some (bool_decide (a1 ≠ a2))
+    | EqOp rit => Some (bool_decide (a1 = a2), rit)
+    | NeOp rit => Some (bool_decide (a1 ≠ a2), rit)
     | _ => None
-    end = Some b →
-    val_of_Z (Z_of_bool b) i32 None = Some v →
+    end = Some (b, rit) →
+    val_of_Z (Z_of_bool b) rit None = Some v →
     eval_bin_op op PtrOp PtrOp σ v1 v2 v
-| RelOpII op v1 v2 v σ n1 n2 it b:
+| RelOpII op v1 v2 v σ n1 n2 it b rit:
     match op with
-    | EqOp => Some (bool_decide (n1 = n2))
-    | NeOp => Some (bool_decide (n1 ≠ n2))
-    | LtOp => Some (bool_decide (n1 < n2))
-    | GtOp => Some (bool_decide (n1 > n2))
-    | LeOp => Some (bool_decide (n1 <= n2))
-    | GeOp => Some (bool_decide (n1 >= n2))
+    | EqOp rit => Some (bool_decide (n1 = n2), rit)
+    | NeOp rit => Some (bool_decide (n1 ≠ n2), rit)
+    | LtOp rit => Some (bool_decide (n1 < n2), rit)
+    | GtOp rit => Some (bool_decide (n1 > n2), rit)
+    | LeOp rit => Some (bool_decide (n1 <= n2), rit)
+    | GeOp rit => Some (bool_decide (n1 >= n2), rit)
     | _ => None
-    end = Some b →
+    end = Some (b, rit) →
     val_to_Z v1 it = Some n1 →
     val_to_Z v2 it = Some n2 →
-    (* TODO: What is the right int type of the result here? C seems to
-    use i32 but maybe we don't want to hard code that. *)
-    val_of_Z (Z_of_bool b) i32 None = Some v →
+    val_of_Z (Z_of_bool b) rit None = Some v →
     eval_bin_op op (IntOp it) (IntOp it) σ v1 v2 v
 | ArithOpII op v1 v2 σ n1 n2 it n v:
     match op with

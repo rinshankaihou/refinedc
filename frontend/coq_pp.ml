@@ -130,6 +130,12 @@ let pp_bin_op : Coq_ast.bin_op pp = fun ff op ->
   | LazyAndOp -> "&&"
   | LazyOrOp  -> "||"
 
+let is_bool_result_op = fun op ->
+  match op with
+  | EqOp | NeOp | LtOp | GtOp | LeOp | GeOp -> true
+  | LazyAndOp | LazyOrOp -> true
+  | _ -> false
+
 let rec pp_expr : Coq_ast.expr pp = fun ff e ->
   let pp fmt = Format.fprintf ff fmt in
   let pp_expr_body ff e =
@@ -170,6 +176,9 @@ let rec pp_expr : Coq_ast.expr pp = fun ff e ->
           | (OpInt(_), OpPtr(_), _      ) ->
               panic_no_pos "Wrong ordering of integer pointer binop [%a]."
                 pp_bin_op op
+          | _   when is_bool_result_op op ->
+              pp "(%a) %a{%a, %a, i32} (%a)" pp_expr e1 pp_bin_op op
+                pp_op_type ty1 pp_op_type ty2 pp_expr e2
           | _                             ->
               pp "(%a) %a{%a, %a} (%a)" pp_expr e1 pp_bin_op op
                 pp_op_type ty1 pp_op_type ty2 pp_expr e2
