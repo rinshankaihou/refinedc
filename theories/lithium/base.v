@@ -11,8 +11,12 @@ From stdpp Require Import natmap.
 From refinedc.lithium Require Import Z_bitblast.
 Set Default Proof Using "Type".
 
-Global Unset Program Cases.
-Global Set Keyed Unification.
+Export Unset Program Cases.
+Export Set Keyed Unification.
+
+(* We always annotate hints with locality ([Global] or [Local]). This enforces
+that at least global hints are annotated. *)
+Export Set Warnings "+deprecated-hint-without-locality".
 
 Typeclasses Opaque is_Some.
 (* This is necessary since otherwise keyed unification unfolds these definitions *)

@@ -254,7 +254,7 @@ Notation "uninit< ly >" := (uninit ly) (only printing, format "'uninit<' ly '>'"
 
 (* See the definition of [uninit_mono_inst].
    This hint should only apply ty is not uninit as this case is covered by the rules for bytes. *)
-Hint Extern 5 (SubsumePlace _ Own ?ty (uninit _)) =>
+Global Hint Extern 5 (SubsumePlace _ Own ?ty (uninit _)) =>
   lazymatch ty with
   | uninit _ => fail
   | _ => unshelve notypeclasses refine (uninit_mono_inst _ _ _)

@@ -399,7 +399,7 @@ Class LocInBounds `{!typeG Σ} (ty : type) (β : own_state) (n : nat) := {
   loc_in_bounds_in_bounds l : ty.(ty_own) β l -∗ loc_in_bounds l n
 }.
 Arguments loc_in_bounds_in_bounds {_ _} _ _ _ {_} _.
-Hint Mode LocInBounds + + + + - : typeclass_instances.
+Global Hint Mode LocInBounds + + + + - : typeclass_instances.
 
 Section loc_in_bounds.
   Context `{!typeG Σ}.
@@ -421,7 +421,7 @@ Class AllocAlive `{!typeG Σ} (ty : type) (β : own_state) (P : iProp Σ) := {
   alloc_alive_alive l : P -∗ ty.(ty_own) β l -∗ alloc_alive_loc l
 }.
 Arguments alloc_alive_alive {_ _} _ _ _ {_} _.
-Hint Mode AllocAlive + + + + - : typeclass_instances.
+Global Hint Mode AllocAlive + + + + - : typeclass_instances.
 
 Definition type_alive `{!typeG Σ} (ty : type) (β : own_state) : iProp Σ :=
   □ (∀ l, ty.(ty_own) β l -∗ alloc_alive_loc l).
@@ -549,7 +549,7 @@ End rmovable.
 
 Notation "l `at_type` ty" := (with_refinement ty <$> l) (at level 50) : bi_scope.
 (* Must be an Hint Extern instead of an Instance since simple apply is not able to apply the instance. *)
-Hint Extern 1 (AssumeInj (=) (=) (with_refinement _)) => exact: I : typeclass_instances.
+Global Hint Extern 1 (AssumeInj (=) (=) (with_refinement _)) => exact: I : typeclass_instances.
 
 (*** Cofe and Ofe *)
 Section ofe.

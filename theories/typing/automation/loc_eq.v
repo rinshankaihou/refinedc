@@ -66,7 +66,7 @@ Lemma tac_solve_loc_eq `{!typeG Σ} l1 β1 ty1 l2 β2 ty2:
   FindHypEqual FICLocSemantic (l1 ◁ₗ{β1} ty1) (l2 ◁ₗ{β2} ty2) (l1 ◁ₗ{β2} ty2).
 Proof. by move => ->. Qed.
 
-Hint Extern 10 (FindHypEqual FICLocSemantic (_ ◁ₗ{_} _) (_ ◁ₗ{_} _) _) =>
+Global Hint Extern 10 (FindHypEqual FICLocSemantic (_ ◁ₗ{_} _) (_ ◁ₗ{_} _) _) =>
   (notypeclasses refine (tac_solve_loc_eq _ _ _ _ _ _ _); solve_loc_eq) : typeclass_instances.
 
 Lemma tac_loc_in_bounds_solve_loc_eq `{!typeG Σ} l1 l2 n1 n2:
@@ -74,7 +74,7 @@ Lemma tac_loc_in_bounds_solve_loc_eq `{!typeG Σ} l1 l2 n1 n2:
   FindHypEqual FICLocSemantic (loc_in_bounds l1 n1) (loc_in_bounds l2 n2) (loc_in_bounds l1 n2).
 Proof. by move => ->. Qed.
 
-Hint Extern 10 (FindHypEqual FICLocSemantic (loc_in_bounds _ _) (loc_in_bounds _ _) _) =>
+Global Hint Extern 10 (FindHypEqual FICLocSemantic (loc_in_bounds _ _) (loc_in_bounds _ _) _) =>
   (notypeclasses refine (tac_loc_in_bounds_solve_loc_eq _ _ _ _ _); solve_loc_eq) : typeclass_instances.
 
 Section test.

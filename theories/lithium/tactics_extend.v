@@ -1,7 +1,7 @@
 From refinedc.lithium Require Import base infrastructure.
 
 Ltac can_solve_tac := fail "provide a can_solve_tac!".
-Hint Extern 10 (CanSolve ?P) => (change P; can_solve_tac) : typeclass_instances.
+Global Hint Extern 10 (CanSolve ?P) => (change P; can_solve_tac) : typeclass_instances.
 
 Ltac sidecond_hook := idtac.
 Ltac unsolved_sidecond_hook := idtac.

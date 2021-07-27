@@ -32,7 +32,7 @@ Ltac custom_exist_tac A protect ::=
     | Movable _ => eexists _
     end.
 
-Hint Transparent ly_size : solve_protected_eq_db.
+Global Hint Transparent ly_size : solve_protected_eq_db.
 Ltac solve_protected_eq_unfold_tac ::=
   lazymatch goal with
   (* unfold constants for function types *)

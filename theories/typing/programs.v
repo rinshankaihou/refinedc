@@ -316,38 +316,38 @@ Ltac solve_into_place_ctx :=
       change_no_check (IntoPlaceCtx (W.to_expr e') T);
       refine (find_place_ctx_correct _ _ _); rewrite/=/W.to_expr/=; done
   end.
-Hint Extern 0 (IntoPlaceCtx _ _) => solve_into_place_ctx : typeclass_instances.
+Global Hint Extern 0 (IntoPlaceCtx _ _) => solve_into_place_ctx : typeclass_instances.
 
-Hint Mode Learnable + + : typeclass_instances.
-Hint Mode LearnAlignment + + + + - : typeclass_instances.
-Hint Mode SimplifyHypPlace + + + + + - : typeclass_instances.
-Hint Mode SimplifyHypVal + + + + + - : typeclass_instances.
-Hint Mode SimplifyGoalPlace + + + + ! - : typeclass_instances.
-Hint Mode SimplifyGoalVal + + + ! ! - : typeclass_instances.
-Hint Mode CopyAs + + + + + : typeclass_instances.
-Hint Mode SubsumePlace + + + + + ! : typeclass_instances.
-Hint Mode SubsumeVal + + + + ! + ! : typeclass_instances.
-Hint Mode SimpleSubsumePlace + + + ! - : typeclass_instances.
-Hint Mode SimpleSubsumePlaceR + + + ! + ! - : typeclass_instances.
-Hint Mode SimpleSubsumeVal + + + ! + ! - : typeclass_instances.
-Hint Mode TypedIf + + + + : typeclass_instances.
-Hint Mode TypedAssert + + + + + : typeclass_instances.
-Hint Mode TypedValue + + + : typeclass_instances.
-Hint Mode TypedBinOp + + + + + + + + + : typeclass_instances.
-Hint Mode TypedBinOpVal + + + + + + + + + + + : typeclass_instances.
-Hint Mode TypedUnOp + + + + + + : typeclass_instances.
-Hint Mode TypedUnOpVal + + + + + + + : typeclass_instances.
-Hint Mode TypedCall + + + + + + : typeclass_instances.
-Hint Mode TypedCallVal + + + + + + + : typeclass_instances.
-Hint Mode TypedCopyAllocId + + + + + + + : typeclass_instances.
-Hint Mode TypedCopyAllocIdVal + + + + + + + + + : typeclass_instances.
-Hint Mode TypedReadEnd + + + + + + + : typeclass_instances.
-Hint Mode TypedWriteEnd + + + + + + + + + + : typeclass_instances.
-Hint Mode TypedAddrOfEnd + + + + + : typeclass_instances.
-Hint Mode TypedPlace + + + + + + : typeclass_instances.
-Hint Mode TypedAnnotExpr + + + + + + + : typeclass_instances.
-Hint Mode TypedAnnotStmt + + + + + + : typeclass_instances.
-Hint Mode TypedMacroExpr + + + + : typeclass_instances.
+Global Hint Mode Learnable + + : typeclass_instances.
+Global Hint Mode LearnAlignment + + + + - : typeclass_instances.
+Global Hint Mode SimplifyHypPlace + + + + + - : typeclass_instances.
+Global Hint Mode SimplifyHypVal + + + + + - : typeclass_instances.
+Global Hint Mode SimplifyGoalPlace + + + + ! - : typeclass_instances.
+Global Hint Mode SimplifyGoalVal + + + ! ! - : typeclass_instances.
+Global Hint Mode CopyAs + + + + + : typeclass_instances.
+Global Hint Mode SubsumePlace + + + + + ! : typeclass_instances.
+Global Hint Mode SubsumeVal + + + + ! + ! : typeclass_instances.
+Global Hint Mode SimpleSubsumePlace + + + ! - : typeclass_instances.
+Global Hint Mode SimpleSubsumePlaceR + + + ! + ! - : typeclass_instances.
+Global Hint Mode SimpleSubsumeVal + + + ! + ! - : typeclass_instances.
+Global Hint Mode TypedIf + + + + : typeclass_instances.
+Global Hint Mode TypedAssert + + + + + : typeclass_instances.
+Global Hint Mode TypedValue + + + : typeclass_instances.
+Global Hint Mode TypedBinOp + + + + + + + + + : typeclass_instances.
+Global Hint Mode TypedBinOpVal + + + + + + + + + + + : typeclass_instances.
+Global Hint Mode TypedUnOp + + + + + + : typeclass_instances.
+Global Hint Mode TypedUnOpVal + + + + + + + : typeclass_instances.
+Global Hint Mode TypedCall + + + + + + : typeclass_instances.
+Global Hint Mode TypedCallVal + + + + + + + : typeclass_instances.
+Global Hint Mode TypedCopyAllocId + + + + + + + : typeclass_instances.
+Global Hint Mode TypedCopyAllocIdVal + + + + + + + + + : typeclass_instances.
+Global Hint Mode TypedReadEnd + + + + + + + : typeclass_instances.
+Global Hint Mode TypedWriteEnd + + + + + + + + + + : typeclass_instances.
+Global Hint Mode TypedAddrOfEnd + + + + + : typeclass_instances.
+Global Hint Mode TypedPlace + + + + + + : typeclass_instances.
+Global Hint Mode TypedAnnotExpr + + + + + + + : typeclass_instances.
+Global Hint Mode TypedAnnotStmt + + + + + + : typeclass_instances.
+Global Hint Mode TypedMacroExpr + + + + : typeclass_instances.
 Arguments typed_annot_expr : simpl never.
 Arguments typed_annot_stmt : simpl never.
 Arguments typed_macro_expr : simpl never.
@@ -1400,7 +1400,7 @@ Section typing.
 End typing.
 
 (* This must be an hint extern because an instance would be a big slowdown . *)
-Hint Extern 1 (SubsumePlace _ _ (?ty _) (?ty2 _)) =>
+Global Hint Extern 1 (SubsumePlace _ _ (?ty _) (?ty2 _)) =>
   match ty with | ty2 => is_var ty; class_apply subtype_var_inst end : typeclass_instances.
 
 (*** guarded *)
@@ -1529,12 +1529,12 @@ Section guarded.
 
 End guarded.
 
-Hint Mode StripGuarded + + + - - + - : typeclass_instances.
-Hint Mode DoStripGuarded + + + - - + - : typeclass_instances.
-Hint Mode StripGuardedLst + + + - - + - : typeclass_instances.
+Global Hint Mode StripGuarded + + + - - + - : typeclass_instances.
+Global Hint Mode DoStripGuarded + + + - - + - : typeclass_instances.
+Global Hint Mode StripGuardedLst + + + - - + - : typeclass_instances.
 Typeclasses Opaque typed_block.
 
-Hint Extern 0 (DoStripGuarded ?β ?E1 ?E2 ?ty1 ?ty2) =>
+Global Hint Extern 0 (DoStripGuarded ?β ?E1 ?E2 ?ty1 ?ty2) =>
   change (StripGuarded β E1 E2 ty1 ty2);
   lazymatch ty1 with
   | context [guarded _ _] => idtac
@@ -1547,21 +1547,21 @@ Hint Extern 0 (DoStripGuarded ?β ?E1 ?E2 ?ty1 ?ty2) =>
    sometimes creates the subgoal in a different order. We need to try
    eq first since x1 and x2 in (x1 @ _) and (x2 @ _) might not be
    bound in the scope of P. *)
-Hint Extern 99 (SimpleSubsumePlace (_ @ _) (_ @ _) _) =>
+Global Hint Extern 99 (SimpleSubsumePlace (_ @ _) (_ @ _) _) =>
     simple notypeclasses refine (simple_subsume_place_refinement_eq _ _ _ _ _ _ _);
       lazymatch goal with
       | |- iProp _ => shelve
       | |- _ = _ => exact : eq_refl
       | |- _ => cbn[eq_rect]
       end : typeclass_instances.
-Hint Extern 100 (SimpleSubsumePlace (_ @ _) (_ @ _) _) =>
+Global Hint Extern 100 (SimpleSubsumePlace (_ @ _) (_ @ _) _) =>
     simple notypeclasses refine (simple_subsume_place_refinement _ _ _ _ _);
       lazymatch goal with
       | |- iProp _ => shelve
       | |- _ = _ => exact : eq_refl
       | |- _ => cbn[eq_rect]
       end : typeclass_instances.
-Hint Extern 100 (SimpleSubsumePlace (_ @ _) (ty_of_rty _) _) =>
+Global Hint Extern 100 (SimpleSubsumePlace (_ @ _) (ty_of_rty _) _) =>
   simple notypeclasses refine (simple_subsume_place_rty_to_ty_r _ _ _ _); lazymatch goal with
       | |- iProp _ => shelve
       | |- _ = _ => exact : eq_refl

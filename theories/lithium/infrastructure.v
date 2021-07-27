@@ -10,12 +10,12 @@ Definition protected_eq {A} (a : A) : protected a = a := (protected_aux a).(seal
 
 Class ContainsProtected {A} (x : A) : Set := contains_protected: ().
 Class IsProtected {A} (x : A) : Set := is_protected: ().
-Hint Extern 0 (ContainsProtected ?x) => (match x with | context [protected _] => exact: tt end) : typeclass_instances.
-Hint Extern 0 (IsProtected (protected _) ) => (exact: tt) : typeclass_instances.
+Global Hint Extern 0 (ContainsProtected ?x) => (match x with | context [protected _] => exact: tt end) : typeclass_instances.
+Global Hint Extern 0 (IsProtected (protected _) ) => (exact: tt) : typeclass_instances.
 
 (** * [IsVar] *)
 Class IsVar {A} (x : A) : Prop := is_var: True.
-Hint Extern 0 (IsVar ?x) => (is_var x; exact: I) : typeclass_instances.
+Global Hint Extern 0 (IsVar ?x) => (is_var x; exact: I) : typeclass_instances.
 
 (** * [AssumeInj] *)
 Class AssumeInj {A B} (R : relation A) (S : relation B) (f : A → B) : Prop := assume_inj : True.
@@ -26,7 +26,7 @@ Proof. done. Qed.
 Ltac check_hyp_not_exists P :=
   assert_fails (assert (P) as _;[fast_done|]).
 Class CheckHypNotExists (P : Prop) : Prop := check_hyp_not_exists : True.
-Hint Extern 1 (CheckHypNotExists ?P) => (check_hyp_not_exists P; change True; fast_done) : typeclass_instances.
+Global Hint Extern 1 (CheckHypNotExists ?P) => (check_hyp_not_exists P; change True; fast_done) : typeclass_instances.
 
 (** * Checking if a hyp in the context
   The implementation can be found in interpreter.v *)
@@ -36,7 +36,7 @@ Class CheckOwnInContext {Σ} (P : iProp Σ) : Prop := { check_own_in_context : T
 (** ** [FastDone]
  Should be used if it is expected that the property shows up directly as a hypothesis. *)
 Class FastDone (P : Prop) : Prop := fast_done_proof : P.
-Hint Extern 1 (FastDone ?P) => (change P; fast_done) : typeclass_instances.
+Global Hint Extern 1 (FastDone ?P) => (change P; fast_done) : typeclass_instances.
 
 (** ** [CanSolve]
  Requires the user to provide a general purpose [can_solve_tac] (see tactics.v)

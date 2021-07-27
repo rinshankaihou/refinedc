@@ -22,8 +22,8 @@ Section type.
     SubsumePlace l β (list_node n1) (list_node n2) :=
     λ T, i2p (subsume_list_node n1 n2 l β T).
 
-  Global Instance inj_hyp_page_map {A B C D E F} : Inj (=) (=) (λ '(ref_count, order, next), (pool, vmemmap, npages, ref_count, order, next) : (A * B * C * D * E * F)).
-  Proof. move => ??? [[??]?] [[??]?]. naive_solver. Qed.
+  Global Instance inj_hyp_page_map {A B C D E F} pool vmemmap npages : Inj (=) (=) (λ '(ref_count, order, next), (pool, vmemmap, npages, ref_count, order, next) : (A * B * C * D * E * F)).
+  Proof. move => [[??]?] [[??]?]. naive_solver. Qed.
 
   Global Instance assume_inj_list_node vmemmap len : AssumeInj (=) (=) (λ h, list_node (idx_to_node vmemmap len h)).
   Proof. done. Qed.

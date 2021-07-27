@@ -113,9 +113,9 @@ Section value.
 End value.
 Notation "value< ot , v >" := (value ot v) (only printing, format "'value<' ot ',' v '>'") : printing_sugar.
 
-Hint Extern 50 (TypedReadEnd _ _ Own _ _) =>
+Global Hint Extern 50 (TypedReadEnd _ _ Own _ _) =>
   unshelve notypeclasses refine (type_read_move_inst _ _ _ _ ) : typeclass_instances.
-Hint Extern 50 (TypedWriteEnd _ _ _ _ _ Own _) =>
+Global Hint Extern 50 (TypedWriteEnd _ _ _ _ _ Own _) =>
   unshelve notypeclasses refine (type_write_own_inst _ _ _ _ _ _) : typeclass_instances.
 
 

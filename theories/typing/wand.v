@@ -93,7 +93,7 @@ Section wand_val.
   Next Obligation. iIntros (??????? v ->) "??[??]". iExists v. iFrame. Qed.
   Next Obligation. iIntros (?????????). apply mem_cast_compat_Untyped. by simplify_eq/=. Qed.
 
-  Global Instance wand_val_loc_in_bounds P ly (ty : A → type) `{!∀ x, Movable (ty x)}:
+  Global Instance wand_val_loc_in_bounds P ly β (ty : A → type) `{!∀ x, Movable (ty x)}:
     LocInBounds (wand_val_ex ly P ty) β (ly_size ly).
   Proof.
     constructor. iIntros (l) "Hl". iDestruct "Hl" as (?) "(_&Hly&Hl&_)".

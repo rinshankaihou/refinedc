@@ -322,10 +322,10 @@ Qed.
 
 Global Instance simpl_fmap_nil {A B} (l : list A) (f : A → B) : SimplBothRel (=) (f <$> l) [] (l = []).
 Proof. split; destruct l; naive_solver. Qed.
-Global Instance simpl_fmap_cons_and {A B} (l : list A) l2 (f : A → B):
+Global Instance simpl_fmap_cons_and {A B} x (l : list A) l2 (f : A → B):
   SimplAndRel (=) (f <$> l) (x :: l2) (λ T, ∃ x' l2', l = x' :: l2' ∧ f x' = x ∧ f <$> l2' = l2 ∧ T).
 Proof. split; first naive_solver. intros [?%fmap_cons_inv ?]. naive_solver. Qed.
-Global Instance simpl_fmap_cons_impl {A B} (l : list A) l2 (f : A → B):
+Global Instance simpl_fmap_cons_impl {A B} x (l : list A) l2 (f : A → B):
   SimplImplRel (=) true (f <$> l) (x :: l2) (λ T, ∀ x' l2', l = x' :: l2' → f x' = x → f <$> l2' = l2 → T).
 Proof. split; last naive_solver. intros ? ?%fmap_cons_inv. naive_solver. Qed.
 Global Instance simpl_fmap_app_and {A B} (l : list A) l1 l2 (f : A → B):

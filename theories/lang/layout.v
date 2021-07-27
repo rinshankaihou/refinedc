@@ -12,24 +12,24 @@ Record layout :=
 Definition sizeof   (ly : layout) : nat := ly.(ly_size).
 Definition ly_align (ly : layout) : nat := 2 ^ ly.(ly_align_log).
 
-Instance layout_dec_eq : EqDecision layout.
+Global Instance layout_dec_eq : EqDecision layout.
 Proof. solve_decision. Defined.
 
-Instance layout_inhabited : Inhabited layout :=
+Global Instance layout_inhabited : Inhabited layout :=
   populate (Layout 0 0).
 
-Instance layout_countable : Countable layout.
+Global Instance layout_countable : Countable layout.
 Proof.
   refine (inj_countable'
     (λ ly, (ly.(ly_size), ly.(ly_align_log)))
     (λ '(sz, a), Layout sz a) _); by intros [].
 Qed.
 
-Instance layout_le : SqSubsetEq layout := λ ly1 ly2,
+Global Instance layout_le : SqSubsetEq layout := λ ly1 ly2,
   (ly1.(ly_size) ≤ ly2.(ly_size))%nat ∧
   (ly1.(ly_align_log) ≤ ly2.(ly_align_log))%nat.
 
-Instance layout_le_po : PreOrder layout_le.
+Global Instance layout_le_po : PreOrder layout_le.
 Proof.
   split => ?; rewrite /layout_le => *; repeat case_bool_decide => //; lia.
 Qed.
@@ -78,9 +78,9 @@ Arguments ly_align : simpl never.
 
 Typeclasses Opaque layout_le ly_offset ly_set_size ly_mult ly_with_align.
 
-Hint Extern 0 (LayoutWf _) => refine (layout_wf_mod _ _); done : typeclass_instances.
-Hint Extern 0 (LayoutWf _) => unfold LayoutWf; done : typeclass_instances.
-Hint Extern 0 (LayoutEq _ _) => exact: eq_refl : typeclass_instances.
+Global Hint Extern 0 (LayoutWf _) => refine (layout_wf_mod _ _); done : typeclass_instances.
+Global Hint Extern 0 (LayoutWf _) => unfold LayoutWf; done : typeclass_instances.
+Global Hint Extern 0 (LayoutEq _ _) => exact: eq_refl : typeclass_instances.
 
 (*** Notations for specific layouts *)
 Definition void_layout : layout := {| ly_size := 0; ly_align_log := 0 |}.

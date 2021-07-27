@@ -35,8 +35,8 @@ Hint Rewrite lookup_insert_gmap : lithium_rewrite.
 (** * Second version of normalization based on typeclasses *)
 Class NormalizeWalk {A} (progress : bool) (a b : A) : Prop := normalize_walk: a = b.
 Class Normalize {A} (progress : bool) (a b : A) : Prop := normalize: a = b.
-Hint Mode NormalizeWalk + - + - : typeclass_instances.
-Hint Mode Normalize + - + - : typeclass_instances.
+Global Hint Mode NormalizeWalk + - + - : typeclass_instances.
+Global Hint Mode Normalize + - + - : typeclass_instances.
 Global Instance normalize_walk_protected A (x : A) :
   NormalizeWalk false (protected x) (protected x) | 10.
 Proof. done. Qed.
@@ -47,7 +47,7 @@ Lemma normalize_walk_app A B (f f' : A → B) x x' r p1 p2 p3
       `{!Normalize p3 (f' x') r}:
   NormalizeWalk true (f x) r.
 Proof. unfold NormalizeWalk, Normalize in *. naive_solver. Qed.
-Hint Extern 50 (NormalizeWalk _ (?f ?x) _) => class_apply normalize_walk_app : typeclass_instances.
+Global Hint Extern 50 (NormalizeWalk _ (?f ?x) _) => class_apply normalize_walk_app : typeclass_instances.
 Global Instance normalize_walk_end_progress A (x x' : A) `{!Normalize true x x'} :
   NormalizeWalk true x x' | 100.
 Proof. done. Qed.
@@ -60,48 +60,48 @@ Proof. done. Qed.
 Lemma normalize_fmap_length A B (f : A → B) l r p `{!Normalize p (length l) r} :
   Normalize true (length (f <$> l)) r.
 Proof. by rewrite fmap_length. Qed.
-Hint Extern 5 (Normalize _ (length (_ <$> _)) _) => class_apply normalize_fmap_length : typeclass_instances.
+Global Hint Extern 5 (Normalize _ (length (_ <$> _)) _) => class_apply normalize_fmap_length : typeclass_instances.
 Lemma normalize_insert_length A i (x : A) l r p `{!Normalize p (length l) r} :
   Normalize true (length (<[i:=x]> l)) r.
 Proof. by rewrite insert_length. Qed.
-Hint Extern 5 (Normalize _ (length (<[_:=_]> _)) _) => class_apply normalize_insert_length : typeclass_instances.
+Global Hint Extern 5 (Normalize _ (length (<[_:=_]> _)) _) => class_apply normalize_insert_length : typeclass_instances.
 Lemma normalize_app_length A (l1 l2 : list A) r1 r2 r3 p1 p2 p3
        `{!Normalize p1 (length l1) r1} `{!Normalize p2 (length l2) r2} `{!Normalize p3 (r1 + r2)%nat r3}:
   Normalize true (length (l1 ++ l2)) r3.
 Proof. unfold Normalize in *; subst. by rewrite app_length. Qed.
-Hint Extern 5 (Normalize _ (length (_ ++ _)) _) => class_apply normalize_app_length : typeclass_instances.
+Global Hint Extern 5 (Normalize _ (length (_ ++ _)) _) => class_apply normalize_app_length : typeclass_instances.
 Lemma normalize_app_assoc A (l1 l2 l3 : list A) r1 r2 p1 p2
        `{!Normalize p1 (l2 ++ l3) r1} `{!Normalize p2 (l1 ++ r1) r2}:
   Normalize true ((l1 ++ l2) ++ l3) r2.
 Proof. unfold Normalize in *; subst. by rewrite -app_assoc. Qed.
-Hint Extern 5 (Normalize _ (((_ ++ _) ++ _)) _) => class_apply normalize_app_assoc : typeclass_instances.
+Global Hint Extern 5 (Normalize _ (((_ ++ _) ++ _)) _) => class_apply normalize_app_assoc : typeclass_instances.
 Lemma normalize_cons_middle A x (l1 l2 : list A) r1 r2 p1 p2
        `{!Normalize p1 (x :: l2) r1} `{!Normalize p2 (l1 ++ r1) r2}:
   Normalize true (l1 ++ [x] ++ l2) r2.
 Proof. unfold Normalize in *; subst. by rewrite -cons_middle. Qed.
 (* The hint extern is especially imporant for this lemma as otherwise
 tc search loops on goal of form l ++ [_]. *)
-Hint Extern 5 (Normalize _ (_ ++ [_] ++ _) _) => class_apply normalize_cons_middle : typeclass_instances.
+Global Hint Extern 5 (Normalize _ (_ ++ [_] ++ _) _) => class_apply normalize_cons_middle : typeclass_instances.
 Lemma normalize_app_nil_r A (l : list A):
   Normalize true (l ++ []) l.
 Proof. unfold Normalize in *; subst. by rewrite app_nil_r. Qed.
-Hint Extern 5 (Normalize _ (_ ++ []) _) => class_apply normalize_app_nil_r : typeclass_instances.
+Global Hint Extern 5 (Normalize _ (_ ++ []) _) => class_apply normalize_app_nil_r : typeclass_instances.
 Lemma normalize_rev_involutive A (l : list A):
   Normalize true (rev (rev l)) l.
 Proof. unfold Normalize in *; subst. by rewrite rev_involutive. Qed.
-Hint Extern 5 (Normalize _ (rev (rev _)) _) => class_apply normalize_rev_involutive : typeclass_instances.
+Global Hint Extern 5 (Normalize _ (rev (rev _)) _) => class_apply normalize_rev_involutive : typeclass_instances.
 Lemma normalize_minus_n_O n:
   Normalize true (n - 0)%nat n.
 Proof. unfold Normalize in *; subst. by rewrite -minus_n_O. Qed.
-Hint Extern 5 (Normalize _ (_ - 0)%nat _) => class_apply normalize_minus_n_O : typeclass_instances.
+Global Hint Extern 5 (Normalize _ (_ - 0)%nat _) => class_apply normalize_minus_n_O : typeclass_instances.
 Lemma normalize_rotate_length A n (l : list A) r p `{!Normalize p (length l) r} :
   Normalize true (length (rotate n l)) r.
 Proof. by rewrite rotate_length. Qed.
-Hint Extern 5 (Normalize _ (length (rotate _ _)) _) => class_apply normalize_rotate_length : typeclass_instances.
+Global Hint Extern 5 (Normalize _ (length (rotate _ _)) _) => class_apply normalize_rotate_length : typeclass_instances.
 Lemma normalize_replicate_length A n (l : list A) :
   Normalize true (length (replicate n l)) n.
 Proof. by rewrite replicate_length. Qed.
-Hint Extern 5 (Normalize _ (length (replicate _ _)) _) => class_apply normalize_replicate_length : typeclass_instances.
+Global Hint Extern 5 (Normalize _ (length (replicate _ _)) _) => class_apply normalize_replicate_length : typeclass_instances.
 
 Ltac normalize_tc :=
   first [

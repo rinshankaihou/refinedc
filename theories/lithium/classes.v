@@ -24,7 +24,7 @@ Definition find_in_context {Σ} (fic : find_in_context_info) (T : fic.(fic_A) �
 Class FindInContext {Σ} (fic : find_in_context_info) (n : nat) (key : Set) : Type :=
   find_in_context_proof T: iProp_to_Prop (Σ:=Σ) (find_in_context fic T)
 .
-Hint Mode FindInContext + + + - : typeclass_instances.
+Global Hint Mode FindInContext + + + - : typeclass_instances.
 Inductive FICSyntactic : Set :=.
 
 (** ** Instances  *)
@@ -41,7 +41,7 @@ Global Instance find_in_context_direct_inst {Σ B} (P : _ → iProp Σ) :
 
 (** ** [FindHypEqual]  *)
 Class FindHypEqual {Σ} (key : Type) (Q P P' : iProp Σ) := find_hyp_equal_equal: P = P'.
-Hint Mode FindHypEqual + + + ! - : typeclass_instances.
+Global Hint Mode FindHypEqual + + + ! - : typeclass_instances.
 
 (** * [destruct_hint] *)
 Inductive destruct_hint_info :=
@@ -56,7 +56,7 @@ Arguments destruct_hint : simpl never.
 Class RelatedTo {Σ} (pat : iProp Σ) : Type := {
   rt_fic : find_in_context_info (Σ:=Σ);
 }.
-Hint Mode RelatedTo + + : typeclass_instances.
+Global Hint Mode RelatedTo + + : typeclass_instances.
 Arguments rt_fic {_ _} _.
 
 (** * [IntroPersistent] *)
@@ -64,7 +64,7 @@ Arguments rt_fic {_ _} _.
 Class IntroPersistent {Σ} (P P' : iProp Σ) := {
   ip_persistent : P -∗ □ P'
 }.
-Hint Mode IntroPersistent + + - : typeclass_instances.
+Global Hint Mode IntroPersistent + + - : typeclass_instances.
 (** ** Instances *)
 Global Instance intro_persistent_intuit Σ (P : iProp Σ) : IntroPersistent (□ P) P.
 Proof. constructor. iIntros "$". Qed.
@@ -92,8 +92,8 @@ Definition simplify_goal {Σ} (P : iProp Σ) (T : iProp Σ → iProp Σ) : iProp
 Class SimplifyGoal {Σ} (P : iProp Σ) (n : option N) : Type :=
   simplify_goal_proof T : iProp_to_Prop (simplify_goal P T).
 
-Hint Mode SimplifyHyp + + - : typeclass_instances.
-Hint Mode SimplifyGoal + ! - : typeclass_instances.
+Global Hint Mode SimplifyHyp + + - : typeclass_instances.
+Global Hint Mode SimplifyGoal + ! - : typeclass_instances.
 
 (** ** Instances *)
 Lemma simplify_hyp_id {Σ} (P : iProp Σ) T:
@@ -144,8 +144,8 @@ Definition subsume_list {Σ} A (ig : list nat) (l1 l2 : list A) (f : nat → A �
 Class SubsumeList {Σ} A (ig : list nat) (l1 l2 : list A) (f : nat → A → iProp Σ) :  Type :=
   subsume_list_proof T : iProp_to_Prop (subsume_list A ig l1 l2 f T).
 
-Hint Mode Subsume + + ! : typeclass_instances.
-Hint Mode SubsumeList + + + + + ! : typeclass_instances.
+Global Hint Mode Subsume + + ! : typeclass_instances.
+Global Hint Mode SubsumeList + + + + + ! : typeclass_instances.
 
 (** ** Instances *)
 Lemma subsume_id {Σ} (P : iProp Σ) T:

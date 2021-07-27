@@ -390,7 +390,7 @@ Ltac unfold_instantiated_evars :=
          end.
 
 Create HintDb solve_protected_eq_db discriminated.
-Hint Constants Opaque : solve_protected_eq_db.
+Global Hint Constants Opaque : solve_protected_eq_db.
 
 Ltac solve_protected_eq_unfold_tac := idtac.
 Ltac solve_protected_eq :=
@@ -421,7 +421,7 @@ Ltac liCheckOwnInContext P :=
       lazymatch (type of H) with | IPM_STATE _ => idtac end;
       first [ go Δs | go Δi ]
   end.
-Hint Extern 1 (CheckOwnInContext ?P) => (liCheckOwnInContext P; constructor; exact: I) : typeclass_instances.
+Global Hint Extern 1 (CheckOwnInContext ?P) => (liCheckOwnInContext P; constructor; exact: I) : typeclass_instances.
 
 (** * Main lithium tactics *)
 Ltac convert_to_i2p_tac P := fail "No convert_to_i2p_tac provided!".
