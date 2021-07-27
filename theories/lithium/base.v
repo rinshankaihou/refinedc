@@ -500,34 +500,6 @@ End list_subequiv.
 Typeclasses Opaque list_subequiv.
 Global Opaque list_subequiv.
 
-(** * big_andM *)
-Reserved Notation "'[∧' 'map]' k ↦ x ∈ m , P"
-         (at level 200, m at level 10, k, x at level 1, right associativity,
-          format "[∧  map]  k ↦ x  ∈  m ,  P").
-Reserved Notation "'[∧' 'map]' x ∈ m , P"
-         (at level 200, m at level 10, x at level 1, right associativity,
-          format "[∧  map]  x  ∈  m ,  P").
-Notation "'[∧' 'map]' k ↦ x ∈ m , P" := (big_opM bi_and (λ k x, P) m) : bi_scope.
-Notation "'[∧' 'map]' x ∈ m , P" := (big_opM bi_and (λ _ x, P) m) : bi_scope.
-
-Section bi_big_op.
-  Context {PROP : bi}.
-  Implicit Types P Q : PROP.
-  Implicit Types Ps Qs : list PROP.
-  Implicit Types A : Type.
-  Section map.
-  Context `{Countable K} {A : Type}.
-  Implicit Types m : gmap K A.
-  Implicit Types Φ Ψ : K → A → PROP.
-  Lemma big_andM_empty Φ : ([∧ map] k↦y ∈ ∅, Φ k y) ⊣⊢ True.
-  Proof. by rewrite big_opM_empty. Qed.
-  Lemma big_andM_insert Φ m i x :
-    m !! i = None →
-    ([∧ map] k↦y ∈ <[i:=x]> m, Φ k y) ⊣⊢ Φ i x ∧ [∧ map] k↦y ∈ m, Φ k y.
-  Proof. apply big_opM_insert. Qed.
-  End map.
-End bi_big_op.
-
 (** * big_op *)
 Section big_op.
 Context {PROP : bi}.

@@ -693,7 +693,7 @@ Lemma heap_update_alloc_alive_in_heap σ a v1 v2 Paid Plk faid flk:
 Proof.
   move => H Hlookup Hfaid Hlen id al /= Hal Halive p Hp.
   destruct (decide (a ≤ p < a + length v2)).
-  - rewrite heap_update_lookup_in_range //=. by eexists.
+  - rewrite heap_update_lookup_in_range //=.
   - rewrite heap_update_lookup_not_in_range; last lia. by eapply H.
 Qed.
 
