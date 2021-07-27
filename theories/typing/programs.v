@@ -834,7 +834,7 @@ Section typing.
     iIntros "Hs Hv". iDestruct (i2p_proof with "Hs Hv") as (Q) "[HQ HT]" => /=. simpl in *.
     iApply ("HT" with "HQ").
   Qed.
-  Global Instance typed_if_simplify_inst ot v (P T1 T2 : iProp Σ) n {SH : SimplifyHyp P (Some n)}:
+  Global Instance typed_if_simplify_inst ot v (P : iProp Σ) n {SH : SimplifyHyp P (Some n)}:
     TypedIf ot v P | 1000 :=
     λ T1 T2, i2p (typed_if_simplify ot v P T1 T2 n).
 

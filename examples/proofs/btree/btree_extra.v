@@ -10,7 +10,7 @@ Qed.
 Lemma same_length_lookup_Some {A B} (l1 : list A) (l2 : list B) (i : nat) (v : A):
   length l1 = length l2 → l1 !! i = Some v → is_Some (l2 !! i).
 Proof.
-  move => Hlen H. eapply same_length_lookup => //. by exists v.
+  move => Hlen H. by eapply same_length_lookup.
 Qed.
 
 Lemma StronglySorted_app {A} {R : A → A → Prop} `{!Transitive R} l1 l2 :
@@ -316,7 +316,7 @@ Section defs.
     btree_invariant o r n ks vs cs → ∀ k, k ∈ ks → br_min r ≤ k ≤ br_max r.
   Proof.
     move => Hinv k Hk. apply elem_of_list_lookup in Hk as [i Hk]. assert (br_map r ≠ ∅).
-    { eapply btree_invariant_has_key_non_empty => //. exists k. exact Hk. }
+    { by eapply btree_invariant_has_key_non_empty. }
     rewrite /btree_invariant bool_decide_true // /= in Hinv.
     destruct Hinv as (Hlen&->&_&_&_&_&_&HSS&HB&_&_&_&_&_&Heq). apply HB.
     assert (is_Some (vs !! i)) as [v Hv] by by eapply same_length_lookup_Some.
