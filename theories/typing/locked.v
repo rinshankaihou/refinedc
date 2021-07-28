@@ -64,7 +64,7 @@ Section type.
   Next Obligation. iIntros (A γ n x ty ? ot mt v ?) "Hl". by iApply ty_aligned. Qed.
   Next Obligation. iIntros (A γ n x ty ? ot mt v ?) "Hl". by iApply ty_size_eq. Qed.
   Next Obligation. iIntros (A γ n x ty ? ot mt l ?) "Hl". by iApply ty_deref. Qed.
-  Next Obligation. iIntros (A γ n x ty ? ot mt l ? ?) "Hl". by iApply ty_ref. Qed.
+  Next Obligation. iIntros (A γ n x ty ? ot mt l ? ?). by iApply ty_ref. Qed.
   Next Obligation. iIntros (A γ n x ty ? v ot mt st ?) "Hl". by iApply ty_memcast_compat. Qed.
 
   Lemma tylocked_simplify_hyp_place A γ n x (ty : A → type) T l:

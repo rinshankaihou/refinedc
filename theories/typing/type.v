@@ -118,6 +118,7 @@ We will need an additional parameter
 
 Definition shrN : namespace := nroot.@"shrN".
 Definition mtN : namespace := nroot.@"mtN".
+Definition mtE : coPset := ↑mtN.
 Inductive own_state : Type :=
 | Own | Shr.
 Definition own_state_min (β1 β2 : own_state) : own_state :=
@@ -275,6 +276,7 @@ Class Movable `{!typeG Σ} (t : type) := {
 }.
 Arguments ty_has_op_type {_ _} _ {_}.
 Arguments ty_own_val {_ _} _ {_} : simpl never.
+Global Hint Mode Movable + + ! : typeclass_instances.
 
 (* Lift Movable to lists.  We cannot use `Forall` because that one is restricted to Prop. *)
 Inductive MovableLst `{typeG Σ} : list type → Type :=
@@ -282,6 +284,7 @@ Inductive MovableLst `{typeG Σ} : list type → Type :=
 | ml_cons ty tyl `{!Movable ty, !MovableLst tyl} : MovableLst (ty::tyl).
 Existing Class MovableLst.
 Existing Instances ml_nil ml_cons.
+Global Hint Mode MovableLst + + ! : typeclass_instances.
 
 (* movable type *)
 Record mtype `{!typeG Σ} : Type := {
@@ -388,7 +391,7 @@ End movable.
 Class Copyable `{!typeG Σ} (ty : type) `{!Movable ty} := {
   copy_own_persistent v : Persistent (ty.(ty_own_val) v);
   copy_shr_acc E ot l :
-    ↑mtN ⊆ E → ty.(ty_has_op_type) ot MCCopy →
+    mtE ⊆ E → ty.(ty_has_op_type) ot MCCopy →
     ty.(ty_own) Shr l ={E}=∗ ⌜l `has_layout_loc` ot_layout ot⌝ ∗
        (* TODO: the closing conjuct does not make much sense with True *)
        ∃ q' vl, l ↦{q'} vl ∗ ▷ ty.(ty_own_val) vl ∗ (▷l ↦{q'} vl ={E}=∗ True)
@@ -465,6 +468,20 @@ Notation "'own' l ∶ ty" := (ty_own ty Own l) (at level 100, only printing) : p
 Notation "'shr' l ∶ ty" := (ty_own ty Shr l) (at level 100, only printing) : printing_sugar.
 Notation "v ∶ ty" := (ty_own_val ty v) (at level 200, only printing) : printing_sugar.
 
+(*** tytrue *)
+Section true.
+  Context `{!typeG Σ}.
+  (** tytrue is a dummy type that all values and locations have. *)
+  Program Definition tytrue : type := {|
+    ty_own _ _ := True%I
+  |}.
+  Next Obligation. iIntros (???) "?". done. Qed.
+  Global Program Instance tytrue_movable : Movable tytrue := {|
+    ty_has_op_type _ _ := False;
+    ty_own_val _ := True%I;
+  |}.
+  Solve Obligations with done.
+End true.
 (*** refinement types *)
 Record rtype `{!typeG Σ} := {
   rty_type : Type;

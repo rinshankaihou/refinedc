@@ -230,24 +230,24 @@ Section uninit.
     iExists _. by iFrame.
   Qed.
 
-  Lemma type_read_move_copy T l ty ot a `{!Movable ty}:
+  Lemma type_read_move_copy T E l ty ot a `{!Movable ty}:
     (⌜ty.(ty_has_op_type) ot MCCopy⌝ ∗ ∀ v, T v (uninit (ot_layout ot)) (t2mt ty)) -∗
-      typed_read_end a l Own ty ot T.
+      typed_read_end a E l Own ty ot T.
   Proof.
-    iIntros "[% HT] Hl".
-    iApply fupd_mask_intro => //. iIntros "Hclose".
+    rewrite /typed_read_end. iIntros "[% HT] Hl".
+    iApply fupd_mask_intro; [destruct a; solve_ndisj|]. iIntros "Hclose".
     iDestruct (ty_aligned with "Hl") as %?; [done|].
     iDestruct (ty_deref with "Hl") as (v) "[Hl Hv]"; [done|].
     iDestruct (ty_size_eq with "Hv") as %?; [done|].
-    iExists _, _, _, (t2mt _). iFrame. do 2 iSplit => //=.
+    iExists _, _, (t2mt _). iFrame. do 2 iSplit => //=.
     iIntros "!# %st Hl Hv". iMod "Hclose". iModIntro.
     iDestruct (ty_memcast_compat_copy with "Hv") as "Hv"; [done|].
-    iExists (t2mt ty). iFrame. iSplitR "HT"; [|done].
+    iExists _, (t2mt ty). iFrame. iSplitR "HT"; [|done].
     iExists _. iFrame. iPureIntro. split_and! => //. by apply: Forall_true.
   Qed.
-  Global Instance type_read_move_copy_inst l ty ot a `{!Movable ty} :
-    TypedReadEnd a l Own ty ot | 70 :=
-    λ T, i2p (type_read_move_copy T l ty ot a).
+  Global Instance type_read_move_copy_inst l E ty ot a `{!Movable ty} :
+    TypedReadEnd a E l Own ty ot | 70 :=
+    λ T, i2p (type_read_move_copy T E l ty ot a).
 End uninit.
 
 Notation "uninit< ly >" := (uninit ly) (only printing, format "'uninit<' ly '>'") : printing_sugar.

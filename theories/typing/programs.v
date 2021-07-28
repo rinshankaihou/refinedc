@@ -164,18 +164,20 @@ Section judgements.
        (∀ (l : loc) β ty, l ◁ₗ{β} ty -∗ T l β ty -∗ Φ (val_of_loc l)) -∗
        WP e {{ Φ }}).
 
-  Definition typed_read_end (atomic : bool) (l : loc) (β : own_state) (ty : type) (ot : op_type) (T : val → type → mtype → iProp Σ) : iProp Σ :=
-    let E := if atomic then ∅ else ⊤ in
-    l◁ₗ{β}ty ={⊤, E}=∗ ∃ q v ty' (ty2 : mtype),
-        ⌜l `has_layout_loc` ot_layout ot⌝ ∗ ⌜v `has_layout_val` ot_layout ot⌝ ∗ l↦{q}v ∗ ▷ v ◁ᵥ ty2 ∗ ▷ (∀ st, l↦{q}v -∗ v ◁ᵥ ty2 ={E, ⊤}=∗ ∃ ty3 : mtype, (mem_cast v ot st) ◁ᵥ ty3 ∗ l◁ₗ{β} ty' ∗ T (mem_cast v ot st) ty' ty3).
-  Class TypedReadEnd (atomic : bool) (l : loc) (β : own_state) (ty : type) (ot : op_type) : Type :=
-    typed_read_end_proof T : iProp_to_Prop (typed_read_end atomic l β ty ot T).
+  Definition typed_read_end (atomic : bool) (E : coPset) (l : loc) (β : own_state) (ty : type) (ot : op_type) (T : val → type → mtype → iProp Σ) : iProp Σ :=
+    let E' := if atomic then ∅ else E in
+    l◁ₗ{β}ty ={E, E'}=∗ ∃ q v (ty2 : mtype),
+        ⌜l `has_layout_loc` ot_layout ot⌝ ∗ ⌜v `has_layout_val` ot_layout ot⌝ ∗ l↦{q}v ∗ ▷ v ◁ᵥ ty2 ∗
+         ▷ (∀ st, l↦{q}v -∗ v ◁ᵥ ty2 ={E', E}=∗
+            ∃ ty' (ty3 : mtype), (mem_cast v ot st) ◁ᵥ ty3 ∗ l◁ₗ{β} ty' ∗ T (mem_cast v ot st) ty' ty3).
+  Class TypedReadEnd (atomic : bool) (E : coPset) (l : loc) (β : own_state) (ty : type) (ot : op_type) : Type :=
+    typed_read_end_proof T : iProp_to_Prop (typed_read_end atomic E l β ty ot T).
 
-  Definition typed_write_end (atomic : bool) (ot : op_type) (v1 : val) (ty1 : type) `{!Movable ty1} (l2 : loc) (β2 : own_state) (ty2 : type) (T : type → iProp Σ) : iProp Σ :=
-    let E := if atomic then ∅ else ⊤ in
-    l2 ◁ₗ{β2} ty2 -∗ (v1 ◁ᵥ ty1 ={⊤, E}=∗ ⌜v1 `has_layout_val` ot_layout ot⌝ ∗ l2↦|ot_layout ot| ∗ ▷ (l2↦v1 ={E, ⊤}=∗ ∃ ty3, l2 ◁ₗ{β2} ty3 ∗ T ty3)).
-  Class TypedWriteEnd (atomic : bool) (ot : op_type) (v1 : val) (ty1 : type) `{!Movable ty1} (l2 : loc) (β2 : own_state) (ty2 : type) : Type :=
-    typed_write_end_proof T : iProp_to_Prop (typed_write_end atomic ot v1 ty1 l2 β2 ty2 T).
+  Definition typed_write_end (atomic : bool) (E : coPset) (ot : op_type) (v1 : val) (ty1 : type) `{!Movable ty1} (l2 : loc) (β2 : own_state) (ty2 : type) (T : type → iProp Σ) : iProp Σ :=
+    let E' := if atomic then ∅ else E in
+    l2 ◁ₗ{β2} ty2 -∗ (v1 ◁ᵥ ty1 ={E, E'}=∗ ⌜v1 `has_layout_val` ot_layout ot⌝ ∗ l2↦|ot_layout ot| ∗ ▷ (l2↦v1 ={E', E}=∗ ∃ ty3, l2 ◁ₗ{β2} ty3 ∗ T ty3)).
+  Class TypedWriteEnd (atomic : bool) (E : coPset) (ot : op_type) (v1 : val) (ty1 : type) `{!Movable ty1} (l2 : loc) (β2 : own_state) (ty2 : type) : Type :=
+    typed_write_end_proof T : iProp_to_Prop (typed_write_end atomic E ot v1 ty1 l2 β2 ty2 T).
 
   Definition typed_addr_of_end (l : loc) (β : own_state) (ty : type) (T : own_state → type → type → iProp Σ) : iProp Σ :=
     l◁ₗ{β}ty ={⊤}=∗ ∃ β2 ty2 ty', l◁ₗ{β2}ty2 ∗ l◁ₗ{β}ty' ∗ T β2 ty2 ty'.
@@ -341,8 +343,8 @@ Global Hint Mode TypedCall + + + + + + : typeclass_instances.
 Global Hint Mode TypedCallVal + + + + + + + : typeclass_instances.
 Global Hint Mode TypedCopyAllocId + + + + + + + : typeclass_instances.
 Global Hint Mode TypedCopyAllocIdVal + + + + + + + + + : typeclass_instances.
-Global Hint Mode TypedReadEnd + + + + + + + : typeclass_instances.
-Global Hint Mode TypedWriteEnd + + + + + + + + + + : typeclass_instances.
+Global Hint Mode TypedReadEnd + + + + + + + + : typeclass_instances.
+Global Hint Mode TypedWriteEnd + + + + + + + + + + + : typeclass_instances.
 Global Hint Mode TypedAddrOfEnd + + + + + : typeclass_instances.
 Global Hint Mode TypedPlace + + + + + + : typeclass_instances.
 Global Hint Mode TypedAnnotExpr + + + + + + + : typeclass_instances.
@@ -377,15 +379,6 @@ Section proper.
     T (v ◁ᵥ ty2) -∗ simplify_goal (v ◁ᵥ ty1) T.
   Proof. iIntros (->) "HT". iExists _. iFrame. by iIntros "?". Qed.
 
-  (* TODO: this lemma is not very useful. figure out how to make it useful *)
-  Lemma typed_place_mono P l ty1 ty2 β T1 T2 :
-    typed_place P l β ty2 T1 -∗ (l ◁ₗ{β} ty1 -∗ l ◁ₗ{β} ty2) -∗ (∀ l2 β2 ty3 typ R, T1 l2 β2 ty3 typ R -∗ T2 l2 β2 ty3 typ R) -∗ typed_place P l β ty1 T2.
-  Proof.
-    iIntros "HP Hlsub HTsub" (Φ) "Hl HΦ". iApply ("HP" with "[Hl Hlsub]"). by iApply "Hlsub".
-    iIntros (l' ty3 β2 typ R) "Hl' Htyp HT".
-    iApply ("HΦ" with "Hl' Htyp"). by iApply "HTsub".
-  Qed.
-
   Lemma typed_place_subsume' P l ty1 β T :
     (l ◁ₗ{β} ty1 -∗ ∃ ty2, l ◁ₗ{β} ty2 ∗ typed_place P l β ty2 T) -∗ typed_place P l β ty1 T.
   Proof.
@@ -397,7 +390,193 @@ Section proper.
   Proof.
     iIntros "Hsub". iApply typed_place_subsume'. iIntros "Hl". iExists _. by iApply "Hsub".
   Qed.
+
+  (** wand lemmas *)
+  Lemma typed_val_expr_wand e T1 T2:
+    typed_val_expr e T1 -∗
+    (∀ v ty, T1 v ty -∗ T2 v ty) -∗
+    typed_val_expr e T2.
+  Proof.
+    iIntros "He HT" (Φ) "HΦ".
+    iApply "He". iIntros (v ty) "Hv Hty".
+    iApply ("HΦ" with "Hv"). by iApply "HT".
+  Qed.
+
+  Lemma typed_if_wand ot v (P : iProp Σ) T1 T2 T1' T2':
+    typed_if ot v P T1 T2 -∗
+    ((T1 -∗ T1') ∧ (T2 -∗ T2')) -∗
+    typed_if ot v P T1' T2'.
+  Proof.
+    iIntros "Hif HT Hv". iDestruct ("Hif" with "Hv") as (it z ? ?) "HC".
+    iExists _, _. iSplit; [done|]. iSplit; [done|]. case_decide.
+    - iDestruct "HT" as "[_ HT]". by iApply "HT".
+    - iDestruct "HT" as "[HT _]". by iApply "HT".
+  Qed.
+
+  Lemma typed_bin_op_wand v1 P1 Q1 v2 P2 Q2 op ot1 ot2 T:
+    typed_bin_op v1 Q1 v2 Q2 op ot1 ot2 T -∗
+    (P1 -∗ Q1) -∗
+    (P2 -∗ Q2) -∗
+    typed_bin_op v1 P1 v2 P2  op ot1 ot2 T.
+  Proof.
+    iIntros "H Hw1 Hw2 H1 H2".
+    iApply ("H" with "[Hw1 H1]"); [by iApply "Hw1"|by iApply "Hw2"].
+  Qed.
+
+  Lemma typed_un_op_wand v P Q op ot T:
+    typed_un_op v Q op ot T -∗
+    (P -∗ Q) -∗
+    typed_un_op v P op ot T.
+  Proof.
+    iIntros "H Hw HP". iApply "H". by iApply "Hw".
+  Qed.
+
+  (** typed_read_end *)
+  Lemma typed_read_end_mono_strong (a : bool) E1 E2 l β ty ot T:
+    (if a then ∅ else E2) = (if a then ∅ else E1) →
+    (l ◁ₗ{β} ty ={E1, E2}=∗ ∃ β' ty' P, l ◁ₗ{β'} ty' ∗ ▷ P ∗
+       typed_read_end a E2 l β' ty' ot (λ v ty2 ty3,
+          P -∗ l ◁ₗ{β'} ty2 -∗ v ◁ᵥ ty3 ={E2, E1}=∗
+          ∃ ty2' (ty3' : mtype), l ◁ₗ{β} ty2' ∗ v ◁ᵥ ty3' ∗ T v ty2' ty3')) -∗
+    typed_read_end a E1 l β ty ot T.
+  Proof.
+    iIntros (Ha) "HT Hl". iMod ("HT" with "Hl") as (β' ty' P) "(Hl&HP&HT)".
+    iMod ("HT" with " Hl") as (?????) "(Hl&Hv&HT)". rewrite Ha.
+    iModIntro. iExists _, _, _.
+    iFrame "Hl Hv". iSplit; [done|]. iSplit; [done|].
+    iIntros "!> %st Hl Hv". iMod ("HT" with "Hl Hv") as (? ty3) "(Hcast&Hl&HT)".
+    iMod ("HT" with "HP Hl Hcast") as (ty2' ty3') "(?&?&?)". iExists _, _. by iFrame.
+  Qed.
+
+  Lemma typed_read_end_wand (a : bool) E l β ty ot T T':
+    typed_read_end a E l β ty ot T' -∗
+    (∀ v ty1 ty2, T' v ty1 ty2 -∗ T v ty1 ty2) -∗
+    typed_read_end a E l β ty ot T.
+  Proof.
+    iIntros "HT Hw Hl". iMod ("HT" with "Hl") as (???) "(%&%&Hl&Hv&HT)".
+    iModIntro. iExists _, _, _.
+    iFrame "Hl Hv". iSplit; [done|]. iSplit; [done|].
+    iIntros "!> %st Hl Hv". iMod ("HT" with "Hl Hv") as (? ty3) "(Hcast&Hl&HT)".
+    iExists _, _. iFrame. by iApply "Hw".
+  Qed.
+
+  Lemma fupd_typed_read_end a E l β ty ot T:
+    (|={E}=> typed_read_end a E l β ty ot T) -∗
+    typed_read_end a E l β ty ot T.
+  Proof. iIntros ">H". by iApply "H". Qed.
+
+  Typeclasses Opaque typed_read_end.
+  Global Instance elim_modal_fupd_typed_read_end p a E l β ty ot T P :
+    ElimModal True p false (|={E}=> P) P (typed_read_end a E l β ty ot T) (typed_read_end a E l β ty ot T).
+  Proof.
+    iIntros (?) "[HP HT]".
+    rewrite bi.intuitionistically_if_elim -{2}fupd_typed_read_end.
+    iMod "HP". by iApply "HT".
+  Qed.
+
+  Global Instance is_except_0_typed_read_end a E l β ty ot T : IsExcept0 (typed_read_end a E l β ty ot T).
+  Proof. by rewrite /IsExcept0 -{2}fupd_typed_read_end -except_0_fupd -fupd_intro. Qed.
+
+  Global Instance elim_modal_fupd_typed_read_end_atomic p E1 E2 l β ty ot T P:
+    ElimModal True p false
+            (|={E1,E2}=> P) P
+            (typed_read_end true  E1 l β ty ot T)
+            (typed_read_end true E2 l β ty ot (λ v ty ty', |={E2,E1}=> T v ty ty'))%I
+            | 100.
+  Proof.
+    iIntros (?) "[HP HT]". rewrite bi.intuitionistically_if_elim.
+    iApply typed_read_end_mono_strong; [done|]. iIntros "Hl". iMod "HP". iModIntro.
+    iExists _, _, True%I. iFrame. iSplit; [done|].
+    iApply (typed_read_end_wand with "(HT HP)").
+    iIntros (v ty1 ty2) "HT _ Hl Hv". iMod "HT". iModIntro. iExists _, _. iFrame.
+  Qed.
+
+  Global Instance elim_acc_typed_read_end_atomic {X} E1 E2 α β γ l b ty ot T :
+    ElimAcc (X:=X) True
+            (fupd E1 E2) (fupd E2 E1)
+            α β γ
+            (typed_read_end true E1 l b ty ot T)
+            (λ x, typed_read_end true E2 l b ty ot (λ v ty ty', |={E2}=> β x ∗ (γ x -∗? T v ty ty')))%I | 100.
+  Proof.
+    iIntros (?) "Hinner Hacc".
+    iMod "Hacc" as (x) "[Hα Hclose]".
+    iApply (typed_read_end_wand with "(Hinner Hα)").
+    iIntros (v ty1 ty2) ">[Hβ HT]". iMod ("Hclose" with "Hβ"). by iApply "HT".
+  Qed.
+
+  (** typed_write_end *)
+  Lemma typed_write_end_mono_strong (a : bool) E1 E2 ot v1 ty1 `{!Movable ty1} l2 β2 ty2 T:
+    (if a then ∅ else E2) = (if a then ∅ else E1) →
+    (v1 ◁ᵥ ty1 -∗ l2 ◁ₗ{β2} ty2 ={E1, E2}=∗ ∃ (ty1' : mtype) β2' ty2' P,
+       v1 ◁ᵥ ty1' ∗ l2 ◁ₗ{β2'} ty2' ∗ ▷ P ∗
+       typed_write_end a E2 ot v1 ty1' l2 β2' ty2' (λ ty3,
+          P -∗ l2 ◁ₗ{β2'} ty3 ={E2, E1}=∗
+          ∃ ty3', l2 ◁ₗ{β2} ty3' ∗ T ty3')) -∗
+    typed_write_end a E1 ot v1 ty1 l2 β2 ty2 T.
+  Proof.
+    iIntros (Ha) "HT Hl Hv". iMod ("HT" with "Hv Hl") as (ty1' β2' ty2' P) "(Hv&Hl&HP&HT)".
+    iMod ("HT" with "Hl Hv") as (?) "(?&HT)". rewrite Ha.
+    iModIntro. iSplit; [done|]. iFrame. iIntros "!> Hl". iMod ("HT" with "Hl") as (ty3) "(Hl&HT)".
+    iMod ("HT" with "HP Hl") as (ty3') "(?&?)". iExists  _. by iFrame.
+  Qed.
+
+  Lemma typed_write_end_wand a E v1 ty1 `{!Movable ty1} l2 β2 ty2 ot T T':
+    typed_write_end a E ot v1 ty1 l2 β2 ty2 T' -∗
+    (∀ ty3, T' ty3 -∗ T ty3) -∗
+    typed_write_end a E ot v1 ty1 l2 β2 ty2 T.
+  Proof.
+    iIntros "HT Hw Hl Hv". iMod ("HT" with "Hl Hv") as (?) "(?&HT)".
+    iModIntro. iFrame. iSplit; [done|].
+    iIntros "!> Hl". iMod ("HT" with "Hl") as (ty3) "(Hl&HT)".
+    iExists _. iFrame. by iApply "Hw".
+  Qed.
+
+  Lemma fupd_typed_write_end a E v1 ty1 `{!Movable ty1} l2 β2 ty2 ot T:
+    (|={E}=> typed_write_end a E ot v1 ty1 l2 β2 ty2 T) -∗
+    typed_write_end a E ot v1 ty1 l2 β2 ty2 T.
+  Proof. iIntros ">H". by iApply "H". Qed.
+
+  Typeclasses Opaque typed_write_end.
+  Global Instance elim_modal_fupd_typed_write_end P p a E v1 ty1 `{!Movable ty1} l2 β2 ty2 ot T:
+    ElimModal True p false (|={E}=> P) P (typed_write_end a E ot v1 ty1 l2 β2 ty2 T) (typed_write_end a E ot v1 ty1 l2 β2 ty2 T).
+  Proof.
+    iIntros (?) "[HP HT]".
+    rewrite bi.intuitionistically_if_elim -{2}fupd_typed_write_end.
+    iMod "HP". by iApply "HT".
+  Qed.
+
+  Global Instance is_except_0_typed_write_end a E v1 ty1 `{!Movable ty1} l2 β2 ty2 ot T : IsExcept0 (typed_write_end a E ot v1 ty1 l2 β2 ty2 T).
+  Proof. by rewrite /IsExcept0 -{2}fupd_typed_write_end -except_0_fupd -fupd_intro. Qed.
+
+  Global Instance elim_modal_fupd_typed_write_end_atomic p E1 E2 v1 ty1 `{!Movable ty1} l2 β2 ty2 ot T P:
+    ElimModal True p false
+            (|={E1,E2}=> P) P
+            (typed_write_end true E1 ot v1 ty1 l2 β2 ty2 T)
+            (typed_write_end true E2 ot v1 ty1 l2 β2 ty2 (λ ty3, |={E2,E1}=> T ty3))%I
+            | 100.
+  Proof.
+    iIntros (?) "[HP HT]". rewrite bi.intuitionistically_if_elim.
+    iApply typed_write_end_mono_strong; [done|]. iIntros "Hv Hl". iMod "HP". iModIntro.
+    iExists (t2mt _), _, _, True%I. iFrame. iSplit; [done|].
+    iApply (typed_write_end_wand with "(HT HP)").
+    iIntros (ty3) "HT _ Hl". iMod "HT". iModIntro. iExists _. iFrame.
+  Qed.
+
+  Global Instance elim_acc_typed_write_end_atomic {X} E1 E2 α β γ v1 ty1 `{!Movable ty1} l2 β2 ty2 ot T :
+    ElimAcc (X:=X) True
+            (fupd E1 E2) (fupd E2 E1)
+            α β γ
+            (typed_write_end true E1 ot v1 ty1 l2 β2 ty2 T)
+            (λ x, typed_write_end true E2 ot v1 ty1 l2 β2 ty2 (λ ty3, |={E2}=> β x ∗ (γ x -∗? T ty3)))%I | 100.
+  Proof.
+    iIntros (?) "Hinner Hacc".
+    iMod "Hacc" as (x) "[Hα Hclose]".
+    iApply (typed_write_end_wand with "(Hinner Hα)").
+    iIntros (ty3) ">[Hβ HT]". iMod ("Hclose" with "Hβ"). by iApply "HT".
+  Qed.
 End proper.
+Typeclasses Opaque typed_read_end.
+Typeclasses Opaque typed_write_end.
 
 Definition FindLoc `{!typeG Σ} (l : loc) :=
   {| fic_A := own_state * type; fic_Prop '(β, ty):= (l ◁ₗ{β} ty)%I; |}.
@@ -435,7 +614,7 @@ Section typing.
   Lemma find_in_context_type_val_P_id v T:
     (∃ ty : mtype, v ◁ᵥ ty ∗ T (v ◁ᵥ ty)) -∗
     find_in_context (FindValP v) T.
-  Proof. iDestruct 1 as (ty) "[Hl HT]". iExists (ty_own_val _ _) => /=. iFrame. Qed.
+  Proof. iDestruct 1 as (ty) "[Hl HT]". iExists (ty_own_val ty _) => /=. iFrame. Qed.
   Global Instance find_in_context_type_val_P_id_inst v :
     FindInContext (FindValP v) 0%nat FICSyntactic :=
     λ T, i2p (find_in_context_type_val_P_id v T).
@@ -451,7 +630,7 @@ Section typing.
   Lemma find_in_context_type_val_or_loc_P_id_val (v : val) (l : loc) T:
     (∃ ty : mtype, v ◁ᵥ ty ∗ T (v ◁ᵥ ty)) -∗
     find_in_context (FindValOrLoc v l) T.
-  Proof. iDestruct 1 as (ty) "[Hl HT]". iExists (ty_own_val _ _) => /=. iFrame. Qed.
+  Proof. iDestruct 1 as (ty) "[Hl HT]". iExists (ty_own_val ty _) => /=. iFrame. Qed.
   Global Instance find_in_context_type_val_or_loc_P_id_val_inst v l:
     FindInContext (FindValOrLoc v l) 0%nat FICSyntactic :=
     λ T, i2p (find_in_context_type_val_or_loc_P_id_val v l T).
@@ -979,45 +1158,6 @@ Section typing.
   Qed.
 
   (*** expressions *)
-  Lemma typed_val_expr_wand e T1 T2:
-    typed_val_expr e T1 -∗
-    (∀ v ty, T1 v ty -∗ T2 v ty) -∗
-    typed_val_expr e T2.
-  Proof.
-    iIntros "He HT" (Φ) "HΦ".
-    iApply "He". iIntros (v ty) "Hv Hty".
-    iApply ("HΦ" with "Hv"). by iApply "HT".
-  Qed.
-
-  Lemma typed_if_wand ot v (P : iProp Σ) T1 T2 T1' T2':
-    typed_if ot v P T1 T2 -∗
-    ((T1 -∗ T1') ∧ (T2 -∗ T2')) -∗
-    typed_if ot v P T1' T2'.
-  Proof.
-    iIntros "Hif HT Hv". iDestruct ("Hif" with "Hv") as (it z ? ?) "HC".
-    iExists _, _. iSplit; [done|]. iSplit; [done|]. case_decide.
-    - iDestruct "HT" as "[_ HT]". by iApply "HT".
-    - iDestruct "HT" as "[HT _]". by iApply "HT".
-  Qed.
-
-  Lemma typed_bin_op_wand v1 P1 Q1 v2 P2 Q2 op ot1 ot2 T:
-    typed_bin_op v1 Q1 v2 Q2 op ot1 ot2 T -∗
-    (P1 -∗ Q1) -∗
-    (P2 -∗ Q2) -∗
-    typed_bin_op v1 P1 v2 P2  op ot1 ot2 T.
-  Proof.
-    iIntros "H Hw1 Hw2 H1 H2".
-    iApply ("H" with "[Hw1 H1]"); [by iApply "Hw1"|by iApply "Hw2"].
-  Qed.
-
-  Lemma typed_un_op_wand v P Q op ot T:
-    typed_un_op v Q op ot T -∗
-    (P -∗ Q) -∗
-    typed_un_op v P op ot T.
-  Proof.
-    iIntros "H Hw HP". iApply "H". by iApply "Hw".
-  Qed.
-
   Lemma type_val_context v T:
     (find_in_context (FindVal v) T) -∗
     typed_value v T.
@@ -1195,11 +1335,11 @@ Section typing.
     all: by iApply ("HΦ" with "Hv HT").
   Qed.
 
-  Lemma type_read T T' e ot a:
+  Lemma type_read T T' e ot (a : bool):
     IntoPlaceCtx e T' →
     T' (λ K l, find_in_context (FindLoc l) (λ '(β1, ty1),
       typed_place K l β1 ty1 (λ l2 β2 ty2 typ R,
-          typed_read_end a l2 β2 ty2 ot (λ v ty2' (ty3 : mtype),
+          typed_read_end a ⊤ l2 β2 ty2 ot (λ v ty2' (ty3 : mtype),
             l ◁ₗ{β1} typ ty2' -∗ R ty2' -∗ T v ty3)))) -∗
     typed_read a e ot T.
   Proof.
@@ -1208,97 +1348,97 @@ Section typing.
     iIntros (K l). iDestruct 1 as ([β ty]) "[Hl HP]".
     iApply ("HP" with "Hl").
     iIntros (l' β2 ty2 typ R) "Hl' Hc HT" => /=. iApply "HΦ".
-    iMod ("HT" with "Hl'") as (q v ty' ty3 Hly Hv) "(Hl&Hv&HT)".
-    iModIntro. iExists _,_,_. iFrame "Hl Hv". iSplit => //. iSplit => //.
-    iIntros "!# %st Hl Hv". iMod ("HT" with "Hl Hv") as (ty4) "(Hv&Hl&HT)".
+    rewrite /typed_read_end. iMod ("HT" with "Hl'") as (q v ty3 Hly Hv) "(Hl&Hv&HT)".
+    iModIntro. iExists _,_,_. iFrame "Hl Hv". iSplitR => //. iSplit => //.
+    iIntros "!# %st Hl Hv".
+    iMod ("HT" with "Hl Hv") as (ty' ty4) "(Hv&Hl&HT)".
     iMod ("Hc" with "Hl") as "[? ?]". iExists _. iFrame. by iApply ("HT" with "[$]").
   Qed.
 
-  Lemma type_read_copy T β l ty ly a {HC: CopyAs l β ty}:
-    ((HC (λ ty', ⌜ty'.(ty_has_op_type) ly MCCopy⌝ ∗ ∀ v, T v (ty' : type) ty')).(i2p_P)) -∗
-      typed_read_end a l β ty ly T.
+  Lemma type_read_copy T a β l ty ly E {HC: CopyAs l β ty}:
+    ((HC (λ ty', ⌜ty'.(ty_has_op_type) ly MCCopy⌝ ∗ ⌜mtE ⊆ E⌝ ∗ ∀ v, T v (ty' : type) ty')).(i2p_P)) -∗
+      typed_read_end a E l β ty ly T.
   Proof.
-    iIntros "Hs Hl". iDestruct (i2p_proof with "Hs Hl") as (ty') "(Hl&%&%&HT)".
-    iRevert "Hl". destruct β.
-    - iIntros "Hl".
-      iApply fupd_mask_intro => //. iIntros "Hclose".
+    rewrite /typed_read_end. iIntros "Hs Hl". iDestruct (i2p_proof with "Hs Hl") as (ty') "(Hl&%&%&%&HT)".
+    destruct β.
+    - iApply fupd_mask_intro; [destruct a; solve_ndisj|]. iIntros "Hclose".
       iDestruct (ty_aligned with "Hl") as %?; [done|].
       iDestruct (ty_deref with "Hl") as (v) "[Hl #Hv]"; [done|].
       iDestruct (ty_size_eq with "Hv") as %?; [done|].
-      iExists _, _, _, _. iFrame "∗Hv". do 2 iSplitR => //=.
+      iExists _, _, _. iFrame "∗Hv". do 2 iSplitR => //=.
       iIntros "!# %st Hl _". iMod "Hclose". iModIntro.
-      iExists _. iDestruct (ty_ref with "[//] Hl Hv") as "$"; [done|]. iSplitR "HT" => //.
+      iExists _, _. iDestruct (ty_ref with "[//] Hl Hv") as "$"; [done|]. iSplitR "HT" => //.
       by iApply (ty_memcast_compat_copy with "Hv").
-    - iIntros "#Hl".
+    - iRevert "Hl". iIntros "#Hl".
       iMod (copy_shr_acc with "Hl") as (? q' v) "[Hmt [Hv Hc]]" => //.
       iDestruct (ty_size_eq with "Hv") as "#>%"; [done|].
-      iApply fupd_mask_intro => //. iIntros "Hclose".
-      iExists _, _, _, _. iFrame. do 2 iSplit => //=.
+      iApply fupd_mask_intro; [destruct a; solve_ndisj|]. iIntros "Hclose".
+      iExists _, _, _. iFrame. do 2 iSplit => //=.
       iIntros "!# %st Hmt Hv". iMod "Hclose". iModIntro.
-      iExists _. iFrame "Hl". iSplitR "HT"; [|done].
+      iExists _, _. iFrame "Hl". iSplitR "HT"; [|done].
       by iApply (ty_memcast_compat_copy with "Hv").
   Qed.
-  Global Instance type_read_copy_inst β l ty ly a `{!CopyAs l β ty} :
-    TypedReadEnd a l β ty ly | 10 :=
-    λ T, i2p (type_read_copy T β l ty ly a).
+  Global Instance type_read_copy_inst β l ty ly a E `{!CopyAs l β ty} :
+    TypedReadEnd a E l β ty ly | 10 :=
+    λ T, i2p (type_read_copy T a β l ty ly E).
 
-  Lemma type_write a ty `{!Movable ty} T T' e v ot:
+  Lemma type_write (a : bool) ty `{!Movable ty} T T' e v ot:
     IntoPlaceCtx e T' →
     T' (λ K l, find_in_context (FindLoc l) (λ '(β1, ty1),
       typed_place K l β1 ty1 (λ l2 β2 ty2 typ R,
-         typed_write_end a ot v ty l2 β2 ty2 (λ ty3, l ◁ₗ{β1} typ ty3 -∗ R ty3 -∗ T)))) -∗
+         typed_write_end a ⊤ ot v ty l2 β2 ty2 (λ ty3, l ◁ₗ{β1} typ ty3 -∗ R ty3 -∗ T)))) -∗
     typed_write a e ot v ty T.
   Proof.
     iIntros (HT') "HT'". iIntros (Φ) "HΦ".
     iApply (HT' with "HT'"). iIntros (K l). iDestruct 1 as ([β1 ty1]) "[Hl HK]".
     iApply ("HK" with "Hl"). iIntros (l2 β2 ty2 typ R) "Hl' Hc He".
-    iApply "HΦ". iIntros "Hv". iMod ("He" with "Hl' Hv") as "[$ [$ Hc2]]". iModIntro.
-    iIntros "!# Hl".
+    iApply "HΦ". iIntros "Hv".
+    rewrite /typed_write_end. iMod ("He" with "Hl' Hv") as "[$ [$ Hc2]]".
+    iIntros "!# !# Hl".
     iMod ("Hc2" with "Hl") as (ty3) "[Hl HT]".
     iMod ("Hc" with "Hl") as "[? ?]". by iApply ("HT" with "[$]").
   Qed.
 
   (* TODO: this constraint on the layout is too strong, we only need
   that the length is the same and the alignment is lower. Adapt when necessary. *)
-  Lemma type_write_own_copy a ty `{!Movable ty} T l2 ty2 v `{!Movable ty2} `{!Copyable ty} ot:
+  Lemma type_write_own_copy a E ty `{!Movable ty} T l2 ty2 v `{!Movable ty2} `{!Copyable ty} ot:
     ⌜ty.(ty_has_op_type) (UntypedOp (ot_layout ot)) MCNone⌝ ∗ ⌜ty2.(ty_has_op_type) (UntypedOp (ot_layout ot)) MCNone⌝ ∗ (v ◁ᵥ ty -∗ T ty) -∗
-    typed_write_end a ot v ty l2 Own ty2 T.
+    typed_write_end a E ot v ty l2 Own ty2 T.
   Proof.
-    iDestruct 1 as (??) "HT". iIntros "Hl #Hv".
+    rewrite /typed_write_end. iDestruct 1 as (??) "HT". iIntros "Hl #Hv".
     iDestruct (ty_aligned with "Hl") as %?; [done|].
     iDestruct (ty_deref with "Hl") as (v') "[Hl Hv']"; [done|].
     iDestruct (ty_size_eq with "Hv'") as %?; [done|].
     iDestruct (ty_size_eq with "Hv") as %?; [done|].
-    iApply fupd_mask_intro => //. iIntros "Hmask".
+    iApply fupd_mask_intro; [destruct a; solve_ndisj|]. iIntros "Hmask".
     iSplit; [done|]. iSplitL "Hl". { iExists _. by iFrame. }
     iIntros "!# Hl". iMod "Hmask". iModIntro.
     iExists _. iDestruct ("HT" with "Hv") as "$".
     by iApply (ty_ref with "[] Hl Hv").
   Qed.
-  Global Instance type_write_own_copy_inst a ty `{!Movable ty} l2 ty2 v `{!Movable ty2} `{!Copyable ty} ot:
-    TypedWriteEnd a ot v ty l2 Own ty2 | 20 :=
-    λ T, i2p (type_write_own_copy a ty T l2 ty2 v ot).
+  Global Instance type_write_own_copy_inst a E ty `{!Movable ty} l2 ty2 v `{!Movable ty2} `{!Copyable ty} ot:
+    TypedWriteEnd a E ot v ty l2 Own ty2 | 20 :=
+    λ T, i2p (type_write_own_copy a E ty T l2 ty2 v ot).
 
   (* Note that there is also [type_write_own] in singleton.v which applies if one can prove MCId. *)
-  Lemma type_write_own_move a ty `{!Movable ty} T l2 ty2 v `{!Movable ty2} ot :
+  Lemma type_write_own_move a E ty `{!Movable ty} T l2 ty2 v `{!Movable ty2} ot :
     ⌜ty.(ty_has_op_type) (UntypedOp (ot_layout ot)) MCNone⌝ ∗ ⌜ty2.(ty_has_op_type) (UntypedOp (ot_layout ot)) MCNone⌝ ∗ (∀ v', v' ◁ᵥ ty2 -∗ T ty) -∗
-    typed_write_end a ot v ty l2 Own ty2 T.
+    typed_write_end a E ot v ty l2 Own ty2 T.
   Proof.
-    iDestruct 1 as (??) "HT". iIntros "Hl Hv".
+    rewrite /typed_write_end. iDestruct 1 as (??) "HT". iIntros "Hl Hv".
     iDestruct (ty_aligned with "Hl") as %?; [done|].
     iDestruct (ty_deref with "Hl") as (v') "[Hl Hv']"; [done|].
     iDestruct (ty_size_eq with "Hv") as %?; [done|].
     iDestruct (ty_size_eq with "Hv'") as %?; [done|].
-    (* iDestruct (ty_memcast_compat_id with "Hv") as %Hid; [done|]. *)
-    iApply fupd_mask_intro => //. iIntros "Hmask".
+    iApply fupd_mask_intro; [destruct a; solve_ndisj|]. iIntros "Hmask".
     iSplit; [done|]. iSplitL "Hl". { iExists _. by iFrame. }
     iIntros "!# Hl". iMod "Hmask". iModIntro.
     iDestruct (ty_ref with "[] Hl Hv") as "?"; [done..|].
     iExists _. iFrame. by iApply "HT".
   Qed.
-  Global Instance type_write_own_move_inst a ty `{!Movable ty} l2 ty2 v `{!Movable ty2} ot:
-    TypedWriteEnd a ot v ty l2 Own ty2 | 70 :=
-    λ T, i2p (type_write_own_move a ty T l2 ty2 v ot).
+  Global Instance type_write_own_move_inst a E ty `{!Movable ty} l2 ty2 v `{!Movable ty2} ot:
+    TypedWriteEnd a E ot v ty l2 Own ty2 | 70 :=
+    λ T, i2p (type_write_own_move a E ty T l2 ty2 v ot).
 
   Lemma type_addr_of_place T T' e:
     IntoPlaceCtx e T' →
