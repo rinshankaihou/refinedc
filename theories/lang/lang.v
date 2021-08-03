@@ -496,6 +496,10 @@ comparing pointers? (see lambda rust) *)
 | IfES v it e1 e2 n σ:
     val_to_Z v it = Some n →
     expr_step (IfE (IntOp it) (Val v) e1 e2) σ [] (if bool_decide (n ≠ 0) then e1 else e2)  σ []
+| IfESP v e1 e2 l σ:
+    val_to_loc v = Some l →
+    (if bool_decide (l ≠ NULL_loc) then heap_state_loc_in_bounds l 0%nat σ.(st_heap) else True) →
+    expr_step (IfE PtrOp (Val v) e1 e2) σ [] (if bool_decide (l ≠ NULL_loc) then e1 else e2)  σ []
 (* no rule for StuckE *)
 .
 
@@ -513,6 +517,10 @@ Inductive stmt_step : stmt → runtime_function → state → list Empty_set →
 | IfSS it v s1 s2 rf σ n:
     val_to_Z v it = Some n →
     stmt_step (IfS (IntOp it) (Val v) s1 s2) rf σ [] (to_rtstmt rf ((if bool_decide (n ≠ 0) then s1 else s2))) σ []
+| IfSSP v s1 s2 rf σ l:
+    val_to_loc v = Some l →
+    (if bool_decide (l ≠ NULL_loc) then heap_state_loc_in_bounds l 0%nat σ.(st_heap) else True) →
+    stmt_step (IfS PtrOp (Val v) s1 s2) rf σ [] (to_rtstmt rf ((if bool_decide (l ≠ NULL_loc) then s1 else s2))) σ []
 | SwitchS rf σ v n m bs s def it :
     val_to_Z v it = Some n →
     (∀ i : nat, m !! n = Some i → is_Some (bs !! i)) →

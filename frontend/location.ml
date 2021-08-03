@@ -59,3 +59,13 @@ let pp_loc : t pp = fun ff (key, pool) ->
   | None    -> Format.fprintf ff "unknown"
 
 type 'a located = { elt : 'a ; loc : t }
+
+let to_cerb_loc : t -> Location_ocaml.t = fun (key, pool) ->
+  match Pool.get pool key with
+  | None    -> Location_ocaml.unknown
+  | Some(d) ->
+  let pos_fname = d.loc_file in
+  let {loc_line1=l1; loc_col1=c1; loc_line2=l2; loc_col2=c2; _} = d in
+  let p1 = Lexing.{pos_fname; pos_lnum=l1; pos_bol=0; pos_cnum=c1} in
+  let p2 = Lexing.{pos_fname; pos_lnum=l2; pos_bol=0; pos_cnum=c2} in
+  Location_ocaml.region (p1, p2) None

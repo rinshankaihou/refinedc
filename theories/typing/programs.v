@@ -65,7 +65,14 @@ Section judgements.
 
   Definition typed_if (ot : op_type) (v : val) (P : iProp Σ) (T1 T2 : iProp Σ) : iProp Σ :=
     (* TODO: generalize this to PtrOp *)
-    (P -∗ ∃ it z, ⌜ot = IntOp it⌝ ∗ ⌜val_to_Z v it = Some z⌝ ∗ (if bool_decide (z ≠ 0) then T1 else T2)).
+    (P -∗
+       match ot with
+       | IntOp it => ∃ z, ⌜val_to_Z v it = Some z⌝ ∗ (if bool_decide (z ≠ 0) then T1 else T2)
+       | PtrOp    => ∃ l, ⌜val_to_loc v  = Some l⌝ ∗
+                          (if bool_decide (l ≠ NULL_loc) then loc_in_bounds l 0 else True) ∗
+                          (if bool_decide (l ≠ NULL_loc) then T1 else T2)
+       | _        => False
+       end).
   Class TypedIf (ot : op_type) (v : val) (P : iProp Σ) : Type :=
     typed_if_proof T1 T2 : iProp_to_Prop (typed_if ot v P T1 T2).
 
@@ -89,9 +96,15 @@ Section judgements.
     typed_switch_proof m ss def fn ls R Q : iProp_to_Prop (typed_switch v ty it m ss def fn ls R Q).
 
   Definition typed_assert (ot : op_type) (v : val) (P : iProp Σ) (s : stmt) (fn : function) (ls : list loc) (R : val → mtype → iProp Σ) (Q : gmap label stmt) : iProp Σ :=
-    (P -∗ ∃ it z, ⌜ot = IntOp it⌝ ∗ ⌜val_to_Z v it = Some z⌝ ∗ ⌜z ≠ 0⌝ ∗ typed_stmt s fn ls R Q)%I.
+    (P -∗
+       match ot with
+       | IntOp it => ∃ z, ⌜val_to_Z v it = Some z⌝ ∗ ⌜z ≠ 0⌝ ∗ typed_stmt s fn ls R Q
+       | PtrOp    => ∃ l, ⌜val_to_loc v = Some l⌝ ∗ ⌜l ≠ NULL_loc⌝ ∗ loc_in_bounds l 0 ∗ typed_stmt s fn ls R Q
+       | _        => False
+       end)%I.
   Class TypedAssert (ot : op_type) (v : val) (P : iProp Σ) : Type :=
     typed_assert_proof s fn ls R Q : iProp_to_Prop (typed_assert ot v P s fn ls R Q).
+
   (*** expressions *)
   Definition typed_val_expr (e : expr) (T : val → mtype → iProp Σ) : iProp Σ :=
     (∀ Φ, (∀ v (ty : mtype), v ◁ᵥ ty -∗ T v ty -∗ Φ v) -∗ WP e {{ Φ }}).
@@ -332,7 +345,7 @@ Global Hint Mode SubsumeVal + + + + ! + ! : typeclass_instances.
 Global Hint Mode SimpleSubsumePlace + + + ! - : typeclass_instances.
 Global Hint Mode SimpleSubsumePlaceR + + + ! + ! - : typeclass_instances.
 Global Hint Mode SimpleSubsumeVal + + + ! + ! - : typeclass_instances.
-Global Hint Mode TypedIf + + + + : typeclass_instances.
+Global Hint Mode TypedIf + + + + + : typeclass_instances.
 Global Hint Mode TypedAssert + + + + + : typeclass_instances.
 Global Hint Mode TypedValue + + + : typeclass_instances.
 Global Hint Mode TypedBinOp + + + + + + + + + : typeclass_instances.
@@ -407,10 +420,12 @@ Section proper.
     ((T1 -∗ T1') ∧ (T2 -∗ T2')) -∗
     typed_if ot v P T1' T2'.
   Proof.
-    iIntros "Hif HT Hv". iDestruct ("Hif" with "Hv") as (it z ? ?) "HC".
-    iExists _, _. iSplit; [done|]. iSplit; [done|]. case_decide.
-    - iDestruct "HT" as "[_ HT]". by iApply "HT".
-    - iDestruct "HT" as "[HT _]". by iApply "HT".
+    iIntros "Hif HT Hv". iDestruct ("Hif" with "Hv") as "Hif".
+    destruct ot => //; iDestruct "Hif" as (zorl ?) "HC"; iExists zorl.
+    all: try iDestruct "HC" as "[$ HC]".
+    all: iSplit; first done.
+    all: case_decide; [iDestruct "HT" as "[_ HT]" | iDestruct "HT" as "[HT _]"].
+    all: by iApply "HT".
   Qed.
 
   Lemma typed_bin_op_wand v1 P1 Q1 v2 P2 Q2 op ot1 ot2 T:
@@ -1013,7 +1028,7 @@ Section typing.
     iIntros "Hs Hv". iDestruct (i2p_proof with "Hs Hv") as (Q) "[HQ HT]" => /=. simpl in *.
     iApply ("HT" with "HQ").
   Qed.
-  Global Instance typed_if_simplify_inst ot v (P : iProp Σ) n {SH : SimplifyHyp P (Some n)}:
+  Global Instance typed_if_simplify_inst ot v P n {SH : SimplifyHyp P (Some n)}:
     TypedIf ot v P | 1000 :=
     λ T1 T2, i2p (typed_if_simplify ot v P T1 T2 n).
 
@@ -1074,15 +1089,19 @@ Section typing.
     all: by iApply ("HT" with "Hl").
   Qed.
 
-  Lemma type_if Q it e s1 s2 fn ls R:
-    typed_val_expr e (λ v ty, typed_if (IntOp it) v (v ◁ᵥ ty)
+  Lemma type_if Q ot e s1 s2 fn ls R:
+    typed_val_expr e (λ v ty, typed_if ot v (v ◁ᵥ ty)
           (typed_stmt s1 fn ls R Q) (typed_stmt s2 fn ls R Q)) -∗
-    typed_stmt (if{IntOp it}: e then s1 else s2) fn ls R Q.
+    typed_stmt (if{ot}: e then s1 else s2) fn ls R Q.
   Proof.
     iIntros "He" (Hls). wps_bind.
     iApply "He". iIntros (v ty) "Hv Hs".
-    iDestruct ("Hs" with "Hv") as (????) "Hs". simplify_eq.
-    iApply wps_if; [done|..]. by case_decide; iApply "Hs".
+    iDestruct ("Hs" with "Hv") as "Hs". destruct ot => //.
+    - iDestruct "Hs" as (z Hz) "Hs".
+      iApply wps_if; [done|..]. by case_decide; iApply "Hs".
+    - iDestruct "Hs" as (l Hl) "[Hlib Hs]".
+      iApply (wps_if_ptr with "Hlib [Hs]") => //.
+      case_bool_decide; simplify_eq => /=; by iApply "Hs".
   Qed.
 
   Lemma type_switch Q it e m ss def fn ls R:
@@ -1106,14 +1125,18 @@ Section typing.
     - by iApply "Hs".
   Qed.
 
-  Lemma type_assert Q it e s fn ls R:
-    typed_val_expr e (λ v ty, typed_assert (IntOp it) v (v ◁ᵥ ty) s fn ls R Q) -∗
-    typed_stmt (assert{IntOp it}: e; s) fn ls R Q.
+  Lemma type_assert Q ot e s fn ls R:
+    typed_val_expr e (λ v ty, typed_assert ot v (v ◁ᵥ ty) s fn ls R Q) -∗
+    typed_stmt (assert{ot}: e; s) fn ls R Q.
   Proof.
     iIntros "He" (Hls). wps_bind.
     iApply "He". iIntros (v ty) "Hv Hs".
-    iDestruct ("Hs" with "Hv") as (?????) "Hs". simplify_eq.
-    iApply wps_assert; [done|done|..]. by iApply "Hs".
+    iDestruct ("Hs" with "Hv") as "Hs".
+    destruct ot => //.
+    - iDestruct "Hs" as (???) "Hs".
+      iApply wps_assert; [done|done|..]. by iApply "Hs".
+    - iDestruct "Hs" as (???) "[#Hlib Hs]".
+      iApply wps_assert_ptr; [done|done|done|..]. by iApply "Hs".
   Qed.
 
   Lemma type_exprs s e fn ls R Q:
@@ -1157,7 +1180,6 @@ Section typing.
     repeat f_equiv. iIntros "Hs". by iApply "Hs".
   Qed.
 
-  (*** expressions *)
   Lemma type_val_context v T:
     (find_in_context (FindVal v) T) -∗
     typed_value v T.
@@ -1241,8 +1263,12 @@ Section typing.
   Proof.
     iIntros "He1" (Φ) "HΦ".
     wp_bind. iApply "He1". iIntros (v1 ty1) "Hv1 Hif".
-    iDestruct ("Hif" with "Hv1") as (it n -> ?) "HT".
-    iApply wp_if; [done|..]. by case_decide; iApply "HT".
+    iDestruct ("Hif" with "Hv1") as "HT". destruct ot => //.
+    all: iDestruct "HT" as (zorl ?) "HT".
+    - iApply wp_if; [done|..]. by case_decide; iApply "HT".
+    - case_bool_decide; iDestruct "HT" as "[#Hlib HT]".
+      + iApply wp_if_ptr; rewrite ?bool_decide_true //. by iApply "HT".
+      + iApply wp_if_ptr; rewrite ?bool_decide_false //; try eauto. by iApply "HT".
   Qed.
 
   Lemma type_logical_and ot1 ot2 e1 e2 T:

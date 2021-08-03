@@ -92,3 +92,34 @@ void test_logical(){
   if(INT_MAX) { assert(1); } else { assert(0); }
   assert(UINT_MAX);
 }
+
+[[rc::returns("void")]]
+void test_not_ptr(){
+  int i;
+  int *pi = &i;
+
+  if(!pi){
+    assert(0);
+  }
+
+  if(pi){
+    assert(1);
+  } else {
+    assert(0);
+  }
+
+  assert(pi);
+
+  void *p = NULL;
+  if(p){
+    assert(0);
+  }
+
+  if(!p){
+    assert(1);
+  } else {
+    assert(0);
+  }
+
+  assert(!p);
+}

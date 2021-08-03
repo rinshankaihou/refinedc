@@ -187,6 +187,38 @@ Section own.
     TypedUnOp p (p ◁ₗ{β} ty)%I (CastOp PtrOp) PtrOp :=
     λ T, i2p (type_cast_ptr_ptr p β ty T).
 
+  Lemma type_if_ptr l β ty T1 T2 n `{!LocInBounds ty β n}:
+    (l ◁ₗ{β} ty -∗ T1) -∗
+    typed_if PtrOp l (l ◁ₗ{β} ty) T1 T2.
+  Proof.
+    iIntros "HT1 Hl".
+    iDestruct (loc_in_bounds_in_bounds with "Hl") as "#Hlib".
+    iDestruct (loc_in_bounds_has_alloc_id with "Hlib") as %[? H].
+    iExists l. iSplit; first by rewrite val_to_of_loc.
+    rewrite bool_decide_true; last by move: l H => [??] /= -> //.
+    iSplit. { iApply loc_in_bounds_shorten; last done. lia. }
+    by iApply "HT1".
+  Qed.
+  Global Instance type_if_ptr_inst (l : loc) β ty n `{!LocInBounds ty β n}:
+    TypedIf PtrOp l (l ◁ₗ{β} ty)%I :=
+    λ T1 T2, i2p (type_if_ptr l β ty T1 T2 n).
+
+  Lemma type_assert_ptr l β ty n `{!LocInBounds ty β n} s fn ls R Q:
+    (l ◁ₗ{β} ty -∗ typed_stmt s fn ls R Q) -∗
+    typed_assert PtrOp l (l ◁ₗ{β} ty) s fn ls R Q.
+  Proof.
+    iIntros "HT Hl".
+    iDestruct (loc_in_bounds_in_bounds with "Hl") as "#Hlib".
+    iDestruct (loc_in_bounds_has_alloc_id with "Hlib") as %[? H].
+    iExists l. iSplit; first by rewrite val_to_of_loc.
+    iSplit. { iPureIntro. move: l H => [??] /= -> //. }
+    iSplit. { iApply loc_in_bounds_shorten; last done. lia. }
+    by iApply "HT".
+  Qed.
+  Global Instance type_assert_ptr_inst (l : loc) β ty n `{!LocInBounds ty β n}:
+    TypedAssert PtrOp l (l ◁ₗ{β} ty)%I :=
+    λ s fn ls R Q, i2p (type_assert_ptr l β ty n s fn ls R Q).
+
   Lemma type_place_cast_ptr_ptr K l ty β T:
     typed_place K l β ty T -∗
     typed_place (UnOpPCtx (CastOp PtrOp) :: K) l β ty T.
@@ -213,7 +245,7 @@ Section own.
     iIntros (i') "!>". by iApply ("HΦ" with "[] HT").
   Qed.
   Global Instance type_cast_int_ptr_inst n v it:
-    TypedUnOp v (v ◁ᵥ n @ int it)%I (CastOp PtrOp) (IntOp it) :=
+    TypedUnOp v (v ◁ᵥ n @ int it)%I (CastOp PtrOp) (IntOp it) | 50 :=
     λ T, i2p (type_cast_int_ptr n v it T).
 
   Lemma type_copy_aid v a it l β ty T:
@@ -504,7 +536,19 @@ Section null.
     move => Hlib ?. have [??]:= heap_state_loc_in_bounds_has_alloc_id _ _ _ Hlib.
     destruct p; simplify_eq/=. destruct b => //; split => Heq; subst.
     1, 3: inversion Heq; unfold NULL in *; rewrite ->?val_to_of_loc in *; simplify_eq; done.
-    all: econstructor; rewrite ?val_to_of_loc /val_of_bool/i2v ?Heq //.
+    all: eapply RelOpPNull => //; rewrite val_to_of_loc //.
+  Qed.
+
+  Lemma eval_bin_op_null_ptr (b : bool) op h (p : loc) v:
+    heap_state_loc_in_bounds p 0 h.(st_heap) →
+    (if b then op = NeOp i32 else op = EqOp i32) →
+    eval_bin_op op PtrOp PtrOp h NULL p v
+     ↔ val_of_Z (Z_of_bool b) i32 None = Some v.
+  Proof.
+    move => Hlib ?. have [??]:= heap_state_loc_in_bounds_has_alloc_id _ _ _ Hlib.
+    destruct p; simplify_eq/=. destruct b => //; split => Heq; subst.
+    1, 3: inversion Heq; unfold NULL in *; rewrite ->?val_to_of_loc in *; simplify_eq; done.
+    all: eapply RelOpNullP => //; rewrite val_to_of_loc //.
   Qed.
 
   Lemma eval_bin_op_null_null (b : bool) op h v:
@@ -535,10 +579,10 @@ Section null.
     TypedBinOp v1 (v1 ◁ᵥ null) v2 (v2 ◁ᵥ null) op PtrOp PtrOp :=
     λ T, i2p (type_binop_null_null v1 v2 op T).
 
-  Lemma type_binop_ptr_null v2 op T (l : loc) ty β n `{!LocInBounds ty β n}:
-    (⌜match op with | EqOp rit | NeOp rit => rit = i32 | _ => False end⌝ ∗ ∀ v, l ◁ₗ{β} ty -∗
-          T v (t2mt ((if op is EqOp i32 then false else true) @ boolean i32))) -∗
-    typed_bin_op l (l ◁ₗ{β} ty) v2 (v2 ◁ᵥ null) op PtrOp PtrOp T.
+  Lemma type_binop_ptr_null v op (l : loc) ty β n `{!LocInBounds ty β n} T:
+    (⌜match op with EqOp rit | NeOp rit => rit = i32 | _ => False end⌝ ∗ ∀ v, l ◁ₗ{β} ty -∗
+          T v (t2mt ((if op is EqOp _ then false else true) @ boolean i32))) -∗
+    typed_bin_op l (l ◁ₗ{β} ty) v (v ◁ᵥ null) op PtrOp PtrOp T.
   Proof.
     iIntros "[% HT] Hl" (-> Φ) "HΦ".
     iDestruct (loc_in_bounds_in_bounds with "Hl") as "#Hb".
@@ -554,9 +598,32 @@ Section null.
     iModIntro. iMod "HE". iModIntro. iFrame.
     iApply "HΦ". 2: by iApply "HT". by destruct op.
   Qed.
-  Global Instance type_binop_ptr_null_inst v2 op (l : loc) ty β n `{!LocInBounds ty β n}:
-    TypedBinOp l (l ◁ₗ{β} ty) v2 (v2 ◁ᵥ null) op PtrOp PtrOp :=
-    λ T, i2p (type_binop_ptr_null v2 op T l ty β n).
+  Global Instance type_binop_ptr_null_inst v op (l : loc) ty β n `{!LocInBounds ty β n}:
+    TypedBinOp l (l ◁ₗ{β} ty) v (v ◁ᵥ null) op PtrOp PtrOp :=
+    λ T, i2p (type_binop_ptr_null v op l ty β n T).
+
+  Lemma type_binop_null_ptr v op (l : loc) ty β n `{!LocInBounds ty β n} T:
+    (⌜match op with EqOp rit | NeOp rit => rit = i32 | _ => False end⌝ ∗ ∀ v, l ◁ₗ{β} ty -∗
+          T v (t2mt ((if op is EqOp _ then false else true) @ boolean i32))) -∗
+    typed_bin_op v (v ◁ᵥ null) l (l ◁ₗ{β} ty) op PtrOp PtrOp T.
+  Proof.
+    iIntros "[% HT] -> Hl %Φ HΦ".
+    iDestruct (loc_in_bounds_in_bounds with "Hl") as "#Hb".
+    iDestruct (loc_in_bounds_shorten _ _ 0 with "Hb") as "#Hb0"; first by lia.
+    have ?:= val_of_Z_bool (if op is EqOp _ then false else true) i32.
+    iApply (wp_binop_det (i2v (Z_of_bool (if op is EqOp _ then false else true)) i32)).
+    iIntros (σ) "Hctx". iApply fupd_mask_intro; [set_solver|]. iIntros "HE".
+    iSplit. {
+      iDestruct (loc_in_bounds_to_heap_loc_in_bounds with "Hb0 Hctx") as %?.
+      iPureIntro => ?.
+      rewrite (eval_bin_op_null_ptr (if op is EqOp _ then false else true)); destruct op => //; naive_solver.
+    }
+    iModIntro. iMod "HE". iModIntro. iFrame.
+    iApply "HΦ". 2: by iApply "HT". by destruct op.
+  Qed.
+  Global Instance type_binop_null_ptr_inst v op (l : loc) ty β n `{!LocInBounds ty β n}:
+    TypedBinOp v (v ◁ᵥ null) l (l ◁ₗ{β} ty) op PtrOp PtrOp :=
+    λ T, i2p (type_binop_null_ptr v op l ty β n T).
 
   Lemma type_cast_null_int it v T:
     (T (i2v 0 it) (t2mt (0 @ int it))) -∗
@@ -571,6 +638,30 @@ Section null.
   Global Instance type_cast_null_int_inst v it:
     TypedUnOpVal v null (CastOp (IntOp it)) PtrOp :=
     λ T, i2p (type_cast_null_int it v T).
+
+  Lemma type_cast_zero_ptr v it T:
+    (T (val_of_loc NULL_loc) (t2mt null)) -∗
+    typed_un_op v (v ◁ᵥ 0 @ int it) (CastOp PtrOp) (IntOp it) T.
+  Proof.
+    iIntros "HT" (Hv Φ) "HΦ".
+    iApply wp_cast_int_null; first done.
+    iModIntro. by iApply ("HΦ" with "[] HT").
+  Qed.
+  Global Instance type_cast_zero_ptr_inst v it:
+    TypedUnOpVal v (0 @ int it) (CastOp PtrOp) (IntOp it) | 10 :=
+    λ T, i2p (type_cast_zero_ptr v it T).
+
+  Lemma type_if_null v T1 T2:
+    T2 -∗
+    typed_if PtrOp v (v ◁ᵥ null) T1 T2.
+  Proof.
+    iIntros "HT2 ->". iExists NULL_loc.
+    rewrite val_to_of_loc bool_decide_false; last eauto.
+    by iFrame.
+  Qed.
+  Global Instance type_if_null_inst v:
+    TypedIf PtrOp v (v ◁ᵥ null)%I :=
+    λ T1 T2, i2p (type_if_null v T1 T2).
 End null.
 
 Section optionable.

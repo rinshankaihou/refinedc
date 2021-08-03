@@ -238,6 +238,7 @@ Definition heap_state_loc_in_bounds (l : loc) (n : nat) (st : heap_state) : Prop
   ∃ alloc_id al,
     l.1 = ProvAlloc (Some alloc_id) ∧
     st.(hs_allocs) !! alloc_id = Some al ∧
+    allocation_in_range al ∧
     al.(al_start) ≤ l.2 ∧
     l.2 + n ≤ al_end al.
 
@@ -245,6 +246,10 @@ Definition heap_state_loc_in_bounds (l : loc) (n : nat) (st : heap_state) : Prop
 (one-past-the-end is allowed) and this allocation is still alive *)
 Definition valid_ptr (l : loc) (st : heap_state) : Prop :=
   block_alive l st ∧ heap_state_loc_in_bounds l 0 st.
+
+Lemma valid_ptr_in_allocation_range l σ:
+  valid_ptr l σ → min_alloc_start ≤ l.2 ≤ max_alloc_end.
+Proof. move => [_][?][?][]?[]?[[]]???. lia. Qed.
 
 Definition addr_in_range_alloc (a : addr) (aid : alloc_id) (st : heap_state) : Prop :=
   ∃ alloc, st.(hs_allocs) !! aid = Some alloc ∧ a ∈ alloc.

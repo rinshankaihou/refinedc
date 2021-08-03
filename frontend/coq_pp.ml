@@ -158,30 +158,43 @@ let rec pp_expr : Coq_ast.expr pp = fun ff e ->
     | BinOp(op,ty1,ty2,e1,e2)       ->
         begin
           match (ty1, ty2, op) with
+          (* Comma operator. *)
           | (_       , _       , CommaOp) ->
               pp "(%a) %a{%a, %a} (%a)" pp_expr e1 pp_bin_op op
                 pp_op_type ty1 pp_op_type ty2 pp_expr e2
+          (* Pointer offset operations. *)
           | (OpPtr(l), OpInt(_), AddOp  ) ->
               pp "(%a) at_offset{%a, PtrOp, %a} (%a)" pp_expr e1
                 (pp_layout false) l pp_op_type ty2 pp_expr e2
           | (OpPtr(l), OpInt(_), SubOp  ) ->
               pp "(%a) at_neg_offset{%a, PtrOp, %a} (%a)" pp_expr e1
                 (pp_layout false) l pp_op_type ty2 pp_expr e2
+          (* Pointer difference. *)
           | (OpPtr(l1), OpPtr(l2), SubOp) ->
               pp "(%a) sub_ptr{%a, PtrOp, PtrOp} (%a)" pp_expr e1
                 (pp_layout false) l1 pp_expr e2
-          | (OpPtr(_), OpInt(_), _      ) ->
-              panic_no_pos "Binop [%a] not supported on pointers."
-                pp_bin_op op
+          (* Pointer compared to 0 (Cerberus rejects non-0 integer values). *)
+          | (OpInt(_) , OpPtr(l) , (EqOp | NeOp)) ->
+              let e1 = {e1 with elt = UnOp(CastOp(ty2), ty1, e1)} in
+              pp "(%a) %a{PtrOp, PtrOp, i32} (%a)" pp_expr e1
+                pp_bin_op op pp_expr e2
+          | (OpPtr(l) , OpInt(_) , (EqOp | NeOp)) ->
+              let e2 = {e2 with elt = UnOp(CastOp(ty1), ty2, e2)} in
+              pp "(%a) %a{PtrOp, PtrOp, i32} (%a)" pp_expr e1
+                pp_bin_op op pp_expr e2
+          (* Invalid operations mixing an integer and a pointer. *)
+          | (OpPtr(_), OpInt(_), _      )
           | (OpInt(_), OpPtr(_), _      ) ->
-              panic_no_pos "Wrong ordering of integer pointer binop [%a]."
-                pp_bin_op op
-          | _   when is_bool_result_op op ->
-              pp "(%a) %a{%a, %a, i32} (%a)" pp_expr e1 pp_bin_op op
-                pp_op_type ty1 pp_op_type ty2 pp_expr e2
+              let loc = Location.to_cerb_loc e.loc in
+              panic loc "Invalid use of binary operation [%a]." pp_bin_op op
+          (* All other operations are defined. *)
           | _                             ->
-              pp "(%a) %a{%a, %a} (%a)" pp_expr e1 pp_bin_op op
-                pp_op_type ty1 pp_op_type ty2 pp_expr e2
+              if is_bool_result_op op then
+                pp "(%a) %a{%a, %a, i32} (%a)" pp_expr e1 pp_bin_op op
+                  pp_op_type ty1 pp_op_type ty2 pp_expr e2
+              else
+                pp "(%a) %a{%a, %a} (%a)" pp_expr e1 pp_bin_op op
+                  pp_op_type ty1 pp_op_type ty2 pp_expr e2
         end
     | Deref(atomic,ty,e)            ->
         if atomic then

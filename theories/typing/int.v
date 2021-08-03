@@ -333,8 +333,7 @@ Section programs.
     typed_if (IntOp it) v (v ◁ᵥ n @ int it) T1 T2.
   Proof.
     unfold destruct_hint. iIntros "Hs %Hb" => /=.
-    iExists it, n. iSplit; first done. iSplit; first done.
-    by do !case_decide.
+    iExists n. iSplit; first done. by do !case_decide.
   Qed.
   Global Instance type_if_int_inst n v it : TypedIf (IntOp it) v (v ◁ᵥ n @ int it)%I :=
     λ T1 T2, i2p (type_if_int it n v T1 T2).
@@ -342,7 +341,7 @@ Section programs.
   Lemma type_assert_int it n s Q fn ls R v :
     (⌜n ≠ 0⌝ ∗ typed_stmt s fn ls R Q) -∗
     typed_assert (IntOp it) v (v ◁ᵥ n @ int it) s fn ls R Q.
-  Proof. iIntros "[% Hs] %Hb". iExists it, _. by iFrame. Qed.
+  Proof. iIntros "[% Hs] %Hb". iExists _. by iFrame. Qed.
   Global Instance type_assert_int_inst it n v : TypedAssert (IntOp it) v (v ◁ᵥ n @ int it)%I :=
     λ s fn ls R Q, i2p (type_assert_int _ _ _ _ _ _ _ _).
 
@@ -507,7 +506,7 @@ Section programs.
     typed_if (IntOp it) v (v ◁ᵥ b @ boolean it) T1 T2.
   Proof.
     unfold destruct_hint. iIntros "Hs %Hb".
-    iExists _, _. do 2 iSplit => //. by destruct b.
+    iExists _. iSplit; first done. by destruct b.
   Qed.
   Global Instance type_if_bool_inst it b v : TypedIf (IntOp it) v (v ◁ᵥ b @ boolean it)%I :=
     λ T1 T2, i2p (type_if_bool it b v T1 T2).
@@ -516,8 +515,8 @@ Section programs.
     (⌜b⌝ ∗ typed_stmt s fn ls R Q) -∗
     typed_assert (IntOp it) v (v ◁ᵥ b @ boolean it) s fn ls R Q.
   Proof.
-    iIntros "[% Hs] %Hb". iExists it, _. iFrame "Hs".
-    do 2 (iSplit; first done). by destruct b.
+    iIntros "[% Hs] %Hb". iExists _. iFrame "Hs".
+    iSplit; first done. by destruct b.
   Qed.
   Global Instance type_assert_bool_inst it b v : TypedAssert (IntOp it) v (v ◁ᵥ b @ boolean it)%I :=
     λ s fn ls R Q, i2p (type_assert_bool _ _ _ _ _ _ _ _).

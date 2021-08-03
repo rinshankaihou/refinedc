@@ -388,7 +388,8 @@ Section loc_in_bounds.
     rewrite loc_in_bounds_eq.
     iIntros "Hb ((?&?&Hctx&?)&?)". iDestruct "Hb" as (id al ????) "Hb".
     iDestruct (alloc_range_lookup with "Hctx Hb") as %[al' [?[??]]].
-    iExists id, al'. iPureIntro. unfold al_end in *. naive_solver lia.
+    iExists id, al'. iPureIntro. unfold allocation_in_range, al_end in *.
+    naive_solver lia.
   Qed.
 
   Lemma loc_in_bounds_ptr_in_range l n:
