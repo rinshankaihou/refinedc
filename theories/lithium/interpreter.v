@@ -546,7 +546,10 @@ Ltac liFalse :=
   | |- False => shelve
   end.
 
-
+(* There can be some goals where one should not call injection on an
+hypothesis that is introduced. The [li_impl_check_injection_tac] hook
+allows the client to customize this. *)
+Ltac li_impl_check_injection_tac := idtac.
 Ltac liImpl :=
   lazymatch goal with
   (* relying on the fact that unification variables cannot contain
@@ -569,7 +572,8 @@ Ltac liImpl :=
               | |- false = false -> ?P → _ => move => _;
                 match P with
                 | ∃ _, _ => fail 1 "handled by do_forall"
-                | _ = _ => let Hi := fresh "Hi" in move => Hi; injection Hi; clear Hi
+                | _ = _ => li_impl_check_injection_tac;
+                      let Hi := fresh "Hi" in move => Hi; injection Hi; clear Hi
                 | _ => check_hyp_not_exists P; intros ?; subst
                 | _ => move => _
                 end
