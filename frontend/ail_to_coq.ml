@@ -177,7 +177,6 @@ let is_const_0 (AilSyntax.AnnotatedExpression(_, _, _, e)) =
       end
   | _            -> false
 
-
 type 'a macro_annot_arg =
   | MacroString of string
   | MacroExpr of ail_expr
@@ -911,6 +910,15 @@ let k_break    = k_gen (fun k -> k.k_break   )
 let k_continue = k_gen (fun k -> k.k_continue)
 let k_final    = k_gen (fun k -> k.k_final   )
 
+let k_init : op_type option -> bool -> k_data list = fun ret_ty is_main ->
+  let ret_v =
+    match ret_ty with
+    (* Insert [return 0] in case of main with int type. *)
+    | Some(OpInt(ItI32(true))) when is_main -> Int("0", ItI32(true))
+    | _                                     -> Void
+  in
+  k_push_final (noloc (Return(noloc (Val(ret_v))))) []
+
 let rec k_pop_cases : k_data list -> k_data list = fun l ->
   match l with
   | []     -> []
@@ -941,8 +949,7 @@ let k_stack_print : out_channel -> k_data list -> unit = fun oc l ->
   List.iter print_data l;
   Printf.fprintf oc "\n%!"
 
-
-let translate_block stmts blocks ret_ty =
+let translate_block stmts blocks ret_ty is_main =
   let translate_bool_expr then_goto else_goto e =
     let ot = op_type_of_tc (loc_of e) (tc_of e) in
     let e = translate_expr false None e in
@@ -1278,8 +1285,7 @@ let translate_block stmts blocks ret_ty =
     if not !attrs_used then warn_ignored_attrs (Some(s)) attrs;
     res
   in
-  let initial_ks = k_push_final (noloc (Return(noloc (Val(Void))))) [] in
-  trans [] [] initial_ks stmts blocks
+  trans [] [] (k_init ret_ty is_main) stmts blocks
 
 (** [translate fname ail] translates typed Ail AST to Coq AST. *)
 let translate : string -> typed_ail -> Coq_ast.t = fun source_file ail ->
@@ -1402,21 +1408,20 @@ let translate : string -> typed_ail -> Coq_ast.t = fun source_file ail ->
         in
         List.mapi fn args_decl
       in
-      let _ =
-        (* Collection top level local variables. *)
+      let (bindings, stmts) =
         match stmt with
-        | AilSblock(bindings, _) -> insert_bindings bindings
-        | _                      -> not_impl loc "Body not a block."
+        | AilSblock(bindings, stmts) -> (bindings, stmts)
+        | _                          -> not_impl loc "Body not a block."
       in
+      (* Collection top level local variables. *)
+      insert_bindings bindings;
       let func_init = fresh_block_id () in
       let func_blocks =
-        let stmts =
-          match stmt with
-          | AilSblock(_, stmts) -> stmts
-          | _                   -> not_impl loc "Body not a block."
-        in
         let ret_ty = op_type_opt Location_ocaml.unknown ret_ty in
-        let (stmt, blocks) = translate_block stmts SMap.empty ret_ty in
+        let (stmt, blocks) =
+          let is_main = func_name = "main" in
+          translate_block stmts SMap.empty ret_ty is_main
+        in
         add_block func_init stmt blocks
       in
       let func_vars = collect_bindings () in

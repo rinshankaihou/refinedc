@@ -123,3 +123,8 @@ void test_not_ptr(){
 
   assert(!p);
 }
+
+[[rc::returns("{0} @ int<i32>")]]
+int main(){
+  // Check that [return 0] is inserted corectly.
+}

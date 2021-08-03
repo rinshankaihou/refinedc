@@ -55,6 +55,7 @@ void mpool_put(struct mpool *p, void *ptr) {
 void* e1, *e2;
 [[rc::requires("global e1 : uninit<ENTRY_LAYOUT>")]]
 [[rc::requires("global e2 : uninit<ENTRY_LAYOUT>")]]
+[[rc::returns("int<i32>")]]
 int main(void) {
     struct mpool p;
     void * p1, *p2;
