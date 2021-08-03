@@ -250,67 +250,30 @@ Inductive eval_bin_op : bin_op → op_type → op_type → state → val → val
     valid_ptr l2 σ.(st_heap) →
     val_of_Z ((l1.2 - l2.2) `div` ly.(ly_size)) ptrdiff_t None = Some v →
     eval_bin_op (PtrDiffOp ly) PtrOp PtrOp σ v1 v2 v
-| RelOpPNull v1 v2 σ l v op b p a rit:
-    val_to_loc v1 = Some l →
-    l = (ProvAlloc p, a) →
-    v2 = NULL →
-    heap_state_loc_in_bounds l 0%nat σ.(st_heap) →
-    match op with
-    | EqOp rit => Some (false, rit)
-    | NeOp rit => Some (true, rit)
-    | _ => None
-    end = Some (b, rit) →
-    val_of_Z (Z_of_bool b) rit None = Some v →
-    eval_bin_op op PtrOp PtrOp σ v1 v2 v
-| RelOpNullP v1 v2 σ l v op b p a rit:
-    v1 = NULL →
-    val_to_loc v2 = Some l →
-    l = (ProvAlloc p, a) →
-    heap_state_loc_in_bounds l 0%nat σ.(st_heap) →
-    match op with
-    | EqOp rit => Some (false, rit)
-    | NeOp rit => Some (true, rit)
-    | _ => None
-    end = Some (b, rit) →
-    val_of_Z (Z_of_bool b) rit None = Some v →
-    eval_bin_op op PtrOp PtrOp σ v1 v2 v
-| RelOpNullNull v1 v2 σ v op b rit:
-    v1 = NULL →
-    v2 = NULL →
-    match op with
-    | EqOp rit => Some (true, rit)
-    | NeOp rit => Some (false, rit)
-    | _ => None
-    end = Some (b, rit) →
-    val_of_Z (Z_of_bool b) rit None = Some v →
-    eval_bin_op op PtrOp PtrOp σ v1 v2 v
-| RelOpPP v1 v2 σ l1 l2 p1 p2 a1 a2 v b op rit:
+| CmpOpPP v1 v2 σ l1 l2 v op e b rit:
     val_to_loc v1 = Some l1 →
     val_to_loc v2 = Some l2 →
-    (* Note that this is technically redundant due to the valid_ptr,
-    but we still have it for clarity. *)
-    l1 = (ProvAlloc p1, a1) →
-    l2 = (ProvAlloc p2, a2) →
+    heap_loc_eq l1 l2 σ.(st_heap) = Some e →
+    match op with
+    | EqOp rit => Some (e, rit)
+    | NeOp rit => Some (negb e, rit)
+    | _ => None
+    end = Some (b, rit) →
+    val_of_Z (Z_of_bool b) rit None = Some v →
+    eval_bin_op op PtrOp PtrOp σ v1 v2 v
+| RelOpPP v1 v2 σ l1 l2 p a1 a2 v b op rit:
+    val_to_loc v1 = Some l1 →
+    val_to_loc v2 = Some l2 →
+    (* Note that this enforces that the locations have the same provenance. *)
+    l1 = (ProvAlloc p, a1) →
+    l2 = (ProvAlloc p, a2) →
     valid_ptr l1 σ.(st_heap) → valid_ptr l2 σ.(st_heap) →
+    (* Equal comparison is handled by heap_loc_eq *)
     match op with
-    | EqOp rit => Some (bool_decide (a1 = a2), rit)
-    | NeOp rit => Some (bool_decide (a1 ≠ a2), rit)
-    | LtOp rit => if bool_decide (p1 = p2) then Some (bool_decide (a1 < a2), rit) else None
-    | GtOp rit => if bool_decide (p1 = p2) then Some (bool_decide (a1 > a2), rit) else None
-    | LeOp rit => if bool_decide (p1 = p2) then Some (bool_decide (a1 <= a2), rit) else None
-    | GeOp rit => if bool_decide (p1 = p2) then Some (bool_decide (a1 >= a2), rit) else None
-    | _ => None
-    end = Some (b, rit) →
-    val_of_Z (Z_of_bool b) rit None = Some v →
-    eval_bin_op op PtrOp PtrOp σ v1 v2 v
-| RelOpFnPP v1 v2 σ l1 l2 a1 a2 v b op rit:
-    val_to_loc v1 = Some l1 →
-    val_to_loc v2 = Some l2 →
-    l1 = (ProvFnPtr, a1) →
-    l2 = (ProvFnPtr, a2) →
-    match op with
-    | EqOp rit => Some (bool_decide (a1 = a2), rit)
-    | NeOp rit => Some (bool_decide (a1 ≠ a2), rit)
+    | LtOp rit => Some (bool_decide (a1 < a2), rit)
+    | GtOp rit => Some (bool_decide (a1 > a2), rit)
+    | LeOp rit => Some (bool_decide (a1 <= a2), rit)
+    | GeOp rit => Some (bool_decide (a1 >= a2), rit)
     | _ => None
     end = Some (b, rit) →
     val_of_Z (Z_of_bool b) rit None = Some v →
@@ -493,13 +456,13 @@ comparing pointers? (see lambda rust) *)
     val_to_loc v2 = Some l →
     valid_ptr (l.1, a) σ.(st_heap) →
     expr_step (CopyAllocId (IntOp it) (Val v1) (Val v2)) σ [] (Val (val_of_loc (l.1, a))) σ []
-| IfES v it e1 e2 n σ:
+| IfESI v it e1 e2 n σ:
     val_to_Z v it = Some n →
     expr_step (IfE (IntOp it) (Val v) e1 e2) σ [] (if bool_decide (n ≠ 0) then e1 else e2)  σ []
-| IfESP v e1 e2 l σ:
+| IfESP v e1 e2 l σ b:
     val_to_loc v = Some l →
-    (if bool_decide (l ≠ NULL_loc) then heap_state_loc_in_bounds l 0%nat σ.(st_heap) else True) →
-    expr_step (IfE PtrOp (Val v) e1 e2) σ [] (if bool_decide (l ≠ NULL_loc) then e1 else e2)  σ []
+    heap_loc_eq l NULL_loc σ.(st_heap) = Some b →
+    expr_step (IfE PtrOp (Val v) e1 e2) σ [] (if b then e2 else e1)  σ []
 (* no rule for StuckE *)
 .
 
@@ -514,13 +477,13 @@ Inductive stmt_step : stmt → runtime_function → state → list Empty_set →
     v2 `has_layout_val` (ot_layout ot) →
     heap_at l (ot_layout ot) v' start_st σ.(st_heap).(hs_heap) →
     stmt_step (Assign o ot (Val v1) (Val v2) s) rf σ [] (to_rtstmt rf end_stmt) (heap_fmap (heap_upd l end_val end_st) σ) []
-| IfSS it v s1 s2 rf σ n:
+| IfSSI it v s1 s2 rf σ n:
     val_to_Z v it = Some n →
     stmt_step (IfS (IntOp it) (Val v) s1 s2) rf σ [] (to_rtstmt rf ((if bool_decide (n ≠ 0) then s1 else s2))) σ []
-| IfSSP v s1 s2 rf σ l:
+| IfSSP v s1 s2 rf σ l b:
     val_to_loc v = Some l →
-    (if bool_decide (l ≠ NULL_loc) then heap_state_loc_in_bounds l 0%nat σ.(st_heap) else True) →
-    stmt_step (IfS PtrOp (Val v) s1 s2) rf σ [] (to_rtstmt rf ((if bool_decide (l ≠ NULL_loc) then s1 else s2))) σ []
+    heap_loc_eq l NULL_loc σ.(st_heap) = Some b →
+    stmt_step (IfS PtrOp (Val v) s1 s2) rf σ [] (to_rtstmt rf ((if b then s2 else s1))) σ []
 | SwitchS rf σ v n m bs s def it :
     val_to_Z v it = Some n →
     (∀ i : nat, m !! n = Some i → is_Some (bs !! i)) →

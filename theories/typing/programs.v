@@ -69,7 +69,7 @@ Section judgements.
        match ot with
        | IntOp it => ∃ z, ⌜val_to_Z v it = Some z⌝ ∗ (if bool_decide (z ≠ 0) then T1 else T2)
        | PtrOp    => ∃ l, ⌜val_to_loc v  = Some l⌝ ∗
-                          (if bool_decide (l ≠ NULL_loc) then loc_in_bounds l 0 else True) ∗
+                          wp_if_precond l ∗
                           (if bool_decide (l ≠ NULL_loc) then T1 else T2)
        | _        => False
        end).
@@ -99,7 +99,7 @@ Section judgements.
     (P -∗
        match ot with
        | IntOp it => ∃ z, ⌜val_to_Z v it = Some z⌝ ∗ ⌜z ≠ 0⌝ ∗ typed_stmt s fn ls R Q
-       | PtrOp    => ∃ l, ⌜val_to_loc v = Some l⌝ ∗ ⌜l ≠ NULL_loc⌝ ∗ loc_in_bounds l 0 ∗ typed_stmt s fn ls R Q
+       | PtrOp    => ∃ l, ⌜val_to_loc v = Some l⌝ ∗ ⌜l ≠ NULL_loc⌝ ∗ wp_if_precond l ∗ typed_stmt s fn ls R Q
        | _        => False
        end)%I.
   Class TypedAssert (ot : op_type) (v : val) (P : iProp Σ) : Type :=
@@ -1134,9 +1134,9 @@ Section typing.
     iDestruct ("Hs" with "Hv") as "Hs".
     destruct ot => //.
     - iDestruct "Hs" as (???) "Hs".
-      iApply wps_assert; [done|done|..]. by iApply "Hs".
-    - iDestruct "Hs" as (???) "[#Hlib Hs]".
-      iApply wps_assert_ptr; [done|done|done|..]. by iApply "Hs".
+      iApply wps_assert_int; [done|done|..]. by iApply "Hs".
+    - iDestruct "Hs" as (???) "[Hpre Hs]".
+      iApply (wps_assert_ptr with "Hpre"); [done..|]. by iApply "Hs".
   Qed.
 
   Lemma type_exprs s e fn ls R Q:
@@ -1180,6 +1180,7 @@ Section typing.
     repeat f_equiv. iIntros "Hs". by iApply "Hs".
   Qed.
 
+  (*** expressions *)
   Lemma type_val_context v T:
     (find_in_context (FindVal v) T) -∗
     typed_value v T.
@@ -1265,10 +1266,10 @@ Section typing.
     wp_bind. iApply "He1". iIntros (v1 ty1) "Hv1 Hif".
     iDestruct ("Hif" with "Hv1") as "HT". destruct ot => //.
     all: iDestruct "HT" as (zorl ?) "HT".
-    - iApply wp_if; [done|..]. by case_decide; iApply "HT".
-    - case_bool_decide; iDestruct "HT" as "[#Hlib HT]".
-      + iApply wp_if_ptr; rewrite ?bool_decide_true //. by iApply "HT".
-      + iApply wp_if_ptr; rewrite ?bool_decide_false //; try eauto. by iApply "HT".
+    - iApply wp_if_int; [done|..]. by case_decide; iApply "HT".
+    - case_bool_decide; iDestruct "HT" as "[Hpre HT]".
+      + iApply (wp_if_ptr with "Hpre"); rewrite ?bool_decide_true //. by iApply "HT".
+      + iApply (wp_if_ptr with "Hpre"); rewrite ?bool_decide_false //; try eauto. by iApply "HT".
   Qed.
 
   Lemma type_logical_and ot1 ot2 e1 e2 T:

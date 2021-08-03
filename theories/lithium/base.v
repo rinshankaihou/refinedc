@@ -152,6 +152,9 @@ Proof. by case_bool_decide.  Qed.
 Lemma if_bool_decide_eq_branches {A} P `{!Decision P} (x : A) :
   (if bool_decide P then x else x) = x.
 Proof. by case_bool_decide. Qed.
+Lemma negb_bool_decide_eq {A} (x y : A) `{!EqDecision A} :
+  negb (bool_decide (x = y)) = bool_decide (x ≠ y).
+Proof. by repeat case_bool_decide. Qed.
 
 (** * apply_dfun *)
 (* TODO: does something like this exist in Iris? *)

@@ -242,6 +242,10 @@ Definition heap_state_loc_in_bounds (l : loc) (n : nat) (st : heap_state) : Prop
     al.(al_start) ≤ l.2 ∧
     l.2 + n ≤ al_end al.
 
+Lemma heap_state_loc_in_bounds_has_alloc_id l n σ:
+  heap_state_loc_in_bounds l n σ → ∃ aid, l.1 = ProvAlloc (Some aid).
+Proof. rewrite /heap_state_loc_in_bounds. naive_solver. Qed.
+
 (** Checks that the location [l] is inbounds of its allocation
 (one-past-the-end is allowed) and this allocation is still alive *)
 Definition valid_ptr (l : loc) (st : heap_state) : Prop :=
@@ -250,6 +254,10 @@ Definition valid_ptr (l : loc) (st : heap_state) : Prop :=
 Lemma valid_ptr_in_allocation_range l σ:
   valid_ptr l σ → min_alloc_start ≤ l.2 ≤ max_alloc_end.
 Proof. move => [_][?][?][]?[]?[[]]???. lia. Qed.
+
+Lemma valid_ptr_has_alloc_id l σ:
+  valid_ptr l σ → ∃ aid, l.1 = ProvAlloc (Some aid).
+Proof. rewrite /valid_ptr => ?. apply: heap_state_loc_in_bounds_has_alloc_id. naive_solver. Qed.
 
 Definition addr_in_range_alloc (a : addr) (aid : alloc_id) (st : heap_state) : Prop :=
   ∃ alloc, st.(hs_allocs) !! aid = Some alloc ∧ a ∈ alloc.
@@ -279,6 +287,74 @@ Proof.
   eapply (exists_dec_unique aid); [ destruct l; naive_solver|].
   eapply (exists_dec_unique al); [ destruct l; naive_solver|].
   apply _.
+Qed.
+
+(** ** Comparing pointers
+  [heap_loc_eq l1 l2] returns whether two pointers compare equal.
+  None means that the comparison is undefined. *)
+Definition heap_loc_eq (l1 l2 : loc) (st : heap_state) : option bool :=
+    (* null pointers are equal *)
+  if bool_decide (l1 = NULL_loc ∧ l2 = NULL_loc) then
+    Some true
+  (* function pointers are different from NULL pointers
+   TODO: Check that the address of the function pointer is not 0?*)
+  else if bool_decide ((l1 = NULL_loc ∧ l2.1 = ProvFnPtr) ∨ (l1.1 = ProvFnPtr ∧ l2 = NULL_loc)) then
+    Some false
+  (* Allocations are different from NULL pointers. But the comparison
+  is only defined if the location is in bounds of its allocation. *)
+  else if bool_decide (l1 = NULL_loc) then
+    guard (heap_state_loc_in_bounds l2 0 st);
+    Some false
+  else if bool_decide (l2 = NULL_loc) then
+    guard (heap_state_loc_in_bounds l1 0 st);
+    Some false
+  (* Two function pointers compare equal if their address is equal. *)
+  else if bool_decide (l1.1 = ProvFnPtr ∧ l2.1 = ProvFnPtr) then
+    Some (bool_decide (l1.2 = l2.2))
+  else
+  (* Two allocations can be compared if they are both alive and in
+  bounds (it is ok if they have different provenances). Comparison
+  compares the addresses. *)
+    guard (valid_ptr l1 st);
+    guard (valid_ptr l2 st);
+    Some (bool_decide (l1.2 = l2.2)).
+
+Lemma heap_loc_eq_symmetric l1 l2 st:
+  heap_loc_eq l1 l2 st = heap_loc_eq l2 l1 st.
+Proof.
+  rewrite /heap_loc_eq.
+  repeat case_bool_decide=> //; repeat case_option_guard => //; naive_solver.
+Qed.
+
+Lemma heap_loc_eq_NULL_NULL st:
+  heap_loc_eq NULL_loc NULL_loc st = Some true.
+Proof. rewrite /heap_loc_eq. case_bool_decide; naive_solver. Qed.
+
+Lemma heap_loc_eq_alloc_NULL l st:
+  heap_state_loc_in_bounds l 0 st →
+  heap_loc_eq l NULL_loc st = Some false.
+Proof.
+  move => Hlib. move: (Hlib) => /heap_state_loc_in_bounds_has_alloc_id[??]. rewrite /heap_loc_eq.
+  do 3 (case_bool_decide; [naive_solver|]). case_bool_decide => //. by rewrite option_guard_True.
+Qed.
+
+Lemma heap_loc_eq_fnptr_NULL l st:
+  l.1 = ProvFnPtr →
+  heap_loc_eq l NULL_loc st = Some false.
+Proof.
+  rewrite /heap_loc_eq => ?. do 3 (case_bool_decide; [naive_solver|]). naive_solver.
+Qed.
+
+Lemma heap_loc_eq_alloc_alloc l1 l2 st:
+  valid_ptr l1 st →
+  valid_ptr l2 st →
+  heap_loc_eq l1 l2 st = Some (bool_decide (l1.2 = l2.2)).
+Proof.
+  move => Hv1 Hv2. move: (Hv1) => /valid_ptr_has_alloc_id[??]. move: (Hv2) => /valid_ptr_has_alloc_id[??].
+  destruct l1, l2; simplify_eq/=.
+  rewrite /heap_loc_eq.
+  do 5 (case_bool_decide; [naive_solver|]).
+  by rewrite !option_guard_True.
 Qed.
 
 (** ** MemCast: Transforming bytes read from memory.
@@ -429,14 +505,6 @@ Inductive free_blocks : heap_state → list (loc * layout) → heap_state → Pr
     free_block σ l ly σ' →
     free_blocks σ' ls σ'' →
     free_blocks σ ((l, ly) :: ls) σ''.
-
-Lemma heap_state_loc_in_bounds_has_alloc_id l n σ:
-  heap_state_loc_in_bounds l n σ → ∃ aid, l.1 = ProvAlloc (Some aid).
-Proof. rewrite /heap_state_loc_in_bounds. naive_solver. Qed.
-
-Lemma valid_ptr_has_alloc_id l σ:
-  valid_ptr l σ → ∃ aid, l.1 = ProvAlloc (Some aid).
-Proof. rewrite /valid_ptr => ?. apply: heap_state_loc_in_bounds_has_alloc_id. naive_solver. Qed.
 
 Lemma free_block_inj hs l ly hs1 hs2:
   free_block hs l ly hs1 → free_block hs l ly hs2 → hs1 = hs2.
