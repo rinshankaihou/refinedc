@@ -21,10 +21,10 @@ Record find_in_context_info {Σ} : Type := {
 (* The nat n is necessary to allow different options, they are tried starting from 0. *)
 Definition find_in_context {Σ} (fic : find_in_context_info) (T : fic.(fic_A) → iProp Σ) : iProp Σ :=
   (∃ b, fic.(fic_Prop) b ∗ T b).
-Class FindInContext {Σ} (fic : find_in_context_info) (n : nat) (key : Set) : Type :=
+Class FindInContext {Σ} (fic : find_in_context_info) (key : Set) : Type :=
   find_in_context_proof T: iProp_to_Prop (Σ:=Σ) (find_in_context fic T)
 .
-Global Hint Mode FindInContext + + + - : typeclass_instances.
+Global Hint Mode FindInContext + + - : typeclass_instances.
 Inductive FICSyntactic : Set :=.
 
 (** ** Instances  *)
@@ -36,7 +36,7 @@ Lemma find_in_context_direct {Σ B} P (T : B → iProp Σ):
    find_in_context (FindDirect P) T.
 Proof. done. Qed.
 Global Instance find_in_context_direct_inst {Σ B} (P : _ → iProp Σ) :
-  FindInContext (FindDirect P) 0%nat FICSyntactic :=
+  FindInContext (FindDirect P) FICSyntactic | 1 :=
   λ T : B → _, i2p (find_in_context_direct P T).
 
 (** ** [FindHypEqual]  *)

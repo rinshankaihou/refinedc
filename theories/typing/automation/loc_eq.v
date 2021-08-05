@@ -49,16 +49,16 @@ Ltac solve_loc_eq :=
 
 Inductive FICLocSemantic : Set :=.
 Global Instance find_in_context_type_loc_semantic_inst `{!typeG Σ} l :
-  FindInContext (FindLoc l) 2%nat FICLocSemantic :=
+  FindInContext (FindLoc l) FICLocSemantic | 20 :=
   λ T, i2p (find_in_context_type_loc_id l T).
 Global Instance find_in_context_type_val_P_loc_semantic_inst `{!typeG Σ} (l : loc) :
-  FindInContext (FindValP l) 2%nat FICLocSemantic :=
+  FindInContext (FindValP l) FICLocSemantic | 20 :=
   λ T, i2p (find_in_context_type_val_P_loc_id l T).
 Global Instance find_in_context_loc_in_bounds_semantic_inst `{!typeG Σ} l :
-  FindInContext (FindLocInBounds l) 2%nat FICLocSemantic :=
+  FindInContext (FindLocInBounds l) FICLocSemantic | 20 :=
   λ T, i2p (find_in_context_loc_in_bounds l T).
 Global Instance find_in_context_loc_in_bounds_type_semantic_inst `{!typeG Σ} l :
-  FindInContext (FindLocInBounds l) 3%nat FICLocSemantic :=
+  FindInContext (FindLocInBounds l) FICLocSemantic | 30 :=
   λ T, i2p (find_in_context_loc_in_bounds_loc l T).
 
 Lemma tac_solve_loc_eq `{!typeG Σ} l1 β1 ty1 l2 β2 ty2:

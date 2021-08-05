@@ -517,22 +517,16 @@ Ltac liExist protect :=
   | _ => fail "do_exist: unknown goal"
   end.
 
-
 Ltac liFindInContext :=
   lazymatch goal with
   | |- envs_entails _ (find_in_context ?fic ?T) =>
-    let rec go n :=
-        let inst := eval cbv beta in (_ : FindInContext fic n _) in
-        first [
-          lazymatch (type of inst) with
-          | FindInContext _ _ ?key =>
-          simple notypeclasses refine (tac_fast_apply (inst _).(i2p_proof) _); simpl;
-          repeat liExist false; liFindHypOrTrue key
-          end
-         | go constr:(S n)
-        ]
-    in
-    go constr:(0%nat)
+    let key := open_constr:(_) in
+    (* We exploit that [typeclasses eauto] is multi-success to enable
+    multiple implementations of [FindInContext]. They are tried in the
+    order of their priorities.
+    See https://coq.zulipchat.com/#narrow/stream/237977-Coq-users/topic/Multi-success.20TC.20resolution.20from.20ltac.3F/near/242759123 *)
+    simple notypeclasses refine (tac_fast_apply ((_ : FindInContext fic key) _).(i2p_proof) _);
+      [ shelve | typeclasses eauto | simpl; repeat liExist false; liFindHypOrTrue key ]
   end.
 
 Ltac liTrue :=
