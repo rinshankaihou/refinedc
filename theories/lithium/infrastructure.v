@@ -47,3 +47,19 @@ Class CanSolve (P : Prop) : Prop := can_solve: P.
 Definition shelve_hint (P : Prop) : Prop := P.
 Typeclasses Opaque shelve_hint.
 Arguments shelve_hint : simpl never.
+
+(** * [via_vm_compute]
+  [via_vm_compute f a] is equivalent to [f a] but tells the automation that it should
+  be reduced using [vm_compute]
+ *)
+Definition via_vm_compute_def {A B} (f : A → B) (x : A) : B :=
+  f x.
+Definition via_vm_compute_aux : seal (@via_vm_compute_def). by eexists. Qed.
+Definition via_vm_compute := unseal via_vm_compute_aux.
+Definition via_vm_compute_eq' : @via_vm_compute = @via_vm_compute_def :=
+  seal_eq via_vm_compute_aux.
+Arguments via_vm_compute {_ _} _ _.
+
+Lemma via_vm_compute_eq {A B} (f : A → B) x:
+  via_vm_compute f x = f x.
+Proof. rewrite via_vm_compute_eq'. done. Qed.

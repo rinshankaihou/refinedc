@@ -658,7 +658,13 @@ Ltac liSideCond :=
   | |- ?P ∧ _ =>
     lazymatch P with
     | shelve_hint _ => split; [ unfold shelve_hint; shelve |]
-    | _ => first [ progress normalize_goal_and |
+    | _ => first [
+      match P with
+      | context [via_vm_compute ?f ?a] =>
+        rewrite (via_vm_compute_eq f a);
+        vm_compute (f a)
+      end |
+      progress normalize_goal_and |
     lazymatch P with
     | context [protected _] => first [
         split; [ solve_protected_eq |]; unfold_instantiated_evars
