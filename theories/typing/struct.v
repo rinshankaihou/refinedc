@@ -275,6 +275,31 @@ Section struct.
     SubsumePlace l β (struct sl tys1) (struct sl tys2) | 10 :=
     λ T, i2p (struct_mono sl tys1 tys2 l β T).
 
+  Lemma struct_mono_val sl tys1 tys2 v T `{!MovableLst tys1} `{!MovableLst tys2}:
+    ⌜length tys1 = length tys2⌝ ∗ foldr (λ e T, ∀ v,
+        subsume (v ◁ᵥ (e.1 : mtype)) (v ◁ᵥ (e.2 : mtype)) T) T
+         (zip (movablelst_to_list tys1) (movablelst_to_list tys2)) -∗
+    subsume (v ◁ᵥ struct sl tys1) (v ◁ᵥ struct sl tys2) T.
+  Proof.
+    iDestruct 1 as (Hlen) "H". iIntros "(%Hly&%Htys1&Hm)".
+    rewrite /(ty_own_val (struct _ _))/= -!assoc.
+    iSplit; [done|]. iSplit; [ iPureIntro; congruence |].
+    move: {Hly} Hlen Htys1. rewrite {1 2}(to_movablelst tys1) {1}(to_movablelst tys2) !fmap_length.
+    move: (movablelst_to_list tys1) => {}tys1'. clear dependent tys1. move: tys1' => tys1.
+    move: (movablelst_to_list tys2) => {}tys2'. clear dependent tys2. move: tys2' => tys2.
+    move: (sl_members sl) => ns {sl} Hlen Hns.
+    iInduction ns as [| [n ly] ns] "IH" forall (v tys1 tys2 Hlen Hns); simplify_eq/=.
+    { destruct tys1, tys2 => //=. iFrame. }
+    destruct n; simplify_eq/=.
+    - destruct tys1, tys2 => //; simplify_eq/=.
+      iDestruct "Hm" as "[Hm1 Hm2]". iDestruct ("H" with "Hm1") as "[$ HT]".
+      iApply ("IH" with "[//] [//] HT Hm2").
+    - iDestruct "Hm" as "[$ Hm2]". iApply ("IH" with "[//] [//] H Hm2").
+  Qed.
+  Global Instance struct_mono_val_inst sl tys1 tys2 v `{!MovableLst tys1} `{!MovableLst tys2}:
+    SubsumeVal v (struct sl tys1) (struct sl tys2) | 10 :=
+    λ T, i2p (struct_mono_val sl tys1 tys2 v T).
+
   Lemma type_place_struct K β1 T tys tys' sl n l E1 E2 `{!DoStripGuarded β1 E1 E2 (struct sl tys) (struct sl tys')}:
     (∃ i ty1, ⌜field_index_of sl.(sl_members) n = Some i⌝ ∗
     ⌜tys' !! i = Some ty1⌝ ∗

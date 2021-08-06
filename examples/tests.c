@@ -128,3 +128,14 @@ void test_not_ptr(){
 int main(){
   // Check that [return 0] is inserted corectly.
 }
+
+struct test { int a; };
+
+[[rc::exists("n : Z")]]
+[[rc::returns("struct<struct_test, n @ int<i32>>")]]
+[[rc::ensures("{n = 1}")]]
+struct test test_struct_return() {
+  struct test test;
+  test.a = 1;
+  return test;
+}
