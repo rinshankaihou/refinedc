@@ -1,23 +1,18 @@
 open Extra
 open Panic.Simple
 
-(** Representation of a Coq module path. *)
-type coq_path = string list
-
-let coq_path_to_string : coq_path -> string = String.concat "."
-
 (** Project configuration (read from and written to a Toml file). *)
 type project_config =
-  { project_coq_root    : coq_path  (** Coq path of the project root. *)
-  ; project_theories    : coq_path list (** Extra Coq (dune) theories. *)
+  { project_coq_root    : Coq_path.t (** Coq root path for the project. *)
+  ; project_theories    : Coq_path.t list (** Extra Coq (dune) theories. *)
   ; project_cpp_include : string list (** CPP include directories. *)
   ; project_cpp_with_rc : bool (** Use global RefinedC include directory? *)
   ; project_no_build    : bool (** Do not run the Coq compilation. *) }
 
-(** [default_project_config coq_path] builds a default configuration for a new
-    RefinedC project under Coq logical directory [coq_path]. *)
-let default_project_config : coq_path -> project_config = fun coq_path ->
-  { project_coq_root    = coq_path
+(** [default_project_config coq_root] builds a default configuration for a new
+    RefinedC project under Coq logical directory [coq_root]. *)
+let default_project_config : Coq_path.t -> project_config = fun coq_root ->
+  { project_coq_root    = coq_root
   ; project_theories    = []
   ; project_cpp_include = []
   ; project_cpp_with_rc = true
@@ -85,12 +80,18 @@ let read_project_file : string -> project_config = fun file ->
   in
   TomlTypes.Table.iter handle_entry toml;
   let project_coq_root =
-    match !coq_root with
-    | None    -> panic "a [coq_root] entry is mandatory" file
-    | Some(s) -> String.split_on_char '.' s
+    let root =
+      match !coq_root with
+      | None    -> panic "a [coq_root] entry is mandatory" file
+      | Some(s) -> s
+    in
+    try Coq_path.path_of_string root with Invalid_argument(msg) ->
+      panic "Ill-formed [coq_root] entry.\n%s" msg
   in
   let project_theories =
-    List.map (String.split_on_char '.') (Option.get [] !theories)
+    try List.map Coq_path.path_of_string (Option.get [] !theories)
+    with Invalid_argument(msg) ->
+      panic "Ill-formed entry in [coq.extra_theories].\n%s" msg
   in
   let project_cpp_include = Option.get [] !cpp_include in
   let project_cpp_with_rc = Option.get true !cpp_with_rc in
@@ -103,9 +104,9 @@ let read_project_file : string -> project_config = fun file ->
     opening the file for writing. *)
 let write_project_file : string -> project_config -> unit = fun file pc ->
   let open TomlTypes in
-  let coq_root = TString(coq_path_to_string pc.project_coq_root) in
+  let coq_root = TString(Coq_path.to_string pc.project_coq_root) in
   let theories =
-    TArray(NodeString(List.map coq_path_to_string pc.project_theories))
+    TArray(NodeString(List.map Coq_path.to_string pc.project_theories))
   in
   let cpp_include = TArray(NodeString(pc.project_cpp_include)) in
   let cpp_with_rc = TBool(pc.project_cpp_with_rc) in

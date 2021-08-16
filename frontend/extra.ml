@@ -15,6 +15,14 @@ module Int =
     let compare = (-)
   end
 
+module Char =
+  struct
+    include Char
+
+    let printable_ascii : char -> bool = fun c ->
+      ' ' <= c && c <= '~'
+  end
+
 module Option =
   struct
     type 'a t = 'a option
@@ -183,6 +191,15 @@ module String =
     let for_all : (char -> bool) -> string -> bool = fun p s ->
       try iter (fun c -> if not (p c) then raise Exit) s; true
       with Exit -> false
+
+    let sub_from : string -> int -> string = fun s i ->
+      sub s i (length s - i)
+
+    let trim_leading : char -> string -> string = fun c s ->
+      let len = length s in
+      let index = ref 0 in
+      while !index < len && s.[!index] = '_' do incr index done;
+      sub_from s !index
   end
 
 (** [outut_lines oc ls] prints the lines [ls] to the output channel [oc]. Note

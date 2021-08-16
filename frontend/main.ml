@@ -7,7 +7,7 @@ open Version
 (* Standard file and directory names. *)
 
 let rc_project_file   = "rc-project.toml"
-let dune_project_file = "dune-project"
+let dune_proj_file    = "dune-project"
 let coq_project_file  = "_CoqProject"
 let rc_dir_name       = "proofs"
 
@@ -16,7 +16,15 @@ let spec_file_name    = "generated_spec.v"
 let proof_file_name   = Printf.sprintf "generated_proof_%s.v"
 let proofs_file_name  = "proof_files"
 
-let default_coqdir base = ["refinedc"; "project"; base]
+let default_coq_root_prefix = ["refinedc"; "project"]
+
+(* The default Coq root is the above prefix followed by the project name. *)
+let default_coq_root : Coq_path.member -> Coq_path.t =
+  let default_coq_root_prefix =
+    try List.map Coq_path.member_of_string default_coq_root_prefix
+    with Invalid_argument(_) -> assert false (* Should never fail. *)
+  in
+  fun base -> Coq_path.path_of_members (default_coq_root_prefix @ [base])
 
 (* RefinedC include directory (containing [refinedc.h]). *)
 let refinedc_include : string option =
@@ -33,7 +41,7 @@ let refinedc_include : string option =
    A RefinedC project, when it is initialized, contains the following files in
    its root directory:
     - [rc_project_file] containing certain project metadata,
-    - [dune_project_file] containing the build system setup for Coq,
+    - [dune_proj_file] containing the build system setup for Coq,
     - [coq_project_file] containing editor setup for Coq.
    These files are generated, and should not be modified directly. These files
    all have special, reserved names, that should not be used for other files.
@@ -99,13 +107,65 @@ let refinedc_include : string option =
    a function spec, a proof file may no longer correspond to anything. In that
    case it is deleted by RefinedC automatically upon generation. *)
 
+(** Metadata associated to a C file. *)
+type c_file_data = {
+  orig_path : string; (** Path given by the user on the command line. *)
+  file_path : string; (** Absolute, normalised file path. *)
+  file_dir  : string; (** Directory holding the file. *)
+  base_name : string; (** Base name of the file, without extension. *)
+  root_dir  : string; (** Absolute path to the RefinedC project root. *)
+  rel_path  : string list; (** Relative path to the parent directory. *)
+  proj_cfg  : project_config; (** Associated project configuration. *)
+}
+
+(** [get_c_file_data path] computes various metadata for the C file pointed to
+    by the given [path]. It includes, for instance, the path to the associated
+    RefinedC project directory. In case of error a suitable message is printed
+    and the program is terminated. *)
+let get_c_file_data : string -> c_file_data = fun c_file ->
+  (* Original file path. *)
+  let orig_path = c_file in
+  (* Absolute, normalised file path. *)
+  let file_path =
+    try Filename.realpath c_file with Invalid_argument(_) ->
+      panic "File \"%s\" disappeared..." c_file
+  in
+  (* Directoru, base name and extension. *)
+  let file_dir = Filename.dirname file_path in
+  let base_name = Filename.basename file_path in
+  let base_name = Filename.remove_extension base_name in
+  (* Root directory and relative path. *)
+  let (root_dir, rel_path) =
+    let rec find acc dir =
+      let rc_project = Filename.concat dir rc_project_file in
+      if Sys.file_exists rc_project then (dir, acc) else
+      let parent = Filename.dirname dir in
+      if parent = dir then raise Not_found;
+      find (Filename.basename dir :: acc) parent
+    in
+    try find [] file_dir with Not_found ->
+      panic "No RefinedC project can be located for file \"%s\"." orig_path
+  in
+  (* Reading the project configuration. *)
+  let proj_cfg =
+    let project_file = Filename.concat root_dir rc_project_file in
+    try
+      if Sys.is_directory project_file then
+        panic "Invalid project file \"%s\" (directory)." project_file;
+      read_project_file project_file
+    with Sys_error(_) ->
+      panic "Error while reading the project file \"%s\"." project_file
+  in
+  {orig_path; file_path; file_dir; base_name; root_dir; rel_path; proj_cfg}
+
+(** Command line configuration for the ["check"] command. *)
 type config =
   { cpp_config  : Cerb_wrapper.cpp_config
   ; no_locs     : bool
   ; no_analysis : bool
   ; no_build    : bool }
 
-(* Main entry point. *)
+(** Entry point for the ["check"] command. *)
 let run : config -> string -> unit = fun cfg c_file ->
   (* Set the printing flags. *)
   if cfg.no_locs then
@@ -113,66 +173,46 @@ let run : config -> string -> unit = fun cfg c_file ->
       Coq_pp.print_expr_locs := false;
       Coq_pp.print_stmt_locs := false
     end;
-  (* Split the file path into a file name and absolute directory path. *)
-  let c_file =
-    try Filename.realpath c_file with Invalid_argument(_) ->
-      panic "File [%s] disappeared..." c_file
-  in
-  let c_file_name = Filename.basename c_file in
-  let c_file_name_no_ext = Filename.remove_extension c_file_name in
-  let c_file_dir = Filename.dirname c_file in
-  (* Locate the RefinedC project root and the relitive logical directory. *)
-  let find_root_and_dir_path dir =
-    let rec find acc dir =
-      let rc_project = Filename.concat dir rc_project_file in
-      if Sys.file_exists rc_project then
-        (dir, acc)
-      else
-       let parent = Filename.dirname dir in
-       if parent = dir then raise Not_found;
-       find (Filename.basename dir :: acc) parent
-    in
-    find [] dir
-  in
-  let (root_dir, c_file_dir_path) =
-    try find_root_and_dir_path c_file_dir with Not_found ->
-      panic "No RefinedC project can be located for file [%s]." c_file
-  in
-  (* Read the project configuration from the project file. *)
-  let project_config =
-    let project_file = Filename.concat root_dir rc_project_file in
-    try
-      if Sys.is_directory project_file then
-        panic "Invalid project file [%s] (directory)." project_file;
-      read_project_file project_file
-    with Sys_error(_) ->
-      panic "Error while reading the project file [%s]." project_file
-  in
+  (* Obtain the metadata for the input C file. *)
+  let c_file = get_c_file_data c_file in
   (* Compute the base Coq logical path for the files. *)
-  let file_coq_dir = project_config.project_coq_root @ c_file_dir_path in
-  let path = String.concat "." file_coq_dir ^ "." ^ c_file_name_no_ext in
+  let path =
+    let suffix =
+      let suffix = c_file.rel_path @ [c_file.base_name] in
+      try List.map Coq_path.member_of_string suffix
+      with Invalid_argument(msg) ->
+        panic "File \"%s\" does not correspond to a valid Coq module path.\n\
+              The obtained module path segment is \"%s\".\n%s"
+              c_file.orig_path (String.concat "." suffix) msg
+    in
+    Coq_path.append c_file.proj_cfg.project_coq_root suffix
+  in
   (* Prepare the output folder if need be. *)
-  let file_rc_dir = Filename.concat c_file_dir rc_dir_name in
+  let file_rc_dir = Filename.concat c_file.file_dir rc_dir_name in
   if not (Sys.file_exists file_rc_dir) then Unix.mkdir file_rc_dir 0o755;
-  let output_dir = Filename.concat file_rc_dir c_file_name_no_ext in
+  let output_dir = Filename.concat file_rc_dir c_file.base_name in
   if not (Sys.file_exists output_dir) then
     begin
       Unix.mkdir output_dir 0o755;
       (* Add the mapping to the Coq project file for editors. *)
       let dune_dir_path =
-        let relative_path = Filename.relative_path root_dir c_file_dir in
+        let relative_path =
+          Filename.relative_path c_file.root_dir c_file.file_dir
+        in
         let path =
           if relative_path = Filename.current_dir_name then "_build/default"
           else Filename.concat "_build/default" relative_path
         in
         let path = Filename.concat path rc_dir_name in
-        Filename.concat path c_file_name_no_ext
+        Filename.concat path c_file.base_name
       in
-      let coq_project_path = Filename.concat root_dir coq_project_file in
-      let new_line = Printf.sprintf "-Q %s %s" dune_dir_path path in
-      let lines = try read_file coq_project_path with Sys_error(_) -> [] in
+      let coq_proj_path = Filename.concat c_file.root_dir coq_project_file in
+      let new_line =
+        Printf.sprintf "-Q %s %s" dune_dir_path (Coq_path.to_string path)
+      in
+      let lines = try read_file coq_proj_path with Sys_error(_) -> [] in
       if not (List.mem new_line lines) then
-        append_file (Filename.concat root_dir coq_project_file) [new_line]
+        append_file coq_proj_path [new_line]
     end;
   (* Paths to the output files. *)
   let code_file = Filename.concat output_dir code_file_name in
@@ -183,11 +223,12 @@ let run : config -> string -> unit = fun cfg c_file ->
   (* Prepare the CPP configuration. *)
   let cpp_config =
     let cpp_I =
-      let project_include =
-        List.map (Filename.concat root_dir) project_config.project_cpp_include
+      let proj_include =
+        let incl = c_file.proj_cfg.project_cpp_include in
+        List.map (Filename.concat c_file.root_dir) incl
       in
-      let cpp_include = cfg.cpp_config.cpp_I @ project_include in
-      match (refinedc_include, project_config.project_cpp_with_rc) with
+      let cpp_include = cfg.cpp_config.cpp_I @ proj_include in
+      match (refinedc_include, c_file.proj_cfg.project_cpp_with_rc) with
       | (_      , false) -> cpp_include
       | (Some(d), true ) -> d :: cpp_include
       | (None   , true ) ->
@@ -197,17 +238,20 @@ let run : config -> string -> unit = fun cfg c_file ->
   in
   (* Parse the comment annotations. *)
   let open Comment_annot in
-  let ca = parse_annots (Cerb_wrapper.cpp_lines cpp_config c_file) in
+  let ca =
+    let lines = Cerb_wrapper.cpp_lines cpp_config c_file.file_path in
+    parse_annots lines
+  in
   let ctxt = List.map (fun s -> "Context " ^ s) ca.ca_context in
   (* Do the translation to Ail, analyse, and generate our AST. *)
-  Sys.chdir root_dir; (* Move to the root to get relative paths. *)
-  let c_file = Filename.relative_path root_dir c_file in
-  let ail_ast = Cerb_wrapper.c_file_to_ail cpp_config c_file in
+  Sys.chdir c_file.root_dir; (* Move to the root to get relative paths. *)
+  let c_file_rel = Filename.relative_path c_file.root_dir c_file.file_path in
+  let ail_ast = Cerb_wrapper.c_file_to_ail cpp_config c_file_rel in
   if not cfg.no_analysis then Warn.warn_file ail_ast;
-  let coq_ast = Ail_to_coq.translate c_file ail_ast in
+  let coq_ast = Ail_to_coq.translate c_file_rel ail_ast in
   (* Generate the code file. *)
   let open Coq_pp in
-  let mode = Code(root_dir, ca.ca_code_imports) in
+  let mode = Code(c_file.root_dir, ca.ca_code_imports) in
   write mode code_file coq_ast;
   (* Generate the spec file. *)
   let mode = Spec(path, ca.ca_imports, ca.ca_inlined, ca.ca_typedefs, ctxt) in
@@ -250,26 +294,30 @@ let run : config -> string -> unit = fun cfg c_file ->
   List.iter write_proof coq_ast.functions;
   (* Generate the dune file. *)
   let theories =
-    let glob = List.map coq_path_to_string project_config.project_theories in
+    let glob = List.map Coq_path.to_string c_file.proj_cfg.project_theories in
     let imports = ca.ca_imports @ ca.ca_proof_imports @ ca.ca_code_imports in
     let imports = List.sort_uniq Stdlib.compare imports in
     ignore imports; (* TODO some dependency analysis based on [imports]. *)
-    List.sort_uniq String.compare (List.filter (fun s -> s <> path) (ca.ca_requires @ glob))
+    let theories =
+      let path = Coq_path.to_string path in
+      List.filter (fun s -> s <> path) (ca.ca_requires @ glob)
+    in
+    List.sort_uniq String.compare theories
   in
   write_file dune_file [
     "; Generated by [refinedc], do not edit.";
     "(coq.theory";
     " (flags -w -notation-overridden -w -redundant-canonical-projection)";
-    Printf.sprintf " (name %s)" path;
+    Printf.sprintf " (name %s)" (Coq_path.to_string path);
     Printf.sprintf " (theories %s))" (String.concat " " theories);
   ];
   (* Run Coq type-checking. *)
-  if not (cfg.no_build || project_config.project_no_build) then
+  if not (cfg.no_build || c_file.proj_cfg.project_no_build) then
     begin
       Sys.chdir output_dir;
       match Sys.command "dune build --display=short" with
       | 0           ->
-          Format.printf "File [%s] successfully checked.\n%!" c_file
+          info "File \"%s\" successfully checked.\n%!" c_file.orig_path
       | i           ->
           panic "The call to [dune] returned with error code %i." i
       | exception _ ->
@@ -381,47 +429,12 @@ let ail_cmd =
 
 (* Cleaning command. *)
 
-let run_clean soft c_file =
-  (* Split the file path into a file name and absolute directory path. *)
-  let c_file_name = Filename.basename c_file in
-  let c_file_name_no_ext = Filename.remove_extension c_file_name in
-  let c_file_dir =
-    let c_file_dir = Filename.dirname c_file in
-    try Filename.realpath c_file_dir with Invalid_argument(_) ->
-      panic "Directory [%s] disappeared..." c_file_dir
-  in
-  (* Check that the C source file is indeed in a RefinedC project. *)
-  let find_root_and_dir_path dir =
-    let rec find acc dir =
-      let rc_project = Filename.concat dir rc_project_file in
-      if Sys.file_exists rc_project then
-        (dir, acc)
-      else
-       let parent = Filename.dirname dir in
-       if parent = dir then raise Not_found;
-       find (Filename.basename dir :: acc) parent
-    in
-    find [] dir
-  in
-  let (root_dir, c_file_dir_path) =
-    try find_root_and_dir_path c_file_dir with Not_found ->
-      panic "No RefinedC project can be located for file [%s]." c_file
-  in
-  (* Read the project configuration from the project file. *)
-  let project_config =
-    let project_file = Filename.concat root_dir rc_project_file in
-    try
-      if Sys.is_directory project_file then
-        panic "Invalid project file [%s] (directory)." project_file;
-      read_project_file project_file
-    with Sys_error(_) ->
-      panic "Error while reading the project file [%s]." project_file
-  in
-  (* Compute the base Coq logical path for the files. *)
-  let file_coq_dir = project_config.project_coq_root @ c_file_dir_path in
+let run_clean : bool -> string -> unit = fun soft c_file ->
+  (* Obtain the metadata for the input C file. *)
+  let c_file = get_c_file_data c_file in
   (* Compute the relevant directory and file paths. *)
-  let rc_dir = Filename.concat c_file_dir rc_dir_name in
-  let gen_dir = Filename.concat rc_dir c_file_name_no_ext in
+  let rc_dir = Filename.concat c_file.file_dir rc_dir_name in
+  let gen_dir = Filename.concat rc_dir c_file.base_name in
   let dune_file = Filename.concat gen_dir "dune" in
   let proofs_file = Filename.concat gen_dir proofs_file_name in
   let code_file = Filename.concat gen_dir code_file_name in
@@ -443,15 +456,29 @@ let run_clean soft c_file =
   List.iter rmdir all_dirs;
   (* Delete the Coq project mapping for the file. *)
   if not soft then
-  let path = String.concat "." file_coq_dir ^ "." ^ c_file_name_no_ext in
-  let dune_dir_path =
-    let relative_path = Filename.relative_path root_dir c_file_dir in
-    let path = Filename.concat "_build/default" relative_path in
-    let path = Filename.concat path rc_dir_name in
-    Filename.concat path c_file_name_no_ext
+  (* Compute the base Coq logical path for the files. *)
+  let path =
+    let suffix =
+      let suffix = c_file.rel_path @ [c_file.base_name] in
+      try List.map Coq_path.member_of_string suffix
+      with Invalid_argument(msg) ->
+        panic "File \"%s\" does not correspond to a valid Coq module path.\n\
+              The obtained module path segment is \"%s\".\n%s"
+              c_file.orig_path (String.concat "." suffix) msg
+    in
+    Coq_path.append c_file.proj_cfg.project_coq_root suffix
   in
-  let coq_project_path = Filename.concat root_dir coq_project_file in
-  let line = Printf.sprintf "-Q %s %s" dune_dir_path path in
+  let dune_dir_path =
+    let rel_path = Filename.relative_path c_file.root_dir c_file.file_dir in
+    let path = Filename.concat "_build/default" rel_path in
+    let path = Filename.concat path rc_dir_name in
+    Filename.concat path c_file.base_name
+  in
+  let coq_project_path = Filename.concat c_file.root_dir coq_project_file in
+  let line =
+    let path = Coq_path.to_string path in
+    Printf.sprintf "-Q %s %s" dune_dir_path path
+  in
   let lines = try read_file coq_project_path with Sys_error(_) -> [] in
   if List.mem line lines then
     begin
@@ -472,23 +499,7 @@ let clean_cmd =
 
 (* Project initialization command. *)
 
-let check_coqdir_member id =
-  (* Empty string is invalid. *)
-  if String.length id = 0 then
-    invalid_arg "invalid empty Coq directory member.";
-  (* Only accept characters and underscores. *)
-  let check_char c =
-    match c with
-    | 'a'..'z' | 'A'..'Z' | '_' -> ()
-    | _                         ->
-        invalid_arg "invalid Coq directory member (contains %C)." c;
-  in
-  String.iter check_char id;
-  (* Should not start with an underscore. *)
-  if id.[0] = '_' then
-    invalid_arg "invalid Coq directory member (starts with '_')."
-
-let init : string list option -> unit = fun coqdir ->
+let init : string option -> unit = fun coq_path ->
   (* Read the current working directory. *)
   let wd =
     try Filename.realpath (Sys.getcwd ()) with Invalid_argument(_) ->
@@ -496,7 +507,7 @@ let init : string list option -> unit = fun coqdir ->
   in
   (* Files to generate. *)
   let rc_project_path = Filename.concat wd rc_project_file in
-  let dune_project_path = Filename.concat wd dune_project_file in
+  let dune_project_path = Filename.concat wd dune_proj_file in
   let coq_project_path = Filename.concat wd coq_project_file in
   (* Check for an existing project. *)
   if Sys.file_exists rc_project_path then
@@ -506,17 +517,25 @@ let init : string list option -> unit = fun coqdir ->
     let dir = Filename.dirname path in
     let base = Filename.basename path in
     if base = rc_project_file then
-      if is_dir then panic "Subdirectory [%s] uses a reserved name." path
-      else panic "A RefinedC project exists in directory [%s]." dir
-    else if base = dune_project_file then
-      if is_dir then panic "Subdirectory [%s] uses a reserved name." path
-      else panic "A [%s] file exists in directory [%s]." dune_project_file dir
+      if is_dir then
+        panic "Subdirectory \"%s\" uses a reserved name." path
+      else
+        panic "A RefinedC project exists in directory \"%s\"." dir
+    else if base = dune_proj_file then
+      if is_dir then
+        panic "Subdirectory \"%s\" uses a reserved name." path
+      else
+        panic "A \"%s\" file exists in directory \"%s\"." dune_proj_file dir
     else if base = coq_project_file then
-      if is_dir then panic "Subdirectory [%s] uses a reserved name." path
-      else panic "A [%s] file exists in directory [%s]." dune_project_file dir
+      if is_dir then
+        panic "Subdirectory \"%s\" uses a reserved name." path
+      else
+        panic "A \"%s\" file exists in directory \"%s\"." dune_proj_file dir
     else if base = rc_dir_name then
-      if is_dir then panic "Directory [%s] uses a reserved name." path
-      else panic "File [%s] uses a reserved name." path
+      if is_dir then
+        panic "Directory \"%s\" uses a reserved name." path
+      else
+        panic "File \"%s\" uses a reserved name." path
     else ()
   in
   Filename.iter_files ~ignored_dirs:[".git"; "_build"] wd file_check;
@@ -527,15 +546,15 @@ let init : string list option -> unit = fun coqdir ->
       let file = Filename.concat dir rc_project_file in
       if Sys.file_exists file then begin
         if Sys.is_directory file then
-          panic "Parent directory [%s] has a reserved name." file;
-        panic "Nested under RefinedC project [%s]." file
+          panic "Parent directory \"%s\" has a reserved name." file;
+        panic "Nested under RefinedC project \"%s\"." file
       end;
       (* Avoid nested dune workspaces, leads to problems. *)
-      let file = Filename.concat dir dune_project_file in
+      let file = Filename.concat dir dune_proj_file in
       if Sys.file_exists file then begin
         if Sys.is_directory file then
-          panic "Parent directory [%s] has a reserved name." file;
-        panic "Nested under RefinedC project [%s]." file
+          panic "Parent directory \"%s\" has a reserved name." file;
+        panic "Nested under RefinedC project \"%s\"." file
       end
       (* Coq project files should be OK. *)
     in
@@ -543,16 +562,44 @@ let init : string list option -> unit = fun coqdir ->
     if parent <> dir then (check_dir parent; check_parents parent)
   in
   check_parents wd;
-  (* Build the Coq directory, using a possible CLI argument. *)
-  let coqdir =
-    match coqdir with Some(d) -> d | None ->
-    let base = Filename.basename wd in
-    try check_coqdir_member base; default_coqdir base
-    with Invalid_argument(msg) ->
-      panic "Current directory name is an %s" msg
+  (* Build the Coq root path, using a possible CLI argument. *)
+  let coq_path =
+    let parse_coq_path d =
+      try Coq_path.path_of_string d with Invalid_argument(msg) ->
+      let example =
+        let d =
+          match Coq_path.fixup_string_path d with Some(d) -> d | None ->
+          String.concat "." (default_coq_root_prefix @ ["my_project"])
+        in
+        try Coq_path.path_of_string d with Invalid_argument(msg) ->
+          assert false (* Cannot happen. *)
+      in
+      panic "%s\nRetry using option \"--coq-path=%a\" or similar."
+        msg Coq_path.pp example
+    in
+    match coq_path with
+    | Some(d) -> parse_coq_path d
+    | None    ->
+    let base =
+      let base = Filename.basename wd in
+      try Coq_path.member_of_string base with Invalid_argument(msg) ->
+      let example =
+        let base =
+          match Coq_path.fixup_string_member base with
+          | Some(id) -> id
+          | None     -> "my_project"
+        in
+        try default_coq_root (Coq_path.member_of_string base)
+        with Invalid_argument(_) -> assert false (* Cannot happen. *)
+      in
+      panic "Current directory name \"%s\" cannot be used to build a Coq \
+            module path.\n%s\nRetry using option \"--coq-path=%a\" or \
+            similar." base msg Coq_path.pp example
+    in
+    default_coq_root base
   in
   (* Now we are safe, generate the project files. *)
-  write_project_file rc_project_path (default_project_config coqdir);
+  write_project_file rc_project_path (default_project_config coq_path);
   write_file dune_project_path [
     "(lang dune 2.7)";
     "(using coq 0.2)";
@@ -564,40 +611,30 @@ let init : string list option -> unit = fun coqdir ->
     "-arg -w -arg -redundant-canonical-projection";
   ];
   (* Reporting. *)
-  let coqdir = String.concat "." coqdir in
-  Format.printf "Initialized a RefinedC project in [%s].\n" wd;
-  Format.printf "Using the Coq logical directory [%s].\n%!" coqdir
+  info "Initialized a RefinedC project in \"%s\".\n" wd;
+  info "Using Coq root module path [%a].\n%!" Coq_path.pp coq_path
 
-let coqdir =
+let coq_path =
   let doc =
-    "Specify the logical Coq directory under which the created verification \
+    "Specify the Coq module path under which the created verification \
     project is to be placed. The argument is expected to be a dot-sperated \
     list of identifiers formed of letters and underscores (but not in first \
     position). If no explicit Coq directory is given then it defaults to \
     [refinedc.project.DIRNAME], where DIRNAME is the current directory name. \
     If DIRNAME is not a valid identifier then the command fails."
   in
-  let coqdir =
-    let parse s =
-      let ids = String.split_on_char '.' s in
-      try List.iter check_coqdir_member ids; Ok ids
-      with Invalid_argument(msg) -> Error (`Msg msg)
-    in
-    let pp fmt ids = Format.pp_print_string fmt (String.concat "." ids) in
-    Arg.conv ~docv:"COQDIR" (parse, pp)
-  in
-  let i = Arg.(info ["coqdir"] ~docv:"COQDIR" ~doc) in
-  Arg.(value & opt (some coqdir) None & i)
+  let i = Arg.(info ["coq-path"] ~docv:"COQDIR" ~doc) in
+  Arg.(value & opt (some string) None & i)
 
 let init_cmd =
   let doc = "Create a new RefinedC project in the current directory." in
-  Term.(pure init $ coqdir),
+  Term.(pure init $ coq_path),
   Term.info "init" ~version ~doc
 
 (* A few trivial commands. *)
 
 let print_version () =
-  Format.printf "RefinedC version: %s\nRelying on Cerberus version: %s\n%!"
+  info "RefinedC version: %s\nRelying on Cerberus version: %s\n%!"
     Version.version Cerb_frontend.Version.version
 
 let version_cmd =

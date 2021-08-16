@@ -23,6 +23,7 @@ depends: [
   "cmdliner" {>= "1.0.4"}
   "earley" {= "3.0.0"}
   "toml" {= "5.0.0"}
+  "ubase" {= "0.04"}
 ]
 
 build: [

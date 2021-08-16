@@ -26,6 +26,8 @@ let blu fmt = with_color "34" fmt
 let mag fmt = with_color "35" fmt
 let cya fmt = with_color "36" fmt
 
+let info : 'a outfmt -> 'a = Format.printf
+
 (** [wrn loc_opt fmt] outputs a waning to [stderr] using [Format] format [fmt]
     and the correponding arguments. If [loc_opt] is [Some(loc)], then location
     [loc] is shown as a prefix of the warning. Note that a newline is added to
@@ -51,4 +53,5 @@ module Simple =
   struct
     let panic : ('a,'b) koutfmt -> 'a = panic_no_pos
     let wrn   : 'a outfmt -> 'a = fun fmt -> wrn None fmt
+    let info  : 'a outfmt -> 'a = info
   end

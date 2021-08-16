@@ -808,9 +808,9 @@ let collect_invs : func_def -> (string * loop_annot) list = fun def ->
   in
   SMap.fold fn def.func_blocks []
 
-let pp_spec : string -> import list -> inlined_code ->
+let pp_spec : Coq_path.t -> import list -> inlined_code ->
       typedef list -> string list -> Coq_ast.t pp =
-    fun import_path imports inlined typedefs ctxt ff ast ->
+    fun coq_path imports inlined typedefs ctxt ff ast ->
 
   (* Formatting utilities. *)
   let pp fmt = Format.fprintf ff fmt in
@@ -830,7 +830,7 @@ let pp_spec : string -> import list -> inlined_code ->
 
   (* Printing some header. *)
   pp "@[<v 0>From refinedc.typing Require Import typing.@;";
-  pp "From %s Require Import generated_code.@;" import_path;
+  pp "From %a Require Import generated_code.@;" Coq_path.pp coq_path;
   List.iter (pp_import ff) imports;
   pp "Set Default Proof Using \"Type\".\n";
 
@@ -1150,8 +1150,9 @@ let pp_spec : string -> import list -> inlined_code ->
   pp_inlined false (Some "final") inlined.ic_final;
   pp "@]"
 
-let pp_proof : string -> func_def -> import list -> string list -> proof_kind
-    -> Coq_ast.t pp = fun import_path def imports ctxt proof_kind ff ast ->
+let pp_proof : Coq_path.t -> func_def -> import list -> string list
+    -> proof_kind -> Coq_ast.t pp =
+    fun coq_path def imports ctxt proof_kind ff ast ->
   (* Formatting utilities. *)
   let pp fmt = Format.fprintf ff fmt in
 
@@ -1172,8 +1173,8 @@ let pp_proof : string -> func_def -> import list -> string list -> proof_kind
 
   (* Printing some header. *)
   pp "@[<v 0>From refinedc.typing Require Import typing.@;";
-  pp "From %s Require Import generated_code.@;" import_path;
-  pp "From %s Require Import generated_spec.@;" import_path;
+  pp "From %a Require Import generated_code.@;" Coq_path.pp coq_path;
+  pp "From %a Require Import generated_spec.@;" Coq_path.pp coq_path;
   List.iter (pp_import ff) imports;
   pp "Set Default Proof Using \"Type\".@;@;";
 
@@ -1417,18 +1418,18 @@ let pp_proof : string -> func_def -> import list -> string list -> proof_kind
 
 type mode =
   | Code of string * import list
-  | Spec of string * import list * inlined_code * typedef list * string list
-  | Fprf of string * func_def * import list * string list * proof_kind
+  | Spec of Coq_path.t * import list * inlined_code * typedef list * string list
+  | Fprf of Coq_path.t * func_def * import list * string list * proof_kind
 
 let write : mode -> string -> Coq_ast.t -> unit = fun mode fname ast ->
   let pp =
     match mode with
     | Code(root_dir,imports)                 ->
         pp_code root_dir imports
-    | Spec(path,imports,inlined,tydefs,ctxt) ->
-        pp_spec path imports inlined tydefs ctxt
-    | Fprf(path,def,imports,ctxt,kind)       ->
-        pp_proof path def imports ctxt kind
+    | Spec(coq_path,imports,inlined,tydefs,ctxt) ->
+        pp_spec coq_path imports inlined tydefs ctxt
+    | Fprf(coq_path,def,imports,ctxt,kind)       ->
+        pp_proof coq_path def imports ctxt kind
   in
   (* We write to a buffer. *)
   let buffer = Buffer.create 4096 in
