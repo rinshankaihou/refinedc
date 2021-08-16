@@ -139,3 +139,12 @@ struct test test_struct_return() {
   test.a = 1;
   return test;
 }
+
+typedef void (*test_fn)(void);
+
+[[rc::parameters("spec : {unit → fn_params}")]]
+[[rc::args("function_ptr<spec>")]]
+[[rc::returns("function_ptr<spec>")]]
+test_fn test_fn_params(test_fn f) {
+    return f;
+}
