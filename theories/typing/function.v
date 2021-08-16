@@ -12,15 +12,26 @@ Arguments introduce_typed_stmt : simpl never.
 Section function.
   Context `{!typeG Σ} {A : Type}.
   Record fn_ret := FR {
+    (* return type (rc::returns) *)
     fr_rty : mtype;
+    (* postcondition (rc::ensures) *)
     fr_R : iProp Σ;
   }.
   Definition mk_FR (rty : type) `{!Movable rty} (R : iProp Σ) := FR (t2mt rty) R.
 
+
+  (* The specification of a function is given by [A → fn_params].
+     The full specification roughly looks like the following:
+     ∀ x : A, args ◁ᵥ fp_atys ∗ fp_Pa → ∃ y : fp_rtype, ret ◁ᵥ fr_rty ∗ fr_R
+ *)
   Record fn_params := FP {
+    (* types of arguments (rc::args) *)
     fp_atys : list mtype;
+    (* precondition (rc::requires) *)
     fp_Pa : iProp Σ;
+    (* type of the existential quantifier (rc::exists) *)
     fp_rtype : Type;
+    (* return type and postcondition (rc::returns and rc::ensures) *)
     fp_fr: fp_rtype → fn_ret;
   }.
 
