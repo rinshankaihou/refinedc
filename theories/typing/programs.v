@@ -1522,8 +1522,9 @@ Section typing.
     TypedAnnotStmt (ShareAnnot) l (l ◁ₗ ty) :=
     λ T, i2p (annot_share l ty T).
 
+  Definition STOPPED : iProp Σ := False.
   Lemma annot_stop l β ty T:
-    (l ◁ₗ{β} ty -∗ False) -∗
+    (l ◁ₗ{β} ty -∗ STOPPED) -∗
     typed_annot_stmt (StopAnnot) l (l ◁ₗ{β} ty) T.
   Proof. iIntros "HT Hl". iDestruct ("HT" with "Hl") as %[]. Qed.
   Global Instance annot_stop_inst l β ty:

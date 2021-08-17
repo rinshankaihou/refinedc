@@ -22,7 +22,7 @@ Section proofs.
     (* Establish the invariant *)
     liInst Hevar id. iExists 0, 0.
     iFrame. iSplit; [ done | by iApply ticket_range_empty ].
-    Unshelve. all: solve_goal.
+    Unshelve. all: li_unshelve_sidecond; sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
   Qed.
 
   (* Typing proof for [hyp_spin_lock]. *)
@@ -268,10 +268,7 @@ Section proofs.
           }
           iIntros "_". repeat liRStep; liShow.
     (* Solving side-conditions. *)
-    Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal.
-    all: try (repeat match goal with [ H : _ |- _ ] => revert H end;
-      rewrite /LAST_TICKET /min_int /max_int /int_modulus /int_half_modulus;
-      rewrite /bits_per_int /bytes_per_int /bits_per_byte /=; lia).
+    Unshelve. all: li_unshelve_sidecond; sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
   Qed.
 
   (* Typing proof for [hyp_spin_unlock]. *)
@@ -428,9 +425,6 @@ Section proofs.
         (* Run the automation to finish the branch. *)
         repeat liRStep; liShow.
     (* Solving side-conditions. *)
-    Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal.
-    all: try (repeat match goal with [ H : _ |- _ ] => revert H end;
-      rewrite /LAST_TICKET /min_int /max_int /int_modulus /int_half_modulus;
-      rewrite /bits_per_int /bytes_per_int /bits_per_byte /=; lia).
+    Unshelve. all: li_unshelve_sidecond; sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
   Qed.
 End proofs.

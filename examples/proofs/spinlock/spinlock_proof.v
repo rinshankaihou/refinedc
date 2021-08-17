@@ -21,7 +21,7 @@ Section type.
     repeat liRStep; liShow.
     liInst Hevar γ.
     repeat liRStep; liShow.
-    Unshelve. all: sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
+    Unshelve. all: li_unshelve_sidecond; sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
   Qed.
 
 End type.

@@ -1387,7 +1387,7 @@ let pp_proof : string -> func_def -> import list -> string list -> proof_kind
     pp "@;  all: print_typesystem_goal \"%s\" \"%s\"." def.func_name id
   in
   List.iter pp_do_step (List.cons "#0" (List.map fst invs_fb));
-  pp "@;Unshelve. all: sidecond_hook; prepare_sideconditions; ";
+  pp "@;Unshelve. all: li_unshelve_sidecond; sidecond_hook; prepare_sideconditions; ";
   pp "normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.";
   let tactics_items =
     let is_all t =
@@ -1409,6 +1409,7 @@ let pp_proof : string -> func_def -> import list -> string list -> proof_kind
   in
   List.iter (pp "@;+ %s") tactics_items;
   pp "@;all: print_sidecondition_goal \"%s\"." def.func_name;
+  pp "@;Unshelve. all: try done; try apply: inhabitant; print_remaining_shelved_goal \"%s\"." def.func_name;
   pp "@]@;Qed.";
 
   (* Closing the section. *)

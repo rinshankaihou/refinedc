@@ -1,4 +1,4 @@
-From refinedc.typing Require Import type.
+From refinedc.typing Require Import type globals.
 From refinedc.lithium Require Import tactics.
 From refinedc.typing.automation Require Import solvers.
 
@@ -105,11 +105,8 @@ Ltac solve_goal_prepare_tac ::=
   repeat match goal with | H : CASE_DISTINCTION_INFO _ _ _ |- _ =>  clear H end.
 
 (** * Tactics for showing failures to the user *)
-Ltac clear_for_print_goal :=
-  repeat match goal with | H : BLOCK_PRECOND _ _ |- _ => clear H end.
 
-Ltac print_goal :=
-  clear_for_print_goal;
+Ltac print_current_location :=
   try lazymatch reverse goal with
       | H : CURRENT_LOCATION ?l ?up_to_date |- _ =>
         let rec print_loc_info l :=
@@ -125,7 +122,9 @@ Ltac print_goal :=
             end in
         print_loc_info l;
         clear H
-      end;
+      end.
+
+Ltac print_case_distinction_info :=
    repeat lazymatch reverse goal with
           | H : CASE_DISTINCTION_INFO ?hint ?i ?l |- _ =>
             lazymatch i with
@@ -142,11 +141,25 @@ Ltac print_goal :=
             | [] => idtac
             end;
             clear H
-          end;
-  idtac "Goal:";
+          end.
+
+Ltac print_coq_hyps :=
   try match reverse goal with
-  | H : ?X |- _ => idtac H ":" X; fail
-  end;
+  | H : ?X |- _ =>
+    lazymatch X with
+    | BLOCK_PRECOND _ _ => fail
+    | gFunctors => fail
+    | typeG _ => fail
+    | globalG _ => fail
+    | _ => idtac H ":" X; fail
+    end
+  end.
+
+Ltac print_goal :=
+  print_current_location;
+  print_case_distinction_info;
+  idtac "Goal:";
+  print_coq_hyps;
   idtac "---------------------------------------";
   match goal with
   | |- ?G => idtac G
@@ -155,9 +168,32 @@ Ltac print_goal :=
   idtac "".
 
 Ltac print_typesystem_goal fn block :=
-  idtac "Type system got stuck in function" fn "in block" block "!";
-  print_goal; admit.
+  lazymatch goal with
+  | |- ?P ∧ ?Q =>
+    idtac "Cannot instantiate evar in" fn "in block" block "!";
+    print_current_location;
+    print_case_distinction_info;
+    idtac "Goal:";
+    print_coq_hyps;
+    idtac "---------------------------------------";
+    idtac P;
+    (* TODO: Should we print the continuation? It might confuse the user and
+       it usually is not helpful. *)
+    (* idtac ""; *)
+    (* idtac "Continuation:"; *)
+    (* idtac Q; *)
+    idtac "";
+    idtac "";
+    admit
+  | |- _ =>
+    idtac "Type system got stuck in function" fn "in block" block "!";
+    print_goal; admit
+  end.
 
 Ltac print_sidecondition_goal fn :=
   idtac "Cannot solve side condition in function" fn "!";
+  print_goal; admit.
+
+Ltac print_remaining_shelved_goal fn :=
+  idtac "Shelved goal remaining in " fn "!";
   print_goal; admit.

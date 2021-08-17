@@ -13,6 +13,9 @@ Notation "'HIDDEN'" := (LET_ID _) (only printing).
 Definition EVAR_ID {A} (x : A) : A := x.
 Arguments EVAR_ID : simpl never.
 
+Definition SHELVED_SIDECOND (P : Prop) : Prop := P.
+Arguments SHELVED_SIDECOND : simpl never.
+
 (** * Lemmas used by tactics *)
 Section coq_tactics.
   Context {Σ : gFunctors}.
@@ -534,10 +537,23 @@ Ltac liTrue :=
   | |- envs_entails _ True => notypeclasses refine (tac_true _)
   end.
 
+Ltac li_shelve_sidecond :=
+  idtac;
+  lazymatch goal with
+  | |- ?G => change_no_check (SHELVED_SIDECOND G); shelve
+  end.
+
+Ltac li_unshelve_sidecond :=
+  idtac;
+  lazymatch goal with
+  | |- SHELVED_SIDECOND ?G => change_no_check G
+  | |- _ => shelve
+  end.
+
 Ltac liFalse :=
   lazymatch goal with
-  | |- envs_entails _ False => exfalso; shelve
-  | |- False => shelve
+  | |- envs_entails _ False => exfalso; li_shelve_sidecond
+  | |- False => li_shelve_sidecond
   end.
 
 (* There can be some goals where one should not call injection on an
@@ -651,7 +667,7 @@ Ltac liSideCond :=
   lazymatch goal with
   | |- ?P ∧ _ =>
     lazymatch P with
-    | shelve_hint _ => split; [ unfold shelve_hint; shelve |]
+    | shelve_hint _ => split; [ unfold shelve_hint; li_shelve_sidecond |]
     | _ => first [
       match P with
       | context [via_vm_compute ?f ?a] =>
@@ -671,7 +687,7 @@ Ltac liSideCond :=
      (* We use done instead of fast_done here because solving more
      sideconditions here is a bigger performance win than the overhead
      of done. *)
-    | _ => split; [ first [ done | shelve ] | ]
+    | _ => split; [ first [ done | li_shelve_sidecond ] | ]
     end ] end
   | _ => fail "do_side_cond: unknown goal"
   end.
