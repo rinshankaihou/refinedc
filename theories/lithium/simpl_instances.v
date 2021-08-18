@@ -455,6 +455,18 @@ Proof.
   rewrite list_lookup_insert_Some. naive_solver.
 Qed.
 
+Global Instance simpl_and_lookup_protected {A} (l : list A) (i : nat) v `{!IsProtected v} `{Inhabited A}:
+  SimplAndRel (=) (l !! i) (Some v) (λ T, i < length l ∧ v = l !!! i ∧ T).
+Proof.
+  split.
+  - move => -[? [-> ?]]. split; [|done]. apply: list_lookup_lookup_total_lt. lia.
+  - move => [/list_lookup_alt ?]. naive_solver lia.
+Qed.
+
+Global Instance simpl_and_lookup_lookup_total {A} (l : list A) (i : nat) `{Inhabited A}:
+  SimplBothRel (=) (l !! i) (Some (l !!! i)) (i < length l).
+Proof. rewrite /SimplBothRel list_lookup_alt. naive_solver lia. Qed.
+
 Global Instance simpl_learn_insert_some_len_impl {A} l i (x : A) :
   (* The false is important here as we learn additional information,
   but don't want to get stuck in an endless loop. *)

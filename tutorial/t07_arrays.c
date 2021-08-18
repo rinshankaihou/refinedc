@@ -17,6 +17,15 @@ void permute(int* ar, int i, int j){
 }
 
 [[rc::parameters("ar : loc", "elts : {list Z}", "n : nat")]]
+[[rc::args("ar @ &own<array<i32, {elts `at_type` (int i32)}>>", "n @ int<i32>")]]
+[[rc::requires("{2 < length elts}")]]
+[[rc::ensures("own ar : array<i32, {elts `at_type` (int i32)}>")]]
+void use_permute(int* ar, int n) {
+  permute(ar, 1, 2);
+  permute(ar, 1, 2);
+}
+
+[[rc::parameters("ar : loc", "elts : {list Z}", "n : nat")]]
 [[rc::args("ar @&own<array<i32, {elts `at_type` (int i32)}>>")]]
 [[rc::args("n @ int<i32>")]]
 [[rc::requires("{(n ≤ length elts)%nat}")]]
