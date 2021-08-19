@@ -20,7 +20,7 @@
 -Q _build/default/tutorial/proofs/binary_search_defs refinedc.tutorial.binary_search_defs
 -Q _build/default/tutorial/proofs/t00_intro refinedc.tutorial.t00_intro
 -Q _build/default/tutorial/proofs/t01_basic refinedc.tutorial.t01_basic
--Q _build/default/tutorial/proofs/t02_pointers refinedc.tutorial.t02_pointers
+-Q _build/default/tutorial/proofs/t02_evars refinedc.tutorial.t02_evars
 -Q _build/default/tutorial/proofs/t03_list refinedc.tutorial.t03_list
 -Q _build/default/tutorial/proofs/t04_alloc refinedc.tutorial.t04_alloc
 -Q _build/default/tutorial/proofs/t05_main refinedc.tutorial.t05_main
@@ -53,3 +53,4 @@
 -Q _build/default/examples/proofs/tagged_ptr refinedc.examples.tagged_ptr
 -Q _build/default/examples/proofs/ocaml_runtime refinedc.examples.ocaml_runtime
 -Q _build/default/linux/casestudies/proofs/page_alloc_find_buddy refinedc.linux.casestudies.page_alloc_find_buddy
+-Q _build/default/examples/proofs/pointers refinedc.examples.pointers

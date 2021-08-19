@@ -2,10 +2,6 @@
 #include <stdbool.h>
 #include <refinedc.h>
 
-/**
-   THIS FILE IS WORK IN PROGRESS! PLEASE CONTINUE TO THE NEXT FILE!
- */
-
 [[rc::parameters("p : loc", "n : Z")]]
 [[rc::args("p @ &own<n @ int<i32>>")]]
 [[rc::returns("n @ int<i32>")]]
