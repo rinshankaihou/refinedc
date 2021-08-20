@@ -528,8 +528,8 @@ Ltac liFindInContext :=
     multiple implementations of [FindInContext]. They are tried in the
     order of their priorities.
     See https://coq.zulipchat.com/#narrow/stream/237977-Coq-users/topic/Multi-success.20TC.20resolution.20from.20ltac.3F/near/242759123 *)
-    simple notypeclasses refine (tac_fast_apply ((_ : FindInContext fic key) _).(i2p_proof) _);
-      [ shelve | typeclasses eauto | simpl; repeat liExist false; liFindHypOrTrue key ]
+    once (simple notypeclasses refine (tac_fast_apply ((_ : FindInContext fic key) _).(i2p_proof) _);
+      [ shelve | typeclasses eauto | simpl; repeat liExist false; liFindHypOrTrue key ])
   end.
 
 Ltac liTrue :=
