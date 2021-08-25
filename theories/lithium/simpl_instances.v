@@ -77,6 +77,11 @@ Proof. split; destruct b; naive_solver. Qed.
 Global Instance simpl_Is_true_false b : SimplBoth (¬ Is_true b) (b = false).
 Proof. split; destruct b; naive_solver. Qed.
 
+Global Instance simpl_negb_true b: SimplBothRel (=) (negb b) true (b = false).
+Proof. destruct b; done. Qed.
+Global Instance simpl_negb_false b: SimplBothRel (=) (negb b) false (b = true).
+Proof. destruct b; done. Qed.
+
 Global Instance simpl_min_glb_nat n1 n2 m : SimplBoth (m ≤ n1 `min` n2)%nat (m ≤ n1 ∧ m ≤ n2)%nat.
 Proof. rewrite /SimplBoth. lia. Qed.
 Global Instance simpl_min_glb n1 n2 m : SimplBoth (m ≤ n1 `min` n2) (m ≤ n1 ∧ m ≤ n2).
