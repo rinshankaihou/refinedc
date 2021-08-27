@@ -4,6 +4,10 @@
 // Required for copy_alloc_id.
 #include <stdint.h>
 
+#if defined (__cerb__)
+#include "refinedc_builtins_specs.h"
+#endif
+
 #define rc_unfold(e)                                     \
     _Pragma("GCC diagnostic push")                       \
     _Pragma("GCC diagnostic ignored \"-Wunused-value\"") \

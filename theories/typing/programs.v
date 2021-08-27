@@ -446,6 +446,18 @@ Section proper.
     iIntros "H Hw HP". iApply "H". by iApply "Hw".
   Qed.
 
+  Lemma type_val_expr_mono_strong e T :
+    typed_val_expr e (λ v ty,
+      ∃ (ty' : mtype), subsume (v ◁ᵥ ty) (v ◁ᵥ ty') (T v ty'))%I
+    -∗ typed_val_expr e T.
+  Proof.
+    iIntros "HT". iIntros (Φ) "HΦ".
+    iApply "HT". iIntros (v ty) "Hv HT".
+    iDestruct "HT" as (ty') "HT".
+    iPoseProof ("HT" with "Hv") as "[Hv HT']".
+    iApply ("HΦ" with "Hv HT'").
+  Qed.
+
   (** typed_read_end *)
   Lemma typed_read_end_mono_strong (a : bool) E1 E2 l β ty ot T:
     (if a then ∅ else E2) = (if a then ∅ else E1) →

@@ -1,4 +1,5 @@
 (install
- (files (refinedc.h as include/refinedc.h))
+ (files (refinedc.h as include/refinedc.h)
+        (refinedc_builtins_specs.h as include/refinedc_builtins_specs.h))
  (section lib)
  (package refinedc))

@@ -38,6 +38,9 @@ Notation "'[@{' A '}' x ; y ; .. ; z ]" :=  (@cons A x (@cons A y .. (@cons A z 
 Notation "'[@{' A '}' x ]" := (@cons A x nil) (only parsing) : list_scope.
 Notation "'[@{' A '}' ]" := (@nil A) (only parsing) : list_scope.
 
+(** More automation for modular arithmetics. *)
+Ltac Zify.zify_post_hook ::= Z.to_euclidean_division_equations.
+
 (** * tactics *)
 Lemma rel_to_eq {A} (R : A → A → Prop) `{!Reflexive R} x y:
   x = y → R x y.
@@ -840,10 +843,55 @@ Proof.
   by rewrite Z.mod_pow2_bits_low ?Z.lnot_spec.
 Qed.
 
+Lemma Z_lunot_spec_high bits n k:
+  (0 ≤ bits ≤ k)%Z → Z.testbit (Z_lunot bits n) k = false.
+Proof.
+  move => ?. by rewrite Z.mod_pow2_bits_high.
+Qed.
+
 Lemma Z_lunot_range bits n:
   (0 ≤ bits → 0 ≤ Z_lunot bits n < 2 ^ bits)%Z.
 Proof.
   move => ?.
   apply: Z.mod_pos_bound.
   by apply: Z.pow_pos_nonneg.
+Qed.
+
+(* bits for `- n` *)
+Lemma Z_bits_opp_z n i :
+  (0 ≤ i)%Z →
+  (n `mod` 2 ^ i = 0)%Z →
+  Z.testbit (- n) i = Z.testbit n i.
+Proof.
+  intros.
+  rewrite !Z.testbit_eqb; [|lia..].
+  have ? : (0 < 2 ^ i)%Z by apply Z.pow_pos_nonneg; lia.
+  rewrite Z.div_opp_l_z; lia.
+Qed.
+
+Lemma Z_bits_opp_nz n i :
+  (0 ≤ i)%Z →
+  (n `mod` 2 ^ i ≠ 0)%Z →
+  Z.testbit (-n) i = negb (Z.testbit n i).
+Proof.
+  intros.
+  rewrite !Z.testbit_eqb; [|lia..].
+  rewrite Z.div_opp_l_nz; lia.
+Qed.
+
+Lemma Z_mod_pow2_zero_iff n k :
+  (0 ≤ k)%Z →
+  (n `mod` 2 ^ k = 0)%Z ↔ ∀ i, (0 ≤ i < k)%Z → Z.testbit n i = false.
+Proof.
+  intros.
+  rewrite -Z.land_ones; last lia.
+  split.
+  - move => Hz i ?.
+    have <- : Z.testbit (Z.land n (Z.ones k)) i = false
+      by rewrite Hz Z.bits_0.
+    rewrite Z.land_spec Z.ones_spec_low //.
+    by simplify_bool_eq.
+  - move => Hf.
+    bitblast.
+    by rewrite Hf.
 Qed.

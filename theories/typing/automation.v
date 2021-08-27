@@ -6,9 +6,6 @@ From refinedc.typing Require Import programs function singleton own struct bytes
 Set Default Proof Using "Type".
 
 (** * Registering extensions *)
-(** More automation for modular arithmetics. *)
-Ltac Zify.zify_post_hook ::= Z.to_euclidean_division_equations.
-
 (** We use autorewrite for the moment. *)
 Ltac normalize_tac ::= normalize_autorewrite.
 (* Goal ∀ l i (x : Z), *)
