@@ -12,13 +12,13 @@ Class refinedcG Σ := RefinedCG {
 }.
 
 Instance c_irisG `{!refinedcG Σ} : irisGS c_lang Σ := {
-  iris_invG := refinedcG_invG;
+  iris_invGS := refinedcG_invG;
   state_interp σ κs _ _ := state_ctx σ;
   fork_post _ := True%I;
   num_laters_per_step _ := 0%nat;
   state_interp_mono _ _ _ _ := fupd_intro _ _;
 }.
-Global Opaque iris_invG.
+Global Opaque iris_invGS.
 
 Instance into_val_val v : IntoVal (to_rtexpr (Val v)) v.
 Proof. done. Qed.

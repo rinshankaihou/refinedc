@@ -173,7 +173,7 @@ Section struct.
     iSplit. { rewrite -Hv. by iApply heap_mapsto_loc_in_bounds. }
     iInduction (sl_members sl) as [|[n ly] ms] "IH" forall (tys' l v Hlys Hv Hcount Hly); csimpl in * => //.
     iDestruct "Htys" as "[Hty Htys]".
-    move: Hlys. intros [[?[?[??]]] ?]%Forall2_cons_inv. move: Hly => [??].
+    move: Hlys. intros [[?[?[??]]] ?]%Forall2_cons. move: Hly => [??].
     rewrite -(take_drop (ly_size ly) v).
     rewrite shift_loc_0 heap_mapsto_app take_app_alt ?take_length_le // ?Hv; try by cbn; lia.
     iDestruct "Hl" as "[Hl Hl']". cbn. simplify_eq/=.

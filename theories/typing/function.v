@@ -167,7 +167,7 @@ Section function.
         iExists _. iFrame. by rewrite Forall_forall. }
       destruct atys, lsa'' => //.
       move: Hl => /(Forall2_cons_inv_l _ _)[[??][?[?[??]]]]; simplify_eq. csimpl in *.
-      move: Hly => /(Forall2_cons_inv _ _ _ _)[??].
+      move: Hly => /(Forall2_cons _ _ _ _)[??].
       iDestruct "Hvl" as "[Hvl ?]".
       iDestruct "Ha" as "[Ha ?]".
       iDestruct (ty_ref with "[] Ha Hvl") as "$"; [done..|].
@@ -275,8 +275,8 @@ Section inline_function.
        iDestruct (big_sepL2_cons_inv_r with "Ha") as (???) "[Hmt ?]".
        iDestruct (big_sepL2_cons_inv_l with "Htys") as (???) "[Hv' ?]". simplify_eq/=.
        move: Hl => /(Forall2_cons_inv_l _ _ _ _)[[??][?[?[??]]]]. simplify_eq/=.
-       move: Hly => /(Forall2_cons_inv _ _ _ _)[??].
-       move: Hall => /(Forall2_cons_inv _ _ _ _)[??].
+       move: Hly => /(Forall2_cons _ _ _ _)[??].
+       move: Hall => /(Forall2_cons _ _ _ _)[??].
        iDestruct (ty_ref with "[] Hmt Hv'") as "Hl"; [done..|].
        iSpecialize ("HT" with "Hl").
        iApply ("IH" with "[%] [//] [//] [//] HT [$] [$] [$] [$]").
