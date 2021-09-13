@@ -1009,8 +1009,8 @@ Lemma wps_if Q Ψ it v s1 s2 n:
   WPs (if{IntOp it}: (Val v) then s1 else s2) {{ Q , Ψ }}.
 Proof.
   iIntros (Hn) "Hs". rewrite !stmt_wp_eq. iIntros (?? ->) "?".
-  iApply wp_lift_stmt_step. iIntros (?) "Hσ".
-  iModIntro. iSplit; first by eauto 8 using IfSSI.
+  iApply wp_lift_stmt_step. iIntros (?) "Hσ". iModIntro.
+  iSplit. { iPureIntro. repeat eexists. apply IfSS. rewrite /= Hn //. }
   iIntros (???? Hstep ?) "!> !>". inv_stmt_step. iSplit; first done.
   iFrame "Hσ". case_bool_decide; by iApply "Hs".
 Qed.
@@ -1023,8 +1023,8 @@ Lemma wps_if_ptr Q Ψ v s1 s2 l:
 Proof.
   iIntros (Hl) "Hlib Hs". rewrite !stmt_wp_eq. iIntros (?? ->) "?".
   iApply wp_lift_stmt_step. iIntros (σ1) "Hσ1 !>".
-  iDestruct (wp_if_precond_heap_loc_eq with "Hlib Hσ1") as %?.
-  iSplit; first by eauto 8 using IfSSP.
+  iDestruct (wp_if_precond_heap_loc_eq with "Hlib Hσ1") as %Heq.
+  iSplit. { iPureIntro. repeat eexists. apply IfSS. rewrite /= Hl /= Heq //. }
   iIntros (???? Hstep ?) "!> !>". inv_stmt_step. iSplit; first done.
   iFrame "Hσ1". do 2 case_bool_decide => //; by iApply "Hs".
 Qed.

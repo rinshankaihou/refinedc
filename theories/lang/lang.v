@@ -477,13 +477,9 @@ Inductive stmt_step : stmt → runtime_function → state → list Empty_set →
     v2 `has_layout_val` (ot_layout ot) →
     heap_at l (ot_layout ot) v' start_st σ.(st_heap).(hs_heap) →
     stmt_step (Assign o ot (Val v1) (Val v2) s) rf σ [] (to_rtstmt rf end_stmt) (heap_fmap (heap_upd l end_val end_st) σ) []
-| IfSSI it v s1 s2 rf σ n:
-    val_to_Z v it = Some n →
-    stmt_step (IfS (IntOp it) (Val v) s1 s2) rf σ [] (to_rtstmt rf ((if bool_decide (n ≠ 0) then s1 else s2))) σ []
-| IfSSP v s1 s2 rf σ l b:
-    val_to_loc v = Some l →
-    heap_loc_eq l NULL_loc σ.(st_heap) = Some b →
-    stmt_step (IfS PtrOp (Val v) s1 s2) rf σ [] (to_rtstmt rf ((if b then s2 else s1))) σ []
+| IfSS ot v s1 s2 rf σ b:
+    cast_to_bool ot v σ.(st_heap) = Some b →
+    stmt_step (IfS ot (Val v) s1 s2) rf σ [] (to_rtstmt rf ((if b then s1 else s2))) σ []
 | SwitchS rf σ v n m bs s def it :
     val_to_Z v it = Some n →
     (∀ i : nat, m !! n = Some i → is_Some (bs !! i)) →

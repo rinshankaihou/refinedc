@@ -357,6 +357,15 @@ Proof.
   by rewrite !option_guard_True.
 Qed.
 
+(** ** Converting a value to a boolean (for conditionals). *)
+
+Definition cast_to_bool (ot: op_type) (v: val) (st: heap_state) : option bool :=
+  match ot with
+  | IntOp it => val_to_Z v it ≫= λ n, Some (bool_decide (n ≠ 0))
+  | PtrOp    => val_to_loc v ≫= λ l, heap_loc_eq l NULL_loc st ≫= λ b, Some (negb b)
+  | _        => None
+  end.
+
 (** ** MemCast: Transforming bytes read from memory.
   [mem_cast] is corresponds to the [abst] function in the VIP paper.
 
