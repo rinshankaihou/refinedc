@@ -639,9 +639,10 @@ Lemma wp_if_int Φ it v e1 e2 n:
   (if bool_decide (n ≠ 0) then WP e1 {{ Φ }} else WP e2 {{ Φ }}) -∗
   WP IfE (IntOp it) (Val v) e1 e2 {{ Φ }}.
 Proof.
-  iIntros (?) "HΦ".
+  iIntros (Hn) "HΦ".
   iApply wp_lift_expr_step; auto.
-  iIntros (σ1) "?". iModIntro. iSplit; first by eauto 8 using IfESI.
+  iIntros (σ1) "?". iModIntro.
+  iSplit. { iPureIntro. repeat eexists. apply IfES. rewrite /= Hn //. }
   iIntros (? ? σ2 efs Hst ?) "!> !>". inv_expr_step.
   iSplit => //. iFrame. by case_bool_decide.
 Qed.
@@ -679,11 +680,11 @@ Lemma wp_if_ptr Φ v e1 e2 l:
   (if bool_decide (l ≠ NULL_loc) then WP e1 {{ Φ }} else WP e2 {{ Φ }}) -∗
   WP IfE PtrOp (Val v) e1 e2 {{ Φ }}.
 Proof.
-  iIntros (?) "Hlib HΦ".
+  iIntros (Hl) "Hlib HΦ".
   iApply wp_lift_expr_step; auto.
   iIntros (σ1) "Hσ1". iModIntro.
-  iDestruct (wp_if_precond_heap_loc_eq with "Hlib Hσ1") as %?.
-  iSplit; first by eauto 8 using IfESP.
+  iDestruct (wp_if_precond_heap_loc_eq with "Hlib Hσ1") as %Heq.
+  iSplit. { iPureIntro. repeat eexists. apply IfES. rewrite /= Hl /= Heq //. }
   iIntros (? ? σ2 efs Hst ?) "!> !>". inv_expr_step.
   iSplit => //. iFrame. by repeat case_bool_decide.
 Qed.

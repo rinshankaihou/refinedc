@@ -456,13 +456,9 @@ comparing pointers? (see lambda rust) *)
     val_to_loc v2 = Some l →
     valid_ptr (l.1, a) σ.(st_heap) →
     expr_step (CopyAllocId (IntOp it) (Val v1) (Val v2)) σ [] (Val (val_of_loc (l.1, a))) σ []
-| IfESI v it e1 e2 n σ:
-    val_to_Z v it = Some n →
-    expr_step (IfE (IntOp it) (Val v) e1 e2) σ [] (if bool_decide (n ≠ 0) then e1 else e2)  σ []
-| IfESP v e1 e2 l σ b:
-    val_to_loc v = Some l →
-    heap_loc_eq l NULL_loc σ.(st_heap) = Some b →
-    expr_step (IfE PtrOp (Val v) e1 e2) σ [] (if b then e2 else e1)  σ []
+| IfES v ot e1 e2 b σ:
+    cast_to_bool ot v σ.(st_heap) = Some b →
+    expr_step (IfE ot (Val v) e1 e2) σ [] (if b then e1 else e2) σ []
 (* no rule for StuckE *)
 .
 
