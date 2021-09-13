@@ -55,3 +55,4 @@
 -Q _build/default/linux/casestudies/proofs/page_alloc_find_buddy refinedc.linux.casestudies.page_alloc_find_buddy
 -Q _build/default/examples/proofs/pointers refinedc.examples.pointers
 -Q _build/default/linux/casestudies/proofs/pgtable refinedc.linux.casestudies.pgtable
+-Q _build/default/tutorial/proofs/lithium refinedc.tutorial.lithium
