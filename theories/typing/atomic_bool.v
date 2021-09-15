@@ -1,5 +1,5 @@
 From refinedc.typing Require Export type.
-From refinedc.typing Require Import programs int.
+From refinedc.typing Require Import programs boolean int.
 Set Default Proof Using "Type".
 
 Definition atomic_boolN : namespace := nroot.@"atomic_boolN".
@@ -52,7 +52,7 @@ Section atomic_bool.
       iInv "Hl" as "(%b&>Hb&?)" "Hclose".
       iApply fupd_mask_intro; [set_solver|]. iIntros "_".
       rewrite /ty_own/=.
-      iDestruct "Hb" as "(%v&%&%&?)". iExists _, _. iFrame. iPureIntro.
+      iDestruct "Hb" as "(%v&%n&%&%&%&?)". iExists _, _. iFrame. iPureIntro.
       erewrite val_to_Z_length; [|done]. lia.
   Qed.
 
@@ -166,34 +166,35 @@ Section programs.
     destruct β.
     - iDestruct "Hl" as (b) "[Hb Hif]".
       destruct (decide (b = bexp)); subst.
-      + iApply (wp_cas_suc_bool with "Hb Hlexp") => //.
+      + iApply (wp_cas_suc_boolean with "Hb Hlexp") => //.
         iIntros "!# Hb Hexp".
         iDestruct "Hsub" as "[Hsub _]". iDestruct ("Hsub" with "Hif") as "[Hif HT]".
-        iApply "HΦ". 2: iApply ("HT" with "[Hb Hif] Hexp"). done.
-        iExists bnew. by iFrame.
-      + iApply (wp_cas_fail_bool with "Hb Hlexp") => //.
-        iIntros "!# Hb Hexp".
-        iDestruct "Hsub" as "[_ HT]".
-        iApply "HΦ". 2: iApply ("HT" with "[Hb Hif]"). done.
-        * iExists b. iFrame.
-        * by destruct b, bexp.
+        iApply "HΦ"; last first.
+        * iApply ("HT" with "[Hb Hif] Hexp"). iExists bnew. by iFrame.
+        * by iExists _.
+      + iApply (wp_cas_fail_boolean with "Hb Hlexp") => //.
+        iIntros "!# Hb Hexp". iDestruct "Hsub" as "[_ HT]".
+        iApply "HΦ"; last first.
+        * iApply ("HT" with "[Hb Hif]"). { iExists _. by iFrame. } by destruct b, bexp.
+        * by iExists _.
     - iDestruct "Hl" as (?) "#Hinv".
       iInv "Hinv" as "Hb".
       iDestruct "Hb" as (b) "[>Hmt Hif]".
       destruct (decide (b = bexp)); subst.
-      + iApply (wp_cas_suc_bool with "Hmt Hlexp") => //.
+      + iApply (wp_cas_suc_boolean with "Hmt Hlexp") => //.
         iIntros "!# Hb Hexp".
         iDestruct "Hsub" as "[Hsub _]". iDestruct ("Hsub" with "Hif") as "[Hif HT]".
         iModIntro. iSplitL "Hb Hif". { iExists bnew. iFrame. }
-        iApply "HΦ". 2: iApply ("HT" with "[] Hexp"). done.
-        by iSplit.
-      + iApply (wp_cas_fail_bool with "Hmt Hlexp") => //.
+        iApply "HΦ"; last first.
+        * iApply ("HT" with "[] Hexp"). by iSplit.
+        * by iExists _.
+      + iApply (wp_cas_fail_boolean with "Hmt Hlexp") => //.
         iIntros "!# Hb Hexp".
         iDestruct "Hsub" as "[_ HT]".
         iModIntro. iSplitL "Hb Hif". { by iExists b; iFrame; rewrite /i2v Hvnew. }
-        iApply "HΦ". 2: iApply ("HT" with "[]"). done.
-        * by iSplit.
-        * by destruct b, bexp.
+        iApply "HΦ"; last first.
+        * iApply ("HT" with "[]"); first by iSplit. by destruct b, bexp.
+        * by iExists _.
   Qed.
   Global Instance type_cas_atomic_bool_inst (l : loc) β it PT PF (lexp : loc) Pexp vnew Pnew:
     TypedCas (IntOp it) l (l ◁ₗ{β} (atomic_bool it PT PF))%I lexp Pexp vnew Pnew :=

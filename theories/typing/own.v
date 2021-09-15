@@ -1,5 +1,5 @@
 From refinedc.typing Require Export type.
-From refinedc.typing Require Import programs optional int singleton.
+From refinedc.typing Require Import programs optional boolean int singleton.
 Set Default Proof Using "Type".
 
 Section own.
@@ -294,7 +294,8 @@ Section own.
     all: iSplit; [ iApply alloc_alive_loc_mono;[eassumption|]; iDestruct "HT" as "[[$ _] _]"| ].
     all: iModIntro; iDestruct "HT" as "[_ HT]".
     all: iApply ("HΦ" with "[] HT") => //.
-    all: iPureIntro; by apply: val_to_of_Z.
+    all: iExists _; iSplit; iPureIntro; [apply: val_to_of_Z | done].
+    all: done.
   Qed.
   Global Program Instance type_lt_ptr_ptr_inst (l1 l2 : loc) β1 β2 ty1 ty2:
     TypedBinOp l1 (l1 ◁ₗ{β1} ty1) l2 (l2 ◁ₗ{β2} ty2) (LtOp i32) PtrOp PtrOp :=
@@ -547,7 +548,7 @@ Section null.
     iApply (wp_binop_det_pure (i2v (Z_of_bool (if op is EqOp i32 then true else false)) i32)). {
       move => ??. rewrite eval_bin_op_ptr_cmp // ?heap_loc_eq_NULL_NULL //= Hz. naive_solver.
     }
-    iApply "HΦ" => //. by destruct op.
+    iApply "HΦ" => //. iExists _. iSplit; iPureIntro => //. by destruct op.
   Qed.
   Global Instance type_binop_null_null_inst v1 v2 op:
     TypedBinOp v1 (v1 ◁ᵥ null) v2 (v2 ◁ᵥ null) op PtrOp PtrOp :=
@@ -569,7 +570,7 @@ Section null.
     iSplit.
     { iPureIntro => ?. rewrite eval_bin_op_ptr_cmp //. case_bool_decide => //; simplify_eq. naive_solver. }
     iModIntro. iMod "HE". iModIntro. iFrame.
-    iApply "HΦ". 2: by iApply "HT". by destruct op.
+    iApply "HΦ". 2: by iApply "HT". iExists _. iSplit; iPureIntro => //. by destruct op.
   Qed.
   Global Instance type_binop_ptr_null_inst v op (l : loc) ty β n `{!LocInBounds ty β n}:
     TypedBinOp l (l ◁ₗ{β} ty) v (v ◁ᵥ null) op PtrOp PtrOp :=
@@ -592,7 +593,7 @@ Section null.
     iSplit.
     { iPureIntro => ?. rewrite eval_bin_op_ptr_cmp //. case_bool_decide => //; simplify_eq. naive_solver. }
     iModIntro. iMod "HE". iModIntro. iFrame.
-    iApply "HΦ". 2: by iApply "HT". by destruct op.
+    iApply "HΦ". 2: by iApply "HT". iExists _. iSplit; iPureIntro => //; by destruct op.
   Qed.
   Global Instance type_binop_null_ptr_inst v op (l : loc) ty β n `{!LocInBounds ty β n}:
     TypedBinOp v (v ◁ᵥ null) l (l ◁ₗ{β} ty) op PtrOp PtrOp :=

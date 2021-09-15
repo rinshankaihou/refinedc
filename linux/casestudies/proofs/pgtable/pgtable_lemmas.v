@@ -145,10 +145,6 @@ Ltac simpl_bool_hyp :=
     assert (b = false) by apply negb_true_iff; clear H
   | [ H : negb ?b = false |- _ ] =>
     assert (b = true) by apply negb_false_iff; clear H
-  | [ H : 0 = Z_of_bool ?b |- _ ] =>
-    assert (b = false) by (by apply Z_of_bool_false); clear H
-  | [ H : 0 ≠ Z_of_bool ?b |- _ ] =>
-    assert (b = true) by (by apply Z_of_bool_true); clear H
   | [ H : bf_cons ?a 1 (Z_of_bool ?b) bf_nil = 0 |- _ ] =>
     assert (b = false) by (by apply (bf_cons_bool_singleton_false_iff a b)); clear H
   | [ H : bf_cons ?a 1 (Z_of_bool ?b) bf_nil ≠ 0 |- _ ] =>

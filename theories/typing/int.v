@@ -1,5 +1,5 @@
 From refinedc.typing Require Export type.
-From refinedc.typing Require Import programs.
+From refinedc.typing Require Import programs boolean.
 Set Default Proof Using "Type".
 
 Section int.
@@ -81,40 +81,6 @@ End int.
 (* Typeclasses Opaque int. *)
 Notation "int< it >" := (int it) (only printing, format "'int<' it '>'") : printing_sugar.
 
-(* TODO: move this to an extra file? *)
-Section boolean.
-  Context `{!typeG Σ}.
-
-  (* Separate definition such that we can make it typeclasses opaque later. *)
-  Program Definition boolean_inner_type (it : int_type) (b : bool) : type :=
-    (Z_of_bool b) @ int it.
-
-  Program Definition boolean (it : int_type) : rtype := {|
-    rty_type := bool;
-    rty := boolean_inner_type it;
-  |}.
-
-  Global Program Instance rmovable_boolean it : RMovable (boolean it) := {|
-    rmovable b := (rmovable (int it)) (Z_of_bool b);
-  |}.
-
-  Global Program Instance boolean_copyable x it : Copyable (x @ boolean it).
-  Next Obligation. rewrite/with_refinement/=/boolean_inner_type => ???????. by apply: copy_shr_acc. Qed.
-
-  Lemma boolean_own_val_eq v b it:
-    (v ◁ᵥ b @ boolean it)%I ≡ ⌜val_to_Z v it = Some (Z_of_bool b)⌝%I.
-  Proof. done. Qed.
-
-  Global Instance alloc_alive_bool b it β: AllocAlive (b @ boolean it) β True.
-  Proof. apply _. Qed.
-
-  Global Instance boolean_timeless l b it:
-    Timeless (l ◁ₗ b @ boolean it)%I.
-  Proof. apply _. Qed.
-
-End boolean.
-Notation "boolean< it >" := (boolean it) (only printing, format "'boolean<' it '>'") : printing_sugar.
-
 Section programs.
   Context `{!typeG Σ}.
 
@@ -152,10 +118,10 @@ Section programs.
     1-2: iPureIntro; by apply: val_to_Z_in_range.
     have [v Hv]:= val_of_Z_bool_is_Some None i32 b.
     iApply (wp_binop_det_pure (i2v (Z_of_bool b) i32)).
-    { rewrite /i2v Hv /=.
-      split; last (move => ->; by econstructor).
+    { rewrite /i2v Hv /=. split; last (move => ->; by econstructor).
       destruct op => //; inversion 1; by simplify_eq. }
-    iIntros "!>". iApply "HΦ" => //. by destruct b.
+    iIntros "!>". iApply "HΦ" => //.
+    iExists (Z_of_bool b). destruct b; eauto.
   Qed.
 
   Global Program Instance type_eq_int_int_inst it v1 n1 v2 n2:
@@ -461,137 +427,52 @@ Section programs.
     iIntros "!# Hl1 Hl2". iApply ("HΦ" with "[Hl1] [Hl2]"); iExists _; by iFrame.
   Qed.
 
-  (*** bool *)
-  Lemma type_val_bool' b:
-    ⊢ (val_of_bool b) ◁ᵥ (b @ boolean bool_it).
-  Proof. iIntros. by destruct b. Qed.
-  Lemma type_val_bool b T:
-    (T (t2mt (b @ boolean bool_it))) -∗ typed_value (val_of_bool b) T.
-  Proof. iIntros "HT". iExists _. iFrame. iApply type_val_bool'. Qed.
-  Global Instance type_val_bool_inst b : TypedValue (val_of_bool b) :=
-    λ T, i2p (type_val_bool b T).
-
-  Inductive destruct_hint_if_bool :=
-  | DestructHintIfBool (b : bool).
-
-  Lemma type_relop_bool_bool it v1 b1 v2 b2 T b op:
-    match op with
-    | EqOp rit => Some (eqb b1 b2, rit)
-    | NeOp rit => Some (negb (eqb b1 b2), rit)
-    | _ => None
-    end = Some (b, i32) →
-    (T (i2v (Z_of_bool b) i32) (t2mt (b @ boolean i32))) -∗
-      typed_bin_op v1 (v1 ◁ᵥ b1 @ boolean it) v2 (v2 ◁ᵥ b2 @ boolean it) op (IntOp it) (IntOp it) T.
-  Proof.
-    iIntros "%Hop HT %Hv1 %Hv2 %Φ HΦ".
-    have [v Hv]:= val_of_Z_bool_is_Some None i32 b.
-    iApply (wp_binop_det_pure (i2v (Z_of_bool b) i32)).
-    { rewrite /i2v Hv /=.
-      destruct op, b1, b2; simplify_eq.
-      all: split; [ inversion 1; simplify_eq/=; done | move => -> ]; simplify_eq/=.
-      all: econstructor => //; by case_bool_decide. }
-    iApply "HΦ"; last done. iPureIntro. by destruct b.
-  Qed.
-
-  Global Program Instance type_eq_bool_bool_inst it v1 b1 v2 b2:
-    TypedBinOpVal v1 (b1 @ (boolean it))%I v2 (b2 @ (boolean it))%I (EqOp i32) (IntOp it) (IntOp it) := λ T, i2p (type_relop_bool_bool it v1 b1 v2 b2 T (eqb b1 b2) _ _).
-  Next Obligation. done. Qed.
-  Global Program Instance type_ne_bool_bool_inst it v1 b1 v2 b2:
-    TypedBinOpVal v1 (b1 @ (boolean it))%I v2 (b2 @ (boolean it))%I (NeOp i32) (IntOp it) (IntOp it) := λ T, i2p (type_relop_bool_bool it v1 b1 v2 b2 T (negb (eqb b1 b2)) _ _).
-  Next Obligation. done. Qed.
-
-  Lemma type_if_bool it (b : bool) v T1 T2 :
-    destruct_hint (DHintDestruct _ b) (DestructHintIfBool b)
-    (if b then T1 else T2) -∗
-    typed_if (IntOp it) v (v ◁ᵥ b @ boolean it) T1 T2.
-  Proof.
-    unfold destruct_hint. iIntros "Hs %Hb".
-    iExists _. iSplit; first done. by destruct b.
-  Qed.
-  Global Instance type_if_bool_inst it b v : TypedIf (IntOp it) v (v ◁ᵥ b @ boolean it)%I :=
-    λ T1 T2, i2p (type_if_bool it b v T1 T2).
-
-  Lemma type_assert_bool it (b : bool) s Q fn ls R v :
-    (⌜b⌝ ∗ typed_stmt s fn ls R Q) -∗
-    typed_assert (IntOp it) v (v ◁ᵥ b @ boolean it) s fn ls R Q.
-  Proof.
-    iIntros "[% Hs] %Hb". iExists _. iFrame "Hs".
-    iSplit; first done. by destruct b.
-  Qed.
-  Global Instance type_assert_bool_inst it b v : TypedAssert (IntOp it) v (v ◁ᵥ b @ boolean it)%I :=
-    λ s fn ls R Q, i2p (type_assert_bool _ _ _ _ _ _ _ _).
-
-  Lemma type_cast_bool b it1 it2 v T:
-    (∀ v, T v (t2mt (b @ boolean it2))) -∗
-    typed_un_op v (v ◁ᵥ b @ boolean it1)%I (CastOp (IntOp it2)) (IntOp it1) T.
-  Proof.
-    iIntros "HT". iApply type_cast_int.
-    iIntros "_". iSplit. { iPureIntro. apply: Z_of_bool_elem_of_int_type. }
-    done.
-  Qed.
-  Global Instance type_cast_bool_inst b it1 it2 v:
-    TypedUnOpVal v (b @ boolean it1)%I (CastOp (IntOp it2)) (IntOp it1) :=
-    λ T, i2p (type_cast_bool b it1 it2 v T).
-
-  (* TODO: replace this with a typed_cas once it is refactored to take E as an argument. *)
-  Lemma wp_cas_suc_bool it b1 b2 bd l1 l2 vd Φ E:
-    (bytes_per_int it ≤ bytes_per_addr)%nat →
-    b1 = b2 →
-    l1 ◁ₗ b1 @ boolean it -∗ l2 ◁ₗ b2 @ boolean it -∗ vd ◁ᵥ bd @ boolean it -∗
-    ▷ (l1 ◁ₗ bd @ boolean it -∗ l2 ◁ₗ b2 @ boolean it -∗ Φ (val_of_bool true)) -∗
-    wp NotStuck E (CAS (IntOp it) (Val l1) (Val l2) (Val vd)) Φ.
-  Proof. iIntros (? ->) "Hl1 Hl2 Hv HΦ/=". iApply (wp_cas_suc_int with "Hl1 Hl2 Hv"); done. Qed.
-
-  Lemma wp_cas_fail_bool it b1 b2 bd l1 l2 vd Φ E:
-    (bytes_per_int it ≤ bytes_per_addr)%nat →
-    b1 ≠ b2 →
-    l1 ◁ₗ b1 @ boolean it -∗ l2 ◁ₗ b2 @ boolean it -∗ vd ◁ᵥ bd @ boolean it -∗
-    ▷ (l1 ◁ₗ b1 @ boolean it -∗ l2 ◁ₗ b1 @ boolean it -∗ Φ (val_of_bool false)) -∗
-    wp NotStuck E (CAS (IntOp it) (Val l1) (Val l2) (Val vd)) Φ.
-  Proof.
-    iIntros (? ?) "Hl1 Hl2 Hv HΦ/=". iApply (wp_cas_fail_int with "Hl1 Hl2 Hv"); try done.
-    by destruct b1, b2.
-  Qed.
-
-
   (*** int <-> bool *)
-  Lemma subsume_int_bool_place l β n b it T:
+  Lemma subsume_int_boolean_place l β n b it T:
     ⌜n = Z_of_bool b⌝ ∗ T -∗
     subsume (l ◁ₗ{β} n @ int it) (l ◁ₗ{β} b @ boolean it) T.
-  Proof. iIntros "[-> $] Hint". iDestruct "Hint" as (x Hx) "?". iExists _. by iFrame. Qed.
-  Global Instance subsume_int_bool_place_inst l β n b it:
+  Proof.
+    iIntros "[-> $] Hint". iDestruct "Hint" as (???) "?".
+    iExists _, _. iFrame. iSplit; first done. iSplit; last done. by destruct b.
+  Qed.
+  Global Instance subsume_int_boolean_place_inst l β n b it:
     SubsumePlace l β (n @ int it) (b @ boolean it) :=
-    λ T, i2p (subsume_int_bool_place l β n b it T).
-
-  Lemma subsume_int_bool_val v n b it T:
+    λ T, i2p (subsume_int_boolean_place l β n b it T).
+ 
+  Lemma subsume_int_boolean_val v n b it T:
     ⌜n = Z_of_bool b⌝ ∗ T -∗
     subsume (v ◁ᵥ n @ int it) (v ◁ᵥ b @ boolean it) T.
-  Proof. by iIntros "[-> $] %". Qed.
-  Global Instance subsume_int_bool_val_inst v n b it:
+  Proof. iIntros "[-> $] %". iExists (Z_of_bool b). iSplit; first done. by destruct b. Qed.
+  Global Instance subsume_int_boolean_val_inst v n b it:
     SubsumeVal v (n @ int it) (b @ boolean it) :=
-    λ T, i2p (subsume_int_bool_val v n b it T).
+    λ T, i2p (subsume_int_boolean_val v n b it T).
 
-
-  Lemma type_binop_bool_int it1 it2 it3 it4 v1 b1 v2 n2 T op:
+  Lemma type_binop_boolean_int it1 it2 it3 it4 v1 b1 v2 n2 T op:
     typed_bin_op v1 (v1 ◁ᵥ (Z_of_bool b1) @ int it1) v2 (v2 ◁ᵥ n2 @ int it2) op (IntOp it3) (IntOp it4) T -∗
     typed_bin_op v1 (v1 ◁ᵥ b1 @ boolean it1) v2 (v2 ◁ᵥ n2 @ int it2) op (IntOp it3) (IntOp it4) T.
-  Proof. iIntros "HT". iApply "HT". Qed.
-  Global Instance type_binop_bool_int_inst it1 it2 it3 it4 v1 b1 v2 n2 op:
+  Proof.
+    iIntros "HT H1 H2". iApply ("HT" with "[H1] H2").
+    iDestruct "H1" as "(%&%H1&%H2)". iPureIntro.
+    move: H1 H2 => /= -> ->. done.
+  Qed.
+  Global Instance type_binop_boolean_int_inst it1 it2 it3 it4 v1 b1 v2 n2 op:
     TypedBinOpVal v1 (b1 @ boolean it1)%I v2 (n2 @ int it2)%I op (IntOp it3) (IntOp it4) :=
-    λ T, i2p (type_binop_bool_int it1 it2 it3 it4 v1 b1 v2 n2 T op).
+    λ T, i2p (type_binop_boolean_int it1 it2 it3 it4 v1 b1 v2 n2 T op).
 
-  Lemma type_binop_int_bool it1 it2 it3 it4 v1 b1 v2 n2 T op:
+  Lemma type_binop_int_boolean it1 it2 it3 it4 v1 b1 v2 n2 T op:
     typed_bin_op v1 (v1 ◁ᵥ n2 @ int it2) v2 (v2 ◁ᵥ (Z_of_bool b1) @ int it1) op (IntOp it3) (IntOp it4) T -∗
     typed_bin_op v1 (v1 ◁ᵥ n2 @ int it2) v2 (v2 ◁ᵥ b1 @ boolean it1) op (IntOp it3) (IntOp it4) T.
-  Proof. iIntros "HT". iApply "HT". Qed.
-  Global Instance type_binop_int_bool_inst it1 it2 it3 it4 v1 b1 v2 n2 op:
+  Proof.
+    iIntros "HT H1 H2". iApply ("HT" with "H1 [H2]").
+    iDestruct "H2" as "(%&%H1&%H2)". iPureIntro.
+    move: H1 H2 => /= -> ->. done.
+  Qed.
+  Global Instance type_binop_int_boolean_inst it1 it2 it3 it4 v1 b1 v2 n2 op:
     TypedBinOpVal v1 (n2 @ int it2)%I v2 (b1 @ boolean it1)%I op (IntOp it3) (IntOp it4) :=
-    λ T, i2p (type_binop_int_bool it1 it2 it3 it4 v1 b1 v2 n2 T op).
-
+    λ T, i2p (type_binop_int_boolean it1 it2 it3 it4 v1 b1 v2 n2 T op).
 End programs.
-Typeclasses Opaque int_inner_type boolean_inner_type.
+Typeclasses Opaque int_inner_type.
 
-Notation "'if' p " := (DestructHintIfBool p) (at level 100, only printing).
 Notation "'if' p ≠ 0 " := (DestructHintIfInt p) (at level 100, only printing).
 Notation "'case' n " := (DestructHintSwitchIntCase n) (at level 100, only printing).
 Notation "'default'" := (DestructHintSwitchIntDefault) (at level 100, only printing).

@@ -1,5 +1,5 @@
 From refinedc.typing Require Export type.
-From refinedc.typing Require Import programs int.
+From refinedc.typing Require Import programs boolean int.
 Set Default Proof Using "Type".
 
 (** We need to use this unbundled approach to ensure that ROptionable
@@ -179,7 +179,7 @@ Section optional.
       }
       iDestruct "HT" as "[_ [HT _]]". iModIntro. iMod "HE". iModIntro. iFrame.
       iDestruct ("HT" with "[//] Hv1") as "HT".
-      by iApply ("HΦ" with "[] HT").
+      iApply ("HΦ" with "[] HT"). by iExists _.
     - iApply (wp_binop_det (i2v (Z_of_bool true) i32)).
       iIntros (σ) "Hctx". iApply fupd_mask_intro; [set_solver|]. iIntros "HE".
       iSplit. {
@@ -191,7 +191,7 @@ Section optional.
       }
       iDestruct "HT" as "[_ [_ HT]]". iModIntro. iMod "HE". iModIntro. iFrame.
       iDestruct ("HT" with "[//] Hv1") as "HT".
-      by iApply ("HΦ" with "[] HT").
+      iApply ("HΦ" with "[] HT"). by iExists _.
   Qed.
   Global Instance type_eq_optional_refined_inst v1 v2 ty optty `{!Movable ty} `{!Movable optty} ot1 ot2 `{!Optionable ty optty ot1 ot2} b :
     TypedBinOp v1 (v1 ◁ᵥ b @ (optional ty optty))%I v2 (v2 ◁ᵥ optty) (EqOp i32) ot1 ot2 :=
@@ -212,7 +212,7 @@ Section optional.
       iPureIntro. by split => ?; simpl in *; simplify_eq.
     }
     iDestruct ("HT" with "Hv1") as "HT". iModIntro. iMod "HE". iModIntro. iFrame.
-    iApply "HΦ" => //. iPureIntro. by eapply val_to_of_Z.
+    iApply "HΦ" => //. iExists _. iSplit; iPureIntro; first by eapply val_to_of_Z. done.
   Qed.
 
   Global Instance type_eq_optional_neq_inst v1 v2 ty optty ot1 ot2 `{!Movable ty} `{!Movable optty} `{!Optionable ty optty ot1 ot2} :
@@ -238,7 +238,7 @@ Section optional.
       }
       iDestruct "HT" as "[_ [HT _]]". iModIntro. iMod "HE". iModIntro. iFrame.
       iDestruct ("HT" with "[//] Hv1") as "HT".
-      by iApply ("HΦ" with "[] HT").
+      iApply ("HΦ" with "[] HT"). by iExists _.
     - iApply (wp_binop_det (i2v (Z_of_bool false) i32)).
       iIntros (σ) "Hctx". iApply fupd_mask_intro; [set_solver|]. iIntros "HE".
       iSplit. {
@@ -250,7 +250,7 @@ Section optional.
       }
       iDestruct "HT" as "[_ [_ HT]]". iModIntro. iMod "HE". iModIntro. iFrame.
       iDestruct ("HT" with "[//] Hv1") as "HT".
-      by iApply ("HΦ" with "[] HT").
+      iApply ("HΦ" with "[] HT"). by iExists _.
   Qed.
   Global Instance type_neq_optional_inst v1 v2 ty optty ot1 ot2 `{!Movable ty} `{!Movable optty} `{!Optionable ty optty ot1 ot2} b :
     TypedBinOp v1 (v1 ◁ᵥ b @ (optional ty optty))%I v2 (v2 ◁ᵥ optty) (NeOp i32) ot1 ot2 :=
@@ -394,7 +394,7 @@ Section optionalO.
         iFrame. iFrame. iPureIntro. by split => ?; simpl in *; simplify_eq.
       }
       iDestruct ("HT" with "Hv1") as "HT". iModIntro. iMod "HE". iModIntro. iFrame.
-      iApply "HΦ" => //. iPureIntro. by apply: val_to_of_Z.
+      iApply "HΦ" => //. iExists _. iSplit; iPureIntro; first by apply: val_to_of_Z. done.
     - have [|v' Hv] := val_of_Z_is_Some None i32 (Z_of_bool true) => //.
       iApply (wp_binop_det v').
       iIntros (σ) "Hctx". iApply fupd_mask_intro; [set_solver|]. iIntros "HE".
@@ -404,7 +404,7 @@ Section optionalO.
         iFrame. iFrame. iPureIntro. by split => ?; simpl in *; simplify_eq.
       }
       iDestruct ("HT" with "Hv1") as "HT". iModIntro. iMod "HE". iModIntro. iFrame.
-      iApply "HΦ" => //. iPureIntro. by apply: val_to_of_Z.
+      iApply "HΦ" => //. iExists _. iSplit; iPureIntro; first by apply: val_to_of_Z. done.
   Qed.
 
   Global Instance type_eq_optionalO_inst A v1 v2 (ty : A → type) optty ot1 ot2 `{!∀ x, Movable (ty x)} `{!Movable optty} `{!∀ x, Optionable (ty x) optty ot1 ot2} b `{!Inhabited A} :
@@ -428,7 +428,7 @@ Section optionalO.
         iFrame. iFrame. iPureIntro. by split => ?; simpl in *; simplify_eq.
       }
       iDestruct ("HT" with "Hv1") as "HT". iModIntro. iMod "HE". iModIntro. iFrame.
-      iApply "HΦ" => //. iPureIntro. by apply: val_to_of_Z.
+      iApply "HΦ" => //. iExists _. iSplit; iPureIntro; first by apply: val_to_of_Z. done.
     - have [|v' Hv] := val_of_Z_is_Some None i32 (Z_of_bool false) => //.
       iApply (wp_binop_det v').
       iIntros (σ) "Hctx". iApply fupd_mask_intro; [set_solver|]. iIntros "HE".
@@ -438,7 +438,7 @@ Section optionalO.
         iFrame. iFrame. iPureIntro. by split => ?; simpl in *; simplify_eq.
       }
       iDestruct ("HT" with "Hv1") as "HT". iModIntro. iMod "HE". iModIntro. iFrame.
-      iApply "HΦ" => //. iPureIntro. by apply: val_to_of_Z.
+      iApply "HΦ" => //. iExists _. iSplit; iPureIntro; first by apply: val_to_of_Z. done.
   Qed.
   Global Instance type_neq_optionalO_inst A v1 v2 (ty : A → type) optty ot1 ot2 `{!∀ x, Movable (ty x)} `{!Movable optty} `{!∀ x, Optionable (ty x) optty ot1 ot2} b `{!Inhabited A} :
     TypedBinOp v1 (v1 ◁ᵥ b @ optionalO ty optty)%I v2 (v2 ◁ᵥ optty) (NeOp i32) ot1 ot2 :=

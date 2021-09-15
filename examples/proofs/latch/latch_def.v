@@ -12,9 +12,15 @@ Section type.
     l `has_layout_loc` struct_latch →
     l ↦ LATCH_INIT ={E}=∗ l ◁ₗ{Shr} P @ latch.
   Proof.
-    iIntros (? ?) "Hl".
-    iApply ty_share => //. unshelve iApply (@ty_ref  with "[] Hl").
-    { apply _. } { apply: (UntypedOp struct_latch). } { apply: MCNone. } { solve_goal. } { done. }
-    rewrite /ty_own_val/=. repeat iSplit => //. rewrite /ty_own_val/=/ty_own_val/=. iSplit => //. by iExists false.
+    iIntros (? ?) "Hl". iApply ty_share => //.
+    unshelve iApply (@ty_ref  with "[] Hl").
+    { apply _. }
+    { apply: (UntypedOp struct_latch). }
+    { apply: MCNone. }
+    { solve_goal. }
+    { done. }
+    rewrite /ty_own_val/=. repeat iSplit => //.
+    rewrite /ty_own_val /= /ty_own_val /=. iSplit => //.
+    iExists false. iSplit; last done. by iExists _.
   Qed.
 End type.

@@ -1,6 +1,6 @@
 From refinedc.lithium Require Import simpl_classes.
 From refinedc.lang Require Export bitfield.
-From refinedc.typing Require Import programs int.
+From refinedc.typing Require Import programs boolean int.
 From refinedc.typing Require Export type.
 Set Default Proof Using "Type".
 
@@ -256,7 +256,7 @@ Section programs.
     { rewrite (bool_decide_iff _ (bv = 0)) //.
       rewrite Hbv (bool_decide_iff _ (b = false)); last by apply bf_cons_bool_singleton_false_iff.
       by destruct b. }
-    iExists _. by iFrame.
+    iExists _. iFrame. iIntros "(%n&%&%Heq)". move: Heq => /= ?. subst n. done.
   Qed.
   Global Instance type_bitfield_raw_is_false_inst it v1 v2 bv :
     TypedBinOpVal v1 (0 @ int it)%I v2 (bv @ bitfield_raw it)%I (EqOp i32) (IntOp it) (IntOp it) :=
@@ -275,7 +275,7 @@ Section programs.
     { rewrite (bool_decide_iff _ (bv ≠ 0)) //.
       rewrite Hbv (bool_decide_iff _ (b = true)); last by apply bf_cons_bool_singleton_true_iff.
       by destruct b. }
-    iExists _. by iFrame.
+    iExists _. iFrame. iIntros "(%n&%&%Heq)". move: Heq => /= ?. subst n. done.
   Qed.
   Global Instance type_bitfield_raw_is_true_inst it v1 v2 bv :
     TypedBinOpVal v1 (0 @ int it)%I v2 (bv @ bitfield_raw it)%I (NeOp i32) (IntOp it) (IntOp it) :=

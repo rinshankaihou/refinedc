@@ -84,7 +84,7 @@ Section proofs.
     - (* #1 First loop (after the initial run), checking if we got the ticket. *)
       destruct s.
       + repeat liRStep; liShow. iIntros "Hb".
-        repeat liRStep; liShow. 2: { destruct b => //. iFrame. }
+        repeat liRStep; liShow.
         iDestruct select (hyp_spinlock_t_invariant _ _ _) as (owner next) "([%%]&?&?&?&?&?&?)".
         repeat liRStep; liShow.
         liInst Hevar next.
@@ -93,7 +93,7 @@ Section proofs.
         liInst Hevar owner. liInst Hevar0 next.
         repeat liRStep; liShow.
       + repeat liRStep; liShow. iIntros "Hb".
-        repeat liRStep; liShow. 2: { destruct b => //. iFrame. }
+        repeat liRStep; liShow.
         iExists (Shr, tytrue); iSplitR; first by simpl.
         iDestruct select (inv _ _) as "#Hinv".
         iInv "Hinv" as ">Inv".
@@ -129,6 +129,7 @@ Section proofs.
              iDestruct select (p at{_}ₗ _ ◁ᵥ _)%I as "[_ ->]".
              iApply (wp_cas_suc_int with "Hnext Hticket [$]"). { cbv. lia. } done.
              iNext. iIntros "??". iApply ("HΦ" $! _ (t2mt (true @ boolean bool_it))%I) => //.
+             { iExists _. done. }
              repeat liRStep; liShow.
              rewrite /hyp_spinlock_t_invariant.
              repeat liRStep; liShow.
@@ -151,6 +152,7 @@ Section proofs.
              iDestruct select (p at{_}ₗ _ ◁ᵥ _)%I as "[_ ->]".
              iApply (wp_cas_fail_int with "Hnext Hticket [$]"). { cbv. lia. } done.
              iNext. iIntros "??". iApply ("HΦ" $! _ (t2mt (false @ boolean bool_it))%I) => //.
+             { by iExists _. }
              repeat liRStep; liShow.
              rewrite /hyp_spinlock_t_invariant.
              repeat liRStep; liShow.
@@ -188,6 +190,7 @@ Section proofs.
              iDestruct select (p at{_}ₗ _ ◁ᵥ _)%I as "[_ ->]".
              iApply (wp_cas_suc_int with "Hnext Hticket [$]"). { cbv. lia. } done.
              iNext. iIntros "??". iApply ("HΦ" $! _ (t2mt (true @ boolean bool_it))%I) => //.
+             { by iExists _. }
              iRename select (p at{struct_hyp_spinlock}ₗ "next" ◁ₗ _)%I into "Hnext".
              iDestruct "Hrest" as "(Hfrag&Hr1&Hr2&Hcases)".
              iDestruct (split_first_ticket with "Hr2") as "[Hticket Hr2]".
@@ -206,6 +209,7 @@ Section proofs.
              iDestruct select (p at{_}ₗ _ ◁ᵥ _)%I as "[_ ->]".
              iApply (wp_cas_fail_int with "Hnext Hticket [$]"). { cbv. lia. } done.
              iNext. iIntros "??". iApply ("HΦ" $! _ (t2mt (false @ boolean bool_it))%I) => //.
+             { by iExists _. }
              iRename select (p at{struct_hyp_spinlock}ₗ _ ◁ₗ _)%I into "Hnext".
              iMod ("Hclose_inv" with "[Howner Hnext Hrest]") as "_".
              { iNext. iExists owner, next. iFrame "Howner". iFrame "Hnext". iFrame "Hrest". done. }
