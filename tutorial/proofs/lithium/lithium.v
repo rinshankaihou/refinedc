@@ -17,7 +17,7 @@ Section lithium.
 
         Atom       A ::= l ◁ₗ ty | v ◁ᵥ ty | ...
         Basic goal F ::= subsume A1 A2 G | ...
-        Goal       G ::= True | H ∗ G | H -∗ G | G1 ∧ G2 | ∀ x, G(x) | ∃ x, G(x)
+        Goal       G ::= True | H ∗ G | H -∗ G | G1 ∧ G2 | ∀ x, G(x) | ∃ x, G(x) | F
         Left goal  H ::= ⌜φ⌝ | A | H ∗ H | ∃ x, H(x)
 
      We explain the different constructs of this grammar on the following example:

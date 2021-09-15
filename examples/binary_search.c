@@ -9,10 +9,10 @@ typedef bool (*comp_fn)(void *, void *);
 
 [[rc::parameters("R : {Z → Z → Prop}", "ls : {list Z}", "x : Z", "p : loc", "ty : {Z → type}", "px : loc")]]
 [[rc::args("function_ptr<{fn(∀ (x, y, px, py) : (Z * Z * loc * loc); px @ &own (ty x), py @ &own (ty y); True) → ∃ (b) : (bool), b @ boolean bool_it; px ◁ₗ ty x ∗ py ◁ₗ ty y ∗ ⌜b ↔ R x y⌝}>",
-      "p @ &own<array<void*, {(fun x => &own (ty x) : type) <$> ls}>>", "{length ls} @ int<i32>", "px @ &own<{ty x}>")]]
+      "p @ &own<array<void*, {(fun x => &own (ty x) : type) <$> ls}>>", "{length ls} @ int<size_t>", "px @ &own<{ty x}>")]]
 [[rc::requires("{StronglySorted R ls}", "{Transitive R}")]]
 [[rc::exists("n : nat")]]
-[[rc::returns("n @ int<i32>")]]
+[[rc::returns("n @ int<size_t>")]]
 [[rc::ensures("{∀ i y, (i < n)%nat → ls !! i = Some y → R y x}",
               "{∀ i y, (n ≤ i)%nat → ls !! i = Some y → ¬ R y x}")]]
 [[rc::ensures("own p : array<void*, {(fun x => &own (ty x) : type) <$> ls}>")]]
@@ -20,15 +20,15 @@ typedef bool (*comp_fn)(void *, void *);
 [[rc::tactics("all: try by [revert select (∀ i j, _ → _ → ¬ R _ _); apply; [| done];solve_goal].")]]
 [[rc::tactics("all: try by apply: binary_search_cond_1; [solve_goal|..]; solve_goal.")]]
 [[rc::tactics("all: try by apply: binary_search_cond_2; [solve_goal|..]; solve_goal.")]]
-int binary_search(comp_fn comp, void **xs, int n, void *x) {
-  int l = 0, r = n;
+size_t binary_search(comp_fn comp, void **xs, size_t n, void *x) {
+  size_t l = 0, r = n;
   [[rc::exists("vl : nat", "vr : nat")]]
-  [[rc::inv_vars("l : vl @ int<i32>", "r : vr @ int<i32>")]]
+  [[rc::inv_vars("l : vl @ int<size_t>", "r : vr @ int<size_t>")]]
   [[rc::constraints("{vl <= vr}", "{vr <= length ls}")]]
   [[rc::constraints("{∀ i y, (i < vl)%nat → ls !! i = Some y → R y x}",
                     "{∀ i y, (vr ≤ i)%nat → ls !! i = Some y → ¬ R y x}")]]
   while(l < r) {
-    int k = l + (r - l) / 2;
+    size_t k = l + (r - l) / 2;
     if (comp(xs[k], x)) {
       l = k + 1;
       } else {
