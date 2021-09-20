@@ -5,7 +5,7 @@ description: """
 RefinedC is a framework for verifying idiomatic, low-level C code using a
 combination of refinement types and ownership types.
 """
-license: "BSD"
+license: "BSD-3-Clause"
 
 maintainer: ["Michael Sammler <msammler@mpi-sws.org>"
              "Rodolphe Lepigre <lepigre@mpi-sws.org>"]
