@@ -9,7 +9,7 @@ RefinedC to get at working setup suitable for development of RefinedC
 and building the examples in this repository:
 
 ```
-opam switch create . ocaml-base-compiler.4.11.1
+opam switch create . ocaml-base-compiler.4.11.1 --no-install
 sudo apt-get install libmpfr-dev # Implicit Cerberus dependency.
 opam repo add coq-released "https://coq.inria.fr/opam/released"
 opam repo add iris-dev "https://gitlab.mpi-sws.org/iris/opam.git"
