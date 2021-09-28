@@ -330,6 +330,61 @@ Section lithium.
     (** Success! Lithium can automatically solve this goal now. *)
   Qed.
 
+  (** Let's look at a more complicated version of the example that
+  uses the typing rule from above. In particular, let us replace the
+  True continuation with some code that reads from [l +ₗ i]. This is
+  modelled by the basic goal [typed_val_expr] that represents a typing
+  judgment of RefinedC. The crucial thing to notice here is that the
+  ownership that is not necessary to prove [l ◁ₗ myarray tys] is
+  automatically available to the continuation that contains the
+  typed_val_expr. *)
+  Lemma my_array_example_2 l (i : nat) tys n:
+    ⌜tys !! i = Some (place (l +ₗ i))⌝ -∗
+    l ◁ₗ myarray (<[i := (n @ int i32)]> tys) -∗
+    l ◁ₗ myarray tys ∗
+      typed_val_expr (use{IntOp i32} (l +ₗ i)) (λ v ty,
+        subsume (v ◁ᵥ ty) (v ◁ᵥ n @ int i32) (True)).
+  Proof.
+    iStartProof.
+    (** The goal can be solved automatically:*)
+    (* repeat liRStep; liShow. *)
+    (** But let's step through this more carefully: First, we skip to
+    the subsume: *)
+    do 7 liRStep; liShow.
+    (** Now we can step through how the rule from above is handled: *)
+    liRStep; liShow.
+    liRStep; liShow.
+    liRStep; liShow.
+    liRStep; liShow.
+    liRStep; liShow.
+    liRStep; liShow.
+    liRStep; liShow.
+    liRStep; liShow.
+    liRStep; liShow.
+    liRStep; liShow.
+    liRStep; liShow.
+    (** We end up in a state where we need to prove the continuation
+    and still have access to the left-over ownership from the
+    subsumption rule. RefinedC can automatically solve the rest. *)
+    repeat liRStep; liShow.
+  Qed.
+  (** Note that the example from above could come from the following C
+   code (the code below does not work directly with RefinedC since it e.g.
+   assumes that l, i and tys are globally known, but the point hopefully
+   still comes across):
+
+   [[rc::requires("own l : myarray tys")]]
+   void require_array();
+
+   [[rc::requires("{tys !! i = Some (place (l +ₗ i))}")]]
+   [[rc::requires("own l : myarray (<[i := (n @ int i32)]> tys)")]]
+   [[rc::ensures("n @ int i32")]]
+   int example() {
+      require_array();
+      return *(l + i);
+   }
+*)
+
   (*** Exercises *)
   (** 1. Write some other goals that fall in the grammar of goals and run
    the Lithium interpreter on it until you have an intuition how
