@@ -22,8 +22,8 @@ Definition heapUR : ucmra :=
 Class heapG Σ := HeapG {
   heap_heap_inG              :> inG Σ (authR heapUR);
   heap_heap_name             : gname;
-  heap_alloc_range_map_inG   :> ghost_mapG Σ alloc_id (Z * nat);
-  heap_alloc_range_map_name  : gname;
+  heap_alloc_meta_map_inG   :> ghost_mapG Σ alloc_id (Z * nat * alloc_kind);
+  heap_alloc_meta_map_name  : gname;
   heap_alloc_alive_map_inG  :> ghost_mapG Σ alloc_id bool;
   heap_alloc_alive_map_name : gname;
   heap_fntbl_inG             :> ghost_mapG Σ addr function;
@@ -39,11 +39,11 @@ Definition to_heap_cellR (hc : heap_cell) : heap_cellR :=
 Definition to_heapUR : heap → heapUR :=
   fmap to_heap_cellR.
 
-Definition to_alloc_rangeR (al : allocation) : (Z * nat) :=
-  (al.(al_start), al.(al_len)).
+Definition to_alloc_metaR (al : allocation) : (Z * nat * alloc_kind) :=
+  (al.(al_start), al.(al_len), al.(al_kind)).
 
-Definition to_alloc_range_map : allocs → gmap alloc_id (Z * nat) :=
-  fmap to_alloc_rangeR.
+Definition to_alloc_meta_map : allocs → gmap alloc_id (Z * nat * alloc_kind) :=
+  fmap to_alloc_metaR.
 
 Definition to_alloc_alive_map : allocs → gmap alloc_id bool :=
   fmap al_alive.
@@ -53,20 +53,20 @@ Section definitions.
 
   (** * Allocation stuff. *)
 
-  (** [alloc_range id al] persistently records the information that allocation
+  (** [alloc_meta id al] persistently records the information that allocation
   with identifier [id] has a range corresponding to that of [a]. *)
-  Definition alloc_range_def (id : alloc_id) (al : allocation) : iProp Σ :=
-    id ↪[ heap_alloc_range_map_name ]□ to_alloc_rangeR al.
-  Definition alloc_range_aux : seal (@alloc_range_def). by eexists. Qed.
-  Definition alloc_range := unseal alloc_range_aux.
-  Definition alloc_range_eq : @alloc_range = @alloc_range_def :=
-    seal_eq alloc_range_aux.
+  Definition alloc_meta_def (id : alloc_id) (al : allocation) : iProp Σ :=
+    id ↪[ heap_alloc_meta_map_name ]□ to_alloc_metaR al.
+  Definition alloc_meta_aux : seal (@alloc_meta_def). by eexists. Qed.
+  Definition alloc_meta := unseal alloc_meta_aux.
+  Definition alloc_meta_eq : @alloc_meta = @alloc_meta_def :=
+    seal_eq alloc_meta_aux.
 
-  Global Instance allocs_range_pers id al : Persistent (alloc_range id al).
-  Proof. rewrite alloc_range_eq. by apply _. Qed.
+  Global Instance allocs_range_pers id al : Persistent (alloc_meta id al).
+  Proof. rewrite alloc_meta_eq. by apply _. Qed.
 
-  Global Instance allocs_range_tl id al : Timeless (alloc_range id al).
-  Proof. rewrite alloc_range_eq. by apply _. Qed.
+  Global Instance allocs_range_tl id al : Timeless (alloc_meta id al).
+  Proof. rewrite alloc_meta_eq. by apply _. Qed.
 
   (** [loc_in_bounds l n] persistently records the information that location
   [l] and any of its positive offset up to [n] (included) are in range of the
@@ -75,7 +75,7 @@ Section definitions.
   Definition loc_in_bounds_def (l : loc) (n : nat) : iProp Σ :=
     ∃ (id : alloc_id) (al : allocation),
       ⌜l.1 = ProvAlloc (Some id)⌝ ∗ ⌜al.(al_start) ≤ l.2⌝ ∗ ⌜l.2 + n ≤ al_end al⌝ ∗
-      ⌜allocation_in_range al⌝ ∗ alloc_range id al.
+      ⌜allocation_in_range al⌝ ∗ alloc_meta id al.
   Definition loc_in_bounds_aux : seal (@loc_in_bounds_def). by eexists. Qed.
   Definition loc_in_bounds := unseal loc_in_bounds_aux.
   Definition loc_in_bounds_eq : @loc_in_bounds = @loc_in_bounds_def :=
@@ -156,8 +156,8 @@ Section definitions.
 
   (** * Freeable *)
 
-  Definition freeable_def (l : loc) (n : nat) : iProp Σ :=
-    ∃ id, ⌜l.1 = ProvAlloc (Some id)⌝ ∗ alloc_range id {| al_start := l.2; al_len := n; al_alive := true |} ∗
+  Definition freeable_def (l : loc) (n : nat) (k : alloc_kind) : iProp Σ :=
+    ∃ id, ⌜l.1 = ProvAlloc (Some id)⌝ ∗ alloc_meta id {| al_start := l.2; al_len := n; al_alive := true; al_kind := k |} ∗
      alloc_alive id (DfracOwn 1) true.
   Definition freeable_aux : seal (@freeable_def). by eexists. Qed.
   Definition freeable := unseal freeable_aux.
@@ -169,8 +169,8 @@ Section definitions.
   Definition heap_ctx (h : heap) : iProp Σ :=
     own heap_heap_name (● to_heapUR h).
 
-  Definition alloc_range_ctx (ub : allocs) : iProp Σ :=
-    ghost_map_auth heap_alloc_range_map_name 1 (to_alloc_range_map ub).
+  Definition alloc_meta_ctx (ub : allocs) : iProp Σ :=
+    ghost_map_auth heap_alloc_meta_map_name 1 (to_alloc_meta_map ub).
 
   Definition alloc_alive_ctx (ub : allocs) : iProp Σ :=
     ghost_map_auth heap_alloc_alive_map_name 1 (to_alloc_alive_map ub).
@@ -181,7 +181,7 @@ Section definitions.
   Definition heap_state_ctx (st : heap_state) : iProp Σ :=
     ⌜heap_state_invariant st⌝ ∗
     heap_ctx st.(hs_heap) ∗
-    alloc_range_ctx st.(hs_allocs) ∗
+    alloc_meta_ctx st.(hs_allocs) ∗
     alloc_alive_ctx st.(hs_allocs).
 
   Definition state_ctx (σ:state) : iProp Σ :=
@@ -241,68 +241,70 @@ Section fntbl.
   Qed.
 End fntbl.
 
-Section alloc_range.
+Section alloc_meta.
   Context `{!heapG Σ}.
   Implicit Types am : allocs.
 
-  Lemma alloc_range_mono id a1 a2 :
+  Lemma alloc_meta_mono id a1 a2 :
     alloc_same_range a1 a2 →
-    alloc_range id a1 -∗ alloc_range id a2.
-  Proof. destruct a1 as [???], a2 as [???] => -[/= <- <-]. by rewrite alloc_range_eq. Qed.
+    a1.(al_kind) = a2.(al_kind) →
+    alloc_meta id a1 -∗ alloc_meta id a2.
+  Proof. destruct a1 as [????], a2 as [????] => -[/= <- <-] <-. by rewrite alloc_meta_eq. Qed.
 
-  Lemma alloc_range_agree id a1 a2 :
-    alloc_range id a1 -∗ alloc_range id a2 -∗ ⌜alloc_same_range a1 a2⌝.
+  Lemma alloc_meta_agree id a1 a2 :
+    alloc_meta id a1 -∗ alloc_meta id a2 -∗ ⌜alloc_same_range a1 a2⌝.
   Proof.
-    destruct a1 as [???], a2 as [???]. rewrite alloc_range_eq /alloc_same_range.
+    destruct a1 as [????], a2 as [????]. rewrite alloc_meta_eq /alloc_same_range.
     iIntros "H1 H2". by iDestruct (ghost_map_elem_agree with "H1 H2") as %[=->->].
   Qed.
 
-  Lemma alloc_range_alloc am id al :
+  Lemma alloc_meta_alloc am id al :
     am !! id = None →
-    alloc_range_ctx am ==∗
-    alloc_range_ctx (<[id := al]> am) ∗ alloc_range id al.
+    alloc_meta_ctx am ==∗
+    alloc_meta_ctx (<[id := al]> am) ∗ alloc_meta id al.
   Proof.
-    move => Hid. rewrite alloc_range_eq. iIntros "Hctx".
+    move => Hid. rewrite alloc_meta_eq. iIntros "Hctx".
     iMod (ghost_map_insert_persist with "Hctx") as "[? $]". { by rewrite lookup_fmap fmap_None. }
     by rewrite -fmap_insert.
   Qed.
 
-  Lemma alloc_range_to_loc_in_bounds l id (n : nat) al:
+  Lemma alloc_meta_to_loc_in_bounds l id (n : nat) al:
     l.1 = ProvAlloc (Some id) →
     al.(al_start) ≤ l.2 ∧ l.2 + n ≤ al_end al →
     allocation_in_range al →
-    alloc_range id al -∗ loc_in_bounds l n.
+    alloc_meta id al -∗ loc_in_bounds l n.
   Proof.
     iIntros (?[??]?) "Hr". rewrite loc_in_bounds_eq.
     iExists id, al. by iFrame "Hr".
   Qed.
 
-  Lemma alloc_range_lookup am id al :
-    alloc_range_ctx am -∗
-    alloc_range id al -∗
-    ⌜∃ al', am !! id = Some al' ∧ alloc_same_range al al'⌝.
+  Lemma alloc_meta_lookup am id al :
+    alloc_meta_ctx am -∗
+    alloc_meta id al -∗
+    ⌜∃ al', am !! id = Some al' ∧ alloc_same_range al al' ∧ al.(al_kind) = al'.(al_kind)⌝.
   Proof.
-    rewrite alloc_range_eq. iIntros "Htbl Hf".
+    rewrite alloc_meta_eq. iIntros "Htbl Hf".
     iDestruct (ghost_map_lookup with "Htbl Hf") as %Hlookup.
-    iPureIntro. move: Hlookup. rewrite lookup_fmap fmap_Some => -[[???][?[??]]].
+    iPureIntro. move: Hlookup. rewrite lookup_fmap fmap_Some => -[[????][?[???]]].
     by eexists _.
   Qed.
 
-  Lemma alloc_range_ctx_same_range am id al1 al2 :
+  Lemma alloc_meta_ctx_same_range am id al1 al2 :
     am !! id = Some al1 →
     alloc_same_range al1 al2 →
-    alloc_range_ctx am = alloc_range_ctx (<[id := al2]> am).
+    al1.(al_kind) = al2.(al_kind) →
+    alloc_meta_ctx am = alloc_meta_ctx (<[id := al2]> am).
   Proof.
-    move => Hid [Heq1 Heq2].
-    rewrite /alloc_range_ctx /to_alloc_range_map fmap_insert insert_id; first done.
+    move => Hid [Heq1 Heq2] Heq3.
+    rewrite /alloc_meta_ctx /to_alloc_meta_map fmap_insert insert_id; first done.
     rewrite lookup_fmap Hid /=. destruct al1, al2; naive_solver.
   Qed.
 
-  Lemma alloc_range_ctx_killed am id al :
+  Lemma alloc_meta_ctx_killed am id al :
     am !! id = Some al →
-    alloc_range_ctx am = alloc_range_ctx (<[id := killed al]> am).
-  Proof. move => ?. by apply: alloc_range_ctx_same_range. Qed.
-End alloc_range.
+    alloc_meta_ctx am = alloc_meta_ctx (<[id := killed al]> am).
+  Proof. move => ?. by apply: alloc_meta_ctx_same_range. Qed.
+End alloc_meta.
 
 Section alloc_alive.
   Context `{!heapG Σ}.
@@ -349,7 +351,7 @@ Section loc_in_bounds.
       iDestruct "H2" as (?? Hl2 ? Hend ?) "#H2".
       move: Hl1 Hl2 => /= Hl1 Hl2. iExists id, al.
       destruct l. unfold al_end in *. simpl in *. simplify_eq.
-      iDestruct (alloc_range_agree with "H2 H1") as %[? <-].
+      iDestruct (alloc_meta_agree with "H2 H1") as %[? <-].
       iFrame "H1". iPureIntro. rewrite /shift_loc /= in Hend. naive_solver lia.
     - iIntros "H". iDestruct "H" as (id al ????) "#H".
       iSplit; iExists id, al; iFrame "H"; iPureIntro; split_and! => //=; lia.
@@ -387,7 +389,7 @@ Section loc_in_bounds.
   Proof.
     rewrite loc_in_bounds_eq.
     iIntros "Hb ((?&?&Hctx&?)&?)". iDestruct "Hb" as (id al ????) "Hb".
-    iDestruct (alloc_range_lookup with "Hctx Hb") as %[al' [?[??]]].
+    iDestruct (alloc_meta_lookup with "Hctx Hb") as %[al' [?[[??]?]]].
     iExists id, al'. iPureIntro. unfold allocation_in_range, al_end in *.
     naive_solver lia.
   Qed.
@@ -524,6 +526,10 @@ Section heap.
     by iDestruct (heap_mapsto_mbyte_agree with "[$]") as %->.
   Qed.
 
+  Lemma heap_mapsto_layout_has_layout l ly :
+    l ↦|ly| -∗ ⌜l `has_layout_loc` ly⌝.
+  Proof. iIntros "(% & % & % & ?)". done. Qed.
+
   Lemma heap_alloc_st l h v aid :
     l.1 = ProvAlloc (Some aid) →
     heap_range_free h l.2 (length v) →
@@ -555,12 +561,12 @@ Section heap.
     al.(al_start) = l.2 →
     al.(al_len) = length v →
     allocation_in_range al →
-    alloc_range id al -∗
+    alloc_meta id al -∗
     alloc_alive id (DfracOwn 1) true -∗
     heap_ctx h ==∗
       heap_ctx (heap_alloc l.2 v id h) ∗
       l ↦ v ∗
-      freeable l (length v).
+      freeable l (length v) al.(al_kind).
   Proof.
     iIntros (Hid Hfree Hstart Hlen Hrange) "#Hr Hal Hctx".
     iMod (heap_alloc_st with "Hctx") as "[$ Hl]" => //.
@@ -568,7 +574,7 @@ Section heap.
     rewrite heap_mapsto_mbyte_eq /heap_mapsto_mbyte_def.
     iSplitR "Hal"; last first; last iSplit.
     - rewrite freeable_eq. iExists id. iFrame. iSplit => //.
-      by iApply (alloc_range_mono with "Hr").
+      by iApply (alloc_meta_mono with "Hr").
     - rewrite loc_in_bounds_eq. iExists id, al. iFrame "Hr".
       rewrite /al_end. iPureIntro. naive_solver lia.
     - iApply (big_sepL_impl with "Hl").
@@ -839,25 +845,25 @@ End alloc_alive.
 Section alloc_new_blocks.
   Context `{!heapG Σ}.
 
-  Lemma heap_alloc_new_block_upd σ1 l v σ2:
-    alloc_new_block σ1 l v σ2 →
-    heap_state_ctx σ1 ==∗ heap_state_ctx σ2 ∗ l ↦ v ∗ freeable l (length v).
+  Lemma heap_alloc_new_block_upd σ1 l v kind σ2:
+    alloc_new_block σ1 kind l v σ2 →
+    heap_state_ctx σ1 ==∗ heap_state_ctx σ2 ∗ l ↦ v ∗ freeable l (length v) kind.
   Proof.
-    move => []; clear. move => σ l aid v alloc Haid ???; subst alloc.
+    move => []; clear. move => σ l aid kind v alloc Haid ???; subst alloc.
     iIntros "Hctx". iDestruct "Hctx" as (Hinv) "(Hhctx&Hrctx&Hsctx)".
-    iMod (alloc_range_alloc  with "Hrctx") as "[$ #Hb]" => //.
+    iMod (alloc_meta_alloc  with "Hrctx") as "[$ #Hb]" => //.
     iMod (alloc_alive_alloc with "Hsctx") as "[$ Hs]" => //.
-    iDestruct (alloc_range_to_loc_in_bounds l aid (length v) with "[Hb]")
+    iDestruct (alloc_meta_to_loc_in_bounds l aid (length v) with "[Hb]")
       as "#Hinb" => //; [done|..].
     iMod (heap_alloc with "Hb Hs Hhctx") as "[Hhctx [Hv Hal]]" => //.
     iModIntro. iFrame. iPureIntro. by eapply alloc_new_block_invariant.
   Qed.
 
-  Lemma heap_alloc_new_blocks_upd σ1 ls vs σ2:
-    alloc_new_blocks σ1 ls vs σ2 →
+  Lemma heap_alloc_new_blocks_upd σ1 ls vs kind σ2:
+    alloc_new_blocks σ1 kind ls vs σ2 →
     heap_state_ctx σ1 ==∗
       heap_state_ctx σ2 ∗
-      [∗ list] l; v ∈ ls; vs, l ↦ v ∗ freeable l (length v).
+      [∗ list] l; v ∈ ls; vs, l ↦ v ∗ freeable l (length v) kind.
   Proof.
     move => alloc.
     iInduction alloc as [σ|] "IH"; first by iIntros "$ !>". iIntros "Hσ".
@@ -869,27 +875,27 @@ End alloc_new_blocks.
 Section free_blocks.
   Context `{!heapG Σ}.
 
-  Lemma heap_free_block_upd σ1 l ly:
+  Lemma heap_free_block_upd σ1 l ly kind:
     l ↦|ly| -∗
-    freeable l (ly_size ly) -∗
-    heap_state_ctx σ1 ==∗ ∃ σ2, ⌜free_block σ1 l ly σ2⌝ ∗ heap_state_ctx σ2.
+    freeable l (ly_size ly) kind -∗
+    heap_state_ctx σ1 ==∗ ∃ σ2, ⌜free_block σ1 kind l ly σ2⌝ ∗ heap_state_ctx σ2.
   Proof.
     iIntros "Hl Hfree (Hinv&Hhctx&Hrctx&Hsctx)". iDestruct "Hinv" as %Hinv.
     rewrite freeable_eq. iDestruct "Hfree" as (aid Haid) "[#Hrange Hkill]".
     iDestruct "Hl" as (v Hv ?) "Hl".
-    iDestruct (alloc_alive_lookup with "Hsctx Hkill") as %[[???] [??]].
-    iDestruct (alloc_range_lookup with "Hrctx Hrange") as %[al'' [?[??]]]. simplify_eq/=.
+    iDestruct (alloc_alive_lookup with "Hsctx Hkill") as %[[????k] [??]].
+    iDestruct (alloc_meta_lookup with "Hrctx Hrange") as %[al'' [?[[??]?]]]. simplify_eq/=.
     iDestruct (heap_mapsto_lookup_1 (λ st : lock_state, st = RSt 0) with "Hhctx Hl") as %? => //.
     iExists _. iSplitR. { iPureIntro. by econstructor. }
     iMod (heap_free_free with "Hhctx Hl") as "Hhctx". rewrite Hv. iFrame => /=.
-    iMod (alloc_alive_kill _ _ ({| al_start := l.2; al_len := ly_size ly; al_alive := true |}) with "Hsctx Hkill") as "[$ Hd]".
-    erewrite alloc_range_ctx_same_range; [iFrame |done..].
+    iMod (alloc_alive_kill _ _ ({| al_start := l.2; al_len := ly_size ly; al_alive := true; al_kind := k |}) with "Hsctx Hkill") as "[$ Hd]".
+    erewrite alloc_meta_ctx_same_range; [iFrame |done..].
     iPureIntro. eapply free_block_invariant => //. by eapply FreeBlock.
   Qed.
 
-  Lemma heap_free_blocks_upd ls σ1:
-    ([∗ list] l ∈ ls, l.1 ↦|l.2| ∗ freeable l.1 (ly_size l.2)) -∗
-    heap_state_ctx σ1 ==∗ ∃ σ2, ⌜free_blocks σ1 ls σ2⌝ ∗ heap_state_ctx σ2.
+  Lemma heap_free_blocks_upd ls σ1 kind:
+    ([∗ list] l ∈ ls, l.1 ↦|l.2| ∗ freeable l.1 (ly_size l.2) kind ) -∗
+    heap_state_ctx σ1 ==∗ ∃ σ2, ⌜free_blocks σ1 kind ls σ2⌝ ∗ heap_state_ctx σ2.
   Proof.
     iInduction ls as [|[l ly] ls] "IH" forall (σ1).
     { iIntros "_ ? !>". iExists σ1. iFrame. iPureIntro. by constructor. }

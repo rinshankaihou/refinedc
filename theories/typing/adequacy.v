@@ -10,7 +10,7 @@ Set Default Proof Using "Type".
 Class typePreG Σ := PreTypeG {
   type_invG                      :> invGpreS Σ;
   type_heap_heap_inG             :> inG Σ (authR heapUR);
-  type_heap_alloc_range_map_inG  :> ghost_mapG Σ alloc_id (Z * nat);
+  type_heap_alloc_meta_map_inG  :> ghost_mapG Σ alloc_id (Z * nat * alloc_kind);
   type_heap_alloc_alive_map_inG  :> ghost_mapG Σ alloc_id bool;
   type_heap_fntbl_inG            :> ghost_mapG Σ addr function;
 }.
@@ -18,7 +18,7 @@ Class typePreG Σ := PreTypeG {
 Definition typeΣ : gFunctors :=
   #[invΣ;
    GFunctor (constRF (authR heapUR));
-   ghost_mapΣ alloc_id (Z * nat);
+   ghost_mapΣ alloc_id (Z * nat * alloc_kind);
    ghost_mapΣ alloc_id bool;
    ghost_mapΣ addr function].
 Instance subG_typePreG {Σ} : subG typeΣ Σ → typePreG Σ.
@@ -38,7 +38,7 @@ Definition main_type `{!typeG Σ} (P : iProp Σ) :=
 
 (** * The main adequacy lemma *)
 Lemma refinedc_adequacy Σ `{!typePreG Σ} (thread_mains : list loc) (fns : gmap addr function) (gls : list loc) (gvs : list val.val) n t2 σ2 κs hs σ:
-  alloc_new_blocks initial_heap_state gls gvs hs →
+  alloc_new_blocks initial_heap_state GlobalAlloc gls gvs hs →
   σ = {| st_heap := hs; st_fntbl := fns; |} →
   (∀ {HtypeG : typeG Σ}, ∃ gl gt,
   let Hglobals : globalG Σ := {| global_locs := gl; global_initialized_types := gt; |} in
@@ -53,7 +53,7 @@ Proof.
   iMod (own_alloc (● h ⋅ ◯ h)) as (γh) "[Hh _]" => //.
   { apply auth_both_valid_discrete. split => //. }
   iMod (ghost_map_alloc fns) as (γf) "[Hf Hfm]".
-  iMod (ghost_map_alloc_empty (V:=(Z * nat))) as (γr) "Hr".
+  iMod (ghost_map_alloc_empty (V:=(Z * nat * alloc_kind))) as (γr) "Hr".
   iMod (ghost_map_alloc_empty (V:=bool)) as (γs) "Hs".
   set (HheapG := HeapG _ _ γh _ γr _ γs _ γf).
   set (HrefinedCG := RefinedCG _ _ HheapG).
@@ -62,7 +62,7 @@ Proof.
   set (Hglobals := {| global_locs := gl; global_initialized_types := gt; |}).
   move => Hwp.
   iMod (heap_alloc_new_blocks_upd with "[Hh Hr Hs]") as "[Hctx Hmt]" => //. {
-    rewrite /heap_state_ctx /alloc_range_ctx /to_alloc_range_map /alloc_alive_ctx /to_alloc_alive_map !fmap_empty.
+    rewrite /heap_state_ctx /alloc_meta_ctx /to_alloc_meta_map /alloc_alive_ctx /to_alloc_alive_map !fmap_empty.
     by iFrame.
   }
   rewrite big_sepL2_sep. iDestruct "Hmt" as "[Hmt Hfree]".

@@ -85,7 +85,7 @@ Section adequate.
     loc_allocator_state `has_layout_loc` struct_alloc_state →
     loc_initialized `has_layout_loc` struct_latch →
     (* TODO: Should we try to show that this assumption is provable? *)
-    alloc_new_blocks initial_heap_state initial_heap_locs initial_heap_values hs →
+    alloc_new_blocks initial_heap_state GlobalAlloc initial_heap_locs initial_heap_values hs →
     σ = {| st_heap := hs; st_fntbl := fn_lists_to_fns function_addrs functions; |} →
     NoDup function_addrs →
     nsteps (Λ := c_lang) n (initial_prog <$> [(fn_loc addr_main); (fn_loc addr_main2)], σ) κs (t2, σ2) →

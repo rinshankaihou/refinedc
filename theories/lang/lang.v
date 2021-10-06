@@ -37,6 +37,7 @@ Inductive expr :=
 | Call (f : expr) (args : list expr)
 | Concat (es : list expr)
 | IfE (ot : op_type) (e1 e2 e3 : expr)
+| Alloc (ly : layout) (e : expr)
 | SkipE (e : expr)
 | StuckE (* stuck expression *)
 .
@@ -53,6 +54,7 @@ Lemma expr_ind (P : expr → Prop) :
   (∀ (f : expr) (args : list expr), P f → Forall P args → P (Call f args)) →
   (∀ (es : list expr), Forall P es → P (Concat es)) →
   (∀ (ot : op_type) (e1 e2 e3 : expr), P e1 → P e2 → P e3 → P (IfE ot e1 e2 e3)) →
+  (∀ (ly : layout) (e : expr), P e → P (Alloc ly e)) →
   (∀ (e : expr), P e → P (SkipE e)) →
   (P StuckE) →
   ∀ (e : expr), P e.
@@ -77,6 +79,7 @@ Inductive stmt :=
 (* m: map from values of e to indices into bs, def: default *)
 | Switch (it : int_type) (e : expr) (m : gmap Z nat) (bs : list stmt) (def : stmt)
 | Assign (o : order) (ot : op_type) (e1 e2 : expr) (s : stmt)
+| Free (ly : layout) (e : expr) (s : stmt)
 | SkipS (s : stmt)
 | StuckS (* stuck statement *)
 | ExprS (e : expr) (s : stmt)
@@ -125,6 +128,7 @@ with rtexpr :=
 | RTCall (f : runtime_expr) (args : list runtime_expr)
 | RTCAS (ot : op_type) (e1 e2 e3 : runtime_expr)
 | RTConcat (es : list runtime_expr)
+| RTAlloc (ly : layout) (e : runtime_expr)
 | RTIfE (ot : op_type) (e1 e2 e3 : runtime_expr)
 | RTSkipE (e : runtime_expr)
 | RTStuckE
@@ -134,6 +138,7 @@ with rtstmt :=
 | RTIfS (ot : op_type) (e : runtime_expr) (s1 s2 : stmt)
 | RTSwitch (it : int_type) (e : runtime_expr) (m : gmap Z nat) (bs : list stmt) (def : stmt)
 | RTAssign (o : order) (ot : op_type) (e1 e2 : runtime_expr) (s : stmt)
+| RTFree (ly : layout) (e : runtime_expr) (s : stmt)
 | RTSkipS (s : stmt)
 | RTStuckS
 | RTExprS (e : runtime_expr) (s : stmt)
@@ -151,6 +156,7 @@ Fixpoint to_rtexpr (e : expr) : runtime_expr :=
   | CAS ot e1 e2 e3 => RTCAS ot (to_rtexpr e1) (to_rtexpr e2) (to_rtexpr e3)
   | Concat es => RTConcat (to_rtexpr <$> es)
   | IfE ot e1 e2 e3 => RTIfE ot (to_rtexpr e1) (to_rtexpr e2) (to_rtexpr e3)
+  | Alloc ly e => RTAlloc ly (to_rtexpr e)
   | SkipE e => RTSkipE (to_rtexpr e)
   | StuckE => RTStuckE
   end.
@@ -164,6 +170,7 @@ Definition to_rtstmt (rf : runtime_function) (s : stmt) : runtime_expr :=
   | IfS ot e s1 s2 => RTIfS ot (to_rtexpr e) s1 s2
   | Switch it e m bs def => RTSwitch it (to_rtexpr e) m bs def
   | Assign o ot e1 e2 s => RTAssign o ot (to_rtexpr e1) (to_rtexpr e2) s
+  | Free ly e s => RTFree ly (to_rtexpr e) s
   | SkipS s => RTSkipS s
   | StuckS => RTStuckS
   | ExprS e s => RTExprS (to_rtexpr e) s
@@ -198,6 +205,7 @@ Fixpoint subst (x : var_name) (v : val) (e : expr)  : expr :=
   | CAS ly e1 e2 e3 => CAS ly (subst x v e1) (subst x v e2) (subst x v e3)
   | Concat el => Concat (subst x v <$> el)
   | IfE ot e1 e2 e3 => IfE ot (subst x v e1) (subst x v e2) (subst x v e3)
+  | Alloc ly e => Alloc ly (subst x v e)
   | SkipE e => SkipE (subst x v e)
   | StuckE => StuckE
   end.
@@ -215,6 +223,7 @@ Fixpoint subst_stmt (xs : list (var_name * val)) (s : stmt) : stmt :=
   | IfS ot e s1 s2 => IfS ot (subst_l xs e) (subst_stmt xs s1) (subst_stmt xs s2)
   | Switch it e m' bs def => Switch it (subst_l xs e) m' (subst_stmt xs <$> bs) (subst_stmt xs def)
   | Assign o ot e1 e2 s => Assign o ot (subst_l xs e1) (subst_l xs e2) (subst_stmt xs s)
+  | Free ly e s => Free ly (subst_l xs e) (subst_stmt xs s)
   | SkipS s => SkipS (subst_stmt xs s)
   | StuckS => StuckS
   | ExprS e s => ExprS (subst_l xs e) (subst_stmt xs s)
@@ -437,9 +446,9 @@ comparing pointers? (see lambda rust) *)
     Forall2 has_layout_loc lsa fn.(f_args).*2 →
     Forall2 has_layout_loc lsv fn.(f_local_vars).*2 →
     (* initialize the local vars to poison *)
-    alloc_new_blocks σ.(st_heap) lsv ((λ p, replicate p.2.(ly_size) MPoison) <$> fn.(f_local_vars)) hs' →
+    alloc_new_blocks σ.(st_heap) StackAlloc lsv ((λ p, replicate p.2.(ly_size) MPoison) <$> fn.(f_local_vars)) hs' →
     (* initialize the arguments with the supplied values *)
-    alloc_new_blocks hs' lsa vs hs'' →
+    alloc_new_blocks hs' StackAlloc lsa vs hs'' →
     (* add used blocks allocations  *)
     rf = {| rf_fn := fn'; rf_locs := zip lsa fn.(f_args).*2 ++ zip lsv fn.(f_local_vars).*2; |} →
     expr_step (Call (Val vf) (Val <$> vs)) σ [] (to_rtstmt rf (Goto fn'.(f_init))) {| st_heap := hs''; st_fntbl := σ.(st_fntbl)|} []
@@ -459,6 +468,14 @@ comparing pointers? (see lambda rust) *)
 | IfES v ot e1 e2 b σ:
     cast_to_bool ot v σ.(st_heap) = Some b →
     expr_step (IfE ot (Val v) e1 e2) σ [] (if b then e1 else e2) σ []
+| AllocS v l ly σ hs' :
+    has_layout_val v ly →
+    has_layout_loc l ly →
+    alloc_new_block σ.(st_heap) HeapAlloc l v hs' →
+    expr_step (Alloc ly (Val v)) σ [] (Val (val_of_loc l)) {| st_heap := hs'; st_fntbl := σ.(st_fntbl) |} []
+| AllocFailS v ly σ :
+    has_layout_val v ly →
+    expr_step (Alloc ly (Val v)) σ [] AllocFailed σ []
 (* no rule for StuckE *)
 .
 
@@ -484,8 +501,13 @@ Inductive stmt_step : stmt → runtime_function → state → list Empty_set →
     rf.(rf_fn).(f_code) !! b = Some s →
     stmt_step (Goto b) rf σ [] (to_rtstmt rf s) σ []
 | ReturnS rf σ hs v:
-    free_blocks σ.(st_heap) rf.(rf_locs) hs → (* Deallocate the stack. *)
+    free_blocks σ.(st_heap) StackAlloc rf.(rf_locs) hs → (* Deallocate the stack. *)
     stmt_step (Return (Val v)) rf σ [] (Val v) {| st_fntbl := σ.(st_fntbl); st_heap := hs |} []
+| FreeS ly v l s rf σ hs' :
+    val_to_loc v = Some l →
+    has_layout_loc l ly →
+    free_block σ.(st_heap) HeapAlloc l ly hs' →
+    stmt_step (Free ly (Val v) s) rf σ [] (to_rtstmt rf s) {| st_fntbl := σ.(st_fntbl); st_heap := hs' |} []
 | SkipSS rf σ s :
     stmt_step (SkipS s) rf σ [] (to_rtstmt rf s) σ []
 | ExprSS rf σ s v:
@@ -514,7 +536,8 @@ Proof.
   all: repeat select (heap_at _ _ _ _ _) ltac:(fun H => destruct H as [?[?[??]]]).
   all: try (rewrite /heap_fmap/=; eapply heap_update_heap_state_invariant => //).
   all: try (unfold has_layout_val in *; by etransitivity).
-  repeat eapply alloc_new_blocks_invariant => //.
+  - repeat eapply alloc_new_blocks_invariant => //.
+  - eapply alloc_new_block_invariant => //.
 Qed.
 
 Lemma stmt_step_preserves_invariant s rf e σ1 σ2 κs efs:
@@ -529,6 +552,7 @@ Proof.
     match goal with H : _ `has_layout_val` _ |- _ => rewrite H end.
     by destruct o.
   - move => ??? _ Hfree Hinv. by eapply free_blocks_invariant.
+  - move => ??? _ _ ???? Hfree Hinv. by eapply free_block_invariant.
 Qed.
 
 Lemma runtime_step_preserves_invariant e1 e2 σ1 σ2 κs efs:
@@ -557,6 +581,7 @@ Inductive expr_ectx :=
 | CASRCtx (ot : op_type) (v1 v2 : val)
 | ConcatCtx (vs : list val) (es : list runtime_expr)
 | IfECtx (ot : op_type) (e2 e3 : runtime_expr)
+| AllocCtx (ly : layout)
 | SkipECtx
 .
 
@@ -575,6 +600,7 @@ Definition expr_fill_item (Ki : expr_ectx) (e : runtime_expr) : rtexpr :=
   | CASRCtx ot v1 v2 => RTCAS ot (Val v1) (Val v2) e
   | ConcatCtx vs es => RTConcat ((Expr <$> (RTVal <$> vs)) ++ e :: es)
   | IfECtx ot e2 e3 => RTIfE ot e e2 e3
+  | AllocCtx ly => RTAlloc ly e
   | SkipECtx => RTSkipE e
   end.
 
@@ -584,6 +610,7 @@ Inductive stmt_ectx :=
 | AssignRCtx (o : order) (ot : op_type) (e1 : expr) (s : stmt)
 | AssignLCtx (o : order) (ot : op_type) (v2 : val) (s : stmt)
 | ReturnCtx
+| FreeCtx (ly : layout) (s : stmt)
 | IfSCtx (ot : op_type) (s1 s2 : stmt)
 | SwitchCtx (it : int_type) (m: gmap Z nat) (bs : list stmt) (def : stmt)
 | ExprSCtx (s : stmt)
@@ -594,6 +621,7 @@ Definition stmt_fill_item (Ki : stmt_ectx) (e : runtime_expr) : rtstmt :=
   | AssignRCtx o ot e1 s => RTAssign o ot e1 e s
   | AssignLCtx o ot v2 s => RTAssign o ot e (Val v2) s
   | ReturnCtx => RTReturn e
+  | FreeCtx ly s => RTFree ly e s
   | IfSCtx ot s1 s2 => RTIfS ot e s1 s2
   | SwitchCtx it m bs def => RTSwitch it e m bs def
   | ExprSCtx s => RTExprS e s

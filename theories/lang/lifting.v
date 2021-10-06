@@ -784,6 +784,26 @@ Proof.
   by iApply (wp_call_bind_ind []).
 Qed.
 
+Lemma wp_alloc E Φ (l : loc) ly (v : val) :
+  has_layout_val v ly →
+  ▷ (∀ l, l ↦ v -∗ freeable l (length v) HeapAlloc -∗ ⌜l `has_layout_loc` ly⌝ -∗ Φ (val_of_loc l)) -∗
+  WP (Alloc ly (Val v)) @ E {{ Φ }}.
+Proof.
+  iIntros (Hly) "Hwp".
+  iApply wp_lift_expr_step; first done.
+  iIntros (hs) "((%&Hhctx&Hactx)&Hfctx)/=".
+  iModIntro.
+  iSplit; first by eauto 10 using AllocFailS.
+  iIntros (??[??]? Hstep _) "!>". inv_expr_step; last first. {
+    (* Alloc failure case. *)
+    iModIntro. iSplit; first done. rewrite /state_ctx. iFrame. iSplit; first done.
+    iApply wp_alloc_failed.
+  }
+  iMod (heap_alloc_new_block_upd with "[$Hhctx $Hactx]") as "(Hctx & Hlv & Hlf)" => //.
+  iDestruct ("Hwp" with "Hlv Hlf [//]") as "Hpost".
+  iModIntro. iSplit => //.
+  iFrame "Hctx Hfctx". by iApply wp_value.
+Qed.
 End expr_lifting.
 
 (*** Lifting of statements *)
@@ -905,6 +925,27 @@ Proof.
   iSplit; first by eauto 10 using GotoS.
   iIntros (???? Hstep ?) "!> !>". inv_stmt_step.
   iSplit; first done. iFrame. by iApply "HWP".
+Qed.
+
+Lemma wps_free Q Ψ s l ly :
+  l ↦|ly| -∗
+  freeable l (ly.(ly_size)) HeapAlloc -∗
+  ▷ WPs s {{ Q, Ψ }} -∗
+  WPs (Free ly (val_of_loc l) s) {{ Q, Ψ }}.
+Proof.
+  iIntros "Hl Hf HWP". rewrite !stmt_wp_unfold. iIntros (???) "?". subst.
+  iPoseProof (heap_mapsto_layout_has_layout with "Hl") as "%".
+  iApply wp_lift_stmt_step. iIntros (σ) "(Hhctx&Hfctx)".
+  iMod (heap_free_block_upd with "Hl Hf Hhctx") as (σ') "(%Hf & Hhctx)".
+  iModIntro. iSplit; first by eauto 10 using FreeS, val_to_of_loc.
+  iNext. iIntros (???? Hstep ?). inv_stmt_step. iModIntro.
+  iSplitR; first done.
+  match goal with
+  | H : val_to_loc _ = Some ?l |- _ => apply val_of_to_loc in H; injection H; intros <-; intros
+  end.
+  rewrite (free_block_inj σ.(st_heap) l ly HeapAlloc hs' σ'); [ | done..].
+  iFrame.
+  by iApply "HWP".
 Qed.
 
 Lemma wps_skip Q Ψ s:

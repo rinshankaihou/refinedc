@@ -185,11 +185,18 @@ Qed.
 
 (** ** Representation of allocations. *)
 
+(** An allocation can either be a stack allocation or a heap allocation. *)
+Inductive alloc_kind : Set :=
+  | HeapAlloc
+  | StackAlloc 
+  | GlobalAlloc.
+
 Record allocation :=
   Allocation {
-    al_start : Z;    (* First valid address. *)
-    al_len   : nat;  (* Number of allocated byte. *)
-    al_alive : bool; (* Is the allocation still alive. *)
+    al_start : Z;           (* First valid address. *)
+    al_len   : nat;         (* Number of allocated byte. *)
+    al_alive : bool;        (* Is the allocation still alive. *)
+    al_kind : alloc_kind;   (* On the heap or on the stack? *)
   }.
 
 Definition al_end (al : allocation) : Z :=
@@ -201,7 +208,7 @@ Definition alloc_same_range (al1 al2 : allocation) : Prop :=
   al1.(al_start) = al2.(al_start) ∧ al1.(al_len) = al2.(al_len).
 
 Definition killed (al : allocation) : allocation :=
-  {| al_start := al.(al_start); al_len := al.(al_len); al_alive := false; |}.
+  {| al_start := al.(al_start); al_len := al.(al_len); al_alive := false; al_kind := al.(al_kind) |}.
 
 (** Smallest allocatable address (we reserve 0 for NULL). *)
 Definition min_alloc_start : Z := 1.
@@ -262,6 +269,8 @@ Proof. rewrite /valid_ptr => ?. apply: heap_state_loc_in_bounds_has_alloc_id. na
 Definition addr_in_range_alloc (a : addr) (aid : alloc_id) (st : heap_state) : Prop :=
   ∃ alloc, st.(hs_allocs) !! aid = Some alloc ∧ a ∈ alloc.
 
+Global Instance alloc_kind_eq_dec : EqDecision alloc_kind.
+Proof. solve_decision. Qed.
 Global Instance allocation_eq_dec : EqDecision (allocation).
 Proof. solve_decision. Qed.
 Global Instance alloc_id_alive_dec aid st : Decision (alloc_id_alive aid st).
@@ -474,57 +483,57 @@ Arguments mem_cast : simpl never.
 
 (** ** Allocation and deallocation. *)
 
-Inductive alloc_new_block : heap_state → loc → val → heap_state → Prop :=
-| AllocNewBlock σ l aid v:
-    let alloc := Allocation l.2 (length v) true in
+Inductive alloc_new_block : heap_state → alloc_kind → loc → val → heap_state → Prop :=
+| AllocNewBlock σ l aid kind v:
+    let alloc := Allocation l.2 (length v) true kind in
     l.1 = ProvAlloc (Some aid) →
     σ.(hs_allocs) !! aid = None →
     allocation_in_range alloc →
     heap_range_free σ.(hs_heap) l.2 (length v) →
-    alloc_new_block σ l v {|
+    alloc_new_block σ kind l v {|
       hs_heap   := heap_alloc l.2 v aid σ.(hs_heap);
       hs_allocs := <[aid := alloc]> σ.(hs_allocs);
     |}.
 
-Inductive alloc_new_blocks : heap_state → list loc → list val → heap_state → Prop :=
-| AllocNewBlock_nil σ :
-    alloc_new_blocks σ [] [] σ
-| AllocNewBlock_cons σ σ' σ'' l v ls vs :
-    alloc_new_block σ l v σ' →
-    alloc_new_blocks σ' ls vs σ'' →
-    alloc_new_blocks σ (l :: ls) (v :: vs) σ''.
+Inductive alloc_new_blocks : heap_state → alloc_kind → list loc → list val → heap_state → Prop :=
+| AllocNewBlock_nil σ kind :
+    alloc_new_blocks σ kind [] [] σ
+| AllocNewBlock_cons σ σ' σ'' l v ls kind vs :
+    alloc_new_block σ kind l v σ' →
+    alloc_new_blocks σ' kind ls vs σ'' →
+    alloc_new_blocks σ kind (l :: ls) (v :: vs) σ''.
 
-Inductive free_block : heap_state → loc → layout → heap_state → Prop :=
-| FreeBlock σ l aid ly v:
-    let al_alive := Allocation l.2 ly.(ly_size) true  in
-    let al_dead  := Allocation l.2 ly.(ly_size) false in
+Inductive free_block : heap_state → alloc_kind → loc → layout → heap_state → Prop :=
+| FreeBlock σ l aid ly kind v:
+    let al_alive := Allocation l.2 ly.(ly_size) true  kind in
+    let al_dead  := Allocation l.2 ly.(ly_size) false kind in
     l.1 = ProvAlloc (Some aid) →
     σ.(hs_allocs) !! aid = Some al_alive →
     length v = ly.(ly_size) →
     heap_lookup_loc l v (λ st, st = RSt 0%nat) σ.(hs_heap) →
-    free_block σ l ly {|
+    free_block σ kind l ly {|
       hs_heap   := heap_free l.2 ly.(ly_size) σ.(hs_heap);
       hs_allocs := <[aid := al_dead]> σ.(hs_allocs);
     |}.
 
-Inductive free_blocks : heap_state → list (loc * layout) → heap_state → Prop :=
-| FreeBlocks_nil σ :
-    free_blocks σ [] σ
-| FreeBlocks_cons σ σ' σ'' l ly ls :
-    free_block σ l ly σ' →
-    free_blocks σ' ls σ'' →
-    free_blocks σ ((l, ly) :: ls) σ''.
+Inductive free_blocks : heap_state → alloc_kind → list (loc * layout) → heap_state → Prop :=
+| FreeBlocks_nil σ kind :
+    free_blocks σ kind [] σ
+| FreeBlocks_cons σ σ' σ'' l ly kind ls :
+    free_block σ kind l ly σ' →
+    free_blocks σ' kind ls σ'' →
+    free_blocks σ kind ((l, ly) :: ls) σ''.
 
-Lemma free_block_inj hs l ly hs1 hs2:
-  free_block hs l ly hs1 → free_block hs l ly hs2 → hs1 = hs2.
+Lemma free_block_inj hs l ly kind hs1 hs2:
+  free_block hs kind l ly hs1 → free_block hs kind l ly hs2 → hs1 = hs2.
 Proof. destruct l. inversion 1; simplify_eq. by inversion 1; simplify_eq/=. Qed.
 
-Lemma free_blocks_inj hs1 hs2 hs ls:
-  free_blocks hs ls hs1 → free_blocks hs ls hs2 → hs1 = hs2.
+Lemma free_blocks_inj hs1 hs2 hs kind ls:
+  free_blocks hs kind ls hs1 → free_blocks hs kind ls hs2 → hs1 = hs2.
 Proof.
   move Heq: {1}(hs) => hs' Hb.
-  elim: Hb hs Heq. { move => ?? ->. by inversion 1. }
-  move => ?????? Hb1 ? IH ??.
+  elim: Hb hs Heq. { move => ??? ->. by inversion 1. }
+  move => ??????? Hb1 ? IH ??.
   inversion 1; simplify_eq. apply: IH; [|done].
   by apply: free_block_inj.
 Qed.
@@ -580,25 +589,25 @@ Definition heap_state_invariant (st : heap_state) : Prop :=
 
 (** ** Lemmas about the heap state invariant. *)
 
-Lemma heap_state_alloc_alive_free_disjoint σ id a n b alloc:
+Lemma heap_state_alloc_alive_free_disjoint σ id a n b kind alloc:
   heap_state_alloc_alive_in_heap σ →
   alloc_id_alive id σ →
   heap_range_free σ.(hs_heap) a n →
   σ.(hs_allocs) !! id = Some alloc →
-  Allocation a n b ## alloc.
+  Allocation a n b kind ## alloc.
 Proof.
   move => Hin_heap Halive Hfree Hal p Hp1 Hp2.
   apply (Hin_heap _ _ Hal Halive) in Hp2 as [? Hp2].
   rewrite Hfree in Hp2; first done. apply Hp1.
 Qed.
 
-Lemma alloc_new_block_invariant σ1 σ2 l v :
-  alloc_new_block σ1 l v σ2 →
+Lemma alloc_new_block_invariant σ1 σ2 l v kind :
+  alloc_new_block σ1 kind l v σ2 →
   heap_state_invariant σ1 →
   heap_state_invariant σ2.
 Proof.
   move => []; clear.
-  move => σ1 l aid v alloc Haid Hfresh Halloc Hrange H.
+  move => σ1 l aid kind v alloc Haid Hfresh Halloc Hrange H.
   destruct H as (Hi1&Hi2&Hi3&Hi4&Hi5). split_and!.
   - move => a [id??] /= Ha. destruct (decide (aid = id)) as [->|Hne].
     + exists alloc. split => /=; first by rewrite lookup_insert.
@@ -650,22 +659,22 @@ Proof.
       eapply (Hi5 _ _ Hal); [by eexists | done |..].
 Qed.
 
-Lemma alloc_new_blocks_invariant σ1 σ2 ls vs :
-  alloc_new_blocks σ1 ls vs σ2 →
+Lemma alloc_new_blocks_invariant σ1 σ2 ls vs kind :
+  alloc_new_blocks σ1 kind ls vs σ2 →
   heap_state_invariant σ1 →
   heap_state_invariant σ2.
 Proof.
-  elim => [] // ??????? Hb Hbs IH H.
+  elim => [] // ???????? Hb Hbs IH H.
   apply IH. by eapply alloc_new_block_invariant.
 Qed.
 
-Lemma free_block_invariant σ1 σ2 l ly:
-  free_block σ1 l ly σ2 →
+Lemma free_block_invariant σ1 σ2 l ly kind :
+  free_block σ1 kind l ly σ2 →
   heap_state_invariant σ1 →
   heap_state_invariant σ2.
 Proof.
   move => []; clear.
-  move => σ l aid ly v al_a al_d Haid Hal_a Hlen Hlookup H.
+  move => σ l aid ly kind v al_a al_d Haid Hal_a Hlen Hlookup H.
   destruct H as (Hi1&Hi2&Hi3&Hi4&Hi5). split_and!.
   - move => a hc /= Hhc.
     assert (¬ (l.2 ≤ a < l.2 + length v)) as Hnot_in.
@@ -712,12 +721,12 @@ Proof.
     erewrite elem_of_disjoint in Hdisj. by eapply Hdisj.
 Qed.
 
-Lemma free_blocks_invariant σ1 σ2 ls:
-  free_blocks σ1 ls σ2 →
+Lemma free_blocks_invariant σ1 σ2 ls kind :
+  free_blocks σ1 kind ls σ2 →
   heap_state_invariant σ1 →
   heap_state_invariant σ2.
 Proof.
-  elim => [] // ?????? Hb Hbs IH H.
+  elim => [] // ??????? Hb Hbs IH H.
   apply IH. by eapply free_block_invariant.
 Qed.
 
