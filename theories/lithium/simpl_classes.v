@@ -1,5 +1,8 @@
 From refinedc.lithium Require Import base.
 
+Class SimplExist (T : Type) (e : T → Prop) (Q: Prop) := simpl_exist_proof : Q → ∃ x, e x.
+Class SimplForall (T : Type) (n : nat) (e : T → Prop) (Q: Prop) := simpl_forall_proof : Q → ∀ x, e x.
+
 Class SimplImplUnsafe (changed : bool) (P : Prop) (Ps : Prop → Prop) := simpl_impl_unsafe T: (Ps T) → (P → T).
 Class SimplAndUnsafe (changed : bool) (P : Prop) (Ps : Prop → Prop) := simpl_and_unsafe T: (Ps T) → (P ∧ T).
 Global Instance simplimpl_unsafe_id (P : Prop) : SimplImplUnsafe false P (λ T, P → T) | 1000.

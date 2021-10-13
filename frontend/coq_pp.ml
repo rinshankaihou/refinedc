@@ -1288,7 +1288,13 @@ let pp_proof : Coq_path.t -> func_def -> import list -> string list
       List.iter (fun (x,_) -> pp " arg_%s" x) def.func_args;
       List.iter (fun (x,_) -> pp " local_%s" x) def.func_vars
     end;
-  pp ".@;split_blocks ((";
+  pp ".@;";
+  if func_annot.fa_parameters <> [] then
+    begin
+      let pp_var ff (x, _) = pp_print_string ff x in
+      pp "prepare_parameters (%a).@;" (pp_sep " " pp_var) func_annot.fa_parameters;
+    end;
+  pp "split_blocks ((";
   let pp_inv (id, annot) =
     (* Opening a box and printing the existentials. *)
     pp "@;  @[<v 2><[ \"%s\" :=" id;

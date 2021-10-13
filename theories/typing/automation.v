@@ -278,25 +278,6 @@ Tactic Notation "liRStepUntil" open_constr(id) :=
 
 
 (** * Tactics for starting a function *)
-(* Recursively destruct a product in hypothesis H, using the given name as template. *)
-Ltac destruct_product_hypothesis name H :=
-  match goal with
-  | H : _ * _ |- _ => let tmp1 := fresh "tmp" in
-                      let tmp2 := fresh "tmp" in
-                      destruct H as [tmp1 tmp2];
-                      destruct_product_hypothesis name tmp1;
-                      destruct_product_hypothesis name tmp2
-  |           |- _ => let id := fresh name in
-                      rename H into id
-  end.
-
-Ltac prepare_initial_coq_context :=
-  (* The automation assumes that all products in the context are destructed, see liForall *)
-  repeat lazymatch goal with
-  | H : _ * _ |- _ => destruct_product_hypothesis H H
-  | H : unit |- _ => destruct H
-  end.
-
 (* IMPORTANT: We need to make sure to never call simpl while the code
 (Q) is part of the goal, because simpl seems to take exponential time
 in the number of blocks! *)
@@ -308,7 +289,10 @@ Tactic Notation "start_function" constr(fnname) "(" simple_intropattern(x) ")" :
   iIntros ( x );
   iSplit; [iPureIntro; simpl; by [repeat constructor] || fail "in" fnname "argument types don't match layout of arguments" |];
   let lsa := fresh "lsa" in let lsv := fresh "lsv" in
-  iIntros "!#" (lsa lsv); inv_vec lsv; inv_vec lsa; prepare_initial_coq_context.
+  iIntros "!#" (lsa lsv); inv_vec lsv; inv_vec lsa.
+
+Tactic Notation "prepare_parameters" "(" ident_list(i) ")" :=
+  revert i; repeat liForall.
 
 Ltac liRSplitBlocksIntro :=
   repeat (

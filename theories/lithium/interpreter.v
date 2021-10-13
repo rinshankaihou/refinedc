@@ -501,7 +501,7 @@ Ltac liExist protect :=
   | _ => idtac
   end;
   lazymatch goal with
-  | |- @ex ?A _ =>
+  | |- @ex ?A ?P =>
     first [
         custom_exist_tac A protect
       | lazymatch A with
@@ -512,10 +512,15 @@ Ltac liExist protect :=
         | sigT _ => apply: tac_exist_sigT
         | unit => exists tt
         | ?A =>
-          lazymatch protect with
-          | true => let Hevar := create_protected_evar A in exists (protected Hevar)
-          | false => eexists _
-          end
+            first [
+                let p := constr:(_ : SimplExist A P _) in
+                refine (@simpl_exist_proof _ _ _ p _)
+              |
+                lazymatch protect with
+                | true => let Hevar := create_protected_evar A in exists (protected Hevar)
+                | false => eexists _
+                end
+              ]
         end ]
   | _ => fail "do_exist: unknown goal"
   end.
@@ -595,26 +600,46 @@ Ltac liImpl :=
   end.
 
 Ltac liForall :=
-  let do_intro name :=
-    repeat lazymatch goal with
-    (* relying on the fact that unification variables cannot contain
-       dependent variables to distinguish between dependent and non dependent forall *)
-    | |- ?P -> ?Q => fail "implication, not forall"
-    | |- forall _ : ?P, _ =>
-      (* When changing this, also change [prepare_initial_coq_context] in automation.v *)
-      lazymatch P with
-      | (prod _ _) => case
-      | unit => case
-      | _ => let H := fresh name in intro H
-      end
+  (* n tells us how many quantifiers we should introduce with this name *)
+  let rec do_intro n name :=
+    lazymatch n with
+    | S ?n' =>
+      lazymatch goal with
+      (* relying on the fact that unification variables cannot contain
+         dependent variables to distinguish between dependent and non dependent forall *)
+      | |- ?P -> ?Q =>
+          lazymatch type of P with
+          | Prop => fail "implication, not forall"
+          | _ => (* just some unused variable, discard *) move => _
+          end
+      | |- forall _ : ?A, _ =>
+        (* When changing this, also change [prepare_initial_coq_context] in automation.v *)
+        lazymatch A with
+        | (prod _ _) => case; do_intro (S (S O)) name
+        | unit => case
+        | _ =>
+            first [
+                (* We match again since having e in the context when calling fresh can mess up names. *)
+                lazymatch goal with
+                | |- forall e : ?A, @?P e =>
+                    let sn := open_constr:(_ : nat) in
+                    let p := constr:(_ : SimplForall A sn P _) in
+                    refine (@simpl_forall_proof _ _ _ _ p _);
+                    do_intro sn name
+                end
+              | let H := fresh name in intro H
+              ]
+        end
+      end; do_intro n' name
+    | O => idtac
     end
   in
   lazymatch goal with
-  | |- envs_entails _ (bi_forall (λ name, _)) => notypeclasses refine (tac_do_forall _ _ _ _); do_intro name
+  | |- envs_entails _ (bi_forall (λ name, _)) => notypeclasses refine (tac_do_forall _ _ _ _); do_intro (S O) name
   | |- envs_entails _ (bi_wand (bi_exist (λ name, _)) _) =>
-    notypeclasses refine (tac_do_exist_wand _ _ _ _ _); do_intro name
-  | |- (∃ name, _) → _ => case; do_intro name
-  | |- forall name, _ => do_intro name
+    notypeclasses refine (tac_do_exist_wand _ _ _ _ _); do_intro (S O) name
+  | |- (∃ name, _) → _ => case; do_intro (S O) name
+  | |- forall name, _ => do_intro (S O) name
   | _ => fail "do_forall: unknown goal"
   end.
 
