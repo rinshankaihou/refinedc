@@ -6,6 +6,11 @@ Global Hint Extern 10 (CanSolve ?P) => (change P; can_solve_tac) : typeclass_ins
 Ltac sidecond_hook := idtac.
 Ltac unsolved_sidecond_hook := idtac.
 
+(* There can be some goals where one should not call injection on an
+hypothesis that is introduced. The [check_injection_tac] hook is called
+before injection and allows the client to customize this. *)
+Ltac check_injection_tac := idtac.
+
 (** * general normalization infrastructure *)
 Ltac normalize_tac := fail "provide a normalize_tac!".
 Lemma tac_normalize_goal (P1 P2 : Prop):

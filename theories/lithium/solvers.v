@@ -91,7 +91,9 @@ Ltac normalize_and_simpl_goal_step :=
         | |- false = false -> ?P → _ => move => _;
           match P with
           | ∃ _, _ => case
-          | _ = _ => let Hi := fresh "Hi" in move => Hi; injection Hi; clear Hi
+          | _ = _ =>
+              check_injection_tac;
+              let Hi := fresh "Hi" in move => Hi; injection Hi; clear Hi
           | _ => check_hyp_not_exists P; intros ?; subst
           | _ => move => _
           end
