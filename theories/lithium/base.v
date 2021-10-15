@@ -23,6 +23,7 @@ Typeclasses Opaque is_Some.
 Global Opaque rotate_nat_add rotate_nat_sub.
 
 Typeclasses Opaque Z.divide Z.modulo Z.div Z.shiftl Z.shiftr.
+Arguments bool_decide : simpl never.
 Arguments min : simpl nomatch.
 
 Arguments Z.testbit : simpl never.
