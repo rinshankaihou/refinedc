@@ -52,6 +52,12 @@ Definition destruct_hint {Σ B} (hint : destruct_hint_info) (info : B) (T : iPro
 Typeclasses Opaque destruct_hint.
 Arguments destruct_hint : simpl never.
 
+(** * [vm_compute_hint] *)
+Definition vm_compute_hint {A B C} (f : A → B) (x : A) (T : B → C) : C :=
+  T (f x).
+Typeclasses Opaque vm_compute_hint.
+Arguments vm_compute_hint : simpl never.
+
 (** * [RelatedTo] *)
 Class RelatedTo {Σ} (pat : iProp Σ) : Type := {
   rt_fic : find_in_context_info (Σ:=Σ);

@@ -28,6 +28,12 @@ Section coq_tactics.
     (P1 -∗ P2) → envs_entails Δ (P1 ∗ T) → envs_entails Δ (P2 ∗ T).
   Proof. by rewrite envs_entails_eq => -> HP. Qed.
 
+  Lemma tac_vm_compute_hint {A B} Δ (f : A → B) a (Q : B → iProp Σ) x:
+    (∀ y, x = y → f a = y) →
+    envs_entails Δ (Q x) →
+    envs_entails Δ (vm_compute_hint f a Q).
+  Proof. naive_solver. Qed.
+
   Lemma tac_protected_eq_app {A} (f : A → Prop) a :
     f a → f (protected a).
   Proof. by rewrite protected_eq. Qed.
@@ -679,6 +685,13 @@ Ltac liDestructHint :=
     end
   end; repeat (liForall || liImpl); try by [exfalso; can_solve_tac].
 
+Ltac liVmComputeHint :=
+  lazymatch goal with
+  | |- envs_entails ?Δ (vm_compute_hint ?f ?a _) =>
+      refine (tac_vm_compute_hint _ _ _ _ _ _ _);
+        [let H := fresh in intros ? H; vm_compute; apply H|]
+  end.
+
 Ltac liAccu :=
   lazymatch goal with
   | |- envs_entails _ (accu _) =>
@@ -784,6 +797,7 @@ Ltac liStep :=
     | liSideCond
     | liFindInContext
     | liDestructHint
+    | liVmComputeHint
     | liTrue
     | liFalse
     | liAccu
