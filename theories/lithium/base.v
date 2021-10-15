@@ -4,9 +4,8 @@ From iris.algebra Require Export big_op.
 From Coq.ZArith Require Import Znumtheory.
 From stdpp Require Import gmap list.
 From iris.program_logic Require Import weakestpre.
-From iris.bi Require Import derived_laws.
-Import interface.bi derived_laws.bi.
-From iris.proofmode Require Import tactics.
+From iris.bi Require Import bi.
+From iris.proofmode Require Import proofmode.
 From stdpp Require Import natmap.
 From refinedc.lithium Require Import Z_bitblast.
 Set Default Proof Using "Type".
@@ -75,7 +74,7 @@ Tactic Notation "reduce_closed" constr(x) :=
 
 (* from https://mattermost.mpi-sws.org/iris/pl/dcktjjjpsiycmrieyh74bzoagr *)
 Ltac solve_sep_entails :=
-  try (apply equiv_entails; split);
+  try (apply (anti_symm _));
   iIntros;
   repeat iMatchHyp (fun H P =>
     lazymatch P with
