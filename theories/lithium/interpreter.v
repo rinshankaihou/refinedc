@@ -704,15 +704,6 @@ Ltac liSideCond :=
     lazymatch P with
     | shelve_hint _ => split; [ unfold shelve_hint; li_shelve_sidecond |]
     | _ => first [
-      match P with
-      | context C [via_vm_compute ?f ?a] =>
-        rewrite (via_vm_compute_eq f a);
-        (* TODO: using [vm_compute (f a)] leads to very slow QED. Why is this the case? *)
-        (* vm_compute (f a) *)
-        let x := eval vm_compute in (f a) in
-        let P' := context C [ x ] in
-        change_no_check (P' ∧ Q)
-      end |
       progress normalize_goal_and |
     lazymatch P with
     | context [protected _] => first [
