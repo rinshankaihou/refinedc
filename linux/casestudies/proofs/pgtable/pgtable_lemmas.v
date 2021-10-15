@@ -53,30 +53,29 @@ Global Instance Pte_BitfieldDesc : BitfieldDesc Pte := {|
   bitfield_repr := pte_repr;
   bitfield_wf := pte_wf;
 |}.
-(*
+
 Global Instance simpl_exist_Pte P : SimplExist Pte P
-   (∃ valid type leaf_attr_lo addr undef leaf_attr_hi,
-       P {|
-           pte_valid := valid;
-           pte_type := type;
-           pte_leaf_attr_lo := leaf_attr_lo;
-           pte_addr := addr;
-           pte_undef := undef;
-           pte_leaf_attr_hi := leaf_attr_hi;
-         |}).
+  (∃ valid type leaf_attr_lo addr undef leaf_attr_hi,
+    P {|
+      pte_valid := valid;
+      pte_type := type;
+      pte_leaf_attr_lo := leaf_attr_lo;
+      pte_addr := addr;
+      pte_undef := undef;
+      pte_leaf_attr_hi := leaf_attr_hi;
+    |}).
 Proof. unfold SimplExist. naive_solver. Qed.
 Global Instance simpl_forall_Pte P : SimplForall Pte 6 P
-   (∀ valid type leaf_attr_lo addr undef leaf_attr_hi,
-       P {|
-           pte_valid := valid;
-           pte_type := type;
-           pte_leaf_attr_lo := leaf_attr_lo;
-           pte_addr := addr;
-           pte_undef := undef;
-           pte_leaf_attr_hi := leaf_attr_hi;
-         |}).
+  (∀ valid type leaf_attr_lo addr undef leaf_attr_hi,
+    P {|
+      pte_valid := valid;
+      pte_type := type;
+      pte_leaf_attr_lo := leaf_attr_lo;
+      pte_addr := addr;
+      pte_undef := undef;
+      pte_leaf_attr_hi := leaf_attr_hi;
+    |}).
 Proof. unfold SimplForall => ? []. naive_solver. Qed.
- *)
 
 Definition addr_of (n : Z) : Z :=
   bf_slice 12 36 n.
@@ -143,9 +142,11 @@ Global Instance Prot_BitfieldDesc : BitfieldDesc Prot := {|
   bitfield_repr := prot_repr;
   bitfield_wf := prot_wf;
 |}.
-Global Instance simpl_exist_Prot P : SimplExist Prot P (∃ x w r device, P {| prot_x := x; prot_w := w; prot_r := r; prot_device := device |}).
+Global Instance simpl_exist_Prot P : SimplExist Prot P (∃ x w r device,
+  P {| prot_x := x; prot_w := w; prot_r := r; prot_device := device |}).
 Proof. unfold SimplExist. naive_solver. Qed.
-Global Instance simpl_forall_Prot P : SimplForall Prot 4 P (∀ x w r device, P {| prot_x := x; prot_w := w; prot_r := r; prot_device := device |}).
+Global Instance simpl_forall_Prot P : SimplForall Prot 4 P (∀ x w r device,
+  P {| prot_x := x; prot_w := w; prot_r := r; prot_device := device |}).
 Proof. unfold SimplForall => ? []. naive_solver. Qed.
 
 (* struct, const *)
@@ -164,19 +165,3 @@ Definition ap_rw : Z := 1.
 Definition ap_ro : Z := 3.
 Definition sh_is : Z := 3.
 Definition err_code : Z := 22.
-
-(* tactics TODO: SimplImpl *)
-
-Ltac simpl_bool_hyp :=
-  repeat (match goal with
-  | [ H : negb ?b = true  |- _ ] =>
-    assert (b = false) by apply negb_true_iff; clear H
-  | [ H : negb ?b = false |- _ ] =>
-    assert (b = true) by apply negb_false_iff; clear H
-  | [ H : bf_cons ?a 1 (Z_of_bool ?b) bf_nil = 0 |- _ ] =>
-    assert (b = false) by (by apply (bf_cons_bool_singleton_false_iff a b)); clear H
-  | [ H : bf_cons ?a 1 (Z_of_bool ?b) bf_nil ≠ 0 |- _ ] =>
-    assert (b = true) by (by apply (bf_cons_bool_singleton_true_iff a b)); clear H
-  | [ H : ?b = false |- _ ] => try (rewrite !H; clear H)
-  | [ H : ?b = true  |- _ ] => try (rewrite !H; clear H)
-  end; try solve_goal).

@@ -26,25 +26,35 @@ Proof.
   bitblast.
 Qed.
 
+Lemma bf_cons_singleton_z_iff a k x :
+  0 ≤ a →
+  bf_cons a k x bf_nil = 0 ↔ x = 0.
+Proof.
+  move => ?. rewrite /bf_cons /bf_nil Z.lor_0_r.
+  by apply Z.shiftl_eq_0_iff.
+Qed.
+
+Lemma bf_cons_singleton_nz_iff a k x :
+  0 ≤ a →
+  bf_cons a k x bf_nil ≠ 0 ↔ x ≠ 0.
+Proof.
+  move => ?. by apply not_iff_compat, bf_cons_singleton_z_iff.
+Qed.
+
 Lemma bf_cons_bool_singleton_false_iff a b :
   0 ≤ a →
   bf_cons a 1 (Z_of_bool b) bf_nil = 0 ↔ b = false.
 Proof.
-  intros. rewrite /bf_cons /bf_nil Z.lor_0_r.
-  split.
-  - destruct b; last done.
-    simplify_eq/=. rewrite Z.shiftl_1_l.
-    have ? : 2 ^ a ≠ 0 by apply Z.pow_nonzero.
-    contradiction.
-  - move => ->. simplify_eq/=. by rewrite Z.shiftl_0_l.
+  move => ?. rewrite bf_cons_singleton_z_iff; last done.
+  by destruct b.
 Qed.
 
 Lemma bf_cons_bool_singleton_true_iff a b :
   0 ≤ a →
   bf_cons a 1 (Z_of_bool b) bf_nil ≠ 0 ↔ b = true.
 Proof.
-  intros. rewrite /not bf_cons_bool_singleton_false_iff //.
-  destruct b; naive_solver.
+  move => ?. rewrite bf_cons_singleton_nz_iff; last done.
+  by destruct b.
 Qed.
 
 Lemma bf_mask_cons_singleton a k :
@@ -319,6 +329,37 @@ Proof.
   unfold CanSolve in *.
   have ? := bf_range_empty_cons.
   split; naive_solver.
+Qed.
+
+(* Simplify singleton data list =/≠ 0 *)
+
+Global Instance bf_cons_singleton_z a k x `{!CanSolve (0 ≤ a)} :
+  SimplBothRel (=) 0 (bf_cons a k x bf_nil) (x = 0).
+Proof.
+  have := (bf_cons_singleton_z_iff a k x).
+  split; naive_solver.
+Qed.
+
+Global Instance bf_cons_singleton_nz_1 a k x `{!CanSolve (0 ≤ a)} :
+  SimplBoth (bf_cons a k x bf_nil ≠ 0) (x ≠ 0).
+Proof.
+  have := (bf_cons_singleton_nz_iff a k x).
+  split; naive_solver.
+Qed.
+Global Instance bf_cons_singleton_nz_2 a k x `{!CanSolve (0 ≤ a)} :
+  SimplBoth (0 ≠ bf_cons a k x bf_nil) (x ≠ 0).
+Proof.
+  have := (bf_cons_singleton_nz_iff a k x).
+  split; naive_solver.
+Qed.
+
+(* Simplify data list eq *)
+
+Global Instance bf_cons_eq a k x1 l1 x2 l2 :
+  SimplAndUnsafe true (bf_cons a k x1 l1 = bf_cons a k x2 l2) (λ T, x1 = x2 ∧ l1 = l2 ∧ T).
+Proof.
+  unfold CanSolve, SimplAndUnsafe in *.
+  naive_solver.
 Qed.
 
 (* Linux macros for bits *)

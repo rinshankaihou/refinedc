@@ -208,7 +208,6 @@ static bool kvm_pte_valid(kvm_pte_t pte)
 [[rc::returns("{if bool_decide (level = max_level - 1) then false \
     else if negb (pte_valid pte) then false \
     else bool_decide (pte_type pte = pte_type_table)} @ boolean<bool_it>")]]
-[[rc::tactics("all: simpl_bool_hyp.")]]
 static bool kvm_pte_table(kvm_pte_t pte, u32 level)
 {
     if (level == KVM_PGTABLE_MAX_LEVELS - 1)
@@ -266,7 +265,6 @@ static void kvm_set_table_pte(kvm_pte_t *ptep, kvm_pte_t *childp,
 [[rc::requires("{pte1 = {| pte_valid := true; pte_type := type; pte_leaf_attr_lo := pte_leaf_attr_lo attr; pte_addr := (addr_of pa); pte_undef := 0; pte_leaf_attr_hi := pte_leaf_attr_hi attr |} }")]]
 [[rc::returns("{if pte_valid pte then bool_decide (bitfield_repr pte = bitfield_repr pte1) else true} @ boolean<bool_it>")]]
 [[rc::ensures("own p : {if pte_valid pte then pte else pte1} @ bitfield<Pte>")]]
-[[rc::tactics("all: simpl_bool_hyp.")]]
 static bool kvm_set_valid_leaf_pte(kvm_pte_t *ptep, u64 pa, kvm_pte_t attr,
                    u32 level)
 {
@@ -305,8 +303,6 @@ struct [[rc::refined_by("phys : Z", "attr : Attr", "mm_ops : mm_callbacks", "o :
 [[rc::requires("{attr = {| attr_lo_s1_attridx := mtype; attr_lo_s1_ap := ap; attr_lo_s1_sh := sh_is; attr_lo_s1_af := true; attr_hi_s1_xn := xn |} }")]]
 [[rc::returns("{if err then -err_code else 0} @ int<i32>")]]
 [[rc::ensures("own d : {if err then (phys, a, mm_ops, o) else (phys, attr, mm_ops, o)} @ hyp_map_data")]]
-[[rc::tactics("all: try congruence.")]]
-[[rc::tactics("all: simpl_bool_hyp.")]]
 static int hyp_map_set_prot_attr(kvm_pgtable_prot prot, struct hyp_map_data *data)
 {
     // TODO: remove 0 != once issue #45 is fixed
