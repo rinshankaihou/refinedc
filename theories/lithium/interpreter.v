@@ -28,11 +28,15 @@ Section coq_tactics.
     (P1 -∗ P2) → envs_entails Δ (P1 ∗ T) → envs_entails Δ (P2 ∗ T).
   Proof. by rewrite envs_entails_eq => -> HP. Qed.
 
-  Lemma tac_vm_compute_hint {A B} Δ (f : A → B) a (Q : B → iProp Σ) x:
-    (∀ y, x = y → f a = y) →
+  Lemma tac_vm_compute_hint {A B} Δ (f : A → option B) a (Q : B → iProp Σ) x:
+    (∀ y, Some x = y → f a = y) →
     envs_entails Δ (Q x) →
     envs_entails Δ (vm_compute_hint f a Q).
-  Proof. naive_solver. Qed.
+  Proof.
+    rewrite envs_entails_eq. intros ? HQ.
+    etrans; [done|]. etrans; [ |apply: bi.exist_intro].
+    iIntros "$ !%". naive_solver.
+  Qed.
 
   Lemma tac_protected_eq_app {A} (f : A → Prop) a :
     f a → f (protected a).

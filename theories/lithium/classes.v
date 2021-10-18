@@ -53,9 +53,8 @@ Typeclasses Opaque destruct_hint.
 Arguments destruct_hint : simpl never.
 
 (** * [vm_compute_hint] *)
-Definition vm_compute_hint {A B C} (f : A → B) (x : A) (T : B → C) : C :=
-  T (f x).
-Typeclasses Opaque vm_compute_hint.
+Definition vm_compute_hint {Σ A B} (f : A → option B) (x : A) (T : B → iProp Σ) : iProp Σ :=
+  ∃ y, ⌜f x = Some y⌝ ∗ T y.
 Arguments vm_compute_hint : simpl never.
 
 (** * [RelatedTo] *)

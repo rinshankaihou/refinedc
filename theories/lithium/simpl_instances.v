@@ -82,6 +82,11 @@ Proof. destruct b; done. Qed.
 Global Instance simpl_negb_false b: SimplBothRel (=) (negb b) false (b = true).
 Proof. destruct b; done. Qed.
 
+Global Instance simpl_eqb_true b1 b2: SimplBothRel (=) (eqb b1 b2) true (b1 = b2).
+Proof. destruct b1, b2; done. Qed.
+Global Instance simpl_eqb_false b1 b2: SimplBothRel (=) (eqb b1 b2) false (b1 = negb b2).
+Proof. destruct b1, b2; done. Qed.
+
 Global Instance simpl_min_glb_nat n1 n2 m : SimplBoth (m ≤ n1 `min` n2)%nat (m ≤ n1 ∧ m ≤ n2)%nat.
 Proof. rewrite /SimplBoth. lia. Qed.
 Global Instance simpl_min_glb n1 n2 m : SimplBoth (m ≤ n1 `min` n2) (m ≤ n1 ∧ m ≤ n2).

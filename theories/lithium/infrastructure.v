@@ -38,6 +38,10 @@ Class CheckOwnInContext {Σ} (P : iProp Σ) : Prop := { check_own_in_context : T
 Class FastDone (P : Prop) : Prop := fast_done_proof : P.
 Global Hint Extern 1 (FastDone ?P) => (change P; fast_done) : typeclass_instances.
 
+(** ** [TCDone] *)
+Class TCDone (P : Prop) : Prop := done_proof : P.
+Global Hint Extern 1 (TCDone ?P) => (change P; done) : typeclass_instances.
+
 (** ** [CanSolve]
  Requires the user to provide a general purpose [can_solve_tac] (see tactics.v)
  which should try hard to solve this goal. *)
