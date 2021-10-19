@@ -9,6 +9,10 @@ Proof. split; rewrite -ly_align_log_ly_align_eq_iff; destruct ly1,ly2; naive_sol
 Global Instance simpl_layout_leq ly1 ly2 : SimplBoth (ly1 ⊑ ly2) (ly1.(ly_size) ≤ ly2.(ly_size) ∧ ly_align ly1 ≤ ly_align ly2)%nat.
 Proof. split; rewrite /ly_align -Nat.pow_le_mono_r_iff //; lia. Qed.
 
+Global Instance ly_size_ly_offset_eq ly n m `{!CanSolve (n ≤ ly_size ly)%nat}:
+  SimplBothRel (=) (ly_size (ly_offset ly n)) m (ly_size ly = m + n)%nat.
+Proof. unfold CanSolve in *. rewrite {1}/ly_size/=. split; lia. Qed.
+
 Global Instance simpl_is_power_of_two_align ly :
   SimplAnd (is_power_of_two (ly_align ly)) (λ T, T).
 Proof. split => ?; last naive_solver. split => //. by eexists _. Qed.

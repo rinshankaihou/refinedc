@@ -61,13 +61,13 @@ Inductive range : Type :=
   | ei : nat → nat → range (* (l, r] *)
   .
 
-Instance range_elem_of : ElemOf nat range := λ i I,
+Global Instance range_elem_of : ElemOf nat range := λ i I,
   match I with
   | ie l r => l ≤ i ∧ i < r
   | ei l r => l < i ∧ i ≤ r
   end.
 
-Instance range_elem_of_decision (i : nat) (I : range) : Decision (i ∈ I).
+Global Instance range_elem_of_decision (i : nat) (I : range) : Decision (i ∈ I).
 Proof.
   destruct I as [l r | l r].
   - destruct (decide (l ≤ i ∧ i < r)); by [ left | right ].

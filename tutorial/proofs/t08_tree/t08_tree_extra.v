@@ -7,7 +7,7 @@ Inductive tree A : Type :=
 Arguments leaf {_}.
 Arguments node {_}.
 
-Instance inhabited_tree A : Inhabited (tree A).
+Global Instance inhabited_tree A : Inhabited (tree A).
 Proof. constructor. exact leaf. Qed.
 
 Definition node_data {A} (t : tree A) : option (tree A * A * tree A) :=

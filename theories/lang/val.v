@@ -10,7 +10,7 @@ Inductive mbyte : Set :=
 | MPtrFrag (l : loc) (n : nat) (** Fragment [n] for location [l]. *)
 | MPoison.
 
-Instance mbyte_dec_eq : EqDecision mbyte.
+#[export] Instance mbyte_dec_eq : EqDecision mbyte.
 Proof. solve_decision. Qed.
 
 Program Definition mbyte_to_byte (mb : mbyte) : option (byte * option alloc_id) :=

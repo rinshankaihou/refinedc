@@ -5,7 +5,7 @@ Set Default Proof Using "Type".
 Lemma shift_12_eq_mul_4096 n :
   (n ≪ 12) = n * 4096.
 Proof. by rewrite Z.shiftl_mul_pow2. Qed.
-Hint Rewrite shift_12_eq_mul_4096 : lithium_rewrite.
+#[export] Hint Rewrite shift_12_eq_mul_4096 : lithium_rewrite.
 
 Lemma ly_size_PAGES i : ly_size (PAGES i) = (i * Z.to_nat PAGE_SIZE)%nat.
 Proof. by rewrite /PAGES /ly_with_align /ly_size. Qed.
@@ -38,12 +38,12 @@ Proof. rewrite !ly_size_PAGES. lia. Qed.
 Typeclasses Opaque PAGES.
 Global Opaque PAGES.
 
-Hint Rewrite ly_size_ly_offset : lithium_rewrite.
-Hint Rewrite ly_size_PAGES_sub : lithium_rewrite.
-Hint Rewrite ly_size_PAGES : lithium_rewrite.
-Hint Rewrite ly_offset_PAGES : lithium_rewrite.
+#[export] Hint Rewrite ly_size_ly_offset : lithium_rewrite.
+#[export] Hint Rewrite ly_size_PAGES_sub : lithium_rewrite.
+#[export] Hint Rewrite ly_size_PAGES : lithium_rewrite.
+#[export] Hint Rewrite ly_offset_PAGES : lithium_rewrite.
 
-Hint Rewrite ly_size_ly_offset : refinedc_loc_eq_rewrite.
-Hint Rewrite ly_size_PAGES_sub : refinedc_loc_eq_rewrite.
-Hint Rewrite ly_size_PAGES : refinedc_loc_eq_rewrite.
-Hint Rewrite ly_offset_PAGES : refinedc_loc_eq_rewrite.
+#[export] Hint Rewrite ly_size_ly_offset : refinedc_loc_eq_rewrite.
+#[export] Hint Rewrite ly_size_PAGES_sub : refinedc_loc_eq_rewrite.
+#[export] Hint Rewrite ly_size_PAGES : refinedc_loc_eq_rewrite.
+#[export] Hint Rewrite ly_offset_PAGES : refinedc_loc_eq_rewrite.

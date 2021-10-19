@@ -11,7 +11,7 @@ Class refinedcG Σ := RefinedCG {
   refinedcG_gen_heapG :> heapG Σ
 }.
 
-Instance c_irisG `{!refinedcG Σ} : irisGS c_lang Σ := {
+Global Instance c_irisG `{!refinedcG Σ} : irisGS c_lang Σ := {
   iris_invGS := refinedcG_invG;
   state_interp σ κs _ _ := state_ctx σ;
   fork_post _ := True%I;
@@ -20,7 +20,7 @@ Instance c_irisG `{!refinedcG Σ} : irisGS c_lang Σ := {
 }.
 Global Opaque iris_invGS.
 
-Instance into_val_val v : IntoVal (to_rtexpr (Val v)) v.
+Global Instance into_val_val v : IntoVal (to_rtexpr (Val v)) v.
 Proof. done. Qed.
 
 Global Instance wp_expr_wp `{!refinedcG Σ} : Wp (iProp Σ) expr val stuckness :=
@@ -36,13 +36,13 @@ Local Ltac solve_atomic :=
     [inversion 1; unfold coerce_rtexpr in *; simplify_eq; inv_expr_step; naive_solver
     |unfold coerce_rtexpr in *;apply ectxi_language_sub_redexes_are_values; intros [[]|[]] **; naive_solver].
 
-Instance cas_atomic s ot (v1 v2 v3 : val) : Atomic s (coerce_rtexpr (CAS ot v1 v2 v3)).
+Global Instance cas_atomic s ot (v1 v2 v3 : val) : Atomic s (coerce_rtexpr (CAS ot v1 v2 v3)).
 Proof. solve_atomic. Qed.
-Instance skipe_atomic s (v : val) : Atomic s (coerce_rtexpr (SkipE v)).
+Global Instance skipe_atomic s (v : val) : Atomic s (coerce_rtexpr (SkipE v)).
 Proof. solve_atomic. Qed.
-Instance deref_atomic s (l : loc) ly : Atomic s (coerce_rtexpr (Deref ScOrd ly l)).
+Global Instance deref_atomic s (l : loc) ly : Atomic s (coerce_rtexpr (Deref ScOrd ly l)).
 Proof. solve_atomic. Qed.
-Instance use_atomic s (l : loc) ly : Atomic s (coerce_rtexpr (Use ScOrd ly l)).
+Global Instance use_atomic s (l : loc) ly : Atomic s (coerce_rtexpr (Use ScOrd ly l)).
 Proof. solve_atomic. Qed.
 
 (*** General lifting lemmas *)

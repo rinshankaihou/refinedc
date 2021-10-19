@@ -17,7 +17,7 @@ Record byte :=
 Program Definition byte0 : byte := {| byte_val := 0; |}.
 Next Obligation. done. Qed.
 
-Instance byte_eq_dec : EqDecision byte.
+#[export] Instance byte_eq_dec : EqDecision byte.
 Proof.
   move => [b1 H1] [b2 H2]. destruct (decide (b1 = b2)) as [->|].
   - left. assert (H1 = H2) as ->; [|done]. apply proof_irrel.

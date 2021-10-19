@@ -277,27 +277,27 @@ Qed.
 (* rewrite & simpl rules *)
 Create HintDb bitfield_rewrite discriminated.
 
-Hint Rewrite bf_land_nil : bitfield_rewrite.
-Hint Rewrite bf_land_mask_cons using can_solve_tac : bitfield_rewrite.
-Hint Rewrite bf_land_mask_flip using can_solve_tac : bitfield_rewrite.
+#[export] Hint Rewrite bf_land_nil : bitfield_rewrite.
+#[export] Hint Rewrite bf_land_mask_cons using can_solve_tac : bitfield_rewrite.
+#[export] Hint Rewrite bf_land_mask_flip using can_solve_tac : bitfield_rewrite.
 
-Hint Rewrite bf_lor_nil_l : bitfield_rewrite.
-Hint Rewrite bf_lor_nil_r : bitfield_rewrite.
-Hint Rewrite bf_lor_update using lia : bitfield_rewrite.
-Hint Rewrite bf_lor_update_ne using lia : bitfield_rewrite.
-Hint Rewrite bf_lor_mask_cons_l using lia : bitfield_rewrite.
-Hint Rewrite bf_lor_mask_cons_ne_l using lia : bitfield_rewrite.
-Hint Rewrite bf_lor_mask_cons_r using lia : bitfield_rewrite.
-Hint Rewrite bf_lor_mask_cons_ne_r using lia : bitfield_rewrite.
-Hint Rewrite bf_lor_mask_cons using lia : bitfield_rewrite.
+#[export] Hint Rewrite bf_lor_nil_l : bitfield_rewrite.
+#[export] Hint Rewrite bf_lor_nil_r : bitfield_rewrite.
+#[export] Hint Rewrite bf_lor_update using lia : bitfield_rewrite.
+#[export] Hint Rewrite bf_lor_update_ne using lia : bitfield_rewrite.
+#[export] Hint Rewrite bf_lor_mask_cons_l using lia : bitfield_rewrite.
+#[export] Hint Rewrite bf_lor_mask_cons_ne_l using lia : bitfield_rewrite.
+#[export] Hint Rewrite bf_lor_mask_cons_r using lia : bitfield_rewrite.
+#[export] Hint Rewrite bf_lor_mask_cons_ne_r using lia : bitfield_rewrite.
+#[export] Hint Rewrite bf_lor_mask_cons using lia : bitfield_rewrite.
 
-Hint Rewrite bf_slice_nil : bitfield_rewrite.
-Hint Rewrite bf_slice_cons using can_solve_tac : bitfield_rewrite.
-Hint Rewrite bf_slice_cons_ne using lia : bitfield_rewrite.
+#[export] Hint Rewrite bf_slice_nil : bitfield_rewrite.
+#[export] Hint Rewrite bf_slice_cons using can_solve_tac : bitfield_rewrite.
+#[export] Hint Rewrite bf_slice_cons_ne using lia : bitfield_rewrite.
 
-Hint Rewrite bf_update_nil : bitfield_rewrite.
-Hint Rewrite bf_update_cons using can_solve_tac : bitfield_rewrite.
-Hint Rewrite bf_update_cons_ne using lia : bitfield_rewrite.
+#[export] Hint Rewrite bf_update_nil : bitfield_rewrite.
+#[export] Hint Rewrite bf_update_cons using can_solve_tac : bitfield_rewrite.
+#[export] Hint Rewrite bf_update_cons_ne using lia : bitfield_rewrite.
 
 Definition normalize_bitfield (bv norm : Z) : Prop := bv = norm.
 Typeclasses Opaque normalize_bitfield.

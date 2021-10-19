@@ -11,13 +11,13 @@ extend with more rewriting rules. *)
 Create HintDb refinedc_loc_eq_rewrite discriminated.
 
 (** Rules to inject [nat] operations in to [Z]. *)
-Hint Rewrite Nat2Z.inj_mul : refinedc_loc_eq_rewrite.
-Hint Rewrite Nat2Z.inj_add : refinedc_loc_eq_rewrite.
-Hint Rewrite Nat2Z.inj_sub using lia : refinedc_loc_eq_rewrite.
-Hint Rewrite Z2Nat.id using lia : refinedc_loc_eq_rewrite.
+#[export] Hint Rewrite Nat2Z.inj_mul : refinedc_loc_eq_rewrite.
+#[export] Hint Rewrite Nat2Z.inj_add : refinedc_loc_eq_rewrite.
+#[export] Hint Rewrite Nat2Z.inj_sub using lia : refinedc_loc_eq_rewrite.
+#[export] Hint Rewrite Z2Nat.id using lia : refinedc_loc_eq_rewrite.
 
 (** Rule to eliminate [Z.shiftl]. *)
-Hint Rewrite Z.shiftl_mul_pow2 using lia : refinedc_loc_eq_rewrite.
+#[export] Hint Rewrite Z.shiftl_mul_pow2 using lia : refinedc_loc_eq_rewrite.
 
 (** * Tactics *)
 

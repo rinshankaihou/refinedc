@@ -6,7 +6,7 @@ stages:
 variables:
   # dune takes care of parallelization itself and does not like running in parallel
   CPU_CORES: "1"
-  MAKE_TARGET: "all_with_examples"
+  MAKE_TARGET: "ci"
   OCAML: "ocaml-base-compiler.4.07.1"
 
 .template: &template
@@ -30,10 +30,10 @@ variables:
   - api
 
 ## Build jobs
-build-coq.8.13.2-timing:
+build-coq.8.14.0-timing:
   <<: *template
   variables:
-    OPAM_PINS: "coq version 8.13.2   cerberus git git+https://github.com/rems-project/cerberus.git#7eb94d628845555cb5425f4f4b48890b345efdc5"
+    OPAM_PINS: "coq version 8.14.0   cerberus git git+https://github.com/rems-project/cerberus.git#7eb94d628845555cb5425f4f4b48890b345efdc5"
     DENY_WARNINGS: "1"
     OPAM_PKG: "1"
   only:
@@ -43,10 +43,10 @@ build-coq.8.13.2-timing:
   tags:
   - fp-timing
 
-build-coq.8.13.2:
+build-coq.8.14.0:
   <<: *template
   variables:
-    OPAM_PINS: "coq version 8.13.2   cerberus git git+https://github.com/rems-project/cerberus.git#7eb94d628845555cb5425f4f4b48890b345efdc5"
+    OPAM_PINS: "coq version 8.14.0   cerberus git git+https://github.com/rems-project/cerberus.git#7eb94d628845555cb5425f4f4b48890b345efdc5"
     DENY_WARNINGS: "1"
   only:
   - /^ci/@iris/refinedc
@@ -54,7 +54,7 @@ build-coq.8.13.2:
 trigger-iris.dev:
   <<: *template
   variables:
-    OPAM_PINS: "coq version 8.13.dev   coq-stdpp.dev git git+https://gitlab.mpi-sws.org/iris/stdpp.git#$STDPP_REV   coq-iris.dev git git+https://gitlab.mpi-sws.org/iris/iris.git#$IRIS_REV  cerberus git git+https://github.com/rems-project/cerberus.git#7eb94d628845555cb5425f4f4b48890b345efdc5"
+    OPAM_PINS: "coq version 8.14.dev   coq-stdpp.dev git git+https://gitlab.mpi-sws.org/iris/stdpp.git#$STDPP_REV   coq-iris.dev git git+https://gitlab.mpi-sws.org/iris/iris.git#$IRIS_REV  cerberus git git+https://github.com/rems-project/cerberus.git#7eb94d628845555cb5425f4f4b48890b345efdc5"
   except:
   only:
   - triggers

@@ -188,7 +188,7 @@ Qed.
 (** An allocation can either be a stack allocation or a heap allocation. *)
 Inductive alloc_kind : Set :=
   | HeapAlloc
-  | StackAlloc 
+  | StackAlloc
   | GlobalAlloc.
 
 Record allocation :=
@@ -222,7 +222,7 @@ memory (e.g., does not contain NULL). *)
 Definition allocation_in_range (al : allocation) : Prop :=
   min_alloc_start ≤ al.(al_start) ∧ al_end al ≤ max_alloc_end.
 
-Instance elem_of_alloc : ElemOf addr allocation :=
+Global Instance elem_of_alloc : ElemOf addr allocation :=
   λ a al, al.(al_start) ≤ a < al_end al.
 
 (** ** Representation of the state of the heap and allocation operations. *)

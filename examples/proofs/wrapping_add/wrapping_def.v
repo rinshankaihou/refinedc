@@ -7,7 +7,7 @@ Definition WrappingAdd (it1 it2 : int_type) (es : list expr) : expr :=
   | _ => Val VOID
   end%E.
 
-Program Instance WrappingAdd_wf it1 it2 : MacroWfSubst (WrappingAdd it1 it2).
+Global Program Instance WrappingAdd_wf it1 it2 : MacroWfSubst (WrappingAdd it1 it2).
 Next Obligation. move => ???? [|?[|?[|??]]]//. Qed.
 
 Typeclasses Opaque WrappingAdd.

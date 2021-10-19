@@ -669,7 +669,7 @@ Lemma val_stuck e1 σ1 κ e2 σ2 ef :
   runtime_step e1 σ1 κ e2 σ2 ef → to_val e1 = None.
 Proof. destruct 1 => //. revert select (expr_step _ _ _ _ _ _). by destruct 1. Qed.
 
-Instance fill_item_inj Ki : Inj (=) (=) (lang_fill_item Ki).
+Global Instance fill_item_inj Ki : Inj (=) (=) (lang_fill_item Ki).
 Proof. destruct Ki as [E|E ?]; destruct E; intros ???; simplify_eq/=; auto with f_equal. Qed.
 
 Lemma fill_item_val Ki e :
@@ -705,15 +705,15 @@ Canonical Structure c_lang := LanguageOfEctx c_ectx_lang.
 
 (** * Useful instances and canonical structures *)
 
-Instance mbyte_inhabited : Inhabited mbyte := populate (MPoison).
-Instance val_inhabited : Inhabited val := _.
-Instance expr_inhabited : Inhabited expr := populate (Val inhabitant).
-Instance stmt_inhabited : Inhabited stmt := populate (Goto "a").
-Instance function_inhabited : Inhabited function :=
+Global Instance mbyte_inhabited : Inhabited mbyte := populate (MPoison).
+Global Instance val_inhabited : Inhabited val := _.
+Global Instance expr_inhabited : Inhabited expr := populate (Val inhabitant).
+Global Instance stmt_inhabited : Inhabited stmt := populate (Goto "a").
+Global Instance function_inhabited : Inhabited function :=
   populate {| f_args := []; f_local_vars := []; f_code := ∅; f_init := "" |}.
-Instance heap_state_inhabited : Inhabited heap_state :=
+Global Instance heap_state_inhabited : Inhabited heap_state :=
   populate {| hs_heap := inhabitant; hs_allocs := inhabitant; |}.
-Instance state_inhabited : Inhabited state :=
+Global Instance state_inhabited : Inhabited state :=
   populate {| st_heap := inhabitant; st_fntbl := inhabitant; |}.
 
 Canonical Structure mbyteO := leibnizO mbyte.

@@ -243,7 +243,7 @@ Record type `{!typeG Σ} := {
   ty_shr_pers l : Persistent (ty_own Shr l);
 }.
 Arguments ty_own : simpl never.
-Existing Instance ty_shr_pers.
+Global Existing Instance ty_shr_pers.
 
 (** [memcast_compat_type] describes how a type can transfered via a
 mem_cast (see also [ty_memcast_compat] below):
@@ -283,7 +283,7 @@ Inductive MovableLst `{typeG Σ} : list type → Type :=
 | ml_nil : MovableLst []
 | ml_cons ty tyl `{!Movable ty, !MovableLst tyl} : MovableLst (ty::tyl).
 Existing Class MovableLst.
-Existing Instances ml_nil ml_cons.
+Global Existing Instances ml_nil ml_cons.
 Global Hint Mode MovableLst + + ! : typeclass_instances.
 
 (* movable type *)
@@ -396,7 +396,7 @@ Class Copyable `{!typeG Σ} (ty : type) `{!Movable ty} := {
        (* TODO: the closing conjuct does not make much sense with True *)
        ∃ q' vl, l ↦{q'} vl ∗ ▷ ty.(ty_own_val) vl ∗ (▷l ↦{q'} vl ={E}=∗ True)
 }.
-Existing Instance copy_own_persistent.
+Global Existing Instance copy_own_persistent.
 
 Class LocInBounds `{!typeG Σ} (ty : type) (β : own_state) (n : nat) := {
   loc_in_bounds_in_bounds l : ty.(ty_own) β l -∗ loc_in_bounds l n

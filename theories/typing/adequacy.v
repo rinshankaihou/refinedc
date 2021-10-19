@@ -21,7 +21,7 @@ Definition typeΣ : gFunctors :=
    ghost_mapΣ alloc_id (Z * nat * alloc_kind);
    ghost_mapΣ alloc_id bool;
    ghost_mapΣ addr function].
-Instance subG_typePreG {Σ} : subG typeΣ Σ → typePreG Σ.
+Global Instance subG_typePreG {Σ} : subG typeΣ Σ → typePreG Σ.
 Proof. solve_inG. Qed.
 
 Definition initial_prog (main : loc) : runtime_expr :=

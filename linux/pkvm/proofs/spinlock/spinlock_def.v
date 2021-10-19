@@ -25,7 +25,7 @@ Class spinlockG Σ := SpinLockG {
 Definition spinlockΣ : gFunctors :=
   #[GFunctor (constRF (gmapR Z (exclR unitO)));
     GFunctor (constRF (excl_authR ZO))].
-Instance subG_spinlockG {Σ} : subG spinlockΣ Σ → spinlockG Σ.
+Global Instance subG_spinlockG {Σ} : subG spinlockΣ Σ → spinlockG Σ.
 Proof. solve_inG. Qed.
 
 Section type.

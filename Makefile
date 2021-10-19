@@ -6,6 +6,10 @@ all_with_examples: generate_all
 	@dune build --display short
 .PHONY: all_with_examples
 
+ci: restore_dune_project all_with_examples
+	@true
+.PHONY: ci_all
+
 install:
 	@dune install
 .PHONY: install
@@ -37,8 +41,17 @@ clean: clean_generated
 .PHONY: clean
 
 builddep-opamfiles: builddep/refinedc-builddep.opam
+	@echo "# Renaming dune-project to work around coq#15044"
+	@mv dune-project dune-project.tmp
 	@true
 .PHONY: builddep-opamfiles
+
+restore_dune_project:
+	@if [ -f dune-project.tmp ] && ! [ -e dune-project ]; then \
+		echo "# Renaming dune-project back";\
+		mv dune-project.tmp dune-project;\
+	fi
+.PHONY: restore_dune_project
 
 # Create a virtual Opam package with the same deps as RefinedC, but no
 # build. Uses a very ugly hack to use sed for removing the last 4
@@ -54,8 +67,12 @@ builddep/refinedc-builddep.opam: refinedc.opam Makefile
 #  2) they will remain satisfied even if other packages are updated/installed,
 #  3) we do not have to pin the RefinedC package itself (which takes time).
 builddep: builddep/refinedc-builddep.opam
+	@echo "# Renaming dune-project to work around coq#15044"
+	@mv dune-project dune-project.tmp
 	@echo "# Installing package $^."
 	@opam install $(OPAMFLAGS) $^
+	@echo "# Renaming dune-project back"
+	@mv dune-project.tmp dune-project
 .PHONY: builddep
 
 # FIXME

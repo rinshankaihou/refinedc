@@ -10,7 +10,7 @@ Local Open Scope Z_scope.
 
 Create HintDb simplify_bool_eq_db discriminated.
 
-Hint Rewrite
+#[export] Hint Rewrite
   Bool.andb_false_r
   Bool.andb_true_r
   Bool.andb_false_l
@@ -29,7 +29,7 @@ Ltac simplify_bool_eq := autorewrite with simplify_bool_eq_db.
 
 Create HintDb simplify_index_db discriminated.
 
-Hint Rewrite
+#[export] Hint Rewrite
   Z.sub_add
   Z.add_simpl_r
   : simplify_index_db.
@@ -48,7 +48,7 @@ Qed.
 
 Create HintDb rewrite_bits_db discriminated.
 
-Hint Rewrite
+#[export] Hint Rewrite
   (* 0 *)
   Z.bits_0
   (* 1 *)

@@ -14,7 +14,7 @@ Class lockG Σ := LockG {
 Definition lockΣ : gFunctors :=
   #[GFunctor (constRF (authR (gset_disjUR string)));
     GFunctor (constRF (exclR unitO))].
-Instance subG_lockG {Σ} : subG lockΣ Σ → lockG Σ.
+Global Instance subG_lockG {Σ} : subG lockΣ Σ → lockG Σ.
 Proof. solve_inG. Qed.
 
 Section type.

@@ -201,5 +201,5 @@ Proof.
   apply: (Zdivide_mult_l _ n1). by rewrite Z.mul_comm -Nat2Z.inj_mul.
 Qed.
 
-Instance aligned_to_dec l n : Decision (l `aligned_to` n).
+#[export] Instance aligned_to_dec l n : Decision (l `aligned_to` n).
 Proof. apply Znumtheory.Zdivide_dec. Qed.
