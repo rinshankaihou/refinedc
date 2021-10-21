@@ -220,7 +220,7 @@ static bool kvm_pte_table(kvm_pte_t pte, u32 level)
 [[rc::parameters("pte : Pte", "p : loc")]]
 [[rc::args("p @ &own<pte @ bitfield<Pte>>")]]
 [[rc::requires("{bitfield_wf pte}")]]
-[[rc::ensures("own p : {pte_set_invalid pte} @ bitfield<Pte>")]]
+[[rc::ensures("own p : {pte <| pte_valid := false |>} @ bitfield<Pte>")]]
 static void kvm_set_invalid_pte(kvm_pte_t *ptep)
 {
     kvm_pte_t pte = *ptep;
@@ -246,7 +246,8 @@ static kvm_pte_t kvm_phys_to_pte(u64 pa)
 [[rc::requires("{bitfield_wf pte}", "{pte_valid pte}")]]
 [[rc::exists("pa : Z")]]
 [[rc::ensures("{mm_ops.(virt_to_phys) va = pa}")]]
-[[rc::ensures("own p : { {| pte_valid := true; pte_type := pte_type_table; pte_leaf_attr_lo := 0; pte_addr := (addr_of pa); pte_undef := 0; pte_leaf_attr_hi := 0 |} } @ bitfield<Pte>")]]
+[[rc::ensures("own p : {mk_pte_addr (addr_of pa) <| pte_type := pte_type_table |>"
+  "<| pte_valid := true |>} @ bitfield<Pte>")]]
 static void kvm_set_table_pte(kvm_pte_t *ptep, kvm_pte_t *childp,
                   struct kvm_pgtable_mm_ops *mm_ops)
 {
@@ -262,7 +263,8 @@ static void kvm_set_table_pte(kvm_pte_t *ptep, kvm_pte_t *childp,
 [[rc::args("p @ &own<pte @ bitfield<Pte>>", "pa @ int<u64>", "attr @ bitfield<Pte>", "level @ int<u32>")]]
 [[rc::requires("{bitfield_wf pte}", "{bitfield_wf attr}")]]
 [[rc::requires("{type = (if bool_decide (level = max_level - 1) then pte_type_page else pte_type_block)}")]]
-[[rc::requires("{pte1 = {| pte_valid := true; pte_type := type; pte_leaf_attr_lo := pte_leaf_attr_lo attr; pte_addr := (addr_of pa); pte_undef := 0; pte_leaf_attr_hi := pte_leaf_attr_hi attr |} }")]]
+[[rc::requires("{pte1 = mk_pte_addr (addr_of pa) <| pte_valid := true |> <| pte_type := type |>"
+  "<| pte_leaf_attr_lo := pte_leaf_attr_lo attr |> <| pte_leaf_attr_hi := pte_leaf_attr_hi attr |>}")]]
 [[rc::returns("{if pte_valid pte then bool_decide (bitfield_repr pte = bitfield_repr pte1) else true} @ boolean<bool_it>")]]
 [[rc::ensures("own p : {if pte_valid pte then pte else pte1} @ bitfield<Pte>")]]
 static bool kvm_set_valid_leaf_pte(kvm_pte_t *ptep, u64 pa, kvm_pte_t attr,

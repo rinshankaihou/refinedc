@@ -24,6 +24,7 @@ depends: [
   "earley" {= "3.0.0"}
   "toml" {= "5.0.0"}
   "ubase" {= "0.04"}
+  "coq-record-update" {= "0.3.0"}
 ]
 
 build: [

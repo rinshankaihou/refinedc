@@ -2,7 +2,7 @@ From refinedc.typing Require Import typing.
 
 (* pte *)
 
-Record Pte := {
+Record Pte := mk_pte {
   pte_valid : bool;
   pte_type : Z;
   pte_leaf_attr_lo : Z;
@@ -11,23 +11,19 @@ Record Pte := {
   pte_leaf_attr_hi : Z;
 }.
 
-Definition pte_set_invalid (pte : Pte) : Pte := {|
-  pte_valid := false;
-  pte_type := pte_type pte;
-  pte_leaf_attr_lo := pte_leaf_attr_lo pte;
-  pte_addr := pte_addr pte;
-  pte_undef := pte_undef pte;
-  pte_leaf_attr_hi := pte_leaf_attr_hi pte;
-|}.
+Global Instance Pte_settable : Settable _ := settable! mk_pte
+  <pte_valid; pte_type; pte_leaf_attr_lo; pte_addr; pte_undef; pte_leaf_attr_hi>.
 
-Definition mk_pte_addr (a : Z) : Pte := {|
+Definition empty_pte := {|
   pte_valid := false;
   pte_type := 0;
   pte_leaf_attr_lo := 0;
-  pte_addr := a;
+  pte_addr := 0;
   pte_undef := 0;
   pte_leaf_attr_hi := 0;
 |}.
+
+Definition mk_pte_addr (a : addr) : Pte := empty_pte <| pte_addr := a |>.
 
 Definition pte_repr (p : Pte) : Z :=
   bf_cons 0 1 (Z_of_bool $ pte_valid p) $

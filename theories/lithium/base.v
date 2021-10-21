@@ -8,6 +8,9 @@ From iris.bi Require Import bi.
 From iris.proofmode Require Import proofmode.
 From stdpp Require Import natmap.
 From refinedc.lithium Require Import Z_bitblast.
+From RecordUpdate Require Export RecordSet.
+Export RecordSetNotations.
+
 Set Default Proof Using "Type".
 
 Export Unset Program Cases.
@@ -16,6 +19,9 @@ Export Set Keyed Unification.
 (* We always annotate hints with locality ([Global] or [Local]). This enforces
 that at least global hints are annotated. *)
 Export Set Warnings "+deprecated-hint-without-locality".
+
+(* ensure that set from RecordUpdate simplifies when it is applied to a concrete value *)
+Arguments set _ _ _ _ _ !_ /.
 
 Typeclasses Opaque is_Some.
 (* This is necessary since otherwise keyed unification unfolds these definitions *)
