@@ -8,7 +8,7 @@ all_with_examples: generate_all
 
 ci: restore_dune_project all_with_examples
 	@true
-.PHONY: ci_all
+.PHONY: ci
 
 install:
 	@dune install
