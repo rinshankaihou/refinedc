@@ -6,7 +6,7 @@ stages:
 variables:
   # dune takes care of parallelization itself and does not like running in parallel
   CPU_CORES: "1"
-  MAKE_TARGET: "ci"
+  MAKE_TARGET: "all_with_examples"
   OCAML: "ocaml-base-compiler.4.07.1"
 
 .template: &template
