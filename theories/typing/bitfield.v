@@ -129,15 +129,15 @@ Section programs.
 
   Lemma type_arithop_bitfield_raw it v1 bv1 v2 bv2 T bv op:
     arith_op_result it bv1 bv2 op = Some bv →
-    (⌜bv1 ∈ it⌝ -∗ ⌜bv2 ∈ it⌝ -∗ ⌜arith_op_sidecond it bv1 bv2 bv op⌝ ∗ ∃ norm,
-      (⌜normalize_bitfield bv norm⌝ ∗ T (i2v norm it) (t2mt (norm @ bitfield_raw it)))) -∗
+    (⌜bv1 ∈ it⌝ -∗ ⌜bv2 ∈ it⌝ -∗ ⌜arith_op_sidecond it bv1 bv2 bv op⌝ ∗
+      (tactic_hint (normalize_bitfield bv) (λ norm, T (i2v norm it) (t2mt (norm @ bitfield_raw it))))) -∗
     typed_bin_op v1 (v1 ◁ᵥ bv1 @ bitfield_raw it) v2 (v2 ◁ᵥ bv2 @ bitfield_raw it) op (IntOp it) (IntOp it) T.
   Proof.
-    iIntros "%Hop HT Hv1 Hv2".
+    iIntros "%Hop HT Hv1 Hv2". unfold tactic_hint, normalize_bitfield.
     iApply type_val_expr_mono_strong.
     iApply (type_arithop_int_int with "[HT] Hv1 Hv2") => //.
     iIntros "Hbv1 Hbv2".
-    iDestruct ("HT" with "Hbv1 Hbv2") as "[% [%norm [<- ?]]]".
+    iDestruct ("HT" with "Hbv1 Hbv2") as "[% ?]".
     iSplitR => //.
     iExists _. by iFrame.
   Qed.
@@ -206,15 +206,15 @@ Section programs.
 
   Lemma type_arithop_bitfield_raw_int it v1 bv v2 n T bv' op:
     arith_op_result it bv n op = Some bv' →
-    (⌜bv ∈ it⌝ -∗ ⌜n ∈ it⌝ -∗ ⌜arith_op_sidecond it bv n bv' op⌝ ∗ ∃ norm,
-      (⌜normalize_bitfield bv' norm⌝ ∗ T (i2v norm it) (t2mt (norm @ bitfield_raw it)))) -∗
+    (⌜bv ∈ it⌝ -∗ ⌜n ∈ it⌝ -∗ ⌜arith_op_sidecond it bv n bv' op⌝ ∗
+      (tactic_hint (normalize_bitfield bv') (λ norm, T (i2v norm it) (t2mt (norm @ bitfield_raw it))))) -∗
       typed_bin_op v1 (v1 ◁ᵥ bv @ bitfield_raw it) v2 (v2 ◁ᵥ n @ int it) op (IntOp it) (IntOp it) T.
   Proof.
-    iIntros "%Hop HT Hv1 Hv2".
+    iIntros "%Hop HT Hv1 Hv2". unfold tactic_hint, normalize_bitfield.
     iApply type_val_expr_mono_strong.
     iApply (type_arithop_int_int with "[HT] Hv1 Hv2") => //.
     iIntros "Hbv1 Hbv2".
-    iDestruct ("HT" with "Hbv1 Hbv2") as "[% [%norm [<- ?]]]".
+    iDestruct ("HT" with "Hbv1 Hbv2") as "[% ?]".
     iSplitR => //.
     iExists _. by iFrame.
   Qed.
@@ -227,15 +227,15 @@ Section programs.
 
   Lemma type_arithop_int_bitfield_raw it v1 n v2 bv T bv' op:
     arith_op_result it n bv op = Some bv' →
-    (⌜n ∈ it⌝ -∗ ⌜bv ∈ it⌝ -∗ ⌜arith_op_sidecond it n bv bv' op⌝ ∗ ∃ norm,
-      (⌜normalize_bitfield bv' norm⌝ ∗ T (i2v norm it) (t2mt (norm @ bitfield_raw it)))) -∗
+    (⌜n ∈ it⌝ -∗ ⌜bv ∈ it⌝ -∗ ⌜arith_op_sidecond it n bv bv' op⌝ ∗
+      (tactic_hint (normalize_bitfield bv') (λ norm, T (i2v norm it) (t2mt (norm @ bitfield_raw it))))) -∗
     typed_bin_op v1 (v1 ◁ᵥ n @ int it) v2 (v2 ◁ᵥ bv @ bitfield_raw it) op (IntOp it) (IntOp it) T.
   Proof.
-    iIntros "%Hop HT Hv1 Hv2".
+    iIntros "%Hop HT Hv1 Hv2". unfold tactic_hint, normalize_bitfield.
     iApply type_val_expr_mono_strong.
     iApply (type_arithop_int_int with "[HT] Hv1 Hv2") => //.
     iIntros "Hbv1 Hbv2".
-    iDestruct ("HT" with "Hbv1 Hbv2") as "[% [%norm [<- ?]]]".
+    iDestruct ("HT" with "Hbv1 Hbv2") as "[% ?]".
     iSplitR => //.
     iExists _. by iFrame.
   Qed.

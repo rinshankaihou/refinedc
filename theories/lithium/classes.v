@@ -1,7 +1,7 @@
 (** Main typeclasses of Lithium *)
 From iris.base_logic.lib Require Export iprop.
 From iris.proofmode Require Export tactics.
-From refinedc.lithium Require Import base infrastructure.
+From refinedc.lithium Require Export base infrastructure.
 
 (** * [iProp_to_Prop] *)
 Record iProp_to_Prop {Σ} (P : iProp Σ) : Type := i2p {
@@ -52,10 +52,34 @@ Definition destruct_hint {Σ B} (hint : destruct_hint_info) (info : B) (T : iPro
 Typeclasses Opaque destruct_hint.
 Arguments destruct_hint : simpl never.
 
-(** * [vm_compute_hint] *)
+(** * [tactic_hint] *)
+Class TacticHint {Σ A} (t : (A → iProp Σ) → iProp Σ) := MkTacticHint {
+  tactic_hint_P : (A → iProp Σ) → iProp Σ;
+  tactic_hint_proof T : tactic_hint_P T -∗ t T;
+}.
+Arguments MkTacticHint {_ _ _} _ _.
+Arguments tactic_hint_proof {_ _ _} _ _.
+
+Definition tactic_hint {Σ A} (t : (A → iProp Σ) → iProp Σ) (T : A → iProp Σ) : iProp Σ :=
+  t T.
+Arguments tactic_hint : simpl never.
+
+(** ** [vm_compute_hint] *)
 Definition vm_compute_hint {Σ A B} (f : A → option B) (x : A) (T : B → iProp Σ) : iProp Σ :=
   ∃ y, ⌜f x = Some y⌝ ∗ T y.
 Arguments vm_compute_hint : simpl never.
+Typeclasses Opaque vm_compute_hint.
+
+Program Definition vm_compute_hint_hint {Σ A B} (f : A → option B) x a :
+  (∀ y, Some x = y → f a = y) →
+  TacticHint (vm_compute_hint (Σ:=Σ) f a) := λ H, {|
+    tactic_hint_P T := T x;
+|}.
+Next Obligation. move => ????????. iIntros "HT". iExists _. iFrame. iPureIntro. naive_solver. Qed.
+
+Global Hint Extern 10 (TacticHint (vm_compute_hint _ _)) =>
+  eapply vm_compute_hint_hint;
+  let H := fresh in intros ? H; vm_compute; apply H : typeclass_instances.
 
 (** * [RelatedTo] *)
 Class RelatedTo {Σ} (pat : iProp Σ) : Type := {

@@ -1,6 +1,7 @@
 From refinedc.lang Require Import base int_type builtins_specs.
-From refinedc.lithium Require Import simpl_classes tactics_extend infrastructure Z_bitblast.
+From refinedc.lithium Require Import simpl_classes tactics_extend infrastructure Z_bitblast classes.
 
+Local Open Scope Z_scope.
 (* raw bit vector constructors *)
 
 Definition bf_nil : Z := 0.
@@ -299,18 +300,40 @@ Create HintDb bitfield_rewrite discriminated.
 #[export] Hint Rewrite bf_update_cons using can_solve_tac : bitfield_rewrite.
 #[export] Hint Rewrite bf_update_cons_ne using lia : bitfield_rewrite.
 
-Definition normalize_bitfield (bv norm : Z) : Prop := bv = norm.
+(* Tactic to normalize a bitfield *)
+Ltac normalize_bitfield :=
+  autorewrite with bitfield_rewrite; exact: eq_refl.
+
+(* enable using normalize_bitfield with tactic_hint *)
+Definition normalize_bitfield {Σ} (bv : Z) (T : Z → iProp Σ) : iProp Σ := T bv.
 Typeclasses Opaque normalize_bitfield.
+
+Program Definition normalize_bitfield_hint {Σ} bv norm :
+  bv = norm →
+  TacticHint (normalize_bitfield (Σ:=Σ) bv) := λ H, {|
+    tactic_hint_P T := T norm;
+|}.
+Next Obligation. move => ??? -> ?. unfold normalize_bitfield. iIntros "$". Qed.
+
+Global Hint Extern 10 (TacticHint (normalize_bitfield _)) =>
+  eapply normalize_bitfield_hint; normalize_bitfield : typeclass_instances.
+
+(* enable using normalize_bitfield in function call specifications
+where one cannot use tactic_hint *)
+(* TODO: figure out how to make the following unnecessary *)
+Definition normalize_bitfield_eq (bv norm : Z) : Prop := bv = norm.
+Typeclasses Opaque normalize_bitfield_eq.
 
 Class NormalizeBitfield (bv norm : Z) : Prop :=
   normalize_bitfield_proof : bv = norm.
 
 Global Instance simpl_and_normalize_bitfield bv norm `{!NormalizeBitfield bv norm'} `{!IsProtected norm} :
-  SimplAnd (normalize_bitfield bv norm) (λ T, norm' = norm ∧ T).
+  SimplAnd (normalize_bitfield_eq bv norm) (λ T, norm' = norm ∧ T).
 Proof. erewrite normalize_bitfield_proof. done. Qed.
 
 Global Hint Extern 10 (NormalizeBitfield _ _) =>
-  autorewrite with bitfield_rewrite; exact: eq_refl : typeclass_instances.
+  normalize_bitfield : typeclass_instances.
+
 
 (* Side cond: ∀ i ∈ I, Z.testbit bv i = false. *)
 Global Instance bf_range_empty_nil_inst a k :
