@@ -230,13 +230,13 @@ Section defs.
     apply: fsm_invariant_partial_alter => //; destruct ir, ir'; naive_solver.
   Qed.
 
-  Global Instance simpl_lookup_fsm_map_and mp key items n ir o `{!FastDone (fsm_invariant mp items)} `{!FastDone (probe_ref key items = Some (n, ir))}:
+  Global Instance simpl_lookup_fsm_map_and mp key items n ir o `{!TCFastDone (fsm_invariant mp items)} `{!TCFastDone (probe_ref key items = Some (n, ir))}:
       SimplBothRel (=) (mp !! key) o (item_ref_to_ty ir = o).
-  Proof. unfold FastDone in *. by rewrite (fsm_invariant_lookup _ items _ n ir (item_ref_to_ty ir)). Qed.
+  Proof. unfold TCFastDone in *. by rewrite (fsm_invariant_lookup _ items _ n ir (item_ref_to_ty ir)). Qed.
 
-  Global Instance simpl_fsm_invariant_and mp1 mp2 items `{!IsProtected mp1} `{!FastDone (fsm_invariant mp2 items)}:
+  Global Instance simpl_fsm_invariant_and mp1 mp2 items `{!IsProtected mp1} `{!TCFastDone (fsm_invariant mp2 items)}:
     SimplAndUnsafe true (fsm_invariant mp1 items) (λ T, mp1 = mp2 ∧ T) | 50.
-  Proof. unfold FastDone in *. by move => ? [->]. Qed.
+  Proof. unfold TCFastDone in *. by move => ? [->]. Qed.
   Global Instance simpl_fsm_invariant_shelve_and mp items `{!ContainsProtected mp}:
     SimplAndUnsafe true (fsm_invariant mp items) (λ T, shelve_hint (fsm_invariant mp items) ∧ T) | 100.
   Proof. move => ?; unfold shelve_hint; eauto. Qed.

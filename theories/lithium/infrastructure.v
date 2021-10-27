@@ -33,11 +33,6 @@ Global Hint Extern 1 (CheckHypNotExists ?P) => (check_hyp_not_exists P; change T
 Class CheckOwnInContext {Σ} (P : iProp Σ) : Prop := { check_own_in_context : True }.
 
 (** * Different ways of checking if a property holds  *)
-(** ** [FastDone]
- Should be used if it is expected that the property shows up directly as a hypothesis. *)
-Class FastDone (P : Prop) : Prop := fast_done_proof : P.
-Global Hint Extern 1 (FastDone ?P) => (change P; fast_done) : typeclass_instances.
-
 (** ** [TCDone] *)
 Class TCDone (P : Prop) : Prop := done_proof : P.
 Global Hint Extern 1 (TCDone ?P) => (change P; done) : typeclass_instances.

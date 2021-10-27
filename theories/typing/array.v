@@ -383,7 +383,7 @@ Section array.
     (⌜l = base offset{ly}ₗ idx⌝ -∗ l ◁ₗ{β} array_ptr ly base idx len -∗ T) -∗
     simplify_hyp (l ◁ₗ{β} array_ptr ly base idx len) T.
   Proof. iIntros "HT [% #Hlib]". iApply "HT" => //. by iSplit. Qed.
-  Global Instance simplify_array_ptr_hyp_learn_loc_inst l β ly base idx len `{!TCUnless (FastDone (l = base offset{ly}ₗ idx))}:
+  Global Instance simplify_array_ptr_hyp_learn_loc_inst l β ly base idx len `{!TCUnless (TCFastDone (l = base offset{ly}ₗ idx))}:
     SimplifyHypPlace l β (array_ptr ly base idx len) (Some 0%N) | 10 :=
     λ T, i2p (simplify_array_ptr_hyp_learn_loc l β ly base idx len T).
 *)

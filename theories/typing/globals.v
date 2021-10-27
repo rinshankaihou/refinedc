@@ -48,23 +48,23 @@ Section globals.
     SimplifyHyp (global_with_type name β ty) (Some 0%N) :=
     λ T, i2p (simplify_global_with_type_hyp name β ty T).
 
-  Lemma simplify_global_with_type_goal name β ty l T `{!FastDone (global_locs !! name = Some l)} :
+  Lemma simplify_global_with_type_goal name β ty l T `{!TCFastDone (global_locs !! name = Some l)} :
     T (l ◁ₗ{β} ty) -∗
     simplify_goal (global_with_type name β ty) T.
-  Proof. unfold FastDone in *. iIntros "HT". iExists _. iFrame. iIntros "?". iExists _. by iFrame. Qed.
-  Global Instance simplify_global_with_type_goal_inst name β ty l `{!FastDone (global_locs !! name = Some l)}:
+  Proof. unfold TCFastDone in *. iIntros "HT". iExists _. iFrame. iIntros "?". iExists _. by iFrame. Qed.
+  Global Instance simplify_global_with_type_goal_inst name β ty l `{!TCFastDone (global_locs !! name = Some l)}:
     SimplifyGoal (global_with_type name β ty) (Some 0%N) :=
     λ T, i2p (simplify_global_with_type_goal name β ty l T).
 
-  Lemma simplify_initialized_hyp A (x : A) name ty l T `{!FastDone (global_locs !! name = Some l)}  `{!FastDone (global_initialized_types !! name = Some ty)}:
+  Lemma simplify_initialized_hyp A (x : A) name ty l T `{!TCFastDone (global_locs !! name = Some l)}  `{!TCFastDone (global_initialized_types !! name = Some ty)}:
     (∃ (Heq : A = ty.(gt_A)), l ◁ₗ{Shr} ty.(gt_type) (rew [λ x, x] Heq in x) -∗ T) -∗
     simplify_hyp (initialized name x) T.
   Proof.
-    unfold FastDone in *. iDestruct 1 as (?) "HT". iDestruct 1 as (l' ??? Heq2) "Hl". simplify_eq. iApply "HT" => /=.
+    unfold TCFastDone in *. iDestruct 1 as (?) "HT". iDestruct 1 as (l' ??? Heq2) "Hl". simplify_eq. iApply "HT" => /=.
     (** HERE WE USE AXIOM K! *)
     by rewrite (UIP_refl _ _ Heq2).
   Qed.
-  Global Instance simplify_initialized_hyp_inst A x name ty l `{!FastDone (global_locs !! name = Some l)} `{!FastDone (global_initialized_types !! name = Some ty)}:
+  Global Instance simplify_initialized_hyp_inst A x name ty l `{!TCFastDone (global_locs !! name = Some l)} `{!TCFastDone (global_initialized_types !! name = Some ty)}:
     SimplifyHyp (initialized name x) (Some 0%N) :=
     λ T, i2p (simplify_initialized_hyp A x name ty l T).
 
@@ -75,11 +75,11 @@ Section globals.
     initialized name x.
   Proof. iIntros (??) "Hl". iExists _, _. by iFrame. Qed.
 
-  Lemma simplify_initialized_goal A (x : A) name l ty T `{!FastDone (global_locs !! name = Some l)} `{!FastDone (global_initialized_types !! name = Some ty)} :
+  Lemma simplify_initialized_goal A (x : A) name l ty T `{!TCFastDone (global_locs !! name = Some l)} `{!TCFastDone (global_initialized_types !! name = Some ty)} :
     T ((∃ (Heq : A = ty.(gt_A)), l ◁ₗ{Shr} ty.(gt_type) (rew [λ x, x] Heq in x))) -∗
     simplify_goal (initialized name x) T.
-  Proof. unfold FastDone in *. iIntros "HT". iExists _. iFrame. by iApply initialized_intro. Qed.
-  Global Instance simplify_initialized_goal_inst A (x : A) name ty l `{!FastDone (global_locs !! name = Some l)}  `{!FastDone (global_initialized_types !! name = Some ty)}:
+  Proof. unfold TCFastDone in *. iIntros "HT". iExists _. iFrame. by iApply initialized_intro. Qed.
+  Global Instance simplify_initialized_goal_inst A (x : A) name ty l `{!TCFastDone (global_locs !! name = Some l)}  `{!TCFastDone (global_initialized_types !! name = Some ty)}:
     SimplifyGoal (initialized name x) (Some 0%N) :=
     λ T, i2p (simplify_initialized_goal A x name l ty T).
 

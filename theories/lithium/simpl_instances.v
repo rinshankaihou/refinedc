@@ -497,9 +497,9 @@ Global Instance simpl_is_Some_unfold {A} (o : option A):
   SimplBoth (is_Some o) (∃ x, o = Some x) | 100.
 Proof. split; naive_solver. Qed.
 
-Global Instance simpl_Some {A} o (x x' : A) `{!FastDone (o = Some x)}:
+Global Instance simpl_Some {A} o (x x' : A) `{!TCFastDone (o = Some x)}:
   SimplBothRel (=) (o) (Some x') (x = x') | 1.
-Proof. unfold FastDone in *; subst. split; naive_solver. Qed.
+Proof. unfold TCFastDone in *; subst. split; naive_solver. Qed.
 
 Global Instance simpl_both_fmap_Some A B f (o : option A) (x : B): SimplBothRel (=) (f <$> o) (Some x) (∃ x', o = Some  x' ∧ x = f x').
 Proof. unfold SimplBothRel. rewrite fmap_Some. naive_solver. Qed.
