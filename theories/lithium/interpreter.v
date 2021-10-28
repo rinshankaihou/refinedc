@@ -36,6 +36,11 @@ Section coq_tactics.
     f (protected a) → f a.
   Proof. by rewrite protected_eq. Qed.
 
+  Lemma tac_tactic_hint {A} Δ t (th : TacticHint t) (Q : A → iProp Σ):
+    envs_entails Δ (th.(tactic_hint_P) Q) →
+    envs_entails Δ (tactic_hint t Q).
+  Proof.  rewrite envs_entails_eq => ?. etrans; [done|]. apply tactic_hint_proof. Qed.
+
   Lemma tac_exist_prod A B (P : _ → Prop):
     (∃ x1 x2, P (x1, x2)) → @ex (A * B) P.
   Proof. move => [?[??]]. eauto. Qed.
@@ -681,9 +686,8 @@ Ltac liDestructHint :=
 
 Ltac liTacticHint :=
   lazymatch goal with
-  | |- envs_entails ?Δ (tactic_hint ?t ?T) =>
-      let x := constr:(_ : TacticHint t) in
-      refine (tac_fast_apply (x.(tactic_hint_proof) T) _)
+  | |- envs_entails _ (tactic_hint _ _) =>
+      simple notypeclasses refine (tac_tactic_hint _ _ _ _ _); [ solve [refine _] |]
   end.
 
 Ltac liAccu :=

@@ -53,12 +53,12 @@ Typeclasses Opaque destruct_hint.
 Arguments destruct_hint : simpl never.
 
 (** * [tactic_hint] *)
-Class TacticHint {Σ A} (t : (A → iProp Σ) → iProp Σ) := MkTacticHint {
+Class TacticHint {Σ A} (t : (A → iProp Σ) → iProp Σ) := {
   tactic_hint_P : (A → iProp Σ) → iProp Σ;
   tactic_hint_proof T : tactic_hint_P T -∗ t T;
 }.
-Arguments MkTacticHint {_ _ _} _ _.
 Arguments tactic_hint_proof {_ _ _} _ _.
+Arguments tactic_hint_P {_ _ _} _ _.
 
 Definition tactic_hint {Σ A} (t : (A → iProp Σ) → iProp Σ) (T : A → iProp Σ) : iProp Σ :=
   t T.
