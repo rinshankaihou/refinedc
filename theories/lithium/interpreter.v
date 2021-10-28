@@ -20,6 +20,11 @@ Arguments SHELVED_SIDECOND : simpl never.
 Section coq_tactics.
   Context {Σ : gFunctors}.
 
+  (* For some reason, replacing tac_fast_apply with more specialized
+  versions gives a 1-2% performance boost, see
+  https://coq-speed.mpi-sws.org/d/1QE_dqjiz/coq-compare?orgId=1&var-project=refinedc&var-branch1=master&var-commit1=05a3e8862ae4ab0041af67d1c02c552f99c4f35c&var-config1=build-coq.8.14.0-timing&var-branch2=master&var-commit2=998704f2a571385c65edfdd36332f6c3d014ec59&var-config2=build-coq.8.14.0-timing&var-metric=instructions&var-group=().*
+  TODO: investigate this more
+*)
   Lemma tac_fast_apply {Δ} {P1 P2 : iProp Σ} :
     (P1 -∗ P2) → envs_entails Δ P1 → envs_entails Δ P2.
   Proof. by rewrite envs_entails_eq => -> HP. Qed.
@@ -56,6 +61,10 @@ Section coq_tactics.
   Lemma tac_exist_sigT A f (P : _ → Prop):
     (∃ (a : A) (x : f a), P (existT a x)) → @ex (sigT f) P.
   Proof. move => [?[??]]. eauto. Qed.
+
+  Lemma tac_find_in_context {Δ} {fic} {T : _ → iProp Σ} key (F : FindInContext fic key) :
+    envs_entails Δ (F T).(i2p_P) → envs_entails Δ (find_in_context fic T).
+  Proof. rewrite envs_entails_eq. etrans; [done|]. apply i2p_proof. Qed.
 
   Lemma tac_find_hyp_equal key (Q P P' R : iProp Σ) Δ `{!FindHypEqual key Q P P'}:
     envs_entails Δ (P' ∗ R) →
@@ -546,7 +555,7 @@ Ltac liFindInContext :=
     multiple implementations of [FindInContext]. They are tried in the
     order of their priorities.
     See https://coq.zulipchat.com/#narrow/stream/237977-Coq-users/topic/Multi-success.20TC.20resolution.20from.20ltac.3F/near/242759123 *)
-    once (simple notypeclasses refine (tac_fast_apply ((_ : FindInContext fic key) _).(i2p_proof) _);
+    once (simple notypeclasses refine (tac_find_in_context key _ _);
       [ shelve | typeclasses eauto | simpl; repeat liExist false; liFindHypOrTrue key ])
   end.
 
