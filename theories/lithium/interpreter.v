@@ -28,6 +28,14 @@ Section coq_tactics.
     (P1 -∗ P2) → envs_entails Δ (P1 ∗ T) → envs_entails Δ (P2 ∗ T).
   Proof. by rewrite envs_entails_eq => -> HP. Qed.
 
+  Lemma tac_apply_i2p {Δ} {P : iProp Σ} (P' : iProp_to_Prop P) :
+    envs_entails Δ P'.(i2p_P) → envs_entails Δ P.
+  Proof. rewrite envs_entails_eq. etrans; [done|]. apply i2p_proof. Qed.
+
+  Lemma tac_apply_i2p_below_sep {Δ} {P T : iProp Σ} (P' : iProp_to_Prop P) :
+    envs_entails Δ (P'.(i2p_P) ∗ T) → envs_entails Δ (P ∗ T).
+  Proof. rewrite envs_entails_eq. etrans; [done|]. apply bi.sep_mono_l. apply i2p_proof. Qed.
+
   Lemma tac_protected_eq_app {A} (f : A → Prop) a :
     f a → f (protected a).
   Proof. by rewrite protected_eq. Qed.
@@ -435,8 +443,8 @@ Global Hint Extern 1 (CheckOwnInContext ?P) => (liCheckOwnInContext P; construct
 Ltac convert_to_i2p_tac P := fail "No convert_to_i2p_tac provided!".
 Ltac convert_to_i2p P cont :=
   lazymatch P with
-  | subsume ?P1 ?P2 ?T => cont uconstr:(((_ : Subsume _ _) _).(i2p_proof))
-  | subsume_list ?A ?ig ?l1 ?l2 ?f ?T => cont uconstr:(((_ : SubsumeList _ _ _ _ _) _).(i2p_proof))
+  | subsume ?P1 ?P2 ?T => cont uconstr:(((_ : Subsume _ _) _))
+  | subsume_list ?A ?ig ?l1 ?l2 ?f ?T => cont uconstr:(((_ : SubsumeList _ _ _ _ _) _))
   | _ => let converted := convert_to_i2p_tac P in cont converted
   end.
 Ltac extensible_judgment_hook := idtac.
@@ -444,7 +452,7 @@ Ltac liExtensibleJudgement :=
   lazymatch goal with
   | |- envs_entails _ ?P =>
     convert_to_i2p P ltac:(fun converted =>
-    simple notypeclasses refine (tac_fast_apply converted _); [solve [refine _] |]; extensible_judgment_hook
+    simple notypeclasses refine (tac_apply_i2p converted _); [solve [refine _] |]; extensible_judgment_hook
   )end.
 
 Ltac liSimpl :=
@@ -734,7 +742,7 @@ Ltac liSep :=
     | match ?x with _ => _ end => fail "should not have match in sep"
     | ?P => first [
                convert_to_i2p P ltac:(fun converted =>
-               simple notypeclasses refine (tac_fast_apply_below_sep converted _); [solve[refine _] |])
+               simple notypeclasses refine (tac_apply_i2p_below_sep converted _); [solve[refine _] |])
              | progress liFindHyp FICSyntactic
              | simple notypeclasses refine (tac_fast_apply (tac_do_simplify_goal 0%N _ _) _); [solve [refine _] |]
              | simple notypeclasses refine (tac_fast_apply (tac_intro_subsume_related _ _) _); [solve [refine _] |];
