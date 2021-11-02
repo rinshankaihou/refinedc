@@ -465,7 +465,9 @@ Ltac liExtensibleJudgement :=
   )end.
 
 Ltac liSimpl :=
-  simpl.
+  (* simpl inserts a cast even if it does not do anything (see https://coq.zulipchat.com/#narrow/stream/237656-Coq-devs.20.26.20plugin.20devs/topic/exact_no_check.2C.20repeated.20casts.20in.20proof.20terms/near/259371220
+   TODO: maybe the try progress can be removed after https://github.com/coq/coq/pull/15104 is merged? *)
+  try progress simpl.
 
 Ltac liShow := liUnfoldLetsInContext.
 
