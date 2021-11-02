@@ -71,15 +71,14 @@ Arguments vm_compute_hint : simpl never.
 Typeclasses Opaque vm_compute_hint.
 
 Program Definition vm_compute_hint_hint {Σ A B} (f : A → option B) x a :
-  (∀ y, Some x = y → f a = y) →
+  f a = Some x →
   TacticHint (vm_compute_hint (Σ:=Σ) f a) := λ H, {|
     tactic_hint_P T := T x;
 |}.
 Next Obligation. move => ????????. iIntros "HT". iExists _. iFrame. iPureIntro. naive_solver. Qed.
 
 Global Hint Extern 10 (TacticHint (vm_compute_hint _ _)) =>
-  eapply vm_compute_hint_hint;
-  let H := fresh in intros ? H; vm_compute; apply H : typeclass_instances.
+  eapply vm_compute_hint_hint; evar_safe_vm_compute : typeclass_instances.
 
 (** * [RelatedTo] *)
 Class RelatedTo {Σ} (pat : iProp Σ) : Type := {

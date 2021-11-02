@@ -89,6 +89,19 @@ Ltac solve_sep_entails :=
     end);
   eauto with iFrame.
 
+Lemma tac_evar_safe_vm_compute {A} (x y : A):
+  (∀ z, y = z → x = z) →
+  x = y.
+Proof. naive_solver. Qed.
+(* vm_compute likes to mess with evars that it find in the goal so
+evar_safe_vm_compute hides them. *)
+Ltac evar_safe_vm_compute :=
+  apply tac_evar_safe_vm_compute;
+  let H := fresh in
+  intros ? H;
+  vm_compute;
+  apply H.
+
 (*
 The following tactics are currently not used.
 
