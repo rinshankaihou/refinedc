@@ -724,6 +724,7 @@ Ltac liSideCond :=
     lazymatch P with
     | shelve_hint _ => split; [ unfold shelve_hint; li_shelve_sidecond |]
     | _ => first [
+      split; [done_no_false|] |
       progress normalize_goal_and |
     lazymatch P with
     | context [protected _] => first [
