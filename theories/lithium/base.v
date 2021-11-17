@@ -63,6 +63,20 @@ Ltac get_head e :=
   | _    => constr:(e)
   end.
 
+(** A version of done that does not exploit False and contradictions. *)
+Ltac done_no_false :=
+  solve
+  [ repeat first
+    [ fast_done
+    | solve [trivial]
+    (* All the tactics below will introduce themselves anyway, or make no sense
+       for goals of product type. So this is a good place for us to do it. *)
+    | progress intros
+    | solve [symmetry; trivial]
+    | solve [apply not_symmetry; trivial]
+    | split ]
+  ].
+
 (* Checks that a term is closed using a trick by Jason Gross. *)
 Ltac check_closed t :=
   assert_succeeds (

@@ -592,6 +592,9 @@ Ltac liImpl :=
   | |- ?P -> ?Q =>
     lazymatch type of P with
     | Prop => first [
+              (* first check if the hyp is trivial *)
+              assert_succeeds (assert (P) as _;[done_no_false|]); intros _
+            |
               progress normalize_goal_impl; simpl
             |
             (*
