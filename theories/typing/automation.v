@@ -308,9 +308,9 @@ Ltac liRSplitBlocksIntro :=
 
 (* TODO: don't use i... tactics here *)
 Ltac split_blocks Pfull Ps :=
-  (* cbn in * is important here to simplify the types of local
+  (* cbn in *|- is important here to simplify the types of local
   variables, otherwise unification gets confused later *)
-  cbn -[union] in *;
+  cbn -[union] in * |-;
   let rec pose_Ps Ps :=
       lazymatch Ps with
       | <[?bid:=?P]>?m =>
