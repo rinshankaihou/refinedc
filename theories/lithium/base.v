@@ -68,12 +68,12 @@ Ltac done_no_false :=
   solve
   [ repeat first
     [ fast_done
-    | solve [trivial]
+    (* | solve [trivial] *)
     (* All the tactics below will introduce themselves anyway, or make no sense
        for goals of product type. So this is a good place for us to do it. *)
     | progress intros
-    | solve [symmetry; trivial]
-    | solve [apply not_symmetry; trivial]
+    (* | solve [symmetry; trivial] *)
+    (* | solve [apply not_symmetry; trivial] *)
     | split ]
   ].
 
