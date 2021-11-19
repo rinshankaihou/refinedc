@@ -65,6 +65,11 @@ Proof. naive_solver. Qed.
 
 Ltac normalize_and_simpl_goal_step :=
   first [
+      lazymatch goal with
+      | |- _ ∧ _ => split; [splitting_fast_done|]
+      | _ => splitting_fast_done
+      end
+    |
       progress normalize_goal; simpl
     |
       lazymatch goal with
@@ -86,6 +91,7 @@ Ltac normalize_and_simpl_goal_step :=
     | |- ?P -> ?Q =>
       lazymatch type of P with
       | Prop => first [
+        assert_is_trivial P; intros _ |
         progress normalize_goal_impl |
         notypeclasses refine (apply_simpl_impl _ _ _ _ _); [ solve [refine _] |]; simpl;
         match goal with
