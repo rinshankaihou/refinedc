@@ -593,7 +593,7 @@ Ltac liImpl :=
     lazymatch type of P with
     | Prop => first [
               (* first check if the hyp is trivial *)
-              assert_succeeds (assert (P) as _;[done_no_false|]); intros _
+              assert_is_trivial P; intros _
             |
               progress normalize_goal_impl; simpl
             |
@@ -613,7 +613,7 @@ Ltac liImpl :=
                 | _ = _ =>
                     check_injection_tac;
                     let Hi := fresh "Hi" in move => Hi; injection Hi; clear Hi
-                | _ => check_hyp_not_exists P; intros ?; subst
+                | _ => assert_is_not_trivial P; intros ?; subst
                 | _ => move => _
                 end
               end
@@ -724,7 +724,7 @@ Ltac liSideCond :=
     lazymatch P with
     | shelve_hint _ => split; [ unfold shelve_hint; li_shelve_sidecond |]
     | _ => first [
-      split; [done_no_false|] |
+      split; [splitting_fast_done|] |
       progress normalize_goal_and |
     lazymatch P with
     | context [protected _] => first [

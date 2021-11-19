@@ -63,19 +63,21 @@ Ltac get_head e :=
   | _    => constr:(e)
   end.
 
-(** A version of done that does not exploit False and contradictions. *)
-Ltac done_no_false :=
+(** A version of fast_done that splits conjunctions. *)
+Ltac splitting_fast_done :=
   solve
   [ repeat first
     [ fast_done
-    (* | solve [trivial] *)
     (* All the tactics below will introduce themselves anyway, or make no sense
        for goals of product type. So this is a good place for us to do it. *)
     | progress intros
-    (* | solve [symmetry; trivial] *)
-    (* | solve [apply not_symmetry; trivial] *)
     | split ]
   ].
+
+Ltac assert_is_trivial P :=
+  assert_succeeds (assert (P) as _;[splitting_fast_done|]).
+Ltac assert_is_not_trivial P :=
+  assert_fails (assert (P) as _;[splitting_fast_done|]).
 
 (* Checks that a term is closed using a trick by Jason Gross. *)
 Ltac check_closed t :=

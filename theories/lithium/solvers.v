@@ -65,20 +65,22 @@ Proof. naive_solver. Qed.
 
 Ltac normalize_and_simpl_goal_step :=
   first [
-      progress normalize_goal; simpl |
-              lazymatch goal with
-              | |- ∃ _, _ => fail 1 "normalize_and_simpl_goal stop in exist"
-              end
-              |
-              lazymatch goal with
-              | |- _ ∧ _ => idtac
-              | _ => refine (intro_and_True _ _)
-              end;
-              refine (apply_simpl_and _ _ _ _ _);
-              lazymatch goal with
-              | |- true = true → _ => move => _; split_and?
-              end
-              | lazymatch goal with
+      progress normalize_goal; simpl
+    |
+      lazymatch goal with
+      | |- ∃ _, _ => fail 1 "normalize_and_simpl_goal stop in exist"
+      end
+    |
+      lazymatch goal with
+      | |- _ ∧ _ => idtac
+      | _ => refine (intro_and_True _ _)
+      end;
+      refine (apply_simpl_and _ _ _ _ _);
+      lazymatch goal with
+      | |- true = true → _ => move => _; split_and?
+      end
+    |
+      lazymatch goal with
     (* relying on the fact that unification variables cannot contain
        dependent variables to distinguish between dependent and non dependent forall *)
     | |- ?P -> ?Q =>

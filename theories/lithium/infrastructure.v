@@ -22,12 +22,6 @@ Class AssumeInj {A B} (R : relation A) (S : relation B) (f : A → B) : Prop := 
 Global Instance assume_inj_inj A B R S (f : A → B) `{!Inj R S f} : AssumeInj R S f.
 Proof. done. Qed.
 
-(** * Checking if a hyp exists *)
-Ltac check_hyp_not_exists P :=
-  assert_fails (assert (P) as _;[fast_done|]).
-Class CheckHypNotExists (P : Prop) : Prop := check_hyp_not_exists : True.
-Global Hint Extern 1 (CheckHypNotExists ?P) => (check_hyp_not_exists P; change True; fast_done) : typeclass_instances.
-
 (** * Checking if a hyp in the context
   The implementation can be found in interpreter.v *)
 Class CheckOwnInContext {Σ} (P : iProp Σ) : Prop := { check_own_in_context : True }.
