@@ -96,7 +96,7 @@ Ltac normalize_and_simpl_goal_step :=
           | _ = _ =>
               check_injection_tac;
               let Hi := fresh "Hi" in move => Hi; injection Hi; clear Hi
-          | _ => check_hyp_not_exists P; intros ?; subst
+          | _ => assert_is_not_trivial P; intros ?; subst
           | _ => move => _
           end
         end]
