@@ -1,0 +1,6 @@
+(coq.theory
+ (name refinedc.lithium.benchmarks)
+ (package refinedc)
+ (flags -w -notation-overridden -w -redundant-canonical-projection)
+ (synopsis "Lithium benchmarks")
+ (theories refinedc.lithium))

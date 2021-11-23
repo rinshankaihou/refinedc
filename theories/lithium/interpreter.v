@@ -2,8 +2,6 @@ From iris.proofmode Require Import coq_tactics reduction.
 From refinedc.lithium Require Import base infrastructure classes simpl_classes tactics_extend.
 
 (** * Definitions of markers for controling the state *)
-Definition IPM_STATE {PROP : bi} (n : positive) := envs PROP.
-Arguments IPM_STATE : simpl never.
 Notation "'HIDDEN'" := (Envs _ _ _) (only printing).
 
 Definition LET_ID {A} (x : A) : A := x.
@@ -121,46 +119,37 @@ Section coq_tactics.
     - by iApply HQ.
   Qed.
 
-  (* TODO: have a generic super intros which does simplification along
-  the awy in an efficient manner and which subsumes SimplifyHypPlace, SimplifyHypVal and SimplImpl*)
-  Lemma tac_do_intro i (P : iProp Σ) T Δ o {SH:SimplifyHyp P o} :
-    match o, envs_app false (Esnoc Enil i P) Δ with
-    | Some 0%N, _ => envs_entails Δ (SH T).(i2p_P)
-    | _, None => False
-    | _, Some Δ' => envs_entails Δ' T
-    end →
+  Lemma tac_do_simplify_hyp (P : iProp Σ) (SH: SimplifyHyp P (Some 0%N)) Δ T :
+    envs_entails Δ (SH T).(i2p_P) →
     envs_entails Δ (P -∗ T).
   Proof.
     rewrite envs_entails_eq => HP. iIntros "Henv Hl".
-    destruct o as [[|?] |]. {
-      iDestruct (HP with "Henv") as "HP".
-      iDestruct (i2p_proof with "HP Hl") as "$".
-    }
-    all: case_match => //.
-    all: rewrite envs_app_sound //=; simpl.
-    all: iDestruct ("Henv" with "[$]") as "Henv".
-    all: by iDestruct (HP with "Henv") as "$".
+    iDestruct (HP with "Henv") as "HP".
+    iDestruct (i2p_proof with "HP Hl") as "$".
   Qed.
 
-  Lemma tac_do_intro_intuit i (P P' : iProp Σ) T Δ o `{!IntroPersistent P P'} {SH:SimplifyHyp P o} :
-    match o, envs_app true (Esnoc Enil i P') Δ with
-    | Some 0%N, _ => envs_entails Δ (SH T).(i2p_P)
-    | _, None => False
-    | _, Some Δ' => envs_entails Δ' T
-    end →
-    envs_entails Δ (P -∗ T).
+  Lemma tac_do_intro i n' (P : iProp Σ) n Γs Γp T :
+    env_lookup i Γs = None →
+    env_lookup i Γp = None →
+    envs_entails (Envs Γp (Esnoc Γs i P) n') T →
+    envs_entails (Envs Γp Γs n) (P -∗ T).
   Proof.
-    revert select (IntroPersistent _ _) => Hpers.
-    rewrite envs_entails_eq => HP. iIntros "Henv HP".
-    destruct o as [[|?] |]. {
-      iDestruct (HP with "Henv") as "HSH".
-      iDestruct (i2p_proof with "HSH HP") as "$".
-    }
-    all: case_match => //.
-    all: iDestruct (@ip_persistent _ _ _ Hpers with "HP") as "#HP'".
-    all: rewrite envs_app_sound //=; simpl.
-    all: iDestruct ("Henv" with "[$]") as "Henv".
-    all: by iDestruct (HP with "Henv") as "$".
+    rewrite envs_entails_eq => Hs Hp HP. iIntros "Henv Hl".
+    rewrite (envs_app_sound (Envs Γp Γs n) (Envs Γp (Esnoc Γs i P) n) false (Esnoc Enil i P)) //; simplify_option_eq => //.
+    iApply HP. iApply "Henv". iFrame.
+  Qed.
+
+  Lemma tac_do_intro_intuit i n' (P P' : iProp Σ) T n Γs Γp (Hpers : IntroPersistent P P') :
+    env_lookup i Γs = None →
+    env_lookup i Γp = None →
+    envs_entails (Envs (Esnoc Γp i P') Γs n') T →
+    envs_entails (Envs Γp Γs n) (P -∗ T).
+  Proof.
+    rewrite envs_entails_eq => Hs Hp HP. iIntros "Henv HP".
+    iDestruct (@ip_persistent _ _ _ Hpers with "HP") as "#HP'".
+    rewrite (envs_app_sound (Envs Γp Γs n) (Envs (Esnoc Γp i P') Γs n) true (Esnoc Enil i P')) //; simplify_option_eq => //.
+    iApply HP. iApply "Henv".
+    iModIntro. by iSplit.
   Qed.
 
   Lemma tac_true Δ :
@@ -245,11 +234,10 @@ Ltac li_pm_reduce_val v :=
   let v := reduction.pm_eval v in v.
 Ltac li_pm_reduce :=
   match goal with
-  | H : IPM_STATE _ |- _ =>
-         match goal with |- ?u =>
-                         let u := eval cbv [H] in u in
-                         let u := li_pm_reduce_val u in change u
-         end
+  | H := Envs _ _ _ |- ?u =>
+       let u := eval cbv [H] in u in
+       let u := li_pm_reduce_val u in
+       change u
   | |- ?u =>
     let u := li_pm_reduce_val u in
     change u
@@ -261,7 +249,6 @@ Local Tactic Notation "liChangeState" hyp(H) constr(Δ) :=
   | @Envs ?PROP _ _ ?n =>
     let H' := fresh "IPM_JANNO" in
     pose (H' := Δ);
-    change (envs PROP) with (@IPM_STATE PROP n) in H';
     clear H;
     rename H' into H
   end.
@@ -271,16 +258,15 @@ Ltac liEnforceInvariant :=
   | |- @envs_entails ?PROP ?Δ ?P =>
     let with_H tac :=
     match goal with
-    | [ H : IPM_STATE _ |- _] =>
+    | [ H := Envs _ _ _ |- _] =>
       lazymatch Δ with H => tac H | _ => unify Δ (H); tac H end
-    | [ H : IPM_STATE _ |- _] =>
+    | [ H := Envs _ _ _ |- _] =>
       liChangeState H Δ; tac H
     | _ =>
       match Δ with
       | Envs _ _ ?c =>
         let H := fresh "IPM_JANNO" in
         pose (H := Δ);
-        change (envs PROP) with (@IPM_STATE PROP c) in H;
         hnf in (value of H);
         tac H
   end
@@ -292,7 +278,7 @@ Ltac liEnforceInvariant :=
 
 Ltac liFresh :=
   lazymatch goal with
-  | [ H : IPM_STATE ?n |- _ ] =>
+  | [ H := Envs _ _ ?n |- _ ] =>
   let do_incr :=
     lazymatch goal with
     | H := @Envs ?PROP ?p1 ?p2 ?c |- envs_entails ?H' ?Q =>
@@ -300,7 +286,6 @@ Ltac liFresh :=
       let c' := eval vm_compute in (Pos.succ c) in
       let H2 := fresh "IPM_INTERNAL" in
       pose (H2 := @Envs PROP p1 p2 c');
-      change (envs PROP) with (@IPM_STATE PROP c') in H2;
       change_no_check (@envs_entails PROP H2 Q);
       clear H; rename H2 into H
       end
@@ -322,7 +307,7 @@ Ltac liUnfoldLetGoal :=
 Ltac liUnfoldLetsInContext :=
   repeat match goal with
   | H := LET_ID _ |- _ => unfold LET_ID in H; unfold H; clear H
-  | H : IPM_STATE _ |- _  => unfold H; clear H
+  | H := Envs _ _ _ |- _  => unfold H; clear H
   end.
 
 (** * Management of evars *)
@@ -443,7 +428,6 @@ Ltac liCheckOwnInContext P :=
       end in
   match goal with
   | H := Envs ?Δi ?Δs _ |- _ =>
-      lazymatch (type of H) with | IPM_STATE _ => idtac end;
       first [ go Δs | go Δi ]
   end.
 Global Hint Extern 1 (CheckOwnInContext ?P) => (liCheckOwnInContext P; constructor; exact: I) : typeclass_instances.
@@ -756,7 +740,7 @@ Ltac liSep :=
     | bi_emp => notypeclasses refine (tac_sep_emp _ _ _)
     | (⌜_⌝)%I => notypeclasses refine (tac_do_intro_pure_and _ _ _ _)
     (* TODO: Is this really the right thing to do? *)
-    | (□ ?P)%I => notypeclasses refine (tac_do_intro_intuit_sep _ _ _ _ _)
+    | (□ ?P)%I => notypeclasses refine (tac_do_intro_intuit_sep _ _ _ _ _); [li_pm_reduce|]
     | match ?x with _ => _ end => fail "should not have match in sep"
     | ?P => first [
                convert_to_i2p P ltac:(fun converted =>
@@ -772,12 +756,23 @@ Ltac liSep :=
   end.
 
 Ltac liWand :=
-  let wand_intro :=
-      let H := liFresh in
-      first [
-          simple notypeclasses refine (tac_do_intro_intuit H _ _ _ _ _ _); [shelve | shelve | solve [refine _] | solve [refine _] | li_pm_reduce]
-         | simple notypeclasses refine (tac_do_intro H _ _ _ _ _); [shelve | solve [refine _] | li_pm_reduce]
-        ] in
+  let wand_intro P :=
+    first [
+        let SH := constr:(_ : SimplifyHyp P (Some 0%N)) in
+        simple notypeclasses refine (tac_do_simplify_hyp P SH _ _ _)
+      |
+        let P' := open_constr:(_) in
+        let ip := constr:(_ : IntroPersistent P P') in
+        let n := lazymatch goal with | [ H := Envs _ _ ?n |- _ ] => constr:(n) end in
+        let H := constr:(IAnon n) in
+        let n' := eval vm_compute in (Pos.succ n) in
+        simple notypeclasses refine (tac_do_intro_intuit H n' P P' _ _ _ _ ip _ _ _); [reduction.pm_reflexivity..|]
+      |
+        let n := lazymatch goal with | [ H := Envs _ _ ?n |- _ ] => constr:(n) end in
+        let H := constr:(IAnon n) in
+        let n' := eval vm_compute in (Pos.succ n) in
+        simple notypeclasses refine (tac_do_intro H n' P _ _ _ _ _ _ _); [reduction.pm_reflexivity..|]
+      ] in
   lazymatch goal with
   | |- envs_entails _ (bi_wand ?P _) =>
       lazymatch P with
@@ -786,7 +781,7 @@ Ltac liWand :=
       | bi_emp => notypeclasses refine (tac_wand_emp _ _ _)
       | bi_pure _ => notypeclasses refine (tac_do_intro_pure _ _ _ _)
       | match ?x with _ => _ end => fail "should not have match in wand "
-      | _ => wand_intro
+      | _ => wand_intro P
       end
   end.
 
