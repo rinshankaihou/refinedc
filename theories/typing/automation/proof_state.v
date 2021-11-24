@@ -23,8 +23,6 @@ Ltac unfold_code_marker_and_compute_map_lookup :=
 
 Definition RETURN_MARKER `{!typeG Σ} (R : val → mtype → iProp Σ) : val → mtype → iProp Σ := R.
 Notation "'HIDDEN'" := (RETURN_MARKER _) (only printing).
-(* simplify RETURN_MARKER as soon as it is applied enough in the goal *)
-Arguments RETURN_MARKER _ _ _ _ _ /.
 
 
 (** * Tactics for manipulating location information *)

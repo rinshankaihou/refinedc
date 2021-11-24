@@ -7,12 +7,15 @@ Notation "'HIDDEN'" := (Envs _ _ _) (only printing).
 Definition LET_ID {A} (x : A) : A := x.
 Arguments LET_ID : simpl never.
 Notation "'HIDDEN'" := (LET_ID _) (only printing).
+Strategy expand [LET_ID].
 
 Definition EVAR_ID {A} (x : A) : A := x.
 Arguments EVAR_ID : simpl never.
+Strategy expand [EVAR_ID].
 
 Definition SHELVED_SIDECOND (P : Prop) : Prop := P.
 Arguments SHELVED_SIDECOND : simpl never.
+Strategy expand [SHELVED_SIDECOND].
 
 (** * Lemmas used by tactics *)
 Section coq_tactics.
@@ -276,6 +279,7 @@ Ltac liEnforceInvariant :=
                 )
   end.
 
+(*
 Ltac liFresh :=
   lazymatch goal with
   | [ H := Envs _ _ ?n |- _ ] =>
@@ -292,17 +296,40 @@ Ltac liFresh :=
   end in
     constr:(IAnon n)
   end.
+ *)
 
+Tactic Notation "li_let_bind" constr(T) tactic3(tac) :=
+  try (assert_fails (is_var T);
+       let H := fresh "GOAL" in
+       pose H := (LET_ID T);
+       let G := tac H in
+       change_no_check G).
+
+(* unfold_let_goal_tac lets users unfold custom definitions. *)
+Ltac unfold_let_goal_tac H := idtac.
 Ltac liUnfoldLetGoal :=
-  match goal with
-  | |- envs_entails _ ?P =>
-    let rec go P tac :=
-        match P with
-        | ?Q ?R => go Q tac
-        | _ => is_var P; tac P
-        end in
-    go P ltac:(fun P => unfold LET_ID in P; unfold P; try clear P)
+  let do_unfold P :=
+    let H := get_head P in
+    is_var H;
+    unfold LET_ID in H;
+    unfold_let_goal_tac H;
+    (* This unfold inserts a cast but that is not too bad for
+       performance since the goal is small at this point. *)
+    unfold H;
+    try clear H
+  in
+  lazymatch goal with
+  | |- envs_entails _ (?P ∗ _) => do_unfold P
+  | |- envs_entails _ ?P => do_unfold P
   end.
+
+Ltac liUnfoldLetsContaining H :=
+  repeat match goal with
+       | Hx := context [ H ] |- _ =>
+                unfold LET_ID in Hx;
+                unfold Hx in *;
+                clear Hx
+       end.
 
 Ltac liUnfoldLetsInContext :=
   repeat match goal with
@@ -326,7 +353,7 @@ Ltac create_protected_evar A :=
       match goal with
       | _ =>
         let x := fresh "x" in
-        unshelve evar (x : A); [ liUnfoldAllEvars; liUnfoldLetsInContext; shelve |];
+        unshelve evar (x : A); [ liUnfoldLetsInContext; liUnfoldAllEvars; shelve |];
         pose (Hevar := EVAR_ID x : A); unfold x in Hevar; clear x
       end in
   Hevar.
@@ -334,6 +361,7 @@ Ltac create_protected_evar A :=
 Ltac unfold_instantiated_evar_hook H := idtac.
 
 Ltac unfold_instantiated_evar H :=
+  liUnfoldLetsContaining H;
   unfold_instantiated_evar_hook H;
   revert H;
   repeat match goal with
@@ -368,6 +396,7 @@ Ltac unfold_instantiated_evar H :=
 Ltac instantiate_protected H' tac_with :=
   lazymatch H' with
   | protected ?H =>
+    liUnfoldLetsContaining H;
     unfold EVAR_ID in H;
     (* we have to be vary careful how we instantiate the evar, as it
     may not rely on things introduced later (even let bindings),
@@ -407,7 +436,7 @@ Ltac solve_protected_eq :=
   (* intros because it is less aggressive than move => * *)
   intros;
   solve_protected_eq_unfold_tac;
-  repeat rewrite protected_eq;
+  liUnfoldLetsInContext;
   liUnfoldAllEvars;
   lazymatch goal with |- ?a = ?b => unify a b with solve_protected_eq_db end;
   exact: eq_refl.
@@ -433,18 +462,23 @@ Ltac liCheckOwnInContext P :=
 Global Hint Extern 1 (CheckOwnInContext ?P) => (liCheckOwnInContext P; constructor; exact: I) : typeclass_instances.
 
 (** * Main lithium tactics *)
-Ltac convert_to_i2p_tac P := fail "No convert_to_i2p_tac provided!".
-Ltac convert_to_i2p P cont :=
+Ltac convert_to_i2p_tac P bind cont := fail "No convert_to_i2p_tac provided!".
+Ltac convert_to_i2p P bind cont :=
   lazymatch P with
-  | subsume ?P1 ?P2 ?T => cont uconstr:(((_ : Subsume _ _) _))
-  | subsume_list ?A ?ig ?l1 ?l2 ?f ?T => cont uconstr:(((_ : SubsumeList _ _ _ _ _) _))
-  | _ => let converted := convert_to_i2p_tac P in cont converted
+  | subsume ?P1 ?P2 ?T =>
+      bind T ltac:(fun H => uconstr:(subsume P1 P2 H));
+      cont uconstr:(((_ : Subsume _ _) _))
+  | subsume_list ?A ?ig ?l1 ?l2 ?f ?T =>
+      bind T ltac:(fun H => uconstr:(subsume_list A ig l1 l2 f H));
+      cont uconstr:(((_ : SubsumeList _ _ _ _ _) _))
+  | _ => convert_to_i2p_tac P bind cont
   end.
 Ltac extensible_judgment_hook := idtac.
 Ltac liExtensibleJudgement :=
   lazymatch goal with
-  | |- envs_entails _ ?P =>
-    convert_to_i2p P ltac:(fun converted =>
+  | |- envs_entails ?Δ ?P =>
+      convert_to_i2p P ltac:(fun T tac => li_let_bind T (fun H => let X := tac H in constr:(envs_entails Δ X)))
+                       ltac:(fun converted =>
     simple notypeclasses refine (tac_apply_i2p converted _); [solve [refine _] |]; extensible_judgment_hook
   )end.
 
@@ -732,7 +766,7 @@ Ltac liSideCond :=
 
 Ltac liSep :=
   lazymatch goal with
-  | |- envs_entails _ (bi_sep ?P _) =>
+  | |- envs_entails ?Δ (bi_sep ?P ?Q) =>
     assert_fails (has_evar P);
     lazymatch P with
     | bi_sep _ _ => notypeclasses refine (tac_sep_sep_assoc _ _ _ _ _)
@@ -743,7 +777,9 @@ Ltac liSep :=
     | (□ ?P)%I => notypeclasses refine (tac_do_intro_intuit_sep _ _ _ _ _); [li_pm_reduce|]
     | match ?x with _ => _ end => fail "should not have match in sep"
     | ?P => first [
-               convert_to_i2p P ltac:(fun converted =>
+               convert_to_i2p P
+                 ltac:(fun T tac => li_let_bind T (fun H => let X := tac H in constr:(envs_entails Δ (X ∗ Q))))
+                 ltac:(fun converted =>
                simple notypeclasses refine (tac_apply_i2p_below_sep converted _); [solve[refine _] |])
              | progress liFindHyp FICSyntactic
              | simple notypeclasses refine (tac_fast_apply (tac_do_simplify_goal 0%N _ _) _); [solve [refine _] |]
@@ -774,9 +810,11 @@ Ltac liWand :=
         simple notypeclasses refine (tac_do_intro H n' P _ _ _ _ _ _ _); [reduction.pm_reflexivity..|]
       ] in
   lazymatch goal with
-  | |- envs_entails _ (bi_wand ?P _) =>
+  | |- envs_entails ?Δ (bi_wand ?P ?T) =>
       lazymatch P with
-      | bi_sep _ _ => notypeclasses refine (tac_wand_sep_assoc _ _ _ _ _)
+      | bi_sep _ _ =>
+          li_let_bind T (fun H => constr:(envs_entails Δ (bi_wand P H)));
+          notypeclasses refine (tac_wand_sep_assoc _ _ _ _ _)
       | bi_exist _ => fail "handled by do_forall"
       | bi_emp => notypeclasses refine (tac_wand_emp _ _ _)
       | bi_pure _ => notypeclasses refine (tac_do_intro_pure _ _ _ _)

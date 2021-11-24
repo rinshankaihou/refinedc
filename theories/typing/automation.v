@@ -47,28 +47,50 @@ Ltac solve_protected_eq_unfold_tac ::=
   | |- _ => idtac
   end.
 
+Ltac unfold_let_goal_tac H ::=
+  unfold RETURN_MARKER in H.
+
 Ltac can_solve_tac ::= solve_goal.
 
 Ltac record_destruct_hint hint info ::= add_case_distinction_info hint info.
 
-Ltac convert_to_i2p_tac P ::=
+Ltac convert_to_i2p_tac P bind cont ::=
   lazymatch P with
-  | typed_value ?v ?T => uconstr:(((_ : TypedValue _) _))
-  | typed_bin_op ?v1 ?ty1 ?v2 ?ty2 ?o ?ot1 ?ot2 ?T => uconstr:(((_ : TypedBinOp _ _ _ _ _ _ _) _))
-  | typed_un_op ?v ?ty ?o ?ot ?T => uconstr:(((_ : TypedUnOp _ _ _ _) _))
-  | typed_call ?v ?P ?vl ?tys ?T => uconstr:(((_ : TypedCall _ _ _ _) _))
-  | typed_copy_alloc_id ?v1 ?ty1 ?v2 ?ty2 ?ot ?T => uconstr:(((_ : TypedCopyAllocId _ _ _ _ _) _))
-  | typed_place ?P ?l1 ?β1 ?ty1 ?T => uconstr:(((_ : TypedPlace _ _ _ _) _))
-  | typed_if ?ot ?v ?P ?T1 ?T2 => uconstr:(((_ : TypedIf _ _ _) _ _))
-  | typed_switch ?v ?ty ?it ?m ?ss ?def ?fn ?ls ?fr ?Q => uconstr:(((_ : TypedSwitch _ _ _) _ _ _ _ _ _ _))
-  | typed_assert ?ot ?v ?ty ?s ?fn ?ls ?fr ?Q => uconstr:(((_ : TypedAssert _ _ _) _ _ _ _ _))
-  | typed_read_end ?a ?E ?l ?β ?ty ?ly ?T => uconstr:(((_ : TypedReadEnd _ _ _ _ _ _) _))
-  | typed_write_end ?a ?E ?ot ?v1 ?ty1 ?l2 ?β2 ?ty2 ?T => uconstr:(((_ : TypedWriteEnd _ _ _ _ _ _ _ _) _))
-  | typed_addr_of_end ?l ?β ?ty ?T => uconstr:(((_ : TypedAddrOfEnd _ _ _) _))
-  | typed_cas ?ot ?v1 ?P1 ?v2 ?P2 ?v3 ?P3 ?T => uconstr:(((_ : TypedCas _ _ _ _ _ _ _) _))
-  | typed_annot_expr ?n ?a ?v ?P ?T => uconstr:(((_ : TypedAnnotExpr _ _ _ _) _) )
-  | typed_annot_stmt ?a ?l ?P ?T => uconstr:(((_ : TypedAnnotStmt _ _ _) _))
-  | typed_macro_expr ?m ?es ?T => uconstr:(((_ : TypedMacroExpr _ _) _))
+  | typed_value ?v ?T =>
+      (* One could introduce more let-bindings as follows, but too
+      many let-bindings seem to hurt performance. *)
+      (* bind T ltac:(fun H => uconstr:(typed_value v H)); *)
+      cont uconstr:(((_ : TypedValue _) _))
+  | typed_bin_op ?v1 ?ty1 ?v2 ?ty2 ?o ?ot1 ?ot2 ?T =>
+      cont uconstr:(((_ : TypedBinOp _ _ _ _ _ _ _) _))
+  | typed_un_op ?v ?ty ?o ?ot ?T =>
+      cont uconstr:(((_ : TypedUnOp _ _ _ _) _))
+  | typed_call ?v ?P ?vl ?tys ?T =>
+      cont uconstr:(((_ : TypedCall _ _ _ _) _))
+  | typed_copy_alloc_id ?v1 ?ty1 ?v2 ?ty2 ?ot ?T =>
+      cont uconstr:(((_ : TypedCopyAllocId _ _ _ _ _) _))
+  | typed_place ?P ?l1 ?β1 ?ty1 ?T =>
+      cont uconstr:(((_ : TypedPlace _ _ _ _) _))
+  | typed_if ?ot ?v ?P ?T1 ?T2 =>
+      cont uconstr:(((_ : TypedIf _ _ _) _ _))
+  | typed_switch ?v ?ty ?it ?m ?ss ?def ?fn ?ls ?fr ?Q =>
+      cont uconstr:(((_ : TypedSwitch _ _ _) _ _ _ _ _ _ _))
+  | typed_assert ?ot ?v ?ty ?s ?fn ?ls ?fr ?Q =>
+      cont uconstr:(((_ : TypedAssert _ _ _) _ _ _ _ _))
+  | typed_read_end ?a ?E ?l ?β ?ty ?ly ?T =>
+      cont uconstr:(((_ : TypedReadEnd _ _ _ _ _ _) _))
+  | typed_write_end ?a ?E ?ot ?v1 ?ty1 ?l2 ?β2 ?ty2 ?T =>
+      cont uconstr:(((_ : TypedWriteEnd _ _ _ _ _ _ _ _) _))
+  | typed_addr_of_end ?l ?β ?ty ?T =>
+      cont uconstr:(((_ : TypedAddrOfEnd _ _ _) _))
+  | typed_cas ?ot ?v1 ?P1 ?v2 ?P2 ?v3 ?P3 ?T =>
+      cont uconstr:(((_ : TypedCas _ _ _ _ _ _ _) _))
+  | typed_annot_expr ?n ?a ?v ?P ?T =>
+      cont uconstr:(((_ : TypedAnnotExpr _ _ _ _) _) )
+  | typed_annot_stmt ?a ?l ?P ?T =>
+      cont uconstr:(((_ : TypedAnnotStmt _ _ _) _))
+  | typed_macro_expr ?m ?es ?T =>
+      cont uconstr:(((_ : TypedMacroExpr _ _) _))
   end.
 
 (** * Main automation tactics *)
@@ -95,18 +117,15 @@ End automation.
 Ltac liRIntroduceLetInGoal :=
   lazymatch goal with
   | |- @envs_entails ?PROP ?Δ ?P =>
-    let H := fresh "GOAL" in
     lazymatch P with
-    | @bi_wand ?PROP ?Q ?T =>
-      pose H := (LET_ID T); change_no_check (@envs_entails PROP Δ (@bi_wand PROP Q H))
     | @typed_val_expr ?Σ ?tG ?e ?T =>
-      pose (H := LET_ID T); change_no_check (@envs_entails PROP Δ (@typed_val_expr Σ tG e H))
+      li_let_bind T (fun H => constr:(@envs_entails PROP Δ (@typed_val_expr Σ tG e H)))
     | @typed_write ?Σ ?tG ?b ?e ?ot ?v ?ty ?Mov ?T =>
-      pose (H := LET_ID T); change_no_check (@envs_entails PROP Δ (@typed_write Σ tG b e ot v ty Mov H))
+      li_let_bind T (fun H => constr:(@envs_entails PROP Δ (@typed_write Σ tG b e ot v ty Mov H)))
     | @typed_place ?Σ ?tG ?P ?l1 ?β1 ?ty1 ?T =>
-      pose (H := LET_ID T); change_no_check (@envs_entails PROP Δ (@typed_place Σ tG P l1 β1 ty1 H))
+      li_let_bind T (fun H => constr:(@envs_entails PROP Δ (@typed_place Σ tG P l1 β1 ty1 H)))
     | @typed_bin_op ?Σ ?tG ?v1 ?P1 ?v2 ?P2 ?op ?ot1 ?ot2 ?T =>
-      pose (H := LET_ID T); change_no_check (@envs_entails PROP Δ (@typed_bin_op Σ tG v1 P1 v2 P2 op ot1 ot2 H))
+      li_let_bind T (fun H => constr:(@envs_entails PROP Δ (@typed_bin_op Σ tG v1 P1 v2 P2 op ot1 ot2 H)))
     end
   end.
 
