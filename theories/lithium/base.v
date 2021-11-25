@@ -222,6 +222,7 @@ Proof.
   split => //; by apply nil_length_inv.
 Qed.
 
+(* TODO: replace with upsteamed version *)
 Lemma take_elem_of {A} (x : A) n l:
   x ∈ take n l ↔ ∃ i, (i < n)%nat ∧ l !! i = Some x.
 Proof.
