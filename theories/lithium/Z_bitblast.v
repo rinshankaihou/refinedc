@@ -33,6 +33,7 @@ Proof. apply Z.bits_inj_iff'. Qed.
 Lemma tac_tactic_in_hyp (P1 P2 : Prop):
   P1 → (P1 → P2) → P2.
 Proof. eauto. Qed.
+(** TODO: replace this with [do [ tac ] in H] from ssreflect? *)
 Tactic Notation "tactic" tactic3(tac) "in" ident(H) :=
   let H' := fresh in
   unshelve epose proof (tac_tactic_in_hyp _ _ H _) as H'; [shelve|
@@ -349,6 +350,21 @@ Proof.
   by rewrite andb_comm.
 Qed.
 Global Hint Resolve bitblast_mod | 10 : bitblast.
+(* TODO: What are good instances for +? Maybe something based on Z_add_nocarry_lor? *)
+Lemma bitblast_add_0 z1 z2 b1 b2:
+  Bitblast z1 0 b1 →
+  Bitblast z2 0 b2 →
+  Bitblast (z1 + z2) 0 (xorb b1 b2).
+Proof. move => [<-] [<-]. constructor. apply Z.add_bit0. Qed.
+Global Hint Resolve bitblast_add_0 | 5 : bitblast.
+Lemma bitblast_add_1 z1 z2 b10 b11 b20 b21:
+  Bitblast z1 0 b10 →
+  Bitblast z2 0 b20 →
+  Bitblast z1 1 b11 →
+  Bitblast z2 1 b21 →
+  Bitblast (z1 + z2) 1 (xorb (xorb b11 b21) (b10 && b20)).
+Proof. move => [<-] [<-] [<-] [<-]. constructor. apply Z.add_bit1. Qed.
+Global Hint Resolve bitblast_add_1 | 5 : bitblast.
 
 (** * Tactics *)
 
