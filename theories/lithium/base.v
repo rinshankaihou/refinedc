@@ -853,13 +853,7 @@ Lemma Z_shiftl_shiftr_0 a n :
   0 ≤ n →
   Z.land a (Z.ones n) = 0 →
   (a ≫ n) ≪ n = a.
-Proof.
-  move => ? Hland.
-  rewrite -Z.ldiff_ones_r //.
-  bitblast.
-  move/Z.bits_inj_iff' in Hland. move: (Hland i ltac:(done)).
-  by rewrite_testbit.
-Qed.
+Proof. move => ? Hland. bitblast as i. by bitblast Hland with i. Qed.
 Lemma Z_shiftl_distr_add a b c:
   0 ≤ c →
   (a + b) ≪ c = (a ≪ c + b ≪ c).
@@ -918,15 +912,7 @@ Lemma Z_mod_pow2_zero_iff n k :
   (0 ≤ k)%Z →
   (n `mod` 2 ^ k = 0)%Z ↔ ∀ i, (0 ≤ i < k)%Z → Z.testbit n i = false.
 Proof.
-  intros.
-  rewrite -Z.land_ones; last lia.
-  split.
-  - move => Hz i ?.
-    have <- : Z.testbit (Z.land n (Z.ones k)) i = false
-      by rewrite Hz Z.bits_0.
-    rewrite Z.land_spec Z.ones_spec_low //.
-    by simplify_bool_eq.
-  - move => Hf.
-    bitblast.
-    by rewrite Hf.
+  intros. split.
+  - move => Hb i ?. by bitblast Hb with i.
+  - move => Hf. bitblast. by apply Hf.
 Qed.

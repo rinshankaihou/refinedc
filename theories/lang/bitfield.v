@@ -99,9 +99,7 @@ Lemma bf_land_mask_flip bv a k N :
   Z.land bv (Z_lunot N (bf_mask_cons a k bf_nil)) = bf_update a k 0 bv.
 Proof.
   rewrite /bf_mask_cons /bf_update /bf_nil /Z_lunot => ????.
-  rewrite -Z.land_ones; last lia.
   bitblast.
-  symmetry. apply (Z_bounded_iff_bits_nonneg N bv); lia.
 Qed.
 
 Lemma bf_lor_nil_l bv :
@@ -205,15 +203,8 @@ Lemma bf_range_empty_cons a k x l a' k' :
 Proof.
   rewrite /bf_range_empty /bf_cons => ???? [??] Hor.
   split.
-  - move => Hl i [??].
-    have : Z.testbit (Z.lor (x ≪ a) l) i = false by apply Hl.
-    rewrite Z.lor_spec Z.shiftl_spec ?Hl; [|lia..].
-    by apply orb_false_elim.
-  - move => Hl i [??].
-    rewrite Z.lor_spec Z.shiftl_spec ?Hl; [|lia..].
-    simplify_bool_eq. destruct Hor.
-    + apply (Z_bounded_iff_bits_nonneg k x); lia.
-    + rewrite Z.testbit_neg_r //. lia.
+  - move => Hl i [??]. by bitblast Hl with i.
+  - move => Hl i [??]. bitblast. apply Hl. lia.
 Qed.
 
 Lemma bf_slice_cons a k x l :
@@ -225,7 +216,6 @@ Proof.
   rewrite /bf_slice /bf_cons => ??? Hi.
   bitblast.
   rewrite Hi; [by simplify_bool_eq | lia].
-  symmetry. apply (Z_bounded_iff_bits_nonneg k x); lia.
 Qed.
 
 Lemma bf_slice_cons_ne a k x a' k' l :
@@ -236,9 +226,6 @@ Lemma bf_slice_cons_ne a k x a' k' l :
 Proof.
   rewrite /bf_slice /bf_cons => ????? [?|?].
   all: bitblast.
-  have -> : Z.testbit x (i + a' - a) = false
-    by apply (Z_bounded_iff_bits_nonneg k x); lia.
-  by simplify_bool_eq.
 Qed.
 
 Lemma bf_update_nil a k x :
@@ -256,10 +243,7 @@ Lemma bf_update_cons a k x x' dl :
 Proof.
   rewrite /bf_update /bf_nil /bf_cons => ??? Hi.
   bitblast.
-  + rewrite Hi; [by simplify_bool_eq | lia].
-  + have -> : Z.testbit x (i - a) = false
-      by apply (Z_bounded_iff_bits_nonneg k x); lia.
-    simplify_bool_eq. by apply orb_comm.
+  rewrite Hi; [by simplify_bool_eq | lia].
 Qed.
 
 Lemma bf_update_cons_ne a k x a' k' x' dl :
@@ -270,9 +254,6 @@ Lemma bf_update_cons_ne a k x a' k' x' dl :
 Proof.
   rewrite /bf_update /bf_nil /bf_cons => ????? [?|?].
   all: bitblast.
-  have -> : Z.testbit x (i - a) = false
-    by apply (Z_bounded_iff_bits_nonneg k x); lia.
-  by simplify_bool_eq.
 Qed.
 
 (* rewrite & simpl rules *)
@@ -448,9 +429,7 @@ Proof.
   intros.
   apply Z_least_significant_one_sound => //.
   rewrite bf_mask_cons_singleton.
-  split.
-  - rewrite Z.shiftl_spec ?Z.ones_spec_low //. lia.
-  - intros. rewrite Z.shiftl_spec ?Z.testbit_neg_r //; lia.
+  split; intros; bitblast.
 Qed.
 
 Lemma bf_slice_shl a k x :
@@ -460,7 +439,6 @@ Lemma bf_slice_shl a k x :
 Proof.
   rewrite /bf_slice => ???.
   bitblast.
-  symmetry. apply (Z_bounded_iff_bits_nonneg k x); lia.
 Qed.
 
 (* opaque *)
