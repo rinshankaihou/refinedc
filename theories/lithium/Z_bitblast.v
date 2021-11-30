@@ -341,10 +341,10 @@ Global Hint Resolve bitblast_setbit | 10 : bitblast.
 Lemma bitblast_mod z1 z2 z2' n b1:
   IsPowerOfTwo z2 z2' →
   Bitblast z1 n b1 →
-  Bitblast (z1 `mod` z2) n (bool_decide (0 ≤ n) && ((bool_decide (z2' < 0) || bool_decide (n < z2')) && b1)).
+  Bitblast (z1 `mod` z2) n ((bool_decide (z2' < 0 ∧ 0 ≤ n) || bool_decide (n < z2')) && b1).
 Proof.
   move => [->] [<-]. constructor.
-  case_bool_decide => /=; [|rewrite Z.testbit_neg_r //;lia].
+  destruct (decide (0 ≤ n)). 2: { rewrite !Z.testbit_neg_r //;lia. }
   case_bool_decide => /=. { by rewrite Z.pow_neg_r ?Zmod_0_r; [lia|]. }
   rewrite -Z.land_ones; [lia|]. rewrite Z.land_spec Z_ones_spec; [lia..|].
   by rewrite andb_comm.
