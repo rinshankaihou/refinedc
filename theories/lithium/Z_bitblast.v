@@ -159,7 +159,7 @@ Local Ltac simplify_bitblast_index := autorewrite with simplify_bitblast_index_d
 (** * Main typeclasses for bitblast *)
 Create HintDb bitblast discriminated.
 Global Hint Constants Opaque : bitblast.
-Global Hint Constants Opaque : bitblast.
+Global Hint Variables Opaque : bitblast.
 
 (** ** [IsPowerOfTwo] *)
 Class IsPowerOfTwo (z n : Z) := {
