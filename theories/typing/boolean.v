@@ -8,7 +8,7 @@ Inductive bool_strictness := StrictBool | RelaxedBool.
 
 Definition represents_boolean (stn: bool_strictness) (n: Z) (b: bool) : Prop :=
   match stn with
-  | StrictBool => n = Z_of_bool b
+  | StrictBool => n = bool_to_Z b
   | RelaxedBool => bool_decide (n ≠ 0) = b
   end.
 
@@ -162,17 +162,17 @@ Section boolean.
     | NeOp rit => Some (negb (eqb b1 b2), rit)
     | _ => None
     end = Some (b, i32) →
-    T (i2v (Z_of_bool b) i32) (t2mt (b @ boolean i32)) -∗
+    T (i2v (bool_to_Z b) i32) (t2mt (b @ boolean i32)) -∗
     typed_bin_op v1 (v1 ◁ᵥ b1 @ boolean it)
                  v2 (v2 ◁ᵥ b2 @ boolean it) op (IntOp it) (IntOp it) T.
   Proof.
     iIntros "%Hop HT (%n1&%Hv1&%Hb1) (%n2&%Hv2&%Hb2) %Φ HΦ".
     have [v Hv]:= val_of_Z_bool_is_Some None i32 b.
-    iApply (wp_binop_det_pure (i2v (Z_of_bool b) i32)).
+    iApply (wp_binop_det_pure (i2v (bool_to_Z b) i32)).
     { rewrite /i2v Hv /=. destruct op, b1, b2; simplify_eq.
       all: split; [inversion 1; simplify_eq /=; done | move => ->]; simplify_eq /=.
       all: econstructor => //; by case_bool_decide. }
-    iApply "HΦ"; last done. iExists (Z_of_bool b).
+    iApply "HΦ"; last done. iExists (bool_to_Z b).
     iSplit; [by destruct b | done].
   Qed.
 
@@ -271,7 +271,7 @@ Section builtin_boolean.
   Proof.
     iIntros "HT (%n&%Hv&%Hb) %Φ HΦ". move: Hb => /= ?. subst n.
     iApply wp_cast_int_bool => //. iApply ("HΦ" with "[] HT") => //.
-    iPureIntro => /=. exists (Z_of_bool b). by destruct b.
+    iPureIntro => /=. exists (bool_to_Z b). by destruct b.
   Qed.
   Global Instance type_cast_boolean_builtin_boolean_inst b it v:
     TypedUnOpVal v (b @ boolean it)%I (CastOp BoolOp) (IntOp it) :=

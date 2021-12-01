@@ -268,7 +268,7 @@ Inductive eval_bin_op : bin_op → op_type → op_type → state → val → val
     | NeOp rit => Some (negb e, rit)
     | _ => None
     end = Some (b, rit) →
-    val_of_Z (Z_of_bool b) rit None = Some v →
+    val_of_Z (bool_to_Z b) rit None = Some v →
     eval_bin_op op PtrOp PtrOp σ v1 v2 v
 | RelOpPP v1 v2 σ l1 l2 p a1 a2 v b op rit:
     val_to_loc v1 = Some l1 →
@@ -285,7 +285,7 @@ Inductive eval_bin_op : bin_op → op_type → op_type → state → val → val
     | GeOp rit => Some (bool_decide (a1 >= a2), rit)
     | _ => None
     end = Some (b, rit) →
-    val_of_Z (Z_of_bool b) rit None = Some v →
+    val_of_Z (bool_to_Z b) rit None = Some v →
     eval_bin_op op PtrOp PtrOp σ v1 v2 v
 | RelOpII op v1 v2 v σ n1 n2 it b rit:
     match op with
@@ -299,7 +299,7 @@ Inductive eval_bin_op : bin_op → op_type → op_type → state → val → val
     end = Some (b, rit) →
     val_to_Z v1 it = Some n1 →
     val_to_Z v2 it = Some n2 →
-    val_of_Z (Z_of_bool b) rit None = Some v →
+    val_of_Z (bool_to_Z b) rit None = Some v →
     eval_bin_op op (IntOp it) (IntOp it) σ v1 v2 v
 | ArithOpII op v1 v2 σ n1 n2 it n v:
     match op with
@@ -376,7 +376,7 @@ Inductive eval_un_op : un_op → op_type → state → val → val → Prop :=
     eval_un_op (CastOp BoolOp) ot σ vs vt
 | CastOpBI it σ vs vt b:
     val_to_bool vs = Some b →
-    val_of_Z (Z_of_bool b) it None = Some vt →
+    val_of_Z (bool_to_Z b) it None = Some vt →
     eval_un_op (CastOp (IntOp it)) BoolOp σ vs vt
 | NegOpI it σ vs vt n:
     val_to_Z vs it = Some n →

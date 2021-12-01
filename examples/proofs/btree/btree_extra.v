@@ -65,7 +65,7 @@ Lemma StronglySorted_insert_drop_take {A} {R : A → A → Prop} `{!Transitive R
   StronglySorted R (take i l ++ x :: drop i l).
 Proof.
   move => Hl Hr Hs. apply StronglySorted_insert_middle.
-  - move => y /take_elem_of [iy [Hy1 Hy2]]. move: (Hl iy Hy1). by rewrite Hy2.
+  - move => y /elem_of_take [iy [Hy1 Hy2]]. move: (Hl iy Hy2). by rewrite Hy1.
   - move => y Hy. destruct (l !! i) eqn:HEq.
     * rewrite -(take_drop i l) in Hs. apply StronglySorted_app_inv_r in Hs.
       erewrite drop_S in Hy, Hs; try done. apply StronglySorted_inv in Hs as [_ Hs].
@@ -113,7 +113,7 @@ Proof.
   { assert (x1 = x2) as Heq by naive_solver. by apply (@irreflexive_eq _ R _ _ _ Heq). }
   apply (asymmetry HR). move: (take_drop (S i2) l) => Heq. rewrite -Heq in HSS.
   apply (elem_of_StronglySorted_app _ _ _ _ _ HSS).
-  - apply take_elem_of. exists i2. split; [ lia | done ].
+  - apply elem_of_take. exists i2. split; [ done | lia ].
   - apply drop_elem_of. exists i1. split; [ lia | done ].
 Qed.
 
@@ -397,7 +397,7 @@ Section defs.
         move: (HB j dj Hdj' k HSome) => [HS1 HS2].
         assert (k < kj) by lia.
         assert (kj ∈ take (length ks) ks).
-        { apply take_elem_of. eexists; split; last done. rewrite -Hlen1. apply lookup_lt_Some in Hdj. lia. }
+        { apply elem_of_take. eexists; split; first done. rewrite -Hlen1. apply lookup_lt_Some in Hdj. lia. }
         rewrite cons_middle app_assoc in HSS.
         apply StronglySorted_app_inv_l in HSS.
         eapply (StronglySorted_last_lt _ kj k) in HSS;
@@ -441,7 +441,7 @@ Section defs.
           apply lookup_ge_None in HEq. apply lookup_lt_Some in Hdj. lia. }
         move: (HM2 j dj Hne Hdj) => HH.
         assert (k < kj). { simplify_eq. lia. }
-        assert (kj ∈ take i ks). { apply take_elem_of. eexists; split; last done. lia. }
+        assert (kj ∈ take i ks). { apply elem_of_take. eexists; split; first done. lia. }
         rewrite cons_middle app_assoc in HSS.
         apply StronglySorted_app_inv_l in HSS.
         eapply (StronglySorted_last_lt _ kj k) in HSS;

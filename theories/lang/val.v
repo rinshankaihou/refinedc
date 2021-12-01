@@ -303,15 +303,15 @@ Lemma val_to_loc_to_Z_disjoint v l it z:
 Proof. destruct v => //=. rewrite /val_to_loc/val_to_Z/=. destruct m => // _. by case_bool_decide. Qed.
 
 Lemma val_of_Z_bool_is_Some p it b:
-  is_Some (val_of_Z (Z_of_bool b) it p).
-Proof. apply: val_of_Z_is_Some. apply: Z_of_bool_elem_of_int_type. Qed.
+  is_Some (val_of_Z (bool_to_Z b) it p).
+Proof. apply: val_of_Z_is_Some. apply: bool_to_Z_elem_of_int_type. Qed.
 
 Lemma val_of_Z_bool b it:
-  val_of_Z (Z_of_bool b) it None = Some (i2v (Z_of_bool b) it).
+  val_of_Z (bool_to_Z b) it None = Some (i2v (bool_to_Z b) it).
 Proof. rewrite /i2v. by have [? ->]:= val_of_Z_bool_is_Some None it b. Qed.
 
 Program Definition val_of_bool (b : bool) : val :=
-  [MByte (Byte (Z_of_bool b) _) None].
+  [MByte (Byte (bool_to_Z b) _) None].
 Next Obligation. by destruct b. Qed.
 
 Definition val_to_bool (v : val) : option bool :=
@@ -332,7 +332,7 @@ Proof.
 Qed.
 
 Lemma val_to_bool_iff_val_to_Z v b:
-  val_to_bool v = Some b ↔ val_to_Z v u8 = Some (Z_of_bool b).
+  val_to_bool v = Some b ↔ val_to_Z v u8 = Some (bool_to_Z b).
 Proof.
   split.
   - destruct v as [|mb []] => //=; repeat case_match => //=; by move => [<-].
@@ -340,7 +340,7 @@ Proof.
 Qed.
 
 Lemma val_of_bool_iff_val_of_Z v b:
-  val_of_bool b = v ↔ val_of_Z (Z_of_bool b) u8 None = Some v.
+  val_of_bool b = v ↔ val_of_Z (bool_to_Z b) u8 None = Some v.
 Proof.
   split.
   - move => <-. destruct b; cbv; do 3 f_equal; by apply byte_eq.
@@ -348,14 +348,14 @@ Proof.
 Qed.
 
 Lemma i2v_bool_Some b it:
-  val_to_Z (i2v (Z_of_bool b) it) it = Some (Z_of_bool b).
+  val_to_Z (i2v (bool_to_Z b) it) it = Some (bool_to_Z b).
 Proof. apply: val_to_of_Z. apply val_of_Z_bool. Qed.
 
 
 Definition val_to_Z_ot (v : val) (ot : op_type) : option Z :=
   match ot with
   | IntOp it => val_to_Z v it
-  | BoolOp => Z_of_bool <$> val_to_bool v
+  | BoolOp => bool_to_Z <$> val_to_bool v
   | _ => None
   end.
 
@@ -369,7 +369,7 @@ Qed.
 
 Lemma val_to_Z_ot_to_Z z it ot v:
   val_to_Z z it = Some v →
-  match ot with | BoolOp => ∃ b, it = u8 ∧ v = Z_of_bool b | IntOp it' => it = it' | _ => False end →
+  match ot with | BoolOp => ∃ b, it = u8 ∧ v = bool_to_Z b | IntOp it' => it = it' | _ => False end →
   val_to_Z_ot z ot = Some v.
 Proof.
   move => ? Hot. destruct ot => //; simplify_eq/= => //. move: Hot => [?[??]]. simplify_eq.

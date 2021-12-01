@@ -183,7 +183,7 @@ Section programs.
     | GeOp rit => Some (bool_decide (bv1 >= bv2), rit)
     | _ => None
     end = Some (b, i32) →
-    (⌜bv1 ∈ it⌝ -∗ ⌜bv2 ∈ it⌝ -∗ T (i2v (Z_of_bool b) i32) (t2mt (b @ boolean i32))) -∗
+    (⌜bv1 ∈ it⌝ -∗ ⌜bv2 ∈ it⌝ -∗ T (i2v (bool_to_Z b) i32) (t2mt (b @ boolean i32))) -∗
       typed_bin_op v1 (v1 ◁ᵥ bv1 @ bitfield_raw it) v2 (v2 ◁ᵥ bv2 @ bitfield_raw it) op (IntOp it) (IntOp it) T.
   Proof.
     iIntros "%Hop HT Hv1 Hv2".
@@ -244,7 +244,7 @@ Section programs.
   Next Obligation. done. Qed.
 
   Lemma type_bitfield_raw_is_false it v1 v2 bv T :
-    (∃ a b, ⌜bv = bf_cons a 1 (Z_of_bool b) bf_nil⌝ ∗ ⌜0 ≤ a⌝ ∗ T (i2v (Z_of_bool (negb b)) i32) (t2mt ((Z_of_bool (negb b)) @ int i32))) -∗
+    (∃ a b, ⌜bv = bf_cons a 1 (bool_to_Z b) bf_nil⌝ ∗ ⌜0 ≤ a⌝ ∗ T (i2v (bool_to_Z (negb b)) i32) (t2mt ((bool_to_Z (negb b)) @ int i32))) -∗
       typed_bin_op v1 (v1 ◁ᵥ 0 @ int it) v2 (v2 ◁ᵥ bv @ bitfield_raw it) (EqOp i32) (IntOp it) (IntOp it) T.
   Proof.
     iIntros "HT Hv1 Hv2".
@@ -263,7 +263,7 @@ Section programs.
       λ T, i2p (type_bitfield_raw_is_false it v1 v2 bv T).
 
   Lemma type_bitfield_raw_is_true it v1 v2 bv T :
-    (∃ a b, ⌜bv = bf_cons a 1 (Z_of_bool b) bf_nil⌝ ∗ ⌜0 ≤ a⌝ ∗ T (i2v (Z_of_bool b) i32) (t2mt ((Z_of_bool b) @ int i32))) -∗
+    (∃ a b, ⌜bv = bf_cons a 1 (bool_to_Z b) bf_nil⌝ ∗ ⌜0 ≤ a⌝ ∗ T (i2v (bool_to_Z b) i32) (t2mt ((bool_to_Z b) @ int i32))) -∗
       typed_bin_op v1 (v1 ◁ᵥ 0 @ int it) v2 (v2 ◁ᵥ bv @ bitfield_raw it) (NeOp i32) (IntOp it) (IntOp it) T.
   Proof.
     iIntros "HT Hv1 Hv2".

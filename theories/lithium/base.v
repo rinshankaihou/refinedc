@@ -170,22 +170,12 @@ Proof.
 Defined.
 
 (** * bool *)
-Definition Z_of_bool (b : bool) : Z :=
-  if b then 1 else 0.
-Typeclasses Opaque Z_of_bool.
-
-Lemma Z_of_bool_true b: Z_of_bool b ≠ 0 ↔ b = true.
-Proof. destruct b; naive_solver. Qed.
-
-Lemma Z_of_bool_false b: Z_of_bool b = 0 ↔ b = false.
-Proof. destruct b; naive_solver. Qed.
-
-Lemma Z_of_bool_neq_0_bool_decide b :
-  bool_decide (Z_of_bool b ≠ 0) = b.
+Lemma bool_to_Z_neq_0_bool_decide b :
+  bool_decide (bool_to_Z b ≠ 0) = b.
 Proof. by destruct b. Qed.
 
-Lemma Z_of_bool_eq_0_bool_decide b :
-  bool_decide (Z_of_bool b = 0) = negb b.
+Lemma bool_to_Z_eq_0_bool_decide b :
+  bool_decide (bool_to_Z b = 0) = negb b.
 Proof. by destruct b. Qed.
 
 Lemma Is_true_eq (b : bool) : b ↔ b = true.
@@ -230,18 +220,10 @@ Proof.
   split => //; by apply nil_length_inv.
 Qed.
 
-(* TODO: replace with upsteamed version *)
-Lemma take_elem_of {A} (x : A) n l:
-  x ∈ take n l ↔ ∃ i, (i < n)%nat ∧ l !! i = Some x.
-Proof.
-  rewrite elem_of_list_lookup. f_equiv => i.
-  destruct (decide (i < n)%nat);[rewrite lookup_take | rewrite lookup_take_ge]; naive_solver lia.
-Qed.
-
 Lemma list_find_Some' A (l : list A) x P `{!∀ x, Decision (P x)}:
   list_find P l = Some x ↔ l !! x.1 = Some x.2 ∧ P x.2 ∧ ∀ y, y ∈ take x.1 l → ¬P y.
 Proof.
-  destruct x => /=. rewrite list_find_Some. do 2 f_equiv. setoid_rewrite take_elem_of.
+  destruct x => /=. rewrite list_find_Some. do 2 f_equiv. setoid_rewrite elem_of_take.
   split => ?; [naive_solver..|].
   move => j ? ?. have [|??]:= lookup_lt_is_Some_2 l j. { by apply: lookup_lt_Some. }
   set_solver.

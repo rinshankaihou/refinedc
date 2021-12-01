@@ -210,19 +210,19 @@ Proof. split; naive_solver lia. Qed.
 Global Instance simpl_eq_Ztonat (n m : nat) : SimplBothRel (=) (A := Z) n m (n = m).
 Proof. split; naive_solver lia. Qed.
 
-Global Instance simpl_Z_to_bool_0 (b : bool) : SimplBothRel (=) 0 (Z_of_bool b) (b = false).
+Global Instance simpl_bool_to_Z_0 (b : bool) : SimplBothRel (=) 0 (bool_to_Z b) (b = false).
 Proof. split; destruct b; naive_solver. Qed.
-Global Instance simpl_Z_to_bool_1 (b : bool) : SimplBothRel (=) 1 (Z_of_bool b) (b = true).
+Global Instance simpl_bool_to_Z_1 (b : bool) : SimplBothRel (=) 1 (bool_to_Z b) (b = true).
 Proof. split; destruct b; naive_solver. Qed.
 
 (* Using a SimplBothRel does not work since [x ≠ y] (i.e., [not (x = y)]) does
 not unify with [?R ?x ?y] (Coq's unification is too limited here). This can be
 seen by applying [simpl_both_rel_inst2], which given the following error:
-[Unable to unify "?Goal1 ?Goal2 ?Goal3" with "0 = Z_of_bool _b_ → False"] *)
-(*Global Instance simpl_Z_to_bool_nonzero b: SimplBothRel (≠) 0 (Z_of_bool b) (b = true).*)
-Global Instance simpl_Z_to_bool_nonzero_1 b : SimplBoth (Z_of_bool b ≠ 0) (b = true).
+[Unable to unify "?Goal1 ?Goal2 ?Goal3" with "0 = bool_to_Z _b_ → False"] *)
+(*Global Instance simpl_Z_to_bool_nonzero b: SimplBothRel (≠) 0 (bool_to_Z b) (b = true).*)
+Global Instance simpl_bool_to_Z_nonzero_1 b : SimplBoth (bool_to_Z b ≠ 0) (b = true).
 Proof. by destruct b. Qed.
-Global Instance simpl_Z_to_bool_nonzero_2 b : SimplBoth (0 ≠ Z_of_bool b) (b = true).
+Global Instance simpl_bool_to_Z_nonzero_2 b : SimplBoth (0 ≠ bool_to_Z b) (b = true).
 Proof. by destruct b. Qed.
 
 Global Instance simpl_add_eq_0 n m:

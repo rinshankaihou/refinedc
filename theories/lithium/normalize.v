@@ -26,7 +26,7 @@ Ltac normalize_autorewrite :=
 #[export] Hint Rewrite <-Nat.mul_sub_distr_r Z.mul_add_distr_r Z.mul_sub_distr_r : lithium_rewrite.
 #[export] Hint Rewrite @bool_decide_eq_x_x_true @if_bool_decide_eq_branches : lithium_rewrite.
 #[export] Hint Rewrite @bool_decide_eq_true_2 @bool_decide_eq_false_2 using fast_done : lithium_rewrite.
-#[export] Hint Rewrite Z_of_bool_neq_0_bool_decide Z_of_bool_eq_0_bool_decide : lithium_rewrite.
+#[export] Hint Rewrite bool_to_Z_neq_0_bool_decide bool_to_Z_eq_0_bool_decide : lithium_rewrite.
 #[export] Hint Rewrite keep_factor2_is_power_of_two keep_factor2_min_eq using can_solve_tac : lithium_rewrite.
 #[export] Hint Rewrite keep_factor2_min_1 keep_factor2_twice : lithium_rewrite.
 

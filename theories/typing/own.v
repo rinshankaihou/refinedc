@@ -281,7 +281,7 @@ Section own.
       (loc_in_bounds l1 0 ∗ True) ∧
       (loc_in_bounds l2 0 ∗ True) ∧
       (alloc_alive_loc l1 ∗ True) ∧
-      T (i2v (Z_of_bool b) i32) (t2mt (b @ boolean i32)))) -∗
+      T (i2v (bool_to_Z b) i32) (t2mt (b @ boolean i32)))) -∗
     typed_bin_op l1 (l1 ◁ₗ{β1} ty1) l2 (l2 ◁ₗ{β2} ty2) op PtrOp PtrOp T.
   Proof.
     iIntros (?) "HT Hl1 Hl2". iIntros (Φ) "HΦ". iDestruct ("HT" with "Hl1 Hl2") as (Heq) "([#? _]&[#? _]&HT)".
@@ -531,7 +531,7 @@ Section null.
     match op with | EqOp it' | NeOp it' => it' = it | _ =>  False end →
     heap_loc_eq l1 l2 h.(st_heap) = Some b →
     eval_bin_op op PtrOp PtrOp h l1 l2 v
-     ↔ val_of_Z (Z_of_bool (if op is EqOp _ then b else negb b)) it None = Some v.
+     ↔ val_of_Z (bool_to_Z (if op is EqOp _ then b else negb b)) it None = Some v.
   Proof.
     move => ??. split.
     - inversion 1; rewrite ->?val_to_of_loc in *; simplify_eq/= => //; destruct op => //; simplify_eq; done.
@@ -545,7 +545,7 @@ Section null.
   Proof.
     iIntros "[% HT]" (-> -> Φ) "HΦ".
     have Hz:= val_of_Z_bool (if op is EqOp i32 then true else false) i32.
-    iApply (wp_binop_det_pure (i2v (Z_of_bool (if op is EqOp i32 then true else false)) i32)). {
+    iApply (wp_binop_det_pure (i2v (bool_to_Z (if op is EqOp i32 then true else false)) i32)). {
       move => ??. rewrite eval_bin_op_ptr_cmp // ?heap_loc_eq_NULL_NULL //= Hz. naive_solver.
     }
     iApply "HΦ" => //. iExists _. iSplit; iPureIntro => //. by destruct op.
@@ -563,7 +563,7 @@ Section null.
     iDestruct (loc_in_bounds_in_bounds with "Hl") as "#Hb".
     iDestruct (loc_in_bounds_shorten _ _ 0 with "Hb") as "#Hb0"; first by lia.
     have Hz:= val_of_Z_bool (if op is EqOp i32 then false else true) i32.
-    iApply (wp_binop_det (i2v (Z_of_bool (if op is EqOp i32 then false else true)) i32)).
+    iApply (wp_binop_det (i2v (bool_to_Z (if op is EqOp i32 then false else true)) i32)).
     iIntros (σ) "Hctx". iApply fupd_mask_intro; [set_solver|]. iIntros "HE".
     iDestruct (loc_in_bounds_has_alloc_id with "Hb") as %[??].
     iDestruct (wp_if_precond_heap_loc_eq with "[] Hctx") as %?. { by iApply wp_if_precond_alloc. }
@@ -585,7 +585,7 @@ Section null.
     iDestruct (loc_in_bounds_in_bounds with "Hl") as "#Hb".
     iDestruct (loc_in_bounds_shorten _ _ 0 with "Hb") as "#Hb0"; first by lia.
     have ?:= val_of_Z_bool (if op is EqOp _ then false else true) i32.
-    iApply (wp_binop_det (i2v (Z_of_bool (if op is EqOp _ then false else true)) i32)).
+    iApply (wp_binop_det (i2v (bool_to_Z (if op is EqOp _ then false else true)) i32)).
     iIntros (σ) "Hctx". iApply fupd_mask_intro; [set_solver|]. iIntros "HE".
     iDestruct (loc_in_bounds_has_alloc_id with "Hb") as %[??].
     iDestruct (wp_if_precond_heap_loc_eq with "[] Hctx") as %Heq. { by iApply wp_if_precond_alloc. }

@@ -141,8 +141,8 @@ Proof.
   lia.
 Qed.
 
-Lemma Z_of_bool_elem_of_int_type (b : bool) (it : int_type):
-  Z_of_bool b ∈ it.
+Lemma bool_to_Z_elem_of_int_type (b : bool) (it : int_type):
+  bool_to_Z b ∈ it.
 Proof.
   apply elem_of_int_type_0_to_127.
   destruct b => /=; lia.

@@ -44,7 +44,7 @@ Qed.
 
 Lemma bf_cons_bool_singleton_false_iff a b :
   0 ≤ a →
-  bf_cons a 1 (Z_of_bool b) bf_nil = 0 ↔ b = false.
+  bf_cons a 1 (bool_to_Z b) bf_nil = 0 ↔ b = false.
 Proof.
   move => ?. rewrite bf_cons_singleton_z_iff; last done.
   by destruct b.
@@ -52,7 +52,7 @@ Qed.
 
 Lemma bf_cons_bool_singleton_true_iff a b :
   0 ≤ a →
-  bf_cons a 1 (Z_of_bool b) bf_nil ≠ 0 ↔ b = true.
+  bf_cons a 1 (bool_to_Z b) bf_nil ≠ 0 ↔ b = true.
 Proof.
   move => ?. rewrite bf_cons_singleton_nz_iff; last done.
   by destruct b.

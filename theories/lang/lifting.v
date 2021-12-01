@@ -370,7 +370,7 @@ Qed.
 
 Lemma wp_cast_bool_int Φ b v v' E it:
   val_to_bool v = Some b →
-  val_of_Z (Z_of_bool b) it None = Some v' →
+  val_of_Z (bool_to_Z b) it None = Some v' →
   ▷ Φ v' -∗
   WP UnOp (CastOp (IntOp it)) (BoolOp) (Val v) @ E {{ Φ }}.
 Proof.
@@ -539,7 +539,7 @@ Qed.
 Lemma wp_ptr_relop Φ op v1 v2 v l1 l2 b rit:
   val_to_loc v1 = Some l1 →
   val_to_loc v2 = Some l2 →
-  val_of_Z (Z_of_bool b) rit None = Some v →
+  val_of_Z (bool_to_Z b) rit None = Some v →
   match op with
   | EqOp rit => Some (bool_decide (l1.2 = l2.2), rit)
   | NeOp rit => Some (bool_decide (l1.2 ≠ l2.2), rit)

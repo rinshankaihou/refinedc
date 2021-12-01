@@ -110,18 +110,18 @@ Section programs.
     | GeOp rit => Some (bool_decide (n1 >= n2), rit)
     | _ => None
     end = Some (b, i32) →
-    (⌜n1 ∈ it⌝ -∗ ⌜n2 ∈ it⌝ -∗ T (i2v (Z_of_bool b) i32) (t2mt (b @ boolean i32))) -∗
+    (⌜n1 ∈ it⌝ -∗ ⌜n2 ∈ it⌝ -∗ T (i2v (bool_to_Z b) i32) (t2mt (b @ boolean i32))) -∗
       typed_bin_op v1 (v1 ◁ᵥ n1 @ int it) v2 (v2 ◁ᵥ n2 @ int it) op (IntOp it) (IntOp it) T.
   Proof.
     iIntros "%Hop HT %Hv1 %Hv2 %Φ HΦ".
     iDestruct ("HT" with "[] []" ) as "HT".
     1-2: iPureIntro; by apply: val_to_Z_in_range.
     have [v Hv]:= val_of_Z_bool_is_Some None i32 b.
-    iApply (wp_binop_det_pure (i2v (Z_of_bool b) i32)).
+    iApply (wp_binop_det_pure (i2v (bool_to_Z b) i32)).
     { rewrite /i2v Hv /=. split; last (move => ->; by econstructor).
       destruct op => //; inversion 1; by simplify_eq. }
     iIntros "!>". iApply "HΦ" => //.
-    iExists (Z_of_bool b). destruct b; eauto.
+    iExists (bool_to_Z b). destruct b; eauto.
   Qed.
 
   Global Program Instance type_eq_int_int_inst it v1 n1 v2 n2:
@@ -429,7 +429,7 @@ Section programs.
 
   (*** int <-> bool *)
   Lemma subsume_int_boolean_place l β n b it T:
-    ⌜n = Z_of_bool b⌝ ∗ T -∗
+    ⌜n = bool_to_Z b⌝ ∗ T -∗
     subsume (l ◁ₗ{β} n @ int it) (l ◁ₗ{β} b @ boolean it) T.
   Proof.
     iIntros "[-> $] Hint". iDestruct "Hint" as (???) "?".
@@ -440,15 +440,15 @@ Section programs.
     λ T, i2p (subsume_int_boolean_place l β n b it T).
  
   Lemma subsume_int_boolean_val v n b it T:
-    ⌜n = Z_of_bool b⌝ ∗ T -∗
+    ⌜n = bool_to_Z b⌝ ∗ T -∗
     subsume (v ◁ᵥ n @ int it) (v ◁ᵥ b @ boolean it) T.
-  Proof. iIntros "[-> $] %". iExists (Z_of_bool b). iSplit; first done. by destruct b. Qed.
+  Proof. iIntros "[-> $] %". iExists (bool_to_Z b). iSplit; first done. by destruct b. Qed.
   Global Instance subsume_int_boolean_val_inst v n b it:
     SubsumeVal v (n @ int it) (b @ boolean it) :=
     λ T, i2p (subsume_int_boolean_val v n b it T).
 
   Lemma type_binop_boolean_int it1 it2 it3 it4 v1 b1 v2 n2 T op:
-    typed_bin_op v1 (v1 ◁ᵥ (Z_of_bool b1) @ int it1) v2 (v2 ◁ᵥ n2 @ int it2) op (IntOp it3) (IntOp it4) T -∗
+    typed_bin_op v1 (v1 ◁ᵥ (bool_to_Z b1) @ int it1) v2 (v2 ◁ᵥ n2 @ int it2) op (IntOp it3) (IntOp it4) T -∗
     typed_bin_op v1 (v1 ◁ᵥ b1 @ boolean it1) v2 (v2 ◁ᵥ n2 @ int it2) op (IntOp it3) (IntOp it4) T.
   Proof.
     iIntros "HT H1 H2". iApply ("HT" with "[H1] H2").
@@ -460,7 +460,7 @@ Section programs.
     λ T, i2p (type_binop_boolean_int it1 it2 it3 it4 v1 b1 v2 n2 T op).
 
   Lemma type_binop_int_boolean it1 it2 it3 it4 v1 b1 v2 n2 T op:
-    typed_bin_op v1 (v1 ◁ᵥ n2 @ int it2) v2 (v2 ◁ᵥ (Z_of_bool b1) @ int it1) op (IntOp it3) (IntOp it4) T -∗
+    typed_bin_op v1 (v1 ◁ᵥ n2 @ int it2) v2 (v2 ◁ᵥ (bool_to_Z b1) @ int it1) op (IntOp it3) (IntOp it4) T -∗
     typed_bin_op v1 (v1 ◁ᵥ n2 @ int it2) v2 (v2 ◁ᵥ b1 @ boolean it1) op (IntOp it3) (IntOp it4) T.
   Proof.
     iIntros "HT H1 H2". iApply ("HT" with "H1 [H2]").
