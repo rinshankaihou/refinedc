@@ -26,7 +26,7 @@ Definition empty_pte := {|
 Definition mk_pte_addr (a : addr) : Pte := empty_pte <| pte_addr := a |>.
 
 Definition pte_repr (p : Pte) : Z :=
-  bf_cons 0 1 (Z_of_bool $ pte_valid p) $
+  bf_cons 0 1 (bool_to_Z $ pte_valid p) $
   bf_cons 1 1 (pte_type p) $
   bf_cons 2 10 (pte_leaf_attr_lo p) $
   bf_cons 12 36 (pte_addr p) $
@@ -37,7 +37,7 @@ Definition pte_repr (p : Pte) : Z :=
 Arguments pte_repr _/.
 
 Definition pte_wf (p : Pte) : Prop :=
-  0 ≤ Z_of_bool $ pte_valid p < 2^1 ∧
+  0 ≤ bool_to_Z $ pte_valid p < 2^1 ∧
   0 ≤ pte_type p < 2^1 ∧
   0 ≤ pte_leaf_attr_lo p < 2^10 ∧
   0 ≤ pte_addr p < 2^36 ∧
@@ -90,8 +90,8 @@ Definition attr_repr (a : Attr) : Z :=
   bf_cons 2 2 (attr_lo_s1_attridx a) $
   bf_cons 6 2 (attr_lo_s1_ap a) $
   bf_cons 8 2 (attr_lo_s1_sh a) $
-  bf_cons 10 1 (Z_of_bool $ attr_lo_s1_af a) $
-  bf_cons 54 1 (Z_of_bool $ attr_hi_s1_xn a)
+  bf_cons 10 1 (bool_to_Z $ attr_lo_s1_af a) $
+  bf_cons 54 1 (bool_to_Z $ attr_hi_s1_xn a)
   bf_nil.
 
 Arguments attr_repr _/.
@@ -100,8 +100,8 @@ Definition attr_wf (a : Attr) : Prop :=
   0 ≤ attr_lo_s1_attridx a < 2^2 ∧
   0 ≤ attr_lo_s1_ap a < 2^2 ∧
   0 ≤ attr_lo_s1_sh a < 2^2 ∧
-  0 ≤ Z_of_bool $ attr_lo_s1_af a < 2^1 ∧
-  0 ≤ Z_of_bool $ attr_hi_s1_xn a < 2^1.
+  0 ≤ bool_to_Z $ attr_lo_s1_af a < 2^1 ∧
+  0 ≤ bool_to_Z $ attr_hi_s1_xn a < 2^1.
 
 Global Instance Attr_BitfieldDesc : BitfieldDesc Attr := {|
   bitfield_it := u64;
@@ -119,19 +119,19 @@ Record Prot := {
 }.
 
 Definition prot_repr (p : Prot) : Z :=
-  bf_cons 0 1 (Z_of_bool $ prot_x p) $
-  bf_cons 1 1 (Z_of_bool $ prot_w p) $
-  bf_cons 2 1 (Z_of_bool $ prot_r p) $
-  bf_cons 3 1 (Z_of_bool $ prot_device p) $
+  bf_cons 0 1 (bool_to_Z $ prot_x p) $
+  bf_cons 1 1 (bool_to_Z $ prot_w p) $
+  bf_cons 2 1 (bool_to_Z $ prot_r p) $
+  bf_cons 3 1 (bool_to_Z $ prot_device p) $
   bf_nil.
 
 Arguments prot_repr _/.
 
 Definition prot_wf (p : Prot) : Prop :=
-  0 ≤ Z_of_bool $ prot_x p < 2^1 ∧
-  0 ≤ Z_of_bool $ prot_w p < 2^1 ∧
-  0 ≤ Z_of_bool $ prot_r p < 2^1 ∧
-  0 ≤ Z_of_bool $ prot_device p < 2^1.
+  0 ≤ bool_to_Z $ prot_x p < 2^1 ∧
+  0 ≤ bool_to_Z $ prot_w p < 2^1 ∧
+  0 ≤ bool_to_Z $ prot_r p < 2^1 ∧
+  0 ≤ bool_to_Z $ prot_device p < 2^1.
 
 Global Instance Prot_BitfieldDesc : BitfieldDesc Prot := {|
   bitfield_it := u64;
