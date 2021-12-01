@@ -42,7 +42,7 @@ int int_id(int a) {
    what is called an [int_type], which describes an integer type and
    is a combination of signedness and number of bits. The predefined
    [int_type] are [u8, u16, u32, u64, i8, i16, i32, i64, size_t,
-   ssize_t, bool_it]. As a user of RefinedC, you only need to care
+   ssize_t]. As a user of RefinedC, you only need to care
    about these predefined [int_type].
 
    Aside: As we have seen, there are three type systems involved when

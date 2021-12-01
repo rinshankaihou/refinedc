@@ -215,7 +215,7 @@ void mpool_fini(struct mpool *p) {
            "&own<uninit<{ly_with_align (Z.to_nat size) entry_size}>>",
            "size @ int<size_t>")]]
 [[rc::requires("{(entry_size | size)}")]]
-[[rc::returns("{Z_of_bool (bool_decide (0 < size))} @ int<bool_it>")]]
+[[rc::returns("{bool_decide (0 < size)} @ builtin_boolean")]]
 [[rc::ensures("frac q p : {(n + (Z.to_nat (size `quot` entry_size)))%nat} @ mpool<entry_size>")]]
 bool mpool_add_chunk(struct mpool *p, void *begin, size_t size)
 {

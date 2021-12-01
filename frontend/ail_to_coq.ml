@@ -91,7 +91,8 @@ let collect_rc_attrs : Annot.attributes -> rc_attr list =
   in
   fun (Annot.Attrs(attrs)) -> List.fold_left fn [] attrs
 
-let rec translate_int_type : loc -> i_type -> Coq_ast.int_type = fun loc i ->
+let rec translate_int_type : loc -> i_type -> Coq_ast.int_type option =
+    fun loc i ->
   let open Ctype in
   let open Ocaml_implementation in
   let size_of_base_type signed i =
@@ -114,26 +115,31 @@ let rec translate_int_type : loc -> i_type -> Coq_ast.int_type = fun loc i ->
     | None    -> assert false
   in
   match i with
-  | Char        -> size_of_base_type (hafniumIntImpl.impl_signed Char) Ichar
-  | Bool        -> ItBool
-  | Signed(i)   -> size_of_base_type true  i
-  | Unsigned(i) -> size_of_base_type false i
+  | Char        -> Some(size_of_base_type (hafniumIntImpl.impl_signed Char) Ichar)
+  | Bool        -> None
+  | Signed(i)   -> Some(size_of_base_type true  i)
+  | Unsigned(i) -> Some(size_of_base_type false i)
   | Enum(s)     -> translate_int_type loc (HafniumImpl.typeof_enum s)
   (* Things defined in the standard libraries *)
   | Wchar_t     -> not_impl loc "layout_of (Wchar_t)"
   | Wint_t      -> not_impl loc "layout_of (Win_t)"
-  | Size_t      -> ItSize_t(false)
-  | Ptrdiff_t   -> ItPtrdiff_t
+  | Size_t      -> Some(ItSize_t(false))
+  | Ptrdiff_t   -> Some(ItPtrdiff_t)
 
 (** [layout_of fa c_ty] translates the C type [c_ty] into a layout.  Note that
     argument [fa] must be set to [true] when in function arguments, since this
     requires a different tranlation for arrays (always pointers). *)
 let layout_of : bool -> c_type -> Coq_ast.layout = fun fa c_ty ->
+  let layout_of_int_type loc i =
+    match translate_int_type loc i with
+    | Some(it) -> LInt(it)
+    | None     -> LBool
+  in
   let rec layout_of Ctype.(Ctype(annots, c_ty)) =
     let loc = Annot.get_loc_ annots in
     match c_ty with
     | Void                -> LVoid
-    | Basic(Integer(i))   -> LInt (translate_int_type loc i)
+    | Basic(Integer(i))   -> layout_of_int_type loc i
     | Basic(Floating(_))  -> not_impl loc "layout_of (Basic float)"
     | Array(_,_) when fa  -> LPtr
     | Array(c_ty,None )   -> LPtr
@@ -246,9 +252,14 @@ let rec tag_def_data : loc -> string -> (string * op_type) list = fun loc id ->
   let fn (s, (_, _, c_ty)) = (id_to_str s, op_type_of loc c_ty) in
   List.map fn fs
 and op_type_of loc Ctype.(Ctype(_, c_ty)) =
+  let op_type_of_int_type loc i =
+    match translate_int_type loc i with
+    | Some(it) -> OpInt(it)
+    | None     -> OpBool
+  in
   match c_ty with
   | Void                -> not_impl loc "op_type_of (Void)"
-  | Basic(Integer(i))   -> OpInt(translate_int_type loc i)
+  | Basic(Integer(i))   -> op_type_of_int_type loc i
   | Basic(Floating(_))  -> not_impl loc "op_type_of (Basic float)"
   | Array(_,_)          -> not_impl loc "op_type_of (Array)"
   | Function(_,_,_,_)   -> not_impl loc "op_type_of (Function)"
@@ -257,6 +268,7 @@ and op_type_of loc Ctype.(Ctype(_, c_ty)) =
       begin
         match op_type_of loc c_ty with
         | OpInt(_) as op_ty -> op_ty
+        | OpBool   as op_ty -> op_ty
         | _                 -> not_impl loc "op_type_of (Atomic not an int)"
       end
   | Struct(sym)           ->
@@ -274,9 +286,14 @@ let op_type_of_tc : loc -> type_cat -> Coq_ast.op_type = fun loc tc ->
 
 (* We need similar function returning options for casts. *)
 let rec op_type_opt loc Ctype.(Ctype(_, c_ty)) =
+  let op_type_of_int_type loc i =
+    match translate_int_type loc i with
+    | Some(it) -> OpInt(it)
+    | None     -> OpBool
+  in
   match c_ty with
   | Void                -> None
-  | Basic(Integer(i))   -> Some(OpInt(translate_int_type loc i))
+  | Basic(Integer(i))   -> Some(op_type_of_int_type loc i)
   | Basic(Floating(_))  -> None
   | Array(_,_)          -> None
   | Function(_,_,_,_)   -> None
@@ -285,6 +302,7 @@ let rec op_type_opt loc Ctype.(Ctype(_, c_ty)) =
       begin
         match op_type_opt loc c_ty with
         | Some(OpInt(_)) as op_ty -> op_ty
+        | Some(OpBool)   as op_ty -> op_ty
         | _                       -> None
       end
   | Struct(_)           -> None
@@ -393,15 +411,20 @@ let memory_order_of_expr : ail_expr -> Cmm_csem.memory_order = fun e ->
 
 let integer_constant_to_string loc i =
   let open AilSyntax in
+  let get_int_type loc it =
+    match translate_int_type loc it with
+    | Some(it) -> it
+    | None     -> assert false (* FIXME unreachable? *)
+  in
   match i with
   | IConstant(i,_,_) ->
       (Z.to_string i, None)
   | IConstantMax(it) ->
-      let it : int_type = translate_int_type loc it in
+      let it = get_int_type loc it in
       Format.(fprintf str_formatter) "(max_int %a)" Coq_pp.pp_int_type it;
       (Format.flush_str_formatter (), Some(it))
   | IConstantMin(it) ->
-      let it : int_type = translate_int_type loc it in
+      let it = get_int_type loc it in
       Format.(fprintf str_formatter) "(min_int %a)" Coq_pp.pp_int_type it;
       (Format.flush_str_formatter (), Some(it))
 
@@ -467,6 +490,9 @@ let rec translate_expr : bool -> op_type option -> ail_expr -> expr =
         in
         let (goal_ty, ty1, ty2) =
           match (ty1, ty2, res_ty) with
+          | (OpBool  , OpBool  , Some((OpInt(_) as res_ty)))
+          | (OpBool  , OpInt(_), Some((OpInt(_) as res_ty)))
+          | (OpInt(_), OpBool  , Some((OpInt(_) as res_ty)))
           | (OpInt(_), OpInt(_), Some((OpInt(_) as res_ty))) ->
               if !arith_op then (Some(res_ty), res_ty, res_ty) else
               (* We build a type both operands can be casted to. *)
@@ -685,6 +711,7 @@ and translate_call : type a. a call_place -> loc -> bool -> ail_expr
           let (_, ty, _) = List.nth args i in
           match op_type_opt Location_ocaml.unknown ty with
           | Some(OpInt(_)) as goal_ty -> translate_expr false goal_ty e
+          | Some(OpBool)   as goal_ty -> translate_expr false goal_ty e
           | _                         -> translate_expr false None e
         in
         List.mapi fn es
@@ -806,6 +833,7 @@ and translate_call : type a. a call_place -> loc -> bool -> ail_expr
           let ty = List.nth arg_tys i in
           match op_type_opt Location_ocaml.unknown ty with
           | Some(OpInt(_)) as goal_ty -> translate_expr false goal_ty e
+          | Some(OpBool)   as goal_ty -> translate_expr false goal_ty e
           | _                         -> translate_expr false None e
         in
         List.mapi fn es
@@ -992,6 +1020,7 @@ let translate_block stmts blocks ret_ty is_main =
           let goal_ty =
             match ret_ty with
             | Some(OpInt(_)) -> ret_ty
+            | Some(OpBool)   -> ret_ty
             | _              -> None
           in
           let e = translate_expr false goal_ty e in
@@ -1022,6 +1051,7 @@ let translate_block stmts blocks ret_ty is_main =
                   let ty_opt = op_type_tc_opt (loc_of e) (tc_of e) in
                   match ty_opt with
                   | Some(OpInt(_)) -> ty_opt
+                  | Some(OpBool)   -> ty_opt
                   | _              -> None
                 in
                 let e2 = translate_expr false goal_ty e2 in
@@ -1360,6 +1390,7 @@ let translate : string -> typed_ail -> Coq_ast.t = fun source_file ail ->
           let rec extend acc layout =
             match layout with
             | LVoid         -> acc
+            | LBool         -> acc
             | LPtr          -> acc
             | LStruct(id,_) -> id :: acc
             | LInt(_)       -> acc

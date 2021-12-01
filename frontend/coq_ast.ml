@@ -9,16 +9,17 @@ type int_type =
   | ItI16       of bool (* signed *)
   | ItI32       of bool (* signed *)
   | ItI64       of bool (* signed *)
-  | ItBool
 
 type layout =
   | LVoid
+  | LBool
   | LPtr
   | LStruct of string * bool (* Union? *)
   | LInt of int_type
   | LArray of layout * string (* size *)
 
 type op_type =
+  | OpBool
   | OpInt of int_type
   | OpPtr of layout
   | OpStruct of string * op_type list

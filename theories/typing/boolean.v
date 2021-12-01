@@ -3,25 +3,53 @@ From refinedc.typing Require Import programs.
 Set Default Proof Using "Type".
 
 (** A [Strict] boolean can only have value 0 (false) or 1 (true). A [Relaxed]
-boolean can have any value: 0 means false, anything else means true. *)
-Inductive strictness := Strict | Relaxed.
+    boolean can have any value: 0 means false, anything else means true. *)
+Inductive bool_strictness := StrictBool | RelaxedBool.
 
-Definition represents_boolean (stn: strictness) (n: Z) (b: bool) : Prop :=
+Definition represents_boolean (stn: bool_strictness) (n: Z) (b: bool) : Prop :=
   match stn with
-  | Strict  => n = Z_of_bool b
-  | Relaxed => bool_decide (n ≠ 0) = b
+  | StrictBool => n = Z_of_bool b
+  | RelaxedBool => bool_decide (n ≠ 0) = b
   end.
 
-Lemma represents_boolean_eq (stn: strictness) (n: Z) (b: bool) :
-  represents_boolean stn n b → bool_decide (n ≠ 0) = b.
-Proof.
-  destruct stn => //=. move => ->. by destruct b.
-Qed.
+Definition is_bool_ot (ot : op_type) (it : int_type) (stn : bool_strictness) : Prop:=
+  match ot with
+  | BoolOp => it = u8 ∧ stn = StrictBool
+  | IntOp it' => it = it'
+  | UntypedOp ly => ly = it_layout it
+  | _ => False
+  end.
+
+Section is_bool_ot.
+  Context `{!typeG Σ}.
+
+  Lemma represents_boolean_eq stn n b :
+    represents_boolean stn n b → bool_decide (n ≠ 0) = b.
+  Proof.
+    destruct stn => //=. move => ->. by destruct b.
+  Qed.
+
+  Lemma is_bool_ot_layout ot it stn:
+    is_bool_ot ot it stn → ot_layout ot = it.
+  Proof. destruct ot => //=; naive_solver. Qed.
+
+  Lemma mem_cast_compat_bool (P : val → iProp Σ) v ot stn it st mt:
+    is_bool_ot ot it stn →
+    (P v ⊢ ⌜∃ n b, val_to_Z v it = Some n ∧ represents_boolean stn n b⌝) →
+    (P v ⊢ match mt with | MCNone => True | MCCopy => P (mem_cast v ot st) | MCId => ⌜mem_cast_id v ot⌝ end).
+  Proof.
+    move => ? HT. apply: mem_cast_compat_Untyped => ?.
+    apply: mem_cast_compat_id. etrans; [done|]. iPureIntro => -[?[?[??]]].
+    destruct ot => //; simplify_eq/=; destruct_and?; simplify_eq/=.
+    - apply: mem_cast_id_bool. by apply val_to_bool_iff_val_to_Z.
+    - by apply: mem_cast_id_int.
+  Qed.
+End is_bool_ot.
 
 Section generic_boolean.
   Context `{!typeG Σ}.
 
-  Program Definition generic_boolean_inner_type (stn: strictness) (it: int_type) (b: bool) : type := {|
+  Program Definition generic_boolean_inner_type (stn: bool_strictness) (it: int_type) (b: bool) : type := {|
     ty_own β l :=
       ∃ v n, ⌜val_to_Z v it = Some n⌝ ∗
              ⌜represents_boolean stn n b⌝ ∗
@@ -33,28 +61,38 @@ Section generic_boolean.
     do 3 (iSplitR; first done). by iApply heap_mapsto_own_state_share.
   Qed.
 
-  Program Definition generic_boolean (stn: strictness) (it: int_type) : rtype := {|
+  Program Definition generic_boolean (stn: bool_strictness) (it: int_type) : rtype := {|
     rty_type := bool;
     rty := generic_boolean_inner_type stn it;
   |}.
 
   Global Program Instance rmovable_generic_boolean stn it : RMovable (generic_boolean stn it) := {|
     rmovable b := {|
-      ty_has_op_type ot mt := is_int_ot ot it;
+      ty_has_op_type ot mt := is_bool_ot ot it stn;
       ty_own_val v := ∃ n, ⌜val_to_Z v it = Some n⌝ ∗ ⌜represents_boolean stn n b⌝;
     |}
   |}%I.
-  Next Obligation. iIntros (?????? ->%is_int_ot_layout) "(%&%&_&_&$&_)". Qed.
-  Next Obligation. iIntros (?????? ->%is_int_ot_layout [?[H _]]) "!%". by apply val_to_Z_length in H. Qed.
-  Next Obligation. iIntros (???????) "(%v&%n&%&%&%&?)". eauto with iFrame. Qed.
-  Next Obligation. iIntros (?????? v ->%is_int_ot_layout ?) "Hl (%n&%&%)". iExists v, n. eauto with iFrame. Qed.
-  Next Obligation. iIntros (????????). apply: mem_cast_compat_int; [naive_solver|]. iPureIntro; naive_solver. Qed.
+  Next Obligation.
+    iIntros (??????->%is_bool_ot_layout) "(%&%&_&_&H&_)" => //.
+  Qed.
+  Next Obligation.
+    iIntros (??????->%is_bool_ot_layout [?[H _]]) "!%". by apply val_to_Z_length in H.
+  Qed.
+  Next Obligation.
+    iIntros (???????) "(%v&%n&%&%&%&?)". eauto with iFrame.
+  Qed.
+  Next Obligation.
+    iIntros (?????? v ->%is_bool_ot_layout ?) "Hl (%n&%&%)". iExists v, n; eauto with iFrame.
+  Qed.
+  Next Obligation.
+    iIntros (????????). apply: mem_cast_compat_bool; [naive_solver|]. iPureIntro. naive_solver.
+  Qed.
 
   Global Program Instance generic_boolean_copyable b stn it : Copyable (b @ generic_boolean stn it).
   Next Obligation.
-    iIntros (??????? ->%is_int_ot_layout) "(%v&%n&%&%&%&Hl)".
+    iIntros (???????->%is_bool_ot_layout) "(%v&%n&%&%&%&Hl)".
     iMod (heap_mapsto_own_state_to_mt with "Hl") as (q) "[_ Hl]" => //.
-    iSplitR; first done. iExists q, v. iFrame. iModIntro. eauto 6 with iFrame.
+    iSplitR; first done; iExists q, v; eauto 8 with iFrame.
   Qed.
 
   Global Instance alloc_alive_generic_boolean b stn it β: AllocAlive (b @ generic_boolean stn it) β True.
@@ -72,39 +110,48 @@ End generic_boolean.
 Notation "generic_boolean< stn , it >" := (generic_boolean stn it)
   (only printing, format "'generic_boolean<' stn ',' it '>'") : printing_sugar.
 
-Notation boolean := (generic_boolean Strict) (only parsing).
+Notation boolean := (generic_boolean StrictBool).
 Notation "boolean< it >" := (boolean it)
   (only printing, format "'boolean<' it '>'") : printing_sugar.
 
-Section programs.
+(* Type corresponding to [_Bool] (https://en.cppreference.com/w/c/types/boolean). *)
+Notation builtin_boolean := (generic_boolean StrictBool u8).
+
+Section generic_boolean.
   Context `{!typeG Σ}.
 
   Inductive destruct_hint_if_bool :=
   | DestructHintIfBool (b : bool).
 
-  Lemma type_if_generic_boolean stn it (b : bool) v T1 T2 :
-    destruct_hint (DHintDestruct _ b) (DestructHintIfBool b) (if b then T1 else T2) -∗
-    typed_if (IntOp it) v (v ◁ᵥ b @ generic_boolean stn it) T1 T2.
+  Lemma type_if_generic_boolean stn it ot (b : bool) v T1 T2 :
+    ⌜match ot with | BoolOp => it = u8 ∧ stn = StrictBool | IntOp it' => it = it' | _ => False end⌝ ∗
+     destruct_hint (DHintDestruct _ b) (DestructHintIfBool b) (if b then T1 else T2) -∗
+    typed_if ot v (v ◁ᵥ b @ generic_boolean stn it) T1 T2.
   Proof.
-    unfold destruct_hint. iIntros "Hs (%n&%Hv&%Hb)".
-    rewrite <-(represents_boolean_eq stn n b); last done. eauto with iFrame.
+    unfold destruct_hint. iIntros "[% Hs] (%n&%Hv&%Hb)".
+    destruct ot; destruct_and? => //; simplify_eq/=.
+    - iExists _. iFrame. iPureIntro. by apply val_to_bool_iff_val_to_Z.
+    - rewrite <-(represents_boolean_eq stn n b); last done. by eauto with iFrame.
   Qed.
-  Global Instance type_if_generic_boolean_inst stn it b v :
-    TypedIf (IntOp it) v (v ◁ᵥ b @ generic_boolean stn it)%I :=
-    λ T1 T2, i2p (type_if_generic_boolean stn it b v T1 T2).
+  Global Instance type_if_generic_boolean_inst stn it ot b v :
+    TypedIf ot v (v ◁ᵥ b @ generic_boolean stn it)%I :=
+    λ T1 T2, i2p (type_if_generic_boolean stn it ot b v T1 T2).
 
-  Lemma type_assert_generic_boolean stn it (b : bool) s Q fn ls R v :
-    (⌜b⌝ ∗ typed_stmt s fn ls R Q) -∗
-    typed_assert (IntOp it) v (v ◁ᵥ b @ generic_boolean stn it) s fn ls R Q.
+  Lemma type_assert_generic_boolean stn it ot (b : bool) s Q fn ls R v :
+    (⌜match ot with | BoolOp => it = u8 ∧ stn = StrictBool | IntOp it' => it = it' | _ => False end⌝ ∗
+      ⌜b⌝ ∗ typed_stmt s fn ls R Q) -∗
+    typed_assert ot v (v ◁ᵥ b @ generic_boolean stn it) s fn ls R Q.
   Proof.
-    iIntros "[%H $] (%n&%&%Hb)". destruct b; last by exfalso.
-    iExists n. iSplit; first done. iPureIntro.
-    by apply represents_boolean_eq, bool_decide_eq_true in Hb.
+    iIntros "[% [% ?]] (%n&%&%Hb)". destruct b; last by exfalso.
+    destruct ot; destruct_and? => //; simplify_eq/=.
+    - iExists true. iFrame. iPureIntro. split; [|done]. by apply val_to_bool_iff_val_to_Z.
+    - iExists n. iFrame. iSplit; first done. iPureIntro.
+      by apply represents_boolean_eq, bool_decide_eq_true in Hb.
   Qed.
-  Global Instance type_assert_generic_boolean_inst stn it b v :
-    TypedAssert (IntOp it) v (v ◁ᵥ b @ generic_boolean stn it)%I :=
-    λ s fn ls R Q, i2p (type_assert_generic_boolean _ _ _ _ _ _ _ _ _).
-End programs.
+  Global Instance type_assert_generic_boolean_inst stn it ot b v :
+    TypedAssert ot v (v ◁ᵥ b @ generic_boolean stn it)%I :=
+    λ s fn ls R Q, i2p (type_assert_generic_boolean _ _ _ _ _ _ _ _ _ _).
+End generic_boolean.
 
 Section boolean.
   Context `{!typeG Σ}.
@@ -143,48 +190,51 @@ Section boolean.
   Next Obligation. done. Qed.
 
   (* TODO: replace this with a typed_cas once it is refactored to take E as an argument. *)
-  Lemma wp_cas_suc_boolean it b1 b2 bd l1 l2 vd Φ E:
-    (bytes_per_int it ≤ bytes_per_addr)%nat →
+  Lemma wp_cas_suc_boolean it ot b1 b2 bd l1 l2 vd Φ E:
+    ((ot_layout ot).(ly_size) ≤ bytes_per_addr)%nat →
+    match ot with | BoolOp => it = u8 | IntOp it' => it = it' | _ => False end →
     b1 = b2 →
     l1 ◁ₗ b1 @ boolean it -∗
     l2 ◁ₗ b2 @ boolean it -∗
     vd ◁ᵥ bd @ boolean it -∗
     ▷ (l1 ◁ₗ bd @ boolean it -∗ l2 ◁ₗ b2 @ boolean it -∗ Φ (val_of_bool true)) -∗
-    wp NotStuck E (CAS (IntOp it) (Val l1) (Val l2) (Val vd)) Φ.
+    wp NotStuck E (CAS ot (Val l1) (Val l2) (Val vd)) Φ.
   Proof.
-    iIntros (? ->) "(%v1&%n1&%&%&%&Hl1) (%v2&%n2&%&%&%&Hl2) (%n&%&%) HΦ/=".
-    iApply (wp_cas_suc with "Hl1 Hl2") => //.
+    iIntros (? Hot ->) "(%v1&%n1&%&%&%&Hl1) (%v2&%n2&%&%&%&Hl2) (%n&%&%) HΦ/=".
+    iApply (wp_cas_suc with "Hl1 Hl2").
     { by apply val_to_of_loc. }
     { by apply val_to_of_loc. }
-    { by eapply val_to_Z_length. }
-    { simpl in *. by simplify_eq. }
+    { by destruct ot; simplify_eq. }
+    { by destruct ot; simplify_eq. }
+    { apply: val_to_Z_ot_to_Z; [done|]. destruct ot; naive_solver. }
+    { apply: val_to_Z_ot_to_Z; [done|]. destruct ot; naive_solver. }
+    { etrans; [by eapply val_to_Z_length|]. by destruct ot; simplify_eq. }
+    { by simplify_eq/=. }
+    { by simplify_eq/=. }
     iIntros "!# Hl1 Hl2". iApply ("HΦ" with "[Hl1] [Hl2]"); iExists _, _; by iFrame.
   Qed.
 
-  Lemma wp_cas_fail_boolean it b1 b2 bd l1 l2 vd Φ E:
-    (bytes_per_int it ≤ bytes_per_addr)%nat →
+  Lemma wp_cas_fail_boolean ot it b1 b2 bd l1 l2 vd Φ E:
+    ((ot_layout ot).(ly_size) ≤ bytes_per_addr)%nat →
+    match ot with | BoolOp => it = u8 | IntOp it' => it = it' | _ => False end →
     b1 ≠ b2 →
     l1 ◁ₗ b1 @ boolean it -∗ l2 ◁ₗ b2 @ boolean it -∗ vd ◁ᵥ bd @ boolean it -∗
     ▷ (l1 ◁ₗ b1 @ boolean it -∗ l2 ◁ₗ b1 @ boolean it -∗ Φ (val_of_bool false)) -∗
-    wp NotStuck E (CAS (IntOp it) (Val l1) (Val l2) (Val vd)) Φ.
+    wp NotStuck E (CAS ot (Val l1) (Val l2) (Val vd)) Φ.
   Proof.
-    iIntros (??) "(%v1&%n1&%&%&%&Hl1) (%v2&%n2&%&%&%&Hl2) (%n&%&%) HΦ/=".
-    iApply (wp_cas_fail with "Hl1 Hl2") => //.
+    iIntros (? Hot ?) "(%v1&%n1&%&%&%&Hl1) (%v2&%n2&%&%&%&Hl2) (%n&%&%) HΦ/=".
+    iApply (wp_cas_fail with "Hl1 Hl2").
     { by apply val_to_of_loc. }
     { by apply val_to_of_loc. }
-    { by eapply val_to_Z_length. }
-    { simpl in *. simplify_eq. by destruct b1, b2. }
+    { by destruct ot; simplify_eq. }
+    { by destruct ot; simplify_eq. }
+    { apply: val_to_Z_ot_to_Z; [done|]. destruct ot; naive_solver. }
+    { apply: val_to_Z_ot_to_Z; [done|]. destruct ot; naive_solver. }
+    { etrans; [by eapply val_to_Z_length|]. by destruct ot; simplify_eq. }
+    { by simplify_eq/=. }
+    { simplify_eq/=. by destruct b1, b2. }
     iIntros "!# Hl1 Hl2". iApply ("HΦ" with "[Hl1] [Hl2]"); iExists _, _; by iFrame.
   Qed.
-
-  Lemma type_val_boolean b T:
-    (T (t2mt (b @ boolean bool_it))) -∗ typed_value (val_of_bool b) T.
-  Proof.
-    iIntros "HT". iExists _. iFrame.
-    iExists (Z_of_bool b). destruct b; eauto.
-  Qed.
-  Global Instance type_val_boolean_inst b : TypedValue (val_of_bool b) :=
-    λ T, i2p (type_val_boolean b T).
 
   Lemma type_cast_boolean b it1 it2 v T:
     (∀ v, T v (t2mt (b @ boolean it2))) -∗
@@ -203,3 +253,42 @@ End boolean.
 Typeclasses Opaque generic_boolean_inner_type.
 
 Notation "'if' p " := (DestructHintIfBool p) (at level 100, only printing).
+
+Section builtin_boolean.
+  Context `{!typeG Σ}.
+
+  Lemma type_val_builtin_boolean b T:
+    (T (t2mt (b @ builtin_boolean))) -∗ typed_value (val_of_bool b) T.
+  Proof.
+    iIntros "HT". iExists _. iFrame. iPureIntro. naive_solver.
+  Qed.
+  Global Instance type_val_builtin_boolean_inst b : TypedValue (val_of_bool b) :=
+    λ T, i2p (type_val_builtin_boolean b T).
+
+  Lemma type_cast_boolean_builtin_boolean b it v T:
+    (∀ v, T v (t2mt (b @ builtin_boolean))) -∗
+    typed_un_op v (v ◁ᵥ b @ boolean it)%I (CastOp BoolOp) (IntOp it) T.
+  Proof.
+    iIntros "HT (%n&%Hv&%Hb) %Φ HΦ". move: Hb => /= ?. subst n.
+    iApply wp_cast_int_bool => //. iApply ("HΦ" with "[] HT") => //.
+    iPureIntro => /=. exists (Z_of_bool b). by destruct b.
+  Qed.
+  Global Instance type_cast_boolean_builtin_boolean_inst b it v:
+    TypedUnOpVal v (b @ boolean it)%I (CastOp BoolOp) (IntOp it) :=
+    λ T, i2p (type_cast_boolean_builtin_boolean b it v T).
+
+  Lemma type_cast_builtin_boolean_boolean b it v T:
+    (∀ v, T v (t2mt (b @ boolean it))) -∗
+    typed_un_op v (v ◁ᵥ b @ builtin_boolean)%I (CastOp (IntOp it)) BoolOp T.
+  Proof.
+    iIntros "HT (%n&%Hv&%Hb) %Φ HΦ". move: Hb => /= ?. subst n.
+    have [??] := val_of_Z_bool_is_Some None it b.
+    iApply wp_cast_bool_int => //. { by apply val_to_bool_iff_val_to_Z. }
+    iApply ("HΦ" with "[] HT") => //.
+    iPureIntro => /=. eexists _. split;[|done]. by apply: val_to_of_Z.
+  Qed.
+  Global Instance type_cast_builtin_boolean_boolean_inst b it v:
+    TypedUnOpVal v (b @ builtin_boolean)%I (CastOp (IntOp it)) BoolOp :=
+    λ T, i2p (type_cast_builtin_boolean_boolean b it v T).
+
+End builtin_boolean.

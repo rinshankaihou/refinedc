@@ -64,7 +64,7 @@ void free_btree(btree_t* t);
 // Test if the key k is mapped in the B-tree t.
 [[rc::parameters("p : loc", "h : nat", "m : {gmap Z type}", "k : Z")]]
 [[rc::args("p @ &own<{BRroot h m} @ btree_t>", "k @ int<i32>")]]
-[[rc::returns("{bool_decide (m !! k ≠ None)} @ boolean<bool_it>")]]
+[[rc::returns("{bool_decide (m !! k ≠ None)} @ builtin_boolean")]]
 [[rc::ensures("own p : {BRroot h m} @ btree_t")]]
 bool btree_member(btree_t* t, int k);
 

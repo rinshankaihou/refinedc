@@ -10,7 +10,7 @@ void sl_init(struct spinlock* lock) {
 
 void sl_lock(struct spinlock* lock) {
   bool expected = 0;
-  [[rc::inv_vars("expected : false @ boolean<bool_it>")]]
+  [[rc::inv_vars("expected : false @ builtin_boolean")]]
   while(atomic_compare_exchange_strong(&lock->lock, &expected, 1) == (bool)false) {
     expected = 0;
   }

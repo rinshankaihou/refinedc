@@ -6,7 +6,7 @@
 #include <stdatomic.h>
 
 struct [[rc::refined_by("P : {iProp Σ}")]] latch {
-    [[rc::field("atomic_bool<bool_it, {(□ P)}, True>")]]
+    [[rc::field("atomic_bool<u8, {(□ P)}, True>")]]
     atomic_bool released;
 };
 

@@ -271,25 +271,25 @@ Qed.
    WP CAS (IntOp it) (Val vl1) (Val vl2) (Val vd) @ E {{ Φ }}.
 *)
 
-Lemma wp_cas_fail vl1 vl2 vd vo ve z1 z2 Φ l1 l2 it q E:
+Lemma wp_cas_fail vl1 vl2 vd vo ve z1 z2 Φ l1 l2 ot q E:
   val_to_loc vl1 = Some l1 →
   val_to_loc vl2 = Some l2 →
-  l1 `has_layout_loc` it_layout it →
-  l2 `has_layout_loc` it_layout it →
-  val_to_Z vo it = Some z1 →
-  val_to_Z ve it = Some z2 →
-  length vd = bytes_per_int it →
-  (bytes_per_int it ≤ bytes_per_addr)%nat →
+  l1 `has_layout_loc` ot_layout ot →
+  l2 `has_layout_loc` ot_layout ot →
+  val_to_Z_ot vo ot = Some z1 →
+  val_to_Z_ot ve ot = Some z2 →
+  length vd = (ot_layout ot).(ly_size) →
+  ((ot_layout ot).(ly_size) ≤ bytes_per_addr)%nat →
   z1 ≠ z2 →
   l1↦{q}vo -∗ l2↦ve -∗ ▷ (l1 ↦{q} vo -∗ l2↦vo -∗ Φ (val_of_bool false)) -∗
-   WP CAS (IntOp it) (Val vl1) (Val vl2) (Val vd) @ E {{ Φ }}.
+   WP CAS ot (Val vl1) (Val vl2) (Val vd) @ E {{ Φ }}.
 Proof.
   iIntros (Hl1 Hl2 Hly1 Hly2 Hvo Hve Hlen1 Hlen2 Hneq) "Hl1 Hl2 HΦ".
   iApply wp_lift_expr_step; auto.
   iIntros (σ1) "((%&Hhctx&?)&Hfctx)".
   iDestruct (heap_mapsto_has_alloc_id with "Hl1") as %Haid1.
   iDestruct (heap_mapsto_has_alloc_id with "Hl2") as %Haid2.
-  move: (Hvo) (Hve) => /val_to_Z_length ? /val_to_Z_length ?.
+  move: (Hvo) (Hve) => /val_to_Z_ot_length ? /val_to_Z_ot_length ?.
   iDestruct (heap_mapsto_lookup_q (λ st : lock_state, ∃ n : nat, st = RSt n) with "Hhctx Hl1") as %? => //. { naive_solver. }
   iDestruct (heap_mapsto_lookup_1 (λ st : lock_state, st = RSt 0%nat) with "Hhctx Hl2") as %? => //.
   iModIntro. iSplit; first by eauto 15 using CasFailS.
@@ -302,25 +302,25 @@ Proof.
   iApply wp_value. by iApply ("HΦ" with "[$]").
 Qed.
 
-Lemma wp_cas_suc vl1 vl2 vd vo ve z1 z2 Φ l1 l2 it E q:
+Lemma wp_cas_suc vl1 vl2 vd vo ve z1 z2 Φ l1 l2 ot E q:
   val_to_loc vl1 = Some l1 →
   val_to_loc vl2 = Some l2 →
-  l1 `has_layout_loc` it_layout it →
-  l2 `has_layout_loc` it_layout it →
-  val_to_Z vo it = Some z1 →
-  val_to_Z ve it = Some z2 →
-  length vd = bytes_per_int it →
-  (bytes_per_int it ≤ bytes_per_addr)%nat →
+  l1 `has_layout_loc` ot_layout ot →
+  l2 `has_layout_loc` ot_layout ot →
+  val_to_Z_ot vo ot = Some z1 →
+  val_to_Z_ot ve ot = Some z2 →
+  length vd = (ot_layout ot).(ly_size) →
+  ((ot_layout ot).(ly_size) ≤ bytes_per_addr)%nat →
   z1 = z2 →
   l1↦vo -∗ l2↦{q}ve -∗ ▷ (l1 ↦ vd -∗ l2↦{q}ve -∗ Φ (val_of_bool true)) -∗
-  WP CAS (IntOp it) (Val vl1) (Val vl2) (Val vd) @ E {{ Φ }}.
+  WP CAS ot (Val vl1) (Val vl2) (Val vd) @ E {{ Φ }}.
 Proof.
   iIntros (Hl1 Hl2 Hly1 Hly2 Hvo Hve Hlen1 Hlen2 Hneq) "Hl1 Hl2 HΦ".
   iApply wp_lift_expr_step; auto.
   iIntros (σ1) "((%&Hhctx&?)&Hfctx)".
   iDestruct (heap_mapsto_has_alloc_id with "Hl1") as %Haid1.
   iDestruct (heap_mapsto_has_alloc_id with "Hl2") as %Haid2.
-  move: (Hvo) (Hve) => /val_to_Z_length ? /val_to_Z_length ?.
+  move: (Hvo) (Hve) => /val_to_Z_ot_length ? /val_to_Z_ot_length ?.
   iDestruct (heap_mapsto_lookup_1 (λ st : lock_state, st = RSt 0%nat) with "Hhctx Hl1") as %? => //.
   iDestruct (heap_mapsto_lookup_q (λ st : lock_state, ∃ n : nat, st = RSt n) with "Hhctx Hl2") as %? => //. { naive_solver. }
   iModIntro. iSplit; first by eauto 15 using CasSucS.
@@ -363,6 +363,18 @@ Lemma wp_cast_loc Φ v l E:
 Proof.
   iIntros (Hv) "HΦ".
   iApply wp_unop_det_pure; [|done].
+  move => ??. split.
+  - by inversion 1; simplify_eq.
+  - move => ->. by econstructor.
+Qed.
+
+Lemma wp_cast_bool_int Φ b v v' E it:
+  val_to_bool v = Some b →
+  val_of_Z (Z_of_bool b) it None = Some v' →
+  ▷ Φ v' -∗
+  WP UnOp (CastOp (IntOp it)) (BoolOp) (Val v) @ E {{ Φ }}.
+Proof.
+  iIntros (Hv Hb) "HΦ". iApply wp_unop_det_pure; [|done].
   move => ??. split.
   - by inversion 1; simplify_eq.
   - move => ->. by econstructor.
@@ -455,6 +467,53 @@ Proof.
   - move => ->. econstructor => //. case_bool_decide; last done. exfalso.
     revert select (valid_ptr _ _) => /valid_ptr_in_allocation_range []/=.
     rewrite /min_alloc_start //.
+Qed.
+
+Lemma wp_cast_int_bool Φ v n E it:
+  val_to_Z v it = Some n →
+  ▷ Φ (val_of_bool (bool_decide (n ≠ 0))) -∗
+  WP UnOp (CastOp BoolOp) (IntOp it) (Val v) @ E {{ Φ }}.
+Proof.
+  iIntros (Hv) "HΦ". iApply wp_unop_det_pure; [|done].
+  move => ??. split.
+  - inversion 1; simplify_eq.
+    revert select (cast_to_bool _ _ _ = _) => /=.
+    rewrite Hv. by move => /= [<-].
+  - move => ->. econstructor => //=. by rewrite Hv.
+Qed.
+
+Lemma wp_cast_NULL_bool Φ E:
+  ▷ Φ (val_of_bool false) -∗
+  WP UnOp (CastOp BoolOp) PtrOp (Val NULL) @ E {{ Φ }}.
+Proof.
+  iIntros "HΦ". iApply wp_unop_det_pure; [|done].
+  move => ??. split.
+  - inversion 1; simplify_eq.
+    revert select (cast_to_bool _ _ _ = _) => /=.
+    rewrite val_to_of_loc /= heap_loc_eq_NULL_NULL /=.
+    by move => [<-].
+  - move => ->. econstructor => //=.
+    rewrite val_to_of_loc /= heap_loc_eq_NULL_NULL //.
+Qed.
+
+Lemma wp_cast_ptr_bool Φ v l p:
+  val_to_loc v = Some l →
+  l.1 = ProvAlloc p →
+  loc_in_bounds l 0 -∗
+  alloc_alive_loc l ∧ ▷ Φ (val_of_bool true) -∗
+  WP UnOp (CastOp BoolOp) PtrOp (Val v) {{ Φ }}.
+Proof.
+  iIntros (Hv Hp) "#Hlib HΦ". iApply wp_unop_det. iIntros (σ) "Hctx".
+  iDestruct (loc_in_bounds_to_heap_loc_in_bounds with "Hlib Hctx") as %?.
+  destruct (decide (block_alive l (st_heap σ))).
+  2: { iDestruct "HΦ" as "[Ha _]". by iMod (alloc_alive_loc_to_block_alive with "Ha Hctx") as %Hb. }
+  iApply fupd_mask_intro; [done|]. iIntros "HE". iDestruct "HΦ" as "[_ HΦ]".
+  iSplit; last first. { iModIntro. iMod "HE". by iFrame. }
+  iPureIntro. split.
+  - inversion 1; simplify_eq.
+    revert select (cast_to_bool _ _ _ = _) => /=.
+    rewrite Hv /= heap_loc_eq_alloc_NULL //=. by move => [<-].
+  - move => ->. econstructor => //=. by rewrite Hv /= heap_loc_eq_alloc_NULL.
 Qed.
 
 Lemma wp_copy_alloc_id Φ it a l v1 v2:
@@ -645,6 +704,18 @@ Proof.
   iSplit. { iPureIntro. repeat eexists. apply IfES. rewrite /= Hn //. }
   iIntros (? ? σ2 efs Hst ?) "!> !>". inv_expr_step.
   iSplit => //. iFrame. by case_bool_decide.
+Qed.
+
+Lemma wp_if_bool Φ v e1 e2 b:
+  val_to_bool v = Some b →
+  (if b then WP e1 {{ Φ }} else WP e2 {{ Φ }}) -∗
+  WP IfE BoolOp (Val v) e1 e2 {{ Φ }}.
+Proof.
+  iIntros (Hb) "HΦ". iApply wp_lift_expr_step; auto.
+  iIntros (σ1) "?". iModIntro.
+  iSplit. { iPureIntro. repeat eexists. apply IfES. rewrite /= Hb //. }
+  iIntros (? ? σ2 efs Hst ?) "!> !>". inv_expr_step.
+  iSplit => //. iFrame. by destruct b.
 Qed.
 
 Definition wp_if_precond (l : loc) : iProp Σ :=
@@ -1057,6 +1128,18 @@ Proof.
   iFrame "Hσ". case_bool_decide; by iApply "Hs".
 Qed.
 
+Lemma wps_if_bool  Q Ψ v s1 s2 b:
+  val_to_bool v = Some b →
+  (if b then WPs s1 {{ Q, Ψ }} else WPs s2 {{ Q, Ψ }}) -∗
+  WPs (if{BoolOp}: (Val v) then s1 else s2) {{ Q , Ψ }}.
+Proof.
+  iIntros (Hb) "Hs". rewrite !stmt_wp_eq. iIntros (?? ->) "?".
+  iApply wp_lift_stmt_step. iIntros (?) "Hσ". iModIntro.
+  iSplit. { iPureIntro. repeat eexists. apply IfSS. rewrite /= Hb //. }
+  iIntros (???? Hstep ?) "!> !>". inv_stmt_step. iSplit; first done.
+  iFrame "Hσ". destruct b; by iApply "Hs".
+Qed.
+
 Lemma wps_if_ptr Q Ψ v s1 s2 l:
   val_to_loc v = Some l →
   wp_if_precond l -∗
@@ -1071,8 +1154,19 @@ Proof.
   iFrame "Hσ1". do 2 case_bool_decide => //; by iApply "Hs".
 Qed.
 
+Lemma wps_assert_bool Q Ψ v s b:
+  val_to_bool v = Some b →
+  b = true →
+  WPs s {{ Q, Ψ }} -∗
+  WPs (assert{BoolOp}: Val v; s) {{ Q , Ψ }}.
+Proof.
+  iIntros (Hv Hb) "Hs". rewrite /notation.Assert.
+  iApply wps_if_bool => //. by rewrite Hb.
+Qed.
+
 Lemma wps_assert_int Q Ψ it v s n:
-  val_to_Z v it = Some n → n ≠ 0 →
+  val_to_Z v it = Some n →
+  n ≠ 0 →
   WPs s {{ Q, Ψ }} -∗
   WPs (assert{IntOp it}: Val v; s) {{ Q , Ψ }}.
 Proof.
@@ -1081,7 +1175,8 @@ Proof.
 Qed.
 
 Lemma wps_assert_ptr Q Ψ v s l:
-  val_to_loc v = Some l → l ≠ NULL_loc →
+  val_to_loc v = Some l →
+  l ≠ NULL_loc →
   wp_if_precond l -∗
   WPs s {{ Q, Ψ }} -∗
   WPs (assert{PtrOp}: Val v; s) {{ Q , Ψ }}.

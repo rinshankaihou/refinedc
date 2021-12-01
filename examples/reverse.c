@@ -41,7 +41,7 @@ void *pop (list_t *p) {
 [[rc::parameters("l : {list Z}", "p : loc", "n : Z" )]]
 [[rc::args("p @ &own<{l `at_type` int size_t} @ list_t>", "n @ int<size_t>")]]
 [[rc::exists("b : bool")]]
-[[rc::returns("b @ boolean<bool_it>")]]
+[[rc::returns("b @ builtin_boolean")]]
 [[rc::ensures("own p : {l `at_type` int size_t} @ list_t", "{b ↔ n ∈ l}")]]
 [[rc::tactics("all: try set_solver.")]]
 bool member_rec (list_t *p, size_t k) {
@@ -58,7 +58,7 @@ bool member_rec (list_t *p, size_t k) {
 [[rc::parameters("l : {list Z}", "p : loc", "n : Z" )]]
 [[rc::args("p @ &own<{l `at_type` int size_t} @ list_t>", "n @ int<size_t>")]]
 [[rc::exists("b : bool")]]
-[[rc::returns("b @ boolean<bool_it>")]]
+[[rc::returns("b @ builtin_boolean")]]
 [[rc::ensures("own p : {l `at_type` int size_t} @ list_t", "{b ↔ n ∈ l}")]]
 [[rc::tactics("all: try set_solver.")]]
 bool member (list_t *p, size_t k) {

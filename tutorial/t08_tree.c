@@ -64,7 +64,7 @@ void free_tree(tree_t* t){
 [[rc::parameters("p : loc", "t : {tree Z}", "k : Z")]]
 [[rc::args("p @ &own<t @ tree_t>", "k @ int<i32>")]]
 [[rc::exists("b : bool")]]
-[[rc::returns("b @ boolean<bool_it>")]]
+[[rc::returns("b @ builtin_boolean")]]
 [[rc::ensures("own p : t @ tree_t", "{b ↔ tree_member k t}")]]
 bool member_rec(tree_t* t, int k){
   if(*t == NULL) return false;
@@ -76,7 +76,7 @@ bool member_rec(tree_t* t, int k){
 [[rc::parameters("p : loc", "t : {tree Z}", "k : Z")]]
 [[rc::args("p @ &own<t @ tree_t>", "k @ int<i32>")]]
 [[rc::exists("b : bool")]]
-[[rc::returns("b @ boolean<bool_it>")]]
+[[rc::returns("b @ builtin_boolean")]]
 [[rc::ensures("own p : t @ tree_t", "{b ↔ tree_member k t}")]]
 bool member(tree_t* t, int k){
   tree_t* cur = &*t;
@@ -210,7 +210,7 @@ void sfree_tree(tree_t* t){
 [[rc::parameters("p : loc", "s : {gset Z}", "k : Z")]]
 [[rc::args("p @ &own<s @ stree_t>", "k @ int<i32>")]]
 [[rc::exists("b : bool")]]
-[[rc::returns("b @ boolean<bool_it>")]]
+[[rc::returns("b @ builtin_boolean")]]
 [[rc::ensures("own p : s @ stree_t", "{b ↔ k ∈ s}")]]
  [[rc::tactics("all: try by etrans; [done|]; symmetry; apply tree_rel_member.")]]
 bool smember(tree_t* t, int k){

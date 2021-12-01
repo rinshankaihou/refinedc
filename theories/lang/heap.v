@@ -370,6 +370,7 @@ Qed.
 
 Definition cast_to_bool (ot: op_type) (v: val) (st: heap_state) : option bool :=
   match ot with
+  | BoolOp   => val_to_bool v
   | IntOp it => val_to_Z v it ≫= λ n, Some (bool_decide (n ≠ 0))
   | PtrOp    => val_to_loc v ≫= λ l, heap_loc_eq l NULL_loc st ≫= λ b, Some (negb b)
   | _        => None
@@ -399,6 +400,7 @@ Fixpoint mem_cast (v : val) (ot : op_type) (st : (gset addr * heap_state)) : val
         else
           Some (val_of_loc (ProvAlloc None, a))
   | IntOp it => val_to_bytes v
+  | BoolOp => if val_to_bool v is Some _ then val_to_bytes v else None
   (* The resize technically should not be necessary since mem_cast
   should only be called if the size is equal to the length of the
   value. But adding it makes proving mem_cast_length a lot easier. *)
@@ -417,6 +419,11 @@ Lemma mem_cast_length v ot st:
   length (mem_cast v ot st) = length v.
 Proof.
   destruct ot => /=.
+  - destruct (val_to_bool v) => /=.
+    + destruct (val_to_bytes v) eqn:Hv => //=.
+      * move: Hv => /mapM_length. lia.
+      * by rewrite replicate_length.
+    + by rewrite replicate_length.
   - destruct (val_to_bytes v) eqn:Hv => //=.
     + move: Hv => /mapM_length. lia.
     + by rewrite replicate_length.
@@ -438,6 +445,11 @@ Lemma mem_cast_id_int it v n :
   val_to_Z v it = Some n →
   mem_cast_id v (IntOp it).
 Proof. move => Hi st. rewrite /mem_cast /=. by erewrite val_to_bytes_id. Qed.
+
+Lemma mem_cast_id_bool v b :
+  val_to_bool v = Some b →
+  mem_cast_id v BoolOp.
+Proof. move => Hb st. rewrite /mem_cast /= Hb. by erewrite val_to_bytes_id_bool. Qed.
 
 Lemma mem_cast_struct_reshape sl v st ots:
   length ots = length (field_names (sl_members sl)) →

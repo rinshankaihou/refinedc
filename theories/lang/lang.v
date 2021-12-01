@@ -370,6 +370,14 @@ Inductive eval_un_op : un_op → op_type → state → val → val → Prop :=
                  (ProvAlloc None, a))) →
     val_of_loc l' = vt →
     eval_un_op (CastOp PtrOp) (IntOp it) σ vs vt
+| CastOpB ot σ vs vt b:
+    cast_to_bool ot vs σ.(st_heap) = Some b →
+    vt = val_of_bool b →
+    eval_un_op (CastOp BoolOp) ot σ vs vt
+| CastOpBI it σ vs vt b:
+    val_to_bool vs = Some b →
+    val_of_Z (Z_of_bool b) it None = Some vt →
+    eval_un_op (CastOp (IntOp it)) BoolOp σ vs vt
 | NegOpI it σ vs vt n:
     val_to_Z vs it = Some n →
     val_of_Z (-n) it None = Some vt →
@@ -408,29 +416,29 @@ Inductive expr_step : expr → state → list Empty_set → runtime_expr → sta
 (* TODO: look at CAS and see whether it makes sense. Also allow
 comparing pointers? (see lambda rust) *)
 (* corresponds to atomic_compare_exchange_strong, see https://en.cppreference.com/w/c/atomic/atomic_compare_exchange *)
-| CasFailS l1 l2 vo ve σ z1 z2 v1 v2 v3 it:
+| CasFailS l1 l2 vo ve σ z1 z2 v1 v2 v3 ot:
     val_to_loc v1 = Some l1 →
-    heap_at l1 (it_layout it) vo (λ st, ∃ n, st = RSt n) σ.(st_heap).(hs_heap) →
+    heap_at l1 (ot_layout ot) vo (λ st, ∃ n, st = RSt n) σ.(st_heap).(hs_heap) →
     val_to_loc v2 = Some l2 →
-    heap_at l2 (it_layout it) ve (λ st, st = RSt 0%nat) σ.(st_heap).(hs_heap) →
-    val_to_Z vo it = Some z1 →
-    val_to_Z ve it = Some z2 →
-    v3 `has_layout_val` it_layout it →
-    (bytes_per_int it ≤ bytes_per_addr)%nat →
+    heap_at l2 (ot_layout ot) ve (λ st, st = RSt 0%nat) σ.(st_heap).(hs_heap) →
+    val_to_Z_ot vo ot = Some z1 →
+    val_to_Z_ot ve ot = Some z2 →
+    v3 `has_layout_val` ot_layout ot →
+    ((ot_layout ot).(ly_size) ≤ bytes_per_addr)%nat →
     z1 ≠ z2 →
-    expr_step (CAS (IntOp it) (Val v1) (Val v2) (Val v3)) σ []
+    expr_step (CAS ot (Val v1) (Val v2) (Val v3)) σ []
               (Val (val_of_bool false)) (heap_fmap (heap_upd l2 vo (λ _, RSt 0%nat)) σ) []
-| CasSucS l1 l2 it vo ve σ z1 z2 v1 v2 v3:
+| CasSucS l1 l2 ot vo ve σ z1 z2 v1 v2 v3:
     val_to_loc v1 = Some l1 →
-    heap_at l1 (it_layout it) vo (λ st, st = RSt 0%nat) σ.(st_heap).(hs_heap) →
+    heap_at l1 (ot_layout ot) vo (λ st, st = RSt 0%nat) σ.(st_heap).(hs_heap) →
     val_to_loc v2 = Some l2 →
-    heap_at l2 (it_layout it) ve (λ st, ∃ n, st = RSt n) σ.(st_heap).(hs_heap) →
-    val_to_Z vo it = Some z1 →
-    val_to_Z ve it = Some z2 →
-    v3 `has_layout_val` it_layout it →
-    (bytes_per_int it ≤ bytes_per_addr)%nat →
+    heap_at l2 (ot_layout ot) ve (λ st, ∃ n, st = RSt n) σ.(st_heap).(hs_heap) →
+    val_to_Z_ot vo ot = Some z1 →
+    val_to_Z_ot ve ot = Some z2 →
+    v3 `has_layout_val` ot_layout ot →
+    ((ot_layout ot).(ly_size) ≤ bytes_per_addr)%nat →
     z1 = z2 →
-    expr_step (CAS (IntOp it) (Val v1) (Val v2) (Val v3)) σ []
+    expr_step (CAS ot (Val v1) (Val v2) (Val v3)) σ []
               (Val (val_of_bool true)) (heap_fmap (heap_upd l1 v3 (λ _, RSt 0%nat)) σ) []
 | CallS lsa lsv σ hs' hs'' vf vs f rf fn fn' a:
     val_to_loc vf = Some f →

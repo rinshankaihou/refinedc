@@ -29,7 +29,7 @@ list_t init () {
 
 [[rc::parameters("p : loc", "l : {list type}")]]
 [[rc::args("p @ &own<l @ list_t>")]]
-[[rc::returns("{bool_decide (l = [])} @ boolean<bool_it>")]]
+[[rc::returns("{bool_decide (l = [])} @ builtin_boolean")]]
 [[rc::ensures("own p : l @ list_t")]]
 bool is_empty (list_t *l) {
     return *l == NULL;
@@ -143,7 +143,7 @@ void append(list_t *l1, list_t l2) {
 [[rc::parameters("l : {list Z}", "p : loc", "n : Z" )]]
 [[rc::args("p @ &own<{l `at_type` int size_t} @ list_t>", "n @ int<size_t>")]]
 [[rc::exists("b : bool")]]
-[[rc::returns("b @ boolean<bool_it>")]]
+[[rc::returns("b @ builtin_boolean")]]
 [[rc::ensures("own p : {l `at_type` int size_t} @ list_t", "{b ↔ n ∈ l}")]]
  [[rc::tactics("all: try set_unfold; refined_solver.")]]
 bool member (list_t *p, size_t k) {
@@ -157,12 +157,12 @@ bool member (list_t *p, size_t k) {
 
         size_t *head = cur->head;
         if(*head == k) {
-            return 1;
+            return true;
         }
 
         prev = &cur->tail;
     }
-    return 0;
+    return false;
 }
 
  [[rc::tactics("all: try by set_unfold; refined_solver.")]]

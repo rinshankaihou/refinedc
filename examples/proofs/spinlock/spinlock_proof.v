@@ -14,7 +14,8 @@ Section type.
   Lemma type_sl_init:
     ⊢ typed_function impl_sl_init type_of_sl_init.
   Proof.
-    start_function "sl_init" (p) => vl. split_blocks (∅ : gmap label (iProp Σ)) (∅ : gmap label (iProp Σ)).
+    start_function "sl_init" (p) => vl.
+    split_blocks (∅ : gmap label (iProp Σ)) (∅ : gmap label (iProp Σ)).
 
     iMod alloc_lock_token as (γ) "?".
 

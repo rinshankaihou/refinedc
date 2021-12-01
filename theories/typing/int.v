@@ -470,6 +470,18 @@ Section programs.
   Global Instance type_binop_int_boolean_inst it1 it2 it3 it4 v1 b1 v2 n2 op:
     TypedBinOpVal v1 (n2 @ int it2)%I v2 (b1 @ boolean it1)%I op (IntOp it3) (IntOp it4) :=
     λ T, i2p (type_binop_int_boolean it1 it2 it3 it4 v1 b1 v2 n2 T op).
+
+  Lemma type_cast_int_builtin_boolean n it v T:
+    (∀ v, T v (t2mt ((bool_decide (n ≠ 0)) @ builtin_boolean))) -∗
+    typed_un_op v (v ◁ᵥ n @ int it)%I (CastOp BoolOp) (IntOp it) T.
+  Proof.
+    iIntros "HT %Hn %Φ HΦ". iApply wp_cast_int_bool => //.
+    iApply ("HΦ" with "[] HT") => //=. iPureIntro. naive_solver.
+  Qed.
+  Global Instance type_cast_int_builtin_boolean_inst n it v:
+    TypedUnOpVal v (n @ int it)%I (CastOp BoolOp) (IntOp it) :=
+    λ T, i2p (type_cast_int_builtin_boolean n it v T).
+
 End programs.
 Typeclasses Opaque int_inner_type.
 

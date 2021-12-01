@@ -67,6 +67,7 @@ Section judgements.
     (* TODO: generalize this to PtrOp *)
     (P -∗
        match ot with
+       | BoolOp   => ∃ b, ⌜val_to_bool v = Some b⌝ ∗ (if b then T1 else T2)
        | IntOp it => ∃ z, ⌜val_to_Z v it = Some z⌝ ∗ (if bool_decide (z ≠ 0) then T1 else T2)
        | PtrOp    => ∃ l, ⌜val_to_loc v  = Some l⌝ ∗
                           wp_if_precond l ∗
@@ -98,6 +99,7 @@ Section judgements.
   Definition typed_assert (ot : op_type) (v : val) (P : iProp Σ) (s : stmt) (fn : function) (ls : list loc) (R : val → mtype → iProp Σ) (Q : gmap label stmt) : iProp Σ :=
     (P -∗
        match ot with
+       | BoolOp   => ∃ b, ⌜val_to_bool v = Some b⌝ ∗ ⌜b = true⌝ ∗ typed_stmt s fn ls R Q
        | IntOp it => ∃ z, ⌜val_to_Z v it = Some z⌝ ∗ ⌜z ≠ 0⌝ ∗ typed_stmt s fn ls R Q
        | PtrOp    => ∃ l, ⌜val_to_loc v = Some l⌝ ∗ ⌜l ≠ NULL_loc⌝ ∗ wp_if_precond l ∗ typed_stmt s fn ls R Q
        | _        => False
@@ -421,11 +423,16 @@ Section proper.
     typed_if ot v P T1' T2'.
   Proof.
     iIntros "Hif HT Hv". iDestruct ("Hif" with "Hv") as "Hif".
-    destruct ot => //; iDestruct "Hif" as (zorl ?) "HC"; iExists zorl.
-    all: try iDestruct "HC" as "[$ HC]".
-    all: iSplit; first done.
-    all: case_decide; [iDestruct "HT" as "[_ HT]" | iDestruct "HT" as "[HT _]"].
-    all: by iApply "HT".
+    destruct ot => //; iDestruct "Hif" as (z ?) "HC"; iExists z.
+    - iSplit; first done. case_match.
+      + iDestruct "HT" as "[HT _]". by iApply "HT".
+      + iDestruct "HT" as "[_ HT]". by iApply "HT".
+    - iSplit; first done. case_decide.
+      + iDestruct "HT" as "[_ HT]". by iApply "HT".
+      + iDestruct "HT" as "[HT _]". by iApply "HT".
+    - iSplit; first done. iDestruct "HC" as "[$ HC]". case_match.
+      + iDestruct "HT" as "[HT _]". by iApply "HT".
+      + iDestruct "HT" as "[_ HT]". by iApply "HT".
   Qed.
 
   Lemma typed_bin_op_wand v1 P1 Q1 v2 P2 Q2 op ot1 ot2 T:
@@ -1109,6 +1116,8 @@ Section typing.
     iIntros "He" (Hls). wps_bind.
     iApply "He". iIntros (v ty) "Hv Hs".
     iDestruct ("Hs" with "Hv") as "Hs". destruct ot => //.
+    - iDestruct "Hs" as (b Hv) "Hs".
+      iApply wps_if_bool; first done. by destruct b => /=; iApply "Hs".
     - iDestruct "Hs" as (z Hz) "Hs".
       iApply wps_if; [done|..]. by case_decide; iApply "Hs".
     - iDestruct "Hs" as (l Hl) "[Hlib Hs]".
@@ -1145,6 +1154,8 @@ Section typing.
     iApply "He". iIntros (v ty) "Hv Hs".
     iDestruct ("Hs" with "Hv") as "Hs".
     destruct ot => //.
+    - iDestruct "Hs" as (???) "Hs".
+      iApply wps_assert_bool; [done|done|..]. by iApply "Hs".
     - iDestruct "Hs" as (???) "Hs".
       iApply wps_assert_int; [done|done|..]. by iApply "Hs".
     - iDestruct "Hs" as (???) "[Hpre Hs]".
@@ -1278,6 +1289,7 @@ Section typing.
     wp_bind. iApply "He1". iIntros (v1 ty1) "Hv1 Hif".
     iDestruct ("Hif" with "Hv1") as "HT". destruct ot => //.
     all: iDestruct "HT" as (zorl ?) "HT".
+    - iApply wp_if_bool; [done|..]. by destruct zorl; iApply "HT".
     - iApply wp_if_int; [done|..]. by case_decide; iApply "HT".
     - case_bool_decide; iDestruct "HT" as "[Hpre HT]".
       + iApply (wp_if_ptr with "Hpre"); rewrite ?bool_decide_true //. by iApply "HT".

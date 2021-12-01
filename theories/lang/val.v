@@ -1,4 +1,4 @@
-From refinedc.lang Require Export base byte layout int_type loc.
+From refinedc.lang Require Export base byte layout int_type loc struct.
 Set Default Proof Using "Type".
 Open Scope Z_scope.
 
@@ -162,10 +162,7 @@ Definition val_of_Z (z : Z) (it : int_type) (p : option alloc_id) : option val :
     None.
 
 Definition i2v (n : Z) (it : int_type) : val :=
-  default [MPoison] (val_of_Z n it None).
-
-Definition val_of_bool (b : bool) : val :=
-  i2v (Z_of_bool b) bool_it.
+  default (replicate (bytes_per_int it) MPoison) (val_of_Z n it None).
 
 Lemma val_of_Z_go_length z sz p:
   length (val_of_Z_go z sz p) = sz.
@@ -188,6 +185,13 @@ Lemma val_of_Z_length z it v p:
 Proof.
   rewrite /val_of_Z => Hv. case_bool_decide => //. simplify_eq.
   by rewrite val_of_Z_go_length.
+Qed.
+
+Lemma i2v_length n it: length (i2v n it) = bytes_per_int it.
+Proof.
+  rewrite /i2v. destruct (val_of_Z n it None) eqn:Heq.
+  - by apply val_of_Z_length in Heq.
+  - by rewrite replicate_length.
 Qed.
 
 Lemma val_to_Z_length v it z:
@@ -306,17 +310,71 @@ Lemma val_of_Z_bool b it:
   val_of_Z (Z_of_bool b) it None = Some (i2v (Z_of_bool b) it).
 Proof. rewrite /i2v. by have [? ->]:= val_of_Z_bool_is_Some None it b. Qed.
 
-Lemma val_to_Z_bool b :
-  val_to_Z (val_of_bool b) bool_it = Some (Z_of_bool b).
+Program Definition val_of_bool (b : bool) : val :=
+  [MByte (Byte (Z_of_bool b) _) None].
+Next Obligation. by destruct b. Qed.
+
+Definition val_to_bool (v : val) : option bool :=
+  match v with
+  | [MByte (Byte 0 _) _] => Some false
+  | [MByte (Byte 1 _) _] => Some true
+  | _                    => None
+  end.
+
+Lemma val_to_of_bool b :
+  val_to_bool (val_of_bool b) = Some b.
 Proof. by destruct b. Qed.
 
-Lemma i2v_bool_length b it:
-  length (i2v (Z_of_bool b) it) = bytes_per_int it.
-Proof. by have /val_of_Z_length -> := val_of_Z_bool b it. Qed.
+Lemma val_to_bool_length v b:
+  val_to_bool v = Some b → length v = 1%nat.
+Proof.
+  rewrite /val_to_bool. repeat case_match => //.
+Qed.
+
+Lemma val_to_bool_iff_val_to_Z v b:
+  val_to_bool v = Some b ↔ val_to_Z v u8 = Some (Z_of_bool b).
+Proof.
+  split.
+  - destruct v as [|mb []] => //=; repeat case_match => //=; by move => [<-].
+  - destruct v as [|mb []] => //=; repeat case_match => //=; destruct b => //.
+Qed.
+
+Lemma val_of_bool_iff_val_of_Z v b:
+  val_of_bool b = v ↔ val_of_Z (Z_of_bool b) u8 None = Some v.
+Proof.
+  split.
+  - move => <-. destruct b; cbv; do 3 f_equal; by apply byte_eq.
+  - destruct b; cbv; move => [<-]; do 2 f_equal; by apply byte_eq.
+Qed.
 
 Lemma i2v_bool_Some b it:
   val_to_Z (i2v (Z_of_bool b) it) it = Some (Z_of_bool b).
 Proof. apply: val_to_of_Z. apply val_of_Z_bool. Qed.
+
+
+Definition val_to_Z_ot (v : val) (ot : op_type) : option Z :=
+  match ot with
+  | IntOp it => val_to_Z v it
+  | BoolOp => Z_of_bool <$> val_to_bool v
+  | _ => None
+  end.
+
+Lemma val_to_Z_ot_length v ot z:
+  val_to_Z_ot v ot = Some z → length v = (ot_layout ot).(ly_size).
+Proof.
+  destruct ot => //=.
+  - by move => /fmap_Some[?[/val_to_bool_length -> ?]].
+  - by move => /val_to_Z_length ->.
+Qed.
+
+Lemma val_to_Z_ot_to_Z z it ot v:
+  val_to_Z z it = Some v →
+  match ot with | BoolOp => ∃ b, it = u8 ∧ v = Z_of_bool b | IntOp it' => it = it' | _ => False end →
+  val_to_Z_ot z ot = Some v.
+Proof.
+  move => ? Hot. destruct ot => //; simplify_eq/= => //. move: Hot => [?[??]]. simplify_eq.
+  apply fmap_Some. eexists _. split; [|done]. by apply val_to_bool_iff_val_to_Z.
+Qed.
 
 Lemma val_to_bytes_id v it n:
   val_to_Z v it = Some n →
@@ -328,7 +386,14 @@ Proof.
   constructor. 2: naive_solver. apply fmap_Some. naive_solver.
 Qed.
 
+Lemma val_to_bytes_id_bool v b:
+  val_to_bool v = Some b →
+  val_to_bytes v = Some v.
+Proof.
+  rewrite /val_to_bool. repeat case_match => //.
+Qed.
+
 Arguments val_to_Z : simpl never.
 Arguments val_of_Z : simpl never.
 Arguments val_to_byte_prov : simpl never.
-Typeclasses Opaque val_to_Z val_of_Z val_of_bool val_to_byte_prov val_to_bytes provs_in_bytes.
+Typeclasses Opaque val_to_Z val_of_Z val_of_bool val_to_bool val_to_byte_prov val_to_bytes provs_in_bytes.

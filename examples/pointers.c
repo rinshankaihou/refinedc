@@ -27,7 +27,7 @@ void no_alias(int *a, int *b) {
     assert(*b == old_b);
 }
 
-[[rc::args("boolean<bool_it>")]]
+[[rc::args("builtin_boolean")]]
 void local_vars(bool b) {
     int var = 1, dummy;
     int *p;
@@ -42,7 +42,7 @@ void local_vars(bool b) {
 }
 
 [[rc::parameters("p : loc")]]
-[[rc::args("boolean<bool_it>", "p @ &own<int<i32>>")]]
+[[rc::args("builtin_boolean", "p @ &own<int<i32>>")]]
 void ptrs(bool b, int *p) {
     int *p1, *p2;
     p1 = p;
@@ -57,7 +57,7 @@ void ptrs(bool b, int *p) {
 }
 
 [[rc::parameters("p : loc")]]
-[[rc::args("boolean<bool_it>", "p @ &own<int<i32>>")]]
+[[rc::args("builtin_boolean", "p @ &own<int<i32>>")]]
 void ptrs2(bool b, int *p) {
     int **p1;
     p1 = &p;

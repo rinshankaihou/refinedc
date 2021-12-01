@@ -8,7 +8,7 @@
 typedef bool (*comp_fn)(void *, void *);
 
 [[rc::parameters("R : {Z → Z → Prop}", "ls : {list Z}", "x : Z", "p : loc", "ty : {Z → type}", "px : loc")]]
-[[rc::args("function_ptr<{fn(∀ (x, y, px, py) : (Z * Z * loc * loc); px @ &own (ty x), py @ &own (ty y); True) → ∃ (b) : (bool), b @ boolean bool_it; px ◁ₗ ty x ∗ py ◁ₗ ty y ∗ ⌜b ↔ R x y⌝}>",
+[[rc::args("function_ptr<{fn(∀ (x, y, px, py) : (Z * Z * loc * loc); px @ &own (ty x), py @ &own (ty y); True) → ∃ (b) : (bool), b @ builtin_boolean; px ◁ₗ ty x ∗ py ◁ₗ ty y ∗ ⌜b ↔ R x y⌝}>",
       "p @ &own<array<void*, {(fun x => &own (ty x) : type) <$> ls}>>", "{length ls} @ int<size_t>", "px @ &own<{ty x}>")]]
 [[rc::requires("{StronglySorted R ls}", "{Transitive R}")]]
 [[rc::exists("n : nat")]]
@@ -41,7 +41,7 @@ size_t binary_search(comp_fn comp, void **xs, size_t n, void *x) {
 [[rc::parameters("x : Z", "y : Z", "px : loc", "py : loc")]]
 [[rc::args("px @ &own<x @ int<size_t>>", "py @ &own<y @ int<size_t>>")]]
 [[rc::exists("b : bool")]]
-[[rc::returns("b @ boolean<bool_it>")]]
+[[rc::returns("b @ builtin_boolean")]]
 [[rc::ensures("own px : x @ int<size_t>", "own py : y @ int<size_t>", "{b ↔ Z.le x y}")]]
 bool compare_int(void *x, void *y) {
   size_t *xi = x, *yi = y;

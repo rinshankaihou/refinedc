@@ -249,10 +249,15 @@ Arguments GetMemberUnionLoc : simpl never.
 
 (** ** op_type *)
 Inductive op_type : Set :=
-| IntOp (i : int_type) | PtrOp | StructOp (sl : struct_layout) (ots : list op_type) | UntypedOp (ly : layout).
+| BoolOp
+| IntOp (i : int_type)
+| PtrOp
+| StructOp (sl : struct_layout) (ots : list op_type)
+| UntypedOp (ly : layout).
 
 Definition ot_layout (ot : op_type) : layout :=
   match ot with
+  | BoolOp => bool_layout
   | PtrOp => void*
   | IntOp it => it_layout it
   | StructOp sl ots => sl

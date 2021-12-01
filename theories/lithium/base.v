@@ -180,6 +180,14 @@ Proof. destruct b; naive_solver. Qed.
 Lemma Z_of_bool_false b: Z_of_bool b = 0 ↔ b = false.
 Proof. destruct b; naive_solver. Qed.
 
+Lemma Z_of_bool_neq_0_bool_decide b :
+  bool_decide (Z_of_bool b ≠ 0) = b.
+Proof. by destruct b. Qed.
+
+Lemma Z_of_bool_eq_0_bool_decide b :
+  bool_decide (Z_of_bool b = 0) = negb b.
+Proof. by destruct b. Qed.
+
 Lemma Is_true_eq (b : bool) : b ↔ b = true.
 Proof. by case: b. Qed.
 

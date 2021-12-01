@@ -6,7 +6,7 @@ Section type.
   Context `{!typeG Σ} `{!lockG Σ}.
 
   Definition spinlock (γ : lock_id) : type :=
-    struct struct_spinlock [atomic_bool bool_it True (lock_token γ [])].
+    struct struct_spinlock [atomic_bool u8 True (lock_token γ [])].
 
   Global Program Instance movable_spinlock γ : Movable (spinlock γ) := ltac:(apply: movable_struct).
 

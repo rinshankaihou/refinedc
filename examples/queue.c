@@ -32,7 +32,7 @@ queue_t init_queue() {
 
 [[rc::parameters("p : loc", "tys : {list type}")]]
 [[rc::args("p @ &own<{tys} @ queue>")]]
-[[rc::returns("{bool_decide (tys ≠ [])} @ boolean<bool_it>")]]
+[[rc::returns("{bool_decide (tys ≠ [])} @ builtin_boolean")]]
 [[rc::ensures("own p : {tys} @ queue")]]
 bool is_empty(queue_t *q) {
   return (*q)->head != NULL;

@@ -78,12 +78,12 @@ let pp_int_type : Coq_ast.int_type pp = fun ff it ->
   | ItI32(false)        -> pp "u32"
   | ItI64(true)         -> pp "i64"
   | ItI64(false)        -> pp "u64"
-  | ItBool              -> pp "bool_it"
 
 let rec pp_layout : bool -> Coq_ast.layout pp = fun wrap ff layout ->
   let pp fmt = Format.fprintf ff fmt in
   match layout with
   | LVoid              -> pp "void_layout"
+  | LBool              -> pp "bool_layout"
   | LPtr               -> pp "void*"
   | _ when wrap        -> pp "(%a)" (pp_layout false) layout
   | LStruct(id, false) -> pp "layout_of struct_%s" id
@@ -95,6 +95,7 @@ let rec pp_layout : bool -> Coq_ast.layout pp = fun wrap ff layout ->
 let rec pp_op_type : Coq_ast.op_type pp = fun ff ty ->
   let pp fmt = Format.fprintf ff fmt in
   match ty with
+  | OpBool           -> pp "BoolOp"
   | OpInt(i)         -> pp "IntOp %a" pp_int_type i
   | OpPtr(_)         -> pp "PtrOp" (* FIXME *)
   | OpStruct(id, os) -> pp "StructOp struct_%s ([ %a ])" id (pp_sep " ; " pp_op_type) os

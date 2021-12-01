@@ -195,7 +195,7 @@ struct [[rc::refined_by("mm_ops : mm_callbacks")]] kvm_pgtable_mm_ops {
 [[rc::parameters("pte : Pte")]]
 [[rc::args("pte @ bitfield<Pte>")]]
 [[rc::requires("{bitfield_wf pte}")]]
-[[rc::returns("{pte_valid pte} @ boolean<bool_it>")]]
+[[rc::returns("{pte_valid pte} @ builtin_boolean")]]
 static bool kvm_pte_valid(kvm_pte_t pte)
 {
     // TODO: remove 0 != once issue #45 is fixed
@@ -207,7 +207,7 @@ static bool kvm_pte_valid(kvm_pte_t pte)
 [[rc::requires("{bitfield_wf pte}")]]
 [[rc::returns("{if bool_decide (level = max_level - 1) then false \
     else if negb (pte_valid pte) then false \
-    else bool_decide (pte_type pte = pte_type_table)} @ boolean<bool_it>")]]
+    else bool_decide (pte_type pte = pte_type_table)} @ builtin_boolean")]]
 static bool kvm_pte_table(kvm_pte_t pte, u32 level)
 {
     if (level == KVM_PGTABLE_MAX_LEVELS - 1)
@@ -265,7 +265,7 @@ static void kvm_set_table_pte(kvm_pte_t *ptep, kvm_pte_t *childp,
 [[rc::requires("{type = (if bool_decide (level = max_level - 1) then pte_type_page else pte_type_block)}")]]
 [[rc::requires("{pte1 = mk_pte_addr (addr_of pa) <| pte_valid := true |> <| pte_type := type |>"
   "<| pte_leaf_attr_lo := pte_leaf_attr_lo attr |> <| pte_leaf_attr_hi := pte_leaf_attr_hi attr |>}")]]
-[[rc::returns("{if pte_valid pte then bool_decide (bitfield_repr pte = bitfield_repr pte1) else true} @ boolean<bool_it>")]]
+[[rc::returns("{if pte_valid pte then bool_decide (bitfield_repr pte = bitfield_repr pte1) else true} @ builtin_boolean")]]
 [[rc::ensures("own p : {if pte_valid pte then pte else pte1} @ bitfield<Pte>")]]
 static bool kvm_set_valid_leaf_pte(kvm_pte_t *ptep, u64 pa, kvm_pte_t attr,
                    u32 level)
