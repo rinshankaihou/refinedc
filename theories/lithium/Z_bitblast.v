@@ -124,27 +124,26 @@ Proof.
   + move => /pos_to_bit_ranges_spec Hbit. rewrite Z_testbit_pos_testbit // Hbit Exists_exists. naive_solver lia.
 Qed.
 
-(** * [simplify_bool_eq] *)
-Create HintDb simplify_bool_eq_db discriminated.
+(** * [simpl_bool] *)
+Ltac simpl_bool_cbn := cbn [andb orb negb].
 
-#[export] Hint Rewrite
-  Bool.andb_false_r
-  Bool.andb_true_r
-  Bool.andb_false_l
-  Bool.andb_true_l
-  Bool.orb_false_r
-  Bool.orb_true_r
-  Bool.orb_false_l
-  Bool.orb_true_l
-  Bool.xorb_false_r
-  Bool.xorb_true_r
-  Bool.xorb_false_l
-  Bool.xorb_true_l
-  : simplify_bool_eq_db.
-
-Ltac simplify_bool_eq :=
-  cbn [andb orb];
-  autorewrite with simplify_bool_eq_db.
+Ltac simpl_bool :=
+  repeat match goal with
+         | |- context C [true && ?b] => simpl_bool_cbn
+         | |- context C [false && ?b] => simpl_bool_cbn
+         | |- context C [true || ?b] => simpl_bool_cbn
+         | |- context C [false || ?b] => simpl_bool_cbn
+         | |- context C [negb true] => simpl_bool_cbn
+         | |- context C [negb false] => simpl_bool_cbn
+         | |- context C [?b && true] => rewrite (Bool.andb_true_r b)
+         | |- context C [?b && false] => rewrite (Bool.andb_false_r b)
+         | |- context C [?b || true] => rewrite (Bool.orb_true_r b)
+         | |- context C [?b || false] => rewrite (Bool.orb_false_r b)
+         | |- context C [xorb ?b true] => rewrite (Bool.xorb_true_r b)
+         | |- context C [xorb ?b false] => rewrite (Bool.xorb_false_r b)
+         | |- context C [xorb true ?b] => rewrite (Bool.orb_true_l b)
+         | |- context C [xorb false ?b] => rewrite (Bool.orb_false_l b)
+         end.
 
 (** * [simplify_bitblast_index] *)
 Create HintDb simplify_bitblast_index_db discriminated.
@@ -409,16 +408,18 @@ Ltac bitblast_bool_decide_simplify :=
              | |- ?G _ =>
                  first [
                      refine (@tac_bitblast_bool_decide_true G P Dec _ _); [lia|];
-                     cbv beta; simplify_bool_eq
+                     simpl_bool_cbn
                    |
                      refine (@tac_bitblast_bool_decide_false G P Dec _ _); [lia|];
-                     cbv beta; simplify_bool_eq
+                     simpl_bool_cbn
                    |
                      change_no_check (G (@BITBLAST_BOOL_DECIDE P Dec))
                ]
              end;
              cbv beta
          end;
+  (** simpl_bool contains rewriting so it can be quite slow and thus we only do it at the end. *)
+  simpl_bool;
   lazymatch goal with
   | |- ?G => let x := eval unfold BITBLAST_BOOL_DECIDE in G in change_no_check x
   end.
@@ -430,7 +431,7 @@ Ltac bitblast_bool_decide_split :=
       pattern (@bool_decide P Dec);
       lazymatch goal with
       | |- ?G _ =>
-          refine (@tac_bitblast_bool_decide_split G P Dec _ _) => ?; cbv beta; simplify_bool_eq
+          refine (@tac_bitblast_bool_decide_split G P Dec _ _) => ?; cbv beta; simpl_bool
       end
   end.
 
@@ -439,7 +440,7 @@ Ltac bitblast_unfold :=
   repeat lazymatch goal with
   | |- context [Z.testbit ?z ?n] =>
       pattern (Z.testbit z n);
-      simple refine (eq_rec_r _ _ _); [shelve| |bitblast_blast_eq]; cbn beta
+      simple refine (eq_rec_r _ _ _); [shelve| |bitblast_blast_eq]; cbv beta
   end;
   lazymatch goal with
   | |- ?G => let x := eval unfold BITBLAST_TESTBIT in G in change_no_check x

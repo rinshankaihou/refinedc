@@ -215,7 +215,7 @@ Lemma bf_slice_cons a k x l :
 Proof.
   rewrite /bf_slice /bf_cons => ??? Hi.
   bitblast.
-  rewrite Hi; [by simplify_bool_eq | lia].
+  rewrite Hi; [by simpl_bool | lia].
 Qed.
 
 Lemma bf_slice_cons_ne a k x a' k' l :
@@ -243,7 +243,7 @@ Lemma bf_update_cons a k x x' dl :
 Proof.
   rewrite /bf_update /bf_nil /bf_cons => ??? Hi.
   bitblast.
-  rewrite Hi; [by simplify_bool_eq | lia].
+  rewrite Hi; [by simpl_bool | lia].
 Qed.
 
 Lemma bf_update_cons_ne a k x a' k' x' dl :
