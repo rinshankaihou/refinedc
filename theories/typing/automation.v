@@ -13,22 +13,6 @@ Ltac normalize_tac ::= normalize_autorewrite.
 (*   move => ???. normalize_goal. *)
 (* Abort. *)
 
-Ltac li_pm_reduce_tac H ::= eval cbv [t2mt mt_type mt_movable] in H.
-
-Ltac custom_exist_tac A protect ::=
-    lazymatch A with
-    | mtype =>
-      lazymatch protect with
-      | true => fail 1000 "cannot protect mtype"
-      | false =>
-      (* it is important that we don't trigger typeclass search here
-      as we want to keep Movable as an evar, thus we use notypeclasses
-      refine. *)
-        notypeclasses refine (ex_intro _ (t2mt _) _)
-      end
-    | Movable _ => eexists _
-    end.
-
 Global Hint Transparent ly_size : solve_protected_eq_db.
 Ltac solve_protected_eq_unfold_tac ::=
   lazymatch goal with
@@ -120,8 +104,8 @@ Ltac liRIntroduceLetInGoal :=
     lazymatch P with
     | @typed_val_expr ?Σ ?tG ?e ?T =>
       li_let_bind T (fun H => constr:(@envs_entails PROP Δ (@typed_val_expr Σ tG e H)))
-    | @typed_write ?Σ ?tG ?b ?e ?ot ?v ?ty ?Mov ?T =>
-      li_let_bind T (fun H => constr:(@envs_entails PROP Δ (@typed_write Σ tG b e ot v ty Mov H)))
+    | @typed_write ?Σ ?tG ?b ?e ?ot ?v ?ty ?T =>
+      li_let_bind T (fun H => constr:(@envs_entails PROP Δ (@typed_write Σ tG b e ot v ty H)))
     | @typed_place ?Σ ?tG ?P ?l1 ?β1 ?ty1 ?T =>
       li_let_bind T (fun H => constr:(@envs_entails PROP Δ (@typed_place Σ tG P l1 β1 ty1 H)))
     | @typed_bin_op ?Σ ?tG ?v1 ?P1 ?v2 ?P2 ?op ?ot1 ?ot2 ?T =>

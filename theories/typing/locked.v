@@ -46,26 +46,23 @@ Section type.
 
 
   Program Definition tylocked_ex {A} (γ : lock_id) (n : string) (x : A) (ty : A → type) : type := {|
+    ty_has_op_type ot mt := (ty x).(ty_has_op_type) ot mt;
     ty_own β l := (match β return _ with
                   | Own => l ◁ₗ ty x
                   | Shr => ∃ γ', inv lockN ((∃ x', l ◁ₗ ty x' ∗ own γ' (Excl ()))  ∨ own γ (◯ GSet {[ n ]}))
-                  end)%I
+                  end)%I;
+    ty_own_val v := (v ◁ᵥ (ty x))%I;
   |}.
   Next Obligation.
     iIntros (A γ n x ty l E HE) "Hl".
     iMod (own_alloc (Excl ())) as (γ') "Hown" => //.
     iExists _. iApply inv_alloc. iIntros "!#". iLeft. iExists _. by iFrame.
   Qed.
-
-  Global Program Instance movable_tylocked_ex A γ n x (ty : A → type) `{!Movable (ty x)}: Movable (tylocked_ex γ n x ty) := {|
-    ty_has_op_type ot mt := (ty x).(ty_has_op_type) ot mt;
-    ty_own_val v := (v ◁ᵥ (ty x))%I;
-  |}.
-  Next Obligation. iIntros (A γ n x ty ? ot mt v ?) "Hl". by iApply ty_aligned. Qed.
-  Next Obligation. iIntros (A γ n x ty ? ot mt v ?) "Hl". by iApply ty_size_eq. Qed.
-  Next Obligation. iIntros (A γ n x ty ? ot mt l ?) "Hl". by iApply ty_deref. Qed.
-  Next Obligation. iIntros (A γ n x ty ? ot mt l ? ?). by iApply ty_ref. Qed.
-  Next Obligation. iIntros (A γ n x ty ? v ot mt st ?) "Hl". by iApply ty_memcast_compat. Qed.
+  Next Obligation. iIntros (A γ n x ty ot mt v ?) "Hl". by iApply ty_aligned. Qed.
+  Next Obligation. iIntros (A γ n x ty ot mt v ?) "Hl". by iApply ty_size_eq. Qed.
+  Next Obligation. iIntros (A γ n x ty ot mt l ?) "Hl". by iApply ty_deref. Qed.
+  Next Obligation. iIntros (A γ n x ty ot mt l ? ?). by iApply ty_ref. Qed.
+  Next Obligation. iIntros (A γ n x ty v ot mt st ?) "Hl". by iApply ty_memcast_compat. Qed.
 
   Lemma tylocked_simplify_hyp_place A γ n x (ty : A → type) T l:
     (l ◁ₗ ty x -∗ T)  -∗

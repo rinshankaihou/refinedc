@@ -888,11 +888,13 @@ let pp_spec : Coq_path.t -> import list -> inlined_code ->
     opaque := !opaque @ [id ^ "_rec"];
 
     pp "@;Global Instance %s_rec_ne : Contractive %s_rec." id id;
-    pp "@;Proof. solve_type_proper. Qed.\n@;";
+    pp "@;Proof. solve_type_proper. Qed.";
+    pp "@;Global Instance %s_rec_proper : Proper ((≡) ==> (≡)) %s_rec." id id;
+    pp "@;Proof. apply contractive_proper, _. Qed.\n@;";
 
     pp "@[<v 2>Definition %s %a: rtype := {|@;" id pp_params params;
     pp "rty_type := %a;@;" pp_prod ref_types;
-    pp "rty r__ := fixp %s %a@]@;|}.\n" (id ^ "_rec")
+    pp "rty r__ := %s_rec (fixp %s) %a@]@;|}.\n" id (id ^ "_rec")
       (pp_as_tuple pp_str) ("r__" :: par_names);
 
     (* Generation of the unfolding lemma. *)
@@ -906,35 +908,24 @@ let pp_spec : Coq_path.t -> import list -> inlined_code ->
     let guard = Guard_in_lem(id) in
     pp_struct_def_np ast.structs guard annot fields ff struct_id;
     pp "@]@;)%%I.@]@;";
-    pp "Proof. by rewrite {1}/with_refinement/=fixp_unfold. Qed.\n";
-
-    (* Movable instance. *)
-    let pp_movable_instance () =
-      pp "\n@;Global Program Instance %s_rmovable %a: RMovable %a :=@;"
-        id pp_params params (pp_id_args true id) par_names;
-      pp "  {| rmovable patt__ := movable_eq _ _ (%s_unfold" id;
-      List.iter (fun n -> pp " %s" n) par_names;
-      pp " patt__) |}.\n";
-    in
-    if not annot.st_immovable then pp_movable_instance ();
+    pp "Proof. apply: (fixp_unfold' %s_rec). Qed.\n" id;
 
     (* Generation of the global instances. *)
     let pp_instance_place inst_name type_name =
       pp "@;Global Instance %s_%s_inst_generated l_ β_ %apatt__:@;"
         id inst_name pp_params params;
-      pp "  %s l_ β_ (patt__ @@ %a)%%I (Some 100%%N) :=@;"
-        type_name (pp_id_args false id) par_names;
+      pp "  %s l_ β_ (patt__ @@ %a)%%I (Some %i%%N) :=@;"
+        type_name (pp_id_args false id) par_names annot.st_unfold_prio;
       pp "  λ T, i2p (%s_eq l_ β_ _ _ T (%s_unfold" inst_name id;
       List.iter (fun _ -> pp " _") par_names; pp " _))."
     in
     let pp_instance_val inst_name type_name =
-      pp "@;Global Program Instance %s_%s_inst_generated v_ %apatt__:@;"
+      pp "@;Global Instance %s_%s_inst_generated v_ %apatt__:@;"
         id inst_name pp_params params;
-      pp "  %s v_ (patt__ @@ %a)%%I (Some 100%%N) :=@;"
-        type_name (pp_id_args false id) par_names;
-      pp "  λ T, i2p (%s_eq v_ _ _ (%s_unfold" inst_name id;
-      List.iter (fun _ -> pp " _") par_names; pp " _) T _).";
-      pp "@;Next Obligation. done. Qed."
+      pp "  %s v_ (patt__ @@ %a)%%I (Some %i%%N) :=@;"
+        type_name (pp_id_args false id) par_names annot.st_unfold_prio;
+      pp "  λ T, i2p (%s_eq v_ _ _ T (%s_unfold" inst_name id;
+      List.iter (fun _ -> pp " _") par_names; pp " _)).";
     in
     pp_instance_place "simplify_hyp_place" "SimplifyHypPlace";
     pp_instance_place "simplify_goal_place" "SimplifyGoalPlace";

@@ -8,8 +8,11 @@ Section tyfold.
   Program Definition tyfold_type (tys : list (type → type)) (base : type) (ls : list loc) : type := {|
     ty_own β l := ⌜length ls = length tys⌝ ∗
             ([∗ list] i ↦ ty ∈ tys, ∃ l1 l2, ⌜(l::ls) !! i = Some l1⌝ ∗ ⌜ls !! i = Some l2⌝ ∗
-           l1 ◁ₗ{β} ty (place l2)) ∗ (default l (last ls)) ◁ₗ{β} base
+           l1 ◁ₗ{β} ty (place l2)) ∗ (default l (last ls)) ◁ₗ{β} base;
+    ty_has_op_type _ _ := False%type;
+    ty_own_val _ := True;
   |}%I.
+  Solve Obligations with try done.
   Next Obligation.
     iIntros (tys base ls l E ?). iDestruct 1 as (Hlen) "(Htys&Hb)".
     iMod (ty_share with "Hb") as "$" => //. iSplitR => //.
@@ -19,10 +22,9 @@ Section tyfold.
     iMod (ty_share with "Hty") as "Hty" => //. iSplitL "Hty". 1: iExists _, _; by iFrame.
     by iApply "IH".
   Qed.
-  Program Definition tyfold (tys : list (type → type)) (base : type) : rtype := {|
-    rty_type := list loc;
-    rty := tyfold_type tys base
-  |}.
+
+  Definition tyfold (tys : list (type → type)) (base : type) : rtype :=
+    RType (tyfold_type tys base).
 
   Typeclasses Transparent own_constrained persistent_own_constraint.
   Lemma simplify_hyp_place_tyfold_optional l β ls tys b T:

@@ -6,54 +6,51 @@ Section padded.
   Context `{!typeG Σ}.
 
   Program Definition padded (ty : type) (lyty ly : layout) : type := {|
+    ty_has_op_type ot mt := ot = UntypedOp ly ∧ ty.(ty_has_op_type) (UntypedOp lyty) MCNone ;
     ty_own β l :=
-      ⌜lyty ⊑ ly⌝ ∗ ⌜l `has_layout_loc` ly⌝ ∗
+      (⌜lyty ⊑ ly⌝ ∗ ⌜l `has_layout_loc` ly⌝ ∗
       loc_in_bounds l ly.(ly_size) ∗
-      l ◁ₗ{β} ty ∗ (l +ₗ lyty.(ly_size)) ◁ₗ{β} uninit (ly_offset ly lyty.(ly_size));
-  |}%I.
+      l ◁ₗ{β} ty ∗ (l +ₗ lyty.(ly_size)) ◁ₗ{β} uninit (ly_offset ly lyty.(ly_size)))%I;
+    ty_own_val v := (∃ v1 v2, ⌜lyty ⊑ ly⌝ ∗ ⌜v = v1 ++ v2⌝ ∗ v1 ◁ᵥ ty ∗ v2 ◁ᵥ uninit (ly_offset ly lyty.(ly_size)))%I;
+  |}.
   Next Obligation.
     iDestruct 1 as "[$ [$ [$ [HT Hl]]]]".
     iMod (ty_share with "HT") as "$" => //.
     by iApply ty_share.
   Qed.
+  Next Obligation. iIntros (?????? [-> ?]) "[_ [$ _]]". Qed.
+  Next Obligation.
+    iIntros (ty lyty ly ot mt v [-> ?]). iDestruct 1 as (v1 v2 [??] ->) "[Hv1 Hv2]".
+    iDestruct (ty_size_eq with "Hv1") as %Heq1; [done|].
+    iDestruct (ty_size_eq _ (UntypedOp _) MCNone with "Hv2") as %Heq2; [done|].
+    iPureIntro. rewrite /has_layout_val app_length Heq1 Heq2 {2}/ly_size/=. lia.
+  Qed.
+  Next Obligation.
+    iIntros (ty lyty ly ot mt l [-> ?]). iDestruct 1 as ([??] ?) "[_ [Hl Hpad]]".
+    iDestruct (ty_deref with "Hl") as (v1) "[Hmt1 Hv1]"; [done|].
+    iDestruct (ty_size_eq with "Hv1") as %Heq1; [done|].
+    iDestruct (ty_deref _ (UntypedOp _) MCNone with "Hpad") as (v2) "[Hmt2 Hv2]"; [done|].
+    iExists (v1 ++ v2). rewrite heap_mapsto_app Heq1. iFrame.
+    iExists _, _. unfold bytewise; simpl_type. by repeat iSplit => //.
+  Qed.
+  Next Obligation.
+    iIntros (ty lyty ly ot mt l v [-> ?] Hly) "Hmt". iDestruct 1 as (v1 v2 [??] ->) "[Hv1 Hv2]".
+    iDestruct (ty_size_eq with "Hv1") as %Heq1; [done|].
+    iDestruct (ty_size_eq _ (UntypedOp _) MCNone with "Hv2") as %Heq2; [done|].
+    iDestruct (heap_mapsto_loc_in_bounds with "Hmt") as "#Hb".
+    rewrite heap_mapsto_app Heq1.
+    iDestruct "Hmt" as "[Hmt1 Hmt2]".
+    iDestruct (ty_ref with "[%] Hmt1 Hv1") as "$"; [done| by apply: has_layout_loc_trans|].
+    iDestruct (ty_ref _ (UntypedOp _) MCNone with "[%] Hmt2 Hv2") as "$" => //. { by apply: has_layout_ly_offset. }
+    iSplit => //. iSplit => //. iApply loc_in_bounds_shorten; last done.
+    rewrite app_length Heq1 Heq2 /ly_size /= -!/(ly_size _). lia.
+  Qed.
+  Next Obligation. iIntros (ty lyty ly v ot mt st ?). apply mem_cast_compat_Untyped. destruct ot; naive_solver. Qed.
 
   Global Instance padded_proper : Proper ((≡) ==> (=) ==> (=) ==> (≡)) padded.
   Proof. solve_type_proper. Qed.
   Global Instance padded_ne n : Proper ((dist n) ==> (=) ==> (=) ==> (dist n)) padded.
   Proof. solve_type_proper. Qed.
-
-  Global Program Instance movable_padded (ty : type) (lyty ly : layout) `{!Movable ty} : Movable (padded ty lyty ly) := {|
-    ty_has_op_type ot mt := ot = UntypedOp ly ∧ ty.(ty_has_op_type) (UntypedOp lyty) MCNone ;
-    ty_own_val v := (∃ v1 v2, ⌜lyty ⊑ ly⌝ ∗ ⌜v = v1 ++ v2⌝ ∗ v1 ◁ᵥ ty ∗ v2 ◁ᵥ uninit (ly_offset ly lyty.(ly_size)))%I;
-  |}.
-  Next Obligation. iIntros (??????? [-> ?]) "[_ [$ _]]". Qed.
-  Next Obligation.
-    iIntros (ty lyty ly ? ot mt v [-> ?]). iDestruct 1 as (v1 v2 [??] ->) "[Hv1 Hv2]".
-    iDestruct (ty_size_eq with "Hv1") as %Heq1; [done|].
-    iDestruct (ty_size_eq (UntypedOp _) MCNone with "Hv2") as %Heq2; [done|].
-    iPureIntro. rewrite /has_layout_val app_length Heq1 Heq2 {2}/ly_size/=. lia.
-  Qed.
-  Next Obligation.
-    iIntros (ty lyty ly ? ot mt l [-> ?]). iDestruct 1 as ([??] ?) "[_ [Hl Hpad]]".
-    iDestruct (ty_deref with "Hl") as (v1) "[Hmt1 Hv1]"; [done|].
-    iDestruct (ty_size_eq with "Hv1") as %Heq1; [done|].
-    iDestruct (ty_deref (UntypedOp _) MCNone with "Hpad") as (v2) "[Hmt2 Hv2]"; [done|].
-    iExists (v1 ++ v2). rewrite heap_mapsto_app Heq1. iFrame.
-    iExists _, _. by repeat iSplit => //.
-  Qed.
-  Next Obligation.
-    iIntros (ty lyty ly ? ot mt l v [-> ?] Hly) "Hmt". iDestruct 1 as (v1 v2 [??] ->) "[Hv1 Hv2]".
-    iDestruct (ty_size_eq with "Hv1") as %Heq1; [done|].
-    iDestruct (ty_size_eq (UntypedOp _) MCNone with "Hv2") as %Heq2; [done|].
-    iDestruct (heap_mapsto_loc_in_bounds with "Hmt") as "#Hb".
-    rewrite heap_mapsto_app Heq1.
-    iDestruct "Hmt" as "[Hmt1 Hmt2]".
-    iDestruct (ty_ref with "[%] Hmt1 Hv1") as "$"; [done| by apply: has_layout_loc_trans|].
-    iDestruct (ty_ref (UntypedOp _) MCNone with "[%] Hmt2 Hv2") as "$" => //. { by apply: has_layout_ly_offset. }
-    iSplit => //. iSplit => //. iApply loc_in_bounds_shorten; last done.
-    rewrite app_length Heq1 Heq2 /ly_size /= -!/(ly_size _). lia.
-  Qed.
-  Next Obligation. iIntros (ty lyty ly ? v ot mt st ?). apply mem_cast_compat_Untyped. destruct ot; naive_solver. Qed.
 
   Global Instance loc_in_bounds_padded ty lyty ly β: LocInBounds (padded ty lyty ly) β (ly_size ly).
   Proof.
@@ -72,7 +69,7 @@ Section padded.
     SimplifyHypPlace l β (padded ty ly ly) (Some 0%N) :=
     λ T, i2p (simpl_padded_hyp_eq_layout l β ty ly T).
   (* TODO: should this also work for Shr? *)
-  Lemma simpl_padded_goal_eq_layout l ty ly T `{!Movable ty}:
+  Lemma simpl_padded_goal_eq_layout l ty ly T:
     T (⌜ty.(ty_has_op_type) (UntypedOp ly) MCNone⌝ ∗ l ◁ₗ ty) -∗
     simplify_goal (l ◁ₗ padded ty ly ly) T.
   Proof.
@@ -84,7 +81,7 @@ Section padded.
     rewrite -{1}(Nat.add_0_r (ly_size _)) -loc_in_bounds_split.
     by iDestruct "Hb" as "[_$]".
   Qed.
-  Global Instance simpl_padded_goal_eq_layout_inst l ty ly `{!Movable ty}:
+  Global Instance simpl_padded_goal_eq_layout_inst l ty ly:
     SimplifyGoalPlace l Own (padded ty ly ly) (Some 0%N) :=
     λ T, i2p (simpl_padded_goal_eq_layout l ty ly T).
 
@@ -108,21 +105,21 @@ Section padded.
 
   (* Only works for Own since ty might have interior mutability, but
   uninit ty assumes that the values are frozen *)
-  Lemma subsume_padded_uninit l ly1 ly2 lyty ty `{!Movable ty} T:
+  Lemma subsume_padded_uninit l ly1 ly2 lyty ty T:
     (⌜ty.(ty_has_op_type) (UntypedOp lyty) MCNone⌝ ∗ ∀ v, v◁ᵥty -∗ subsume (l ◁ₗ uninit ly1) (l ◁ₗ uninit ly2) T) -∗
     subsume (l ◁ₗ padded ty lyty ly1) (l ◁ₗ uninit ly2) T.
   Proof.
     iIntros "[% HT]". iDestruct 1 as ([? ?] ?) "(Hb & Hl & Hr)".
     iDestruct (ty_deref with "Hl") as (v1) "[Hl Hv1]"; [done|].
     iDestruct (ty_size_eq with "Hv1") as %Hlen1; [done|].
-    iDestruct (ty_deref (UntypedOp _) MCNone with "Hr") as (v2) "[Hr Hv2]"; [done|].
-    iDestruct (ty_size_eq (UntypedOp _) MCNone with "Hv2") as %Hlen2; [done|].
+    iDestruct (ty_deref _ (UntypedOp _) MCNone with "Hr") as (v2) "[Hr Hv2]"; [done|].
+    iDestruct (ty_size_eq _ (UntypedOp _) MCNone with "Hv2") as %Hlen2; [done|].
     iApply ("HT" with "Hv1"). iExists (v1 ++ v2).
     rewrite /= heap_mapsto_app /has_layout_val app_length Forall_forall Hlen1 Hlen2.
     iFrame. iPureIntro; split_and! => //.
     rewrite /= /ly_offset {2}/ly_size. lia.
   Qed.
-  Global Instance subsume_padded_uninit_inst l ly1 ly2 lyty ty `{!Movable ty}:
+  Global Instance subsume_padded_uninit_inst l ly1 ly2 lyty ty:
     SubsumePlace l Own (padded ty lyty ly1) (uninit ly2) | 4 :=
     λ T, i2p (subsume_padded_uninit l ly1 ly2 lyty ty T).
 
@@ -191,9 +188,10 @@ Section padded.
 
   Lemma type_add_padded v2 β ly lyty ty (p : loc) (n : Z) it T:
     (⌜n ∈ it⌝ -∗ ⌜0 ≤ n⌝ ∗ ⌜Z.to_nat n ≤ ly.(ly_size)⌝%nat ∗ ⌜lyty.(ly_size) ≤ Z.to_nat n⌝%nat ∗ (p ◁ₗ{β} padded ty lyty (ly_set_size ly (Z.to_nat n)) -∗ v2 ◁ᵥ n @ int it -∗
-          T (val_of_loc (p +ₗ n)) (t2mt ((p +ₗ n) @ &frac{β} (uninit (ly_offset ly (Z.to_nat n))))))) -∗
+          T (val_of_loc (p +ₗ n)) ((p +ₗ n) @ &frac{β} (uninit (ly_offset ly (Z.to_nat n)))))) -∗
       typed_bin_op v2 (v2 ◁ᵥ n @ int it) p (p ◁ₗ{β} padded ty lyty ly) (PtrOffsetOp u8) (IntOp it) PtrOp T.
   Proof.
+    unfold int; simpl_type.
     iIntros "HT" (Hint) "Hp". iIntros (Φ) "HΦ".
     move: (Hint) => /val_to_Z_in_range?.
     iDestruct ("HT" with "[//]") as (???) "HT".
@@ -203,7 +201,7 @@ Section padded.
     iApply wp_ptr_offset; [ by apply val_to_of_loc | done | |].
     { iApply loc_in_bounds_shorten; [|done]; lia. }
     iModIntro. iApply ("HΦ" with "[H2]"). 2: iApply ("HT" with "H1 []").
-    - by iFrame.
+    - unfold frac_ptr; simpl_type. by iFrame.
     - by iPureIntro.
   Qed.
   Global Instance type_add_padded_inst v2 β ly lyty ty (p : loc) n it:
@@ -211,18 +209,18 @@ Section padded.
     λ T, i2p (type_add_padded v2 β ly lyty ty p n it T).
 
 
-  Lemma annot_to_uninit_padded l ty ly lyty T `{!Movable ty}:
+  Lemma annot_to_uninit_padded l ty ly lyty T:
     (⌜ty.(ty_has_op_type) (UntypedOp lyty) MCNone⌝ ∗ (l ◁ₗ uninit ly -∗ T)) -∗
     typed_annot_stmt ToUninit l (l ◁ₗ padded ty lyty ly) T.
   Proof.
     iIntros "[% HT] Hl". iApply step_fupd_intro => //. iModIntro.
-    iDestruct (ty_aligned _ MCNone with "Hl") as %?; [done|].
-    iDestruct (ty_deref _ MCNone with "Hl") as (v) "[Hmt Hv]"; [done|].
-    iDestruct (ty_size_eq _ MCNone with "Hv") as %?; [done|].
+    iDestruct (ty_aligned _ _ MCNone with "Hl") as %?; [done|].
+    iDestruct (ty_deref _ _ MCNone with "Hl") as (v) "[Hmt Hv]"; [done|].
+    iDestruct (ty_size_eq _ _ MCNone with "Hv") as %?; [done|].
     iApply ("HT").
     iExists v. rewrite Forall_forall. by iFrame.
   Qed.
-  Global Instance annot_to_uninit_inst l ty ly lyty `{!Movable ty}:
+  Global Instance annot_to_uninit_inst l ty ly lyty:
     TypedAnnotStmt (ToUninit) l (l ◁ₗ padded ty lyty ly) :=
     λ T, i2p (annot_to_uninit_padded l ty ly lyty T).
 

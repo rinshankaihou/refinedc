@@ -14,13 +14,13 @@ Section type.
   Proof.
     iIntros (? ?) "Hl". iApply ty_share => //.
     unshelve iApply (@ty_ref  with "[] Hl").
-    { apply _. }
     { apply: (UntypedOp struct_latch). }
     { apply: MCNone. }
     { solve_goal. }
     { done. }
     rewrite /ty_own_val/=. repeat iSplit => //.
-    rewrite /ty_own_val /= /ty_own_val /=. iSplit => //.
-    iExists false. iSplit; last done. by iExists _.
+    unfold atomic_bool; simpl_type. iExists false.
+    unfold boolean; simpl_type. iSplit => //.
+    by iExists _.
   Qed.
 End type.

@@ -7,42 +7,25 @@ Section array.
   Context `{typeG Σ}.
   (*** arrays *)
   Program Definition array (ly : layout) (tys : list type) : type := {|
+    ty_has_op_type ot mt := ot = UntypedOp (mk_array_layout ly (length tys)) ∧ mt = MCNone ∧ layout_wf ly ∧ Forall (λ ty, ty.(ty_has_op_type) (UntypedOp ly) MCNone) tys;
     ty_own β l := (
       ⌜l `has_layout_loc` ly⌝ ∗
       loc_in_bounds l (ly_size ly * length tys)%nat ∗
       [∗ list] i ↦ ty ∈ tys, (l offset{ly}ₗ i) ◁ₗ{β} ty
-    )%I
+    )%I;
+    ty_own_val v :=
+      (⌜v `has_layout_val` (mk_array_layout ly (length tys))⌝ ∗
+       [∗ list] v';ty∈reshape (replicate (length tys) (ly_size ly)) v;tys, (v' ◁ᵥ ty))%I;
   |}.
   Next Obligation.
     iIntros (ly tys l E He) "($&$&Ha)". iApply big_sepL_fupd. iApply (big_sepL_impl with "Ha").
     iIntros "!#" (???). by iApply ty_share.
   Qed.
-
-  Global Instance array_ne n : Proper ((=) ==> (dist n) ==> (dist n)) array.
-  Proof.
-    move => ? sl -> tys1 tys2 Htys. constructor => β l; rewrite/ty_own/=.
-    f_equiv. f_equiv; first by rewrite ->Htys.
-    elim: Htys l => // ???????? /=. f_equiv. solve_proper.
-    by setoid_rewrite offset_loc_S.
-  Qed.
-  Global Instance array_proper : Proper ((=) ==> (≡) ==> (≡)) array.
-  Proof. move => ??->. apply ne_proper, _. Qed.
-
-
-  Global Program Instance movable_array ly tys `{!MovableLst tys} : Movable (array ly tys) := {|
-    ty_has_op_type ot mt := ot = UntypedOp (mk_array_layout ly (length tys)) ∧ mt = MCNone ∧ layout_wf ly ∧ Forall (λ ty, (ty : mtype).(ty_has_op_type) (UntypedOp ly) MCNone) (movablelst_to_list tys);
-    ty_own_val v :=
-      (⌜v `has_layout_val` (mk_array_layout ly (length tys))⌝ ∗
-       [∗ list] v';ty∈reshape (replicate (length tys) (ly_size ly)) v;(movablelst_to_list tys), (v' ◁ᵥ (ty : mtype)))%I;
-  |}.
-  Next Obligation. by iIntros (ly tys ? ot mt l [-> ?]) "[% _]". Qed.
-  Next Obligation. by iIntros (ly tys ? ot mt v [-> ?]) "(?&_)". Qed.
+  Next Obligation. by iIntros (ly tys ot mt l [-> ?]) "[% _]". Qed.
+  Next Obligation. by iIntros (ly tys ot mt v [-> ?]) "(?&_)". Qed.
   Next Obligation.
-    move => ly tys ? ot mt l [? [? [? ]]]. rewrite {2}(to_movablelst tys).
-    move Heq: (movablelst_to_list tys) => tys'.
-    have ->: (length tys = length tys') by rewrite -Heq movablelst_to_list_length.
-    clear dependent tys. rewrite /ty_own/=. iIntros (Hlys) "(_&#Hb&Htys)".
-    iInduction (tys') as [|ty tys] "IH" forall (l); csimpl.
+    move => ly tys ot mt l [? [? [? ]]]. iIntros (Hlys) "(_&#Hb&Htys)". subst.
+    iInduction (tys) as [|ty tys] "IH" forall (l Hlys); csimpl.
     { iExists []. iSplitR => //.
       - iApply heap_mapsto_nil; first by iApply (loc_in_bounds_shorten with "Hb"); lia.
       - iSplit => //. iPureIntro. rewrite /has_layout_val/ly_size/=. lia. }
@@ -52,20 +35,16 @@ Section array.
     iDestruct (ty_deref with "Hty") as (v') "[Hl Hty]"; [done|].
     iDestruct (ty_size_eq with "Hty") as %Hszv; [done|].
     setoid_rewrite offset_loc_S.
-    iDestruct ("IH" $! _ (l offset{ly}ₗ 1) with "[Hb2] Htys") as (vs') "(Hl' & Hsz & Htys)".
+    iDestruct ("IH" $! (l offset{ly}ₗ 1) with "[//] [Hb2] Htys") as (vs') "(Hl' & Hsz & Htys)".
     { by rewrite /offset_loc Z.mul_1_r. }
     iDestruct "Hsz" as %Hsz. iExists (v' ++ vs').
     rewrite /has_layout_val heap_mapsto_app Hszv offset_loc_1 take_app_alt // drop_app_alt // app_length Hszv Hsz.
     iFrame. iPureIntro. rewrite /ly_size/= -/(ly_size _). lia.
-    Unshelve. done.
   Qed.
   Next Obligation.
-    move => ly tys ? ot mt l v [-> [? [? ]]]. rewrite {6}(to_movablelst tys).
-    move Heq: (movablelst_to_list tys) => tys'.
-    have ->: (length tys = length tys') by rewrite -Heq movablelst_to_list_length.
-    clear dependent tys. iIntros (Hlys Hl) "Hl". rewrite /ty_own/=.
+    move => ly tys ot mt l v [-> [? [? ]]]. iIntros (Hlys Hl) "Hl".
     iDestruct 1 as (Hv) "Htys". iSplit => //.
-    iInduction (tys') as [|ty tys] "IH" forall (l v Hv Hl); csimpl in *.
+    iInduction (tys) as [|ty tys] "IH" forall (l v Hlys Hv Hl); csimpl in *.
     { rewrite mult_0_r right_id. by iApply heap_mapsto_loc_in_bounds_0. }
     move: Hlys. intros [? ?]%Forall_cons. iDestruct "Htys" as "[Hty Htys]".
     rewrite -{1}(take_drop (ly_size ly) v).
@@ -80,7 +59,24 @@ Section array.
     iApply loc_in_bounds_split_mul_S. rewrite take_length min_l; first by eauto.
     rewrite Hv. repeat unfold ly_size => /=; lia.
   Qed.
-  Next Obligation. iIntros (???????[?[-> ?]]) "?". done. Qed.
+  Next Obligation. iIntros (??????[?[-> ?]]) "?". done. Qed.
+
+  Global Instance array_ne n : Proper ((=) ==> (dist n) ==> (dist n)) array.
+  Proof.
+    move => ? sl -> tys1 tys2 Htys. constructor.
+    - move => /= ??. erewrite Forall2_length; [|done]. do 3 f_equiv => //.
+      elim: Htys => //???? Hty ? IH. rewrite !Forall_cons IH. f_equiv. apply Hty.
+    - move => β l; rewrite/ty_own/=.
+      f_equiv. f_equiv; first by rewrite ->Htys.
+      elim: Htys l => // ???????? /=. f_equiv. solve_proper.
+      by setoid_rewrite offset_loc_S.
+    - move => v; rewrite/ty_own_val/=.
+      f_equiv. f_equiv; first by rewrite ->Htys.
+      elim: Htys v => // ???? Hty Htys IH v /=. f_equiv. { solve_proper. }
+      apply: IH.
+  Qed.
+  Global Instance array_proper : Proper ((=) ==> (≡) ==> (≡)) array.
+  Proof. move => ??->. apply ne_proper, _. Qed.
 
   Global Instance array_loc_in_bounds ly β tys : LocInBounds (array ly tys) β (ly_size ly * length tys).
   Proof. constructor. iIntros (?) "(?&$&?)". Qed.
@@ -146,8 +142,11 @@ Section array.
       ⌜l `has_layout_loc` ly⌝ ∗
       ⌜0 ≤ idx ≤ len⌝ ∗
       loc_in_bounds base (ly_size (mk_array_layout ly len))
-    )%I
+    )%I;
+    ty_has_op_type _ _ := False%type;
+    ty_own_val _ := True%I;
   |}.
+  Solve Obligations with try done.
   Next Obligation. iIntros (ly base idx len l E ?) "(%&%&$)". done. Qed.
 
   Global Instance array_ptr_loc_in_bounds ly base idx β len : LocInBounds (array_ptr ly base idx len) β ((len - Z.to_nat idx) * ly_size ly).
@@ -240,13 +239,14 @@ Section array.
     SubsumePlace l β (array ly1 tys1) (array ly2 tys2) | 100 :=
     λ T, i2p (subsume_array ly1 ly2 tys1 tys2 l β T).
 
-  Lemma type_place_array l β T ly1 it v (tyv : mtype) tys ly2 K:
+  Lemma type_place_array l β T ly1 it v tyv tys ly2 K:
     (∃ i, ⌜ly1 = ly2⌝ ∗ subsume (v ◁ᵥ tyv) (v ◁ᵥ i @ int it) (⌜0 ≤ i⌝ ∗ ⌜i < length tys⌝ ∗
      ∀ ty, ⌜tys !! Z.to_nat i = Some ty⌝ -∗
     typed_place K (l offset{ly2}ₗ i) β ty (λ l2 β2 ty2 typ, T l2 β2 ty2 (λ t, array ly2 (<[Z.to_nat i := typ t]>tys))))) -∗
     typed_place (BinOpPCtx (PtrOffsetOp ly1) (IntOp it) v tyv :: K) l β (array ly2 tys) T.
   Proof.
     iDestruct 1 as (i ->) "HP". iIntros (Φ) "(%&#Hb&Hl) HΦ" => /=. iIntros "Hv".
+    unfold int; simpl_type.
     iDestruct ("HP" with "Hv") as (Hv) "HP".
     iDestruct "HP" as (? Hlen) "HP".
     have [|ty ?]:= lookup_lt_is_Some_2 tys (Z.to_nat i). lia.
@@ -259,21 +259,21 @@ Section array.
     iMod ("Htyp" with "Hl'") as "[? $]".
     iSplitR => //. iSplitR; first by rewrite insert_length. by iApply "Hc".
   Qed.
-  Global Instance type_place_array_inst l β ly1 it v (tyv : mtype) tys ly2 K:
+  Global Instance type_place_array_inst l β ly1 it v tyv tys ly2 K:
     TypedPlace (BinOpPCtx (PtrOffsetOp ly1) (IntOp it) v tyv :: K) l β (array ly2 tys):=
     λ T, i2p (type_place_array l β T ly1 it v tyv tys ly2 K).
 
   Lemma type_bin_op_offset_array l β T ly it v tys i:
     (* TODO: Should we make layout_wf ly part of array such that we don't need to require it here? *)
-    (⌜layout_wf ly⌝ ∗ ⌜0 ≤ i ≤ length tys⌝ ∗ (l ◁ₗ{β} array ly tys -∗ T (val_of_loc (l offset{ly}ₗ i)) (t2mt ((l offset{ly}ₗ i) @ &own (array_ptr ly l i (length tys)))))) -∗
+    (⌜layout_wf ly⌝ ∗ ⌜0 ≤ i ≤ length tys⌝ ∗ (l ◁ₗ{β} array ly tys -∗ T (val_of_loc (l offset{ly}ₗ i)) ((l offset{ly}ₗ i) @ &own (array_ptr ly l i (length tys))))) -∗
     typed_bin_op v (v ◁ᵥ i @ int it) l (l ◁ₗ{β} array ly tys) (PtrOffsetOp ly) (IntOp it) PtrOp T.
   Proof.
-    iIntros "[% [% HT]]".
+    iIntros "[% [% HT]]". unfold int; simpl_type.
     iIntros "%Hv (%&#Hlib&Hl)" (Φ) "HΦ".
     iApply wp_ptr_offset => //; [by apply val_to_of_loc | | ].
     { iApply (loc_in_bounds_offset with "Hlib"); simpl; [done| destruct l => /=; lia | destruct l => /=; nia]. }
     iModIntro. iApply "HΦ"; [|iApply "HT"; iFrame; by iSplit].
-    iSplit; [done|]. iSplit; [done|].
+    unfold frac_ptr; simpl_type. iSplit; [done|]. iSplit; [done|].
     iSplit; [| by iSplit].
     iPureIntro. by apply: has_layout_loc_offset_loc.
   Qed.
@@ -282,16 +282,16 @@ Section array.
     λ T, i2p (type_bin_op_offset_array l β T ly it v tys i).
 
   Lemma type_bin_op_offset_array_ptr l β T ly it v i idx (len : nat) base:
-    (⌜layout_wf ly⌝ ∗ ⌜0 ≤ idx + i ≤ len⌝ ∗ (l ◁ₗ{β} array_ptr ly base idx len -∗ T (val_of_loc (base offset{ly}ₗ (idx + i))) (t2mt ((base offset{ly}ₗ (idx + i)) @ &own (array_ptr ly base (idx + i) len))))) -∗
+    (⌜layout_wf ly⌝ ∗ ⌜0 ≤ idx + i ≤ len⌝ ∗ (l ◁ₗ{β} array_ptr ly base idx len -∗ T (val_of_loc (base offset{ly}ₗ (idx + i))) ((base offset{ly}ₗ (idx + i)) @ &own (array_ptr ly base (idx + i) len)))) -∗
      typed_bin_op v (v ◁ᵥ i @ int it) l (l ◁ₗ{β} array_ptr ly base idx len) (PtrOffsetOp ly) (IntOp it) PtrOp T.
   Proof.
-    iIntros "[% [% HT]]".
+    iIntros "[% [% HT]]". unfold int; simpl_type.
     iIntros "%Hv (->&%&%&#Hlib)" (Φ) "HΦ".
     iApply wp_ptr_offset => //; [by apply val_to_of_loc | | ].
     { iApply (loc_in_bounds_offset with "Hlib"); simpl; unfold addr in *; [done|nia|].
       rewrite {3}/ly_size/=. nia. }
     rewrite offset_loc_offset_loc.
-    iModIntro. iApply "HΦ"; [|iApply "HT"]; iFrame "Hlib"; iPureIntro; [|done].
+    iModIntro. iApply "HΦ"; [|iApply "HT"]; unfold frac_ptr; simpl_type; iFrame "Hlib"; iPureIntro; [|done].
     split_and! => //; try lia. rewrite -offset_loc_offset_loc.
     by apply has_layout_loc_offset_loc.
   Qed.
@@ -300,16 +300,16 @@ Section array.
     λ T, i2p (type_bin_op_offset_array_ptr l β T ly it v i idx len base).
 
   Lemma type_bin_op_neg_offset_array_ptr l β T ly it v i idx (len : nat) base:
-    (⌜layout_wf ly⌝ ∗ ⌜0 ≤ idx - i ≤ len⌝ ∗ (l ◁ₗ{β} array_ptr ly base idx len -∗ T (val_of_loc (base offset{ly}ₗ (idx - i))) (t2mt ((base offset{ly}ₗ (idx - i)) @ &own (array_ptr ly base (idx - i) len))))) -∗
+    (⌜layout_wf ly⌝ ∗ ⌜0 ≤ idx - i ≤ len⌝ ∗ (l ◁ₗ{β} array_ptr ly base idx len -∗ T (val_of_loc (base offset{ly}ₗ (idx - i))) ((base offset{ly}ₗ (idx - i)) @ &own (array_ptr ly base (idx - i) len)))) -∗
      typed_bin_op v (v ◁ᵥ i @ int it) l (l ◁ₗ{β} array_ptr ly base idx len) (PtrNegOffsetOp ly) (IntOp it) PtrOp T.
   Proof.
-    iIntros "[% [% HT]]".
+    iIntros "[% [% HT]]". unfold int; simpl_type.
     iIntros "%Hv (->&%&%&#Hlib)" (Φ) "HΦ".
     iApply wp_ptr_neg_offset => //; [by apply val_to_of_loc | | ].
     { iApply (loc_in_bounds_offset with "Hlib"); simpl; unfold addr in *; [done|nia|].
       rewrite {3}/ly_size/=. nia. }
     rewrite offset_loc_offset_loc Z.add_opp_r.
-    iModIntro. iApply "HΦ"; [|iApply "HT"]; iFrame "Hlib"; iPureIntro; [|done].
+    iModIntro. iApply "HΦ"; [|iApply "HT"]; unfold frac_ptr; simpl_type; iFrame "Hlib"; iPureIntro; [|done].
     split_and! => //; try lia. rewrite -Z.add_opp_r -offset_loc_offset_loc.
     by apply has_layout_loc_offset_loc.
   Qed.
@@ -324,7 +324,7 @@ Section array.
      ⌜0 < length tys⌝ ∗
      ⌜idx ≤ max_int ptrdiff_t⌝ ∗
      (alloc_alive_loc l2 ∗ True) ∧
-     (T (i2v idx ptrdiff_t) (t2mt (idx @ int ptrdiff_t)))) -∗
+     (T (i2v idx ptrdiff_t) (idx @ int ptrdiff_t))) -∗
      typed_bin_op l1 (l1 ◁ₗ{β} array_ptr ly l2 idx len) l2 (l2 ◁ₗ{β} array ly tys) (PtrDiffOp ly) PtrOp PtrOp T.
   Proof.
     iIntros "HT (->&%&%&#Hlib) Hl2" (Φ) "HΦ".
@@ -345,7 +345,7 @@ Section array.
     }
     iDestruct "HT" as "[_ HT]".
     iModIntro. iApply "HΦ"; [|iApply "HT"].
-    iPureIntro. by apply: val_to_of_Z.
+    unfold int; simpl_type. iPureIntro. by apply: val_to_of_Z.
   Qed.
   Global Instance type_bin_op_diff_array_ptr_array_inst (l1 : loc) β l2 ly idx (len : nat) tys:
     TypedBinOp l1 (l1 ◁ₗ{β} array_ptr ly l2 idx len)%I l2 (l2 ◁ₗ{β} array ly tys) (PtrDiffOp ly) PtrOp PtrOp :=

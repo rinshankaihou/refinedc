@@ -8,6 +8,7 @@ Section proofs.
   Context `{!typeG Σ} `{!globalG Σ} `{!lockG Σ} `{!spinlockG Σ}.
 
   Typeclasses Transparent hyp_spinlock_t spinlock_token.
+  Typeclasses Transparent frac_ptr_type.
 
   (* Typing proof for [hyp_spin_lock_init]. *)
   Lemma type_hyp_spin_lock_init :
@@ -75,7 +76,7 @@ Section proofs.
         iExists _, _, True%I. iFrame. iSplit; [done|].
         unshelve iApply type_read_copy. { apply _. } simpl.
         iSplit; [done|]. iSplit; [iPureIntro; solve_ndisj|]. iIntros (v) "_ Hl Hv !>".
-        iExists tytrue, (t2mt (next @ int u16)). iSplit; [done|]. iSplit; [done|]. iModIntro.
+        iExists tytrue, (next @ int u16)%I. iSplit; [done|]. iSplit; [done|]. iModIntro.
         iSplitL "Howner Hrest Hl Hv". {
           iNext. rewrite /hyp_spinlock_t_invariant. iExists owner, next.
           iFrame "Hrest". iSplit; first done. iFrame.
@@ -102,7 +103,7 @@ Section proofs.
         iExists _, _, True%I. iFrame.
         unshelve iApply type_read_copy. { apply _. } simpl.
         iSplit; [done|]. iSplit; [iPureIntro; solve_ndisj|]. iIntros (v') "_ Hl Hv !>".
-        iExists tytrue, (t2mt (next @ int u16)). iSplit; [done|]. iSplit; [done|]. iModIntro.
+        iExists tytrue, (next @ int u16)%I. iSplit; [done|]. iSplit; [done|]. iModIntro.
         iSplitL "Howner Hrest Hl Hv". {
           iNext. rewrite /hyp_spinlock_t_invariant. iExists owner, next.
           iFrame "Hrest". iSplit; first done. iFrame.
@@ -128,7 +129,7 @@ Section proofs.
              iDestruct select (local_ticket ◁ᵥ _)%I as "[_ Hticket]".
              iDestruct select (p at{_}ₗ _ ◁ᵥ _)%I as "[_ ->]".
              iApply (wp_cas_suc_int with "Hnext Hticket [$]"). { cbv. lia. } done.
-             iNext. iIntros "??". iApply ("HΦ" $! _ (t2mt (true @ builtin_boolean))%I) => //.
+             iNext. iIntros "??". iApply ("HΦ" $! _ (true @ builtin_boolean)%I) => //.
              { iExists _. done. }
              repeat liRStep; liShow.
              rewrite /hyp_spinlock_t_invariant.
@@ -151,7 +152,7 @@ Section proofs.
              iDestruct select (local_ticket ◁ᵥ _)%I as "[_ Hticket]".
              iDestruct select (p at{_}ₗ _ ◁ᵥ _)%I as "[_ ->]".
              iApply (wp_cas_fail_int with "Hnext Hticket [$]"). { cbv. lia. } done.
-             iNext. iIntros "??". iApply ("HΦ" $! _ (t2mt (false @ builtin_boolean))%I) => //.
+             iNext. iIntros "??". iApply ("HΦ" $! _ (false @ builtin_boolean)%I) => //.
              { by iExists _. }
              repeat liRStep; liShow.
              rewrite /hyp_spinlock_t_invariant.
@@ -171,7 +172,7 @@ Section proofs.
           iExists _, _, True%I. iFrame. iSplit; [done|].
           unshelve iApply type_read_copy. { apply _. } simpl.
           iSplit; [done|]. iSplit; [iPureIntro; solve_ndisj|]. iIntros (v') "_ Hl Hv !>".
-          iExists tytrue, (t2mt (next @ int u16)). iSplit; [done|]. iSplit; [done|]. iModIntro.
+          iExists tytrue, (next @ int u16)%I. iSplit; [done|]. iSplit; [done|]. iModIntro.
           iSplitL "Howner Hrest Hl Hv". {
             iNext. rewrite /hyp_spinlock_t_invariant. iExists owner, next.
             iFrame "Hrest". iSplit; first done. iFrame.
@@ -189,7 +190,7 @@ Section proofs.
              iDestruct select (local_ticket ◁ᵥ _)%I as "[_ Hticket]".
              iDestruct select (p at{_}ₗ _ ◁ᵥ _)%I as "[_ ->]".
              iApply (wp_cas_suc_int with "Hnext Hticket [$]"). { cbv. lia. } done.
-             iNext. iIntros "??". iApply ("HΦ" $! _ (t2mt (true @ builtin_boolean))%I) => //.
+             iNext. iIntros "??". iApply ("HΦ" $! _ (true @ builtin_boolean)%I) => //.
              { by iExists _. }
              iRename select (p at{struct_hyp_spinlock}ₗ "next" ◁ₗ _)%I into "Hnext".
              iDestruct "Hrest" as "(Hfrag&Hr1&Hr2&Hcases)".
@@ -208,7 +209,7 @@ Section proofs.
              iDestruct select (local_ticket ◁ᵥ _)%I as "[_ Hticket]".
              iDestruct select (p at{_}ₗ _ ◁ᵥ _)%I as "[_ ->]".
              iApply (wp_cas_fail_int with "Hnext Hticket [$]"). { cbv. lia. } done.
-             iNext. iIntros "??". iApply ("HΦ" $! _ (t2mt (false @ builtin_boolean))%I) => //.
+             iNext. iIntros "??". iApply ("HΦ" $! _ (false @ builtin_boolean)%I) => //.
              { by iExists _. }
              iRename select (p at{struct_hyp_spinlock}ₗ _ ◁ₗ _)%I into "Hnext".
              iMod ("Hclose_inv" with "[Howner Hnext Hrest]") as "_".
@@ -246,7 +247,7 @@ Section proofs.
         iExists _, _, True%I. iFrame. iSplit; [done|].
         unshelve iApply type_read_copy. { apply _. } simpl.
         iSplit; [done|]. iSplit; [iPureIntro; solve_ndisj|]. iIntros (v') "_ Hl Hv !>".
-        iExists tytrue, (t2mt (owner @ int u16)). iSplit; [done|]. iSplit; [done|]. iModIntro.
+        iExists tytrue, (owner @ int u16)%I. iSplit; [done|]. iSplit; [done|]. iModIntro.
         destruct (decide (i ≠ owner)).
         * iSplitL "Hnext Hrest Hl Hv". {
             iNext. rewrite /hyp_spinlock_t_invariant. iExists owner, next.
@@ -262,7 +263,7 @@ Section proofs.
           { rewrite /ty_own_val /=. by iDestruct "Hv" as %Hv%val_to_Z_in_range. }
           iAssert (⌜owner < next⌝)%I as %?.
           { destruct (decide (owner < next)); first done. iExFalso.
-            iDestruct (ty_size_eq (IntOp _) MCNone with "Hv") as %?; [done|].
+            iDestruct (ty_size_eq _ (IntOp _) MCNone with "Hv") as %?; [done|].
             iDestruct (ticket_not_NO_TICKET with "Hticket") as %Howner.
             iApply (ticket_already_in_range with "[] Hr2 Hticket").
             iPureIntro. clear Q. apply elem_of_seqZ. lia. }
@@ -328,7 +329,7 @@ Section proofs.
       iExists _, _, True%I. iFrame. iSplit; [done|].
       unshelve iApply type_read_copy. { apply _. } simpl.
       iSplit; [done|]. iSplit; [iPureIntro; solve_ndisj|]. iIntros (v') "_ Hl Hv !>".
-      iExists tytrue, (t2mt (owner @ int u16)). iSplit; [done|]. iSplit; [done|]. iModIntro.
+      iExists tytrue, (owner @ int u16)%I. iSplit; [done|]. iSplit; [done|]. iModIntro.
       iSplitL "Hnext Hrest Hl Hv H◯". {
           iNext. rewrite /hyp_spinlock_t_invariant. iExists owner, next.
           iFrame "Hrest". iSplit; first done. iFrame.
@@ -350,12 +351,13 @@ Section proofs.
         iMod (owner_auth_update _ _ _ _ 0%nat with "H● H◯") as "[H● H◯]".
         (* Learn that [next'] actually is [max_int u16]. *)
         iAssert ⌜next' = max_int u16⌝%I as %->.
-        { iDestruct (ty_deref (IntOp _) MCNone with "Hnext") as (w) "[_ H]"; [done|]. iDestruct "H" as %Hnext.
+        { iDestruct (ty_deref _ (IntOp _) MCNone with "Hnext") as (w) "[_ H]"; [done|].
+          unfold int; simpl_type. iDestruct "H" as %Hnext.
           iPureIntro. apply val_to_Z_in_range in Hnext as [??]. lia. }
         (* We perform the write and close the invariant. *)
         iApply typed_write_end_mono_strong; [done|].
-        iIntros "Hv2 _ !>". iExists (t2mt _), _, _, True%I. iFrame. iSplit; [done|].
-        unshelve iApply type_write_own_copy. { apply _. } iSplit; [done|]. iSplit; [done|].
+        iIntros "Hv2 _ !>". iExists _, _, _, True%I. iFrame. iSplit; [done|].
+        iApply type_write_own_copy. iSplit; [done|].
         iIntros "Hv _ Hl !>". iExists tytrue. iSplit; [done|]. iModIntro.
         iSplitL "Htok H● H◯ Hnext Hl Hv". {
           iNext. iExists 0, (LAST_TICKET + 1). iFrame.
@@ -375,7 +377,8 @@ Section proofs.
         (* We can get [owner' = 0] since we have all the tickets. *)
         iAssert ⌜owner' = 0⌝%I as %->.
         { destruct (decide (owner' = 0)) => //. iExFalso.
-          iDestruct (ty_deref (IntOp _) MCNone with "Howner") as (?) "[? Hv]"; [done|].
+          iDestruct (ty_deref _ (IntOp _) MCNone with "Howner") as (?) "[? Hv]"; [done|].
+          unfold int; simpl_type.
           iDestruct "Hv" as %Howner%val_to_Z_in_range.
           destruct Howner as [Howner ?].
           iDestruct (overlaping_ticket_ranges with "[] Htk Htr1") as "$".
@@ -394,8 +397,8 @@ Section proofs.
           iExists next''. iPureIntro. split; apply elem_of_seqZ; lia. }
         (* We perform the write and close the invariant. *)
         iApply typed_write_end_mono_strong; [done|].
-        iIntros "Hv2 _ !>". iExists (t2mt _), _, _, True%I. iFrame. iSplit; [done|].
-        unshelve iApply type_write_own_copy. { apply _. } iSplit; [done|]. iSplit; [done|].
+        iIntros "Hv2 _ !>". iExists _, _, _, True%I. iFrame. iSplit; [done|].
+        iApply type_write_own_copy. iSplit; [done|].
         iIntros "Hv _ Hl !>". iExists tytrue. iSplit; [done|]. iModIntro.
         iRename select (ticket ◁ₗ _)%I into "Hticket_var".
         iSplitR "Hticket_var". { iNext. iExists 0, 0. by iFrame. }
@@ -415,8 +418,8 @@ Section proofs.
         (* The owner will be [owner + 1], update the witness. *)
         iMod (owner_auth_update _ _ _ _ (owner + 1) with "H● H◯") as "[H● H◯]".
         iApply typed_write_end_mono_strong; [done|].
-        iIntros "Hv2 _ !>". iExists (t2mt _), _, _, True%I. iFrame. iSplit; [done|].
-        unshelve iApply type_write_own_copy. { apply _. } iSplit; [done|]. iSplit; [done|].
+        iIntros "Hv2 _ !>". iExists _, _, _, True%I. iFrame. iSplit; [done|].
+        iApply type_write_own_copy. iSplit; [done|].
         iIntros "Hv _ Hl !>". iExists tytrue. iSplit; [done|]. iModIntro.
         iSplitL "Htok H● H◯ Hticket Hnext Hl Htk1 Htk2". {
           iNext. iExists (owner + 1), next'. iFrame.

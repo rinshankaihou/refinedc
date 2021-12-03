@@ -13,7 +13,12 @@ Section fixpoint.
 
   Definition type_fixpoint : (A -d> typeO) → (A -d> typeO) := (λ self, T (λ x, apply_dfun self x)).
   Global Instance type_fixpoint_contractive : Contractive type_fixpoint.
-  Proof. constructor. intros. apply ty_own_ne => //. apply HT. solve_contractive. Qed.
+  Proof.
+    constructor; intros.
+    - eapply ty_has_op_type_ne => //. apply HT. solve_contractive.
+    - apply ty_own_ne => //. apply HT. solve_contractive.
+    - apply ty_own_val_ne => //. apply HT. solve_contractive.
+  Qed.
 
 
   Definition fixp := (apply_dfun (fixpoint type_fixpoint)).
@@ -21,6 +26,10 @@ Section fixpoint.
   Lemma fixp_unfold n:
     fixp n ≡ T (λ n, fixp n) n.
   Proof. rewrite /fixp. rewrite ->fixpoint_unfold. rewrite /apply_dfun{1}/type_fixpoint. f_equiv. Qed.
+
+  Lemma fixp_unfold' x:
+    T fixp x ≡@{type} T (T fixp) x.
+  Proof. apply (contractive_proper T) => ?. by rewrite -fixp_unfold. Qed.
 End fixpoint.
 
 Section fixpoint.
@@ -45,9 +54,7 @@ Section tests.
   Definition fixpoint_test_rec : (nat -d> typeO) → (nat -d> typeO) := (λ self, λ n, own_ptr (guarded ("test") (apply_dfun self (S n)))).
   Arguments fixpoint_test_rec /.
   Global Instance fixpoint_test_rec_ne : Contractive fixpoint_test_rec.
-  Proof.
-    constructor => ??. f_equiv => /=. f_equiv. f_contractive. done.
-  Qed.
+  Proof. solve_type_proper. Qed.
 
   Definition fixpoint_test : rtype := {|
     rty_type := nat;

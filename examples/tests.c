@@ -148,3 +148,17 @@ typedef void (*test_fn)(void);
 test_fn test_fn_params(test_fn f) {
     return f;
 }
+
+struct [[rc::parameters("z: Z", "n : Z")]] [[rc::refined_by("x: unit")]] test2 {
+  [[rc::field("z @ int<i32>")]]
+  int a;
+  [[rc::field("&own<test2<n, z>>")]]
+  struct test2 * next;
+};
+
+[[rc::parameters("z : Z", "n : Z")]]
+[[rc::args("test2<z, n>")]]
+[[rc::returns("z @ int<i32>")]]
+int test_struct2(struct test2 s) {
+  return s.a;
+}

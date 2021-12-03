@@ -12,28 +12,25 @@ Section own_constrained.
   Context `{!typeG Σ}.
 
   Program Definition own_constrained (P : own_state → iProp Σ) `{!OwnConstraint P} (ty : type) : type := {|
-    ty_own β l := (l ◁ₗ{β} ty ∗ P β)%I
+    ty_has_op_type ot mt := ty.(ty_has_op_type) ot mt;
+    ty_own β l := (l ◁ₗ{β} ty ∗ P β)%I;
+     ty_own_val v := (v ◁ᵥ ty ∗ P Own)%I;
   |}.
   Next Obligation.
     move => ty P ? l E ?. iIntros "[Hl HP]".
     iMod (ty_share with "Hl") as "$" => //.
     by iApply own_constraint_share.
   Qed.
+  Next Obligation. iIntros (???????) "[? _]". by iApply ty_aligned. Qed.
+  Next Obligation. iIntros (???????) "[? _]". by iApply ty_size_eq. Qed.
+  Next Obligation. iIntros (???????) "[? $]". by iApply ty_deref. Qed.
+  Next Obligation. iIntros (?????????) "Hl [? $]". by iApply (ty_ref with "[//] [Hl]"). Qed.
+  Next Obligation. iIntros (????????) "[Hv ?]". iDestruct (ty_memcast_compat with "Hv") as "?"; [done|]. destruct mt => //. by iFrame. Qed.
 
   Global Instance own_constrained_rty_ne n P `{!OwnConstraint P} : Proper ((dist n) ==> (dist n)) (own_constrained P).
   Proof. solve_type_proper. Qed.
   Global Instance own_constrained_rty_proper P `{!OwnConstraint P} : Proper ((≡) ==> (≡)) (own_constrained P).
   Proof. solve_type_proper. Qed.
-
-  Global Program Instance own_constrained_movable ty P `{!Movable ty} `{!OwnConstraint P} : Movable (own_constrained P ty) := {|
-     ty_has_op_type ot mt := ty.(ty_has_op_type) ot mt;
-     ty_own_val v := (v ◁ᵥ ty ∗ P Own)%I;
-  |}.
-  Next Obligation. iIntros (????????) "[? _]". by iApply ty_aligned. Qed.
-  Next Obligation. iIntros (????????) "[? _]". by iApply ty_size_eq. Qed.
-  Next Obligation. iIntros (????????) "[? $]". by iApply ty_deref. Qed.
-  Next Obligation. iIntros (??????????) "Hl [? $]". by iApply (ty_ref with "[//] [Hl]"). Qed.
-  Next Obligation. iIntros (?????????) "[Hv ?]". iDestruct (ty_memcast_compat with "Hv") as "?"; [done|]. destruct mt => //. by iFrame. Qed.
 
   Global Instance own_constrained_loc_in_bounds ty β n P `{!OwnConstraint P} `{!LocInBounds ty β n} :
     LocInBounds (own_constrained P ty) β n.
@@ -63,25 +60,25 @@ Section own_constrained.
     SimplifyGoalPlace l β (own_constrained P ty)%I (Some 0%N) :=
     λ T, i2p (simplify_goal_place_own_constrained P l β ty T).
 
-  Lemma simplify_hyp_val_own_constrained P v ty T `{!Movable ty} `{!OwnConstraint P}:
+  Lemma simplify_hyp_val_own_constrained P v ty T `{!OwnConstraint P}:
     (P Own -∗ v ◁ᵥ ty -∗ T) -∗ simplify_hyp (v ◁ᵥ own_constrained P ty) T.
   Proof. iIntros "HT [Hl HP]". by iApply ("HT" with "HP"). Qed.
-  Global Instance simplify_hyp_val_own_constrained_inst P v ty `{!Movable ty} `{!OwnConstraint P}:
+  Global Instance simplify_hyp_val_own_constrained_inst P v ty `{!OwnConstraint P}:
     SimplifyHypVal v (own_constrained P ty)%I (Some 0%N) :=
     λ T, i2p (simplify_hyp_val_own_constrained P v ty T).
 
-  Lemma simplify_goal_val_own_constrained P v ty T `{!Movable ty} `{!OwnConstraint P}:
+  Lemma simplify_goal_val_own_constrained P v ty T `{!OwnConstraint P}:
     T (v ◁ᵥ ty ∗ P Own) -∗ simplify_goal (v ◁ᵥ own_constrained P ty) T.
   Proof. iIntros "HT". iExists _. iFrame. iIntros "[$ $]". Qed.
-  Global Instance simplify_goal_val_own_constrained_inst P v ty `{!Movable ty} `{!OwnConstraint P}:
+  Global Instance simplify_goal_val_own_constrained_inst P v ty `{!OwnConstraint P}:
     SimplifyGoalVal v (own_constrained P ty)%I (Some 0%N) :=
     λ T, i2p (simplify_goal_val_own_constrained P v ty T).
 
-  Global Program Instance own_constrained_optional ty P optty ot1 ot2 `{!Movable ty} `{!Movable optty} `{!OwnConstraint P} `{!Optionable ty optty ot1 ot2} : Optionable (own_constrained P ty) optty ot1 ot2 := {|
+  Global Program Instance own_constrained_optional ty P optty ot1 ot2 `{!OwnConstraint P} `{!Optionable ty optty ot1 ot2} : Optionable (own_constrained P ty) optty ot1 ot2 := {|
     opt_pre v1 v2 := opt_pre ty v1 v2
   |}.
   Next Obligation.
-    iIntros (?????????[]?????) "Hpre H1 H2". 1: iDestruct "H1" as "[H1 _]".
+    iIntros (???????[]?????) "Hpre H1 H2". 1: iDestruct "H1" as "[H1 _]".
     by iApply (opt_bin_op true with "Hpre H1 H2").
     by iApply (opt_bin_op false with "Hpre H1 H2").
   Qed.

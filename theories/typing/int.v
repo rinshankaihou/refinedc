@@ -5,31 +5,24 @@ Set Default Proof Using "Type".
 Section int.
   Context `{!typeG Σ}.
 
-  (* Separate definition such that we can make it typeclasses opaque later. *)
+  (* Separate definition such that we can make it typeclasses opaque
+  later. We cannot call it int_type since that already exists.  *)
   Program Definition int_inner_type (it : int_type) (n : Z) : type := {|
+    ty_has_op_type ot mt := is_int_ot ot it;
     ty_own β l := ∃ v, ⌜val_to_Z v it = Some n⌝ ∗ ⌜l `has_layout_loc` it⌝ ∗ l ↦[β] v;
+    ty_own_val v := ⌜val_to_Z v it = Some n⌝%I;
   |}%I.
   Next Obligation.
     iIntros (it n l ??) "(%v&%Hv&%Hl&H)". iExists v.
     do 2 (iSplitR; first done). by iApply heap_mapsto_own_state_share.
   Qed.
-
-  Program Definition int (it : int_type) : rtype := {|
-    rty_type := Z;
-    rty := int_inner_type it;
-  |}.
-
-  Global Program Instance rmovable_int it : RMovable (int it) := {|
-    rmovable n := {|
-      ty_has_op_type ot mt := is_int_ot ot it;
-      ty_own_val v := ⌜val_to_Z v it = Some n⌝%I;
-    |}
-  |}.
   Next Obligation. iIntros (????? ->%is_int_ot_layout) "(%&%&$&_)". Qed.
   Next Obligation. iIntros (????? ->%is_int_ot_layout H) "!%". by apply val_to_Z_length in H. Qed.
   Next Obligation. iIntros (????? ?) "(%v&%&%&Hl)". eauto with iFrame. Qed.
   Next Obligation. iIntros (????? v ->%is_int_ot_layout ?) "Hl %". iExists v. eauto with iFrame. Qed.
   Next Obligation. iIntros (???????). apply: mem_cast_compat_int; [naive_solver|]. iPureIntro. naive_solver. Qed.
+
+  Definition int (it : int_type) : rtype := RType (int_inner_type it).
 
   Lemma int_loc_in_bounds l β n it:
      l ◁ₗ{β} n @ int it -∗ loc_in_bounds l (bytes_per_int it).
@@ -59,7 +52,7 @@ Section int.
   Lemma ty_own_int_in_range l β n it : l ◁ₗ{β} n @ int it -∗ ⌜n ∈ it⌝.
   Proof.
     iIntros "Hl". destruct β.
-    - iDestruct (ty_deref (IntOp _) MCNone with "Hl") as (?) "[_ %]"; [done|].
+    - iDestruct (ty_deref _ (IntOp _) MCNone with "Hl") as (?) "[_ %]"; [done|].
       iPureIntro. by eapply val_to_Z_in_range.
     - iDestruct "Hl" as (?) "[% _]".
       iPureIntro. by eapply val_to_Z_in_range.
@@ -86,7 +79,7 @@ Section programs.
 
   (*** int *)
   Lemma type_val_int n it T:
-    ⌜n ∈ it⌝ ∗ T (t2mt (n @ (int it))) -∗ typed_value (i2v n it) T.
+    ⌜n ∈ it⌝ ∗ T (n @ (int it)) -∗ typed_value (i2v n it) T.
   Proof.
     iIntros "[%Hn HT]".
     move: Hn => /(val_of_Z_is_Some None) [v Hv].
@@ -110,7 +103,7 @@ Section programs.
     | GeOp rit => Some (bool_decide (n1 >= n2), rit)
     | _ => None
     end = Some (b, i32) →
-    (⌜n1 ∈ it⌝ -∗ ⌜n2 ∈ it⌝ -∗ T (i2v (bool_to_Z b) i32) (t2mt (b @ boolean i32))) -∗
+    (⌜n1 ∈ it⌝ -∗ ⌜n2 ∈ it⌝ -∗ T (i2v (bool_to_Z b) i32) (b @ boolean i32)) -∗
       typed_bin_op v1 (v1 ◁ᵥ n1 @ int it) v2 (v2 ◁ᵥ n2 @ int it) op (IntOp it) (IntOp it) T.
   Proof.
     iIntros "%Hop HT %Hv1 %Hv2 %Φ HΦ".
@@ -237,7 +230,7 @@ Section programs.
 
   Lemma type_arithop_int_int it v1 n1 v2 n2 T n op:
     arith_op_result it n1 n2 op = Some n →
-    (⌜n1 ∈ it⌝ -∗ ⌜n2 ∈ it⌝ -∗ ⌜arith_op_sidecond it n1 n2 n op⌝ ∗ T (i2v n it) (t2mt (n @ int it))) -∗
+    (⌜n1 ∈ it⌝ -∗ ⌜n2 ∈ it⌝ -∗ ⌜arith_op_sidecond it n1 n2 n op⌝ ∗ T (i2v n it) (n @ int it)) -∗
       typed_bin_op v1 (v1 ◁ᵥ n1 @ int it) v2 (v2 ◁ᵥ n2 @ int it) op (IntOp it) (IntOp it) T.
   Proof.
     iIntros "%Hop HT %Hv1 %Hv2 %Φ HΦ".
@@ -336,7 +329,7 @@ Section programs.
     λ m ss def fn ls R Q, i2p (type_switch_int n it m ss def Q fn ls R v).
 
   Lemma type_neg_int n it v T:
-    (⌜n ∈ it⌝ -∗ ⌜it.(it_signed)⌝ ∗ ⌜n ≠ min_int it⌝ ∗ T (i2v (-n) it) (t2mt ((-n) @ int it))) -∗
+    (⌜n ∈ it⌝ -∗ ⌜it.(it_signed)⌝ ∗ ⌜n ≠ min_int it⌝ ∗ T (i2v (-n) it) ((-n) @ int it)) -∗
     typed_un_op v (v ◁ᵥ n @ int it)%I (NegOp) (IntOp it) T.
   Proof.
     iIntros "HT %Hv %Φ HΦ". move: (Hv) => /val_to_Z_in_range ?.
@@ -354,7 +347,7 @@ Section programs.
     λ T, i2p (type_neg_int n it v T).
 
   Lemma type_cast_int n it1 it2 v T:
-    (⌜n ∈ it1⌝ -∗ ⌜n ∈ it2⌝ ∗ ∀ v, T v (t2mt (n @ int it2))) -∗
+    (⌜n ∈ it1⌝ -∗ ⌜n ∈ it2⌝ ∗ ∀ v, T v (n @ int it2)) -∗
     typed_un_op v (v ◁ᵥ n @ int it1)%I (CastOp (IntOp it2)) (IntOp it1) T.
   Proof.
     iIntros "HT %Hv %Φ HΦ".
@@ -369,7 +362,7 @@ Section programs.
 
   Lemma type_not_int n1 it v1 T:
     let n := if it_signed it then Z.lnot n1 else Z_lunot (bits_per_int it) n1 in
-    (⌜n1 ∈ it⌝ -∗ T (i2v n it) (t2mt (n @ int it))) -∗
+    (⌜n1 ∈ it⌝ -∗ T (i2v n it) (n @ int it)) -∗
     typed_un_op v1 (v1 ◁ᵥ n1 @ int it)%I (NotIntOp) (IntOp it) T.
   Proof.
     iIntros "%n HT %Hv1 %Φ HΦ".
@@ -438,7 +431,7 @@ Section programs.
   Global Instance subsume_int_boolean_place_inst l β n b it:
     SubsumePlace l β (n @ int it) (b @ boolean it) :=
     λ T, i2p (subsume_int_boolean_place l β n b it T).
- 
+
   Lemma subsume_int_boolean_val v n b it T:
     ⌜n = bool_to_Z b⌝ ∗ T -∗
     subsume (v ◁ᵥ n @ int it) (v ◁ᵥ b @ boolean it) T.
@@ -451,7 +444,7 @@ Section programs.
     typed_bin_op v1 (v1 ◁ᵥ (bool_to_Z b1) @ int it1) v2 (v2 ◁ᵥ n2 @ int it2) op (IntOp it3) (IntOp it4) T -∗
     typed_bin_op v1 (v1 ◁ᵥ b1 @ boolean it1) v2 (v2 ◁ᵥ n2 @ int it2) op (IntOp it3) (IntOp it4) T.
   Proof.
-    iIntros "HT H1 H2". iApply ("HT" with "[H1] H2").
+    iIntros "HT H1 H2". iApply ("HT" with "[H1] H2"). unfold boolean; simpl_type.
     iDestruct "H1" as "(%&%H1&%H2)". iPureIntro.
     move: H1 H2 => /= -> ->. done.
   Qed.
@@ -463,7 +456,7 @@ Section programs.
     typed_bin_op v1 (v1 ◁ᵥ n2 @ int it2) v2 (v2 ◁ᵥ (bool_to_Z b1) @ int it1) op (IntOp it3) (IntOp it4) T -∗
     typed_bin_op v1 (v1 ◁ᵥ n2 @ int it2) v2 (v2 ◁ᵥ b1 @ boolean it1) op (IntOp it3) (IntOp it4) T.
   Proof.
-    iIntros "HT H1 H2". iApply ("HT" with "H1 [H2]").
+    iIntros "HT H1 H2". iApply ("HT" with "H1 [H2]"). unfold boolean; simpl_type.
     iDestruct "H2" as "(%&%H1&%H2)". iPureIntro.
     move: H1 H2 => /= -> ->. done.
   Qed.
@@ -472,11 +465,11 @@ Section programs.
     λ T, i2p (type_binop_int_boolean it1 it2 it3 it4 v1 b1 v2 n2 T op).
 
   Lemma type_cast_int_builtin_boolean n it v T:
-    (∀ v, T v (t2mt ((bool_decide (n ≠ 0)) @ builtin_boolean))) -∗
+    (∀ v, T v ((bool_decide (n ≠ 0)) @ builtin_boolean)) -∗
     typed_un_op v (v ◁ᵥ n @ int it)%I (CastOp BoolOp) (IntOp it) T.
   Proof.
     iIntros "HT %Hn %Φ HΦ". iApply wp_cast_int_bool => //.
-    iApply ("HΦ" with "[] HT") => //=. iPureIntro. naive_solver.
+    iApply ("HΦ" with "[] HT") => //=. unfold boolean; simpl_type. iPureIntro. naive_solver.
   Qed.
   Global Instance type_cast_int_builtin_boolean_inst n it v:
     TypedUnOpVal v (n @ int it)%I (CastOp BoolOp) (IntOp it) :=
@@ -494,16 +487,13 @@ Section offsetof.
 
   (*** OffsetOf *)
   Program Definition offsetof (s : struct_layout) (m : var_name) : type := {|
-    ty_own β l := ∃ n, ⌜offset_of s.(sl_members) m = Some n⌝ ∗ l ◁ₗ{β} n @ int size_t
+    ty_has_op_type ot mt := is_int_ot ot size_t;
+    ty_own β l := ∃ n, ⌜offset_of s.(sl_members) m = Some n⌝ ∗ l ◁ₗ{β} n @ int size_t;
+    ty_own_val v := ∃ n, ⌜offset_of s.(sl_members) m = Some n⌝ ∗ v ◁ᵥ n @ int size_t;
   |}%I.
   Next Obligation.
     iIntros (s m l E ?). iDestruct 1 as (n Hn) "H". iExists _. iSplitR => //. by iApply ty_share.
   Qed.
-
-  Global Program Instance movable_offsetof s m : Movable (offsetof s m) := {|
-    ty_has_op_type ot mt := is_int_ot ot size_t;
-    ty_own_val v := ∃ n, ⌜offset_of s.(sl_members) m = Some n⌝ ∗ v ◁ᵥ n @ int size_t
-  |}%I.
   Next Obligation. iIntros (s m ot mt l ?). iDestruct 1 as (??)"Hn". by iDestruct (ty_aligned with "Hn") as "$". Qed.
   Next Obligation. iIntros (s m ot mt l ?). iDestruct 1 as (??)"Hn". by iDestruct (ty_size_eq with "Hn") as "$". Qed.
   Next Obligation.
@@ -513,7 +503,7 @@ Section offsetof.
   Qed.
   Next Obligation.
     iIntros (s m ? l v ???) "Hl". iDestruct 1 as (??)"Hn".
-    iExists _. iSplit => //. iApply (@ty_ref with "[] Hl") => //. done.
+    iExists _. iSplit => //. by iApply (@ty_ref with "[] Hl").
   Qed.
   Next Obligation.
     iIntros (s m v ot mt st ?). iDestruct 1 as (??)"Hn". iDestruct (ty_memcast_compat with "Hn") as "?"; [done|].
@@ -529,12 +519,12 @@ Section offsetof.
   Qed.
 
   Lemma type_offset_of s m T:
-    ⌜Some m ∈ s.(sl_members).*1⌝ ∗ (∀ v, T v (t2mt (offsetof s m))) -∗
+    ⌜Some m ∈ s.(sl_members).*1⌝ ∗ (∀ v, T v (offsetof s m)) -∗
     typed_val_expr (OffsetOf s m) T.
   Proof.
     iIntros "[%Hin HT] %Φ HΦ". move: Hin => /offset_of_from_in [n Hn].
     iApply wp_offset_of => //. iIntros "%v %Hv". iApply "HΦ" => //.
-    iExists _. iSplit; first done. iPureIntro. by eapply val_to_of_Z.
+    iExists _. iSplit; first done. unfold int; simpl_type. iPureIntro. by eapply val_to_of_Z.
   Qed.
 
 End offsetof.

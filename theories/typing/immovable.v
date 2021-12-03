@@ -6,8 +6,11 @@ Section immovable.
   Context `{!typeG Σ}.
 
   Program Definition immovable (ty : loc → type) : type := {|
-    ty_own q l := (ty l).(ty_own) q l
+    ty_own q l := (ty l).(ty_own) q l;
+    ty_has_op_type _ _ := False;
+    ty_own_val _ := True%I;
   |}.
+  Solve Obligations with try done.
   Next Obligation. iIntros (????). by iApply ty_share. Qed.
 
   Global Instance immovable_ne n : Proper (pointwise_relation loc (dist n) ==> (dist n)) immovable.

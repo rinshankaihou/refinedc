@@ -79,7 +79,7 @@ Proof.
     iIntros "!#" (? main ?); iDestruct 1 as (P) "[Hmain HP]".
     iApply (type_call with "[-]"). 2: { by iIntros (??) "??". }
     iApply type_val. iApply type_val_context.
-    iExists (t2mt (main @ function_ptr (main_type P))) => /=. iFrame => /=.
+    iExists (main @ function_ptr (main_type P))%I => /=. iFrame => /=.
     iApply type_call_fnptr. iIntros "_". iExists () => /=. iFrame. by iIntros (v []) "Hv" => /=.
   - iFrame. iIntros (?? _ _ ?) "_ _ _". iApply fupd_mask_intro_discard => //. iPureIntro. by eauto.
   - by iFrame.
@@ -111,7 +111,6 @@ Ltac adequacy_intro_parameter :=
 
 Ltac adequacy_unfold_equiv :=
   lazymatch goal with
-  | |- Build_mtype _ _ _ _ ≡ Build_mtype _ _ _ _ => constructor => /=; [|move => ??|move => ?]
   | |- fixp _ _ ≡ fixp _ _ => apply: fixp_proper; [|move => ??]
   | |- ty_own_val _ _ ≡ ty_own_val _ _ => unfold ty_own_val => /=
   | |-  _ =@{struct_layout} _ => apply: struct_layout_eq

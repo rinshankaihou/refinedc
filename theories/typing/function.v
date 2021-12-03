@@ -2,7 +2,7 @@ From refinedc.typing Require Export type.
 From refinedc.typing Require Import programs bytes.
 Set Default Proof Using "Type".
 
-Definition introduce_typed_stmt {Σ} `{!typeG Σ} (fn : function) (ls : list loc) (R : val → mtype → iProp Σ) : iProp Σ :=
+Definition introduce_typed_stmt {Σ} `{!typeG Σ} (fn : function) (ls : list loc) (R : val → type → iProp Σ) : iProp Σ :=
   let Q := (subst_stmt (zip (fn.(f_args).*1 ++ fn.(f_local_vars).*1)
                             (val_of_loc <$> ls))) <$> fn.(f_code) in
   typed_stmt (Goto fn.(f_init)) fn ls R Q.
@@ -13,11 +13,11 @@ Section function.
   Context `{!typeG Σ} {A : Type}.
   Record fn_ret := FR {
     (* return type (rc::returns) *)
-    fr_rty : mtype;
+    fr_rty : type;
     (* postcondition (rc::ensures) *)
     fr_R : iProp Σ;
   }.
-  Definition mk_FR (rty : type) `{!Movable rty} (R : iProp Σ) := FR (t2mt rty) R.
+  Definition mk_FR (rty : type) (R : iProp Σ) := FR rty R.
 
 
   (* The specification of a function is given by [A → fn_params].
@@ -26,7 +26,7 @@ Section function.
  *)
   Record fn_params := FP {
     (* types of arguments (rc::args) *)
-    fp_atys : list mtype;
+    fp_atys : list type;
     (* precondition (rc::requires) *)
     fp_Pa : iProp Σ;
     (* type of the existential quantifier (rc::exists) *)
@@ -35,16 +35,16 @@ Section function.
     fp_fr: fp_rtype → fn_ret;
   }.
 
-  Definition fn_ret_prop {B} (fr : B → fn_ret) : val → mtype → iProp Σ :=
+  Definition fn_ret_prop {B} (fr : B → fn_ret) : val → type → iProp Σ :=
     (λ v ty, v ◁ᵥ ty -∗ ∃ x, v ◁ᵥ (fr x).(fr_rty) ∗ (fr x).(fr_R) ∗ True)%I.
 
-  Definition FP_wf {B} (atys : list type) `{!MovableLst atys} (Pa : iProp Σ) (fr : B → fn_ret)  :=
-    FP (movablelst_to_list atys) Pa B fr.
+  Definition FP_wf {B} (atys : list type) (Pa : iProp Σ) (fr : B → fn_ret)  :=
+    FP atys Pa B fr.
 
   Definition typed_function (fn : function) (fp : A → fn_params) : iProp Σ :=
-    (∀ x, ⌜Forall2 (λ (ty : mtype) '(_, p), ty.(ty_has_op_type) (UntypedOp p) MCNone) (fp x).(fp_atys) (f_args fn)⌝ ∗
+    (∀ x, ⌜Forall2 (λ (ty : type) '(_, p), ty.(ty_has_op_type) (UntypedOp p) MCNone) (fp x).(fp_atys) (f_args fn)⌝ ∗
       □ ∀ (lsa : vec loc (length (fp x).(fp_atys))) (lsv : vec loc (length fn.(f_local_vars))),
-          let Qinit := ([∗list] l;t∈lsa;(fp x).(fp_atys), l ◁ₗ (t:mtype)) ∗
+          let Qinit := ([∗list] l;t∈lsa;(fp x).(fp_atys), l ◁ₗ t) ∗
                        ([∗list] l;p∈lsv;fn.(f_local_vars), l ◁ₗ uninit (p.2)) ∗ (fp x).(fp_Pa) in
           Qinit -∗ introduce_typed_stmt fn (lsa ++ lsv) (fn_ret_prop (fp x).(fp_fr))
     )%I.
@@ -71,7 +71,7 @@ Section function.
       iPureIntro. apply: Forall2_same_length_lookup_2. { rewrite -Hlen. symmetry. by apply: length_proper. }
       move => i ty [??] Haty Harg.
       move: Hatys => /list_equiv_lookup Hatys.
-      have := Hatys i. rewrite Haty => /(Some_equiv_eq _ _)[? [? [? Hi ?]]].
+      have := Hatys i. rewrite Haty => /(Some_equiv_eq _ _)[? [? [Hi ? ?]]].
       apply Hi. by apply: (Hall _ _ (_, _)).
     }
     rewrite /introduce_typed_stmt.
@@ -82,7 +82,7 @@ Section function.
         iFrame. iApply (big_sepL2_impl' with "Hv") => //. by rewrite Hatys.
         move: Hatys => /list_equiv_lookup Hatys.
         iIntros "!>" (k ????? Haty2 ? Haty1) "?".
-        have := Hatys k. rewrite Haty1 Haty2=> /(Some_equiv_eq _ _)[?[? [Heql ? ?]]].
+        have := Hatys k. rewrite Haty1 Haty2=> /(Some_equiv_eq _ _)[?[? [? Heql ?]]].
         rewrite -Heql. by simplify_eq.
       }
       iApply "HT". by rewrite -Hlsa.
@@ -94,18 +94,12 @@ Section function.
       iExists (rew [λ x : Type, x] Heq in y). iFrame.
   Qed.
 
-  Program Definition function_ptr (fp : A → fn_params) : rtype := {|
-    rty_type := loc;
-    rty f := {|
-      ty_own β l := (∃ fn, ⌜l `has_layout_loc` void*⌝ ∗ l ↦[β] val_of_loc f ∗ fntbl_entry f fn ∗ ▷ typed_function fn fp)%I;
-  |} |}.
+  Program Definition function_ptr_type (fp : A → fn_params) (f : loc) : type := {|
+    ty_has_op_type ot mt := is_ptr_ot ot;
+    ty_own β l := (∃ fn, ⌜l `has_layout_loc` void*⌝ ∗ l ↦[β] val_of_loc f ∗ fntbl_entry f fn ∗ ▷ typed_function fn fp)%I;
+    ty_own_val v := (∃ fn, ⌜v = val_of_loc f⌝  ∗ fntbl_entry f fn ∗ ▷ typed_function fn fp)%I;
+  |}.
   Next Obligation. iDestruct 1 as (fn) "[? [H [? ?]]]". iExists _. iFrame. by iApply heap_mapsto_own_state_share. Qed.
-
-  Global Program Instance rmovable_function_ptr fp : RMovable (function_ptr fp) := {|
-    rmovable f := {|
-      ty_has_op_type ot mt := is_ptr_ot ot;
-      ty_own_val v := (∃ fn, ⌜v = val_of_loc f⌝  ∗ fntbl_entry f fn ∗ ▷ typed_function fn fp)%I;
-  |} |}.
   Next Obligation. iIntros (fp f ot mt l ->%is_ptr_ot_layout). by iDestruct 1 as (??) "?". Qed.
   Next Obligation. iIntros (fp f ot mt v ->%is_ptr_ot_layout). by iDestruct 1 as (? ->) "?". Qed.
   Next Obligation. iIntros (fp f ot mt v ?). iDestruct 1 as (??) "(?&?)". eauto with iFrame. Qed.
@@ -114,6 +108,9 @@ Section function.
     iIntros (fp f v ot mt st ?). apply mem_cast_compat_loc; [done|].
     iIntros "[%fn [-> ?]]". iPureIntro. naive_solver.
   Qed.
+
+  Definition function_ptr (fp : A → fn_params) : rtype :=
+    RType (function_ptr_type fp).
 
   Global Program Instance copyable_function_ptr p fp : Copyable (p @ function_ptr fp).
   Next Obligation.
@@ -124,8 +121,8 @@ Section function.
   Qed.
 
   Lemma type_call_fnptr l v vl tys T fp:
-    (([∗ list] v;ty∈vl; tys, v ◁ᵥ (ty : mtype)) -∗ ∃ x,
-      ([∗ list] v;ty∈vl; (fp x).(fp_atys), v ◁ᵥ (ty : mtype)) ∗
+    (([∗ list] v;ty∈vl; tys, v ◁ᵥ ty) -∗ ∃ x,
+      ([∗ list] v;ty∈vl; (fp x).(fp_atys), v ◁ᵥ ty) ∗
       (fp x).(fp_Pa) ∗ ∀ v x',
       ((fp x).(fp_fr) x').(fr_R) -∗
       T v ((fp x).(fp_fr) x').(fr_rty)
@@ -205,22 +202,17 @@ Notation "'fn(∀' x ':' A ';' Pa ')' '→' '∃' y ':' B ',' rty ';' Pr" :=
 
 
 Typeclasses Opaque typed_function.
+Typeclasses Opaque function_ptr_type.
 
 Section inline_function.
   Context `{!typeG Σ} {A : Type}.
 
-  Program Definition inline_function_ptr (fn : function) : rtype := {|
-    rty_type := loc;
-    rty f := {|
-      ty_own β l := (⌜l `has_layout_loc` void*⌝ ∗ l ↦[β] val_of_loc f ∗ fntbl_entry f fn)%I;
-  |} |}.
+  Program Definition inline_function_ptr_type (fn : function) (f : loc) : type := {|
+    ty_has_op_type ot mt := is_ptr_ot ot;
+    ty_own β l := (⌜l `has_layout_loc` void*⌝ ∗ l ↦[β] val_of_loc f ∗ fntbl_entry f fn)%I;
+    ty_own_val v := (⌜v = val_of_loc f⌝ ∗ fntbl_entry f fn)%I;
+  |}.
   Next Obligation. iDestruct 1 as "[? [H ?]]". iFrame. by iApply heap_mapsto_own_state_share. Qed.
-
-  Global Program Instance rmovable_inline_function_ptr fn : RMovable (inline_function_ptr fn) := {|
-    rmovable f := {|
-      ty_has_op_type ot mt := is_ptr_ot ot;
-      ty_own_val v := (⌜v = val_of_loc f⌝ ∗ fntbl_entry f fn)%I;
-  |} |}.
   Next Obligation. iIntros (fn f ot mt l ->%is_ptr_ot_layout). by iDestruct 1 as (?) "?". Qed.
   Next Obligation. iIntros (fn f ot mt v ->%is_ptr_ot_layout). by iDestruct 1 as (->) "?". Qed.
   Next Obligation. iIntros (fn f ot mt v ?). iDestruct 1 as (?) "(?&?)". eauto with iFrame. Qed.
@@ -229,6 +221,9 @@ Section inline_function.
     iIntros (fn f v ot mt st ?). apply mem_cast_compat_loc; [done|].
     iIntros "[-> ?]". iPureIntro. naive_solver.
   Qed.
+
+  Definition inline_function_ptr (fn : function) : rtype :=
+    RType (inline_function_ptr_type fn).
 
   Global Program Instance copyable_inline_function_ptr p fn : Copyable (p @ inline_function_ptr fn).
   Next Obligation.
@@ -239,8 +234,8 @@ Section inline_function.
   Qed.
 
   Lemma type_call_inline_fnptr l v vl tys T fn:
-    (⌜Forall2 (λ (ty : mtype) '(_, p), ty.(ty_has_op_type) (UntypedOp p) MCNone) tys (f_args fn)⌝ ∗
-      foldr (λ '(v, ty) T lsa, ∀ l, l ◁ₗ (ty : mtype) -∗ T (lsa ++ [l]))
+    (⌜Forall2 (λ ty '(_, p), ty.(ty_has_op_type) (UntypedOp p) MCNone) tys (f_args fn)⌝ ∗
+      foldr (λ '(v, ty) T lsa, ∀ l, l ◁ₗ ty -∗ T (lsa ++ [l]))
       (λ lsa, foldr (λ ly T lsv, ∀ l, l ◁ₗ uninit ly -∗ T (lsv ++ [l]))
                     (λ lsv,
                      introduce_typed_stmt fn (lsa ++ lsv) T)
@@ -307,6 +302,8 @@ Section inline_function.
     TypedCallVal v (l @ inline_function_ptr fn) vl tys :=
     λ T, i2p (type_call_inline_fnptr l v vl tys T fn).
 End inline_function.
+
+Typeclasses Opaque inline_function_ptr_type.
 
 (*** Tests *)
 Section test.

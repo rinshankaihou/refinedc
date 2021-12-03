@@ -10,13 +10,14 @@ Section type.
       ∃ n1 n2, subsume (v1 ◁ᵥ ty1) (v1 ◁ᵥ n1 @ int it1) (
                subsume (v2 ◁ᵥ ty2) (v2 ◁ᵥ n2 @ int it2) (
                (⌜n1 ∈ it1⌝ -∗ ⌜n2 ∈ it2⌝ -∗ ⌜it1 = it2⌝ ∗ ⌜it_signed it1 = false⌝ ∗ (
-               ∀ v, T v (t2mt (((n1 + n2) `mod` int_modulus it1) @ int it1)))))))) -∗
+               ∀ v, T v (((n1 + n2) `mod` int_modulus it1) @ int it1))))))) -∗
     typed_macro_expr (WrappingAdd it1 it2) [e1 ; e2] T.
   Proof.
     iIntros "HT". rewrite /typed_macro_expr/WrappingAdd. iApply type_bin_op.
     iIntros (Φ) "HΦ". iApply "HT". iIntros (v1 ty1) "Hty1 HT". iApply ("HΦ" with "Hty1"). clear.
     iIntros (Φ) "HΦ". iApply "HT". iIntros (v2 ty2) "Hty2 HT". iApply ("HΦ" with "Hty2"). clear.
     iIntros "Hty1 Hty2". iDestruct "HT" as (n1 n2) "HT".
+    unfold int; simpl_type.
     iDestruct ("HT" with "Hty1") as (Hv1) "HT".
     iDestruct ("HT" with "Hty2") as (Hv2) "HT".
     iIntros (Φ) "HΦ".
@@ -31,7 +32,7 @@ Section type.
       + move => ->. apply: ArithOpII => //.
           by destruct it1 as [? []]; simplify_eq/=.
     }
-    iIntros "!>". iApply "HΦ"; last done. iPureIntro.
+    iIntros "!>". iApply "HΦ"; last done. simpl_type. iPureIntro.
     by eapply val_to_of_Z.
   Qed.
 

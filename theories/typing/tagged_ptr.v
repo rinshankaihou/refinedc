@@ -6,6 +6,7 @@ Section tagged_ptr.
   Context `{!typeG Σ}.
 
   Program Definition tagged_ptr_type (β : own_state) (align : nat) (ty : type) (r : loc * Z) : type := {|
+    ty_has_op_type ot mt := is_ptr_ot ot;
     ty_own β' l :=
       ⌜l `has_layout_loc` void*⌝ ∗
       ⌜r.1 `aligned_to` align⌝ ∗
@@ -13,33 +14,18 @@ Section tagged_ptr.
       l ↦[β'] (r.1 +ₗ r.2) ∗
       loc_in_bounds r.1 align ∗
       r.1 ◁ₗ{own_state_min β' β} ty;
-  |}%I.
-  Next Obligation.
-    iIntros (β ??????) "($&$&$&Hl&$&H)". rewrite left_id.
-    iMod (heap_mapsto_own_state_share with "Hl") as "$".
-    destruct β => //=. by iApply ty_share.
-  Qed.
-  Global Instance tagged_ptr_type_ne n : Proper ((=) ==> (dist n) ==> (=) ==> (=) ==> (dist n)) tagged_ptr_type.
-  Proof. solve_type_proper. Qed.
-  Global Instance tagged_ptr_type_proper : Proper ((=) ==> (≡) ==> (=) ==> (=) ==> (≡)) tagged_ptr_type.
-  Proof. solve_type_proper. Qed.
-
-  Program Definition tagged_ptr (β : own_state) (align : nat) (ty : type) : rtype := {|
-    rty_type := loc * Z;
-    rty := tagged_ptr_type β align ty;
-  |}%I.
-
-  Global Program Instance rmovable_tagged_ptr β align ty : RMovable (tagged_ptr β align ty) := {|
-    rmovable r := {|
-      ty_has_op_type ot mt := is_ptr_ot ot;
       ty_own_val v :=
         ⌜v = val_of_loc (r.1 +ₗ r.2)⌝ ∗
         ⌜r.1 `aligned_to` align⌝ ∗
         ⌜0 ≤ r.2 < align⌝ ∗
         loc_in_bounds r.1 align ∗
         r.1 ◁ₗ{β} ty;
-    |}
   |}%I.
+  Next Obligation.
+    iIntros (β ??????) "($&$&$&Hl&$&H)". rewrite left_id.
+    iMod (heap_mapsto_own_state_share with "Hl") as "$".
+    destruct β => //=. by iApply ty_share.
+  Qed.
   Next Obligation. iIntros (???????->%is_ptr_ot_layout) "($&_)". Qed.
   Next Obligation. iIntros (???????->%is_ptr_ot_layout) "(->&_)". done. Qed.
   Next Obligation. iIntros (????????) "(%&%&%&?&?)". rewrite left_id. eauto with iFrame. Qed.
@@ -48,6 +34,14 @@ Section tagged_ptr.
     iIntros (β align ty l v ot mt st ?). apply mem_cast_compat_loc; [done|].
     iIntros "[-> ?]". iPureIntro. naive_solver.
   Qed.
+
+  Global Instance tagged_ptr_type_ne n : Proper ((=) ==> (dist n) ==> (=) ==> (=) ==> (dist n)) tagged_ptr_type.
+  Proof. solve_type_proper. Qed.
+  Global Instance tagged_ptr_type_proper : Proper ((=) ==> (≡) ==> (=) ==> (=) ==> (≡)) tagged_ptr_type.
+  Proof. solve_type_proper. Qed.
+
+  Definition tagged_ptr (β : own_state) (align : nat) (ty : type) : rtype :=
+    RType (tagged_ptr_type β align ty).
 
   Global Instance tagged_ptr_loc_in_bounds r ty align β1 β2 :
     LocInBounds (r @ tagged_ptr β1 align ty) β2 bytes_per_addr.
@@ -93,7 +87,7 @@ Section tagged_ptr.
     simplify_hyp (v ◁ᵥ r @ tagged_ptr β n ty) T.
   Proof.
     unfold CanSolve in *. destruct r as [l ?]. simpl in *. simplify_eq.
-    iIntros "HT (->&%&%&?&?)". iApply "HT". rewrite /= shift_loc_0. by iFrame.
+    iIntros "HT (->&%&%&?&?)". iApply "HT". rewrite /= shift_loc_0. unfold frac_ptr; simpl_type. by iFrame.
   Qed.
   Global Instance simplify_hyp_tagged_ptr_0_inst v r β n ty `{!CanSolve (r.2 = 0)}:
     SimplifyHypVal v (r @ tagged_ptr β n ty) (Some 0%N) :=
@@ -110,7 +104,7 @@ Section tagged_ptr.
         v ◁ᵥ r @ tagged_ptr β align (place r.1) -∗
         ⌜(r.1.2 + r.2)%Z ∈ it⌝ ∗
         ((alloc_alive_loc r.1 ∗ True) ∧
-        ∀ v, T v (t2mt ((r.1 +ₗ r.2) @ intptr it)))
+        ∀ v, T v ((r.1 +ₗ r.2) @ intptr it))
     ) -∗
     typed_un_op v (v ◁ᵥ r @ tagged_ptr β align ty) (CastOp (IntOp it)) PtrOp T.
   Proof.
@@ -139,10 +133,11 @@ Section tagged_ptr.
       v2 ◁ᵥ r @ tagged_ptr β align ty -∗
       ⌜r.1.2 ≤ a ≤ r.1.2 + align⌝ ∗
       (alloc_alive_loc r.1 ∗ True) ∧
-      T (val_of_loc (r.1.1, a)) (t2mt (value PtrOp (val_of_loc (r.1.1, a))))
+      T (val_of_loc (r.1.1, a)) (value PtrOp (val_of_loc (r.1.1, a)))
     ) -∗
     typed_copy_alloc_id v1 (v1 ◁ᵥ a @ int it) v2 (v2 ◁ᵥ r @ tagged_ptr β align ty) (IntOp it) T.
   Proof.
+    unfold int; simpl_type.
     iIntros "HT %Hv1 (->&%&%&#Hlib&Hp)" (Φ) "HΦ".
     iDestruct ("HT" with "[//] [$Hlib $Hp]") as ([??]) "HT"; [done|].
     rewrite !right_id.

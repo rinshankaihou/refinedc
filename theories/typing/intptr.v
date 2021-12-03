@@ -5,28 +5,18 @@ Set Default Proof Using "Type".
 Section intptr.
   Context `{!typeG Σ}.
 
-  Program Definition intptr_inner_type (it : int_type) (p : loc) : type := {|
+  Program Definition intptr_type (it : int_type) (p : loc) : type := {|
+    ty_has_op_type ot mt := is_int_ot ot it;
     ty_own β l := ∃ v aid, ⌜p.1 = ProvAlloc (Some aid)⌝ ∗ ⌜val_to_Z v it = Some p.2⌝ ∗
                       ⌜val_to_byte_prov v = Some aid⌝ ∗ ⌜l `has_layout_loc` it⌝ ∗
                       loc_in_bounds p 0 ∗ l ↦[β] v;
+      ty_own_val v := ∃ aid, ⌜p.1 = ProvAlloc (Some aid)⌝ ∗ ⌜val_to_Z v it = Some p.2⌝ ∗
+                      ⌜val_to_byte_prov v = Some aid⌝ ∗ loc_in_bounds p 0;
   |}%I.
   Next Obligation.
     iIntros (it p l ??) "(%v&%aid&%Haid&%Hv&%&%Hl&#?&H)". iExists v, aid.
     do 5 (iSplitR; first done). by iApply heap_mapsto_own_state_share.
   Qed.
-
-  Program Definition intptr (it : int_type) : rtype := {|
-    rty_type := loc;
-    rty := intptr_inner_type it;
-  |}.
-
-  Global Program Instance rmovable_intptr it : RMovable (intptr it) := {|
-    rmovable p := {|
-      ty_has_op_type ot mt := is_int_ot ot it;
-      ty_own_val v := ∃ aid, ⌜p.1 = ProvAlloc (Some aid)⌝ ∗ ⌜val_to_Z v it = Some p.2⌝ ∗
-                      ⌜val_to_byte_prov v = Some aid⌝ ∗ loc_in_bounds p 0;
-    |}
-  |}%I.
   Next Obligation. iIntros (?????->%is_int_ot_layout) "(%aid&%&%&%&%&$&_)". Qed.
   Next Obligation. iIntros (?????->%is_int_ot_layout) "(%aid&%&%&?) !%". by apply: val_to_Z_length. Qed.
   Next Obligation. iIntros (??????) "(%v&%&%&%&%&%&Hl&?)". eauto with iFrame. Qed.
@@ -35,6 +25,8 @@ Section intptr.
     iIntros (???????). apply: mem_cast_compat_int; [naive_solver|].
     iIntros "(%&%&%&%&?)". iPureIntro. naive_solver.
   Qed.
+
+  Definition intptr (it : int_type) : rtype := RType (intptr_type it).
 
   Lemma intptr_loc_in_bounds l β p it:
      l ◁ₗ{β} p @ intptr it -∗ loc_in_bounds l (bytes_per_int it).
@@ -53,7 +45,7 @@ Section intptr.
   Lemma ty_own_intptr_in_range l β p it : l ◁ₗ{β} p @ intptr it -∗ ⌜p.2 ∈ it⌝.
   Proof.
     iIntros "Hl". destruct β.
-    - iDestruct (ty_deref (IntOp _ ) MCNone with "Hl") as (?) "[_ (%&%&%&%&?)]"; [done|].
+    - iDestruct (ty_deref _ (IntOp _ ) MCNone with "Hl") as (?) "[_ (%&%&%&%&?)]"; [done|].
       iPureIntro. by eapply val_to_Z_in_range.
     - iDestruct "Hl" as (?????) "_".
       iPureIntro. by eapply val_to_Z_in_range.
@@ -85,7 +77,7 @@ Section programs.
       (loc_in_bounds p n ∗ True) ∧
       (⌜min_alloc_start ≤ p.2 ∧ p.2 + n ≤ max_alloc_end⌝ -∗
        ⌜p.2 ∈ it⌝ ∗
-         ((alloc_alive_loc p ∗ True) ∧ ∀ v, T v (t2mt (p @ intptr it))))
+         ((alloc_alive_loc p ∗ True) ∧ ∀ v, T v (p @ intptr it)))
     ) -∗
     typed_un_op p (p ◁ₗ{β} ty) (CastOp (IntOp it)) PtrOp T.
   Proof.
@@ -112,10 +104,11 @@ Section programs.
     (⌜min_alloc_start ≤ p.2 ∧ p.2 + n ≤ max_alloc_end⌝ -∗
       v ◁ᵥ p @ ptr n -∗
       ⌜p.2 ∈ it⌝ ∗
-       (alloc_alive_loc p ∗ True) ∧ ∀ v, T v (t2mt (p @ intptr it))
+       (alloc_alive_loc p ∗ True) ∧ ∀ v, T v (p @ intptr it)
     ) -∗
     typed_un_op v (v ◁ᵥ p @ ptr n) (CastOp (IntOp it)) PtrOp T.
   Proof.
+    unfold ptr; simpl_type.
     iIntros "HT [-> #Hlib]" (Φ) "HΦ".
     iDestruct (loc_in_bounds_ptr_in_range with "Hlib") as %?.
     iDestruct (loc_in_bounds_has_alloc_id with "Hlib") as %[aid ?].
@@ -134,14 +127,14 @@ Section programs.
     λ T, i2p (type_cast_ptr_intptr_val v p it n T).
 
   Lemma type_cast_intptr_ptr p v it T:
-    ((alloc_alive_loc p ∗ True) ∧ T (val_of_loc p) (t2mt (p @ frac_ptr Own (place p)))) -∗
+    ((alloc_alive_loc p ∗ True) ∧ T (val_of_loc p) (p @ frac_ptr Own (place p))) -∗
     typed_un_op v (v ◁ᵥ p @ intptr it) (CastOp PtrOp) (IntOp it) T.
   Proof.
     iIntros "HT (%aid&%&%&%&#Hlib)" (Φ) "HΦ".
     destruct p; simplify_eq /=.
     iApply wp_cast_int_ptr_alive => //.
     iSplit; [by iDestruct "HT" as "[[$ _] _]"| iDestruct "HT" as "[_ HT]"].
-    iApply ("HΦ" with "[]"); last iApply "HT". done.
+    iApply ("HΦ" with "[]"); last iApply "HT". unfold frac_ptr; simpl_type. done.
   Qed.
   Global Instance type_cast_intptr_ptr_inst p v it:
     TypedUnOp v (v ◁ᵥ p @ intptr it)%I (CastOp PtrOp) (IntOp it) :=
@@ -149,7 +142,7 @@ Section programs.
 
   Lemma intptr_wand_int v p it:
     v ◁ᵥ p @ intptr it -∗ v ◁ᵥ p.2 @ int it.
-  Proof. iIntros "(%aid&%&%&%&#Hlib)". by iPureIntro. Qed.
+  Proof. iIntros "(%aid&%&%&%&#Hlib)". unfold int; simpl_type. by iPureIntro. Qed.
 
   Lemma subsume_intptr_int_val v it (n : Z) (p : loc) T:
     ⌜n = p.2⌝ ∗ T -∗
@@ -182,27 +175,27 @@ Section programs.
     TypedUnOpVal v (l @ intptr it)%I op (IntOp it) :=
     λ T, i2p (typed_un_op_intptr it v l op T).
 
-  Lemma typed_bin_op_intptr_l it v1 l v2 ty op ot `{!Movable ty} T:
+  Lemma typed_bin_op_intptr_l it v1 l v2 ty op ot T:
     typed_bin_op v1 (v1 ◁ᵥ l.2 @ int    it) v2 (v2 ◁ᵥ ty) op (IntOp it) ot T -∗
     typed_bin_op v1 (v1 ◁ᵥ l   @ intptr it) v2 (v2 ◁ᵥ ty) op (IntOp it) ot T.
   Proof.
     iIntros "HT". iApply (typed_bin_op_wand with "HT"); last by iIntros "$".
     iApply intptr_wand_int.
   Qed.
-  Global Instance typed_bin_op_intptr_l_inst it v1 l v2 ty op ot `{!Movable ty}:
+  Global Instance typed_bin_op_intptr_l_inst it v1 l v2 ty op ot:
     TypedBinOpVal v1 (l @ intptr it)%I v2 ty op (IntOp it) ot :=
     λ T, i2p (typed_bin_op_intptr_l it v1 l v2 ty op ot T).
 
-  Lemma typed_bin_op_intptr_r it v1 ty v2 l op ot `{!Movable ty} T:
+  Lemma typed_bin_op_intptr_r it v1 ty v2 l op ot T:
     typed_bin_op v1 (v1 ◁ᵥ ty) v2 (v2 ◁ᵥ l.2 @ int    it) op ot (IntOp it) T -∗
     typed_bin_op v1 (v1 ◁ᵥ ty) v2 (v2 ◁ᵥ l   @ intptr it) op ot (IntOp it) T.
   Proof.
     iIntros "HT". iApply (typed_bin_op_wand with "HT"); first by iIntros "$".
     iApply intptr_wand_int.
   Qed.
-  Global Instance typed_bin_op_intptr_r_inst it v1 ty v2 l op ot `{!Movable ty}:
+  Global Instance typed_bin_op_intptr_r_inst it v1 ty v2 l op ot:
     TypedBinOpVal v1 ty v2 (l @ intptr it)%I op ot (IntOp it) :=
     λ T, i2p (typed_bin_op_intptr_r it v1 ty v2 l op ot T).
 
 End programs.
-Typeclasses Opaque intptr_inner_type.
+Typeclasses Opaque intptr_type.

@@ -49,29 +49,19 @@ End is_bool_ot.
 Section generic_boolean.
   Context `{!typeG Σ}.
 
-  Program Definition generic_boolean_inner_type (stn: bool_strictness) (it: int_type) (b: bool) : type := {|
+  Program Definition generic_boolean_type (stn: bool_strictness) (it: int_type) (b: bool) : type := {|
+    ty_has_op_type ot mt := is_bool_ot ot it stn;
     ty_own β l :=
       ∃ v n, ⌜val_to_Z v it = Some n⌝ ∗
              ⌜represents_boolean stn n b⌝ ∗
              ⌜l `has_layout_loc` it⌝ ∗
              l ↦[β] v;
+      ty_own_val v := ∃ n, ⌜val_to_Z v it = Some n⌝ ∗ ⌜represents_boolean stn n b⌝;
   |}%I.
   Next Obligation.
     iIntros (??????) "(%v&%n&%&%&%&Hl)". iExists v, n.
     do 3 (iSplitR; first done). by iApply heap_mapsto_own_state_share.
   Qed.
-
-  Program Definition generic_boolean (stn: bool_strictness) (it: int_type) : rtype := {|
-    rty_type := bool;
-    rty := generic_boolean_inner_type stn it;
-  |}.
-
-  Global Program Instance rmovable_generic_boolean stn it : RMovable (generic_boolean stn it) := {|
-    rmovable b := {|
-      ty_has_op_type ot mt := is_bool_ot ot it stn;
-      ty_own_val v := ∃ n, ⌜val_to_Z v it = Some n⌝ ∗ ⌜represents_boolean stn n b⌝;
-    |}
-  |}%I.
   Next Obligation.
     iIntros (??????->%is_bool_ot_layout) "(%&%&_&_&H&_)" => //.
   Qed.
@@ -87,6 +77,9 @@ Section generic_boolean.
   Next Obligation.
     iIntros (????????). apply: mem_cast_compat_bool; [naive_solver|]. iPureIntro. naive_solver.
   Qed.
+
+  Program Definition generic_boolean (stn: bool_strictness) (it: int_type) : rtype :=
+    RType (generic_boolean_type stn it).
 
   Global Program Instance generic_boolean_copyable b stn it : Copyable (b @ generic_boolean stn it).
   Next Obligation.
@@ -162,7 +155,7 @@ Section boolean.
     | NeOp rit => Some (negb (eqb b1 b2), rit)
     | _ => None
     end = Some (b, i32) →
-    T (i2v (bool_to_Z b) i32) (t2mt (b @ boolean i32)) -∗
+    T (i2v (bool_to_Z b) i32) (b @ boolean i32) -∗
     typed_bin_op v1 (v1 ◁ᵥ b1 @ boolean it)
                  v2 (v2 ◁ᵥ b2 @ boolean it) op (IntOp it) (IntOp it) T.
   Proof.
@@ -237,7 +230,7 @@ Section boolean.
   Qed.
 
   Lemma type_cast_boolean b it1 it2 v T:
-    (∀ v, T v (t2mt (b @ boolean it2))) -∗
+    (∀ v, T v (b @ boolean it2)) -∗
     typed_un_op v (v ◁ᵥ b @ boolean it1)%I (CastOp (IntOp it2)) (IntOp it1) T.
   Proof.
     iIntros "HT (%n&%Hv&%Hb) %Φ HΦ". move: Hb => /= ?. subst n.
@@ -250,7 +243,6 @@ Section boolean.
     λ T, i2p (type_cast_boolean b it1 it2 v T).
 
 End boolean.
-Typeclasses Opaque generic_boolean_inner_type.
 
 Notation "'if' p " := (DestructHintIfBool p) (at level 100, only printing).
 
@@ -258,7 +250,7 @@ Section builtin_boolean.
   Context `{!typeG Σ}.
 
   Lemma type_val_builtin_boolean b T:
-    (T (t2mt (b @ builtin_boolean))) -∗ typed_value (val_of_bool b) T.
+    (T (b @ builtin_boolean)) -∗ typed_value (val_of_bool b) T.
   Proof.
     iIntros "HT". iExists _. iFrame. iPureIntro. naive_solver.
   Qed.
@@ -266,7 +258,7 @@ Section builtin_boolean.
     λ T, i2p (type_val_builtin_boolean b T).
 
   Lemma type_cast_boolean_builtin_boolean b it v T:
-    (∀ v, T v (t2mt (b @ builtin_boolean))) -∗
+    (∀ v, T v (b @ builtin_boolean)) -∗
     typed_un_op v (v ◁ᵥ b @ boolean it)%I (CastOp BoolOp) (IntOp it) T.
   Proof.
     iIntros "HT (%n&%Hv&%Hb) %Φ HΦ". move: Hb => /= ?. subst n.
@@ -278,7 +270,7 @@ Section builtin_boolean.
     λ T, i2p (type_cast_boolean_builtin_boolean b it v T).
 
   Lemma type_cast_builtin_boolean_boolean b it v T:
-    (∀ v, T v (t2mt (b @ boolean it))) -∗
+    (∀ v, T v (b @ boolean it)) -∗
     typed_un_op v (v ◁ᵥ b @ builtin_boolean)%I (CastOp (IntOp it)) BoolOp T.
   Proof.
     iIntros "HT (%n&%Hv&%Hb) %Φ HΦ". move: Hb => /= ?. subst n.
@@ -292,3 +284,4 @@ Section builtin_boolean.
     λ T, i2p (type_cast_builtin_boolean_boolean b it v T).
 
 End builtin_boolean.
+Typeclasses Opaque generic_boolean_type.

@@ -16,17 +16,17 @@ Section judgements.
 
   Class SimplifyHypPlace (l : loc) (β : own_state) (ty : type) (n : option N) : Type :=
     simplify_hyp_place :> SimplifyHyp (l ◁ₗ{β} ty) n.
-  Class SimplifyHypVal (v : val) (ty : type) `{!Movable ty} (n : option N) : Type :=
+  Class SimplifyHypVal (v : val) (ty : type) (n : option N) : Type :=
     simplify_hyp_val :> SimplifyHyp (v ◁ᵥ ty) n.
 
   Class SimplifyGoalPlace (l : loc) (β : own_state) (ty : type) (n : option N) : Type :=
     simplify_goal_place :> SimplifyGoal (l ◁ₗ{β} ty) n.
-  Class SimplifyGoalVal (v : val) (ty : type) `{!Movable ty} (n : option N) : Type :=
+  Class SimplifyGoalVal (v : val) (ty : type) (n : option N) : Type :=
     simplify_goal_val :> SimplifyGoal (v ◁ᵥ ty) n.
 
   Class SubsumePlace (l : loc) (β : own_state) (ty1 ty2 : type) : Type :=
     subsume_place :> Subsume (l ◁ₗ{β} ty1) (l ◁ₗ{β} ty2).
-  Class SubsumeVal (v : val) (ty1 ty2 : type) `{!Movable ty1} `{!Movable ty2} : Type :=
+  Class SubsumeVal (v : val) (ty1 ty2 : type) : Type :=
     subsume_val :> Subsume (v ◁ᵥ ty1) (v ◁ᵥ ty2).
 
   (* Variants of Subsume which don't need the continuation. P is an
@@ -39,7 +39,7 @@ Section judgements.
   (* TODO: add infrastructure like SimpleSubsumePlaceR to
   SimpleSubsumeVal. Not sure if it would work because of the movable
   instance. *)
-  Class SimpleSubsumeVal (ty1 ty2 : type) `{!Movable ty1} `{!Movable ty2} (P : iProp Σ) : Prop :=
+  Class SimpleSubsumeVal (ty1 ty2 : type) (P : iProp Σ) : Prop :=
     simple_subsume_val v: P -∗ v ◁ᵥ ty1 -∗ v ◁ᵥ ty2.
 
   (* This is similar to simplify hyp place (Some 0), but targeted at
@@ -47,8 +47,8 @@ Section judgements.
   step. We need this because copying duplicates a type and we want to
   make it as specific as we can before we do the duplication (e.g.
   destruct all existentials in it). *)
-  Definition copy_as (l : loc) (β : own_state) (ty : type) (T : mtype → iProp Σ) : iProp Σ :=
-    l ◁ₗ{β} ty -∗ ∃ ty' : mtype, l ◁ₗ{β} ty' ∗ ⌜Copyable ty'⌝ ∗ T ty'.
+  Definition copy_as (l : loc) (β : own_state) (ty : type) (T : type → iProp Σ) : iProp Σ :=
+    l ◁ₗ{β} ty -∗ ∃ ty', l ◁ₗ{β} ty' ∗ ⌜Copyable ty'⌝ ∗ T ty'.
   Class CopyAs (l : loc) (β : own_state) (ty : type) : Type :=
     copy_as_proof T : iProp_to_Prop (copy_as l β ty T).
 
@@ -78,25 +78,25 @@ Section judgements.
     typed_if_proof T1 T2 : iProp_to_Prop (typed_if ot v P T1 T2).
 
   (*** statements *)
-  Definition typed_stmt_post_cond (fn : function) (ls : list loc) (R : val → mtype → iProp Σ) (v : val) : iProp Σ :=
-    (∃ ty : mtype, v ◁ᵥ ty ∗ ([∗ list] l;v ∈ ls;(fn.(f_args) ++ fn.(f_local_vars)), l ↦|v.2|) ∗ R v ty)%I.
-  Definition typed_stmt (s : stmt) (fn : function) (ls : list loc) (R : val → mtype → iProp Σ) (Q : gmap label stmt) : iProp Σ :=
+  Definition typed_stmt_post_cond (fn : function) (ls : list loc) (R : val → type → iProp Σ) (v : val) : iProp Σ :=
+    (∃ ty, v ◁ᵥ ty ∗ ([∗ list] l;v ∈ ls;(fn.(f_args) ++ fn.(f_local_vars)), l ↦|v.2|) ∗ R v ty)%I.
+  Definition typed_stmt (s : stmt) (fn : function) (ls : list loc) (R : val → type → iProp Σ) (Q : gmap label stmt) : iProp Σ :=
     (⌜length ls = length (fn.(f_args) ++ fn.(f_local_vars))⌝ -∗ WPs s {{Q, typed_stmt_post_cond fn ls R}})%I.
   Global Arguments typed_stmt _%E _ _ _%I _.
 
-  Definition typed_block (P : iProp Σ) (b : label) (fn : function) (ls : list loc) (R : val → mtype → iProp Σ) (Q : gmap label stmt) : iProp Σ :=
+  Definition typed_block (P : iProp Σ) (b : label) (fn : function) (ls : list loc) (R : val → type → iProp Σ) (Q : gmap label stmt) : iProp Σ :=
     (wps_block P b Q (typed_stmt_post_cond fn ls R)).
 
-  Definition typed_switch (v : val) (ty : type) `{!Movable ty} (it : int_type) (m : gmap Z nat) (ss : list stmt) (def : stmt) (fn : function) (ls : list loc) (R : val → mtype → iProp Σ) (Q : gmap label stmt) : iProp Σ :=
+  Definition typed_switch (v : val) (ty : type) (it : int_type) (m : gmap Z nat) (ss : list stmt) (def : stmt) (fn : function) (ls : list loc) (R : val → type → iProp Σ) (Q : gmap label stmt) : iProp Σ :=
     (v ◁ᵥ ty -∗ ∃ z, ⌜val_to_Z v it = Some z⌝ ∗
       match m !! z with
       | Some i => ∃ s, ⌜ss !! i = Some s⌝ ∗ typed_stmt s fn ls R Q
       | None   => typed_stmt def fn ls R Q
       end).
-  Class TypedSwitch (v : val) (ty : type) `{!Movable ty} (it : int_type) : Type :=
+  Class TypedSwitch (v : val) (ty : type) (it : int_type) : Type :=
     typed_switch_proof m ss def fn ls R Q : iProp_to_Prop (typed_switch v ty it m ss def fn ls R Q).
 
-  Definition typed_assert (ot : op_type) (v : val) (P : iProp Σ) (s : stmt) (fn : function) (ls : list loc) (R : val → mtype → iProp Σ) (Q : gmap label stmt) : iProp Σ :=
+  Definition typed_assert (ot : op_type) (v : val) (P : iProp Σ) (s : stmt) (fn : function) (ls : list loc) (R : val → type → iProp Σ) (Q : gmap label stmt) : iProp Σ :=
     (P -∗
        match ot with
        | BoolOp   => ∃ b, ⌜val_to_bool v = Some b⌝ ∗ ⌜b = true⌝ ∗ typed_stmt s fn ls R Q
@@ -108,47 +108,47 @@ Section judgements.
     typed_assert_proof s fn ls R Q : iProp_to_Prop (typed_assert ot v P s fn ls R Q).
 
   (*** expressions *)
-  Definition typed_val_expr (e : expr) (T : val → mtype → iProp Σ) : iProp Σ :=
-    (∀ Φ, (∀ v (ty : mtype), v ◁ᵥ ty -∗ T v ty -∗ Φ v) -∗ WP e {{ Φ }}).
+  Definition typed_val_expr (e : expr) (T : val → type → iProp Σ) : iProp Σ :=
+    (∀ Φ, (∀ v (ty : type), v ◁ᵥ ty -∗ T v ty -∗ Φ v) -∗ WP e {{ Φ }}).
   Global Arguments typed_val_expr _%E _%I.
 
-  Definition typed_value (v : val) (T : mtype → iProp Σ) : iProp Σ :=
-    (∃ (ty: mtype), v ◁ᵥ ty ∗ T ty).
+  Definition typed_value (v : val) (T : type → iProp Σ) : iProp Σ :=
+    (∃ (ty: type), v ◁ᵥ ty ∗ T ty).
   Class TypedValue (v : val) : Type :=
     typed_value_proof T : iProp_to_Prop (typed_value v T).
 
-  Definition typed_bin_op (v1 : val) (P1 : iProp Σ) (v2 : val) (P2 : iProp Σ) (o : bin_op) (ot1 ot2 : op_type) (T : val → mtype → iProp Σ) : iProp Σ :=
+  Definition typed_bin_op (v1 : val) (P1 : iProp Σ) (v2 : val) (P2 : iProp Σ) (o : bin_op) (ot1 ot2 : op_type) (T : val → type → iProp Σ) : iProp Σ :=
     (P1 -∗ P2 -∗ typed_val_expr (BinOp o ot1 ot2 v1 v2) T).
 
   Class TypedBinOp (v1 : val) (P1 : iProp Σ) (v2 : val) (P2 : iProp Σ) (o : bin_op) (ot1 ot2 : op_type) : Type :=
     typed_bin_op_proof T : iProp_to_Prop (typed_bin_op v1 P1 v2 P2 o ot1 ot2 T).
-  Class TypedBinOpVal (v1 : val) (ty1 : type) `{!Movable ty1} (v2 : val) (ty2 : type) `{!Movable ty2} (o : bin_op) (ot1 ot2 : op_type) : Type :=
+  Class TypedBinOpVal (v1 : val) (ty1 : type) (v2 : val) (ty2 : type) (o : bin_op) (ot1 ot2 : op_type) : Type :=
     typed_bin_op_val :> TypedBinOp v1 (v1 ◁ᵥ ty1) v2 (v2 ◁ᵥ ty2) o ot1 ot2.
 
-  Definition typed_un_op (v : val) (P : iProp Σ) (o : un_op) (ot : op_type) (T : val → mtype → iProp Σ) : iProp Σ :=
+  Definition typed_un_op (v : val) (P : iProp Σ) (o : un_op) (ot : op_type) (T : val → type → iProp Σ) : iProp Σ :=
     (P -∗ typed_val_expr (UnOp o ot v) T).
 
   Class TypedUnOp (v : val) (P : iProp Σ) (o : un_op) (ot : op_type) : Type :=
     typed_un_op_proof T : iProp_to_Prop (typed_un_op v P o ot T).
-  Class TypedUnOpVal (v : val) (ty : type) `{!Movable ty} (o : un_op) (ot : op_type) : Type :=
+  Class TypedUnOpVal (v : val) (ty : type) (o : un_op) (ot : op_type) : Type :=
     typed_un_op_val :> TypedUnOp v (v ◁ᵥ ty) o ot.
 
-  Definition typed_call (v : val) (P : iProp Σ) (vl : list val) (tys : list mtype) (T : val → mtype → iProp Σ) : iProp Σ :=
-    (P -∗ ([∗ list] v;ty∈vl;tys, v ◁ᵥ (ty : mtype)) -∗ typed_val_expr (Call v (Val <$> vl)) T)%I.
-  Class TypedCall (v : val) (P : iProp Σ) (vl : list val) (tys : list mtype) : Type :=
+  Definition typed_call (v : val) (P : iProp Σ) (vl : list val) (tys : list type) (T : val → type → iProp Σ) : iProp Σ :=
+    (P -∗ ([∗ list] v;ty∈vl;tys, v ◁ᵥ ty) -∗ typed_val_expr (Call v (Val <$> vl)) T)%I.
+  Class TypedCall (v : val) (P : iProp Σ) (vl : list val) (tys : list type) : Type :=
     typed_call_proof T : iProp_to_Prop (typed_call v P vl tys T).
-  Class TypedCallVal (v : val) (ty : type) `{!Movable ty} (vl : list val) (tys : list mtype) : Type :=
+  Class TypedCallVal (v : val) (ty : type) (vl : list val) (tys : list type) : Type :=
     typed_call_val :> TypedCall v (v ◁ᵥ ty) vl tys.
 
-  Definition typed_copy_alloc_id (v1 : val) (P1 : iProp Σ) (v2 : val) (P2 : iProp Σ) (ot : op_type) (T : val → mtype → iProp Σ) : iProp Σ :=
+  Definition typed_copy_alloc_id (v1 : val) (P1 : iProp Σ) (v2 : val) (P2 : iProp Σ) (ot : op_type) (T : val → type → iProp Σ) : iProp Σ :=
     (P1 -∗ P2 -∗ typed_val_expr (CopyAllocId ot v1 v2) T).
 
   Class TypedCopyAllocId (v1 : val) (P1 : iProp Σ) (v2 : val) (P2 : iProp Σ) (ot : op_type) : Type :=
     typed_copy_alloc_id_proof T : iProp_to_Prop (typed_copy_alloc_id v1 P1 v2 P2 ot T).
-  Class TypedCopyAllocIdVal (v1 : val) (ty1 : type) `{!Movable ty1} (v2 : val) (ty2 : type) (ot : op_type) `{!Movable ty2} : Type :=
+  Class TypedCopyAllocIdVal (v1 : val) (ty1 : type) (v2 : val) (ty2 : type) (ot : op_type) : Type :=
     typed_copy_alloc_id_val :> TypedCopyAllocId v1 (v1 ◁ᵥ ty1) v2 (v2 ◁ᵥ ty2) ot.
 
-  Definition typed_cas (ot : op_type) (v1 : val) (P1 : iProp Σ) (v2 : val) (P2 : iProp Σ) (v3 : val) (P3 : iProp Σ)  (T : val → mtype → iProp Σ) : iProp Σ :=
+  Definition typed_cas (ot : op_type) (v1 : val) (P1 : iProp Σ) (v2 : val) (P2 : iProp Σ) (v3 : val) (P3 : iProp Σ)  (T : val → type → iProp Σ) : iProp Σ :=
     (P1 -∗ P2 -∗ P3 -∗ typed_val_expr (CAS ot v1 v2 v3) T).
   Class TypedCas (ot : op_type) (v1 : val) (P1 : iProp Σ) (v2 : val) (P2 : iProp Σ) (v3 : val) (P3 : iProp Σ) : Type :=
     typed_cas_proof T : iProp_to_Prop (typed_cas ot v1 P1 v2 P2 v3 P3 T).
@@ -156,22 +156,22 @@ Section judgements.
   (* This does not allow overloading the macro based on the type of
   es. Is this a problem? There is a work around where the rule inserts
   another judgment that allows type-based overloading. *)
-  Definition typed_macro_expr (m : list expr → expr) (es : list expr) (T : val → mtype → iProp Σ) : iProp Σ :=
+  Definition typed_macro_expr (m : list expr → expr) (es : list expr) (T : val → type → iProp Σ) : iProp Σ :=
     (typed_val_expr (m es) T).
   Class TypedMacroExpr (m : list expr → expr) (es : list expr) : Type :=
     typed_macro_expr_proof T : iProp_to_Prop (typed_macro_expr m es T).
 
   (*** places *)
-  Definition typed_write (atomic : bool) (e : expr) (ot : op_type) (v : val) (ty : type) `{!Movable ty} (T : iProp Σ) : iProp Σ :=
+  Definition typed_write (atomic : bool) (e : expr) (ot : op_type) (v : val) (ty : type) (T : iProp Σ) : iProp Σ :=
     let E := if atomic then ∅ else ⊤ in
     (∀ Φ,
         (∀ l, (v ◁ᵥ ty ={⊤, E}=∗ ⌜v `has_layout_val` ot_layout ot⌝ ∗ l↦|ot_layout ot| ∗ ▷ (l ↦ v ={E, ⊤}=∗ T)) -∗ Φ (val_of_loc l)) -∗
        WP e {{ Φ }}).
 
-  Definition typed_read (atomic : bool) (e : expr) (ot : op_type) (T : val → mtype → iProp Σ) : iProp Σ :=
+  Definition typed_read (atomic : bool) (e : expr) (ot : op_type) (T : val → type → iProp Σ) : iProp Σ :=
     let E := if atomic then ∅ else ⊤ in
     (∀ Φ,
-       (∀ (l : loc), (|={⊤, E}=> ∃ v q (ty : mtype), ⌜l `has_layout_loc` ot_layout ot⌝ ∗ ⌜v `has_layout_val` ot_layout ot⌝ ∗ l↦{q}v ∗ ▷ v ◁ᵥ ty ∗ ▷ (∀ st, l↦{q}v -∗ v ◁ᵥ ty ={E, ⊤}=∗ ∃ ty' : mtype, (mem_cast v ot st) ◁ᵥ ty' ∗ T (mem_cast v ot st) ty')) -∗ Φ (val_of_loc l)) -∗
+       (∀ (l : loc), (|={⊤, E}=> ∃ v q (ty : type), ⌜l `has_layout_loc` ot_layout ot⌝ ∗ ⌜v `has_layout_val` ot_layout ot⌝ ∗ l↦{q}v ∗ ▷ v ◁ᵥ ty ∗ ▷ (∀ st, l↦{q}v -∗ v ◁ᵥ ty ={E, ⊤}=∗ ∃ ty' : type, (mem_cast v ot st) ◁ᵥ ty' ∗ T (mem_cast v ot st) ty')) -∗ Φ (val_of_loc l)) -∗
        WP e {{ Φ }}).
 
   Definition typed_addr_of (e : expr) (T : loc → own_state → type → iProp Σ) : iProp Σ :=
@@ -179,19 +179,19 @@ Section judgements.
        (∀ (l : loc) β ty, l ◁ₗ{β} ty -∗ T l β ty -∗ Φ (val_of_loc l)) -∗
        WP e {{ Φ }}).
 
-  Definition typed_read_end (atomic : bool) (E : coPset) (l : loc) (β : own_state) (ty : type) (ot : op_type) (T : val → type → mtype → iProp Σ) : iProp Σ :=
+  Definition typed_read_end (atomic : bool) (E : coPset) (l : loc) (β : own_state) (ty : type) (ot : op_type) (T : val → type → type → iProp Σ) : iProp Σ :=
     let E' := if atomic then ∅ else E in
-    l◁ₗ{β}ty ={E, E'}=∗ ∃ q v (ty2 : mtype),
+    l◁ₗ{β}ty ={E, E'}=∗ ∃ q v (ty2 : type),
         ⌜l `has_layout_loc` ot_layout ot⌝ ∗ ⌜v `has_layout_val` ot_layout ot⌝ ∗ l↦{q}v ∗ ▷ v ◁ᵥ ty2 ∗
          ▷ (∀ st, l↦{q}v -∗ v ◁ᵥ ty2 ={E', E}=∗
-            ∃ ty' (ty3 : mtype), (mem_cast v ot st) ◁ᵥ ty3 ∗ l◁ₗ{β} ty' ∗ T (mem_cast v ot st) ty' ty3).
+            ∃ ty' (ty3 : type), (mem_cast v ot st) ◁ᵥ ty3 ∗ l◁ₗ{β} ty' ∗ T (mem_cast v ot st) ty' ty3).
   Class TypedReadEnd (atomic : bool) (E : coPset) (l : loc) (β : own_state) (ty : type) (ot : op_type) : Type :=
     typed_read_end_proof T : iProp_to_Prop (typed_read_end atomic E l β ty ot T).
 
-  Definition typed_write_end (atomic : bool) (E : coPset) (ot : op_type) (v1 : val) (ty1 : type) `{!Movable ty1} (l2 : loc) (β2 : own_state) (ty2 : type) (T : type → iProp Σ) : iProp Σ :=
+  Definition typed_write_end (atomic : bool) (E : coPset) (ot : op_type) (v1 : val) (ty1 : type) (l2 : loc) (β2 : own_state) (ty2 : type) (T : type → iProp Σ) : iProp Σ :=
     let E' := if atomic then ∅ else E in
     l2 ◁ₗ{β2} ty2 -∗ (v1 ◁ᵥ ty1 ={E, E'}=∗ ⌜v1 `has_layout_val` ot_layout ot⌝ ∗ l2↦|ot_layout ot| ∗ ▷ (l2↦v1 ={E', E}=∗ ∃ ty3, l2 ◁ₗ{β2} ty3 ∗ T ty3)).
-  Class TypedWriteEnd (atomic : bool) (E : coPset) (ot : op_type) (v1 : val) (ty1 : type) `{!Movable ty1} (l2 : loc) (β2 : own_state) (ty2 : type) : Type :=
+  Class TypedWriteEnd (atomic : bool) (E : coPset) (ot : op_type) (v1 : val) (ty1 : type) (l2 : loc) (β2 : own_state) (ty2 : type) : Type :=
     typed_write_end_proof T : iProp_to_Prop (typed_write_end atomic E ot v1 ty1 l2 β2 ty2 T).
 
   Definition typed_addr_of_end (l : loc) (β : own_state) (ty : type) (T : own_state → type → type → iProp Σ) : iProp Σ :=
@@ -210,7 +210,7 @@ Section judgements.
   | GetMemberUnionPCtx (ul : union_layout) (m : var_name)
   | AnnotExprPCtx (n : nat) {A} (x : A)
     (* for PtrOffsetOp, second ot must be PtrOp *)
-  | BinOpPCtx (op : bin_op) (ot : op_type) (v : val) (ty : mtype)
+  | BinOpPCtx (op : bin_op) (ot : op_type) (v : val) (ty : type)
     (* for ptr-to-ptr casts, ot must be PtrOp *)
   | UnOpPCtx (op : un_op)
   .
@@ -338,28 +338,28 @@ Global Hint Extern 0 (IntoPlaceCtx _ _) => solve_into_place_ctx : typeclass_inst
 Global Hint Mode Learnable + + : typeclass_instances.
 Global Hint Mode LearnAlignment + + + + - : typeclass_instances.
 Global Hint Mode SimplifyHypPlace + + + + + - : typeclass_instances.
-Global Hint Mode SimplifyHypVal + + + + + - : typeclass_instances.
+Global Hint Mode SimplifyHypVal + + + + - : typeclass_instances.
 Global Hint Mode SimplifyGoalPlace + + + + ! - : typeclass_instances.
-Global Hint Mode SimplifyGoalVal + + + ! ! - : typeclass_instances.
+Global Hint Mode SimplifyGoalVal + + + ! - : typeclass_instances.
 Global Hint Mode CopyAs + + + + + : typeclass_instances.
 Global Hint Mode SubsumePlace + + + + + ! : typeclass_instances.
-Global Hint Mode SubsumeVal + + + + ! + ! : typeclass_instances.
+Global Hint Mode SubsumeVal + + + ! ! : typeclass_instances.
 Global Hint Mode SimpleSubsumePlace + + + ! - : typeclass_instances.
 Global Hint Mode SimpleSubsumePlaceR + + + ! + ! - : typeclass_instances.
-Global Hint Mode SimpleSubsumeVal + + + ! + ! - : typeclass_instances.
+Global Hint Mode SimpleSubsumeVal + + ! ! - : typeclass_instances.
 Global Hint Mode TypedIf + + + + + : typeclass_instances.
 Global Hint Mode TypedAssert + + + + + : typeclass_instances.
 Global Hint Mode TypedValue + + + : typeclass_instances.
 Global Hint Mode TypedBinOp + + + + + + + + + : typeclass_instances.
-Global Hint Mode TypedBinOpVal + + + + + + + + + + + : typeclass_instances.
+Global Hint Mode TypedBinOpVal + + + + + + + + + : typeclass_instances.
 Global Hint Mode TypedUnOp + + + + + + : typeclass_instances.
-Global Hint Mode TypedUnOpVal + + + + + + + : typeclass_instances.
+Global Hint Mode TypedUnOpVal + + + + + + : typeclass_instances.
 Global Hint Mode TypedCall + + + + + + : typeclass_instances.
-Global Hint Mode TypedCallVal + + + + + + + : typeclass_instances.
+Global Hint Mode TypedCallVal + + + + + + : typeclass_instances.
 Global Hint Mode TypedCopyAllocId + + + + + + + : typeclass_instances.
-Global Hint Mode TypedCopyAllocIdVal + + + + + + + + + : typeclass_instances.
+Global Hint Mode TypedCopyAllocIdVal + + + + + + + : typeclass_instances.
 Global Hint Mode TypedReadEnd + + + + + + + + : typeclass_instances.
-Global Hint Mode TypedWriteEnd + + + + + + + + + + + : typeclass_instances.
+Global Hint Mode TypedWriteEnd + + + + + + + + + + : typeclass_instances.
 Global Hint Mode TypedAddrOfEnd + + + + + : typeclass_instances.
 Global Hint Mode TypedPlace + + + + + + : typeclass_instances.
 Global Hint Mode TypedAnnotExpr + + + + + + + : typeclass_instances.
@@ -374,6 +374,7 @@ Arguments learnalign_learn {_ _ _ _ _} _.
 Section proper.
   Context `{!typeG Σ}.
 
+
   Lemma simplify_hyp_place_eq l β ty1 ty2 T:
     ty1 ≡@{type} ty2 →
     (l ◁ₗ{β} ty2 -∗ T) -∗ simplify_hyp (l◁ₗ{β} ty1) T.
@@ -384,15 +385,15 @@ Section proper.
     T (l ◁ₗ{β} ty2) -∗ simplify_goal (l◁ₗ{β} ty1) T.
   Proof. iIntros (Heq) "HT". iExists _. iFrame. rewrite Heq. by iIntros "?". Qed.
 
-  Lemma simplify_hyp_val_eq v ty1 ty2 (Heq : ty1 ≡@{type} ty2) {Hm: Movable ty1} `{!Movable ty2} T:
-    Hm = movable_eq ty1 ty2 Heq →
+  Lemma simplify_hyp_val_eq v ty1 ty2 T:
+    ty1 ≡@{type} ty2 →
     (v ◁ᵥ ty2 -∗ T) -∗ simplify_hyp (v ◁ᵥ ty1) T.
-  Proof. by move => ->. Qed.
+  Proof. iIntros (->) "HT ?". by iApply "HT". Qed.
 
-  Lemma simplify_goal_val_eq v ty1 ty2 (Heq : ty1 ≡@{type} ty2) {Hm: Movable ty1} `{!Movable ty2} T:
-    Hm = movable_eq ty1 ty2 Heq →
+  Lemma simplify_goal_val_eq v ty1 ty2 T:
+    ty1 ≡@{type} ty2 →
     T (v ◁ᵥ ty2) -∗ simplify_goal (v ◁ᵥ ty1) T.
-  Proof. iIntros (->) "HT". iExists _. iFrame. by iIntros "?". Qed.
+  Proof. iIntros (Heq) "HT". iExists _. iFrame. rewrite Heq. by iIntros "?". Qed.
 
   Lemma typed_place_subsume' P l ty1 β T :
     (l ◁ₗ{β} ty1 -∗ ∃ ty2, l ◁ₗ{β} ty2 ∗ typed_place P l β ty2 T) -∗ typed_place P l β ty1 T.
@@ -455,7 +456,7 @@ Section proper.
 
   Lemma type_val_expr_mono_strong e T :
     typed_val_expr e (λ v ty,
-      ∃ (ty' : mtype), subsume (v ◁ᵥ ty) (v ◁ᵥ ty') (T v ty'))%I
+      ∃ ty', subsume (v ◁ᵥ ty) (v ◁ᵥ ty') (T v ty'))%I
     -∗ typed_val_expr e T.
   Proof.
     iIntros "HT". iIntros (Φ) "HΦ".
@@ -471,7 +472,7 @@ Section proper.
     (l ◁ₗ{β} ty ={E1, E2}=∗ ∃ β' ty' P, l ◁ₗ{β'} ty' ∗ ▷ P ∗
        typed_read_end a E2 l β' ty' ot (λ v ty2 ty3,
           P -∗ l ◁ₗ{β'} ty2 -∗ v ◁ᵥ ty3 ={E2, E1}=∗
-          ∃ ty2' (ty3' : mtype), l ◁ₗ{β} ty2' ∗ v ◁ᵥ ty3' ∗ T v ty2' ty3')) -∗
+          ∃ ty2' ty3', l ◁ₗ{β} ty2' ∗ v ◁ᵥ ty3' ∗ T v ty2' ty3')) -∗
     typed_read_end a E1 l β ty ot T.
   Proof.
     iIntros (Ha) "HT Hl". iMod ("HT" with "Hl") as (β' ty' P) "(Hl&HP&HT)".
@@ -539,9 +540,9 @@ Section proper.
   Qed.
 
   (** typed_write_end *)
-  Lemma typed_write_end_mono_strong (a : bool) E1 E2 ot v1 ty1 `{!Movable ty1} l2 β2 ty2 T:
+  Lemma typed_write_end_mono_strong (a : bool) E1 E2 ot v1 ty1 l2 β2 ty2 T:
     (if a then ∅ else E2) = (if a then ∅ else E1) →
-    (v1 ◁ᵥ ty1 -∗ l2 ◁ₗ{β2} ty2 ={E1, E2}=∗ ∃ (ty1' : mtype) β2' ty2' P,
+    (v1 ◁ᵥ ty1 -∗ l2 ◁ₗ{β2} ty2 ={E1, E2}=∗ ∃ ty1' β2' ty2' P,
        v1 ◁ᵥ ty1' ∗ l2 ◁ₗ{β2'} ty2' ∗ ▷ P ∗
        typed_write_end a E2 ot v1 ty1' l2 β2' ty2' (λ ty3,
           P -∗ l2 ◁ₗ{β2'} ty3 ={E2, E1}=∗
@@ -554,7 +555,7 @@ Section proper.
     iMod ("HT" with "HP Hl") as (ty3') "(?&?)". iExists  _. by iFrame.
   Qed.
 
-  Lemma typed_write_end_wand a E v1 ty1 `{!Movable ty1} l2 β2 ty2 ot T T':
+  Lemma typed_write_end_wand a E v1 ty1 l2 β2 ty2 ot T T':
     typed_write_end a E ot v1 ty1 l2 β2 ty2 T' -∗
     (∀ ty3, T' ty3 -∗ T ty3) -∗
     typed_write_end a E ot v1 ty1 l2 β2 ty2 T.
@@ -565,13 +566,13 @@ Section proper.
     iExists _. iFrame. by iApply "Hw".
   Qed.
 
-  Lemma fupd_typed_write_end a E v1 ty1 `{!Movable ty1} l2 β2 ty2 ot T:
+  Lemma fupd_typed_write_end a E v1 ty1 l2 β2 ty2 ot T:
     (|={E}=> typed_write_end a E ot v1 ty1 l2 β2 ty2 T) -∗
     typed_write_end a E ot v1 ty1 l2 β2 ty2 T.
   Proof. iIntros ">H". by iApply "H". Qed.
 
   Typeclasses Opaque typed_write_end.
-  Global Instance elim_modal_fupd_typed_write_end P p a E v1 ty1 `{!Movable ty1} l2 β2 ty2 ot T:
+  Global Instance elim_modal_fupd_typed_write_end P p a E v1 ty1 l2 β2 ty2 ot T:
     ElimModal True p false (|={E}=> P) P (typed_write_end a E ot v1 ty1 l2 β2 ty2 T) (typed_write_end a E ot v1 ty1 l2 β2 ty2 T).
   Proof.
     iIntros (?) "[HP HT]".
@@ -579,10 +580,10 @@ Section proper.
     iMod "HP". by iApply "HT".
   Qed.
 
-  Global Instance is_except_0_typed_write_end a E v1 ty1 `{!Movable ty1} l2 β2 ty2 ot T : IsExcept0 (typed_write_end a E ot v1 ty1 l2 β2 ty2 T).
+  Global Instance is_except_0_typed_write_end a E v1 ty1 l2 β2 ty2 ot T : IsExcept0 (typed_write_end a E ot v1 ty1 l2 β2 ty2 T).
   Proof. by rewrite /IsExcept0 -{2}fupd_typed_write_end -except_0_fupd -fupd_intro. Qed.
 
-  Global Instance elim_modal_fupd_typed_write_end_atomic p E1 E2 v1 ty1 `{!Movable ty1} l2 β2 ty2 ot T P:
+  Global Instance elim_modal_fupd_typed_write_end_atomic p E1 E2 v1 ty1 l2 β2 ty2 ot T P:
     ElimModal True p false
             (|={E1,E2}=> P) P
             (typed_write_end true E1 ot v1 ty1 l2 β2 ty2 T)
@@ -591,12 +592,12 @@ Section proper.
   Proof.
     iIntros (?) "[HP HT]". rewrite bi.intuitionistically_if_elim.
     iApply typed_write_end_mono_strong; [done|]. iIntros "Hv Hl". iMod "HP". iModIntro.
-    iExists (t2mt _), _, _, True%I. iFrame. iSplit; [done|].
+    iExists _, _, _, True%I. iFrame. iSplit; [done|].
     iApply (typed_write_end_wand with "(HT HP)").
     iIntros (ty3) "HT _ Hl". iMod "HT". iModIntro. iExists _. iFrame.
   Qed.
 
-  Global Instance elim_acc_typed_write_end_atomic {X} E1 E2 α β γ v1 ty1 `{!Movable ty1} l2 β2 ty2 ot T :
+  Global Instance elim_acc_typed_write_end_atomic {X} E1 E2 α β γ v1 ty1 l2 β2 ty2 ot T :
     ElimAcc (X:=X) True
             (fupd E1 E2) (fupd E2 E1)
             α β γ
@@ -615,7 +616,7 @@ Typeclasses Opaque typed_write_end.
 Definition FindLoc `{!typeG Σ} (l : loc) :=
   {| fic_A := own_state * type; fic_Prop '(β, ty):= (l ◁ₗ{β} ty)%I; |}.
 Definition FindVal `{!typeG Σ} (v : val) :=
-  {| fic_A := mtype; fic_Prop ty := (v ◁ᵥ ty)%I; |}.
+  {| fic_A := type; fic_Prop ty := (v ◁ᵥ ty)%I; |}.
 Definition FindValP {Σ} (v : val) :=
   {| fic_A := iProp Σ; fic_Prop P := P; |}.
 Definition FindValOrLoc {Σ} (v : val) (l : loc) :=
@@ -638,7 +639,7 @@ Section typing.
     λ T, i2p (find_in_context_type_loc_id l T).
 
   Lemma find_in_context_type_val_id v T:
-    (∃ ty : mtype, v ◁ᵥ ty ∗ T ty) -∗
+    (∃ ty, v ◁ᵥ ty ∗ T ty) -∗
     find_in_context (FindVal v) T.
   Proof. iDestruct 1 as (ty) "[Hl HT]". iExists _ => /=. iFrame. Qed.
   Global Instance find_in_context_type_val_id_inst v :
@@ -646,7 +647,7 @@ Section typing.
     λ T, i2p (find_in_context_type_val_id v T).
 
   Lemma find_in_context_type_val_P_id v T:
-    (∃ ty : mtype, v ◁ᵥ ty ∗ T (v ◁ᵥ ty)) -∗
+    (∃ ty, v ◁ᵥ ty ∗ T (v ◁ᵥ ty)) -∗
     find_in_context (FindValP v) T.
   Proof. iDestruct 1 as (ty) "[Hl HT]". iExists (ty_own_val ty _) => /=. iFrame. Qed.
   Global Instance find_in_context_type_val_P_id_inst v :
@@ -662,7 +663,7 @@ Section typing.
     λ T, i2p (find_in_context_type_val_P_loc_id l T).
 
   Lemma find_in_context_type_val_or_loc_P_id_val (v : val) (l : loc) T:
-    (∃ ty : mtype, v ◁ᵥ ty ∗ T (v ◁ᵥ ty)) -∗
+    (∃ ty, v ◁ᵥ ty ∗ T (v ◁ᵥ ty)) -∗
     find_in_context (FindValOrLoc v l) T.
   Proof. iDestruct 1 as (ty) "[Hl HT]". iExists (ty_own_val ty _) => /=. iFrame. Qed.
   Global Instance find_in_context_type_val_or_loc_P_id_val_inst v l:
@@ -718,7 +719,7 @@ Section typing.
     λ T, i2p (find_in_context_alloc_alive_loc l T).
 
   Global Instance related_to_loc l β ty : RelatedTo (l ◁ₗ{β} ty)  | 100 := {| rt_fic := FindLoc l |}.
-  Global Instance related_to_val v ty `{!Movable ty} : RelatedTo (v ◁ᵥ ty)  | 100 := {| rt_fic := FindValP v |}.
+  Global Instance related_to_val v ty : RelatedTo (v ◁ᵥ ty)  | 100 := {| rt_fic := FindValP v |}.
   Global Instance related_to_loc_in_bounds l n : RelatedTo (loc_in_bounds l n)  | 100 := {| rt_fic := FindLocInBounds l |}.
   Global Instance related_to_alloc_alive l : RelatedTo (alloc_alive_loc l)  | 100 := {| rt_fic := FindAllocAlive l |}.
 
@@ -822,12 +823,12 @@ Section typing.
     SimplifyHypPlace l β ty (Some 0%N) :=
     λ T, i2p (simplify_place_refine_l ty l β T).
 
-  Lemma simplify_val_refine_l (ty : rtype) v T `{!RMovable ty} `{!Inhabited (ty.(rty_type))}:
+  Lemma simplify_val_refine_l (ty : rtype) v T `{!Inhabited (ty.(rty_type))}:
     (∀ x, v◁ᵥ (x @ ty) -∗ T) -∗ simplify_hyp (v◁ᵥty) T.
   Proof.
     iIntros "HT Hl". iDestruct "Hl" as (x) "Hv". by iApply "HT".
   Qed.
-  Global Instance simplify_val_refine_l_inst (ty : rtype) v `{!RMovable ty} `{!Inhabited (ty.(rty_type))}:
+  Global Instance simplify_val_refine_l_inst (ty : rtype) v `{!Inhabited (ty.(rty_type))}:
     SimplifyHypVal v ty (Some 0%N) :=
     λ T, i2p (simplify_val_refine_l ty v T).
 
@@ -840,10 +841,10 @@ Section typing.
     SimplifyGoalPlace l β ty (Some 10%N) :=
     λ T, i2p (simplify_goal_place_refine_r ty l β T).
 
-  Lemma simplify_goal_val_refine_r (ty : rtype) v T  `{!RMovable ty} `{!Inhabited (ty.(rty_type))} :
+  Lemma simplify_goal_val_refine_r (ty : rtype) v T `{!Inhabited (ty.(rty_type))} :
     (∃ x, T (v ◁ᵥ (x @ ty))) -∗ simplify_goal (v◁ᵥty) T.
   Proof. iDestruct 1 as (x) "HT". iExists _. iFrame. iIntros "?". by iExists _. Qed.
-  Global Instance simplfy_goal_val_refine_r_inst (ty : rtype) v `{!RMovable ty} `{!Inhabited (ty.(rty_type))} :
+  Global Instance simplfy_goal_val_refine_r_inst (ty : rtype) v `{!Inhabited (ty.(rty_type))} :
     SimplifyGoalVal v ty (Some 10%N) :=
     λ T, i2p (simplify_goal_val_refine_r ty v T).
 
@@ -877,9 +878,9 @@ Section typing.
   Proof. iIntros (??) "_ $". Qed.
   Global Instance simple_subsume_place_r_id ty x : SimpleSubsumePlaceR ty ty x x True | 1.
   Proof. iIntros (??) "_ $". Qed.
-  Global Instance simple_subsume_val_id ty `{!Movable ty} : SimpleSubsumeVal ty ty True | 1.
+  Global Instance simple_subsume_val_id ty : SimpleSubsumeVal ty ty True | 1.
   Proof. iIntros (?) "_ $". Qed.
-  Global Instance simple_subsume_val_refinement_id ty x1 x2 `{!RMovable ty} :
+  Global Instance simple_subsume_val_refinement_id ty x1 x2 :
     SimpleSubsumeVal (x1 @ ty) (x2 @ ty) (⌜x1 = x2⌝) | 100.
   Proof. iIntros (? ->) "$". Qed.
 
@@ -889,10 +890,10 @@ Section typing.
   Global Instance simple_subsume_place_to_subsume_inst l β ty1 ty2 P `{!SimpleSubsumePlace ty1 ty2 P}:
     SubsumePlace l β ty1 ty2 := λ T, i2p (simple_subsume_place_to_subsume l β ty1 ty2 P T).
 
-  Lemma simple_subsume_val_to_subsume v ty1 ty2 P `{!Movable ty1} `{!Movable ty2} `{!SimpleSubsumeVal ty1 ty2 P} T:
+  Lemma simple_subsume_val_to_subsume v ty1 ty2 P `{!SimpleSubsumeVal ty1 ty2 P} T:
     P ∗ T -∗ subsume (v ◁ᵥ ty1) (v ◁ᵥ ty2) T.
   Proof. iIntros "[HP $] Hv". iApply (@simple_subsume_val with "HP Hv"). Qed.
-  Global Instance simple_subsume_val_to_subsume_inst v ty1 ty2 P `{!Movable ty1} `{!Movable ty2} `{!SimpleSubsumeVal ty1 ty2 P}:
+  Global Instance simple_subsume_val_to_subsume_inst v ty1 ty2 P `{!SimpleSubsumeVal ty1 ty2 P}:
     SubsumeVal v ty1 ty2 := λ T, i2p (simple_subsume_val_to_subsume v ty1 ty2 P T).
 
   Import EqNotations.
@@ -948,15 +949,15 @@ Section typing.
     TypedBinOp v1 P1 v2 P2 op ot1 ot2 | 1000 :=
     λ T, i2p (typed_binop_simplify v1 P1 v2 P2 T o1 o2 ot1 ot2 op).
 
-  Lemma typed_binop_comma v1 v2 P (ty : type) ot1 ot2 `{!Movable ty} T:
-    (P -∗ T v2 (t2mt ty)) -∗
+  Lemma typed_binop_comma v1 v2 P (ty : type) ot1 ot2 T:
+    (P -∗ T v2 ty) -∗
     typed_bin_op v1 P v2 (v2 ◁ᵥ ty) Comma ot1 ot2 T.
   Proof.
     iIntros "HT H1 H2" (Φ) "HΦ". iApply (wp_binop_det_pure v2).
     { split; [ by inversion 1 | move => ->; constructor ]. }
-    iDestruct ("HT" with "H1") as "HT". iApply ("HΦ" $! v2 (t2mt ty) with "H2 HT").
+    iDestruct ("HT" with "H1") as "HT". iApply ("HΦ" $! v2 ty with "H2 HT").
   Qed.
-  Global Instance typed_binop_comma_inst v1 v2 P (ty : type) ot1 ot2 `{!Movable ty}:
+  Global Instance typed_binop_comma_inst v1 v2 P (ty : type) ot1 ot2:
     TypedBinOp v1 P v2 (v2 ◁ᵥ ty) Comma ot1 ot2 :=
     λ T, i2p (typed_binop_comma v1 v2 P ty ot1 ot2 T).
 
@@ -1252,8 +1253,8 @@ Section typing.
   Proof.
     iIntros "He". iIntros (Φ) "HΦ".
     iApply wp_call_bind. iApply "He". iIntros (vf tyf) "Hvf HT".
-    iAssert ([∗ list] v;ty∈[];[], v ◁ᵥ (ty : mtype))%I as "-#Htys". { done. }
-    move: {2 3 5}[] => vl. move: {2 3}(@nil mtype) => tys.
+    iAssert ([∗ list] v;ty∈[];[], v ◁ᵥ ty)%I as "-#Htys". { done. }
+    move: {2 3 5}[] => vl. move: {2 3}(@nil type) => tys.
     iInduction es as [|e es] "IH" forall (vl tys) => /=. 2: {
       iApply "HT". iIntros (v ty) "Hv Hnext". iApply ("IH" with "HΦ Hvf Hnext"). by iFrame.
     }
@@ -1390,7 +1391,7 @@ Section typing.
     IntoPlaceCtx e T' →
     T' (λ K l, find_in_context (FindLoc l) (λ '(β1, ty1),
       typed_place K l β1 ty1 (λ l2 β2 ty2 typ R,
-          typed_read_end a ⊤ l2 β2 ty2 ot (λ v ty2' (ty3 : mtype),
+          typed_read_end a ⊤ l2 β2 ty2 ot (λ v ty2' ty3,
             l ◁ₗ{β1} typ ty2' -∗ R ty2' -∗ T v ty3)))) -∗
     typed_read a e ot T.
   Proof.
@@ -1433,7 +1434,7 @@ Section typing.
     TypedReadEnd a E l β ty ly | 10 :=
     λ T, i2p (type_read_copy T a β l ty ly E).
 
-  Lemma type_write (a : bool) ty `{!Movable ty} T T' e v ot:
+  Lemma type_write (a : bool) ty T T' e v ot:
     IntoPlaceCtx e T' →
     T' (λ K l, find_in_context (FindLoc l) (λ '(β1, ty1),
       typed_place K l β1 ty1 (λ l2 β2 ty2 typ R,
@@ -1452,11 +1453,12 @@ Section typing.
 
   (* TODO: this constraint on the layout is too strong, we only need
   that the length is the same and the alignment is lower. Adapt when necessary. *)
-  Lemma type_write_own_copy a E ty `{!Movable ty} T l2 ty2 v `{!Movable ty2} `{!Copyable ty} ot:
-    ⌜ty.(ty_has_op_type) (UntypedOp (ot_layout ot)) MCNone⌝ ∗ ⌜ty2.(ty_has_op_type) (UntypedOp (ot_layout ot)) MCNone⌝ ∗ (v ◁ᵥ ty -∗ T ty) -∗
+  Lemma type_write_own_copy a E ty T l2 ty2 v `{!Copyable ty} ot
+    `{!TCDone (ty2.(ty_has_op_type) (UntypedOp (ot_layout ot)) MCNone)}:
+    ⌜ty.(ty_has_op_type) (UntypedOp (ot_layout ot)) MCNone⌝ ∗ (v ◁ᵥ ty -∗ T ty) -∗
     typed_write_end a E ot v ty l2 Own ty2 T.
   Proof.
-    rewrite /typed_write_end. iDestruct 1 as (??) "HT". iIntros "Hl #Hv".
+    unfold typed_write_end, TCDone in *. iDestruct 1 as (?) "HT". iIntros "Hl #Hv".
     iDestruct (ty_aligned with "Hl") as %?; [done|].
     iDestruct (ty_deref with "Hl") as (v') "[Hl Hv']"; [done|].
     iDestruct (ty_size_eq with "Hv'") as %?; [done|].
@@ -1467,16 +1469,18 @@ Section typing.
     iExists _. iDestruct ("HT" with "Hv") as "$".
     by iApply (ty_ref with "[] Hl Hv").
   Qed.
-  Global Instance type_write_own_copy_inst a E ty `{!Movable ty} l2 ty2 v `{!Movable ty2} `{!Copyable ty} ot:
+  Global Instance type_write_own_copy_inst a E ty l2 ty2 v `{!Copyable ty} ot
+    `{!TCDone (ty2.(ty_has_op_type) (UntypedOp (ot_layout ot)) MCNone)}:
     TypedWriteEnd a E ot v ty l2 Own ty2 | 20 :=
     λ T, i2p (type_write_own_copy a E ty T l2 ty2 v ot).
 
   (* Note that there is also [type_write_own] in singleton.v which applies if one can prove MCId. *)
-  Lemma type_write_own_move a E ty `{!Movable ty} T l2 ty2 v `{!Movable ty2} ot :
-    ⌜ty.(ty_has_op_type) (UntypedOp (ot_layout ot)) MCNone⌝ ∗ ⌜ty2.(ty_has_op_type) (UntypedOp (ot_layout ot)) MCNone⌝ ∗ (∀ v', v' ◁ᵥ ty2 -∗ T ty) -∗
+  Lemma type_write_own_move a E ty T l2 ty2 v ot
+        `{!TCDone (ty2.(ty_has_op_type) (UntypedOp (ot_layout ot)) MCNone)} :
+    ⌜ty.(ty_has_op_type) (UntypedOp (ot_layout ot)) MCNone⌝ ∗ (∀ v', v' ◁ᵥ ty2 -∗ T ty) -∗
     typed_write_end a E ot v ty l2 Own ty2 T.
   Proof.
-    rewrite /typed_write_end. iDestruct 1 as (??) "HT". iIntros "Hl Hv".
+    unfold TCDone, typed_write_end in *. iDestruct 1 as (?) "HT". iIntros "Hl Hv".
     iDestruct (ty_aligned with "Hl") as %?; [done|].
     iDestruct (ty_deref with "Hl") as (v') "[Hl Hv']"; [done|].
     iDestruct (ty_size_eq with "Hv") as %?; [done|].
@@ -1487,7 +1491,8 @@ Section typing.
     iDestruct (ty_ref with "[] Hl Hv") as "?"; [done..|].
     iExists _. iFrame. by iApply "HT".
   Qed.
-  Global Instance type_write_own_move_inst a E ty `{!Movable ty} l2 ty2 v `{!Movable ty2} ot:
+  Global Instance type_write_own_move_inst a E ty l2 ty2 v ot
+    `{!TCDone (ty2.(ty_has_op_type) (UntypedOp (ot_layout ot)) MCNone)}:
     TypedWriteEnd a E ot v ty l2 Own ty2 | 70 :=
     λ T, i2p (type_write_own_move a E ty T l2 ty2 v ot).
 
@@ -1520,10 +1525,10 @@ Section typing.
   Global Instance type_place_id_inst l ty β:
     TypedPlace [] l β ty | 20 := λ T, i2p (type_place_id l ty β T).
 
-  Lemma copy_as_id l β ty `{!Movable ty} `{!Copyable ty} T:
-    T (t2mt ty) -∗ copy_as l β ty T.
-  Proof. iIntros "HT Hl". iExists (t2mt _). by iFrame. Qed.
-  Global Instance copy_as_id_inst l β ty `{!Movable ty} `{!Copyable ty}:
+  Lemma copy_as_id l β ty `{!Copyable ty} T:
+    T ty -∗ copy_as l β ty T.
+  Proof. iIntros "HT Hl". iExists _. by iFrame. Qed.
+  Global Instance copy_as_id_inst l β ty `{!Copyable ty}:
     CopyAs l β ty | 1000 := λ T, i2p (copy_as_id l β ty T).
 
   Lemma copy_as_refinement l β (ty : rtype) {HC: ∀ x, CopyAs l β (x @ ty)} T:
@@ -1607,7 +1612,10 @@ Section guarded.
                   | Own => ▷ l ◁ₗ ty
                   | Shr => □ ∀ E, ⌜↑shrN ⊆ E⌝ -∗ ⌜↑guardedN.@n ⊆ E⌝ ={E}[E ∖ ↑guardedN.@n]▷=∗ l ◁ₗ{Shr} ty
                   end%I;
+    ty_has_op_type _ _ := False;
+    ty_own_val _ := True%I;
   |}.
+  Solve Obligations with try done.
   Next Obligation.
     (* This is taken from the delayed shring approach in RustBelt. *)
     iIntros (n ty l ? ?) "Hl".
@@ -1621,7 +1629,12 @@ Section guarded.
   Qed.
 
   Global Instance guarded_contractive n : Contractive (guarded n).
-  Proof. constructor. solve_contractive. Qed.
+  Proof.
+    constructor.
+    - done.
+    - solve_contractive.
+    - done.
+  Qed.
 
   Lemma guarded_intro n l β ty :
     l ◁ₗ{β} ty -∗ l ◁ₗ{β} guarded n ty.
@@ -1743,20 +1756,20 @@ Global Hint Extern 99 (SimpleSubsumePlace (_ @ _) (_ @ _) _) =>
     simple notypeclasses refine (simple_subsume_place_refinement_eq _ _ _ _ _ _ _);
       lazymatch goal with
       | |- iProp _ => shelve
-      | |- _ = _ => exact : eq_refl
+      | |- _ = _ => simpl; exact : eq_refl
       | |- _ => cbn[eq_rect]
       end : typeclass_instances.
 Global Hint Extern 100 (SimpleSubsumePlace (_ @ _) (_ @ _) _) =>
     simple notypeclasses refine (simple_subsume_place_refinement _ _ _ _ _);
       lazymatch goal with
       | |- iProp _ => shelve
-      | |- _ = _ => exact : eq_refl
+      | |- _ = _ => simpl; exact : eq_refl
       | |- _ => cbn[eq_rect]
       end : typeclass_instances.
 Global Hint Extern 100 (SimpleSubsumePlace (_ @ _) (ty_of_rty _) _) =>
   simple notypeclasses refine (simple_subsume_place_rty_to_ty_r _ _ _ _); lazymatch goal with
       | |- iProp _ => shelve
-      | |- _ = _ => exact : eq_refl
+      | |- _ = _ => simpl; exact : eq_refl
       | |- _ => cbn[eq_rect]
       end
   : typeclass_instances.

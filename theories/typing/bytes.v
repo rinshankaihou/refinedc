@@ -10,22 +10,19 @@ Section bytewise.
   Implicit Types P : mbyte → Prop.
 
   Program Definition bytewise (P : mbyte → Prop) (ly : layout) : type := {|
+    ty_has_op_type ot mt := ot = UntypedOp ly;
     ty_own β l :=
       ∃ v, ⌜v `has_layout_val` ly⌝ ∗
            ⌜l `has_layout_loc` ly⌝ ∗
            ⌜Forall P v⌝ ∗
            l ↦[β] v;
+    ty_own_val v := (⌜v `has_layout_val` ly⌝ ∗ ⌜Forall P v⌝)%I;
   |}%I.
   Next Obligation.
     iIntros (?????). iDestruct 1 as (?) "(?&?&?&Hl)".
     iMod (heap_mapsto_own_state_share with "Hl") as "Hl".
     eauto with iFrame.
   Qed.
-
-  Global Program Instance movable_bytewise ly P : Movable (bytewise P ly) := {|
-    ty_has_op_type ot mt := ot = UntypedOp ly;
-    ty_own_val v := (⌜v `has_layout_val` ly⌝ ∗ ⌜Forall P v⌝)%I;
-  |}.
   Next Obligation. iIntros (?????->). by iDestruct 1 as (????) "_". Qed.
   Next Obligation. by iIntros (?????-> [??]). Qed.
   Next Obligation. iIntros (??????). iDestruct 1 as (????) "?". by eauto. Qed.
@@ -146,9 +143,10 @@ Section bytewise.
       ⌜0 ≤ n⌝ ∗
       ⌜Z.to_nat n ≤ ly.(ly_size)⌝%nat ∗
       (p ◁ₗ{β} bytewise P (ly_set_size ly (Z.to_nat n)) -∗ v2 ◁ᵥ n @ int it -∗
-       T (val_of_loc (p +ₗ n)) (t2mt ((p +ₗ n) @ &frac{β} (bytewise P (ly_offset ly (Z.to_nat n))))))) -∗
+       T (val_of_loc (p +ₗ n)) ((p +ₗ n) @ &frac{β} (bytewise P (ly_offset ly (Z.to_nat n)))))) -∗
     typed_bin_op v2 (v2 ◁ᵥ n @ int it) p (p ◁ₗ{β} bytewise P ly) (PtrOffsetOp u8) (IntOp it) PtrOp T.
   Proof.
+    unfold int; simpl_type.
     iIntros "HT" (Hint) "Hp". iIntros (Φ) "HΦ".
     move: (Hint) => /val_to_Z_in_range?.
     iDestruct ("HT" with "[//]") as (??) "HT".
@@ -158,7 +156,7 @@ Section bytewise.
     iApply wp_ptr_offset; [ by apply val_to_of_loc | done | |].
     { iApply loc_in_bounds_shorten; [|done]; lia. }
     iModIntro. iApply ("HΦ" with "[H2]"). 2: iApply ("HT" with "H1 []").
-    - by iFrame.
+    - unfold frac_ptr; simpl_type. by iFrame.
     - by iPureIntro.
   Qed.
   Global Instance type_add_bytewise_inst v2 β P ly (p : loc) n it:
@@ -185,11 +183,11 @@ Section uninit.
   Qed.
 
   (* This only works for [Own] since [ty] might have interior mutability. *)
-  Lemma uninit_mono l ty ly `{!Movable ty} `{!CanSolve (ty.(ty_has_op_type) (UntypedOp ly) MCNone)} T:
+  Lemma uninit_mono l ty ly `{!TCDone (ty.(ty_has_op_type) (UntypedOp ly) MCNone)} T:
     (∀ v, v ◁ᵥ ty -∗ T) -∗
     subsume (l ◁ₗ ty) (l ◁ₗ uninit ly) T.
   Proof.
-    unfold CanSolve in *; subst. iIntros "HT Hl".
+    unfold TCDone in *; subst. iIntros "HT Hl".
     iDestruct (ty_aligned with "Hl") as %?; [done|].
     iDestruct (ty_deref with "Hl") as (v) "[Hl Hv]"; [done|].
     iDestruct (ty_size_eq with "Hv") as %?; [done|].
@@ -198,15 +196,10 @@ Section uninit.
     - by iApply "HT".
   Qed.
   (* This rule is handled with a definition and an [Hint Extern] (not
-  with an instance) since [Movable] is a dependent subgoal (used by
-  [ty.(ty_has_layout)] in the [CanSolve] instance), and it is thus
-  shelved according to heuristics used by Coq. We thus use [unshleve]
-  in the [Hint Extern] to prevent that.
-
-  Also this rule should only apply ty is not uninit as this case is
-  covered by the rules for bytes and the CanSolve can be quite
-  expensive. *)
-  Definition uninit_mono_inst l ty ly `{!Movable ty} `{!CanSolve (ty.(ty_has_op_type) (UntypedOp ly) MCNone)}:
+  with an instance) since this rule should only apply ty is not uninit
+  as this case is covered by the rules for bytes and the CanSolve can
+  be quite expensive. *)
+  Definition uninit_mono_inst l ty ly `{!TCDone (ty.(ty_has_op_type) (UntypedOp ly) MCNone)}:
     SubsumePlace l Own ty (uninit ly) :=
     λ T, i2p (uninit_mono l ty ly T).
 
@@ -230,22 +223,22 @@ Section uninit.
     iExists _. by iFrame.
   Qed.
 
-  Lemma type_read_move_copy T E l ty ot a `{!Movable ty}:
-    (⌜ty.(ty_has_op_type) ot MCCopy⌝ ∗ ∀ v, T v (uninit (ot_layout ot)) (t2mt ty)) -∗
+  Lemma type_read_move_copy T E l ty ot a `{!TCDone (ty.(ty_has_op_type) ot MCCopy)}:
+    (∀ v, T v (uninit (ot_layout ot)) ty) -∗
       typed_read_end a E l Own ty ot T.
   Proof.
-    rewrite /typed_read_end. iIntros "[% HT] Hl".
+    unfold TCDone in *. rewrite /typed_read_end. iIntros "HT Hl".
     iApply fupd_mask_intro; [destruct a; solve_ndisj|]. iIntros "Hclose".
     iDestruct (ty_aligned with "Hl") as %?; [done|].
     iDestruct (ty_deref with "Hl") as (v) "[Hl Hv]"; [done|].
     iDestruct (ty_size_eq with "Hv") as %?; [done|].
-    iExists _, _, (t2mt _). iFrame. do 2 iSplit => //=.
+    iExists _, _, _. iFrame. do 2 iSplit => //=.
     iIntros "!# %st Hl Hv". iMod "Hclose". iModIntro.
     iDestruct (ty_memcast_compat_copy with "Hv") as "Hv"; [done|].
-    iExists _, (t2mt ty). iFrame. iSplitR "HT"; [|done].
+    iExists _, ty. iFrame. iSplitR "HT"; [|done].
     iExists _. iFrame. iPureIntro. split_and! => //. by apply: Forall_true.
   Qed.
-  Global Instance type_read_move_copy_inst l E ty ot a `{!Movable ty} :
+  Global Instance type_read_move_copy_inst l E ty ot a `{!TCDone (ty.(ty_has_op_type) ot MCCopy)}:
     TypedReadEnd a E l Own ty ot | 70 :=
     λ T, i2p (type_read_move_copy T E l ty ot a).
 End uninit.
@@ -267,8 +260,8 @@ Section void.
   Definition void : type := uninit void_layout.
 
   Lemma type_void T:
-    T (t2mt void) -∗ typed_value VOID T.
-  Proof. iIntros "HT". rewrite /VOID. iExists _. by iFrame. Qed.
+    T void -∗ typed_value VOID T.
+  Proof. iIntros "HT". rewrite /VOID. iExists _. iFrame. by unfold void, bytewise; simpl_type. Qed.
   Global Instance type_void_inst : TypedValue VOID :=
     λ T, i2p (type_void T).
 End void.
@@ -283,7 +276,7 @@ Section zeroed.
     subsume (p ◁ₗ uninit ly1)%I (p ◁ₗ zeroed ly2)%I T.
   Proof.
     iDestruct 1 as (H1 H2) "HT". iIntros "Hp".
-    iDestruct (ty_aligned (UntypedOp _) MCNone with "Hp") as %Hal; [done|].
+    iDestruct (ty_aligned _ (UntypedOp _) MCNone with "Hp") as %Hal; [done|].
     iDestruct (loc_in_bounds_in_bounds with "Hp") as "#Hlib".
     iSplitR; last by iApply "HT".
     iExists []. rewrite Forall_nil /has_layout_loc -H1. repeat iSplit => //.

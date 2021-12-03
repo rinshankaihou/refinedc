@@ -181,6 +181,7 @@ void remove(tree_t* t, int k){
 
 struct [[rc::refined_by("s: {gset Z}")]]
        [[rc::ptr_type("stree_t : ∃ t. t @ tree_t & {tree_rel s t}")]]
+       [[rc::unfold_prio("90")]]
 dummy { [[rc::field("int<i32>")]] int a; };
 
 [[rc::returns("{∅} @ stree_t")]]
