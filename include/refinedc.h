@@ -26,6 +26,8 @@
     [[rc::annot(__VA_ARGS__)]] &(e);                     \
     _Pragma("GCC diagnostic pop")
 
+#define rc_annot_expr(e, ...) (0 ? ("rc_annot", __VA_ARGS__, (e)) : (e))
+
 #define rc_unlock(e) rc_annot(e, "UnlockA")
 #define rc_to_uninit(e) rc_annot(e, "ToUninit")
 #define rc_stop(e) rc_annot(e, "StopAnnot")
@@ -33,6 +35,7 @@
 #define rc_unfold_once(e) rc_annot(e, "UnfoldOnceAnnot")
 #define rc_learn(e) rc_annot(e, "LearnAnnot")
 #define rc_learn_alignment(e) rc_annot(e, "LearnAlignmentAnnot")
+#define rc_reduce_expr(e) rc_annot_expr(e, "ReduceAnnot")
 
 #ifdef RC_ENABLE_FOCUS
 #define RC_FOCUS ,rc::trust_me

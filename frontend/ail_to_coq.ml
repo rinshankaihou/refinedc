@@ -204,6 +204,11 @@ let is_macro_annot e =
   | MacroString("rc_macro") :: _ -> true
   | _ -> false
 
+let is_expr_annot e =
+  match macro_annot_to_list e with
+  | MacroString("rc_annot") :: _ -> true
+  | _ -> false
+
 
 (* Getting return and argument types for a function. *)
 let rec get_function_type loc Ctype.(Ctype(_, c_ty)) =
@@ -532,6 +537,15 @@ let rec translate_expr : bool -> op_type option -> ail_expr -> expr =
           let e3 = translate e3 in
           locate (Macro(name, args, es, e3))
        | _ -> not_impl loc "wrong macro"
+       end
+    | AilEcond(e1,e2,e3) when is_const_0 e1 && is_expr_annot e2 ->
+       begin
+       match macro_annot_to_list e2 with
+       | _ :: MacroString(name) :: _ ->
+         let e3 = translate e3 in
+         (* TODO: Allow customizing the 1 *)
+         locate (AnnotExpr(1, Coq_ident(name), e3))
+       | _ -> not_impl loc "wrong annot expr"
        end
     | AilEcond(e1,e2,e3)           ->
        let ty = op_type_of_tc (loc_of e1) (tc_of e1) in

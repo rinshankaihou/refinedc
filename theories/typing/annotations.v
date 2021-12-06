@@ -19,3 +19,6 @@ Inductive learn_alignment_annot : Type :=
   LearnAlignmentAnnot.
 
 Inductive LockAnnot : Type := LockA | UnlockA.
+
+Inductive reduce_annot : Type :=
+  ReduceAnnot.

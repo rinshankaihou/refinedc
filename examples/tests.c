@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include "refinedc.h"
 // Random tests.
 
 [[rc::returns("void")]]
@@ -161,4 +162,9 @@ struct [[rc::parameters("z: Z", "n : Z")]] [[rc::refined_by("x: unit")]] test2 {
 [[rc::returns("z @ int<i32>")]]
 int test_struct2(struct test2 s) {
   return s.a;
+}
+
+[[rc::returns("{0xf1} @ int<i32>")]]
+int test_reduce() {
+  return rc_reduce_expr((1 | 0xff0) & 0xff);
 }
