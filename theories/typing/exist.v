@@ -49,6 +49,11 @@ Section tyexist.
   Qed.
 End tyexist.
 
+Notation "'∃ₜ' x .. y , p" := (ty_of_rty (tyexists (fun x => .. (ty_of_rty (tyexists (fun y => p))) ..)))
+  (at level 200, x binder, right associativity,
+   format "'[' '∃ₜ'  '/  ' x  ..  y ,  '/  ' p ']'")
+  : bi_scope.
+
 Section tyexist.
   Context `{!typeG Σ} {A : Type}.
 

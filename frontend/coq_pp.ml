@@ -594,7 +594,7 @@ and pp_type_expr_guard : unit pp option -> guard_mode -> type_expr pp =
                 (pp true true guarded) ty
         end
     | Ty_exists(xs,a,ty) ->
-        fprintf ff "tyexists (λ %a%a, %a%a)" (pp_encoded_patt_name false) xs
+        fprintf ff "∃ₜ %a%a, %a%a" (pp_encoded_patt_name false) xs
           pp_ty_annot a pp_encoded_patt_bindings xs
           (pp false false guarded) ty
     | Ty_constr(ty,c)    ->
@@ -607,6 +607,8 @@ and pp_type_expr_guard : unit pp option -> guard_mode -> type_expr pp =
         in
         match guard with
         | Guard_in_def(s) when id = s ->
+           (* We cannot use the ∃ₜ notation here as it hard-codes a
+              rtype-to-type conversion.*)
             fprintf ff "tyexists (λ rfmt__, ";
             if not guarded then fprintf ff "guarded (%a) (" with_uid s;
             fprintf ff "apply_dfun self (rfmt__";
@@ -712,10 +714,12 @@ let rec pp_struct_def_np structs guard annot fields ff id =
     pp "@[<v 0>";
     if annot.st_exists <> [] then
       begin
+        pp "∃ₜ";
         let pp_exist (x, e) =
-          pp "tyexists (λ %s : %a,@;" x (pp_simple_coq_expr false) e
+          pp " (%s : %a)" x (pp_simple_coq_expr false) e
         in
         List.iter pp_exist annot.st_exists;
+        pp ",@;"
       end;
     (* Printing the let-bindings. *)
     let pp_let (id, ty, def) =
@@ -791,8 +795,6 @@ let rec pp_struct_def_np structs guard annot fields ff id =
         List.iter (pp " ∗@;%a" pp_constr) cs;
         pp "@]@;)"
       end;
-    (* Closing the "exists". *)
-    List.iter (fun _ -> pp ")") annot.st_exists;
     pp "@]"
   in
   match annot.st_ptr_type with
