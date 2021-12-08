@@ -79,17 +79,8 @@ Ltac assert_is_trivial P :=
 Ltac assert_is_not_trivial P :=
   assert_fails (assert (P) as _;[splitting_fast_done|]).
 
-(* Checks that a term is closed using a trick by Jason Gross. *)
-Ltac check_closed t :=
-  assert_succeeds (
-    let x := fresh "x" in
-    exfalso; pose t as x; revert x;
-    repeat match goal with H : _ |- _ => clear H end;
-    lazymatch goal with H : _ |- _ => fail | _ => idtac end
-  ).
-
 Tactic Notation "reduce_closed" constr(x) :=
-  check_closed x;
+  is_closed_term x;
   let r := eval vm_compute in x in
   change_no_check x with r in *
 .
