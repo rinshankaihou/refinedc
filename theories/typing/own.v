@@ -695,4 +695,17 @@ Section optional_null.
   Global Instance type_place_optional_null_inst K l β1 b ty :
     TypedPlace K l β1 (b @ optional ty null) | 100 :=
     λ T, i2p (type_place_optional_null K l β1 b ty T).
+
+  Lemma type_place_optionalO_null A K l β1 b (ty : A → _) T:
+    ⌜is_Some b⌝ ∗ (∀ x, ⌜b = Some x⌝ -∗ typed_place K l β1 (ty x) T) -∗
+    typed_place K l β1 (b @ optionalO ty null) T.
+  Proof.
+    iDestruct 1 as ([? ->]) "Hwp".
+    iIntros (Φ) "Hx". by iApply "Hwp".
+  Qed.
+
+  (* This should have a lower priority than type_place_id *)
+  Global Instance type_place_optionalO_null_inst A K l β1 b (ty : A → _) :
+    TypedPlace K l β1 (b @ optionalO ty null) | 100 :=
+    λ T, i2p (type_place_optionalO_null A K l β1 b ty T).
 End optional_null.

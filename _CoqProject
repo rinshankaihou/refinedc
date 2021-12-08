@@ -17,6 +17,8 @@
 -Q _build/default/examples/proofs/lock refinedc.examples.lock
 -Q _build/default/examples/proofs/flags refinedc.examples.flags
 -Q _build/default/examples/proofs/shift refinedc.examples.shift
+-Q _build/default/examples/VerifyThis2021/proofs/challenge1 refinedc.examples.VerifyThis2021.challenge1
+-Q _build/default/examples/VerifyThis2021/proofs/challenge2 refinedc.examples.VerifyThis2021.challenge2
 -Q _build/default/tutorial/proofs/binary_search_defs refinedc.tutorial.binary_search_defs
 -Q _build/default/tutorial/proofs/t00_intro refinedc.tutorial.t00_intro
 -Q _build/default/tutorial/proofs/t01_basic refinedc.tutorial.t01_basic

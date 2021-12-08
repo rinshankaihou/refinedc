@@ -135,6 +135,34 @@ Ltac evalZ :=
   repeat select closed subterm of type Z (fun x => progress reduce_closed x).
  *)
 
+
+Create HintDb simplify_length discriminated.
+Global Hint Rewrite rev_length app_length @take_length @drop_length @cons_length @nil_length : simplify_length.
+Global Hint Rewrite @insert_length : simplify_length.
+Ltac simplify_length :=
+  autorewrite with simplify_length.
+
+Ltac saturate_list_lookup :=
+  repeat match goal with
+         | H : @lookup _ _ _ list_lookup ?l ?i = Some _ |- _ =>
+             let H' := fresh "H" in
+             pose proof (lookup_lt_Some _ _ _ H) as H';
+             tactic simplify_length in H';
+             lazymatch type of H' with
+             | ?T => assert_fails (clear H'; assert T by lia)
+             end
+      end.
+
+Ltac list_lia :=
+  simplify_length; lia.
+
+Lemma list_eq_split {A} i (l1 l2 : list A):
+  take i l1 = take i l2 →
+  drop i l1 = drop i l2 →
+  l1 = l2.
+Proof. move => ??. rewrite -(take_drop i l1) -(take_drop i l2). congruence. Qed.
+
+
 (** * typeclasses *)
 Inductive TCOneIsSome {A} : option A → option A → Prop :=
 | tc_one_is_some_left n1 o2 : TCOneIsSome (Some n1) o2

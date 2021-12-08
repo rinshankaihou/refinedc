@@ -797,9 +797,10 @@ let rec pp_struct_def_np structs guard annot fields ff id =
       end;
     pp "@]"
   in
+  reset_nroot_counter ();
   match annot.st_ptr_type with
   | None        -> pp_dots ff ()
-  | Some(_, ty) -> pp_type_expr_guard (Some(pp_dots)) Guard_none ff ty
+  | Some(_, ty) -> pp_type_expr_guard (Some(pp_dots)) guard ff ty
 
 let collect_invs : func_def -> (string * loop_annot) list = fun def ->
   let fn id (annot, _) acc =
