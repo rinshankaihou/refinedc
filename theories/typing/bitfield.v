@@ -239,8 +239,8 @@ Section programs.
     iApply (type_relop_int_int with "[HT] Hv1 Hv2") => //.
     iIntros "_ _".
     have -> : negb b = bool_decide (0 = bv).
-    { rewrite (bool_decide_iff _ (bv = 0)) //.
-      rewrite Hbv (bool_decide_iff _ (b = false)); last by apply bf_cons_bool_singleton_false_iff.
+    { rewrite (bool_decide_ext _ (bv = 0)) //.
+      rewrite Hbv (bool_decide_ext _ (b = false)); last by apply bf_cons_bool_singleton_false_iff.
       by destruct b. }
     iExists _. iFrame. unfold boolean, int; simpl_type. iIntros "(%n&%&%Heq)". move: Heq => /= ?. subst n. done.
   Qed.
@@ -258,8 +258,8 @@ Section programs.
     iApply (type_relop_int_int with "[HT] Hv1 Hv2") => //.
     iIntros "_ _".
     have -> : b = bool_decide (0 ≠ bv).
-    { rewrite (bool_decide_iff _ (bv ≠ 0)) //.
-      rewrite Hbv (bool_decide_iff _ (b = true)); last by apply bf_cons_bool_singleton_true_iff.
+    { rewrite (bool_decide_ext _ (bv ≠ 0)) //.
+      rewrite Hbv (bool_decide_ext _ (b = true)); last by apply bf_cons_bool_singleton_true_iff.
       by destruct b. }
     iExists _. iFrame. unfold boolean, int; simpl_type.
     iIntros "(%n&%&%Heq)". move: Heq => /= ?. subst n. done.

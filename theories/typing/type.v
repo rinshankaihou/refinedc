@@ -248,6 +248,9 @@ Inductive memcast_compat_type : Set :=
 Record type `{!typeG Σ} := {
   (** ty_has_op_type should be written such that it computes well and can be solved by solve_goal.
    Also ty_has_op_type should be defined for UntypedOp. *)
+  (* TODO: add
+   ty_has_op_type ot mt → ty_has_op_type (UntypedOp (ot_layout ot)) mt
+   This property is never used explicitly, but relied on by some typing rules *)
   ty_has_op_type : op_type → memcast_compat_type → Prop;
   ty_own : own_state → loc → iProp Σ;
   ty_own_val : val → iProp Σ;
