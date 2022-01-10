@@ -539,7 +539,7 @@ let init : string option -> unit = fun coq_path ->
         panic "File \"%s\" uses a reserved name." path
     else ()
   in
-  Filename.iter_files ~ignored_dirs:[".git"; "_build"] wd file_check;
+  Filename.iter_files ~ignored_dirs:[".git"; "_build"; "_opam"] wd file_check;
   (* Check for conflicting projects in parent directories. *)
   let rec check_parents dir =
     let check_dir dir =
