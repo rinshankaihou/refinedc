@@ -71,6 +71,9 @@ int int_id(int a) {
  */
 
 /**
+   Refinement types
+   ================
+
    While [int_id] fulfills its specification, this specification is
    quite weak. We would additionally like to prove that it is indeed
    the identity function, i.e. it returns the same integer as it was
@@ -155,6 +158,9 @@ int add1(int a) {
 }
 
 /**
+   Failing side conditions
+   =======================
+
    Try commenting out the line with [rc::requires...] on the [add1]
    function and running RefinedC. You should see an output which looks
    something like:
@@ -198,6 +204,9 @@ int add1(int a) {
 
 
 /**
+   Typechecking
+   ============
+
    Based on the next example, we want to get a better high-level
    understanding how the typechecker of RefinedC works.
 
@@ -265,6 +274,9 @@ int min(int a, int b) {
 }
 
 /**
+   Loop invariants
+   ===============
+
    Loops are a bit more complicated than if statements, so let's have
    a look at the world's most stupid add function: [looping_add]
 
@@ -288,6 +300,10 @@ int min(int a, int b) {
 
   Note that RefinedC does not prove termination, so there is no need
   to specify a loop variant or similar.
+
+  Try to play around with this loop invariant (e.g. changing the
+  refinement of [b] or the rc::constraints clause) and see if you can
+  understand why certain errors occur and how they can be fixed.
 */
 
 [[rc::parameters("va : Z", "vb : Z")]]
@@ -297,7 +313,7 @@ int min(int a, int b) {
 int looping_add(int a, int b) {
     [[rc::exists("acc : Z")]]
     [[rc::inv_vars("a : acc @ int<i32>", "b : {va + vb - acc} @ int<i32>")]]
-    [[rc::constraints("{0 <= acc}")]]
+    [[rc::constraints("{0 <= acc}")]] // try commenting this line and see what happens
     while(a > 0) {
         b++;
         // try uncommenting the following line: (see below for explanation)
@@ -308,6 +324,9 @@ int looping_add(int a, int b) {
 }
 
 /**
+   Type system error messages
+   ==========================
+
    We also want to use the [looping_add] example to understand the
    type system a bit better. You can use the [rc_stop] macro, which
    takes as argument an arbitrary variable, to artifically stop the
@@ -366,8 +385,142 @@ int looping_add(int a, int b) {
  */
 
 /**
+   Ownership types
+   ===============
+
+   So far we have seen many examples using integers, but RefinedC can
+   not only reason about integers. Another important feature of C are
+   pointers. Reasoning about pointers is handled by ownership types in
+   RefinedC.
+
+   The basic idea of ownership types is simple: The type of a pointer
+   does no only ensure that the value is a pointer value, but the type
+   also ensures exclusive ownership of the memory that the pointer
+   points to. Roughly this exclusive ownership ensures that there is
+   only one valid pointer to a location of memory at each time so when
+   modifying a memory location, one does not need to worry about
+   potential aliases.
+
+   Let's look at ownership types in action: The following [int_ptrs]
+   function takes two pointer arguments [p1] and [p2]. They have the
+   RefinedC type [&own<T>] which denotes that they are owned pointers
+   --- concretely, they are owned pointers to integers. (You can
+   ignore the rc::ensures) clause for the moment.)
+ */
+
+[[rc::parameters("p1 : loc", "p2 : loc")]]
+[[rc::args("p1 @ &own<int<i32>>", "p2 @ &own<int<i32>>")]]
+[[rc::ensures("own p1 : int<i32>", "own p2 : int<i32>")]]
+void int_ptrs(int* p1, int* p2) {
+  /** We can write to p1. */
+  *p1 = 1;
+  /** Afterwards we know that p1 points to 1. */
+  assert(*p1 == 1);
+  /** We can also write to p2. */
+  *p2 = 2;
+  /** And afterwards [*p1] contains 1 and [*p2] contains 2. */
+  assert(*p1 == 1);
+  assert(*p2 == 2);
+}
+
+/**
+   This verification of [int_ptrs] might seem straightforward, but
+   actually it is not obvious that all the asserts in this function
+   always succeed. Can you think of a potential caller of this
+   function that could make one of the asserts fail?
+
+
+   The interesting assert is the second [assert(*p1 == 1)]: For
+   proving that this assert succeeds, we need to know that [*p1] still
+   contains 1 even after the write to [p2]. But what if a client
+   passes the same pointer as [p1] and [p2], i.e. [p1] and [p2] alias?
+   In this case, the write to [p2] would overwrite the value stored in
+   [p1] and the [assert(*p1 == 1)] fails! In general, such aliasing
+   makes verification of C code very hard as every write to a pointer
+   could potentially invalidate many other pointers. This is where
+   ownership types come in to safe the day: Ownership types and in
+   particular owned pointers rule out aliasing by ensuring that there
+   can only be one owned pointer for each memory location. Concretely
+   for the example above the owned pointer types of [p1] and [p2] mean
+   that they cannot alias since they are both owned pointers and there
+   can only be one owned pointer to each memory location. This
+   implicitly ensures that the write to [p2] does not change the value
+   stored at [p1] and thus the second [assert(*p1 == 1)] always
+   succeeds.
+
+   We can see the ownership constraint that the [int_ptrs] places on
+   its clients more clearly when looking at the following function:
+   */
+
+[[rc::ensures("True")]]
+void call_int_ptrs() {
+  int p1 = 0, p2 = 0;
+  /** Calling int_ptrs with two different pointers is fine. */
+  int_ptrs(&p1, &p2);
+  /** But calling [int_ptrs] with aliasing pointers gives an error.
+   * Try uncommenting the next line to see it.  */
+  // int_ptrs(&p1, &p1); // try uncommenting this line
+}
+
+/**
+    When you uncomment the second call to [int_ptrs], you should get
+    an error which roughly looks like the following:
+
+    Type system got stuck in function "call_int_ptrs" in block "#0" !
+    Location: "tutorial/t01_basic.c" [ 462 : 16 - 462 : 19 ]
+    Location: "tutorial/t01_basic.c" [ 462 : 2 - 462 : 21 ]
+    Location: "tutorial/t01_basic.c" [ 462 : 2 - 462 : 21 ]
+    up to date: true
+    Goal:
+    global_int_ptrs : loc
+    local_p1 : loc
+    local_p2 : loc
+    Q : (gmap label stmt)
+    R : (val → type → iProp Σ)
+    v : val
+    x : Z
+    x0 : Z
+    ---------------------------------------
+    _ : global_int_ptrs ∶ global_int_ptrs @ function_ptr type_of_int_ptrs
+    --------------------------------------□
+    _ : i2v 0 i32 ∶ 0 @ int<i32>
+    _ : i2v 0 i32 ∶ 0 @ int<i32>
+    _ : own local_p2 ∶ x0 @ int<i32>
+    _ : v ∶ void
+    --------------------------------------∗
+    find_in_context (FindLoc local_p1)
+    ...
+
+    This error might seem quite intimidating at first, but it is not
+    too hard to understand what it means. The important part for
+    understanding error messages like this is to look at the top-most
+    connective after
+    --------------------------------------∗
+
+    This shows the head of the Goal where the RefinedC type checker
+    got stuck. In this case, it is [find_in_context (FindLoc
+    local_p1)]. This tells us that the RefinedC type system could not
+    find ownership of the location [local_p1] (i.e. the location of
+    the local variable [p1]) in the context. In fact, we can see that
+    the context only contains ownership of [local_p2] (i.e. own
+    local_p2 ∶ x0 @ int<i32>) but not of [p1]. Looking at the line
+    numbers tells us that this happens when type checking the &p1 in
+    the second argument to int_ptrs. With this information we can
+    figure out what happened: We passed ownership of [p1] to
+    [int_ptrs] together with the first argument so that when RefinedC
+    tries to pass the ownership of the second argument, it gets stuck
+    because this ownership is already gone! Overall, this shows how
+    RefinedC rules out aliasing using ownership types.
+
+*/
+
+/**
+   TODO: Talk about rc::ensures clauses with ownership types.
+ */
+
+/**
    So far we have only looked at the [int] type, but there are more
-   type in RefinedC. The next example of a function which initializes
+   types in RefinedC. The next example of a function which initializes
    an integer to 1 shows two of them:
 
    - [uninit<layout>] represents uninitialized memory which might
