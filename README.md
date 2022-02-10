@@ -45,7 +45,7 @@ Assuming an appropriate [opam](https://opam.ocaml.org/doc/Install.html) switch
 sudo apt-get install libmpfr-dev # Implicit Cerberus dependency.
 opam repo add coq-released "https://coq.inria.fr/opam/released"
 opam repo add iris-dev "https://gitlab.mpi-sws.org/iris/opam.git"
-opam pin add -n -y cerberus "git+https://github.com/rems-project/cerberus.git#7eb94d628845555cb5425f4f4b48890b345efdc5"
+opam pin add -n -y cerberus "git+https://github.com/rems-project/cerberus.git#b60ea9a7d30dfa7f048c2b312dd86547939a035a"
 opam pin add refinedc "git+https://gitlab.mpi-sws.org/iris/refinedc.git"
 ```
 
@@ -114,7 +114,7 @@ dependencies can be made available to opam by running the following commands.
 ```bash
 opam repo add coq-released "https://coq.inria.fr/opam/released"
 opam repo add iris-dev "https://gitlab.mpi-sws.org/iris/opam.git"
-opam pin add -n -y cerberus "git+https://github.com/rems-project/cerberus.git#7eb94d628845555cb5425f4f4b48890b345efdc5"
+opam pin add -n -y cerberus "git+https://github.com/rems-project/cerberus.git#b60ea9a7d30dfa7f048c2b312dd86547939a035a"
 ```
 You can then finally install RefinedC with the following command, or rather
 decide to install it from a local clone to have access to various examples.

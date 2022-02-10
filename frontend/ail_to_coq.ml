@@ -138,17 +138,18 @@ let layout_of : bool -> c_type -> Coq_ast.layout = fun fa c_ty ->
   let rec layout_of Ctype.(Ctype(annots, c_ty)) =
     let loc = Annot.get_loc_ annots in
     match c_ty with
-    | Void                -> LVoid
-    | Basic(Integer(i))   -> layout_of_int_type loc i
-    | Basic(Floating(_))  -> not_impl loc "layout_of (Basic float)"
-    | Array(_,_) when fa  -> LPtr
-    | Array(c_ty,None )   -> LPtr
-    | Array(c_ty,Some(n)) -> LArray(layout_of c_ty, Z.to_string n)
-    | Function(_,_,_,_)   -> LPtr
-    | Pointer(_,_)        -> LPtr
-    | Atomic(c_ty)        -> layout_of c_ty
-    | Struct(sym)         -> LStruct(sym_to_str sym, false)
-    | Union(sym)          -> LStruct(sym_to_str sym, true )
+    | Void                  -> LVoid
+    | Basic(Integer(i))     -> layout_of_int_type loc i
+    | Basic(Floating(_))    -> not_impl loc "layout_of (Basic float)"
+    | Array(_,_) when fa    -> LPtr
+    | Array(c_ty,None )     -> LPtr
+    | Array(c_ty,Some(n))   -> LArray(layout_of c_ty, Z.to_string n)
+    | FunctionNoParams(_,_)
+    | Function(_,_,_,_)     -> LPtr
+    | Pointer(_,_)          -> LPtr
+    | Atomic(c_ty)          -> layout_of c_ty
+    | Struct(sym)           -> LStruct(sym_to_str sym, false)
+    | Union(sym)            -> LStruct(sym_to_str sym, true )
   in
   layout_of c_ty
 
@@ -263,13 +264,14 @@ and op_type_of loc Ctype.(Ctype(_, c_ty)) =
     | None     -> OpBool
   in
   match c_ty with
-  | Void                -> not_impl loc "op_type_of (Void)"
-  | Basic(Integer(i))   -> op_type_of_int_type loc i
-  | Basic(Floating(_))  -> not_impl loc "op_type_of (Basic float)"
-  | Array(_,_)          -> not_impl loc "op_type_of (Array)"
-  | Function(_,_,_,_)   -> not_impl loc "op_type_of (Function)"
-  | Pointer(_,c_ty)     -> OpPtr(layout_of false c_ty)
-  | Atomic(c_ty)        ->
+  | Void                  -> not_impl loc "op_type_of (Void)"
+  | Basic(Integer(i))     -> op_type_of_int_type loc i
+  | Basic(Floating(_))    -> not_impl loc "op_type_of (Basic float)"
+  | Array(_,_)            -> not_impl loc "op_type_of (Array)"
+  | FunctionNoParams(_,_)
+  | Function(_,_,_,_)     -> not_impl loc "op_type_of (Function)"
+  | Pointer(_,c_ty)       -> OpPtr(layout_of false c_ty)
+  | Atomic(c_ty)          ->
       begin
         match op_type_of loc c_ty with
         | OpInt(_) as op_ty -> op_ty
@@ -278,7 +280,7 @@ and op_type_of loc Ctype.(Ctype(_, c_ty)) =
       end
   | Struct(sym)           ->
      OpStruct(sym_to_str sym, List.map snd (tag_def_data loc (sym_to_str sym)))
-  | Union(_)            -> not_impl loc "op_type_of (Union)"
+  | Union(_)              -> not_impl loc "op_type_of (Union)"
 
 (* Get an op_type under a pointer indirection in the type of [e]. *)
 let ptr_op_type_of : ail_expr -> Coq_ast.op_type = fun e ->
@@ -297,21 +299,22 @@ let rec op_type_opt loc Ctype.(Ctype(_, c_ty)) =
     | None     -> OpBool
   in
   match c_ty with
-  | Void                -> None
-  | Basic(Integer(i))   -> Some(op_type_of_int_type loc i)
-  | Basic(Floating(_))  -> None
-  | Array(_,_)          -> None
-  | Function(_,_,_,_)   -> None
-  | Pointer(_,c_ty)     -> Some(OpPtr(layout_of false c_ty))
-  | Atomic(c_ty)        ->
+  | Void                  -> None
+  | Basic(Integer(i))     -> Some(op_type_of_int_type loc i)
+  | Basic(Floating(_))    -> None
+  | Array(_,_)            -> None
+  | FunctionNoParams(_,_)
+  | Function(_,_,_,_)     -> None
+  | Pointer(_,c_ty)       -> Some(OpPtr(layout_of false c_ty))
+  | Atomic(c_ty)          ->
       begin
         match op_type_opt loc c_ty with
         | Some(OpInt(_)) as op_ty -> op_ty
         | Some(OpBool)   as op_ty -> op_ty
         | _                       -> None
       end
-  | Struct(_)           -> None
-  | Union(_)            -> None
+  | Struct(_)             -> None
+  | Union(_)              -> None
 
 let op_type_tc_opt : loc -> type_cat -> Coq_ast.op_type option = fun loc tc ->
   op_type_opt loc (c_type_of_type_cat tc)
@@ -325,15 +328,16 @@ let rec align_of : c_type -> int = fun c_ty ->
     panic loc "Undefined alignment requirement."
   in
   match c_ty with
-  | Void                -> 1
-  | Basic(Integer(i))   -> unwrap (alignof_ity i)
-  | Basic(Floating(f))  -> unwrap (alignof_fty f)
-  | Array(c_ty,_)       -> align_of c_ty
-  | Function(_,_,_,_)   -> unwrap alignof_pointer
-  | Pointer(_,_)        -> unwrap alignof_pointer
-  | Atomic(c_ty)        -> align_of c_ty (* FIXME may not be the same? *)
-  | Struct(sym)         -> align_of_struct false sym
-  | Union(sym)          -> align_of_struct true  sym
+  | Void                  -> 1
+  | Basic(Integer(i))     -> unwrap (alignof_ity i)
+  | Basic(Floating(f))    -> unwrap (alignof_fty f)
+  | Array(c_ty,_)         -> align_of c_ty
+  | FunctionNoParams(_,_)
+  | Function(_,_,_,_)     -> unwrap alignof_pointer
+  | Pointer(_,_)          -> unwrap alignof_pointer
+  | Atomic(c_ty)          -> align_of c_ty (* FIXME may not be the same? *)
+  | Struct(sym)           -> align_of_struct false sym
+  | Union(sym)            -> align_of_struct true  sym
 
 and align_of_struct : bool -> Symbol.sym -> int = fun is_union id ->
   let id = sym_to_str id in
@@ -354,16 +358,17 @@ let rec size_of : c_type -> int = fun c_ty ->
     panic loc "Undefined size."
   in
   match c_ty with
-  | Void                -> 1
-  | Basic(Integer(i))   -> unwrap (sizeof_ity i)
-  | Basic(Floating(f))  -> unwrap (sizeof_fty f)
-  | Array(c_ty,None)    -> unwrap sizeof_pointer
-  | Array(c_ty,Some(n)) -> size_of c_ty * Nat_big_num.to_int n
-  | Function(_,_,_,_)   -> unwrap sizeof_pointer
-  | Pointer(_,_)        -> unwrap sizeof_pointer
-  | Atomic(c_ty)        -> size_of c_ty (* FIXME may not be the same? *)
-  | Struct(sym)         -> size_of_struct false sym
-  | Union(sym)          -> size_of_struct true  sym
+  | Void                  -> 1
+  | Basic(Integer(i))     -> unwrap (sizeof_ity i)
+  | Basic(Floating(f))    -> unwrap (sizeof_fty f)
+  | Array(c_ty,None)      -> unwrap sizeof_pointer
+  | Array(c_ty,Some(n))   -> size_of c_ty * Nat_big_num.to_int n
+  | Function(_,_,_,_)    
+  | FunctionNoParams(_,_) -> unwrap sizeof_pointer
+  | Pointer(_,_)          -> unwrap sizeof_pointer
+  | Atomic(c_ty)          -> size_of c_ty (* FIXME may not be the same? *)
+  | Struct(sym)           -> size_of_struct false sym
+  | Union(sym)            -> size_of_struct true  sym
 
 and size_of_struct : bool -> Symbol.sym -> int = fun is_union s ->
   let id = sym_to_str s in
@@ -915,6 +920,10 @@ let warn_ignored_attrs so attrs =
       | AilSdeclaration(_) -> "a declaration"
       | AilSpar(_)         -> "a par statement"
       | AilSreg_store(_,_) -> "a register store statement"
+      | AilSpack(_,_)      -> assert false (* FIXME *)
+      | AilSunpack(_,_)    -> assert false (* FIXME *)
+      | AilShave(_,_)      -> assert false (* FIXME *)
+      | AilSshow(_,_)      -> assert false (* FIXME *)
     in
     let desc =
       match so with
@@ -1325,6 +1334,10 @@ let translate_block stmts blocks ret_ty is_main =
           (List.fold_right add_decl ls stmt, blocks)
       | AilSpar(_)          -> not_impl loc "statement par"
       | AilSreg_store(_,_)  -> not_impl loc "statement store"
+      | AilSpack(_,_)       -> assert false (* FIXME *)
+      | AilSunpack(_,_)     -> assert false (* FIXME *)
+      | AilShave(_,_)       -> assert false (* FIXME *)
+      | AilSshow(_,_)       -> assert false (* FIXME *)
     in
     if not !attrs_used then warn_ignored_attrs (Some(s)) attrs;
     res

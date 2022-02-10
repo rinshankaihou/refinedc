@@ -469,6 +469,10 @@ let taints_of_functions sigm =
                         merge_pointsto (List.map (fun (_, e) -> taint_expr e) xs)
                     | AilSpar ss ->
                         merge_pointsto (List.map (fold_stmt env) ss)
+                    | AilSpack(_,_) -> assert false (* FIXME *)
+                    | AilSunpack(_,_) -> assert false (* FIXME *)
+                    | AilShave(_,_) -> assert false (* FIXME *)
+                    | AilSshow(_,_) -> assert false (* FIXME *)
                 in
                 (sym_decl, fold_stmt { counter= 1; block_depth= 0; scopes= fun_scopes } stmt) :: acc
           end
@@ -783,7 +787,12 @@ let warn_file (_, sigm) =
           List.iter (aux { env with block_depth= 0 }) ss
       | AilSreg_store (_, e) ->
           aux_expr env e;
-          warn_unseq e in
+          warn_unseq e
+      | AilSpack(_,_) -> assert false (* FIXME *)
+      | AilSunpack(_,_) -> assert false (* FIXME *)
+      | AilShave(_,_) -> assert false (* FIXME *)
+      | AilSshow(_,_) -> assert false (* FIXME *)
+  in
   List.iter (fun (fsym, (_, _, params, stmt)) ->
     (* NOTE: following (§6.2.1#4), the function parameters are placed in a block scope *)
     let fun_scopes =

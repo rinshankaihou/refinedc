@@ -13,7 +13,7 @@ opam switch create . ocaml-base-compiler.4.11.1 --no-install
 sudo apt-get install libmpfr-dev # Implicit Cerberus dependency.
 opam repo add coq-released "https://coq.inria.fr/opam/released"
 opam repo add iris-dev "https://gitlab.mpi-sws.org/iris/opam.git"
-opam pin add -n -y cerberus "git+https://github.com/rems-project/cerberus.git#7eb94d628845555cb5425f4f4b48890b345efdc5"
+opam pin add -n -y cerberus "git+https://github.com/rems-project/cerberus.git#b60ea9a7d30dfa7f048c2b312dd86547939a035a"
 make builddep
 ```
 

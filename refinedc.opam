@@ -20,7 +20,7 @@ depends: [
   "coq-iris" { (= "dev.2021-12-09.1.f52f9f6a") | (= "dev") }
   "dune" {>= "2.9.1"}
   "cerberus" {= "~dev"}
-  "cmdliner" {>= "1.0.4"}
+  "cmdliner" {= "1.0.4"}
   "earley" {= "3.0.0"}
   "toml" {= "5.0.0"}
   "ubase" {= "0.04"}
