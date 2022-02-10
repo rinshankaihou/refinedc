@@ -36,8 +36,13 @@ int int_id(int a) {
 }
 
 /**
-   Aside: As the [int<..>] type shows, types in RefinedC can be
-   parametrized. In general, RefinedC types can be parametrized by
+   Aside: As the [int<i32>] type shows, types in RefinedC can be
+   parametrized --- here the parameter inside the <..> is i32 and
+   denotes that the integer is a signed 32-bit integer. But one can
+   for example also write [int<u64>] to refer to a unsigned 64-bit
+   integer.
+
+   In general, RefinedC types can be parametrized by
    arbitrary Coq types. In this case, [int<..>] is parametrized by
    what is called an [int_type], which describes an integer type and
    is a combination of signedness and number of bits. The predefined
