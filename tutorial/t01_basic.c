@@ -2,6 +2,13 @@
 #include <stdbool.h>
 #include <refinedc.h>
 
+// TODO: Make the structure of this tutorial clearer
+
+// TODO: clearly separate parts about how to use RefinedC and how
+// RefinedC works -> especially type checking part
+
+// TODO: clear explanation what rc::parameter, rc::exists, rc::args,
+// ... are, what kind of arguments they take, with a small cheatsheet
 
 /**
    We start with one of the simplest function one could verify:
@@ -122,7 +129,9 @@ int int_id(int a) {
    First, we need to make the specification parametric on the integer
    [n] which is passed as the argument via [rc::parameters...] where
    we give a list of names and Coq types in which the specification
-   should be parametric in.
+   should be parametric in. In particular, the arguments for
+   rc::parameters are universally quantified in the rest of the
+   specification.
 
    Second, we use [n @ int<i32>] for both the argument and the return
    type, which enforces that the integer returned by [int_id2] is the
@@ -309,6 +318,9 @@ int min(int a, int b) {
   Try to play around with this loop invariant (e.g. changing the
   refinement of [b] or the rc::constraints clause) and see if you can
   understand why certain errors occur and how they can be fixed.
+
+  For a general explanation of loop invariants look e.g. at
+  https://www.cs.cornell.edu/courses/cs2112/2015fa/lectures/lec_loopinv/
 */
 
 [[rc::parameters("va : Z", "vb : Z")]]
