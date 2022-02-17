@@ -11,7 +11,7 @@
 // ... are, what kind of arguments they take, with a small cheatsheet
 
 /**
-   We start with one of the simplest function one could verify:
+   We start with one of the simplest functions one could verify:
    [int_id] returns the int which it receives as its argument. Let's
    verify that this function actually returns an integer if it is
    passed an integer as the argument. This is stated using
@@ -64,12 +64,12 @@ int int_id(int a) {
      layout of types (e.g. how many bytes does this value have? What are the alignment
      constraints?) and the operations (e.g. which casts should be inserted when adding
      two numbers? How many bytes should be read when dereferencing a pointer?). This type
-     system does it's job well, but it is to weak to describe interesting properties.
+     system does it's job well, but it is too weak to describe interesting properties.
      For this we need...
    - The RefinedC type system: This type system drives the verification when using RefinedC.
      We will get to know it better over the course of this tutorial. But as we have already
      seen the RefinedC type system also uses...
-   - The Coq type system: This is the type system of the Coq proof assistent on which RefinedC
+   - The Coq type system: This is the type system of the Coq proof assistant on which RefinedC
      is based. The most important role of this type system is to give mathematical
      representations, e.g. of integers, lists or maps. This tutorial will show you the types you
      need for some verification tasks. But if you have some experience in Coq, you can also
@@ -150,11 +150,11 @@ int int_id2(int a) {
    function, but only a little bit: adding 1 to an integer.
 
    Except for the [rc::requires...] annotation, the specification of
-   [add1] should be straightforward. Note that one need to surround
+   [add1] should be straightforward. Note that one needs to surround
    mathematical (Coq) expressions (like [n + 1]) with [{...}] if the
    they are more than an identifier.
 
-   An [rc::requires...] annotation states additional precondtions
+   An [rc::requires...] annotation states additional preconditions
    which the caller of a function has to fulfill. Here the caller
    needs to ensure that the addition does not overflow. In RefinedC
    (like in VCC) all over- and underflow is considered undefined
@@ -211,7 +211,7 @@ int add1(int a) {
    the [+] since overflow is undefined behavior in the RefinedC C
    semantics. If you now look at the facts we know, we can see that
    this problem is not a problem of the RefinedC automation but the
-   goal actually not provable since n might very well be INT_MAX-1.
+   goal is actually not provable since n might very well be INT_MAX-1.
    This reasoning shows that we actually need the [rc::requires...]
    clause on [add1] since it is not well-typed otherwise.
  */
@@ -352,7 +352,7 @@ int looping_add(int a, int b) {
 
      Type system got stuck in function "looping_add" in block "#1" !
 
-   This is different error from the "Cannot solve sidecondition" which
+   This is a different error from the "Cannot solve sidecondition" which
    we have seen before. In general, this kind of error occurs if no
    typing rule of the type system applies to the goal. In this case,
    the reason is obvious, but in general this kind of error occurs if
@@ -455,7 +455,7 @@ void int_ptrs(int* p1, int* p2) {
    [p1] and the [assert(*p1 == 1)] fails! In general, such aliasing
    makes verification of C code very hard as every write to a pointer
    could potentially invalidate many other pointers. This is where
-   ownership types come in to safe the day: Ownership types and in
+   ownership types come in to save the day: Ownership types and in
    particular owned pointers rule out aliasing by ensuring that there
    can only be one owned pointer for each memory location. Concretely
    for the example above the owned pointer types of [p1] and [p2] mean

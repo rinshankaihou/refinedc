@@ -20,7 +20,7 @@
    precondition in [rc::requires]), it returns the index of the
    element if it appears it in the list and otherwise -1.
 
-   The annotations on the function ifself except [rc::lemmas] give the
+   The annotations on the function itself except [rc::lemmas] give the
    specification, while the annotations inside the body of the
    function give the loop invariant. Given the invariant, RefinedC
    reduces verification of the function to sideconditions about the
