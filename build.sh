@@ -12,5 +12,5 @@ if [[ "${1##*.}" == "c" ]]; then
     cd "$(dirname $1)/proofs/$(basename $1 .c)"
     dune build --display short
 else
-    dune build --display short "$@"
+    make
 fi
