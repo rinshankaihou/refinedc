@@ -168,3 +168,10 @@ int test_struct2(struct test2 s) {
 int test_reduce() {
   return rc_reduce_expr((1 | 0xff0) & 0xff);
 }
+
+[[rc::returns("{0} @ int<i32>")]]
+int test_conditional_annot() {
+  /* unsigned short i = rc_annot_expr((unsigned short) 0, "a"); */
+  unsigned short i2 = 0 ? (unsigned short) 0 : (unsigned short) 0;
+  return i2;
+}

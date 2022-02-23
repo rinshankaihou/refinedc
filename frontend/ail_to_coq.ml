@@ -363,7 +363,7 @@ let rec size_of : c_type -> int = fun c_ty ->
   | Basic(Floating(f))    -> unwrap (sizeof_fty f)
   | Array(c_ty,None)      -> unwrap sizeof_pointer
   | Array(c_ty,Some(n))   -> size_of c_ty * Nat_big_num.to_int n
-  | Function(_,_,_,_)    
+  | Function(_,_,_,_)
   | FunctionNoParams(_,_) -> unwrap sizeof_pointer
   | Pointer(_,_)          -> unwrap sizeof_pointer
   | Atomic(c_ty)          -> size_of c_ty (* FIXME may not be the same? *)
@@ -450,7 +450,7 @@ type _ call_res =
 let rec translate_expr : bool -> op_type option -> ail_expr -> expr =
   fun lval goal_ty e ->
   let open AilSyntax in
-  let res_ty = op_type_tc_opt (loc_of e) (tc_of e) in
+  let res_ty = ref(op_type_tc_opt (loc_of e) (tc_of e)) in
   let AnnotatedExpression(_, _, loc, e) = e in
   let coq_loc = register_loc coq_locs loc in
   let locate e = mkloc e coq_loc in
@@ -499,7 +499,7 @@ let rec translate_expr : bool -> op_type option -> ail_expr -> expr =
           | Bxor -> XorOp | Bor  -> OrOp
         in
         let (goal_ty, ty1, ty2) =
-          match (ty1, ty2, res_ty) with
+          match (ty1, ty2, !res_ty) with
           | (OpBool  , OpBool  , Some((OpInt(_) as res_ty)))
           | (OpBool  , OpInt(_), Some((OpInt(_) as res_ty)))
           | (OpInt(_), OpBool  , Some((OpInt(_) as res_ty)))
@@ -547,16 +547,21 @@ let rec translate_expr : bool -> op_type option -> ail_expr -> expr =
        begin
        match macro_annot_to_list e2 with
        | _ :: MacroString(name) :: _ ->
-         let e3 = translate e3 in
-         (* TODO: Allow customizing the 1 *)
-         locate (AnnotExpr(1, Coq_ident(name), e3))
+          (* We need to override the res_ty as we ignore the
+             conditional. Note that Cerberus computes the type i32 for
+             (0 ? (unsigned short) 0 : (unsigned short) 0) instead of
+             u16 due to integer promotion rules. *)
+          res_ty := op_type_tc_opt (loc_of e3) (tc_of e3);
+          let e3 = translate e3 in
+          (* TODO: Allow customizing the 1 *)
+          locate (AnnotExpr(1, Coq_ident(name), e3))
        | _ -> not_impl loc "wrong annot expr"
        end
     | AilEcond(e1,e2,e3)           ->
        let ty = op_type_of_tc (loc_of e1) (tc_of e1) in
        let e1 = translate_expr lval None e1 in
-       let e2 = translate_expr lval None e2 in
-       let e3 = translate_expr lval None e3 in
+       let e2 = translate_expr lval (!res_ty) e2 in
+       let e3 = translate_expr lval (!res_ty) e3 in
        locate (IfE(ty, e1, e2, e3))
     | AilEcast(q,c_ty,e)           ->
         begin
@@ -632,7 +637,7 @@ let rec translate_expr : bool -> op_type option -> ail_expr -> expr =
               let (i, it) =
                 let (i, ito) = integer_constant_to_string loc i in
                 let it =
-                  match (res_ty, ito) with
+                  match (!res_ty, ito) with
                   | (Some(OpInt(it)), Some(it_c)) -> assert (it = it_c); it
                   | (Some(OpInt(it)), None      ) -> it
                   | (_              , _         ) -> assert false
@@ -696,7 +701,7 @@ let rec translate_expr : bool -> op_type option -> ail_expr -> expr =
     | AilEgcc_statement            ->
         Panic.panic loc "Not implemented GCC statement expr." (* TODO *)
   in
-  match (goal_ty, res_ty) with
+  match (goal_ty, !res_ty) with
   | (None         , _           )
   | (_            , None        )                       -> e
   | (Some(goal_ty), Some(res_ty)) when goal_ty = res_ty -> e
