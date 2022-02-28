@@ -1,3 +1,5 @@
 (lang dune 2.9)
 (name refinedc)
+(package (name refinedc))
+(package (name coq-lithium))
 (using coq 0.3)

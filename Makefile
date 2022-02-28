@@ -40,14 +40,34 @@ builddep-opamfiles: builddep/refinedc-builddep.opam
 	@true
 .PHONY: builddep-opamfiles
 
+# see https://stackoverflow.com/a/649462 for defining multiline strings in Makefiles
+define BUILDDEP_OPAM_BODY
+opam-version: "2.0"
+name: "refinedc-builddep"
+synopsis: "---"
+description: """
+---
+"""
+license: "BSD-3-Clause"
+maintainer: ["Michael Sammler <msammler@mpi-sws.org>"
+             "Rodolphe Lepigre <lepigre@mpi-sws.org>"]
+authors: ["Michael Sammler" "Rodolphe Lepigre"]
+homepage: "https://plv.mpi-sws.org/refinedc"
+bug-reports: "https://gitlab.mpi-sws.org/iris/refinedc/issues"
+dev-repo: "git+https://gitlab.mpi-sws.org/iris/refinedc.git"
+depends: [
+endef
+export BUILDDEP_OPAM_BODY
+
 # Create a virtual Opam package with the same deps as RefinedC, but no
-# build. Uses a very ugly hack to use sed for removing the last 4
-# lines since head -n -4 does not work on MacOS
-# (https://stackoverflow.com/a/24298204)
+# build.
 builddep/refinedc-builddep.opam: refinedc.opam Makefile
 	@echo "# Creating builddep package."
 	@mkdir -p builddep
-	@sed '$$d' $< | sed '$$d' | sed '$$d' | sed '$$d' | sed -E 's/^name: *"(.*)" */name: "\1-builddep"/' > $@
+	@echo "$$BUILDDEP_OPAM_BODY" > $@
+	@opam show -f depends: ./coq-lithium.opam >> $@
+	@opam show -f depends: ./refinedc.opam | sed 's/"coq-lithium".*//g' >> $@
+	@echo "]" >> $@
 
 # Install the virtual Opam package to ensure that:
 #  1) dependencies of RefinedC are installed,
@@ -57,6 +77,19 @@ builddep: builddep/refinedc-builddep.opam
 	@echo "# Installing package $^."
 	@opam install $(OPAMFLAGS) $^
 .PHONY: builddep
+
+DUNE_FILES = $(shell find theories/ -type f -name 'dune')
+
+# We need to remove lithium from the theories in dune files when
+# installing RefinedC via opam as otherwise dune does not use the
+# already installed version of Lithium, but recompiles it (if one
+# instructs it with dune build -p refinedc,coq-lithium).
+prepare-install-refinedc:
+	@for f in $(DUNE_FILES) ; do \
+		sed 's/^.*; removed by make prepare-install-refinedc.*//g' "$$f" > "$$f-tmp"; \
+		mv "$$f-tmp" "$$f"; \
+	done
+.PHONY: prepare-install
 
 # FIXME
 #TUTORIAL_SRC = \

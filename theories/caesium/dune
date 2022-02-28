@@ -3,4 +3,6 @@
  (package refinedc)
  (flags :standard -w -notation-overridden -w -redundant-canonical-projection)
  (synopsis "Caesium language")
- (theories lithium))
+ (theories
+   lithium ; removed by make prepare-install-refinedc
+ ))
