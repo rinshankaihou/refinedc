@@ -1,5 +1,5 @@
-From refinedc.lithium Require Import simpl_classes.
-From refinedc.lang Require Export bitfield.
+From lithium Require Import simpl_classes.
+From caesium Require Export bitfield.
 From refinedc.typing Require Import programs boolean int.
 From refinedc.typing Require Export type.
 Set Default Proof Using "Type".

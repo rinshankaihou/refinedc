@@ -1,5 +1,5 @@
 From refinedc.typing Require Import type.
-From refinedc.lithium Require Export normalize.
+From lithium Require Export normalize.
 
 #[export] Hint Rewrite ly_align_ly_with_align ly_align_ly_offset ly_align_ly_set_size : lithium_rewrite.
 #[export] Hint Rewrite ly_size_ly_set_size ly_size_ly_with_align : lithium_rewrite.

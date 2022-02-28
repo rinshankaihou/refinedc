@@ -1,4 +1,4 @@
-//@rc::import builtins_specs from refinedc.lang
+//@rc::import builtins_specs from caesium
 
 /**
  * GCC-builtins declaration.
@@ -8,10 +8,10 @@
 
 /**
  * https://gcc.gnu.org/onlinedocs/gcc/Other-Builtins.html
- * 
+ *
  * This built-in function returns one plus the index of the least significant 1-bit of x,
  * or if x is zero, returns zero.
- * 
+ *
  * Reference implementation: return log2(x & -x);
  */
 [[rc::parameters("x : Z")]]

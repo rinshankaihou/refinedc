@@ -1,5 +1,5 @@
-From refinedc.lang Require Import base lang.
-From refinedc.lithium Require Import classes.
+From caesium Require Import base lang.
+From lithium Require Import classes.
 From refinedc.typing Require Import programs.
 
 (** This file contains a solver for location (semantic) equality based on [lia]

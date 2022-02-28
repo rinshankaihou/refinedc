@@ -1,4 +1,4 @@
-From refinedc.lithium Require Import base simpl_classes infrastructure.
+From lithium Require Import base simpl_classes infrastructure.
 
 Local Open Scope Z_scope.
 

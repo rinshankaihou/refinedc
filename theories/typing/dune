@@ -3,4 +3,4 @@
  (package refinedc)
  (flags :standard -w -notation-overridden -w -redundant-canonical-projection)
  (synopsis "Lithium")
- (theories refinedc.lang refinedc.lithium))
+ (theories caesium lithium))

@@ -1,7 +1,7 @@
 (** Main typeclasses of Lithium *)
 From iris.base_logic.lib Require Export iprop.
 From iris.proofmode Require Export tactics.
-From refinedc.lithium Require Export base infrastructure.
+From lithium Require Export base infrastructure.
 
 (** * [iProp_to_Prop] *)
 Record iProp_to_Prop {Σ} (P : iProp Σ) : Type := i2p {

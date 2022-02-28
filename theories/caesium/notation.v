@@ -1,4 +1,4 @@
-From refinedc.lang Require Export lang.
+From caesium Require Export lang.
 Set Default Proof Using "Type".
 
 Coercion val_of_loc : loc >-> val.

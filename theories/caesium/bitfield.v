@@ -1,5 +1,5 @@
-From refinedc.lang Require Import base int_type builtins_specs.
-From refinedc.lithium Require Import simpl_classes tactics_extend infrastructure Z_bitblast classes.
+From caesium Require Import base int_type builtins_specs.
+From lithium Require Import simpl_classes tactics_extend infrastructure Z_bitblast classes.
 
 Local Open Scope Z_scope.
 (* raw bit vector constructors *)

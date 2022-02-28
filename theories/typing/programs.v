@@ -1,4 +1,4 @@
-From refinedc.lang Require Import proofmode.
+From caesium Require Import proofmode.
 From refinedc.typing Require Export type.
 Set Default Proof Using "Type".
 

@@ -1,5 +1,5 @@
 From iris.proofmode Require Import coq_tactics reduction.
-From refinedc.lithium Require Import base infrastructure classes simpl_classes tactics_extend.
+From lithium Require Import base infrastructure classes simpl_classes tactics_extend.
 
 (** * Definitions of markers for controling the state *)
 Notation "'HIDDEN'" := (Envs _ _ _) (only printing).

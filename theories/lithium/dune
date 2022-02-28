@@ -1,5 +1,5 @@
 (coq.theory
- (name refinedc.lithium)
+ (name lithium)
  (package refinedc)
  (flags :standard -w -notation-overridden -w -redundant-canonical-projection)
  (synopsis "Lithium"))

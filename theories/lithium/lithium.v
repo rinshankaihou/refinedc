@@ -1,1 +1,1 @@
-From refinedc.lithium Require Export classes infrastructure.
+From lithium Require Export classes infrastructure.

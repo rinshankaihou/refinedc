@@ -1,6 +1,6 @@
 From stdpp Require Export strings.
 From stdpp Require Import gmap list.
-From refinedc.lang Require Export base layout int_type loc.
+From caesium Require Export base layout int_type loc.
 Set Default Proof Using "Type".
 
 Definition var_name := string.

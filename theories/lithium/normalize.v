@@ -1,4 +1,4 @@
-From refinedc.lithium Require Import base tactics_extend infrastructure.
+From lithium Require Import base tactics_extend infrastructure.
 
 (** * First version of normalization based on [autorewrite] *)
 Create HintDb lithium_rewrite discriminated.

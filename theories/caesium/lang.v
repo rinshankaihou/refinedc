@@ -1,7 +1,7 @@
 From iris.program_logic Require Export language ectx_language ectxi_language.
 From stdpp Require Export strings.
 From stdpp Require Import gmap list.
-From refinedc.lang Require Export base byte layout int_type loc val heap struct.
+From caesium Require Export base byte layout int_type loc val heap struct.
 Set Default Proof Using "Type".
 Open Scope Z_scope.
 

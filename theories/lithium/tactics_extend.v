@@ -1,4 +1,4 @@
-From refinedc.lithium Require Import base infrastructure.
+From lithium Require Import base infrastructure.
 
 Ltac can_solve_tac := fail "provide a can_solve_tac!".
 Global Hint Extern 10 (CanSolve ?P) => (change P; can_solve_tac) : typeclass_instances.

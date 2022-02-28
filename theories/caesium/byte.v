@@ -1,4 +1,4 @@
-From refinedc.lang Require Import base.
+From caesium Require Import base.
 Open Scope Z_scope.
 
 (** Representation of a standard (8-bit) byte. *)

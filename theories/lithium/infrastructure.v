@@ -1,6 +1,6 @@
 (** General infrastructure *)
 From iris.base_logic.lib Require Import iprop.
-From refinedc.lithium Require Import base.
+From lithium Require Import base.
 
 (** * [protected] *)
 Definition protected_def {A} (a : A) : A := a.

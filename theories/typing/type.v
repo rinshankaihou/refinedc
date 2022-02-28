@@ -1,7 +1,7 @@
 From iris.bi Require Export fractional.
 From iris.base_logic.lib Require Export invariants.
-From refinedc.lang Require Export proofmode notation.
-From refinedc.lithium Require Import simpl_classes.
+From caesium Require Export proofmode notation.
+From lithium Require Import simpl_classes.
 From refinedc.typing Require Export base annotations.
 Set Default Proof Using "Type".
 

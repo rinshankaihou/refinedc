@@ -323,8 +323,8 @@ let pp_code : string -> import list -> Coq_ast.t pp =
   let pp fmt = Format.fprintf ff fmt in
 
   (* Printing some header. *)
-  pp "@[<v 0>From refinedc.lang Require Export notation.@;";
-  pp "From refinedc.lang Require Import tactics.@;";
+  pp "@[<v 0>From caesium Require Export notation.@;";
+  pp "From caesium Require Import tactics.@;";
   pp "From refinedc.typing Require Import annotations.@;";
   List.iter (pp_import ff) imports;
   pp "Set Default Proof Using \"Type\".@;@;";

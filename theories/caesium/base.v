@@ -1,4 +1,4 @@
-From refinedc.lithium Require Export base.
+From lithium Require Export base.
 Set Default Proof Using "Type".
 
 Global Unset Program Cases.

@@ -1,7 +1,7 @@
 From refinedc.typing Require Import typing.
 From refinedc.tutorial.lithium Require Import generated_code.
 From refinedc.tutorial.lithium Require Import generated_spec.
-From refinedc.lang Require Import builtins_specs.
+From caesium Require Import builtins_specs.
 Set Default Proof Using "Type".
 
 (** This file contains a tutorial for Lithium, the underlying proof

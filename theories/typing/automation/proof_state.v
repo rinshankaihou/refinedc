@@ -1,5 +1,5 @@
 From refinedc.typing Require Import type globals.
-From refinedc.lithium Require Import tactics.
+From lithium Require Import tactics.
 From refinedc.typing.automation Require Import solvers.
 
 (** * Markers for keeping track of the proof state *)

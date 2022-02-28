@@ -1,5 +1,5 @@
-From refinedc.lithium Require Export lithium.
-From refinedc.lang Require Export proofmode.
+From lithium Require Export lithium.
+From caesium Require Export proofmode.
 
 Class CoPsetFact (P : Prop) : Prop := copset_fact : P.
 (* clear for performance reasons as there can be many hypothesis and they should not be needed for the goals which occur *)

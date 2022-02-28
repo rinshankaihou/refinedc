@@ -9,8 +9,8 @@ use_rc_include = false
 
 [coq]
 extra_theories = [
-  "refinedc.lang",
+  "caesium",
   "refinedc.typing",
   "refinedc.typing.automation",
-  "refinedc.lithium"
+  "lithium"
 ]

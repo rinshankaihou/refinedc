@@ -1,4 +1,4 @@
-From refinedc.lithium Require Import base tactics_extend simpl_classes infrastructure.
+From lithium Require Import base tactics_extend simpl_classes infrastructure.
 
 (** * [refined_solver]
     Version of naive_solver which fails faster. *)

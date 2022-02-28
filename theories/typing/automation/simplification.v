@@ -1,6 +1,6 @@
 (** This file collects simplification instances specific to RefinedC *)
 From refinedc.typing Require Import type.
-From refinedc.lithium Require Import tactics.
+From lithium Require Import tactics.
 
 (** * layout *)
 Global Instance simpl_layout_eq ly1 ly2 : SimplAndRel (=) ly1 ly2 (λ T, ly1.(ly_size) = ly2.(ly_size) ∧ ly_align ly1 = ly_align ly2 ∧ T).

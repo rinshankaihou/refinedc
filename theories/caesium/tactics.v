@@ -1,5 +1,5 @@
 From stdpp Require Import fin_maps.
-From refinedc.lang Require Export notation.
+From caesium Require Export notation.
 Set Default Proof Using "Type".
 
 Module W.
