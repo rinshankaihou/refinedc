@@ -55,6 +55,17 @@ Section value.
     SubsumePlace l Own ty (value ot v') :=
     λ T, i2p (value_subsume_goal_loc l v' ot ty T).
 
+  Lemma value_subsume_own_ptrop l β (v' : val) ty T:
+    (l ◁ₗ{β} ty -∗ ⌜v' = l⌝ ∗ T) -∗
+    subsume (l ◁ₗ{β} ty) (l ◁ᵥ value PtrOp v') T.
+  Proof.
+    iIntros "HT Hty". iDestruct ("HT" with "Hty") as "[% $]"; subst.
+    iPureIntro. split_and!; [|done..]. apply mem_cast_id_loc.
+  Qed.
+  Global Instance value_subsume_own_ptrop_inst l β v' ty:
+    Subsume (l ◁ₗ{β} ty) (l ◁ᵥ value PtrOp v') :=
+    λ T, i2p (value_subsume_own_ptrop l β v' ty T).
+
   Lemma value_merge v l ot T:
     (find_in_context (FindVal v) (λ ty:type, ⌜ty.(ty_has_op_type) (UntypedOp (ot_layout ot)) MCNone⌝ ∗ (l ◁ₗ ty -∗ T))) -∗
       simplify_hyp (l ◁ₗ value ot v) T.
