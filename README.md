@@ -29,7 +29,7 @@ The following files contain documentation about RefinedC:
 
 ## Installing RefinedC
 
-RefinedC is known to compile with Coq 8.11.2, on 64-bits Linux machines. It
+RefinedC is known to compile with Coq 8.14.0, on 64-bits Linux machines. It
 also possibly works on MacOS. In any case, we strongly advise you to rely on
 [opam](https://opam.ocaml.org/doc/Install.html) to install dependencies.
 
@@ -66,7 +66,7 @@ you can check if the following command succeeds.
 ```bash
 opam --version
 ```
-If you already have `opam` version 2.0.0 or higher, then you can skip to the
+If you already have `opam` version 2.1.0 or higher, then you can skip to the
 next section.
 
 Otherwise, install `opam` using your usual package manager (checking that a
