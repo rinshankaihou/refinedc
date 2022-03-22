@@ -9,6 +9,8 @@ typedef struct list_node {
   struct list_node *next;
 } *list_t;
 
+/* l == NULL -> list is empty */
+
 void append(list_t *l, list_t k) {
   if(*l == NULL) {
     *l = k;
@@ -27,6 +29,10 @@ list_node {
   struct list_node *next;
 } *list_t;
 
+/*
+list_t := optional<&own<struct<struct_list_node, int<i32>, list_t>>, null>
+*/
+
 [[rc::args("&own<list_t>", "list_t")]]
 void append(list_t *l, list_t k) {
   if(*l == NULL) {
@@ -42,6 +48,7 @@ void test() {
   node1->val = 1; node1->next = NULL;
   struct list_node * node2 = alloc(sizeof(struct list_node));
   node2->val = 2; node2->next = NULL;
+
   append(&node1, node2);
   if(node1 != NULL) {
     /* assert(node1->val == 1); */

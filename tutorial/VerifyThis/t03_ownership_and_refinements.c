@@ -13,6 +13,15 @@ list_node {
   struct list_node *next;
 } *list_t;
 
+/*
+
+xs @ list_t :=
+{xs <> []} @ optional<&own<
+  ∃ y ys, struct<struct_list_node, y @ int<i32>, ys @ list_t> & {xs = y :: ys}>
+  , null>
+
+*/
+
 
 [[rc::parameters("p : loc")]]
 [[rc::args("p @ &own<list_t>", "list_t")]]
