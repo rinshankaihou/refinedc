@@ -40,6 +40,8 @@ list_node {
   struct list_node *next;
 } *list_t;
 
+/* Now we can use the list_t type to specify the arguments of
+ * append: */
 
 [[rc::args("&own<list_t>", "list_t")]]
 void append(list_t *l, list_t k) {
@@ -50,7 +52,9 @@ void append(list_t *l, list_t k) {
   }
 }
 
-/* [[rc::requires("[alloc_initialized]")]] */
+/* So far this looks good. What if we try to use append? */
+
+// [[rc::requires("[alloc_initialized]")]] // comment in this line to enable typechecking
 void test() {
   struct list_node * node1 = alloc(sizeof(struct list_node));
   node1->val = 1; node1->next = NULL;
@@ -62,3 +66,39 @@ void test() {
     /* assert(node1->val == 1); */
   }
 }
+
+/* There is an error! We cannot use node1 after calling append. The
+ * problem is that append does not give back the ownership of its
+ * first argument. This can be fixed by adding an rc::ensures clause
+ * that gives back the ownership of the pointer passed for the
+ * first argument. */
+
+[[rc::parameters("p : loc")]]
+[[rc::args("p @ &own<list_t>", "list_t")]]
+[[rc::ensures("own p : list_t")]]
+void append_2(list_t *l, list_t k) {
+  if(*l == NULL) {
+    *l = k;
+  } else {
+    append_2(&(*l)->next, k);
+  }
+}
+
+/* Now the test function typechecks! */
+
+[[rc::requires("[alloc_initialized]")]]
+void test_2() {
+  struct list_node * node1 = alloc(sizeof(struct list_node));
+  node1->val = 1; node1->next = NULL;
+  struct list_node * node2 = alloc(sizeof(struct list_node));
+  node2->val = 2; node2->next = NULL;
+
+  append_2(&node1, node2);
+  if(node1 != NULL) {
+    // assert(node1->val == 1); // try commenting in this line
+  }
+}
+
+/* But the assert fails because the specification of append does not
+ * guarantee anything about the values of the list. Continue with
+ * t03_ownership_and_refinements.c to see how to fix this. */

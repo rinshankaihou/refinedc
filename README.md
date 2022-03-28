@@ -27,6 +27,10 @@ The following files contain documentation about RefinedC:
   the layout of this repository.
 - [DEVELOPERS.md](DEVELOPERS.md): Information for RefinedC developers.
 
+There is a work in progress tutorial in [tutorial/](tutorial/) which
+is also available in a standalone repository here:
+https://gitlab.mpi-sws.org/msammler/refinedc-tutorial
+
 ## Installing RefinedC
 
 RefinedC is known to compile with Coq 8.14.0, on 64-bits Linux machines. It

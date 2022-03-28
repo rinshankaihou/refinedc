@@ -43,7 +43,9 @@ unsigned int avg_2(unsigned int a, unsigned int b) {
 
 
 /* There are multiple ways to fix this bug. One is to detect which
- * integer is lower and then adding half the difference:
+ * integer is lower and then adding half the difference. (For more
+ * discussion of the subtleties of implemeting this function see
+ * https://www.youtube.com/watch?v=sBtAGxBh-XI .)
 */
 [[rc::args("int<u32>", "int<u32>")]]
 [[rc::returns("int<u32>")]]
