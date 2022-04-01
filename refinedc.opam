@@ -19,6 +19,7 @@ depends: [
   "coq-lithium" {= version | = "~dev"}
   "cerberus" {= "~dev"}
   "cmdliner" {= "1.0.4"}
+  "sexplib0" {= "v0.14.0"} # see https://github.com/rems-project/cerberus/issues/194
   "earley" {= "3.0.0"}
   "toml" {= "5.0.0"}
   "ubase" {= "0.04"}
