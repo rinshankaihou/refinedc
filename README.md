@@ -41,6 +41,8 @@ Note that if you want to develop RefinedC or build the examples
 shipped with RefinedC, you should install RefinedC according to the
 instructions in [DEVELOPERS.md](DEVELOPERS.md).
 
+(Note that the installation instructions were only tested on Linux.)
+
 ### tl;dr
 
 Assuming an appropriate [opam](https://opam.ocaml.org/doc/Install.html) switch
