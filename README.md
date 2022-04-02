@@ -49,9 +49,14 @@ Assuming an appropriate [opam](https://opam.ocaml.org/doc/Install.html) switch
 sudo apt-get install libmpfr-dev # Implicit Cerberus dependency.
 opam repo add coq-released "https://coq.inria.fr/opam/released"
 opam repo add iris-dev "https://gitlab.mpi-sws.org/iris/opam.git"
+opam update
 opam pin add -n -y cerberus "git+https://github.com/rems-project/cerberus.git#b60ea9a7d30dfa7f048c2b312dd86547939a035a"
 opam pin add refinedc "git+https://gitlab.mpi-sws.org/iris/refinedc.git"
 ```
+
+If the `refinedc` command it not in the `PATH` and you installed
+`refinedc` in an opam switch, try `eval $(opam env)` in the directory
+where you created the switch.
 
 ### System dependencies
 
@@ -82,7 +87,7 @@ sh <(curl -sL https://raw.githubusercontent.com/ocaml/opam/master/shell/install.
 You can use the `BINDIR` environment variable to choose where the binary is
 installed. There is a reasonable default but it needs root privileges.
 
-### Setting up an [opam](https://opam.ocaml.org) switch
+### Setting up an [opam](https://opam.ocaml.org) switch (optional)
 
 If you are an OCaml user and if you know what you are doing, it is perfectly
 fine to install RefinedC in any "opam switch" you like (provided the OCaml
@@ -118,6 +123,7 @@ dependencies can be made available to opam by running the following commands.
 ```bash
 opam repo add coq-released "https://coq.inria.fr/opam/released"
 opam repo add iris-dev "https://gitlab.mpi-sws.org/iris/opam.git"
+opam update
 opam pin add -n -y cerberus "git+https://github.com/rems-project/cerberus.git#b60ea9a7d30dfa7f048c2b312dd86547939a035a"
 ```
 You can then finally install RefinedC with the following command, or rather
