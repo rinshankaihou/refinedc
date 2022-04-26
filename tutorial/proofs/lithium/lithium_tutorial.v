@@ -1,8 +1,308 @@
+From iris.proofmode Require Import coq_tactics reduction.
 From refinedc.typing Require Import typing.
 From refinedc.tutorial.lithium Require Import generated_code.
 From refinedc.tutorial.lithium Require Import generated_spec.
 From caesium Require Import builtins_specs.
 Set Default Proof Using "Type".
+
+Axiom AddE : expr → expr → expr.
+Notation "e1 + e2" := (AddE e1 e2) : expr_scope.
+Axiom ValInt : Z → val.
+Check Val : val → expr.
+
+Section lithium.
+  Context `{!typeG Σ}.
+
+  Axiom wp_add : ∀ n1 n2 Φ,
+      Φ (ValInt $ n1 + n2) -∗
+      WP ValInt n1 + ValInt n2 {{ Φ }}.
+
+  Lemma ex1 :
+    ⊢ ∀ n, ⌜n > 0⌝ -∗
+     WP ValInt n + ValInt 1 {{ v,
+       ∃ n', ⌜v = ValInt n'⌝ ∗ ⌜n' > 0⌝ ∗ True }}.
+  Proof.
+    iStartProof.
+    (* Run Lithium. *)
+    repeat liStep.
+    (* Lithium stops at the WP. Let's apply our lemma. *)
+    iApply wp_add.
+    (* Run Lithium. *)
+    repeat liStep.
+    (* Lithium finished and left some sideconditions. *)
+    Unshelve. all: li_unshelve_sidecond.
+    (* Discharge the sidecondition. *)
+    lia.
+    (* Done! *)
+  Qed.
+
+  Lemma ex1' :
+    ⊢ ∀ n, ⌜n > 0⌝ -∗
+     WP ValInt n + ValInt 1 {{ v,
+       ∃ n', ⌜v = ValInt n'⌝ ∗ ⌜n' > 0⌝ ∗ True }}.
+  Proof.
+    iStartProof.
+    (* Introduce the universal quantifier. *)
+    liStep.
+    (* Introduce the pure assumption (in two steps for technical reasons).*)
+    liStep. liStep.
+    (* Lithium does not know how to handle this WP. *)
+    Fail liStep.
+    (* Let's apply our lemma. *)
+    iApply wp_add.
+    (* Instantiate the existential quantifier with an evar. *)
+    liStep.
+    (* Solve the sidecondition to instantiate the evar. *)
+    liStep. liStep.
+    (* Shelve the sidecondition. *)
+    liStep. liStep.
+    (* Solve True *)
+    liStep.
+    (* Unshelve sideconditions. *)
+    Unshelve. all: li_unshelve_sidecond.
+    (* Discharge the sidecondition. *)
+    lia.
+    (* Done! *)
+  Qed.
+
+  (* Key takeaway: Lithium automates proofs by looking at the goal and
+  applying the "obvious" rule. The technical term for this is
+  goal-directed proof search and Lithium can be seen as a logic
+  programming language for separation logic.
+
+   The maybe surprising fact is that it is possible to identify a
+   fragment of separation logic that can be handled by this principle
+   of goal-directed proof search (without backtracking) and that is
+   large enough to verify interesting programs with it. The last
+   point is show-cased by RefinedC and Islaris. *)
+
+
+  (* Let's wrap the application of wp_add into a tactic. *)
+  Ltac liEExpr :=
+    match goal with
+    | |- envs_entails _ (wp _ _ ?e _) =>
+        match e with
+        | AddE _ _ => notypeclasses refine (tac_fast_apply (wp_add _ _ _) _)
+        end
+    end.
+
+  (* Now we can define our own step tactic liEStep that combines
+  liEExpr and liStep (and some boilerplate). *)
+  Ltac liEStep :=
+    liEnforceInvariantAndUnfoldInstantiatedEvars;
+    first [
+        liEExpr
+      | liStep
+    ]; liSimpl.
+
+  Lemma ex2 :
+    ⊢ ∀ n, ⌜n > 0⌝ -∗
+      WP ValInt n + ValInt 1 {{ v,
+        ∃ n', ⌜v = ValInt n'⌝ ∗ ⌜n' > 0⌝ ∗ True }}.
+  Proof.
+    iStartProof.
+    (* Now the proof is automatic! *)
+    repeat liEStep; liShow.
+    Unshelve. all: li_unshelve_sidecond.
+    lia.
+  Qed.
+
+  (* What about multiple additions ? *)
+  Lemma ex3 :
+    ⊢ ∀ n, ⌜n > 0⌝ -∗
+      WP ValInt n + ValInt 1 + ValInt 1 {{ v,
+        ∃ n', ⌜v = ValInt n'⌝ ∗ ⌜n' > 0⌝ ∗ True }}.
+  Proof.
+    iStartProof.
+    repeat liEStep; liShow.
+    (* Here wp_add does not apply since the first argument of the
+    addition is not a value. *)
+  Abort.
+
+  (* Let's define a more general version of wp_add that works for
+  expressions, not just for values. *)
+  Axiom wp_add2 : ∀ e1 e2 Φ,
+    WP e1 {{ v1,
+      WP e2 {{ v2, ∃ n1 n2,
+        ⌜v1 = ValInt n1⌝ ∗ ⌜v2 = ValInt n2⌝ ∗ Φ (ValInt $ n1 + n2) }} }} -∗
+    WP e1 + e2 {{ Φ }}.
+
+  (* We need to update liEExpr. *)
+  Ltac liEExpr ::=
+    match goal with
+    | |- envs_entails _ (wp _ _ ?e _) =>
+        match e with
+        | AddE _ _ => notypeclasses refine (tac_fast_apply (wp_add2 _ _ _) _)
+        end
+    end.
+
+  (* Let's try... *)
+  Lemma ex4 :
+    ⊢ ∀ n, ⌜n > 0⌝ -∗
+      WP ValInt n + ValInt 1 + ValInt 1 {{ v,
+        ∃ n', ⌜v = ValInt n'⌝ ∗ ⌜n' > 0⌝ ∗ True }}.
+  Proof.
+    iStartProof.
+    repeat liEStep; liShow.
+    (* Almost! The new wp_add was applied successfully, but now we get
+    a WP for ValInt that the automation does not know how to
+    handle. *)
+  Abort.
+
+  (* Let's add a wp rule for values. *)
+  Axiom wp_val : ∀ v Φ,
+      Φ v -∗
+      WP Val v {{ Φ }}.
+
+  Ltac liEExpr ::=
+    match goal with
+    | |- envs_entails _ (wp _ _ ?e _) =>
+        match e with
+        | AddE _ _ => notypeclasses refine (tac_fast_apply (wp_add2 _ _ _) _)
+        | Val _ => notypeclasses refine (tac_fast_apply (wp_val _ _) _)
+        end
+    end.
+
+  Lemma ex5 :
+    ⊢ ∀ n, ⌜n > 0⌝ -∗
+      WP ValInt n + ValInt 1 + ValInt 1 {{ v,
+        ∃ n', ⌜v = ValInt n'⌝ ∗ ⌜n' > 0⌝ ∗ True }}.
+  Proof.
+    iStartProof.
+    repeat liEStep; liShow.
+    (* Success! *)
+    Unshelve. all: li_unshelve_sidecond.
+    lia.
+    (* Also try changing the expression to include more or less
+    additions. *)
+  Qed.
+
+  Axiom wp_add3 : ∀ e1 e2 Φ,
+    WP e1 {{ v1,
+      WP e2 {{ v2, ∃ n1 n2,
+        ⌜v1 = ValInt n1⌝ ∗ ⌜v2 = ValInt n2⌝ ∗
+        ⌜n1 + n2 < 2 ^ 64⌝ ∗
+        Φ (ValInt $ n1 + n2) }} }} -∗
+    WP e1 + e2 {{ Φ }}.
+
+  Ltac liEExpr ::=
+    match goal with
+    | |- envs_entails _ (wp _ _ ?e _) =>
+        match e with
+        | AddE _ _ => notypeclasses refine (tac_fast_apply (wp_add3 _ _ _) _)
+        | Val _ => notypeclasses refine (tac_fast_apply (wp_val _ _) _)
+        end
+    end.
+
+  Lemma ex6 :
+    ⊢ ∀ n, ⌜n > 0⌝ -∗ ⌜n < 2 ^ 64 - 2⌝ -∗
+      WP ValInt n + ValInt 1 + ValInt 1 {{ v,
+        ∃ n', ⌜v = ValInt n'⌝ ∗ ⌜n' > 0⌝ ∗ True }}.
+  Proof.
+    iStartProof.
+    repeat liEStep; liShow.
+    Unshelve. all: li_unshelve_sidecond.
+    all: try lia.
+  Abort.
+
+  (* For more information like the subset of separation logic
+  supported by Lithium, see Section 5 of the RefinedC paper. *)
+
+  Axiom Load : expr → expr.
+  Axiom ValLoc : loc → val.
+
+  Axiom wp_load : ∀ e Φ,
+    WP e {{ v, ∃ l,
+     ⌜v = ValLoc l⌝ ∗ l ↦ ValInt 5 ∗ (l ↦ ValInt 5 -∗ Φ (ValInt 5)) }} -∗
+    WP Load e {{ Φ }}.
+
+  Ltac liEExpr ::=
+    match goal with
+    | |- envs_entails _ (wp _ _ ?e _) =>
+        match e with
+        | AddE _ _ => notypeclasses refine (tac_fast_apply (wp_add3 _ _ _) _)
+        | Load _ => notypeclasses refine (tac_fast_apply (wp_load _ _) _)
+        | Val _ => notypeclasses refine (tac_fast_apply (wp_val _ _) _)
+        end
+    end.
+
+  Lemma ex7 :
+    ⊢ ∀ l, l ↦ ValInt 5 -∗
+      WP Load (ValLoc l) + ValInt 1 {{ v,
+        ∃ n', ⌜v = ValInt n'⌝ ∗ ⌜n' > 0⌝ ∗ l ↦ ValInt 5 ∗ True }}.
+  Proof.
+    iStartProof.
+    repeat liEStep; liShow.
+  Qed.
+
+  Axiom wp_load2 : ∀ e Φ,
+    WP e {{ v, ∃ l v',
+     ⌜v = ValLoc l⌝ ∗ l ↦ v' ∗ (l ↦ v' -∗ Φ v') }} -∗
+    WP Load e {{ Φ }}.
+
+  Ltac liEExpr ::=
+    match goal with
+    | |- envs_entails _ (wp _ _ ?e _) =>
+        match e with
+        | AddE _ _ => notypeclasses refine (tac_fast_apply (wp_add3 _ _ _) _)
+        | Load _ => notypeclasses refine (tac_fast_apply (wp_load2 _ _) _)
+        | Val _ => notypeclasses refine (tac_fast_apply (wp_val _ _) _)
+        end
+    end.
+
+  Lemma ex8 :
+    ⊢ ∀ l, l ↦ ValInt 5 -∗
+      WP Load (ValLoc l) + ValInt 1 {{ v,
+        ∃ n', ⌜v = ValInt n'⌝ ∗ ⌜n' > 0⌝ ∗ l ↦ ValInt 5 ∗ True }}.
+  Proof.
+    iStartProof.
+    repeat liEStep; liShow.
+  Abort.
+
+  Global Instance mapsto_related_to l v : RelatedTo (l ↦ v) := {|
+    rt_fic := FindDirect (λ v', l ↦ v')%I;
+  |}.
+
+  Lemma ex8 :
+    ⊢ ∀ l, l ↦ ValInt 5 -∗
+      WP Load (ValLoc l) + ValInt 1 {{ v,
+        ∃ n', ⌜v = ValInt n'⌝ ∗ ⌜n' > 0⌝ ∗ l ↦ ValInt 5 ∗ True }}.
+  Proof.
+    iStartProof.
+    repeat liEStep; liShow.
+  Abort.
+
+  Lemma subsume_mapsto l v1 v2 G:
+    ⌜v1 = v2⌝ ∗ G -∗
+    subsume (l ↦ v1) (l ↦ v2) G.
+  Proof. iIntros "[-> $] $". Qed.
+  Global Instance subsume_mapsto_inst l v1 v2 :
+    Subsume (l ↦ v1) (l ↦ v2) :=
+    λ G, i2p (subsume_mapsto l v1 v2 G).
+
+  Lemma ex8 :
+    ⊢ ∀ l, l ↦ ValInt 5 -∗
+      WP Load (ValLoc l) + ValInt 1 {{ v,
+        ∃ n', ⌜v = ValInt n'⌝ ∗ ⌜n' > 0⌝ ∗ l ↦ ValInt 5 ∗ True }}.
+  Proof.
+    iStartProof.
+    repeat liEStep; liShow.
+  Qed.
+
+  (*
+    Predictable:
+    - Easy to understand what the automation is doing
+    - Allows integration with manual proof steps
+
+    Efficient: pass over the goal without backtracking
+
+    Extensible:
+    - supports new rules for primitive constructs
+    - supports different ownership assertions
+ *)
+
+
+(*** Alternative tutorial *)
 
 (** This file contains a tutorial for Lithium, the underlying proof
 automation of RefinedC. See also Section 5 of the RefinedC paper. *)
