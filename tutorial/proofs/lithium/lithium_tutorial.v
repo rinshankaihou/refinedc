@@ -56,7 +56,7 @@ Section lithium.
     liStep. liStep.
     (* Shelve the sidecondition. *)
     liStep. liStep.
-    (* Solve True *)
+    (* Solve True. *)
     liStep.
     (* Unshelve sideconditions. *)
     Unshelve. all: li_unshelve_sidecond.
@@ -65,19 +65,20 @@ Section lithium.
     (* Done! *)
   Qed.
 
+  (*
+        Atom       A ::= v ◁ᵥ ty | ...
+        Basic goal F ::= A1 <: A2 { G } | ...
+        Goal       G ::= True | H ∗ G | H -∗ G | G1 ∧ G2 | ∀ x, G(x)
+                          | ∃ x, G(x) | F
+        Left goal  H ::= ⌜φ⌝ | A | H ∗ H | ∃ x, H(x)
+  *)
+
   (* Key takeaway: Lithium automates proofs by looking at the goal and
   applying the "obvious" rule. The technical term for this is
   goal-directed proof search and Lithium can be seen as a logic
-  programming language for separation logic.
+  programming language for separation logic. *)
 
-   The maybe surprising fact is that it is possible to identify a
-   fragment of separation logic that can be handled by this principle
-   of goal-directed proof search (without backtracking) and that is
-   large enough to verify interesting programs with it. The last
-   point is show-cased by RefinedC and Islaris. *)
-
-
-  (* Let's wrap the application of wp_add into a tactic. *)
+  (* Let's automate the basic goal WP. *)
   Ltac liEExpr :=
     match goal with
     | |- envs_entails _ (wp _ _ ?e _) =>
@@ -107,8 +108,33 @@ Section lithium.
     lia.
   Qed.
 
-  (* What about multiple additions ? *)
+  (* Let's add a sidecondition to wp_add. *)
+  Axiom wp_add2 : ∀ n1 n2 Φ,
+      ⌜n1 + n2 < 2 ^ 64⌝ ∗ Φ (ValInt $ n1 + n2) -∗
+      WP ValInt n1 + ValInt n2 {{ Φ }}.
+
+  (* We need to update liEExpr. *)
+  Ltac liEExpr ::=
+    match goal with
+    | |- envs_entails _ (wp _ _ ?e _) =>
+        match e with
+        | AddE _ _ => notypeclasses refine (tac_fast_apply (wp_add2 _ _ _) _)
+        end
+    end.
+
   Lemma ex3 :
+    ⊢ ∀ n, ⌜n > 0⌝ -∗
+      WP ValInt n + ValInt 1 {{ v,
+        ∃ n', ⌜v = ValInt n'⌝ ∗ ⌜n' > 0⌝ ∗ True }}.
+  Proof.
+    iStartProof.
+    repeat liEStep; liShow.
+    Unshelve. all: li_unshelve_sidecond.
+    all: try lia.
+  Abort.
+
+  (* What about multiple additions ? *)
+  Lemma ex4 :
     ⊢ ∀ n, ⌜n > 0⌝ -∗
       WP ValInt n + ValInt 1 + ValInt 1 {{ v,
         ∃ n', ⌜v = ValInt n'⌝ ∗ ⌜n' > 0⌝ ∗ True }}.
@@ -121,7 +147,7 @@ Section lithium.
 
   (* Let's define a more general version of wp_add that works for
   expressions, not just for values. *)
-  Axiom wp_add2 : ∀ e1 e2 Φ,
+  Axiom wp_add3 : ∀ e1 e2 Φ,
     WP e1 {{ v1,
       WP e2 {{ v2, ∃ n1 n2,
         ⌜v1 = ValInt n1⌝ ∗ ⌜v2 = ValInt n2⌝ ∗ Φ (ValInt $ n1 + n2) }} }} -∗
@@ -132,7 +158,7 @@ Section lithium.
     match goal with
     | |- envs_entails _ (wp _ _ ?e _) =>
         match e with
-        | AddE _ _ => notypeclasses refine (tac_fast_apply (wp_add2 _ _ _) _)
+        | AddE _ _ => notypeclasses refine (tac_fast_apply (wp_add3 _ _ _) _)
         end
     end.
 
@@ -158,7 +184,7 @@ Section lithium.
     match goal with
     | |- envs_entails _ (wp _ _ ?e _) =>
         match e with
-        | AddE _ _ => notypeclasses refine (tac_fast_apply (wp_add2 _ _ _) _)
+        | AddE _ _ => notypeclasses refine (tac_fast_apply (wp_add3 _ _ _) _)
         | Val _ => notypeclasses refine (tac_fast_apply (wp_val _ _) _)
         end
     end.
@@ -177,7 +203,7 @@ Section lithium.
     additions. *)
   Qed.
 
-  Axiom wp_add3 : ∀ e1 e2 Φ,
+  Axiom wp_add4 : ∀ e1 e2 Φ,
     WP e1 {{ v1,
       WP e2 {{ v2, ∃ n1 n2,
         ⌜v1 = ValInt n1⌝ ∗ ⌜v2 = ValInt n2⌝ ∗
@@ -189,13 +215,13 @@ Section lithium.
     match goal with
     | |- envs_entails _ (wp _ _ ?e _) =>
         match e with
-        | AddE _ _ => notypeclasses refine (tac_fast_apply (wp_add3 _ _ _) _)
+        | AddE _ _ => notypeclasses refine (tac_fast_apply (wp_add4 _ _ _) _)
         | Val _ => notypeclasses refine (tac_fast_apply (wp_val _ _) _)
         end
     end.
 
   Lemma ex6 :
-    ⊢ ∀ n, ⌜n > 0⌝ -∗ ⌜n < 2 ^ 64 - 2⌝ -∗
+    ⊢ ∀ n, ⌜n > 0⌝ -∗
       WP ValInt n + ValInt 1 + ValInt 1 {{ v,
         ∃ n', ⌜v = ValInt n'⌝ ∗ ⌜n' > 0⌝ ∗ True }}.
   Proof.

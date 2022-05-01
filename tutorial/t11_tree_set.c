@@ -105,12 +105,13 @@ bool member(tree_t* t, size_t k){
 [[rc::requires("[alloc_initialized]")]]
 [[rc::ensures("own p : {{[k]} ∪ s} @ tree_t")]]
  [[rc::tactics("all: try by set_unfold; solve_goal.")]]
-void insert_rec(tree_t* t, size_t k){
-  if(*t == NULL){
+void insert_rec(tree_t* t, size_t k) {
+  if(*t == NULL) {
     *t = node(NULL, k, NULL);
   } else {
-    if((*t)->key == k) return;
-    if(k < (*t)->key){
+    if((*t)->key == k) {
+      return;
+    } else if(k < (*t)->key) {
       insert_rec(&((*t)->left), k);
     } else {
       insert_rec(&((*t)->right), k);
