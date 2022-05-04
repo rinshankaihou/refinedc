@@ -44,7 +44,8 @@ Section lithium.
     iStartProof.
     (* Introduce the universal quantifier. *)
     liStep.
-    (* Introduce the pure assumption (in two steps for technical reasons).*)
+    (* Introduce the pure assumption
+       (in two steps for technical reasons).*)
     liStep. liStep.
     (* Lithium does not know how to handle this WP. *)
     Fail liStep.
@@ -66,17 +67,20 @@ Section lithium.
   Qed.
 
   (*
-        Atom       A ::= v ◁ᵥ ty | ...
-        Basic goal F ::= A1 <: A2 { G } | ...
-        Goal       G ::= True | H ∗ G | H -∗ G | G1 ∧ G2 | ∀ x, G(x)
-                          | ∃ x, G(x) | F
-        Left goal  H ::= ⌜φ⌝ | A | H ∗ H | ∃ x, H(x)
+     Atom       A ::= v ◁ᵥ ty | ...
+     Basic goal F ::= A1 <: A2 { G } | ...
+     Goal       G ::= True | H ∗ G | H -∗ G
+                       | G1 ∧ G2 | ∀ x, G(x)
+                       | ∃ x, G(x) | F
+     Left goal  H ::= ⌜φ⌝ | A | H ∗ H | ∃ x, H(x)
   *)
 
   (* Key takeaway: Lithium automates proofs by looking at the goal and
   applying the "obvious" rule. The technical term for this is
   goal-directed proof search and Lithium can be seen as a logic
-  programming language for separation logic. *)
+  programming language for separation logic. For more information like
+  the subset of separation logic supported by Lithium, see Section 5
+  of the RefinedC paper. *)
 
   (* Let's automate the basic goal WP. *)
   Ltac liEExpr :=
@@ -132,6 +136,10 @@ Section lithium.
     Unshelve. all: li_unshelve_sidecond.
     all: try lia.
   Abort.
+
+
+  (* Additional content. *)
+
 
   (* What about multiple additions ? *)
   Lemma ex4 :
@@ -230,9 +238,6 @@ Section lithium.
     Unshelve. all: li_unshelve_sidecond.
     all: try lia.
   Abort.
-
-  (* For more information like the subset of separation logic
-  supported by Lithium, see Section 5 of the RefinedC paper. *)
 
   Axiom Load : expr → expr.
   Axiom ValLoc : loc → val.
