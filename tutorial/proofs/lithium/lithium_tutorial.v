@@ -8,7 +8,6 @@ Set Default Proof Using "Type".
 Axiom AddE : expr → expr → expr.
 Notation "e1 + e2" := (AddE e1 e2) : expr_scope.
 Axiom ValInt : Z → val.
-Check Val : val → expr.
 
 Section lithium.
   Context `{!typeG Σ}.
@@ -331,7 +330,7 @@ Section lithium.
     - supports new rules for primitive constructs
     - supports different ownership assertions
  *)
-
+End lithium.
 
 (*** Alternative tutorial *)
 
