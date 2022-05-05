@@ -62,25 +62,25 @@ As an example, the annotations on the following functions are equivalent.
 ```c
 [[rc::parameters("i : Z")]]
 [[rc::args("int<i32>", "i @ int<i32>")]] // Spec for the two arguments.
-[[rc::returns("i @ int<32>")]]
+[[rc::returns("i @ int<i32>")]]
 int snd_0(int x, int y){
-  return x;
+  return y;
 }
 
 [[rc::parameters("i : Z")]]
 [[rc::args("int<i32>")]] // Spec for the first argument.
 [[rc::args("i @ int<i32>")]] // Spec for the second argument.
-[[rc::returns("i @ int<32>")]]
+[[rc::returns("i @ int<i32>")]]
 int snd_1(int x, int y){
-  return x;
+  return y;
 }
 
 [[rc::args("int<i32>")]] // Spec for the first argument.
 [[rc::parameters("i : Z")]]
 [[rc::args("i @ int<i32>")]] // Spec for the second argument.
-[[rc::returns("i @ int<32>")]]
+[[rc::returns("i @ int<i32>")]]
 int snd_2(int x, int y){
-  return x;
+  return y;
 }
 ```
 
