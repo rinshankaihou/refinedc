@@ -14,7 +14,7 @@ uninstall:
 	@dune uninstall
 .PHONY: uninstall
 
-C_SRC = $(wildcard examples/*.c) $(wildcard examples/VerifyThis2021/*.c) $(wildcard tutorial/*.c) $(wildcard tutorial/VerifyThis/*.c) $(wildcard linux/casestudies/*.c) $(wildcard linux/pkvm/*.c)
+C_SRC = $(wildcard examples/*.c) $(wildcard examples/VerifyThis2021/*.c) $(wildcard tutorial/*.c) $(wildcard tutorial/VerifyThis/*.c) $(wildcard linux/casestudies/*.c) $(wildcard linux/pkvm/*.c) $(wildcard examples/scheduler/src/fdsched.c)
 
 %.c.gen: %.c phony
 	@dune exec -- refinedc check $<

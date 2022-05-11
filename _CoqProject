@@ -64,3 +64,5 @@
 -Q _build/default/tutorial/VerifyThis/proofs/t02_ownership refinedc.tutorial.VerifyThis.t02_ownership
 -Q _build/default/tutorial/VerifyThis/proofs/t03_ownership_and_refinements refinedc.tutorial.VerifyThis.t03_ownership_and_refinements
 -Q _build/default/tutorial/VerifyThis/proofs/t04_loops refinedc.tutorial.VerifyThis.t04_loops
+-Q _build/default/examples/exampleScheduler/src/proofs/main refinedc.examples.exampleScheduler.src.main
+-Q _build/default/examples/exampleScheduler/src/proofs/fdsched refinedc.examples.exampleScheduler.src.fdsched

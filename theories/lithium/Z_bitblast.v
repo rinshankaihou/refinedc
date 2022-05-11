@@ -364,6 +364,17 @@ Lemma bitblast_add_1 z1 z2 b10 b11 b20 b21:
   Bitblast (z1 + z2) 1 (xorb (xorb b11 b21) (b10 && b20)).
 Proof. move => [<-] [<-] [<-] [<-]. constructor. apply Z.add_bit1. Qed.
 Global Hint Resolve bitblast_add_1 | 5 : bitblast.
+Lemma bitblast_clearbit z n b m:
+  Bitblast z n b →
+  Bitblast (Z.clearbit z m) n (bool_decide (n ≠ m) && b).
+Proof.
+  move => [<-]. constructor.
+  case_bool_decide; subst => /=.
+  - by apply Z.clearbit_neq.
+  - by apply Z.clearbit_eq.
+Qed.
+Global Hint Resolve bitblast_clearbit | 10 : bitblast.
+
 
 (** * Tactics *)
 

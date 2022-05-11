@@ -23,3 +23,12 @@ Proof.
   - destruct (decide (n' < k)); [by rewrite Hlt|].
     rewrite Z_bits_opp_nz ?andb_negb_r // => Hn. bitblast Hn with k as Hn'. congruence.
 Qed.
+
+Lemma Z_least_significant_one_lower_bound n :
+  -1 ≤ Z_least_significant_one n.
+Proof.
+  rewrite /Z_least_significant_one.
+  case_bool_decide; [done|].
+  trans 0; [done|].
+  apply Z.log2_nonneg.
+Qed.

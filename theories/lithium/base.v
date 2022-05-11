@@ -895,6 +895,29 @@ Proof.
   by apply: Z.pow_pos_nonneg.
 Qed.
 
+Lemma bitblast_lunot bits z n b:
+  Bitblast z n b →
+  Bitblast (Z_lunot bits z) n
+((bool_decide ((bits < 0 ≤ n)%Z) || (bool_decide ((0 ≤ bits)%Z) && bool_decide ((0 ≤ n < bits)%Z))) && negb b).
+Proof.
+  move => [<-]. constructor.
+  case_bool_decide.
+  - rewrite orb_true_l andb_true_l /Z_lunot.
+    destruct H as [LE GT].
+    have -> : (2 ^ bits)%Z = 0 by apply Z.pow_neg_r.
+    by rewrite Zmod_0_r -Z.lnot_spec //=.
+  - rewrite orb_false_l.
+    case_bool_decide; last first.
+    + apply Z.testbit_neg_r. lia.
+    + case_bool_decide => //=.
+      *  rewrite Z.mod_pow2_bits_low; [| lia]. 
+         rewrite -Z.lnot_spec //. lia.
+      * destruct (decide (0 ≤ n)%Z). 
+        -- rewrite Z.mod_pow2_bits_high //=. lia.
+        -- apply Z.testbit_neg_r. lia.
+Qed.
+Global Hint Resolve bitblast_lunot | 10 : bitblast. 
+
 (* bits for `- n` *)
 Lemma Z_bits_opp_z n i :
   (0 ≤ i)%Z →

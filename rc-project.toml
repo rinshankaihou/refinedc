@@ -4,7 +4,7 @@ coq_root = "refinedc"
 no_build = true
 
 [cpp]
-include = [ "include", "examples/include" , "linux/pkvm/include" ]
+include = [ "include", "examples/include" , "linux/pkvm/include", "examples/scheduler/include" ]
 use_rc_include = false
 
 [coq]

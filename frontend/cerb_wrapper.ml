@@ -62,7 +62,7 @@ let cpp_cmd config =
     List.map  (fun file -> "-include " ^ file) config.cpp_include
   in
   let macros =
-    ["__cerb__"; "DEBUG"; "MAX_CPUS=4"; "MAX_VMS=2"; "HEAP_PAGES=10"]
+    ["__refinedc__"; "__cerb__"; "DEBUG"; "MAX_CPUS=4"; "MAX_VMS=2"; "HEAP_PAGES=10"]
     @ config.cpp_D
   in
   let cpp_D = List.map (fun mac -> "-D" ^ mac) macros in

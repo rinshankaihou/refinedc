@@ -4,7 +4,7 @@
 // Required for copy_alloc_id.
 #include <stdint.h>
 
-#if defined (__cerb__)
+#if defined (__refinedc__)
 #include "refinedc_builtins_specs.h"
 #endif
 
