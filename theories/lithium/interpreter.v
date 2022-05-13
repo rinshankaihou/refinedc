@@ -28,19 +28,19 @@ Section coq_tactics.
 *)
   Lemma tac_fast_apply {Δ} {P1 P2 : iProp Σ} :
     (P1 -∗ P2) → envs_entails Δ P1 → envs_entails Δ P2.
-  Proof. by rewrite envs_entails_eq => -> HP. Qed.
+  Proof. by rewrite envs_entails_unseal => -> HP. Qed.
 
   Lemma tac_fast_apply_below_sep {Δ} {P1 P2 T : iProp Σ} :
     (P1 -∗ P2) → envs_entails Δ (P1 ∗ T) → envs_entails Δ (P2 ∗ T).
-  Proof. by rewrite envs_entails_eq => -> HP. Qed.
+  Proof. by rewrite envs_entails_unseal => -> HP. Qed.
 
   Lemma tac_apply_i2p {Δ} {P : iProp Σ} (P' : iProp_to_Prop P) :
     envs_entails Δ P'.(i2p_P) → envs_entails Δ P.
-  Proof. rewrite envs_entails_eq. etrans; [done|]. apply i2p_proof. Qed.
+  Proof. rewrite envs_entails_unseal. etrans; [done|]. apply i2p_proof. Qed.
 
   Lemma tac_apply_i2p_below_sep {Δ} {P T : iProp Σ} (P' : iProp_to_Prop P) :
     envs_entails Δ (P'.(i2p_P) ∗ T) → envs_entails Δ (P ∗ T).
-  Proof. rewrite envs_entails_eq. etrans; [done|]. apply bi.sep_mono_l. apply i2p_proof. Qed.
+  Proof. rewrite envs_entails_unseal. etrans; [done|]. apply bi.sep_mono_l. apply i2p_proof. Qed.
 
   Lemma tac_protected_eq_app {A} (f : A → Prop) a :
     f a → f (protected a).
@@ -53,7 +53,7 @@ Section coq_tactics.
   Lemma tac_tactic_hint {A} Δ t (th : TacticHint t) (Q : A → iProp Σ):
     envs_entails Δ (th.(tactic_hint_P) Q) →
     envs_entails Δ (tactic_hint t Q).
-  Proof.  rewrite envs_entails_eq => ?. etrans; [done|]. apply tactic_hint_proof. Qed.
+  Proof.  rewrite envs_entails_unseal => ?. etrans; [done|]. apply tactic_hint_proof. Qed.
 
   Lemma tac_exist_prod A B (P : _ → Prop):
     (∃ x1 x2, P (x1, x2)) → @ex (A * B) P.
@@ -65,7 +65,7 @@ Section coq_tactics.
 
   Lemma tac_find_in_context {Δ} {fic} {T : _ → iProp Σ} key (F : FindInContext fic key) :
     envs_entails Δ (F T).(i2p_P) → envs_entails Δ (find_in_context fic T).
-  Proof. rewrite envs_entails_eq. etrans; [done|]. apply i2p_proof. Qed.
+  Proof. rewrite envs_entails_unseal. etrans; [done|]. apply i2p_proof. Qed.
 
   Lemma tac_find_hyp_equal key (Q P P' R : iProp Σ) Δ `{!FindHypEqual key Q P P'}:
     envs_entails Δ (P' ∗ R) →
@@ -76,7 +76,7 @@ Section coq_tactics.
     envs_lookup i Δ = Some (p, P) →
     envs_entails (envs_delete false i p Δ) R → envs_entails Δ (P ∗ R).
   Proof.
-    rewrite envs_entails_eq. intros ? HQ.
+    rewrite envs_entails_unseal. intros ? HQ.
     rewrite (envs_lookup_sound' _ false) // bi.intuitionistically_if_elim.
       by apply bi.sep_mono_r.
   Qed.
@@ -84,38 +84,38 @@ Section coq_tactics.
   Lemma tac_do_exist A Δ (P : A → iProp Σ) :
     (∃ x, envs_entails Δ (P x)) → envs_entails Δ (∃ x : A, P x).
   Proof.
-    rewrite envs_entails_eq. intros [x HP]. by rewrite -(bi.exist_intro x).
+    rewrite envs_entails_unseal. intros [x HP]. by rewrite -(bi.exist_intro x).
   Qed.
 
   Lemma tac_do_forall A Δ (P : A → iProp Σ) :
     (∀ x, envs_entails Δ (P x)) → envs_entails Δ (∀ x : A, P x).
   Proof.
-    rewrite envs_entails_eq. intros HP. by apply bi.forall_intro.
+    rewrite envs_entails_unseal. intros HP. by apply bi.forall_intro.
   Qed.
   Lemma tac_do_exist_wand A Δ (P : A → iProp Σ) Q :
     (∀ x, envs_entails Δ (P x -∗ Q)) → envs_entails Δ ((∃ x : A, P x) -∗ Q).
   Proof.
-    rewrite envs_entails_eq. iIntros (HP) "Henv". iDestruct 1 as (x) "HP".
+    rewrite envs_entails_unseal. iIntros (HP) "Henv". iDestruct 1 as (x) "HP".
     by iApply (HP with "Henv HP").
   Qed.
 
   Lemma tac_do_intro_pure Δ (P : Prop) (Q : iProp Σ) :
     (P → envs_entails Δ Q) → envs_entails Δ (⌜P⌝ -∗ Q).
   Proof.
-    rewrite envs_entails_eq => HP. iIntros "HΔ %".  by iApply HP.
+    rewrite envs_entails_unseal => HP. iIntros "HΔ %".  by iApply HP.
   Qed.
 
   Lemma tac_do_intro_pure_and Δ (P : Prop) (Q : iProp Σ) :
     (P ∧ (envs_entails Δ Q)) → envs_entails Δ (⌜P⌝ ∗ Q).
   Proof.
-    rewrite envs_entails_eq => [[HP HΔ]].
+    rewrite envs_entails_unseal => [[HP HΔ]].
     iIntros "HΔ".  iSplit => //. by iApply HΔ.
   Qed.
 
   Lemma tac_do_intro_intuit_sep Δ (P Q : iProp Σ) :
     envs_entails (envs_clear_spatial Δ) (P ∗ True) → envs_entails Δ Q → envs_entails Δ (□ P ∗ Q).
   Proof.
-    rewrite envs_entails_eq => HP HQ. iIntros "Henv".
+    rewrite envs_entails_unseal => HP HQ. iIntros "Henv".
     iSplit.
     - iDestruct (envs_clear_spatial_sound with "Henv") as "[#Henv _]".
       iModIntro. iDestruct (HP with "Henv") as "[$ _]".
@@ -126,7 +126,7 @@ Section coq_tactics.
     envs_entails Δ (SH T).(i2p_P) →
     envs_entails Δ (P -∗ T).
   Proof.
-    rewrite envs_entails_eq => HP. iIntros "Henv Hl".
+    rewrite envs_entails_unseal => HP. iIntros "Henv Hl".
     iDestruct (HP with "Henv") as "HP".
     iDestruct (i2p_proof with "HP Hl") as "$".
   Qed.
@@ -137,7 +137,7 @@ Section coq_tactics.
     envs_entails (Envs Γp (Esnoc Γs i P) n') T →
     envs_entails (Envs Γp Γs n) (P -∗ T).
   Proof.
-    rewrite envs_entails_eq => Hs Hp HP. iIntros "Henv Hl".
+    rewrite envs_entails_unseal => Hs Hp HP. iIntros "Henv Hl".
     rewrite (envs_app_sound (Envs Γp Γs n) (Envs Γp (Esnoc Γs i P) n) false (Esnoc Enil i P)) //; simplify_option_eq => //.
     iApply HP. iApply "Henv". iFrame.
   Qed.
@@ -148,7 +148,7 @@ Section coq_tactics.
     envs_entails (Envs (Esnoc Γp i P') Γs n') T →
     envs_entails (Envs Γp Γs n) (P -∗ T).
   Proof.
-    rewrite envs_entails_eq => Hs Hp HP. iIntros "Henv HP".
+    rewrite envs_entails_unseal => Hs Hp HP. iIntros "Henv HP".
     iDestruct (@ip_persistent _ _ _ Hpers with "HP") as "#HP'".
     rewrite (envs_app_sound (Envs Γp Γs n) (Envs (Esnoc Γp i P') Γs n) true (Esnoc Enil i P')) //; simplify_option_eq => //.
     iApply HP. iApply "Henv".
@@ -157,7 +157,7 @@ Section coq_tactics.
 
   Lemma tac_true Δ :
     envs_entails Δ (True%I : iProp Σ).
-  Proof. rewrite envs_entails_eq. by iIntros "_". Qed.
+  Proof. rewrite envs_entails_unseal. by iIntros "_". Qed.
 
   Lemma tac_sep_true Δ (P : iProp Σ) :
     envs_entails Δ P → envs_entails Δ (True ∗ P).
@@ -199,7 +199,7 @@ Section coq_tactics.
     envs_entails (envs_clear_spatial Δ) (f (env_to_prop (env_spatial Δ))) →
     envs_entails Δ (accu f).
   Proof.
-    rewrite envs_entails_eq => Henv. iIntros "Henv".
+    rewrite envs_entails_unseal => Henv. iIntros "Henv".
     iDestruct (envs_clear_spatial_sound with "Henv") as "[#Henv Hs]". iExists (env_to_prop (env_spatial Δ)).
     rewrite -env_to_prop_sound. iFrame. iModIntro. by iApply (Henv with "Henv").
   Qed.
@@ -207,7 +207,7 @@ Section coq_tactics.
   Lemma tac_do_split Δ (P1 P2 : iProp Σ):
     envs_entails Δ P1 → envs_entails Δ P2 →
     envs_entails Δ (P1 ∧ P2).
-  Proof. rewrite envs_entails_eq => HP1 HP2. by apply bi.and_intro. Qed.
+  Proof. rewrite envs_entails_unseal => HP1 HP2. by apply bi.and_intro. Qed.
 
   Lemma tac_split_big_sepM {K A} `{!EqDecision K} `{!Countable K} (m : gmap K A) i x Φ (P : iProp Σ):
     m !! i = None →

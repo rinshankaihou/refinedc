@@ -409,7 +409,7 @@ Inductive expr_step : expr → state → list Empty_set → runtime_expr → sta
       |  _    , _                => WSt (* unreachable *)
       end
     in
-    let end_expr := if o is Na1Ord then Deref Na2Ord ot (Val v) else Val (mem_cast v' ot (dom _ σ.(st_fntbl), σ.(st_heap))) in
+    let end_expr := if o is Na1Ord then Deref Na2Ord ot (Val v) else Val (mem_cast v' ot (dom σ.(st_fntbl), σ.(st_heap))) in
     val_to_loc v = Some l →
     heap_at l (ot_layout ot) v' start_st σ.(st_heap).(hs_heap) →
     expr_step (Deref o ot (Val v)) σ [] end_expr (heap_fmap (heap_upd l v' end_st) σ) []
