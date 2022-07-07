@@ -48,7 +48,7 @@ Lemma refinedc_adequacy Σ `{!typePreG Σ} (thread_mains : list loc) (fns : gmap
   nsteps (Λ := c_lang) n (initial_prog <$> thread_mains, σ) κs (t2, σ2) →
   ∀ e2, e2 ∈ t2 → not_stuck e2 σ2.
 Proof.
-  move => Hnew -> Hwp. apply: wp_strong_adequacy. move => ?.
+  move => Hnew -> Hwp. apply: wp_strong_adequacy_no_lc. move => ??.
   set h := to_heapUR ∅.
   iMod (own_alloc (● h ⋅ ◯ h)) as (γh) "[Hh _]" => //.
   { apply auth_both_valid_discrete. split => //. }
@@ -73,7 +73,7 @@ Proof.
   }
   iMod (Hwp with "Hmt Hfm") as "Hmains".
 
-  iModIntro. iExists NotStuck, _, (replicate (length thread_mains) (λ _, True%I)), _, _.
+  iModIntro. iExists _, (replicate (length thread_mains) (λ _, True%I)), _, _.
   iSplitL "Hctx Hf"; last first. 1: iSplitL "Hmains".
   - rewrite big_sepL2_fmap_l. iApply big_sepL2_replicate_r; [done|]. iApply (big_sepL_impl with "Hmains").
     iIntros "!#" (? main ?); iDestruct 1 as (P) "[Hmain HP]".
