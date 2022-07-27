@@ -53,7 +53,7 @@ Section lifting.
     ⊢ WP AllocFailed @ E {{ Φ }}.
   Proof.
     iLöb as "IH".
-    iApply wp_lift_pure_det_head_step_no_fork' => //; first by eauto using AllocFailedStep.
+    iApply wp_lift_pure_det_head_step_no_fork'; [done|by eauto using AllocFailedStep| | by iIntros "!> _"].
     move => ????? . inversion 1; simplify_eq => //.
     match goal with | H: to_rtexpr ?e = AllocFailed |- _ => destruct e; discriminate end.
   Qed.
@@ -76,7 +76,7 @@ Section lifting.
       iPureIntro. destruct Hstep as (?&?&?&?&?).
       naive_solver eauto using ExprStep, StmtStep.
     }
-    clear Hstep. iIntros (??? Hstep).
+    clear Hstep. iIntros (??? Hstep) "_".
     move: (Hstep) => /runtime_step_preserves_invariant?.
     destruct He as [[e' [??]]|[? [s [??]]]]; inversion Hstep; simplify_eq.
     all: try by [destruct e'; discriminate].
