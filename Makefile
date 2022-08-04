@@ -61,7 +61,7 @@ export BUILDDEP_OPAM_BODY
 
 # Create a virtual Opam package with the same deps as RefinedC, but no
 # build.
-builddep/refinedc-builddep.opam: refinedc.opam Makefile
+builddep/refinedc-builddep.opam: refinedc.opam coq-lithium.opam Makefile
 	@echo "# Creating builddep package."
 	@mkdir -p builddep
 	@echo "$$BUILDDEP_OPAM_BODY" > $@
