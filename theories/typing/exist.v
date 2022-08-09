@@ -112,4 +112,4 @@ Section tyexist.
   Qed.
 End tyexist.
 
-Typeclasses Opaque tyexists_type.
+Global Typeclasses Opaque tyexists_type.

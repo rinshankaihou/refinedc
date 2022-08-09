@@ -6,7 +6,7 @@ Definition introduce_typed_stmt {Σ} `{!typeG Σ} (fn : function) (ls : list loc
   let Q := (subst_stmt (zip (fn.(f_args).*1 ++ fn.(f_local_vars).*1)
                             (val_of_loc <$> ls))) <$> fn.(f_code) in
   typed_stmt (Goto fn.(f_init)) fn ls R Q.
-Typeclasses Opaque introduce_typed_stmt.
+Global Typeclasses Opaque introduce_typed_stmt.
 Arguments introduce_typed_stmt : simpl never.
 
 Section function.
@@ -201,8 +201,8 @@ Notation "'fn(∀' x ':' A ';' Pa ')' '→' '∃' y ':' B ',' rty ';' Pr" :=
    format "'fn(∀'  x  ':'  A ';' '/'  Pa ')'  '→' '/'  '∃'  y  ':'  B ','  rty  ';'  Pr") : stdpp_scope.
 
 
-Typeclasses Opaque typed_function.
-Typeclasses Opaque function_ptr_type.
+Global Typeclasses Opaque typed_function.
+Global Typeclasses Opaque function_ptr_type.
 
 Section inline_function.
   Context `{!typeG Σ} {A : Type}.
@@ -303,7 +303,7 @@ Section inline_function.
     λ T, i2p (type_call_inline_fnptr l v vl tys T fn).
 End inline_function.
 
-Typeclasses Opaque inline_function_ptr_type.
+Global Typeclasses Opaque inline_function_ptr_type.
 
 (*** Tests *)
 Section test.

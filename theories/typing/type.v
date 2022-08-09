@@ -1,7 +1,7 @@
 From iris.bi Require Export fractional.
 From iris.base_logic.lib Require Export invariants.
-From caesium Require Export proofmode notation.
 From lithium Require Import simpl_classes.
+From caesium Require Export proofmode notation.
 From refinedc.typing Require Export base annotations.
 Set Default Proof Using "Type".
 
@@ -409,7 +409,7 @@ Section alloc_alive.
   Proof. by move => T [-> ?]. Qed.
 End alloc_alive.
 
-Typeclasses Opaque type_alive.
+Global Typeclasses Opaque type_alive.
 
 Notation "l ◁ₗ{ β } ty" := (ty_own ty β l) (at level 15, format "l  ◁ₗ{ β }  ty") : bi_scope.
 Notation "l ◁ₗ ty" := (ty_own ty Own l) (at level 15) : bi_scope.

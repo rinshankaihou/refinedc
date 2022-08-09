@@ -886,7 +886,7 @@ let pp_spec : Coq_path.t -> import list -> inlined_code ->
     pp_encoded_patt_bindings ff ref_and_par_names;
     let guard = Guard_in_def(id) in
     pp_struct_def_np ast.structs guard annot fields ff struct_id;
-    pp "@]@;)%%I.@;Typeclasses Opaque %s_rec.\n" id;
+    pp "@]@;)%%I.@;Global Typeclasses Opaque %s_rec.\n" id;
     if par_names <> [] then sugar := !sugar @ [(id, par_names)];
     opaque := !opaque @ [id ^ "_rec"];
 
@@ -1138,7 +1138,7 @@ let pp_spec : Coq_path.t -> import list -> inlined_code ->
 
   (* [Typeclass Opaque] stuff. *)
   if !opaque <> [] then pp "@;";
-  let pp_opaque = pp "@;Typeclasses Opaque %s." in
+  let pp_opaque = pp "@;Global Typeclasses Opaque %s." in
   List.iter pp_opaque !opaque;
 
   (* Printing inlined code (from comments). *)
@@ -1274,7 +1274,7 @@ let pp_proof : Coq_path.t -> func_def -> import list -> string list
                  List.iter (fprintf ff " %a]" pp_intro) xs
   in
   pp "@[<v 2>Proof.@;";
-  pp "Open Scope printing_sugar.@;";
+  pp "Local Open Scope printing_sugar.@;";
   pp "start_function \"%s\" (%a)" def.func_name
     pp_intros func_annot.fa_parameters;
   if def.func_vars <> [] || def.func_args <> [] then

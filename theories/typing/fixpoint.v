@@ -7,6 +7,27 @@ Import uPred.
 Section fixpoint.
   Context `{!typeG Σ}.
 
+  (* TODO: Is it possible to use monotone fixpoints instead of guarded
+  fixpoints here? It is not obvious how to do that since the Iris
+  monotone fixpoint library is for BIs, not for OFEs. Maybe it could
+  work to make ty_own_val and ty_has_op_type trivial (as currently in
+  guarded)? This would be quite annoying as it would mean that
+  fixpoints are not movable. But maybe one can work around this
+  problem by unfolding the T once in the definition of the fixpoint
+  and making sure that the recursive occurence occurs under a pointer
+  such that it's ty_own is used which can be unfolded? I.e. something
+  like the following:
+
+   list_t_rec R := optional (&own R) null
+
+   list_t := list_t_rec (fixp R)
+
+  with ty_own (fixp R) β l ≡ ty_own (R (fixp R)) β l
+
+  Not sure if this would actually work, in particular if one can show
+  that fixp is a type. Maybe if one makes sharing trivial as well?
+ *)
+
   Global Instance type_inhabited : Inhabited type := populate (uninit void_layout).
 
   Context {A : Type} (T : (A -d> typeO) → (A -d> typeO)) {HT: Contractive T}.

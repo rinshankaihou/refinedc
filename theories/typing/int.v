@@ -384,7 +384,7 @@ Section programs.
     λ T, i2p (annot_reduce_int v n it T).
 
 End programs.
-Typeclasses Opaque int_inner_type.
+Global Typeclasses Opaque int_inner_type.
 
 Notation "'if' p ≠ 0 " := (DestructHintIfInt p) (at level 100, only printing).
 Notation "'case' n " := (DestructHintSwitchIntCase n) (at level 100, only printing).
@@ -436,7 +436,7 @@ Section offsetof.
   Qed.
 
 End offsetof.
-Typeclasses Opaque offsetof.
+Global Typeclasses Opaque offsetof.
 
 (*** Tests *)
 Section tests.

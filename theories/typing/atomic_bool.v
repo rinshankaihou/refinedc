@@ -209,4 +209,4 @@ Section programs.
 
 End programs.
 
-Typeclasses Opaque atomic_bool.
+Global Typeclasses Opaque atomic_bool.

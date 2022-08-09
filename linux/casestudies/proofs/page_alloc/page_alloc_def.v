@@ -68,7 +68,7 @@ Section type.
   Qed.
 End type.
 
-Typeclasses Opaque PAGE_LAYOUT.
+Global Typeclasses Opaque PAGE_LAYOUT.
 Global Opaque PAGE_LAYOUT.
 
 Ltac enrich_context_tac ::=

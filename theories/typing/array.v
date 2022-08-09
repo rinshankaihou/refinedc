@@ -411,5 +411,5 @@ End array.
 
 Notation "array< ty , tys >" := (array ty tys)
   (only printing, format "'array<' ty ,  tys '>'") : printing_sugar.
-Typeclasses Opaque array.
-Typeclasses Opaque array_ptr.
+Global Typeclasses Opaque array.
+Global Typeclasses Opaque array_ptr.

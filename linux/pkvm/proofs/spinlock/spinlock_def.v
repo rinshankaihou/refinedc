@@ -216,4 +216,4 @@ Section type.
   Global Instance with_lock_id_hyp_spinlock_t id : WithLockId (hyp_spinlock_t id) (id.(γ_lock)) := I.
 End type.
 
-Typeclasses Opaque hyp_spinlock_t lock_token.
+Global Typeclasses Opaque hyp_spinlock_t lock_token.

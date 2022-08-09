@@ -1,5 +1,5 @@
-From refinedc.typing Require Import type globals.
 From lithium Require Import tactics.
+From refinedc.typing Require Import type globals.
 From refinedc.typing.automation Require Import solvers.
 
 (** * Markers for keeping track of the proof state *)
@@ -10,7 +10,7 @@ Arguments CASE_DISTINCTION_INFO : simpl never.
 
 Definition pop_location_info {A} (i : location_info) (a : A) : A := a.
 Arguments pop_location_info : simpl never.
-Typeclasses Opaque pop_location_info.
+Global Typeclasses Opaque pop_location_info.
 
 Definition BLOCK_PRECOND `{!typeG Σ} (bid : label) (P : iProp Σ) : Set := unit.
 Arguments BLOCK_PRECOND : simpl never.

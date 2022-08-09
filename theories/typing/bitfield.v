@@ -88,8 +88,8 @@ Section bitfield.
 End bitfield.
 Notation "bitfield< R >" := (bitfield R) (only printing, format "'bitfield<' R '>'") : printing_sugar.
 
-Typeclasses Opaque bitfield_raw_type.
-Typeclasses Opaque bitfield_type.
+Global Typeclasses Opaque bitfield_raw_type.
+Global Typeclasses Opaque bitfield_type.
 
 Section programs.
   Context `{!typeG Σ}.

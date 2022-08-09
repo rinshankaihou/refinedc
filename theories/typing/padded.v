@@ -228,4 +228,4 @@ End padded.
 Notation "padded< ty , lyty , ly >" := (padded ty lyty ly)
   (only printing, format "'padded<' ty ,  lyty ,  ly '>'") : printing_sugar.
 
-Typeclasses Opaque padded.
+Global Typeclasses Opaque padded.

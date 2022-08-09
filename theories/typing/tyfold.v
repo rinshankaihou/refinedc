@@ -26,7 +26,7 @@ Section tyfold.
   Definition tyfold (tys : list (type → type)) (base : type) : rtype :=
     RType (tyfold_type tys base).
 
-  Typeclasses Transparent own_constrained persistent_own_constraint.
+  Local Typeclasses Transparent own_constrained persistent_own_constraint.
   Lemma simplify_hyp_place_tyfold_optional l β ls tys b T:
     (l ◁ₗ{β} (maybe2 cons tys) @ optionalO (λ '(ty, tys), tyexists (λ l2, tyexists (λ ls2,
        constrained (
@@ -91,4 +91,4 @@ Section tyfold.
     SubsumePlace l β (ls1 @ tyfold (f <$> tys) b1) (ls2 @ tyfold (f <$> (tys ++ [ty])) b2) :=
     λ T, i2p (subsume_tyfold_snoc A l β f ls1 ls2 tys ty b1 b2 T ).
 End tyfold.
-Typeclasses Opaque tyfold_type.
+Global Typeclasses Opaque tyfold_type.

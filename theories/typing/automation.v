@@ -1,6 +1,6 @@
 From iris.proofmode Require Import coq_tactics reduction.
-From refinedc.typing Require Export type.
 From lithium Require Export tactics.
+From refinedc.typing Require Export type.
 From refinedc.typing.automation Require Export normalize solvers simplification proof_state loc_eq.
 From refinedc.typing Require Import programs function singleton own struct bytes int.
 Set Default Proof Using "Type".
@@ -121,15 +121,15 @@ Ltac liRInstantiateEvars :=
     (* We would like to use [liInst H (S (protected (EVAR_ID _)))],
       but this causes a Error: No such section variable or assumption
       at Qed. time. Maybe this is related to https://github.com/coq/coq/issues/9937 *)
-    instantiate_protected (protected H) ltac:(fun H => instantiate (1:=((S (protected (EVAR_ID _))))) in (Value of H))
+    instantiate_protected (protected H) ltac:(fun H => instantiate (1:=((S (protected (EVAR_ID _))))) in (value of H))
   (* This is very hard to figure out for unification because of the
   dependent types in with refinement. Unificaiton likes to unfold the
   definition of ty without this. This is the reason why do_instantiate
   evars must come before do_side_cond *)
   | |- protected ?H = ( _ @ ?ty)%I ∧ _ =>
-    instantiate_protected (protected H) ltac:(fun H => instantiate (1:=((protected (EVAR_ID _)) @ ty)%I) in (Value of H))
+    instantiate_protected (protected H) ltac:(fun H => instantiate (1:=((protected (EVAR_ID _)) @ ty)%I) in (value of H))
   | |- protected ?H = ty_of_rty (frac_ptr ?β _)%I ∧ _ =>
-    instantiate_protected (protected H) ltac:(fun H => instantiate (1:=((frac_ptr β (protected (EVAR_ID _)))%I)) in (Value of H))
+    instantiate_protected (protected H) ltac:(fun H => instantiate (1:=((frac_ptr β (protected (EVAR_ID _)))%I)) in (value of H))
   | |- envs_entails _ (subsume (?x ◁ₗ{?β} ?ty) (_ ◁ₗ{_} (protected ?H)) _) => liInst H ty
   | |- envs_entails _ (subsume (?x ◁ₗ{?β} ?ty) (_ ◁ₗ{protected ?H} _) _) => liInst H β
   end.

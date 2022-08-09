@@ -263,4 +263,4 @@ Section tunion.
 
 End tunion.
 
-Typeclasses Opaque variant.
+Global Typeclasses Opaque variant.

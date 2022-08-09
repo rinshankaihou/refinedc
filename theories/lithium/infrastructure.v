@@ -38,5 +38,5 @@ Class CanSolve (P : Prop) : Prop := can_solve: P.
 
 (** * [shelve_hint] *)
 Definition shelve_hint (P : Prop) : Prop := P.
-Typeclasses Opaque shelve_hint.
+Global Typeclasses Opaque shelve_hint.
 Arguments shelve_hint : simpl never.

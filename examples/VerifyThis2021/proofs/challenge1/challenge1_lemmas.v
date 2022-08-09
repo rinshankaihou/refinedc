@@ -243,7 +243,7 @@ End lexico.
 Definition swap (i j : nat) (A : list Z) : list Z :=
   <[j := default 0 (A !! i)]> $
   <[i := default 0 (A !! j)]> A.
-Typeclasses Opaque swap.
+Global Typeclasses Opaque swap.
 Lemma swap_intro i ni j nj A :
   A !! i = Some ni → A !! j = Some nj →
   <[j:=ni]> (<[i:=nj]> A) = swap i j A.
@@ -285,14 +285,14 @@ Definition next_start (i : nat) (A : list Z) :=
   ∃ ni niprev, A !! i = Some ni ∧
                A !! (i - 1)%nat = Some niprev ∧
                niprev < ni ∧ Sorted (Z.ge) (drop i A).
-Typeclasses Opaque next_start.
+Global Typeclasses Opaque next_start.
 
 Definition next_end (i j : nat) (A : list Z) :=
   ∃ nj ni, A !! j = Some nj ∧
            A !! (i - 1)%nat = Some ni ∧
            ni < nj ∧ i ≤ j ∧
            (∀ (u : nat) nu, A !! u = Some nu → j < u → nu ≤ ni).
-Typeclasses Opaque next_end.
+Global Typeclasses Opaque next_end.
 
 Inductive next_partial_swap : nat → nat → nat → list Z → list Z → Prop :=
 | NPSBase s i j A Acur e:

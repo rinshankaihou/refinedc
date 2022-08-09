@@ -1,6 +1,6 @@
-From refinedc.typing Require Import programs.
 From iris.algebra Require Import csum excl auth cmra_big_op.
 From iris.algebra Require Import big_op gset frac agree.
+From refinedc.typing Require Import programs.
 Set Default Proof Using "Type".
 
 Definition lockN : namespace := nroot.@"lockN".
@@ -185,6 +185,6 @@ Section type.
 End type.
 
 (* TODO> DO something stronger, e.g. sealing? *)
-Typeclasses Opaque tylocked_ex lock_token tylocked_ex_token.
+Global Typeclasses Opaque tylocked_ex lock_token tylocked_ex_token.
 Notation tylocked γ n ty := (tylocked_ex γ n tt (λ _, ty)).
 Notation tylocked_token γ n l β ty := (tylocked_ex_token γ n l β (λ _ : unit, ty)).

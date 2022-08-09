@@ -471,4 +471,4 @@ Section defs.
     alter (λ _, place p)%I k m.
 End defs.
 
-Typeclasses Opaque btree_invariant.
+Global Typeclasses Opaque btree_invariant.

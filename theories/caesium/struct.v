@@ -196,7 +196,7 @@ Qed.
 Definition GetMemberLoc (l : loc) (s : struct_layout) (m : var_name) : loc :=
   (l +ₗ Z.of_nat (default 0%nat (offset_of s.(sl_members) m))).
 Notation "l 'at{' s '}ₗ' m" := (GetMemberLoc l s m) (at level 10, format "l  'at{' s '}ₗ'  m") : stdpp_scope.
-Typeclasses Opaque GetMemberLoc.
+Global Typeclasses Opaque GetMemberLoc.
 Arguments GetMemberLoc : simpl never.
 
 (** ** Unions *)
@@ -244,7 +244,7 @@ Qed.
 
 Definition GetMemberUnionLoc (l : loc) (ul : union_layout) (m : var_name) : loc := (l).
 Notation "l 'at_union{' ul '}ₗ' m" := (GetMemberUnionLoc l ul m) (at level 10, format "l  'at_union{' ul '}ₗ'  m") : stdpp_scope.
-Typeclasses Opaque GetMemberUnionLoc.
+Global Typeclasses Opaque GetMemberUnionLoc.
 Arguments GetMemberUnionLoc : simpl never.
 
 (** ** op_type *)

@@ -22,4 +22,4 @@ Section type.
   Global Instance spinlock_with_lock_id γ : WithLockId (spinlock γ) γ := I.
 End type.
 
-Typeclasses Opaque spinlock.
+Global Typeclasses Opaque spinlock.

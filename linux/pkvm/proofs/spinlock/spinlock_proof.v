@@ -7,8 +7,8 @@ Set Default Proof Using "Type".
 Section proofs.
   Context `{!typeG Σ} `{!globalG Σ} `{!lockG Σ} `{!spinlockG Σ}.
 
-  Typeclasses Transparent hyp_spinlock_t spinlock_token.
-  Typeclasses Transparent frac_ptr_type.
+  Local Typeclasses Transparent hyp_spinlock_t spinlock_token.
+  Local Typeclasses Transparent frac_ptr_type.
 
   (* Typing proof for [hyp_spin_lock_init]. *)
   Lemma type_hyp_spin_lock_init :

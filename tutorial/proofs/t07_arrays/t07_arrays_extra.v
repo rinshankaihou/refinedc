@@ -90,5 +90,5 @@ Proof.
       rewrite Hi in H. by inversion H.
 Qed.
 
-Typeclasses Opaque index_of_min_list_Z.
+Global Typeclasses Opaque index_of_min_list_Z.
 Opaque index_of_min_list_Z.

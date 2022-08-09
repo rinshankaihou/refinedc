@@ -31,10 +31,10 @@ variables:
 
 ## Build jobs
 # z3 is pinned because of this failure: https://gitlab.mpi-sws.org/iris/refinedc/-/jobs/167306
-build-coq.8.14.0-timing:
+build-coq.8.15.2-timing:
   <<: *template
   variables:
-    OPAM_PINS: "coq version 8.14.0   cerberus git git+https://github.com/rems-project/cerberus.git#b60ea9a7d30dfa7f048c2b312dd86547939a035a   z3 version 4.8.11"
+    OPAM_PINS: "coq version 8.15.2   cerberus git git+https://github.com/rems-project/cerberus.git#b60ea9a7d30dfa7f048c2b312dd86547939a035a   z3 version 4.8.11"
     DENY_WARNINGS: "1"
     OPAM_PKG: "1"
   only:
@@ -44,10 +44,10 @@ build-coq.8.14.0-timing:
   tags:
   - fp-timing
 
-build-coq.8.14.0:
+build-coq.8.15.2:
   <<: *template
   variables:
-    OPAM_PINS: "coq version 8.14.0   cerberus git git+https://github.com/rems-project/cerberus.git#b60ea9a7d30dfa7f048c2b312dd86547939a035a   z3 version 4.8.11"
+    OPAM_PINS: "coq version 8.15.2   cerberus git git+https://github.com/rems-project/cerberus.git#b60ea9a7d30dfa7f048c2b312dd86547939a035a   z3 version 4.8.11"
     DENY_WARNINGS: "1"
   only:
   - /^ci/@iris/refinedc
@@ -55,7 +55,7 @@ build-coq.8.14.0:
 trigger-iris.dev:
   <<: *template
   variables:
-    OPAM_PINS: "coq version 8.14.0   coq-stdpp.dev git git+https://gitlab.mpi-sws.org/iris/stdpp.git#$STDPP_REV   coq-iris.dev git git+https://gitlab.mpi-sws.org/iris/iris.git#$IRIS_REV  cerberus git git+https://github.com/rems-project/cerberus.git#b60ea9a7d30dfa7f048c2b312dd86547939a035a   z3 version 4.8.11"
+    OPAM_PINS: "coq version 8.15.2   coq-stdpp.dev git git+https://gitlab.mpi-sws.org/iris/stdpp.git#$STDPP_REV   coq-iris.dev git git+https://gitlab.mpi-sws.org/iris/iris.git#$IRIS_REV  cerberus git git+https://github.com/rems-project/cerberus.git#b60ea9a7d30dfa7f048c2b312dd86547939a035a   z3 version 4.8.11"
   except:
   only:
   - triggers

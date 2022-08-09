@@ -265,7 +265,7 @@ Section optional.
   Qed.
 
 End optional.
-Typeclasses Opaque optional_type.
+Global Typeclasses Opaque optional_type.
 Notation "optional< ty , optty >" := (optional ty optty)
   (only printing, format "'optional<' ty ,  optty '>'") : printing_sugar.
 
@@ -498,6 +498,6 @@ Section optionalO.
     all: iExists _, _; iFrame.
   Qed.
 End optionalO.
-Typeclasses Opaque optionalO_type.
+Global Typeclasses Opaque optionalO_type.
 Notation "optionalO< ty , optty >" := (optionalO ty optty)
   (only printing, format "'optionalO<' ty ,  optty '>'") : printing_sugar.

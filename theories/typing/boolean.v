@@ -284,4 +284,4 @@ Section builtin_boolean.
     λ T, i2p (type_cast_builtin_boolean_boolean b it v T).
 
 End builtin_boolean.
-Typeclasses Opaque generic_boolean_type.
+Global Typeclasses Opaque generic_boolean_type.

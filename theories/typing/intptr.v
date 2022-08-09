@@ -198,4 +198,4 @@ Section programs.
     λ T, i2p (typed_bin_op_intptr_r it v1 ty v2 l op ot T).
 
 End programs.
-Typeclasses Opaque intptr_type.
+Global Typeclasses Opaque intptr_type.

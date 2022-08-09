@@ -1,13 +1,39 @@
 From Coq Require Import ssreflect.
-From stdpp Require Import prelude.
 From Coq.btauto Require Export Btauto.
+From stdpp Require Export tactics numbers list.
+From stdpp Require Import options.
 
+(** * [bitblast] tactic: Solve integer goals by bitwise reasoning *)
+(** This file provides the [bitblast] tactic for bitwise reasoning
+about [Z] via [Z.testbit]. Concretely, [bitblast] first turns an
+equality [a = b] into [∀ n, Z.testbit a n = Z.testbit a b], then
+simplifies the [Z.testbit] expressions using lemmas like
+[Z.testbit (Z.land a b) n = Z.testbit a n && Z.testbit b n], or
+[Z.testbit (Z.ones z) n = bool_decide (0 ≤ n < z) || bool_decide (z < 0 ∧ 0 ≤ n)]
+and finally simplifies the resulting boolean expression by performing case
+distinction on all [bool_decide] in the goal and pruning impossible cases.
+
+This library provides the following variants of the [bitblast] tactic:
+- [bitblast]: applies the bitblasting technique described above to the goal.
+  If the goal already contains a [Z.testbit], the first step (which introduces
+  [Z.testbit] to prove equalities between [Z]) is skipped.
+- [bitblast as n] behaves the same as [bitblast], but it allows naming the [n]
+  introduced in the first step. Fails if the goal is not an equality between [Z].
+- [bitblast H] applies the simplification of [Z.testbit] in the hypothesis [H]
+  (but does not perform case distinction).
+- [bitblast H with n as H'] deduces from the equality [H] of the form [z1 = z2]
+  that the [n]-th bit of [z1] and [z2] are equal, simplifies the resulting
+  equation, and adds it as the hypothesis [H'].
+- [bitblast H with n] is the same as [bitblast H with n as H'], but using a fresh
+  name for [H'].
+
+See also https://github.com/mit-plv/coqutil/blob/master/src/coqutil/Z/bitblast.v
+for another implementation of the same idea.
+*)
 
 (** * Settings *)
-(* set globally in base.v *)
-Local Set Keyed Unification.
+Local Set SsrOldRewriteGoalsOrder. (* See Coq issue #5706 *)
 
-Local Open Scope bool_scope.
 Local Open Scope Z_scope.
 
 (** * Helper lemmas to upstream *)
@@ -17,20 +43,20 @@ Proof. case_bool_decide; [by apply Nat.eqb_eq | by apply Nat.eqb_neq]. Qed.
 Lemma Z_eqb_eq n1 n2 :
   (n1 =? n2)%Z = bool_decide (n1 = n2).
 Proof. case_bool_decide; [by apply Z.eqb_eq | by apply Z.eqb_neq]. Qed.
-Lemma Z_testbit_pos_testbit p n:
+Lemma Z_testbit_pos_testbit p n :
   (0 ≤ n)%Z →
   Z.testbit (Z.pos p) n = Pos.testbit p (Z.to_N n).
 Proof. by destruct n, p. Qed.
 
-Lemma negb_forallb {A} (ls : list A) f:
+Lemma negb_forallb {A} (ls : list A) f :
    negb (forallb f ls) = existsb (negb ∘ f) ls.
-Proof. elim: ls => //= ?? <-. by rewrite negb_andb. Qed.
+Proof. induction ls; [done|]; simpl. rewrite negb_andb. congruence. Qed.
 
-Lemma Z_bits_inj'' a b:
+Lemma Z_bits_inj'' a b :
   a = b → (∀ n : Z, 0 ≤ n → Z.testbit a n = Z.testbit b n).
 Proof. apply Z.bits_inj_iff'. Qed.
 
-Lemma tac_tactic_in_hyp (P1 P2 : Prop):
+Lemma tac_tactic_in_hyp (P1 P2 : Prop) :
   P1 → (P1 → P2) → P2.
 Proof. eauto. Qed.
 (** TODO: replace this with [do [ tac ] in H] from ssreflect? *)
@@ -55,19 +81,22 @@ Fixpoint pos_to_bit_ranges_aux (p : positive) : (nat * nat) * list (nat * nat) :
         ((0%nat, 1%nat), prod_map S id <$> (x.1 :: x.2))
   end.
 
-(* Compute (pos_to_bit_ranges_aux 1%positive). (** 0b  1  (0, 1), [] *) *)
-(* Compute (pos_to_bit_ranges_aux 2%positive). (** 0b 10  (1, 1), [] *) *)
-(* Compute (pos_to_bit_ranges_aux 3%positive). (** 0b 11  (0, 2), [] *) *)
-(* Compute (pos_to_bit_ranges_aux 4%positive). (** 0b100  (2, 1), [] *) *)
-(* Compute (pos_to_bit_ranges_aux 5%positive). (** 0b101  (0, 1), [(2, 1)] *) *)
-(* Compute (pos_to_bit_ranges_aux 6%positive). (** 0b110  (1, 2), [] *) *)
-(* Compute (pos_to_bit_ranges_aux 7%positive). (** 0b111  (0, 3), [] *) *)
-(* Compute (pos_to_bit_ranges_aux 21%positive). (** 0b10101  (0, 1), [(2, 1), (4, 1)] *) *)
+(** [pos_to_bit_ranges p] computes the list of (start, length) pairs
+describing which bits of [p] are [1]. The following examples show the
+behavior of [pos_to_bit_ranges]: *)
+(* Compute (pos_to_bit_ranges 1%positive). (** 0b  1  [(0, 1)] *) *)
+(* Compute (pos_to_bit_ranges 2%positive). (** 0b 10  [(1, 1)] *) *)
+(* Compute (pos_to_bit_ranges 3%positive). (** 0b 11  [(0, 2)] *) *)
+(* Compute (pos_to_bit_ranges 4%positive). (** 0b100  [(2, 1)] *) *)
+(* Compute (pos_to_bit_ranges 5%positive). (** 0b101  [(0, 1); (2, 1)] *) *)
+(* Compute (pos_to_bit_ranges 6%positive). (** 0b110  [(1, 2)] *) *)
+(* Compute (pos_to_bit_ranges 7%positive). (** 0b111  [(0, 3)] *) *)
+(* Compute (pos_to_bit_ranges 21%positive). (** 0b10101  [(0, 1); (2, 1); (4, 1)] *) *)
 
 Definition pos_to_bit_ranges (p : positive) : list (nat * nat) :=
   let x := pos_to_bit_ranges_aux p in x.1::x.2.
 
-Lemma pos_to_bit_ranges_spec p rs:
+Lemma pos_to_bit_ranges_spec p rs :
   pos_to_bit_ranges p = rs →
   (∀ n, Pos.testbit p n ↔ ∃ r, r ∈ rs ∧ (N.of_nat r.1 ≤ n ∧ n < N.of_nat r.1 + N.of_nat r.2)%N).
 Proof.
@@ -112,7 +141,7 @@ Definition Z_to_bit_ranges (z : Z) : list (nat * nat) :=
   | Z.neg p => []
   end.
 
-Lemma Z_to_bit_ranges_spec z n rs:
+Lemma Z_to_bit_ranges_spec z n rs :
   (0 ≤ n)%Z →
   (0 ≤ z)%Z →
   Z_to_bit_ranges z = rs →
@@ -148,7 +177,7 @@ Ltac simpl_bool :=
 (** * [simplify_bitblast_index] *)
 Create HintDb simplify_bitblast_index_db discriminated.
 
-#[export] Hint Rewrite
+Global Hint Rewrite
   Z.sub_add
   Z.add_simpl_r
   : simplify_bitblast_index_db.
@@ -166,11 +195,11 @@ Class IsPowerOfTwo (z n : Z) := {
 }.
 Global Arguments is_power_of_two_proof _ _ {_}.
 Global Hint Mode IsPowerOfTwo + - : bitblast.
-Lemma is_power_of_two_pow2 n:
+Lemma is_power_of_two_pow2 n :
   IsPowerOfTwo (2 ^ n) n.
 Proof. constructor. done. Qed.
 Global Hint Resolve is_power_of_two_pow2 | 10 : bitblast.
-Lemma is_power_of_two_const n p:
+Lemma is_power_of_two_const n p :
   (∀ x, [(n, 1%nat)] = x → prod_map Z.of_nat id <$> Z_to_bit_ranges (Z.pos p) = x) →
   IsPowerOfTwo (Z.pos p) n.
 Proof.
@@ -206,11 +235,11 @@ Global Arguments bitblast_proof _ _ _ {_}.
 Global Hint Mode Bitblast + + - : bitblast.
 
 Definition BITBLAST_TESTBIT := Z.testbit.
-Lemma bitblast_id z n:
+Lemma bitblast_id z n :
   Bitblast z n (bool_decide (0 ≤ n) && BITBLAST_TESTBIT z n).
 Proof. constructor. case_bool_decide => //=. rewrite Z.testbit_neg_r //; lia. Qed.
 Global Hint Resolve bitblast_id | 1000 : bitblast.
-Lemma bitblast_id_bounded z z' n:
+Lemma bitblast_id_bounded z z' n :
   BitblastBounded z z' →
   Bitblast z n (bool_decide (0 ≤ n < z') && BITBLAST_TESTBIT z n).
 Proof.
@@ -223,18 +252,18 @@ Proof.
   rewrite Z.pow_neg_r in Hb; lia.
 Qed.
 Global Hint Resolve bitblast_id_bounded | 990 : bitblast.
-Lemma bitblast_0 n:
+Lemma bitblast_0 n :
   Bitblast 0 n false.
 Proof. constructor. by rewrite Z.bits_0. Qed.
 Global Hint Resolve bitblast_0 | 10 : bitblast.
-Lemma bitblast_pos p n rs b:
+Lemma bitblast_pos p n rs b :
   (∀ x, rs = x → (λ p, (Z.of_nat p.1, Z.of_nat p.1 + Z.of_nat p.2)) <$> Z_to_bit_ranges (Z.pos p) = x) →
   existsb (λ '(r1, r2), bool_decide (r1 ≤ n ∧ n < r2)) rs = b →
   Bitblast (Z.pos p) n b.
 Proof.
   move => Hr <-. constructor. rewrite -(Hr rs) //.
   destruct (decide (0 ≤ n)). 2: {
-    rewrite Z.testbit_neg_r; [lia|]. elim: (Z_to_bit_ranges (Z.pos p)) => // [??]; csimpl => <-.
+    rewrite Z.testbit_neg_r; [|lia]. elim: (Z_to_bit_ranges (Z.pos p)) => // [??]; csimpl => <-.
     case_bool_decide => //; lia.
   }
   apply eq_bool_prop_intro. rewrite Z_to_bit_ranges_spec; [|done..]. rewrite existb_True Exists_fmap.
@@ -246,13 +275,13 @@ Global Hint Extern 10 (Bitblast (Z.pos ?p) _ _) =>
    let H := fresh in intros ? H; vm_compute; apply H |
    cbv [existsb]; exact eq_refl]
   : bitblast.
-Lemma bitblast_neg p n rs b:
+Lemma bitblast_neg p n rs b :
   (∀ x, rs = x → (λ p, (Z.of_nat p.1, Z.of_nat p.1 + Z.of_nat p.2)) <$> Z_to_bit_ranges (Z.pred (Z.pos p)) = x) →
   forallb (λ '(r1, r2), bool_decide (n < r1 ∨ r2 ≤ n)) rs = b →
   Bitblast (Z.neg p) n (bool_decide (0 ≤ n) && b).
 Proof.
   move => Hr <-. constructor. rewrite -(Hr rs) //.
-  case_bool_decide => /=; [|rewrite Z.testbit_neg_r; [lia|done]].
+  case_bool_decide => /=; [|rewrite Z.testbit_neg_r; [done|lia]].
   have -> : Z.neg p = Z.lnot (Z.pred (Z.pos p)).
   { rewrite -Pos2Z.opp_pos. have := Z.add_lnot_diag (Z.pred (Z.pos p)). lia. }
   rewrite Z.lnot_spec //. symmetry. apply negb_sym.
@@ -266,25 +295,25 @@ Global Hint Extern 10 (Bitblast (Z.neg ?p) _ _) =>
    let H := fresh in intros ? H; vm_compute; apply H |
    cbv [forallb]; exact eq_refl]
     : bitblast.
-Lemma bitblast_land z1 z2 n b1 b2:
+Lemma bitblast_land z1 z2 n b1 b2 :
   Bitblast z1 n b1 →
   Bitblast z2 n b2 →
   Bitblast (Z.land z1 z2) n (b1 && b2).
 Proof. move => [<-] [<-]. constructor. by rewrite Z.land_spec. Qed.
 Global Hint Resolve bitblast_land | 10 : bitblast.
-Lemma bitblast_lor z1 z2 n b1 b2:
+Lemma bitblast_lor z1 z2 n b1 b2 :
   Bitblast z1 n b1 →
   Bitblast z2 n b2 →
   Bitblast (Z.lor z1 z2) n (b1 || b2).
 Proof. move => [<-] [<-]. constructor. by rewrite Z.lor_spec. Qed.
 Global Hint Resolve bitblast_lor | 10 : bitblast.
-Lemma bitblast_lxor z1 z2 n b1 b2:
+Lemma bitblast_lxor z1 z2 n b1 b2 :
   Bitblast z1 n b1 →
   Bitblast z2 n b2 →
   Bitblast (Z.lxor z1 z2) n (xorb b1 b2).
 Proof. move => [<-] [<-]. constructor. by rewrite Z.lxor_spec. Qed.
 Global Hint Resolve bitblast_lxor | 10 : bitblast.
-Lemma bitblast_shiftr z1 z2 n b1:
+Lemma bitblast_shiftr z1 z2 n b1 :
   Bitblast z1 (n + z2) b1 →
   Bitblast (z1 ≫ z2) n (bool_decide (0 ≤ n) && b1).
 Proof.
@@ -292,7 +321,7 @@ Proof.
   case_bool_decide => /=; [by rewrite Z.shiftr_spec| rewrite Z.testbit_neg_r //; lia].
 Qed.
 Global Hint Resolve bitblast_shiftr | 10 : bitblast.
-Lemma bitblast_shiftl z1 z2 n b1:
+Lemma bitblast_shiftl z1 z2 n b1 :
   Bitblast z1 (n - z2) b1 →
   Bitblast (z1 ≪ z2) n (bool_decide (0 ≤ n) && b1).
 Proof.
@@ -300,7 +329,7 @@ Proof.
   case_bool_decide => /=; [by rewrite Z.shiftl_spec| rewrite Z.testbit_neg_r //; lia].
 Qed.
 Global Hint Resolve bitblast_shiftl | 10 : bitblast.
-Lemma bitblast_lnot z1 n b1:
+Lemma bitblast_lnot z1 n b1 :
   Bitblast z1 n b1 →
   Bitblast (Z.lnot z1) n (bool_decide (0 ≤ n) && negb b1).
 Proof.
@@ -308,23 +337,23 @@ Proof.
   case_bool_decide => /=; [by rewrite Z.lnot_spec| rewrite Z.testbit_neg_r //; lia].
 Qed.
 Global Hint Resolve bitblast_lnot | 10 : bitblast.
-Lemma bitblast_ldiff z1 z2 n b1 b2:
+Lemma bitblast_ldiff z1 z2 n b1 b2 :
   Bitblast z1 n b1 →
   Bitblast z2 n b2 →
   Bitblast (Z.ldiff z1 z2) n (b1 && negb b2).
 Proof. move => [<-] [<-]. constructor. by rewrite Z.ldiff_spec. Qed.
 Global Hint Resolve bitblast_ldiff | 10 : bitblast.
-Lemma bitblast_ones z1 n:
+Lemma bitblast_ones z1 n :
   Bitblast (Z.ones z1) n (bool_decide (0 ≤ n < z1) || bool_decide (z1 < 0 ∧ 0 ≤ n)).
 Proof.
   constructor. case_bool_decide; [by apply Z.ones_spec_low|] => /=.
   case_bool_decide.
-  - rewrite Z.ones_equiv Z.pow_neg_r; [lia|]. apply Z.bits_m1. lia.
+  - rewrite Z.ones_equiv Z.pow_neg_r; [|lia]. apply Z.bits_m1. lia.
   - destruct (decide (0 ≤ n)); [|rewrite Z.testbit_neg_r //; lia].
     apply Z.ones_spec_high; lia.
 Qed.
 Global Hint Resolve bitblast_ones | 10 : bitblast.
-Lemma bitblast_pow2 n n':
+Lemma bitblast_pow2 n n' :
   Bitblast (2 ^ n') n (bool_decide (n = n' ∧ 0 ≤ n)).
 Proof.
   constructor. case_bool_decide; destruct_and?; subst; [by apply Z.pow2_bits_true|].
@@ -332,31 +361,38 @@ Proof.
   apply Z.pow2_bits_false. lia.
 Qed.
 Global Hint Resolve bitblast_pow2 | 10 : bitblast.
-Lemma bitblast_setbit z1 n b1 n':
+Lemma bitblast_setbit z1 n b1 n' :
   Bitblast (Z.lor z1 (2 ^ n')) n b1 →
   Bitblast (Z.setbit z1 n') n b1.
 Proof. by rewrite Z.setbit_spec'. Qed.
 Global Hint Resolve bitblast_setbit | 10 : bitblast.
-Lemma bitblast_mod z1 z2 z2' n b1:
+Lemma bitblast_mod z1 z2 z2' n b1 :
   IsPowerOfTwo z2 z2' →
   Bitblast z1 n b1 →
-  Bitblast (z1 `mod` z2) n ((bool_decide (z2' < 0 ∧ 0 ≤ n) || bool_decide (n < z2')) && b1).
+  (* Coq 8.14 changed the definition of [x `mod` 0] from [0] to [x],
+  so we have to use the following definition to be compatible with
+  both Coq 8.12 and Coq 8.14. The [z2' < 0] case is hopefully not
+  common in practice. *)
+  (* TODO: After dropping support for Coq 8.14, switch to the following definition: *)
+  (* Bitblast (z1 `mod` z2) n ((bool_decide (z2' < 0 ∧ 0 ≤ n) || bool_decide (n < z2')) && b1). *)
+  Bitblast (z1 `mod` z2) n ((bool_decide (z2' < 0 ∧ 0 ≤ n) && Z.testbit (z1 `mod` 0) n)
+                            || (bool_decide (n < z2') && b1)).
 Proof.
   move => [->] [<-]. constructor.
-  destruct (decide (0 ≤ n)). 2: { rewrite !Z.testbit_neg_r //;lia. }
-  case_bool_decide => /=. { by rewrite Z.pow_neg_r ?Zmod_0_r; [lia|]. }
-  rewrite -Z.land_ones; [lia|]. rewrite Z.land_spec Z_ones_spec; [lia..|].
+  case_bool_decide => /=. { rewrite Z.pow_neg_r ?bool_decide_false /= ?orb_false_r; [done|lia..]. }
+  destruct (decide (0 ≤ n)). 2: { rewrite !Z.testbit_neg_r ?andb_false_r //; lia. }
+  rewrite -Z.land_ones; [|lia]. rewrite Z.land_spec Z_ones_spec; [|lia..].
   by rewrite andb_comm.
 Qed.
 Global Hint Resolve bitblast_mod | 10 : bitblast.
 (* TODO: What are good instances for +? Maybe something based on Z_add_nocarry_lor? *)
-Lemma bitblast_add_0 z1 z2 b1 b2:
+Lemma bitblast_add_0 z1 z2 b1 b2 :
   Bitblast z1 0 b1 →
   Bitblast z2 0 b2 →
   Bitblast (z1 + z2) 0 (xorb b1 b2).
 Proof. move => [<-] [<-]. constructor. apply Z.add_bit0. Qed.
 Global Hint Resolve bitblast_add_0 | 5 : bitblast.
-Lemma bitblast_add_1 z1 z2 b10 b11 b20 b21:
+Lemma bitblast_add_1 z1 z2 b10 b11 b20 b21 :
   Bitblast z1 0 b10 →
   Bitblast z2 0 b20 →
   Bitblast z1 1 b11 →
@@ -364,7 +400,7 @@ Lemma bitblast_add_1 z1 z2 b10 b11 b20 b21:
   Bitblast (z1 + z2) 1 (xorb (xorb b11 b21) (b10 && b20)).
 Proof. move => [<-] [<-] [<-] [<-]. constructor. apply Z.add_bit1. Qed.
 Global Hint Resolve bitblast_add_1 | 5 : bitblast.
-Lemma bitblast_clearbit z n b m:
+Lemma bitblast_clearbit z n b m :
   Bitblast z n b →
   Bitblast (Z.clearbit z m) n (bool_decide (n ≠ m) && b).
 Proof.
@@ -380,19 +416,19 @@ Global Hint Resolve bitblast_clearbit | 10 : bitblast.
 
 (** ** Helper definitions and lemmas for the tactics *)
 Definition BITBLAST_BOOL_DECIDE := @bool_decide.
-Arguments BITBLAST_BOOL_DECIDE _ {_}.
+Global Arguments BITBLAST_BOOL_DECIDE _ {_}.
 
-Lemma tac_bitblast_bool_decide_true G (P : Prop) `{!Decision P}:
+Lemma tac_bitblast_bool_decide_true G (P : Prop) `{!Decision P} :
   P →
   G true →
   G (bool_decide P).
 Proof. move => ??. by rewrite bool_decide_eq_true_2. Qed.
-Lemma tac_bitblast_bool_decide_false G (P : Prop) `{!Decision P}:
+Lemma tac_bitblast_bool_decide_false G (P : Prop) `{!Decision P} :
   ¬ P →
   G false →
   G (bool_decide P).
 Proof. move => ??. by rewrite bool_decide_eq_false_2. Qed.
-Lemma tac_bitblast_bool_decide_split G (P : Prop) `{!Decision P}:
+Lemma tac_bitblast_bool_decide_split G (P : Prop) `{!Decision P} :
   (P → G true) →
   (¬ P → G false) →
   G (bool_decide P).
@@ -480,8 +516,10 @@ Tactic Notation "bitblast" ident(H) :=
   tactic bitblast_bool_decide_simplify in H.
 Tactic Notation "bitblast" ident(H) "with" constr(i) "as" ident(H') :=
   lazymatch type of H with
-  | @eq Z _ _ => efeed pose proof (Z_bits_inj'' _ _ H i) as H'; [try bitblast_done..|]
-  | ∀ x, _ => efeed pose proof (H i) as H'; [try bitblast_done..|]
+  (* We cannot use [efeed pose proof] since this causes weird failures
+  in combination with [Set Mangle Names]. *)
+  | @eq Z _ _ => pose proof (Z_bits_inj'' _ _ H i) as H'; efeed specialize H'; [try bitblast_done..|]
+  | ∀ x, _ => pose proof (H i) as H'; efeed specialize H'; [try bitblast_done..|]
   end; bitblast H'.
 Tactic Notation "bitblast" ident(H) "with" constr(i) :=
   let H' := fresh "H" in bitblast H with i as H'.

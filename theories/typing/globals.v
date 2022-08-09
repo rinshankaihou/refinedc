@@ -108,4 +108,4 @@ Section globals.
 
 End globals.
 
-Typeclasses Opaque initialized global_with_type.
+Global Typeclasses Opaque initialized global_with_type.

@@ -1,8 +1,8 @@
 From iris.proofmode Require Import coq_tactics reduction.
+From caesium Require Import builtins_specs.
 From refinedc.typing Require Import typing.
 From refinedc.tutorial.lithium Require Import generated_code.
 From refinedc.tutorial.lithium Require Import generated_spec.
-From caesium Require Import builtins_specs.
 Set Default Proof Using "Type".
 
 Axiom AddE : expr → expr → expr.
@@ -738,7 +738,7 @@ Section proof_lithium_test.
     ⊢ typed_function impl_lithium_test type_of_lithium_test.
   Proof.
     (** Boiler plate code at the start of a function, ignore this. *)
-    Open Scope printing_sugar.
+    Local Open Scope printing_sugar.
     start_function "lithium_test" (n) => arg_a.
     (** The following tactic gives the loop invariants for this
     function. In this case, there are none since the function does not

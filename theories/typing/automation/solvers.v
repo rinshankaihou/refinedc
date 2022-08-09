@@ -1,6 +1,6 @@
-From refinedc.typing Require Import type.
 From lithium Require Import tactics.
 From lithium Require Export solvers.
+From refinedc.typing Require Import type.
 
 Lemma unfold_int_elem_of_it (z : Z) (it : int_type) :
   z ∈ it = (min_int it ≤ z ∧ z ≤ max_int it).

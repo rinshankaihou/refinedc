@@ -1,10 +1,10 @@
 From iris.program_logic Require Export adequacy weakestpre.
 From iris.algebra Require Import csum excl auth cmra_big_op gmap.
 From iris.base_logic.lib Require Import ghost_map.
+From caesium Require Import ghost_state.
 From refinedc.typing Require Export type.
 From refinedc.typing Require Import programs function bytes globals int fixpoint.
-From caesium Require Import ghost_state.
-From iris.program_logic Require Export language.
+From iris.program_logic Require Export language. (* must be last to get the correct nsteps *)
 Set Default Proof Using "Type".
 
 Class typePreG Σ := PreTypeG {

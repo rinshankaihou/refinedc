@@ -19,24 +19,26 @@ Export Set Keyed Unification.
 (* We always annotate hints with locality ([Global] or [Local]). This enforces
 that at least global hints are annotated. *)
 Export Set Warnings "+deprecated-hint-without-locality".
+Export Set Warnings "+deprecated-hint-rewrite-without-locality".
+Export Set Warnings "+deprecated-typeclasses-transparency-without-locality".
 
 (* ensure that set from RecordUpdate simplifies when it is applied to a concrete value *)
-Arguments set _ _ _ _ _ !_ /.
+Global Arguments set _ _ _ _ _ !_ /.
 
-Typeclasses Opaque is_Some.
+Global Typeclasses Opaque is_Some.
 (* This is necessary since otherwise keyed unification unfolds these definitions *)
 Global Opaque rotate_nat_add rotate_nat_sub.
 
-Typeclasses Opaque Z.divide Z.modulo Z.div Z.shiftl Z.shiftr.
-Arguments min : simpl nomatch.
+Global Typeclasses Opaque Z.divide Z.modulo Z.div Z.shiftl Z.shiftr.
+Global Arguments min : simpl nomatch.
 
-Arguments Z.testbit : simpl never.
-Arguments Z.shiftl : simpl never.
-Arguments Z.shiftr : simpl never.
-Arguments N.shiftl : simpl never.
-Arguments N.shiftr : simpl never.
-Arguments Pos.shiftl : simpl never.
-Arguments Pos.shiftr : simpl never.
+Global Arguments Z.testbit : simpl never.
+Global Arguments Z.shiftl : simpl never.
+Global Arguments Z.shiftr : simpl never.
+Global Arguments N.shiftl : simpl never.
+Global Arguments N.shiftr : simpl never.
+Global Arguments Pos.shiftl : simpl never.
+Global Arguments Pos.shiftr : simpl never.
 Global Opaque Z.shiftl Z.shiftr.
 
 Notation "'[@{' A '}' x ; y ; .. ; z ]" :=  (@cons A x (@cons A y .. (@cons A z (@nil A)) ..)) (only parsing) : list_scope.
@@ -213,7 +215,7 @@ Proof. by repeat case_bool_decide. Qed.
 (** * apply_dfun *)
 (* TODO: does something like this exist in Iris? *)
 Definition apply_dfun {A B} (f : A -d> B) (x : A) : B := f x.
-Arguments apply_dfun : simpl never.
+Global Arguments apply_dfun : simpl never.
 
 Global Instance apply_dfun_ne A B n:
   Proper ((dist n) ==> (=) ==> (dist n)) (@apply_dfun A B).
@@ -551,7 +553,7 @@ Section list_subequiv.
         by rewrite -!lookup_drop Hd.
   Qed.
 End list_subequiv.
-Typeclasses Opaque list_subequiv.
+Global Typeclasses Opaque list_subequiv.
 Global Opaque list_subequiv.
 
 (** * big_op *)
@@ -614,8 +616,8 @@ End big_op.
 
 (** * power_of_two and factor2  *)
 Definition is_power_of_two (n : nat) := ∃ m : nat, n = (2^m)%nat.
-Arguments is_power_of_two : simpl never.
-Typeclasses Opaque is_power_of_two.
+Global Arguments is_power_of_two : simpl never.
+Global Typeclasses Opaque is_power_of_two.
 
 Fixpoint Pos_factor2 (p : positive) : nat :=
   match p with
@@ -872,7 +874,7 @@ End shifts.
 (** Z.lnot (bitwise negation) for unsigned integers with [bits] bits. *)
 Definition Z_lunot (bits n : Z) :=
   (Z.lnot n `mod` 2 ^ bits)%Z.
-Typeclasses Opaque Z_lunot.
+Global Typeclasses Opaque Z_lunot.
 
 Lemma Z_lunot_spec bits n k:
   (0 ≤ k < bits)%Z → Z.testbit (Z_lunot bits n) k = negb (Z.testbit n k).
@@ -910,13 +912,13 @@ Proof.
     case_bool_decide; last first.
     + apply Z.testbit_neg_r. lia.
     + case_bool_decide => //=.
-      *  rewrite Z.mod_pow2_bits_low; [| lia]. 
+      *  rewrite Z.mod_pow2_bits_low; [| lia].
          rewrite -Z.lnot_spec //. lia.
-      * destruct (decide (0 ≤ n)%Z). 
+      * destruct (decide (0 ≤ n)%Z).
         -- rewrite Z.mod_pow2_bits_high //=. lia.
         -- apply Z.testbit_neg_r. lia.
 Qed.
-Global Hint Resolve bitblast_lunot | 10 : bitblast. 
+Global Hint Resolve bitblast_lunot | 10 : bitblast.
 
 (* bits for `- n` *)
 Lemma Z_bits_opp_z n i :

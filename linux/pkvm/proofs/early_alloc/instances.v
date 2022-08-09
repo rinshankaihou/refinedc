@@ -35,7 +35,7 @@ Lemma ly_size_PAGES_sub n m:
   (ly_size (PAGES n) - ly_size (PAGES m) = ly_size (PAGES (n - m)))%nat.
 Proof. rewrite !ly_size_PAGES. lia. Qed.
 
-Typeclasses Opaque PAGES.
+Global Typeclasses Opaque PAGES.
 Global Opaque PAGES.
 
 #[export] Hint Rewrite ly_size_ly_offset : lithium_rewrite.

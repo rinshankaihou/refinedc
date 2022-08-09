@@ -23,5 +23,5 @@ Proof.
   exists i'. split_and! => //. by apply: StronglySorted_lookup_lt.
 Qed.
 
-Typeclasses Opaque must_be_in_range.
+Global Typeclasses Opaque must_be_in_range.
 Opaque must_be_in_range.

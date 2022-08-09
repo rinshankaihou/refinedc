@@ -500,7 +500,8 @@ Section proper.
     typed_read_end a E l β ty ot T.
   Proof. iIntros ">H". by iApply "H". Qed.
 
-  Typeclasses Opaque typed_read_end.
+  (* TODO: can this be Global? *)
+  Local Typeclasses Opaque typed_read_end.
   Global Instance elim_modal_fupd_typed_read_end p a E l β ty ot T P :
     ElimModal True p false (|={E}=> P) P (typed_read_end a E l β ty ot T) (typed_read_end a E l β ty ot T).
   Proof.
@@ -571,7 +572,8 @@ Section proper.
     typed_write_end a E ot v1 ty1 l2 β2 ty2 T.
   Proof. iIntros ">H". by iApply "H". Qed.
 
-  Typeclasses Opaque typed_write_end.
+  (* TODO: can this be Global? *)
+  Local Typeclasses Opaque typed_write_end.
   Global Instance elim_modal_fupd_typed_write_end P p a E v1 ty1 l2 β2 ty2 ot T:
     ElimModal True p false (|={E}=> P) P (typed_write_end a E ot v1 ty1 l2 β2 ty2 T) (typed_write_end a E ot v1 ty1 l2 β2 ty2 T).
   Proof.
@@ -610,8 +612,8 @@ Section proper.
     iIntros (ty3) ">[Hβ HT]". iMod ("Hclose" with "Hβ"). by iApply "HT".
   Qed.
 End proper.
-Typeclasses Opaque typed_read_end.
-Typeclasses Opaque typed_write_end.
+Global Typeclasses Opaque typed_read_end.
+Global Typeclasses Opaque typed_write_end.
 
 Definition FindLoc `{!typeG Σ} (l : loc) :=
   {| fic_A := own_state * type; fic_Prop '(β, ty):= (l ◁ₗ{β} ty)%I; |}.
@@ -625,7 +627,7 @@ Definition FindLocInBounds {Σ} (l : loc) :=
     {| fic_A := iProp Σ; fic_Prop P := P |}.
 Definition FindAllocAlive {Σ} (l : loc) :=
     {| fic_A := iProp Σ; fic_Prop P := P |}.
-Typeclasses Opaque FindLoc FindVal FindValP FindValOrLoc FindLocInBounds FindAllocAlive.
+Global Typeclasses Opaque FindLoc FindVal FindValP FindValOrLoc FindLocInBounds FindAllocAlive.
 
 Section typing.
   Context `{!typeG Σ}.
@@ -1737,7 +1739,7 @@ End guarded.
 Global Hint Mode StripGuarded + + + - - + - : typeclass_instances.
 Global Hint Mode DoStripGuarded + + + - - + - : typeclass_instances.
 Global Hint Mode StripGuardedLst + + + - - + - : typeclass_instances.
-Typeclasses Opaque typed_block.
+Global Typeclasses Opaque typed_block.
 
 Global Hint Extern 0 (DoStripGuarded ?β ?E1 ?E2 ?ty1 ?ty2) =>
   change (StripGuarded β E1 E2 ty1 ty2);

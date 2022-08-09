@@ -33,4 +33,4 @@ Section immovable.
     λ T, i2p (simplify_goal_place_immovable l β ty T).
 End immovable.
 
-Typeclasses Opaque immovable.
+Global Typeclasses Opaque immovable.

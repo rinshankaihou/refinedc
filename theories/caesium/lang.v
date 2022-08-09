@@ -3,7 +3,6 @@ From stdpp Require Export strings.
 From stdpp Require Import gmap list.
 From caesium Require Export base byte layout int_type loc val heap struct.
 Set Default Proof Using "Type".
-Open Scope Z_scope.
 
 (** * Definition of the language *)
 

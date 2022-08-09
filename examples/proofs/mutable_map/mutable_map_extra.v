@@ -48,8 +48,8 @@ Section defs.
   Definition fsm_invariant (mp : gmap Z type) (items : list item_ref) : Prop :=
     (∀ key ty, mp !! key = Some ty ↔ ∃ i, probe_ref key items = Some (i, Entry key ty)) ∧
     (∀ key, probe_ref_Empty_inv key items).
-  Typeclasses Opaque fsm_invariant.
-  Typeclasses Opaque probe_ref.
+  Local Typeclasses Opaque fsm_invariant.
+  Local Typeclasses Opaque probe_ref.
 
   Lemma slot_for_key_ref_unfold_rem key (len : nat):
     0 ≤ key → 0 < len →
@@ -283,7 +283,7 @@ Section defs.
 
 End defs.
 
-Typeclasses Opaque probe_ref_go fsm_invariant probe_ref fsm_copy_entries.
+Global Typeclasses Opaque probe_ref_go fsm_invariant probe_ref fsm_copy_entries.
 Global Opaque fsm_copy_entries slot_for_key_ref.
 
 Ltac enrich_context_tac ::=

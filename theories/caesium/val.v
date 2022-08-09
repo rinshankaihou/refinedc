@@ -1,6 +1,5 @@
 From caesium Require Export base byte layout int_type loc struct.
 Set Default Proof Using "Type".
-Open Scope Z_scope.
 
 (** * Bytes and values stored in memory *)
 
@@ -34,7 +33,7 @@ Definition VOID : val := [].
 Definition has_layout_val (v : val) (ly : layout) : Prop := length v = ly.(ly_size).
 Notation "v `has_layout_val` n" := (has_layout_val v n) (at level 50) : stdpp_scope.
 Arguments has_layout_val : simpl never.
-Typeclasses Opaque has_layout_val.
+Global Typeclasses Opaque has_layout_val.
 
 (** ** Conversion to and from locations. *)
 (* rev because we do little endian *)
@@ -53,7 +52,7 @@ Definition val_to_loc : val → option loc :=
   val_to_loc_n bytes_per_addr.
 
 Definition NULL : val := val_of_loc NULL_loc.
-Typeclasses Opaque NULL.
+Global Typeclasses Opaque NULL.
 
 Lemma val_of_loc_n_length n l:
   length (val_of_loc_n n l) = n.
@@ -107,11 +106,11 @@ Qed.
 Global Instance val_of_loc_inj : Inj (=) (=) val_of_loc.
 Proof. move => x y Heq. have := val_to_of_loc x. have := val_to_of_loc y. rewrite Heq. by simplify_eq. Qed.
 
-Typeclasses Opaque val_of_loc_n val_to_loc_n val_of_loc val_to_loc.
+Global Typeclasses Opaque val_of_loc_n val_to_loc_n val_of_loc val_to_loc.
 Arguments val_of_loc : simpl never.
 Arguments val_to_loc : simpl never.
 
-Typeclasses Opaque val_of_loc val_to_loc.
+Global Typeclasses Opaque val_of_loc val_to_loc.
 Arguments val_of_loc : simpl never.
 Arguments val_to_loc : simpl never.
 
@@ -396,4 +395,4 @@ Qed.
 Arguments val_to_Z : simpl never.
 Arguments val_of_Z : simpl never.
 Arguments val_to_byte_prov : simpl never.
-Typeclasses Opaque val_to_Z val_of_Z val_of_bool val_to_bool val_to_byte_prov val_to_bytes provs_in_bytes.
+Global Typeclasses Opaque val_to_Z val_of_Z val_of_bool val_to_bool val_to_byte_prov val_to_bytes provs_in_bytes.

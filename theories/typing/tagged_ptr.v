@@ -152,7 +152,7 @@ Section tagged_ptr.
     TypedCopyAllocId v1 (v1 ◁ᵥ a @ int it)%I v2 (v2 ◁ᵥ r @ tagged_ptr β align ty)%I (IntOp it) :=
     λ T, i2p (type_copy_aid_tagged_ptr v1 a it v2 r β align ty T).
 End tagged_ptr.
-Typeclasses Opaque tagged_ptr_type.
+Global Typeclasses Opaque tagged_ptr_type.
 
 Notation "&tagged< align , ty >" :=
   (tagged_ptr Own align ty)

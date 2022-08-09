@@ -189,7 +189,7 @@ Section definitions.
     fntbl_ctx σ.(st_fntbl).
 End definitions.
 
-Typeclasses Opaque heap_mapsto_mbyte heap_mapsto.
+Global Typeclasses Opaque heap_mapsto_mbyte heap_mapsto.
 
 Notation "l ↦{ q } v" := (heap_mapsto l q v)
   (at level 20, q at level 50, format "l  ↦{ q }  v") : bi_scope.

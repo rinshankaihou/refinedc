@@ -1,7 +1,6 @@
 From stdpp Require Import gmap list.
 From caesium Require Export base byte layout int_type loc val struct.
 Set Default Proof Using "Type".
-Open Scope Z_scope.
 
 (** * Heap and allocations. *)
 
@@ -490,7 +489,7 @@ Proof.
 Qed.
 
 
-Typeclasses Opaque mem_cast_id.
+Global Typeclasses Opaque mem_cast_id.
 Arguments mem_cast : simpl never.
 
 (** ** Allocation and deallocation. *)

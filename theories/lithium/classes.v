@@ -29,7 +29,7 @@ Inductive FICSyntactic : Set :=.
 
 (** ** Instances  *)
 Definition FindDirect {Σ A} (P : A → iProp Σ) := {| fic_A := A; fic_Prop := P; |}.
-Typeclasses Opaque FindDirect.
+Global Typeclasses Opaque FindDirect.
 
 Lemma find_in_context_direct {Σ B} P (T : B → iProp Σ):
   (∃ x : B, P x ∗ T x) -∗
@@ -49,7 +49,7 @@ Inductive destruct_hint_info :=
 | DHintDestruct (A : Type) (x : A)
 | DHintDecide (P : Prop) `{!Decision P}.
 Definition destruct_hint {Σ B} (hint : destruct_hint_info) (info : B) (T : iProp Σ) : iProp Σ := T.
-Typeclasses Opaque destruct_hint.
+Global Typeclasses Opaque destruct_hint.
 Arguments destruct_hint : simpl never.
 
 (** * [tactic_hint] *)
@@ -68,7 +68,7 @@ Arguments tactic_hint : simpl never.
 Definition vm_compute_hint {Σ A B} (f : A → option B) (x : A) (T : B → iProp Σ) : iProp Σ :=
   ∃ y, ⌜f x = Some y⌝ ∗ T y.
 Arguments vm_compute_hint : simpl never.
-Typeclasses Opaque vm_compute_hint.
+Global Typeclasses Opaque vm_compute_hint.
 
 Program Definition vm_compute_hint_hint {Σ A B} (f : A → option B) x a :
   f a = Some x →
@@ -101,7 +101,7 @@ Proof. constructor. iIntros "$". Qed.
 Definition accu {Σ} (f : iProp Σ → iProp Σ) : iProp Σ :=
   ∃ P, P ∗ □ f P.
 Arguments accu : simpl never.
-Typeclasses Opaque accu.
+Global Typeclasses Opaque accu.
 
 
 (** * Simplification *)

@@ -175,7 +175,7 @@ Section at_value.
 
 End at_value.
 Notation "at_value< v , ty >" := (at_value v ty) (only printing, format "'at_value<' v ',' ty '>'") : printing_sugar.
-Typeclasses Opaque at_value.
+Global Typeclasses Opaque at_value.
 
 Section place.
   Context `{!typeG Σ}.

@@ -1,5 +1,5 @@
-From refinedc.typing Require Export type.
 From iris.algebra Require Import list.
+From refinedc.typing Require Export type.
 From refinedc.typing Require Import programs bytes.
 Set Default Proof Using "Type".
 
@@ -435,4 +435,4 @@ Section struct.
     SimplifyGoalPlace l β (uninit s) (Some 50%N) :=
     λ T, i2p (uninit_struct_simpl_goal l β s T).
 End struct.
-Typeclasses Opaque struct.
+Global Typeclasses Opaque struct.

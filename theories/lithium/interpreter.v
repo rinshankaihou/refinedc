@@ -421,7 +421,7 @@ Ltac instantiate_protected H' tac_with :=
     unfold tmp, EVAR_ID; clear tmp
   end.
 Tactic Notation "liInst" hyp(H) open_constr(c) :=
-  instantiate_protected (protected H) ltac:(fun H => instantiate (1:=c) in (Value of H)).
+  instantiate_protected (protected H) ltac:(fun H => instantiate (1:=c) in (value of H)).
 
 Ltac unfold_instantiated_evars :=
   repeat match goal with

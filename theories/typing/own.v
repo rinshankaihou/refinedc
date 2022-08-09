@@ -388,7 +388,7 @@ Section own.
     FindInContext (FindValP l) FICSyntactic | 30 :=
     λ T, i2p (find_in_context_type_val_P_own_singleton l T).
 End own.
-Typeclasses Opaque place'.
+Global Typeclasses Opaque place'.
 Notation "place'< l >" := (place' l) (only printing, format "'place'<' l '>'") : printing_sugar.
 
 Notation "&frac{ β }" := (frac_ptr β) (format "&frac{ β }") : bi_scope.
@@ -675,13 +675,13 @@ Section optionable.
     λ T, i2p (subsume_optionalO_place_val_null A ty l β T b ty').
 End optionable.
 
-Typeclasses Opaque ptr_type.
-Typeclasses Opaque frac_ptr_type.
+Global Typeclasses Opaque ptr_type.
+Global Typeclasses Opaque frac_ptr_type.
 
 Section optional_null.
   Context `{!typeG Σ}.
 
-  Typeclasses Transparent optional_type.
+  Local Typeclasses Transparent optional_type.
 
   Lemma type_place_optional_null K l β1 b ty T:
     ⌜b⌝ ∗ typed_place K l β1 ty T -∗

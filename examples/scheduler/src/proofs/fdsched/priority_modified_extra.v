@@ -1,7 +1,6 @@
-From refinedc.typing Require Import typing.
 From caesium Require Import builtins_specs.
+From refinedc.typing Require Import typing.
 Set Default Proof Using "Type".
-Require Import ssreflect.
 
 Lemma clearbit_equiv bm priority :
   min_int u64 ≤ bm →
@@ -11,9 +10,9 @@ Lemma clearbit_equiv bm priority :
 Proof.
   move => GE LE.
   bitblast as n. symmetry.
-  apply (Z_bounded_iff_bits_nonneg' n) => //=; last by apply Z.le_refl.
+  apply (Z_bounded_iff_bits_nonneg' n) => //=.
   split; [done|].
   eapply Z.le_lt_trans; [exact LE|].
   eapply Z.lt_le_trans; [|apply (Z.pow_le_mono_r _ 64); solve_goal].
-  by done.
+  done.
 Qed.

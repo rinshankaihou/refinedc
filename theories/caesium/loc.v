@@ -1,6 +1,5 @@
 From caesium Require Export base layout.
 Set Default Proof Using "Type".
-Open Scope Z_scope.
 
 (** * Representation of locations. *)
 
@@ -8,7 +7,7 @@ Open Scope Z_scope.
 
 Declare Scope loc_scope.
 Delimit Scope loc_scope with L.
-Open Scope loc_scope.
+Global Open Scope loc_scope.
 
 (** Physical address. *)
 Definition addr := Z.
@@ -52,31 +51,31 @@ Bind Scope loc_scope with loc.
 
 Definition fn_loc (a : addr) : loc := (ProvFnPtr, a).
 Definition NULL_loc : loc := (ProvNull, 0).
-Typeclasses Opaque NULL_loc fn_loc.
+Global Typeclasses Opaque NULL_loc fn_loc.
 
 (** Shifts location [l] by offset [z]. *)
 Definition shift_loc (l : loc) (z : Z) : loc := (l.1, l.2 + z).
 Notation "l +ₗ z" := (shift_loc l%L z%Z)
   (at level 50, left associativity) : loc_scope.
-Typeclasses Opaque shift_loc.
+Global Typeclasses Opaque shift_loc.
 
 (** Shift a location by [z] times the size of [ly]. *)
 Definition offset_loc (l : loc) (ly : layout) (z : Z) : loc := (l +ₗ ly.(ly_size) * z).
 Notation "l 'offset{' ly '}ₗ' z" := (offset_loc l%L ly z%Z)
   (at level 50, format "l  'offset{' ly '}ₗ'  z", left associativity) : loc_scope.
-Typeclasses Opaque offset_loc.
+Global Typeclasses Opaque offset_loc.
 
 (** Proposition stating that location [l] is aligned to [n] *)
 Definition aligned_to (l : loc) (n : nat) : Prop := (n | l.2).
 Notation "l `aligned_to` n" := (aligned_to l n) (at level 50) : stdpp_scope.
 Arguments aligned_to : simpl never.
-Typeclasses Opaque aligned_to.
+Global Typeclasses Opaque aligned_to.
 
 (** Proposition stating that location [l] has the right alignment for layout [ly]. *)
 Definition has_layout_loc (l : loc) (ly : layout) : Prop := l `aligned_to` ly_align ly.
 Notation "l `has_layout_loc` n" := (has_layout_loc l n) (at level 50) : stdpp_scope.
 Arguments has_layout_loc : simpl never.
-Typeclasses Opaque has_layout_loc.
+Global Typeclasses Opaque has_layout_loc.
 
 (** ** Properties of [shift_loc]. *)
 

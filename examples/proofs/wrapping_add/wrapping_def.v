@@ -10,4 +10,4 @@ Definition WrappingAdd (it1 it2 : int_type) (es : list expr) : expr :=
 Global Program Instance WrappingAdd_wf it1 it2 : MacroWfSubst (WrappingAdd it1 it2).
 Next Obligation. move => ???? [|?[|?[|??]]]//. Qed.
 
-Typeclasses Opaque WrappingAdd.
+Global Typeclasses Opaque WrappingAdd.

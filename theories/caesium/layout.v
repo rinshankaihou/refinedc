@@ -1,5 +1,4 @@
 From caesium Require Import base.
-Open Scope Z_scope.
 
 (** Representation of a type layout (byte size and alignment constraint). *)
 
@@ -76,7 +75,7 @@ Arguments ly_size : simpl never.
 Arguments sizeof _ /.
 Arguments ly_align : simpl never.
 
-Typeclasses Opaque layout_le ly_offset ly_set_size ly_mult ly_with_align.
+Global Typeclasses Opaque layout_le ly_offset ly_set_size ly_mult ly_with_align.
 
 Global Hint Extern 0 (LayoutWf _) => refine (layout_wf_mod _ _); done : typeclass_instances.
 Global Hint Extern 0 (LayoutWf _) => unfold LayoutWf; done : typeclass_instances.
@@ -86,7 +85,7 @@ Global Hint Extern 0 (LayoutEq _ _) => exact: eq_refl : typeclass_instances.
 Definition void_layout : layout := {| ly_size := 0; ly_align_log := 0 |}.
 
 Definition mk_array_layout := ly_mult.
-Typeclasses Opaque mk_array_layout.
+Global Typeclasses Opaque mk_array_layout.
 
 (*** Lemmas about [layout] *)
 

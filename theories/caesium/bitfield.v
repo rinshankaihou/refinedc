@@ -1,7 +1,6 @@
-From caesium Require Import base int_type builtins_specs.
 From lithium Require Import simpl_classes tactics_extend infrastructure Z_bitblast classes.
+From caesium Require Import base int_type builtins_specs.
 
-Local Open Scope Z_scope.
 (* raw bit vector constructors *)
 
 Definition bf_nil : Z := 0.
@@ -287,7 +286,7 @@ Ltac normalize_bitfield :=
 
 (* enable using normalize_bitfield with tactic_hint *)
 Definition normalize_bitfield {Σ} (bv : Z) (T : Z → iProp Σ) : iProp Σ := T bv.
-Typeclasses Opaque normalize_bitfield.
+Global Typeclasses Opaque normalize_bitfield.
 
 Program Definition normalize_bitfield_hint {Σ} bv norm :
   bv = norm →
@@ -303,7 +302,7 @@ Global Hint Extern 10 (TacticHint (normalize_bitfield _)) =>
 where one cannot use tactic_hint *)
 (* TODO: figure out how to make the following unnecessary *)
 Definition normalize_bitfield_eq (bv norm : Z) : Prop := bv = norm.
-Typeclasses Opaque normalize_bitfield_eq.
+Global Typeclasses Opaque normalize_bitfield_eq.
 
 Class NormalizeBitfield (bv norm : Z) : Prop :=
   normalize_bitfield_proof : bv = norm.

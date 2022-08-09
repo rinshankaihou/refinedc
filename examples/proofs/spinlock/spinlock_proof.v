@@ -5,7 +5,7 @@ From refinedc.examples.spinlock Require Import spinlock_def.
 From refinedc.examples.spinlock Require Import generated_code generated_spec.
 Set Default Proof Using "Type".
 
-Typeclasses Transparent spinlock.
+Global Typeclasses Transparent spinlock.
 
 Section type.
   Context `{!typeG Σ} `{!lockG Σ}.
