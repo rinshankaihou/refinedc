@@ -1,3 +1,4 @@
+From stdpp.unstable Require Import bitblast.
 From caesium Require Import builtins_specs.
 From refinedc.typing Require Import typing.
 Set Default Proof Using "Type".
