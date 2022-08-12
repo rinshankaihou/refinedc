@@ -366,10 +366,10 @@ Proof.
     + list_lia.
     + intros. saturate_list_lookup. list_lia.
   - destruct (decide (i < length A)); subst. 2: {
-      tactic simplify_list in Hi. naive_solver.
+     do [simplify_list] in Hi. naive_solver.
     }
-    tactic simplify_list in Hi.
-    tactic simplify_list in Hp.
+    do [simplify_list] in Hi.
+    do [simplify_list] in Hp.
     have [//|//|// |e [?[?[He[?[?[??]]]]]]]:= IH; simplify_eq.
     saturate_list_lookup.
     eexists e, _, _. split_and!.
@@ -379,7 +379,7 @@ Proof.
     + list_lia.
     + move => ?? /lookup_app_Some[?|[? Hl]].
       * naive_solver lia.
-      * saturate_list_lookup. tactic simplify_list in Hl. naive_solver lia.
+      * saturate_list_lookup. do [simplify_list] in Hl. naive_solver lia.
 Qed.
 
 Lemma next_end_upper i e A:
