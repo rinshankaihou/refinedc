@@ -7,7 +7,7 @@ From iris.program_logic Require Import weakestpre.
 From iris.bi Require Import bi.
 From iris.proofmode Require Import proofmode.
 From stdpp Require Import natmap.
-From lithium Require Import Z_bitblast.
+From stdpp.unstable Require Import bitblast.
 From RecordUpdate Require Export RecordSet.
 Export RecordSetNotations.
 
@@ -232,7 +232,7 @@ Proof. by intros ?? ->%leibniz_equiv. Qed.
 (** * list *)
 Lemma zip_fmap_r {A B C} (l1 : list A) (l2 : list B) (f : B → C) :
   zip l1 (f <$> l2) = (λ x, (x.1, f x.2)) <$>  zip l1 l2.
-Proof. rewrite zip_with_fmap_r zip_with_zip. by apply: list_fmap_ext => // [[]]. Qed.
+Proof. rewrite zip_with_fmap_r zip_with_zip. by apply: list_fmap_ext => // ? []. Qed.
 
 Lemma zip_with_nil_inv' {A B C : Type} (f : A → B → C) (l1 : list A) (l2 : list B) :
   length l1 = length l2 → zip_with f l1 l2 = [] → l1 = [] ∧ l2 = [].
@@ -279,12 +279,6 @@ Qed.
 Lemma list_elem_of_insert2' {A} (l : list A) i (x1 x2 x3 : A) :
   l !! i = Some x3 → x1 ∈ l → x1 ≠ x3 → x1 ∈ <[i:=x2]> l.
 Proof. move => ???. efeed pose proof (list_elem_of_insert2 (A:=A)) as Hi; naive_solver. Qed.
-
-
-Lemma list_fmap_ext' {A B} f (g : A → B) (l1 l2 : list A) :
-    (∀ x, x ∈ l1 → f x = g x) → l1 = l2 → f <$> l1 = g <$> l2.
-Proof. intros ? <-. induction l1; f_equal/=; set_solver. Qed.
-
 
 Lemma imap_fst_NoDup {A B C} l (f : nat → A → B) (g : nat → C):
   Inj eq eq g →

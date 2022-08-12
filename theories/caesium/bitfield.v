@@ -1,4 +1,5 @@
-From lithium Require Import simpl_classes tactics_extend infrastructure Z_bitblast classes.
+From stdpp.unstable Require Import bitblast.
+From lithium Require Import simpl_classes tactics_extend infrastructure classes.
 From caesium Require Import base int_type builtins_specs.
 
 (* raw bit vector constructors *)

@@ -578,9 +578,11 @@ Lemma to_expr_subst x v e :
 Proof.
   elim: e => *//; cbn -[notation.GetMember]; (repeat case_bool_decide) => //=; f_equal; eauto; try by case_decide.
   - (** Call *)
-    rewrite -!list_fmap_compose. apply list_fmap_ext' => //. by apply Forall_forall.
+    revert select (Forall _ _) => /Forall_forall?.
+    rewrite -!list_fmap_compose. apply list_fmap_ext => ?? /(elem_of_list_lookup_2 _ _ _).  naive_solver.
   - (** Concat *)
-    rewrite -!list_fmap_compose. apply list_fmap_ext' => //. by apply Forall_forall.
+    revert select (Forall _ _) => /Forall_forall?.
+    rewrite -!list_fmap_compose. apply list_fmap_ext => ?? /(elem_of_list_lookup_2 _ _ _).  naive_solver.
   - (** LogicalAnd *)
     rewrite /notation.LogicalAnd/=. do 2 f_equal; eauto.
   - (** LogicalOr *)
@@ -609,8 +611,9 @@ Proof.
     f_equal. move: Hf => /Forall_forall IH. apply (IH _).
     simplify_eq. apply elem_of_list_to_map_2 in H. set_solver.
   - (** MacroE *)
+    revert select (Forall _ _) => /Forall_forall?.
     rewrite /notation.MacroE macro_wf_subst. f_equal.
-    rewrite -!list_fmap_compose. apply list_fmap_ext' => //. by apply Forall_forall.
+    rewrite -!list_fmap_compose. apply list_fmap_ext => ?? /(elem_of_list_lookup_2 _ _ _).  naive_solver.
 Qed.
 
 Lemma Forall_eq_fmap {A B} (xs : list A) (f1 f2 : A → B) :
