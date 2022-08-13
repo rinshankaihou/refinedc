@@ -179,7 +179,7 @@ Section own_state.
     iMod ("IH" $! (l +ₗ 1%nat) with "[Hb Hv]") as (q2 _) "Hl".
     { iFrame. simpl. assert (S (length v) = 1 + length v)%nat as -> by lia.
       iDestruct (loc_in_bounds_split with "Hb") as "[_ $]". }
-    have [q [q1' [q2' [-> ->]]]]:= Qp_lower_bound (q1 / 2) q2.
+    have [q [q1' [q2' [-> ->]]]]:= Qp.lower_bound (q1 / 2) q2.
     iDestruct "H2" as "[H2 _]". iDestruct "Hl" as "[Hl _]".
     iExists q. rewrite (heap_mapsto_cons _ b v). by iFrame.
   Qed.

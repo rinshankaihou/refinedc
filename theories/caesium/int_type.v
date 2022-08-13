@@ -69,7 +69,7 @@ Definition bool_layout : layout := {| ly_size := 1; ly_align_log := 0 |}.
 Lemma bytes_per_int_gt_0 it : bytes_per_int it > 0.
 Proof.
   rewrite /bytes_per_int. move: it => [log ?] /=.
-  rewrite Z2Nat_inj_pow. assert (0 < 2%nat ^ log); last lia.
+  rewrite Z2Nat.inj_pow. assert (0 < 2%nat ^ log); last lia.
   apply Z.pow_pos_nonneg; lia.
 Qed.
 
@@ -87,7 +87,7 @@ Proof.
   rewrite -[X in X * _]Z.pow_1_r -Z.pow_add_r; try f_equal; try lia.
   rewrite /bits_per_int /bytes_per_int.
   apply Z.le_add_le_sub_l. rewrite Z.add_0_r.
-  rewrite Z2Nat_inj_pow.
+  rewrite Z2Nat.inj_pow.
   assert (0 < 2%nat ^ it_byte_size_log it * bits_per_byte); last lia.
   apply Z.mul_pos_pos; last (rewrite /bits_per_byte; lia).
   apply Z.pow_pos_nonneg; lia.

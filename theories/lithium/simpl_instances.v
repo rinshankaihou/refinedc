@@ -367,10 +367,10 @@ Global Instance simpl_replicate_app_and {A} (l1 l2 : list A) x n:
 Proof.
   unfold shelve_hint. split.
   - move => [n'[?[?[??]]]]; subst. split => //.
-    have ->: (n = n' + (n - n'))%nat by lia. rewrite replicate_plus. do 2 f_equal. lia.
+    have ->: (n = n' + (n - n'))%nat by lia. rewrite replicate_add. do 2 f_equal. lia.
   - move => [Hr ?].
     have Hn: (n = length l1 + length l2)%nat by rewrite -(replicate_length n x) -app_length Hr.
-    move: Hr. rewrite Hn replicate_plus => /app_inj_1[|<- <-]. by rewrite replicate_length.
+    move: Hr. rewrite Hn replicate_add => /app_inj_1[|<- <-]. by rewrite replicate_length.
     exists (length l1). repeat split => //.
     + rewrite !replicate_length. lia.
     + rewrite !replicate_length. f_equal. lia.
@@ -528,6 +528,6 @@ Proof. move => T [? [-> ?]]. rewrite rotate_nat_add_0 //. Qed.
 Global Instance simpl_rotate_nat_add_next_Unsafe (base offset1 offset2 len : nat) `{!CanSolve (0 < len)%nat}:
   SimplAndUnsafe true ((rotate_nat_add base offset1 len + 1) `rem` len = rotate_nat_add base offset2 len) (λ T, offset2 = S offset1 ∧ T).
 Proof.
-  unfold CanSolve in * => ? -[-> ?]. split => //. rewrite rotate_nat_add_S // Nat2Z_inj_mod.
+  unfold CanSolve in * => ? -[-> ?]. split => //. rewrite rotate_nat_add_S // Nat2Z.inj_mod.
   rewrite Z.rem_mod_nonneg //=; lia.
 Qed.

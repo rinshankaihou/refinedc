@@ -7,7 +7,7 @@
  [[rc::global("alloc_state")]]
 static struct alloc_state allocator_state;
 
- [[rc::tactics("all: try by apply: has_layout_loc_trans' => //; normalize_and_simpl_goal => //; apply: keep_factor2_leq; [solve_goal|]; apply Nat.divide_sub_r; apply Nat2Z_divide; rewrite /ly_align/ly_align_log/=; solve_goal.")]]
+ [[rc::tactics("all: try by apply: has_layout_loc_trans' => //; normalize_and_simpl_goal => //; apply: keep_factor2_leq; [solve_goal|]; apply Nat.divide_sub_r; apply Nat2Z.divide; rewrite /ly_align/ly_align_log/=; solve_goal.")]]
 void *alloc(size_t size) {
 
   [[rc::constraints("[initialized \"allocator_state\" ()]")]]

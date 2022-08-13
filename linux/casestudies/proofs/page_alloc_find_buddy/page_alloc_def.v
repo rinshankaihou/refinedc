@@ -14,7 +14,7 @@ Section type.
     Z.land (Z.lxor (page ≪ 12) (4096 ≪ order)) (Z.ones 12) = 0.
   Proof.
     move => ?. apply Z.bits_inj_iff' => n' ?.
-    rewrite Z.bits_0 Z.land_spec Z_ones_spec// Z.lxor_spec !Z.shiftl_spec// andb_comm.
+    rewrite Z.bits_0 Z.land_spec Z.ones_spec// Z.lxor_spec !Z.shiftl_spec// andb_comm.
     case_bool_decide => //=.
     rewrite Z.testbit_neg_r /=; [|lia].
     {
@@ -59,7 +59,7 @@ Section type.
       rewrite -Z_shiftl_distr_add // Z_shiftr_shiftl_0 //.
       suff : Z.land ((range_start_idx + npages) ≪ 12) (Z.ones 12) = 0 by lia.
       apply Z.bits_inj_iff' => ??.
-      rewrite Z.land_spec Z_ones_spec // !Z.shiftl_spec// Z.bits_0 andb_comm.
+      rewrite Z.land_spec Z.ones_spec // !Z.shiftl_spec// Z.bits_0 andb_comm.
       case_bool_decide => //. rewrite Z.testbit_neg_r //. lia.
   Qed.
   Lemma find_buddy_result' page range_start_idx order npages n:

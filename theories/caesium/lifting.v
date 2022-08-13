@@ -579,14 +579,14 @@ Proof.
   - rewrite /int_half_modulus.
     move ? : (bits_per_int it - 1) => k.
     have Hb : ∀ n, -2^k ≤ n ≤ 2^k - 1 ↔ ∀ l, k ≤ l → Z.testbit n l = bool_decide (n < 0).
-    { move => ?. rewrite -Z_bounded_iff_bits; lia. }
+    { move => ?. rewrite -Z.bounded_iff_bits; lia. }
     move => /Hb Hn1 /Hb Hn2.
     apply Hb => l Hl.
     by rewrite Htestbit Hsign Hn1 ?Hn2.
   - rewrite /int_modulus.
     move ? : (bits_per_int it) => k.
     have Hb : ∀ n, 0 ≤ n → n ≤ 2^k - 1 ↔ ∀ l, k ≤ l → Z.testbit n l = bool_decide (n < 0).
-    { move => ??. rewrite bool_decide_false -?Z_bounded_iff_bits_nonneg; lia. }
+    { move => ??. rewrite bool_decide_false -?Z.bounded_iff_bits_nonneg; lia. }
     move => [Hn1 /Hb HN1] [Hn2 /Hb HN2].
     have Hn := Hnonneg Hn1 Hn2.
     split; first done.

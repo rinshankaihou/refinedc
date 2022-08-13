@@ -233,7 +233,7 @@ Proof.
     + move => [??] [] ?. simplify_eq.
       assert (2 ^ (bytes_per_int it * bits_per_byte) =
               2 * 2 ^ (bytes_per_int it * bits_per_byte - 1)) as Heq.
-      { rewrite Z.sub_1_r. rewrite Z_pow_pred_r => //. rewrite /bits_per_byte.
+      { rewrite Z.sub_1_r. rewrite Z.pow_pred_r => //. rewrite /bits_per_byte.
         have ? := bytes_per_int_gt_0 it. lia. }
       rewrite Heq. lia.
     + move => [??] [] ?. lia.

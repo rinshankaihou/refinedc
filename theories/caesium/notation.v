@@ -152,13 +152,13 @@ Lemma annot_expr_S {A} n (a : A) e:
 Proof. done. Qed.
 Lemma annot_expr_S_r {A} n (a : A) e:
   AnnotExpr (S n) a e = (AnnotExpr n a (SkipE e)).
-Proof. by rewrite /AnnotExpr Nat_iter_S_r. Qed.
+Proof. by rewrite /AnnotExpr Nat.iter_succ_r. Qed.
 Lemma annot_stmt_S {A} n (a : A) s:
   AnnotStmt (S n) a s = SkipS (AnnotStmt n a s).
 Proof. done. Qed.
 Lemma annot_stmt_S_r {A} n (a : A) s:
   AnnotStmt (S n) a s = (AnnotStmt n a (SkipS s)).
-Proof. by rewrite /AnnotStmt Nat_iter_S_r. Qed.
+Proof. by rewrite /AnnotStmt Nat.iter_succ_r. Qed.
 
 (*** Layouts and structs *)
 Definition StructInit (ly : struct_layout) (fs : list (string * expr)) : expr :=

@@ -11,7 +11,7 @@ Lemma clearbit_equiv bm priority :
 Proof.
   move => GE LE.
   bitblast as n. symmetry.
-  apply (Z_bounded_iff_bits_nonneg' n) => //=.
+  apply (Z.bounded_iff_bits_nonneg' n) => //=.
   split; [done|].
   eapply Z.le_lt_trans; [exact LE|].
   eapply Z.lt_le_trans; [|apply (Z.pow_le_mono_r _ 64); solve_goal].

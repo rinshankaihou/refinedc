@@ -215,9 +215,9 @@ Lemma list_tree_eq_aux_Node_Z {A : Type} (n : nat) (l l' l_rest : list A) (tr_l 
   list_tree_eq_aux n l (Node tr_l v tr_r) l_rest.
 Proof.
   assert (n - Z.to_nat (n `quot` 2)%Z - Z.to_nat 1 = n - n `div` 2 - 1)%nat as ->.
-  { rewrite Z.quot_div_nonneg ?Z2Nat_inj_div; try lia. repeat f_equal. lia. }
+  { rewrite Z.quot_div_nonneg ?Z2Nat.inj_div; try lia. repeat f_equal. lia. }
   assert (Z.to_nat (n `quot` 2) = n `div` 2)%nat as ->.
-  { rewrite Z.quot_div_nonneg ?Z2Nat_inj_div; try lia. f_equal. lia. }
+  { rewrite Z.quot_div_nonneg ?Z2Nat.inj_div; try lia. f_equal. lia. }
   by apply list_tree_eq_aux_Node.
 Qed.
 
@@ -227,7 +227,7 @@ Lemma list_tree_eq_aux_is_Some {A : Type} (n : nat) (l rest : list A) (t : tree 
   (n ≤ length l)%nat →
   is_Some (maybe2 cons rest).
 Proof.
-  rewrite /is_Some Z.quot_div_nonneg ?Z2Nat_inj_div ?Nat2Z.id; try lia.
+  rewrite /is_Some Z.quot_div_nonneg ?Z2Nat.inj_div ?Nat2Z.id; try lia.
   change (Z.to_nat 2) with 2%nat. move => H Hnz Hle.
   assert (rest ≠ []); last first. { destruct rest; naive_solver. }
   assert (n `div` 2 ≤ length l)%nat as Hlediv2.
@@ -243,7 +243,7 @@ Lemma list_tree_eq_aux_le {A : Type} (n : nat) (l rest : list A) (v : A) (t : tr
   (n ≤ length l)%nat →
   (n - Z.to_nat (n `quot` 2) - Z.to_nat 1)%nat ≤ length rest.
 Proof.
-  rewrite Z.quot_div_nonneg ?Z2Nat_inj_div ?Nat2Z.id; try lia.
+  rewrite Z.quot_div_nonneg ?Z2Nat.inj_div ?Nat2Z.id; try lia.
   change (Z.to_nat 2) with 2%nat. change (Z.to_nat 1) with 1%nat.
   move => H Hnx Hle.
   assert (n `div` 2 ≤ length l)%nat as Hlediv2.

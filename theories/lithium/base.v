@@ -778,8 +778,8 @@ Proof. by destruct n. Qed.
 (* Qed. *)
 
 Lemma divide_mult_2 n1 n2 : divide 2 (n1 * n2) → divide 2 n1 ∨ divide 2 n2.
-  move => /Nat2Z_divide. rewrite Nat2Z.inj_mul. move => /(prime_mult _ prime_2).
-  move => [H|H]; [left | right]; apply Z2Nat_divide in H; try lia.
+  move => /Nat2Z.divide. rewrite Nat2Z.inj_mul. move => /(prime_mult _ prime_2).
+  move => [H|H]; [left | right]; apply Z2Nat.divide in H; try lia.
   - rewrite Nat2Z.id in H. assert (Z.to_nat 2 = 2) as Heq by lia. by rewrite Heq in H.
   - rewrite Nat2Z.id in H. assert (Z.to_nat 2 = 2) as Heq by lia. by rewrite Heq in H.
 Qed.
