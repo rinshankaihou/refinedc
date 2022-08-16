@@ -1,5 +1,6 @@
 From refinedc.typing Require Export type.
 From refinedc.typing Require Import programs bytes.
+From refinedc.typing Require Import exist constrained.
 Set Default Proof Using "Type*".
 Import uPred.
 
@@ -27,6 +28,84 @@ Section fixpoint.
   Not sure if this would actually work, in particular if one can show
   that fixp is a type. Maybe if one makes sharing trivial as well?
  *)
+(*
+  Inductive type_own_le (ty1 ty2 : type) : Prop :=
+    Type_own_le :
+      (∀ β l, ty1.(ty_own) β l -∗ ty2.(ty_own) β l) →
+      (∀ v, ty1.(ty_own_val) v -∗ ty2.(ty_own_val) v) →
+      type_own_le ty1 ty2.
+
+  Definition type_own_equiv (ty1 ty2 : type) : Prop :=
+    type_own_le ty1 ty2 ∧ type_own_le ty2 ty1.
+
+  Definition type_own_le_all {A} (ty1 ty2 : A → type) : Prop :=
+    ∀ x, type_own_le (ty1 x) (ty2 x).
+
+  Class TypeMono {A} (T : (A → type) → (A → type)) :=
+    type_mono ty1 ty2:
+      type_own_le_all ty1 ty2 →
+      type_own_le_all (T ty1) (T ty2).
+
+  Context {A : Type} (T : (A -> type) → (A -> type)).
+  Definition fixp : A → type :=
+    λ x, tyexists (λ ty, constrained (ty x) (⌜type_own_le_all ty (T ty)⌝)).
+
+  Lemma fixp_greatest ty :
+    type_own_le_all ty (T ty) →
+    type_own_le_all ty fixp.
+  Proof.
+    move => Hle.
+    split.
+    - iIntros (β l) "Hl". rewrite {2}/ty_own/=. iExists _.
+      rewrite tyexists_eq. rewrite /own_constrained/={2}/ty_own/=/persistent_own_constraint. iFrame.
+      iPureIntro. done.
+    - iIntros (v) "Hv". rewrite {2}/ty_own_val/=. iExists _.
+      rewrite tyexists_eq. rewrite /own_constrained/={2}/ty_own_val/=/persistent_own_constraint. iFrame.
+      iPureIntro. done.
+  Qed.
+
+  Lemma fixp_unfold_1 `{!TypeMono T}:
+    type_own_le_all fixp (T fixp).
+  Proof.
+    intros x. split; simpl.
+    - iIntros (??) "[%ty HA]". simpl in *. rewrite tyexists_eq.
+      rewrite /own_constrained/={1}/ty_own/=/persistent_own_constraint.
+      iDestruct "HA" as "[HA %Hle]".
+      move: (Hle) => Hle2.
+      destruct (Hle2 x) as [Hown ?].
+      iDestruct (Hown with "HA") as "HA".
+      edestruct (type_mono ty fixp) as [Hown2 ?]; [|by iApply Hown2].
+      intros. by apply fixp_greatest.
+    - iIntros (?) "[%ty HA]". simpl in *. rewrite tyexists_eq.
+      rewrite /own_constrained/={1}/ty_own_val/=/persistent_own_constraint.
+      iDestruct "HA" as "[HA %Hle]".
+      move: (Hle) => Hle2.
+      destruct (Hle2 x) as [? Hown].
+      iDestruct (Hown with "HA") as "HA".
+      edestruct (type_mono ty fixp) as [? Hown2]; [|by iApply Hown2].
+      intros. by apply fixp_greatest.
+  Qed.
+
+  Lemma fixp_unfold_2 `{!TypeMono T} :
+    type_own_le_all (T fixp) fixp.
+  Proof.
+    intros x. split; simpl.
+    - iIntros (??) "?". iExists _. rewrite tyexists_eq.
+      rewrite /own_constrained/={2}/ty_own/=/persistent_own_constraint. iSplit; [done|].
+      iPureIntro. intros. apply type_mono. intros. by apply fixp_unfold_1.
+    - iIntros (?) "?". iExists _. rewrite tyexists_eq.
+      rewrite /own_constrained/={2}/ty_own_val/=/persistent_own_constraint. iFrame.
+      iPureIntro. intros. apply type_mono. intros. by apply fixp_unfold_1.
+  Qed.
+
+  Lemma fixp_unfold x `{!TypeMono T} :
+    type_own_equiv (fixp x) (T fixp x).
+  Proof. split; [by apply fixp_unfold_1 | by apply fixp_unfold_2]. Qed.
+
+  Lemma fixp_unfold2 x `{!TypeMono T}:
+    type_own_equiv (T fixp x) (T (T fixp) x).
+  Proof. split; apply type_mono; intros ?; by apply fixp_unfold. Qed.
+*)
 
   Global Instance type_inhabited : Inhabited type := populate (uninit void_layout).
 
