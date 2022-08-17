@@ -47,9 +47,9 @@ Section padded.
   Qed.
   Next Obligation. iIntros (ty lyty ly v ot mt st ?). apply mem_cast_compat_Untyped. destruct ot; naive_solver. Qed.
 
-  Global Instance padded_proper : Proper ((≡) ==> (=) ==> (=) ==> (≡)) padded.
+  Global Instance padded_le : Proper ((⊑) ==> (=) ==> (=) ==> (⊑)) padded.
   Proof. solve_type_proper. Qed.
-  Global Instance padded_ne n : Proper ((dist n) ==> (=) ==> (=) ==> (dist n)) padded.
+  Global Instance padded_proper : Proper ((≡) ==> (=) ==> (=) ==> (≡)) padded.
   Proof. solve_type_proper. Qed.
 
   Global Instance loc_in_bounds_padded ty lyty ly β: LocInBounds (padded ty lyty ly) β (ly_size ly).

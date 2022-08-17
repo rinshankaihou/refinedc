@@ -551,10 +551,6 @@ There is some special support for predefined type constructors:
  - similarly, `optionalO<ty>` is syntactic sugar for  `optionalO<ty, {null}>`.
  - `struct<{layout}, ty1, ..., tyN>` builds a structure type, using the layout
    `layout` and the fields `ty1, ...,tyN`.
- - `guarded<ty>` inserts a guard (i.e., a later modality). Usually, the user
-   does not have to deal with this directly, but there are cases where this is
-   necessary. For example, when recursive occurences of a type appear undear
-   an `array` type.
 
 # Annotations using macros
 

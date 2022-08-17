@@ -54,6 +54,7 @@ Section function.
   Import EqNotations.
   Lemma typed_function_equiv fn1 fn2 (fp1 fp2 : A → _) :
     fn1 = fn2 →
+    (∀ x, Forall2 (λ ty '(_, p), ty_has_op_type ty (UntypedOp p) MCNone) (fp_atys (fp2 x)) (f_args fn2)) →
     (* TODO: replace the following with an equivalenve relation for fn_params? *)
     (∀ x, ∃ Heq : (fp1 x).(fp_rtype) = (fp2 x).(fp_rtype),
           (fp1 x).(fp_atys) ≡ (fp2 x).(fp_atys) ∧
@@ -62,18 +63,11 @@ Section function.
                 ((fp1 x).(fp_fr) y).(fr_R) ≡ ((fp2 x).(fp_fr) (rew [λ x : Type, x] Heq in y)).(fr_R))) →
     typed_function fn1 fp1 -∗ typed_function fn2 fp2.
   Proof.
-    iIntros (-> Hfn) "HT".
+    iIntros (-> Hly Hfn) "HT".
     rewrite /typed_function.
     iIntros (x). iDestruct ("HT" $! x) as ([Hlen Hall]%Forall2_same_length_lookup) "#HT".
     have [Heq [Hatys [HPa Hret]]] := Hfn x.
-
-    iSplit. {
-      iPureIntro. apply: Forall2_same_length_lookup_2. { rewrite -Hlen. symmetry. by apply: length_proper. }
-      move => i ty [??] Haty Harg.
-      move: Hatys => /list_equiv_lookup Hatys.
-      have := Hatys i. rewrite Haty => /(Some_equiv_eq _ _)[? [? [Hi ? ?]]].
-      apply Hi. by apply: (Hall _ _ (_, _)).
-    }
+    iSplit; [done|].
     rewrite /introduce_typed_stmt.
     iIntros "!>" (lsa lsv) "[Hv Ha] %". rewrite -HPa.
     have [|lsa' Hlsa]:= vec_cast _ lsa (length (fp_atys (fp1 x))). { by rewrite Hatys. }
@@ -82,7 +76,7 @@ Section function.
         iFrame. iApply (big_sepL2_impl' with "Hv") => //. by rewrite Hatys.
         move: Hatys => /list_equiv_lookup Hatys.
         iIntros "!>" (k ????? Haty2 ? Haty1) "?".
-        have := Hatys k. rewrite Haty1 Haty2=> /(Some_equiv_eq _ _)[?[? [? Heql ?]]].
+        have := Hatys k. rewrite Haty1 Haty2=> /(Some_equiv_eq _ _)[?[? [Heql ?]]].
         rewrite -Heql. by simplify_eq.
       }
       iApply "HT". by rewrite -Hlsa.
@@ -90,7 +84,7 @@ Section function.
       iDestruct 1 as (?) "[?[? HR]]". rewrite Hlsa.
       iExists _. iFrame.
       iIntros "Hty". iDestruct ("HR" with "Hty") as (y) "[?[??]]".
-      have [[?? ->] ->]:= Hret y.
+      have [-> ->]:= Hret y.
       iExists (rew [λ x : Type, x] Heq in y). iFrame.
   Qed.
 

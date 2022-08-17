@@ -111,7 +111,7 @@ Ltac adequacy_intro_parameter :=
 
 Ltac adequacy_unfold_equiv :=
   lazymatch goal with
-  | |- fixp _ _ ≡ fixp _ _ => apply: fixp_proper; [|move => ??]
+  | |- type_fixpoint _ _ ≡ type_fixpoint _ _ => apply: type_fixpoint_proper; [|move => ??]
   | |- ty_own_val _ _ ≡ ty_own_val _ _ => unfold ty_own_val => /=
   | |-  _ =@{struct_layout} _ => apply: struct_layout_eq
   end.
@@ -122,5 +122,6 @@ Ltac adequacy_solve_equiv unfold_tac :=
 Ltac adequacy_solve_typed_function lemma unfold_tac :=
   iApply typed_function_equiv; [
     done |
+    adequacy_intro_parameter => /=; repeat (constructor; [done|]); by constructor |
     | iApply lemma => //; iExists _; repeat iSplit => //];
     adequacy_intro_parameter => /=; eexists eq_refl => /=; split_and!; [..|adequacy_intro_parameter => /=; split_and!];  repeat adequacy_solve_equiv unfold_tac.

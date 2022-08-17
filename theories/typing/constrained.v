@@ -27,7 +27,7 @@ Section own_constrained.
   Next Obligation. iIntros (?????????) "Hl [? $]". by iApply (ty_ref with "[//] [Hl]"). Qed.
   Next Obligation. iIntros (????????) "[Hv ?]". iDestruct (ty_memcast_compat with "Hv") as "?"; [done|]. destruct mt => //. by iFrame. Qed.
 
-  Global Instance own_constrained_rty_ne n P `{!OwnConstraint P} : Proper ((dist n) ==> (dist n)) (own_constrained P).
+  Global Instance own_constrained_rty_le P `{!OwnConstraint P} : Proper ((⊑) ==> (⊑)) (own_constrained P).
   Proof. solve_type_proper. Qed.
   Global Instance own_constrained_rty_proper P `{!OwnConstraint P} : Proper ((≡) ==> (≡)) (own_constrained P).
   Proof. solve_type_proper. Qed.

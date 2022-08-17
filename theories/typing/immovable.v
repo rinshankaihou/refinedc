@@ -13,7 +13,7 @@ Section immovable.
   Solve Obligations with try done.
   Next Obligation. iIntros (????). by iApply ty_share. Qed.
 
-  Global Instance immovable_ne n : Proper (pointwise_relation loc (dist n) ==> (dist n)) immovable.
+  Global Instance immovable_le : Proper (pointwise_relation loc (⊑) ==> (⊑)) immovable.
   Proof. solve_type_proper. Qed.
   Global Instance immovable_proper : Proper (pointwise_relation loc (≡) ==> (≡)) immovable.
   Proof. solve_type_proper. Qed.

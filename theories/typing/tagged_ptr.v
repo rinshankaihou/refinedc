@@ -35,9 +35,9 @@ Section tagged_ptr.
     iIntros "[-> ?]". iPureIntro. naive_solver.
   Qed.
 
-  Global Instance tagged_ptr_type_ne n : Proper ((=) ==> (dist n) ==> (=) ==> (=) ==> (dist n)) tagged_ptr_type.
+  Global Instance tagged_ptr_type_le : Proper ((=) ==> (=) ==> (⊑) ==> (=) ==> (⊑)) tagged_ptr_type.
   Proof. solve_type_proper. Qed.
-  Global Instance tagged_ptr_type_proper : Proper ((=) ==> (≡) ==> (=) ==> (=) ==> (≡)) tagged_ptr_type.
+  Global Instance tagged_ptr_type_proper : Proper ((=) ==> (=) ==> (≡) ==> (=) ==> (≡)) tagged_ptr_type.
   Proof. solve_type_proper. Qed.
 
   Definition tagged_ptr (β : own_state) (align : nat) (ty : type) : rtype :=

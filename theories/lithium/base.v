@@ -341,9 +341,6 @@ Proof. elim: len => //=???. rewrite filter_cons. case_decide => //=. f_equal. na
 Lemma reshape_app {A} (ln1 ln2 : list nat) (l : list A) :
   reshape (ln1 ++ ln2) l = reshape ln1 (take (sum_list ln1) l) ++ reshape ln2 (drop (sum_list ln1) l).
 Proof. elim: ln1 l => //= n ln1 IH l. rewrite take_take skipn_firstn_comm IH drop_drop. repeat f_equal; lia. Qed.
-Lemma omap_app {A B} (f : A → option B) (s1 s2 : list A):
-  omap f (s1 ++ s2) = omap f s1 ++ omap f s2.
-Proof. elim: s1 => //. csimpl => ?? ->. case_match; naive_solver. Qed.
 Lemma sum_list_with_take {A} f (l : list A) i:
    (sum_list_with f (take i l) ≤ sum_list_with f l)%nat.
 Proof. elim: i l => /=. lia. move => ? IH [|? l2] => //=. move: (IH l2). lia.  Qed.
@@ -355,10 +352,6 @@ Proof.
   elim: l => //; csimpl => x ? IH Hx. move: (Hx O x ltac:(done)) => /=?.
   do 2 case_match => //=; rewrite IH // => i ??; by apply: (Hx (S i)).
 Qed.
-
-Lemma join_length {A} (l : list (list A)) :
-  length (mjoin l) = sum_list (length <$> l).
-Proof. elim: l => // ?? IH; csimpl. rewrite app_length IH //. Qed.
 
 Lemma sum_list_eq l1 l2:
   Forall2 eq l1 l2 →
@@ -406,6 +399,22 @@ Proof.
   - case; first naive_solver. move => n [?]/= /(elem_of_list_lookup_2 _ _ _)?; subst. naive_solver.
   - move => n. case; first lia. move => n2 /= ??. apply lt_n_S. naive_solver.
 Qed.
+
+(* TODO: Is it possible to make this lemma more general and add it as an instance? *)
+Lemma list_fmap_Forall2_proper {A B} (R : relation B) :
+  Proper (pointwise_relation A R ==> (=) ==> Forall2 R) fmap.
+Proof.
+  move => ?? Hf ?? ->. apply Forall2_fmap.
+  apply Forall_Forall2_diag, Forall_true => *.
+  eapply Hf.
+Qed.
+(* TODO: Can one make this an instance? *)
+Lemma default_proper {A} (R : relation A) :
+  Proper (R ==> option_Forall2 R ==> R) default.
+Proof. move => ?? ? [?|] [?|] //= Hopt; by inversion Hopt. Qed.
+
+Global Instance head_proper {A} (R : relation A): Proper (Forall2 R ==> option_Forall2 R) head.
+Proof. move => ?? [] * /=; by constructor. Qed.
 
 (** * vec *)
 Lemma vec_cast {A} n (v : vec A n) m:

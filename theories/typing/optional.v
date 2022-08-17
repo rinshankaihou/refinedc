@@ -74,9 +74,9 @@ Section optional.
     all: by iFrame.
   Qed.
 
-  Global Instance optional_type_ne n : Proper ((dist n) ==> (dist n) ==> (dist n) ==> (dist n)) optional_type.
+  Global Instance optional_type_le : Proper ((⊑) ==> (⊑) ==> (=) ==> (⊑)) optional_type.
   Proof. solve_type_proper. Qed.
-  Global Instance optional_type_proper : Proper ((≡) ==> (≡) ==> (≡) ==> (≡)) optional_type.
+  Global Instance optional_type_proper : Proper ((≡) ==> (≡) ==> (=) ==> (≡)) optional_type.
   Proof. solve_type_proper. Qed.
 
   (* Never use optional without the refinement! This will fail
@@ -246,15 +246,6 @@ Section optional.
     TypedBinOp v1 (v1 ◁ᵥ b @ (optional ty optty))%I v2 (v2 ◁ᵥ optty) (NeOp i32) ot1 ot2 :=
     λ T, i2p (type_neq_optional v1 v2 ty optty ot1 ot2 T b).
 
-  Global Instance strip_guarded_optional b ty ty' optty E1 E2 β `{!StripGuarded β E1 E2 ty ty'}:
-    StripGuarded β E1 E2 (b @ optional ty optty) (b @ optional ty' optty ).
-  Proof.
-    iIntros (l E HE1 HE2) "Hs".
-    iDestruct "Hs" as "[[?Hs]|[?Hs]]"; [iLeft|iRight]; iFrame.
-    1: by iDestruct (strip_guarded with "Hs") as "Hs".
-    iApply step_fupd_intro => //. solve_ndisj.
-  Qed.
-
   Global Program Instance optional_copyable b ty optty `{!Copyable ty} `{!Copyable optty} : Copyable (b @ optional ty optty).
   Next Obligation.
     iIntros (b ty optty ? ? E ly l ? [??]) "[[% Hl]|[% Hl]]".
@@ -300,22 +291,10 @@ Section optionalO.
     all: by iDestruct (ty_memcast_compat with "Hl") as "Hl".
   Qed.
 
-  Global Instance optionalO_type_ne A n : Proper (pointwise_relation A (dist n) ==> (dist n) ==> (eq) ==> (dist n)) optionalO_type.
-  Proof.
-    move => ?? Heq1 ?? Heq2 ?[?|] -> /=; unfold optionalO_type; unfold_type_equiv.
-    all: f_equiv => //.
-    all: try apply forall_proper => ?.
-    all: try by apply Heq1.
-    all: try by apply Heq2.
-  Qed.
+  Global Instance optionalO_type_le A : Proper (pointwise_relation A (⊑) ==> (⊑) ==> (eq) ==> (⊑)) optionalO_type.
+  Proof. solve_type_proper. Qed.
   Global Instance optionalO_type_proper A : Proper (pointwise_relation A (≡) ==> (≡) ==> (eq) ==> (≡)) optionalO_type.
-  Proof.
-    move => ?? Heq1 ?? Heq2 ?[?|] -> /=; unfold optionalO_type; unfold_type_equiv.
-    all: f_equiv => //.
-    all: try apply forall_proper => ?.
-    all: try by apply Heq1.
-    all: try by apply Heq2.
-  Qed.
+  Proof. solve_type_proper. Qed.
 
   Definition optionalO {A : Type} (ty : A → type) (optty : type) : rtype := RType (optionalO_type ty optty).
 
@@ -471,23 +450,6 @@ Section optionalO.
   Global Instance read_optionalO_case_inst A E l b (ty : A → type) optty ly a:
     TypedReadEnd a E l Own (b @ optionalO ty optty) ly | 1001 :=
     λ T, i2p (read_optionalO_case A E l b ty optty ly T a).
-
-
-  Global Instance strip_guarded_optionalO A x E1 E2 (ty : A → type) ty' optty β `{!∀ y, StripGuarded β E1 E2 (ty y) (ty' y)}:
-    StripGuarded β E1 E2 (x @ optionalO ty optty) (x @ optionalO ty' optty).
-  Proof.
-    iIntros (l E HE1 HE2) "Hs". unfold optionalO; simpl_type.
-    destruct x as [x|]; first by iDestruct (strip_guarded with "Hs") as "Hs".
-    iFrame. iApply step_fupd_intro => //. solve_ndisj.
-  Qed.
-
-  Global Instance strip_guarded_optionalO_unrefined A E1 E2 (ty : A → type) ty' optty β `{!∀ y, StripGuarded β E1 E2 (ty y) (ty' y)}:
-    StripGuarded β E1 E2 (optionalO ty optty) (optionalO ty' optty).
-  Proof.
-    iIntros (l E HE1 HE2). iDestruct 1 as (x) "Hs". iExists x.
-    destruct x as [x|]; first by iDestruct (strip_guarded with "Hs") as "Hs".
-    iFrame. iApply step_fupd_intro => //. solve_ndisj.
-  Qed.
 
   Global Program Instance optionalO_copyable A (ty : A → type) optty x `{!∀ x, Copyable (ty x)} `{!Copyable optty} : Copyable (x @ optionalO ty optty).
   Next Obligation.

@@ -29,15 +29,18 @@ Section tyexist.
 
   Definition tyexists (ty : A → type) : rtype := RType (tyexists_type ty).
 
-  Lemma tyexists_dist ty (x : A) n :
-    (x @ tyexists ty)%I ≡{n}≡ ty x.
+  Lemma tyexists_le_l ty (x : A) :
+    (x @ tyexists ty)%I ⊑ ty x.
+  Proof. rewrite /with_refinement/=/tyexists_type. by constructor => //=; simpl_type; rewrite ty_exists_rty_eq. Qed.
+  Lemma tyexists_le_r ty (x : A) :
+    ty x ⊑ (x @ tyexists ty)%I.
   Proof. rewrite /with_refinement/=/tyexists_type. by constructor => //=; simpl_type; rewrite ty_exists_rty_eq. Qed.
   Lemma tyexists_eq ty (x : A) :
     (x @ tyexists ty)%I ≡@{type} ty x.
-  Proof. rewrite /with_refinement/=/tyexists_type. by constructor => //=; simpl_type; rewrite ty_exists_rty_eq. Qed.
+  Proof. rewrite /with_refinement/=/tyexists_type. constructor => //=; simpl_type; by rewrite ty_exists_rty_eq. Qed.
 
-  Global Instance ty_exists_rty_ne n : Proper (pointwise_relation A (dist n) ==> (=) ==> (dist n)) tyexists_type.
-  Proof. move => ????? ->. etrans; [apply tyexists_dist|]. etrans; [|symmetry; apply tyexists_dist]. done. Qed.
+  Global Instance ty_exists_rty_le : Proper (pointwise_relation A (⊑) ==> (=) ==> (⊑)) tyexists_type.
+  Proof. move => ????? ->. etrans; [apply tyexists_le_l|]. etrans; [|apply tyexists_le_r]. done. Qed.
   Global Instance ty_exists_rty_proper : Proper (pointwise_relation A (≡) ==> (=) ==> (≡)) tyexists_type.
   Proof. move => ????? ->. etrans; [apply tyexists_eq|]. etrans; [|symmetry; apply tyexists_eq]. done. Qed.
 
@@ -102,14 +105,6 @@ Section tyexist.
 
   Global Instance optionable_agree_tyexists (ty2 : A → type) ty1 `{!∀ x, OptionableAgree (ty2 x) ty1} : OptionableAgree (tyexists ty2) ty1.
   Proof. done. Qed.
-
-  (* TODO: Also have a version without refinement? *)
-  Global Instance strip_guarded_tyexists E1 E2 (ty : A → type) ty' β `{!∀ y, StripGuarded β E1 E2 (ty y) (ty' y)}:
-    StripGuarded β E1 E2 (tyexists ty) (tyexists ty').
-  Proof.
-    iIntros (l E HE1 HE2). iDestruct 1 as (x) "Hs". iExists x.
-    rewrite !tyexists_eq. by iDestruct (strip_guarded with "Hs") as "$".
-  Qed.
 End tyexist.
 
 Global Typeclasses Opaque tyexists_type.

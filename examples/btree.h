@@ -44,7 +44,7 @@ btree {
   [[rc::field("array_p<void*, {(λ ty, (&own ty : type)) <$> vs}, {(ORDER-1-n)%nat}>")]]
   void* vals[ORDER - 1];
 
-  [[rc::field("guarded<array_p<void*, {cs `at_type` !{btree_t<>}}, {(ORDER-1-n)%nat}>>")]]
+  [[rc::field("array_p<void*, {cs `at_type` !{btree_t<>}}, {(ORDER-1-n)%nat}>")]]
   struct btree* children[ORDER];
 
   [[rc::field("{br_height r} @ int<i32>")]]

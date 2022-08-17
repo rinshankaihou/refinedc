@@ -61,11 +61,9 @@ Section array.
   Qed.
   Next Obligation. iIntros (??????[?[-> ?]]) "?". done. Qed.
 
-  Global Instance array_ne n : Proper ((=) ==> (dist n) ==> (dist n)) array.
+  Global Instance array_le : Proper ((=) ==> Forall2 (⊑) ==> (⊑)) array.
   Proof.
     move => ? sl -> tys1 tys2 Htys. constructor.
-    - move => /= ??. erewrite Forall2_length; [|done]. do 3 f_equiv => //.
-      elim: Htys => //???? Hty ? IH. rewrite !Forall_cons IH. f_equiv. apply Hty.
     - move => β l; rewrite/ty_own/=.
       f_equiv. f_equiv; first by rewrite ->Htys.
       elim: Htys l => // ???????? /=. f_equiv. solve_proper.
@@ -75,8 +73,8 @@ Section array.
       elim: Htys v => // ???? Hty Htys IH v /=. f_equiv. { solve_proper. }
       apply: IH.
   Qed.
-  Global Instance array_proper : Proper ((=) ==> (≡) ==> (≡)) array.
-  Proof. move => ??->. apply ne_proper, _. Qed.
+  Global Instance array_proper : Proper ((=) ==> Forall2 (≡) ==> (≡)) array.
+  Proof. move => ??-> ?? Heq. apply type_le_equiv_list; [by apply array_le|done]. Qed.
 
   Global Instance array_loc_in_bounds ly β tys : LocInBounds (array ly tys) β (ly_size ly * length tys).
   Proof. constructor. iIntros (?) "(?&$&?)". Qed.

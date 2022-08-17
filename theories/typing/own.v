@@ -24,7 +24,7 @@ Section own.
     iIntros (β ty l v ot mt st ?). apply: mem_cast_compat_loc; [done|].
     iIntros "[-> ?]". iPureIntro. naive_solver.
   Qed.
-  Global Instance frac_ptr_type_ne n : Proper ((=) ==> (dist n) ==> (=) ==> (dist n)) frac_ptr_type.
+  Global Instance frac_ptr_type_le : Proper ((=) ==> (⊑) ==> (=) ==> (⊑)) frac_ptr_type.
   Proof. solve_type_proper. Qed.
   Global Instance frac_ptr_type_proper : Proper ((=) ==> (≡) ==> (=) ==> (≡)) frac_ptr_type.
   Proof. solve_type_proper. Qed.
@@ -134,22 +134,6 @@ Section own.
     T -∗
     l ◁ᵥ l @ frac_ptr β (place l) ∗ T.
   Proof. by iIntros "$". Qed.
-
-
-  Global Instance strip_guarded_frac_ptr_refined p β β' E1 E2 ty ty' `{!StripGuarded (own_state_min β β') E1 E2 ty ty'}:
-    StripGuarded β E1 E2 (p @ frac_ptr β' ty) (p @ frac_ptr β' ty').
-  Proof.
-    iIntros (l E HE1 HE2) "Hs". iDestruct "Hs" as "($&$&Hty)".
-    by iDestruct (strip_guarded with "Hty") as "Hty".
-  Qed.
-
-  (* TODO: find the right instance for ty_of_rty such that this instance is not necessary anymore *)
-  Global Instance strip_guarded_frac_ptr β β' E1 E2 ty ty' `{!StripGuarded (own_state_min β β') E1 E2 ty ty'}:
-    StripGuarded β E1 E2 (frac_ptr β' ty) (frac_ptr β' ty').
-  Proof.
-    iIntros (l E HE1 HE2) "Hs". iDestruct "Hs" as (p) "($&Hl&Hty)". iExists _. iFrame.
-    by iDestruct (strip_guarded with "Hty") as "Hty".
-  Qed.
 
   Lemma type_offset_of_sub v1 l s m P ly T:
     ⌜ly_size ly = 1%nat⌝ ∗ (

@@ -52,9 +52,6 @@ Section struct.
       + move => /IH. constructor; [| naive_solver]. eexists (UntypedOp ly), MCNone. done.
   Qed.
 
-  (* Should we have a later in here to avoid the use of guarded in most
-   cases? Probably not because subtyping would break (later in the
-   goal would be only around the struct, not the whole goal. ). *)
   Program Definition struct (sl : struct_layout) (tys : list type) : type := {|
     ty_has_op_type := is_struct_ot sl tys;
     ty_own β l :=
@@ -158,45 +155,26 @@ Section struct.
       rewrite /has_layout_val replicate_length. split; [done|]. by apply: Forall_true.
   Qed.
 
-  (* TODO: move*)
-  Lemma and_proper (A B C : Prop) :
-    (A → B ↔ C) →
-    (A ∧ B) ↔ (A ∧ C).
-  Proof. naive_solver. Qed.
-
-  Global Instance struct_ne n : Proper ((=) ==> (dist n) ==> (dist n)) struct.
+  Global Instance struct_le : Proper ((=) ==> Forall2 (⊑) ==> (⊑)) struct.
   Proof.
     move => ? sl -> tys1 tys2 Htys.
     have Hlen : length tys1 = length tys2 by apply: Forall2_length.
     constructor.
-    - move => ot mt /=. rewrite /is_struct_ot Hlen. apply and_proper => Hsl.
-      destruct ot => //=.
-      + do 2 f_equiv. apply and_proper => Hots. rewrite -!Forall_fold_right.
-        rewrite -field_members_length in Hsl. clear Hlen.
-        elim: (field_members (sl_members sl)) ots tys1 tys2 Htys Hsl Hots => //; csimpl.
-        { by move => ? [|??] [|??]. }
-        move => -[m ?] s IH ots tys1 tys2 [//|ty1 ty2 {}tys1 {}tys2] Hty Htys Hsl Hots /=.
-        destruct m, ots; simplify_eq/=; rewrite !Forall_cons/=; f_equiv.
-        all: try by apply: IH.
-        all: f_equiv; apply Hty.
-      + f_equiv. rewrite -!Forall_fold_right.
-        rewrite -field_members_length in Hsl. clear Hlen.
-        elim: (field_members (sl_members sl)) tys1 tys2 Htys Hsl => //; csimpl.
-        { by move => ? [|??] [|??]. }
-        move => -[m ?] s IH tys1 tys2 [//|ty1 ty2 {}tys1 {}tys2] Hty Htys Hsl /=.
-        rewrite !Forall_cons/=; f_equiv. 1: by apply Hty.
-        apply: IH => //. by simplify_eq/=.
     - move => β l; rewrite/ty_own/=/offset_of_idx.
       f_equiv. f_equiv; first by move: Htys => /Forall2_length->. f_equiv. clear Hlen.
       elim: (sl_members sl) tys1 tys2 Htys l => // -[m ?] s IH tys1 tys2 Htys l. csimpl.
-      f_equiv. 1: solve_proper. setoid_rewrite <-shift_loc_assoc_nat; apply IH => //.
-      destruct m, Htys => //. by f_equiv.
+      f_equiv.
+      + do 2 f_equiv. apply default_proper; [done|]. by f_equiv.
+      + setoid_rewrite <-shift_loc_assoc_nat; apply IH => //.
+        destruct m, Htys => //. by f_equiv.
     - move => v. rewrite/ty_own_val/=. f_equiv. rewrite Hlen. f_equiv. clear Hlen.
       elim: (sl_members sl) v tys1 tys2 Htys => // -[m ?] s IH v tys1 tys2 Htys. csimpl.
-      f_equiv. 1: solve_proper. apply IH. destruct m, Htys => //. by f_equiv.
+      f_equiv.
+      + do 2 f_equiv. apply default_proper; [done|]. by f_equiv.
+      + apply IH. destruct m, Htys => //. by f_equiv.
   Qed.
-  Global Instance struct_proper : Proper ((=) ==> (≡) ==> (≡)) struct.
-  Proof. move => ??->. apply ne_proper, _. Qed.
+  Global Instance struct_proper : Proper ((=) ==> Forall2 (≡) ==> (≡)) struct.
+  Proof. move => ??-> ?? Heq. apply type_le_equiv_list; [by apply struct_le|done]. Qed.
 
   Lemma struct_focus l β sl tys:
     l ◁ₗ{β} struct sl tys -∗ ([∗ list] n;ty∈field_names sl.(sl_members);tys, l at{sl}ₗ n ◁ₗ{β} ty) ∗ (∀ tys',
@@ -265,16 +243,6 @@ Section struct.
     by iApply (alloc_alive_loc_mono with "Hl").
   Qed.
 
-  Global Instance strip_guarded_struct sl tys tys' E1 E2 β {Hs :StripGuardedLst β E1 E2 tys tys'}:
-    StripGuarded β E1 E2 (struct sl tys) (struct sl tys').
-  Proof.
-    iIntros (l E  HE1 HE2) "Hs".
-    iDestruct (struct_focus with "Hs") as "[Hs Hc]".
-    iDestruct (Hs (GetMemberLoc l sl <$> omap fst (sl_members sl))) as "-#Hstrip" => //.
-    rewrite !big_sepL2_fmap_l /=. iApply "Hc".
-    by iApply "Hstrip".
-  Qed.
-
   Lemma struct_mono sl tys1 tys2 l β T:
     ⌜length tys1 = length tys2⌝ ∗ foldr (λ e T, subsume (l at{sl}ₗ e.2.2 ◁ₗ{β} e.1) (l at{sl}ₗ e.2.2 ◁ₗ{β} e.2.1) T) T (zip tys1 (zip tys2 (field_names sl.(sl_members)))) -∗
     subsume (l ◁ₗ{β} struct sl tys1) (l ◁ₗ{β} struct sl tys2) T.
@@ -317,19 +285,17 @@ Section struct.
     SubsumeVal v (struct sl tys1) (struct sl tys2) | 10 :=
     λ T, i2p (struct_mono_val sl tys1 tys2 v T).
 
-  Lemma type_place_struct K β1 T tys tys' sl n l E1 E2 `{!DoStripGuarded β1 E1 E2 (struct sl tys) (struct sl tys')}:
+  Lemma type_place_struct K β1 T tys sl n l :
     (∃ i ty1, ⌜field_index_of sl.(sl_members) n = Some i⌝ ∗
-    ⌜tys' !! i = Some ty1⌝ ∗
-    typed_place K (l at{sl}ₗ n) β1 ty1 (λ l2 β ty2 typ, T l2 β ty2 (λ t, struct sl (<[i := (typ t)]> tys')))) -∗
+    ⌜tys !! i = Some ty1⌝ ∗
+    typed_place K (l at{sl}ₗ n) β1 ty1 (λ l2 β ty2 typ, T l2 β ty2 (λ t, struct sl (<[i := (typ t)]> tys)))) -∗
     typed_place (GetMemberPCtx sl n :: K) l β1 (struct sl tys) T.
   Proof.
     iDestruct 1 as (i ty1 Hi Hn) "HP".
     move: (Hi) => /field_index_of_to_index_of[? Hi2].
-    iIntros (Φ) "Hs HΦ" => /=.
-    iDestruct (loc_in_bounds_in_bounds with "Hs") as "#Hlib".
-    iApply (wp_step_fupd with "[Hs]"). done. 2: by iApply (do_strip_guarded with "Hs"). solve_ndisj.
+    iIntros (Φ) "[% [% [#Hb Hs]]] HΦ" => /=.
     iApply wp_get_member. by apply val_to_of_loc. by eauto. done.
-    iIntros "!# [% [% [#Hb Hs]]] !#". iExists _. iSplit => //.
+    iIntros "!#". iExists _. iSplit => //.
     iDestruct (big_sepL_insert_acc with "Hs") as "[Hl Hs]" => //=. by eapply pad_struct_lookup_field.
     rewrite /GetMemberLoc/offset_of Hi2/=.
     iApply ("HP" with "Hl"). iIntros (l' ty2 β2 typ R) "Hl' Hc HT".
@@ -338,9 +304,9 @@ Section struct.
     iDestruct ("Hs" with "Hty") as "Hs". iSplitR => //. iSplitR; first by rewrite insert_length.
     iFrame "Hb". erewrite pad_struct_insert_field => //. have := field_index_of_leq _ _ _ Hi. lia.
   Qed.
-  Global Instance type_place_struct_inst K β1 tys tys' sl n l E1 E2 `{!DoStripGuarded β1 E1 E2 (struct sl tys) (struct sl tys')} :
+  Global Instance type_place_struct_inst K β1 tys sl n l :
     TypedPlace (GetMemberPCtx sl n :: K) l β1 (struct sl tys) | 10 :=
-    λ T, i2p (type_place_struct K β1 T tys tys' sl n l E1 E2).
+    λ T, i2p (type_place_struct K β1 T tys sl n l).
 
   (* Ail fills in the missing elements in fs, so we can assume that
   the lookup will always succeed. This is nice, because otherwise we

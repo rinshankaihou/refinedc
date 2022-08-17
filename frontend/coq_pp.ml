@@ -492,10 +492,10 @@ let pp_code : string -> import list -> Coq_ast.t pp =
   (* Closing the section. *)
   pp "@]@;End code.@]"
 
-type guard_mode =
-  | Guard_none
-  | Guard_in_def of string
-  | Guard_in_lem of string
+type rec_mode =
+  | Rec_none
+  | Rec_in_def of string
+  | Rec_in_lem of string
 
 let (reset_nroot_counter, with_uid) : (unit -> unit) * string pp =
   let counter = ref (-1) in
@@ -523,11 +523,11 @@ and pp_coq_expr : bool -> type_expr pp -> coq_expr pp = fun wrap pp_ty ff e ->
 and pp_type_annot : type_expr pp -> coq_expr option pp = fun pp_ty ff eo ->
   Option.iter (fprintf ff " : %a" (pp_coq_expr false pp_ty)) eo
 
-and pp_constr_guard : unit pp option -> guard_mode -> bool -> constr pp =
-    fun pp_dots guard wrap ff c ->
-  let pp_ty = pp_type_expr_guard pp_dots guard in
+and pp_constr_rec : unit pp option -> rec_mode -> bool -> constr pp =
+    fun pp_dots r wrap ff c ->
+  let pp_ty = pp_type_expr_rec pp_dots r in
   let pp_coq_expr wrap = pp_coq_expr wrap pp_ty in
-  let pp_constr = pp_constr_guard pp_dots guard in
+  let pp_constr = pp_constr_rec pp_dots r in
   let pp_kind ff k =
     match k with
     | Own     -> pp_str ff "◁ₗ"
@@ -553,13 +553,13 @@ and pp_constr_guard : unit pp option -> guard_mode -> bool -> constr pp =
   | Constr_glob(x,ty)   ->
       fprintf ff "global_with_type %S Own %a" x pp_ty ty
 
-and pp_type_expr_guard : unit pp option -> guard_mode -> type_expr pp =
-    fun pp_dots guard ff ty ->
-  let pp_constr = pp_constr_guard pp_dots guard in
+and pp_type_expr_rec : unit pp option -> rec_mode -> type_expr pp =
+    fun pp_dots r ff ty ->
+  let pp_constr = pp_constr_rec pp_dots r in
   let rec pp_ty_annot ff a =
-    pp_type_annot (pp false false false) ff a
-  and pp wrap rfnd guarded ff ty =
-    let pp_coq_expr wrap = pp_coq_expr wrap (pp false rfnd guarded) in
+    pp_type_annot (pp false false) ff a
+  and pp wrap rfnd ff ty =
+    let pp_coq_expr wrap = pp_coq_expr wrap (pp false rfnd) in
     match ty with
     (* Don't need explicit wrapping. *)
     | Ty_Coq(e)          -> (pp_coq_expr wrap) ff e
@@ -572,54 +572,48 @@ and pp_type_expr_guard : unit pp option -> guard_mode -> type_expr pp =
           fprintf ff (if wrap then "(@;  %a@;)" else "%a") pp ()
         end
     (* Insert wrapping if needed. *)
-    | _ when wrap        -> fprintf ff "(%a)" (pp false rfnd guarded) ty
+    | _ when wrap        -> fprintf ff "(%a)" (pp false rfnd) ty
     | Ty_refine(e,ty)    ->
         begin
-          match (guard, ty) with
-          | (Guard_in_def(s), Ty_params(c,tys)) when c = s ->
-              if not guarded then fprintf ff "guarded (%a) (" with_uid s;
-              fprintf ff "apply_dfun self (%a" (pp_coq_expr true) e;
-              List.iter (fprintf ff ", %a" (pp_arg true guarded)) tys;
-              fprintf ff ")"; if not guarded then fprintf ff ")"
-          | (Guard_in_lem(s), Ty_params(c,tys)) when c = s ->
-              if not guarded then fprintf ff "guarded %a (" with_uid s;
+          match (r, ty) with
+          | (Rec_in_def(s), Ty_params(c,tys)) when c = s ->
+              fprintf ff "self (%a" (pp_coq_expr true) e;
+              List.iter (fprintf ff ", %a" (pp_arg true)) tys;
+              fprintf ff ")"
+          | (Rec_in_lem(s), Ty_params(c,tys)) when c = s ->
               fprintf ff "%a @@ " (pp_coq_expr true) e;
               if tys <> [] then pp_str ff "(";
               pp_str ff c;
-              List.iter (fprintf ff " %a" (pp_arg true guarded)) tys;
-              if tys <> [] then pp_str ff ")";
-              if not guarded then fprintf ff ")"
+              List.iter (fprintf ff " %a" (pp_arg true)) tys;
+              if tys <> [] then pp_str ff ")"
           | (_              , _               )            ->
               fprintf ff "%a @@ %a" (pp_coq_expr true) e
-                (pp true true guarded) ty
+                (pp true true) ty
         end
     | Ty_exists(xs,a,ty) ->
         fprintf ff "∃ₜ %a%a, %a%a" (pp_encoded_patt_name false) xs
           pp_ty_annot a pp_encoded_patt_bindings xs
-          (pp false false guarded) ty
+          (pp false false) ty
     | Ty_constr(ty,c)    ->
-        fprintf ff "constrained %a %a" (pp true false guarded) ty
+        fprintf ff "constrained %a %a" (pp true false) ty
           (pp_constr true) c
     | Ty_params(id,tyas) ->
         let default () =
           pp_str ff id;
-          List.iter (fprintf ff " %a" (pp_arg true guarded)) tyas
+          List.iter (fprintf ff " %a" (pp_arg true)) tyas
         in
-        match guard with
-        | Guard_in_def(s) when id = s ->
+        match r with
+        | Rec_in_def(s) when id = s ->
            (* We cannot use the ∃ₜ notation here as it hard-codes a
               rtype-to-type conversion.*)
             fprintf ff "tyexists (λ rfmt__, ";
-            if not guarded then fprintf ff "guarded (%a) (" with_uid s;
-            fprintf ff "apply_dfun self (rfmt__";
-            List.iter (fprintf ff ", %a" (pp_arg true guarded)) tyas;
-            fprintf ff "))"; if not guarded then fprintf ff ")"
-        | Guard_in_lem(s) when id = s ->
+            fprintf ff "self (rfmt__";
+            List.iter (fprintf ff ", %a" (pp_arg true)) tyas;
+            fprintf ff "))"
+        | Rec_in_lem(s) when id = s ->
             fprintf ff "tyexists (λ rfmt__, ";
-            if not guarded then fprintf ff "guarded %a (" with_uid s;
             fprintf ff "rfmt__ @@ ";
-            default (); fprintf ff ")";
-            if not guarded then fprintf ff ")"
+            default (); fprintf ff ")"
         | _                           ->
         match id with
         | "&frac"                  ->
@@ -630,7 +624,7 @@ and pp_type_expr_guard : unit pp option -> guard_mode -> type_expr pp =
                  Panic.panic_no_pos "[%s] expects two arguments." id
             in
             fprintf ff "&frac{%a} %a"
-              (pp_arg false guarded) beta (pp_arg true guarded) ty
+              (pp_arg false) beta (pp_arg true) ty
         | "optional" when not rfnd ->
             let (tya1, tya2) =
               match tyas with
@@ -642,15 +636,15 @@ and pp_type_expr_guard : unit pp option -> guard_mode -> type_expr pp =
             let tya1 =
               Ty_arg_lambda([], Some(Coq_ident("unit")), tya1)
             in
-            fprintf ff "optionalO %a %a" (pp_arg true guarded) tya1
-              (pp_arg true guarded) tya2
+            fprintf ff "optionalO %a %a" (pp_arg true) tya1
+              (pp_arg true) tya2
         | "optional" | "optionalO" ->
            (match tyas with
            | [tya]        ->
-               fprintf ff "%s %a null" id (pp_arg true guarded) tya
+               fprintf ff "%s %a null" id (pp_arg true) tya
            | [tya1; tya2] ->
-               fprintf ff "%s %a %a" id (pp_arg true guarded) tya1
-                 (pp_arg true guarded) tya2
+               fprintf ff "%s %a %a" id (pp_arg true) tya1
+                 (pp_arg true) tya2
            | _            ->
                Panic.panic_no_pos "[%s] expects one or two arguments." id)
         | "struct"                 ->
@@ -659,35 +653,24 @@ and pp_type_expr_guard : unit pp option -> guard_mode -> type_expr pp =
               Panic.panic_no_pos "[%s] expects at least one argument." id
             in
             fprintf ff "struct %a [@@{type} %a ]"
-              (pp_arg true guarded) tya
-              (pp_sep " ; " (pp_arg false guarded)) tyas
-        | "guarded"                ->
-            let (s, ty) =
-              match (guard, tyas) with
-              | (Guard_in_def(s), [ty])
-              | (Guard_in_lem(s), [ty]) -> (s, ty)
-              | (Guard_none     , [_ ]) ->
-                  Panic.panic_no_pos "[%s] not expected here." id
-              | (_              , _   ) ->
-                  Panic.panic_no_pos "[%s] expects exactly one argument." id
-            in
-            fprintf ff "guarded %a %a" with_uid s (pp_arg true true) ty;
+              (pp_arg true) tya
+              (pp_sep " ; " (pp_arg false)) tyas
         | _                        ->
             default ()
-  and pp_arg wrap guarded ff tya =
+  and pp_arg wrap ff tya =
     match tya with
     | Ty_arg_expr(ty)         ->
-        pp wrap false guarded ff ty
+        pp wrap false ff ty
     | Ty_arg_lambda(xs,a,tya) ->
         fprintf ff "(λ %a%a,@;  @[<v 0>%a%a@]@;)"
           (pp_encoded_patt_name false) xs
           pp_ty_annot a pp_encoded_patt_bindings xs
-          (pp_arg false guarded) tya
+          (pp_arg false) tya
   in
-  pp true false false ff ty
+  pp true false ff ty
 
-let pp_type_expr = pp_type_expr_guard None Guard_none
-let pp_constr = pp_constr_guard None Guard_none true
+let pp_type_expr = pp_type_expr_rec None Rec_none
+let pp_constr = pp_constr_rec None Rec_none true
 
 let pp_constrs : constr list pp = fun ff cs ->
   match cs with
@@ -706,7 +689,7 @@ let gather_struct_fields id s =
   in
   List.map fn s.struct_members
 
-let rec pp_struct_def_np structs guard annot fields ff id =
+let rec pp_struct_def_np structs r annot fields ff id =
   let pp fmt = fprintf ff fmt in
   (* Print the part that may stand for dots in case of "ptr_type". *)
   let pp_dots ff () =
@@ -761,7 +744,7 @@ let rec pp_struct_def_np structs guard annot fields ff id =
             | SA_basic(annot) ->
             if annot = default_basic_struct_annot then
               (* No annotation on struct, fall back to normal printing. *)
-              pp_type_expr_guard None guard ff ty
+              pp_type_expr_rec None r ff ty
             else
             let annot =
               match annot.st_ptr_type with
@@ -770,10 +753,10 @@ let rec pp_struct_def_np structs guard annot fields ff id =
               Panic.panic_no_pos "[rc::ptr_type] in nested struct [%s]." s_id
             in
             let fields = gather_struct_fields s_id s in
-            pp "(%a)" (pp_struct_def_np structs Guard_none annot fields) s_id
+            pp "(%a)" (pp_struct_def_np structs Rec_none annot fields) s_id
           end
       | LStruct(_   , true ) -> assert false (* TODO *)
-      | _                    -> pp_type_expr_guard None guard ff ty
+      | _                    -> pp_type_expr_rec None r ff ty
     in
     begin
       match fields with
@@ -800,7 +783,7 @@ let rec pp_struct_def_np structs guard annot fields ff id =
   reset_nroot_counter ();
   match annot.st_ptr_type with
   | None        -> pp_dots ff ()
-  | Some(_, ty) -> pp_type_expr_guard (Some(pp_dots)) guard ff ty
+  | Some(_, ty) -> pp_type_expr_rec (Some(pp_dots)) r ff ty
 
 let collect_invs : func_def -> (string * loop_annot) list = fun def ->
   let fn id (annot, _) acc =
@@ -880,24 +863,22 @@ let pp_spec : Coq_path.t -> import list -> inlined_code ->
     in
     pp "\n@;(* Definition of type [%s]. *)@;" id;
     let pp_prod = pp_as_prod (pp_simple_coq_expr true) in
-    pp "@[<v 2>Definition %s_rec : (%a -d> typeO) → (%a -d> typeO) := " id
+    pp "@[<v 2>Definition %s_rec : (%a → type) → (%a → type) := " id
       pp_prod ref_and_par_types pp_prod ref_and_par_types;
     pp "(λ self %a,@;" (pp_encoded_patt_name false) ref_and_par_names;
     pp_encoded_patt_bindings ff ref_and_par_names;
-    let guard = Guard_in_def(id) in
-    pp_struct_def_np ast.structs guard annot fields ff struct_id;
+    let r = Rec_in_def(id) in
+    pp_struct_def_np ast.structs r annot fields ff struct_id;
     pp "@]@;)%%I.@;Global Typeclasses Opaque %s_rec.\n" id;
     if par_names <> [] then sugar := !sugar @ [(id, par_names)];
     opaque := !opaque @ [id ^ "_rec"];
 
-    pp "@;Global Instance %s_rec_ne : Contractive %s_rec." id id;
-    pp "@;Proof. solve_type_proper. Qed.";
-    pp "@;Global Instance %s_rec_proper : Proper ((≡) ==> (≡)) %s_rec." id id;
-    pp "@;Proof. apply contractive_proper, _. Qed.\n@;";
+    pp "@;Global Instance %s_rec_le : TypeMono %s_rec." id id;
+    pp "@;Proof. solve_type_proper. Qed.\n@;";
 
     pp "@[<v 2>Definition %s %a: rtype := {|@;" id pp_params params;
     pp "rty_type := %a;@;" pp_prod ref_types;
-    pp "rty r__ := %s_rec (fixp %s) %a@]@;|}.\n" id (id ^ "_rec")
+    pp "rty r__ := %s_rec (type_fixpoint %s) %a@]@;|}.\n" id (id ^ "_rec")
       (pp_as_tuple pp_str) ("r__" :: par_names);
 
     (* Generation of the unfolding lemma. *)
@@ -908,10 +889,10 @@ let pp_spec : Coq_path.t -> import list -> inlined_code ->
       (pp_encoded_patt_name true) ref_names
       (pp_id_args false id) par_names;
     pp "%a" pp_encoded_patt_bindings ref_names;
-    let guard = Guard_in_lem(id) in
-    pp_struct_def_np ast.structs guard annot fields ff struct_id;
+    let r = Rec_in_lem(id) in
+    pp_struct_def_np ast.structs r annot fields ff struct_id;
     pp "@]@;)%%I.@]@;";
-    pp "Proof. apply: (fixp_unfold' %s_rec). Qed.\n" id;
+    pp "Proof. apply: (type_fixpoint_unfold2 %s_rec). Qed.\n" id;
 
     (* Generation of the global instances. *)
     let pp_instance_place inst_name type_name =
@@ -1234,7 +1215,7 @@ let pp_proof : Coq_path.t -> func_def -> import list -> string list
           pp "global_initialized_types !! \"%s\" = " f;
           pp "Some (GT %a (λ '%a, %a : type)%%I) →@;" pp_prod param_types
             (pp_as_tuple pp_str) param_names
-            (pp_type_expr_guard None Guard_none) global_type.ga_type
+            (pp_type_expr_rec None Rec_none) global_type.ga_type
       | _                       -> ()
     in
     List.iter pp_global_type used_globals;

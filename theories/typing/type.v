@@ -256,7 +256,7 @@ Record type `{!typeG Σ} := {
   ty_own_val : val → iProp Σ;
   (* TODO: figure out the right mask here. We cannot give the full
   mask because of sharing for guarded (for similar reasons as in
-  rustbelt)*)
+  rustbelt) TODO: This comment is outdated as there is no guarded anymore. *)
   ty_share l E : ↑shrN ⊆ E → ty_own Own l ={E}=∗ ty_own Shr l;
   ty_shr_pers l : Persistent (ty_own Shr l);
   ty_aligned ot mt l : ty_has_op_type ot mt → ty_own Own l -∗ ⌜l `has_layout_loc` ot_layout ot⌝;
@@ -433,6 +433,8 @@ Section true.
   Solve Obligations with try done.
   Next Obligation. iIntros (???) "?". done. Qed.
 End true.
+Global Instance inhabited_type `{!typeG Σ} : Inhabited type := populate tytrue.
+
 (*** refinement types *)
 Record rtype `{!typeG Σ} := RType {
   rty_type : Type;
@@ -508,162 +510,102 @@ Notation "l `at_type` ty" := (with_refinement ty <$> l) (at level 50) : bi_scope
 (* Must be an Hint Extern instead of an Instance since simple apply is not able to apply the instance. *)
 Global Hint Extern 1 (AssumeInj (=) (=) (with_refinement _)) => exact: I : typeclass_instances.
 
-(*** Cofe and Ofe *)
-Section ofe.
+(*** Monotonicity *)
+Section mono.
   Context `{!typeG Σ}.
+
+  Inductive type_le' (ty1 ty2 : type) : Prop :=
+    Type_le :
+      (* We omit [ty_has_op_type] on purpose as it is not preserved by fixpoints. *)
+      (∀ β l, ty1.(ty_own) β l -∗ ty2.(ty_own) β l) →
+      (∀ v, ty1.(ty_own_val) v -∗ ty2.(ty_own_val) v) →
+      type_le' ty1 ty2.
+  Global Instance type_le : SqSubsetEq type := type_le'.
 
   Inductive type_equiv' (ty1 ty2 : type) : Prop :=
     Type_equiv :
-      (∀ ot mt, ty1.(ty_has_op_type) ot mt ↔ ty2.(ty_has_op_type) ot mt) →
+      (* We omit [ty_has_op_type] on purpose as it is not preserved by fixpoints. *)
       (∀ β l, ty1.(ty_own) β l ≡ ty2.(ty_own) β l) →
       (∀ v, ty1.(ty_own_val) v ≡ ty2.(ty_own_val) v) →
       type_equiv' ty1 ty2.
-  Instance type_equiv : Equiv type := type_equiv'.
-  Inductive type_dist' (n : nat) (ty1 ty2 : type) : Prop :=
-    Type_dist :
-      (∀ ot mt, ty1.(ty_has_op_type) ot mt ↔ ty2.(ty_has_op_type) ot mt) →
-      (∀ β l, (l ◁ₗ{β} ty1)%I ≡{n}≡ (l ◁ₗ{β} ty2)%I) →
-      (∀ v, ty1.(ty_own_val) v ≡{n}≡ ty2.(ty_own_val) v) →
-      type_dist' n ty1 ty2.
-  Instance type_dist : Dist type := type_dist'.
+  Global Instance type_equiv : Equiv type := type_equiv'.
 
-  Let T := prodO (prodO
-    (op_type -d> memcast_compat_type -d> PropO)
-    (own_state -d> loc -d> iPropO Σ))
-    (val -d> iPropO Σ)
-  .
-  Let P (x : T) : Prop :=
-    (∀ l, Persistent (x.1.2 Shr l)) ∧
-    (∀ l E, ↑shrN ⊆ E → x.1.2 Own l ={E}=∗ x.1.2 Shr l) ∧
-    (∀ ot mt l, x.1.1 ot mt → x.1.2 Own l -∗ ⌜l `has_layout_loc` ot_layout ot⌝) ∧
-    (∀ ot mt v, x.1.1 ot mt → x.2 v -∗ ⌜v `has_layout_val` ot_layout ot⌝) ∧
-    (∀ ot mt l, x.1.1 ot mt → x.1.2 Own l -∗ l↦: x.2) ∧
-    (∀ ot mt l v, x.1.1 ot mt → ⌜l `has_layout_loc` ot_layout ot⌝ -∗ l↦v -∗ x.2 v -∗ x.1.2 Own l) ∧
-    (∀ v ot mt st, x.1.1 ot mt →
-    x.2 v -∗
-    match mt with
-    | MCNone => True
-    | MCCopy => x.2 (mem_cast v ot st)
-    | MCId => ⌜mem_cast_id v ot⌝
-    end).
+  Global Instance type_equiv_antisym :
+    AntiSymm (≡@{type}) (⊑).
+  Proof. move => ?? [??] [??]. split; intros; by apply (anti_symm (⊢)). Qed.
 
-  Definition type_unpack (ty : type) : T :=
-    (λ ot mt, ty.(ty_has_op_type) ot mt, λ β l, (ty.(ty_own) β l), λ v, (ty.(ty_own_val) v)).
-  Program Definition type_pack (x : T) (H : P x) : type :=
-    {| ty_has_op_type := x.1.1; ty_own := x.1.2; ty_own_val := x.2 |}.
-  Solve Obligations with by intros ? (?&?&?&?&?&?&?).
-
-  Definition type_ofe_mixin : OfeMixin type.
+  Global Instance type_le_preorder : PreOrder (⊑@{type}).
   Proof.
-    apply (iso_ofe_mixin type_unpack).
-    - split; [ by destruct 1|]. by intros [[??]?]; constructor.
-    - split; [ by destruct 1|]. by intros [[??]?]; constructor.
+    constructor.
+    - done.
+    - move => ??? [??] [??].
+      constructor => *; (etrans; [match goal with | H : _ |- _ => apply H end|]; done).
   Qed.
-  Canonical Structure typeO : ofe := Ofe type type_ofe_mixin.
 
-  Global Instance ty_own_ne n:
-    Proper (dist n ==> eq ==> eq ==> dist n) ty_own.
+  Global Instance type_equivalence : Equivalence (≡@{type}).
+  Proof.
+    constructor.
+    - done.
+    - move => ?? [??]. constructor => *; by symmetry.
+    - move => ??? [??] [??].
+      constructor => *; (etrans; [match goal with | H : _ |- _ => apply H end|]; done).
+  Qed.
+
+  Global Instance ty_le_proper : Proper ((≡) ==> (≡) ==> iff) (⊑@{type}).
+  Proof.
+    move => ?? [Hl1 Hv1] ?? [Hl2 Hv2].
+    split; move => [??]; constructor; intros.
+    - by rewrite -Hl1 -Hl2.
+    - by rewrite -Hv1 -Hv2.
+    - by rewrite Hl1 Hl2.
+    - by rewrite Hv1 Hv2.
+  Qed.
+
+  Lemma type_le_equiv_list (f : list type → type) :
+    Proper (Forall2 (⊑) ==> (⊑)) f →
+    Proper (Forall2 (≡) ==> (≡)) f.
+  Proof.
+    move => HP ?? Heq. apply (anti_symm (⊑)); apply HP.
+    2: symmetry in Heq.
+    all: by apply: Forall2_impl; [done|] => ?? ->.
+  Qed.
+
+  Global Instance ty_own_le : Proper ((⊑) ==> eq ==> eq ==> (⊢)) ty_own.
   Proof. intros ?? EQ ??-> ??->. apply EQ. Qed.
   Global Instance ty_own_proper : Proper ((≡) ==> eq ==> eq ==> (≡)) ty_own.
   Proof. intros ?? EQ ??-> ??->. apply EQ. Qed.
   Lemma ty_own_entails `{!typeG Σ} ty1 ty2 β l:
     ty1 ≡@{type} ty2 →
     ty_own ty1 β l -∗ ty_own ty2 β l.
-  Proof. by move => [? -> ?]. Qed.
+  Proof. by move => [-> ?]. Qed.
 
-  Global Instance ty_own_val_ne n:
-    Proper (dist n ==> eq ==> dist n) ty_own_val.
+  Global Instance ty_own_val_le : Proper ((⊑) ==> eq ==> (⊢)) ty_own_val.
   Proof. intros ?? EQ ??->. apply EQ. Qed.
   Global Instance ty_own_val_proper : Proper ((≡) ==> eq ==> (≡)) ty_own_val.
   Proof. intros ?? EQ ??->. apply EQ. Qed.
-  Global Instance ty_has_op_type_ne n:
-    Proper (dist n ==> eq ==> eq ==> iff) ty_has_op_type.
-  Proof. intros ?? EQ ??-> ??->. apply EQ. Qed.
-  Global Instance ty_has_op_type_proper:
-    Proper ((≡) ==> eq ==> eq ==> iff) ty_has_op_type.
-  Proof. intros ?? EQ ??-> ??->. apply EQ. Qed.
-
-  Global Instance type_cofe : Cofe typeO.
-  Proof.
-    apply (iso_cofe_subtype' P type_pack type_unpack).
-    - by intros [].
-    - split; [ by destruct 1|]. by intros [[??]?]; constructor.
-    - by intros.
-    - repeat apply limit_preserving_and; repeat (apply limit_preserving_forall; intros ?).
-      all: try (apply limit_preserving_impl; [ move => ?? [[Hmt ?]?]; rewrite /impl; by apply Hmt|]).
-      all: apply bi.limit_preserving_entails=> n ty1 ty2 [[??]?]; repeat f_equiv.
-  Qed.
 
   Import EqNotations.
-  Lemma ty_of_rty_ne rty1 rty2 n (Heq : rty1.(rty_type) = rty2.(rty_type)) :
-    (∀ x, (x @ rty1)%I ≡{n}≡ ((rew [λ x : Type, x] Heq in x) @ rty2)%I) →
-    ty_of_rty rty1 ≡{n}≡ ty_of_rty rty2.
+  Lemma ty_of_rty_le rty1 rty2 (Heq : rty1.(rty_type) = rty2.(rty_type)) :
+    (∀ x, (x @ rty1)%I ⊑ ((rew [λ x : Type, x] Heq in x) @ rty2)%I) →
+    ty_of_rty rty1 ⊑ ty_of_rty rty2.
   Proof.
     destruct rty1, rty2; simpl in *. destruct Heq => /=. rewrite /with_refinement/=.
-    move => Hne. constructor => /=.
-    - move => ??. apply forall_proper => ?. apply Hne.
-    - move => ??. rewrite /ty_own/=. f_equiv => ?. apply Hne.
-    - move => ?. rewrite /ty_own_val/=. f_equiv => ?. apply Hne.
+    move => Hle. constructor => /=.
+    - move => ??. rewrite /ty_own/=. f_equiv => ?. apply Hle.
+    - move => ?. rewrite /ty_own_val/=. f_equiv => ?. apply Hle.
   Qed.
   Lemma ty_of_rty_proper rty1 rty2 (Heq : rty1.(rty_type) = rty2.(rty_type)) :
     (∀ x, (x @ rty1)%I ≡ ((rew [λ x : Type, x] Heq in x) @ rty2)%I) →
     ty_of_rty rty1 ≡ ty_of_rty rty2.
   Proof.
     destruct rty1, rty2; simpl in *. destruct Heq => /=. rewrite /with_refinement/=.
-    move => Hne. constructor => /=.
-    - move => ??. apply forall_proper => ?. apply Hne.
-    - move => ??. rewrite /ty_own/=. f_equiv => ?. apply Hne.
-    - move => ?. rewrite /ty_own_val/=. f_equiv => ?. apply Hne.
+    move => Heq. constructor => /=.
+    - move => ??. rewrite /ty_own/=. f_equiv => ?. apply Heq.
+    - move => ?. rewrite /ty_own_val/=. f_equiv => ?. apply Heq.
   Qed.
+End mono.
 
-  (* Inductive rtype_equiv' (ty1 ty2 : rtype) : Prop := *)
-  (*   RType_equiv (H : ty1.(rty_type) = ty2.(rty_type)): *)
-  (*     ((eq_rect _ (λ x, x -d> _) ty1.(rty) _ H) ≡ ty2.(rty)) → *)
-  (*     rtype_equiv' ty1 ty2. *)
-  (* Instance rtype_equiv : Equiv rtype := rtype_equiv'. *)
-  (* Inductive rtype_dist' (n : nat) (ty1 ty2 : rtype) : Prop := *)
-  (*   RType_dist (H : ty1.(rty_type) = ty2.(rty_type)): *)
-  (*     ((eq_rect _ (λ x, x -d> _) ty1.(rty) _ H) ≡{n}≡ ty2.(rty)) → *)
-  (*     rtype_dist' n ty1 ty2. *)
-  (* Instance rtype_dist : Dist rtype := rtype_dist'. *)
-
-  (* Let RT := (sigT (λ x, x -d> typeO)). *)
-  (* Let RP (x : RT) : Prop := True. *)
-
-  (* Definition rtype_unpack (ty : rtype) : RT := *)
-  (*   (existT _ ty.(rty)). *)
-  (* Program Definition rtype_pack (x : RT) (H : RP x) : rtype := *)
-  (*   {| rty := projT2 x |}. *)
-
-  (* Global Instance proof_irrel_axiom : ∀ a b : Type, ProofIrrel (a = b). *)
-  (* Admitted. *)
-
-  (* Definition rtype_ofe_mixin : OfeMixin rtype. *)
-  (* Proof. *)
-  (*   apply (iso_ofe_mixin rtype_unpack). *)
-  (*   - split. *)
-  (*     + destruct 1. apply sigT_equiv_eq_alt. eauto. *)
-  (*     + move => /sigT_equiv_eq_alt/= [H1 H2]. by econstructor. *)
-  (*   - split. *)
-  (*     + destruct 1. eexists _. eauto. *)
-  (*     + destruct 1. by econstructor. *)
-  (* Qed. *)
-  (* Canonical Structure rtypeO : ofe := Ofe rtype rtype_ofe_mixin. *)
-
-
-  (* Global Instance with_refinement_ne n: *)
-  (*   Proper (dist n ==> eq ==> dist n) with_refinement. *)
-  (* Proof. intros ?? EQ ??-> ??->. apply EQ. Qed. *)
-
-  Global Instance type_equivalence : Equivalence (≡@{type}).
-  Proof.
-    constructor.
-    - done.
-    - move => ?? [???]. constructor => *; by symmetry.
-    - move => ??? [???] [???].
-      constructor => *; (etrans; [match goal with | H : _ |- _ => apply H end|]; done).
-  Qed.
-End ofe.
+Notation TypeMono T := (Proper (pointwise_relation _ (⊑) ==> pointwise_relation _ (⊑)) T).
 
 Ltac simpl_type :=
   simpl;
@@ -680,17 +622,15 @@ Ltac simpl_type :=
 
 Ltac unfold_type_equiv :=
   lazymatch goal with
-  | |- (_ <$> _)%I ≡{_}≡ (_ <$> _)%I => apply list.list_fmap_ext_ne; intros
-  | |- (?a @ ?ty1)%I ≡{?n}≡ (?b @ ?ty2)%I => change (rty ty1 a ≡{n}≡ rty ty2 b); simpl
+  | |- Forall2 _ (_ <$> _) (_ <$> _) => apply list_fmap_Forall2_proper
+  | |- (?a @ ?ty1)%I ⊑ (?b @ ?ty2)%I => change (rty ty1 a ⊑ rty ty2 b); simpl
   | |- (?a @ ?ty1)%I ≡ (?b @ ?ty2)%I => change (rty ty1 a ≡ rty ty2 b); simpl
-  | |- ty_of_rty _ ≡{?n}≡ ty_of_rty _ => simple refine (ty_of_rty_ne _ _ _ _ _) => /=; [exact: eq_refl|] => ? /=
+  | |- ty_of_rty _ ⊑ ty_of_rty _ => simple refine (ty_of_rty_le _ _ _ _) => /=; [exact: eq_refl|] => ? /=
   | |- ty_of_rty _ ≡ ty_of_rty _ => simple refine (ty_of_rty_proper _ _ _ _) => /=; [exact: eq_refl|] => ? /=
-  | |- {| ty_own := _ |} ≡{?n}≡ {| ty_own := _ |} =>
+  | |- {| ty_own := _ |} ⊑ {| ty_own := _ |} =>
       constructor => *; simpl_type
-  | |- {| ty_own := ?f1 |} ≡ {| ty_own := ?f2 |} =>
+  | |- {| ty_own := _ |} ≡ {| ty_own := _ |} =>
       constructor => *; simpl_type
-   | H : ?x ≡{_}≡ _ |- ty_has_op_type ?x _ _ ↔ _ => apply H
-   | H : ?x ≡ _ |- ty_has_op_type ?x _ _ ↔ _ => apply H
   | |- context [let '_ := ?x in _] => destruct x
   end.
 
