@@ -1213,7 +1213,7 @@ let pp_proof : Coq_path.t -> func_def -> import list -> string list
             List.split global_type.ga_parameters
           in
           pp "global_initialized_types !! \"%s\" = " f;
-          pp "Some (GT %a (λ '%a, %a : type)%%I) →@;" pp_prod param_types
+          pp "Some (GT (%a) (λ '%a, %a : type)%%I) →@;" pp_prod param_types
             (pp_as_tuple pp_str) param_names
             (pp_type_expr_rec None Rec_none) global_type.ga_type
       | _                       -> ()
