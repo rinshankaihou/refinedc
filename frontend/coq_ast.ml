@@ -23,6 +23,7 @@ type op_type =
   | OpInt of int_type
   | OpPtr of layout
   | OpStruct of string * op_type list
+  | OpUntyped of layout
 
 type un_op =
   | NotBoolOp

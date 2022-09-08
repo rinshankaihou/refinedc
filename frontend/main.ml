@@ -163,7 +163,8 @@ type config =
   { cpp_config  : Cerb_wrapper.cpp_config
   ; no_locs     : bool
   ; no_analysis : bool
-  ; no_build    : bool }
+  ; no_build    : bool
+  ; no_mem_cast : bool }
 
 (** Entry point for the ["check"] command. *)
 let run : config -> string -> unit = fun cfg c_file ->
@@ -172,6 +173,10 @@ let run : config -> string -> unit = fun cfg c_file ->
     begin
       Coq_pp.print_expr_locs := false;
       Coq_pp.print_stmt_locs := false
+    end;
+  if cfg.no_mem_cast then
+    begin
+      Ail_to_coq.no_mem_cast := true
     end;
   (* Obtain the metadata for the input C file. *)
   let c_file = get_c_file_data c_file in
@@ -390,11 +395,17 @@ let no_build =
   in
   Arg.(value & flag & info ["no-build"] ~doc)
 
-let opts : config Term.t =
-  let build cpp_config no_analysis no_locs no_build =
-    { cpp_config ; no_analysis ; no_locs ; no_build }
+let no_mem_cast =
+  let doc =
+    "Disable mem cast on loads from memory."
   in
-  Term.(pure build $ cpp_config $ no_analysis $ no_locs $ no_build)
+  Arg.(value & flag & info ["no-mem-cast"] ~doc)
+
+let opts : config Term.t =
+  let build cpp_config no_analysis no_locs no_build no_mem_cast =
+    { cpp_config ; no_analysis ; no_locs ; no_build ; no_mem_cast }
+  in
+  Term.(pure build $ cpp_config $ no_analysis $ no_locs $ no_build $ no_mem_cast)
 
 let c_file =
   let doc = "C language source file." in

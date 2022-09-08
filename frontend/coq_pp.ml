@@ -99,6 +99,7 @@ let rec pp_op_type : Coq_ast.op_type pp = fun ff ty ->
   | OpInt(i)         -> pp "IntOp %a" pp_int_type i
   | OpPtr(_)         -> pp "PtrOp" (* FIXME *)
   | OpStruct(id, os) -> pp "StructOp struct_%s ([ %a ])" id (pp_sep " ; " pp_op_type) os
+  | OpUntyped(ly)    -> pp "UntypedOp (%a)" (pp_layout false) ly
 
 let pp_un_op : Coq_ast.un_op pp = fun ff op ->
   let pp fmt = Format.fprintf ff fmt in
