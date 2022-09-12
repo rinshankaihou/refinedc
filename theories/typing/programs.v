@@ -168,10 +168,10 @@ Section judgements.
         (∀ l, (v ◁ᵥ ty ={⊤, E}=∗ ⌜v `has_layout_val` ot_layout ot⌝ ∗ l↦|ot_layout ot| ∗ ▷ (l ↦ v ={E, ⊤}=∗ T)) -∗ Φ (val_of_loc l)) -∗
        WP e {{ Φ }}).
 
-  Definition typed_read (atomic : bool) (e : expr) (ot : op_type) (T : val → type → iProp Σ) : iProp Σ :=
+  Definition typed_read (atomic : bool) (e : expr) (ot : op_type) (memcast : bool) (T : val → type → iProp Σ) : iProp Σ :=
     let E := if atomic then ∅ else ⊤ in
     (∀ Φ,
-       (∀ (l : loc), (|={⊤, E}=> ∃ v q (ty : type), ⌜l `has_layout_loc` ot_layout ot⌝ ∗ ⌜v `has_layout_val` ot_layout ot⌝ ∗ l↦{q}v ∗ ▷ v ◁ᵥ ty ∗ ▷ (∀ st, l↦{q}v -∗ v ◁ᵥ ty ={E, ⊤}=∗ ∃ ty' : type, (mem_cast v ot st) ◁ᵥ ty' ∗ T (mem_cast v ot st) ty')) -∗ Φ (val_of_loc l)) -∗
+       (∀ (l : loc), (|={⊤, E}=> ∃ v q (ty : type), ⌜l `has_layout_loc` ot_layout ot⌝ ∗ ⌜v `has_layout_val` ot_layout ot⌝ ∗ l↦{q}v ∗ ▷ v ◁ᵥ ty ∗ ▷ (∀ st, l↦{q}v -∗ v ◁ᵥ ty ={E, ⊤}=∗ ∃ ty' : type, (if memcast then mem_cast v ot st else v) ◁ᵥ ty' ∗ T (if memcast then mem_cast v ot st else v) ty')) -∗ Φ (val_of_loc l)) -∗
        WP e {{ Φ }}).
 
   Definition typed_addr_of (e : expr) (T : loc → own_state → type → iProp Σ) : iProp Σ :=
@@ -179,14 +179,14 @@ Section judgements.
        (∀ (l : loc) β ty, l ◁ₗ{β} ty -∗ T l β ty -∗ Φ (val_of_loc l)) -∗
        WP e {{ Φ }}).
 
-  Definition typed_read_end (atomic : bool) (E : coPset) (l : loc) (β : own_state) (ty : type) (ot : op_type) (T : val → type → type → iProp Σ) : iProp Σ :=
+  Definition typed_read_end (atomic : bool) (E : coPset) (l : loc) (β : own_state) (ty : type) (ot : op_type) (memcast : bool) (T : val → type → type → iProp Σ) : iProp Σ :=
     let E' := if atomic then ∅ else E in
     l◁ₗ{β}ty ={E, E'}=∗ ∃ q v (ty2 : type),
         ⌜l `has_layout_loc` ot_layout ot⌝ ∗ ⌜v `has_layout_val` ot_layout ot⌝ ∗ l↦{q}v ∗ ▷ v ◁ᵥ ty2 ∗
          ▷ (∀ st, l↦{q}v -∗ v ◁ᵥ ty2 ={E', E}=∗
-            ∃ ty' (ty3 : type), (mem_cast v ot st) ◁ᵥ ty3 ∗ l◁ₗ{β} ty' ∗ T (mem_cast v ot st) ty' ty3).
-  Class TypedReadEnd (atomic : bool) (E : coPset) (l : loc) (β : own_state) (ty : type) (ot : op_type) : Type :=
-    typed_read_end_proof T : iProp_to_Prop (typed_read_end atomic E l β ty ot T).
+            ∃ ty' (ty3 : type), (if memcast then mem_cast v ot st else v) ◁ᵥ ty3 ∗ l◁ₗ{β} ty' ∗ T (if memcast then mem_cast v ot st else v) ty' ty3).
+  Class TypedReadEnd (atomic : bool) (E : coPset) (l : loc) (β : own_state) (ty : type) (ot : op_type) (memcast : bool) : Type :=
+    typed_read_end_proof T : iProp_to_Prop (typed_read_end atomic E l β ty ot memcast T).
 
   Definition typed_write_end (atomic : bool) (E : coPset) (ot : op_type) (v1 : val) (ty1 : type) (l2 : loc) (β2 : own_state) (ty2 : type) (T : type → iProp Σ) : iProp Σ :=
     let E' := if atomic then ∅ else E in
@@ -205,7 +205,7 @@ Section judgements.
   expression is not in evaluation position. *)
   (* TODO: Should we track location information here? *)
   Inductive place_ectx_item :=
-  | DerefPCtx (o : order) (ot : op_type)
+  | DerefPCtx (o : order) (ot : op_type) (memcast : bool)
   | GetMemberPCtx (s : struct_layout) (m : var_name)
   | GetMemberUnionPCtx (ul : union_layout) (m : var_name)
   | AnnotExprPCtx (n : nat) {A} (x : A)
@@ -219,7 +219,7 @@ Section judgements.
   applied to the location l. *)
   Definition place_item_to_wp (Ki : place_ectx_item) (Φ : loc → iProp Σ) (l : loc) : iProp Σ :=
     match Ki with
-    | DerefPCtx o ot => WP !{ot, o} l {{ v, ∃ l' : loc, ⌜v = val_of_loc l'⌝ ∗ Φ l' }}
+    | DerefPCtx o ot mc => WP !{ot, o, mc} l {{ v, ∃ l' : loc, ⌜v = val_of_loc l'⌝ ∗ Φ l' }}
     | GetMemberPCtx sl m => WP l at{sl} m {{ v, ∃ l' : loc, ⌜v = val_of_loc l'⌝ ∗ Φ l' }}
     | GetMemberUnionPCtx ul m => WP l at_union{ul} m {{ v, ∃ l' : loc, ⌜v = val_of_loc l'⌝ ∗ Φ l' }}
     | AnnotExprPCtx n x => WP AnnotExpr n x l {{ v, ∃ l' : loc, ⌜v = val_of_loc l'⌝ ∗ Φ l' }}
@@ -234,7 +234,7 @@ Section judgements.
   Lemma place_item_to_wp_mono K Φ1 Φ2 l:
     place_item_to_wp K Φ1 l -∗ (∀ l, Φ1 l -∗ Φ2 l) -∗ place_item_to_wp K Φ2 l.
   Proof.
-    iIntros "HP HΦ". move: K => [o ly|sl m|ul m|n A x|op ot v ty|op]//=.
+    iIntros "HP HΦ". move: K => [o ot mc|sl m|ul m|n A x|op ot v ty|op]//=.
     5: iIntros "Hv".
     1-4,6: iApply (@wp_wand with "HP").
     6: iApply (@wp_wand with "[Hv HP]"); first by iApply "HP".
@@ -254,7 +254,7 @@ Section judgements.
   Fixpoint find_place_ctx (e : W.expr) : option ((list place_ectx_item → loc → iProp Σ) → iProp Σ) :=
     match e with
     | W.Loc l => Some (λ T, T [] l)
-    | W.Deref o ot e => T' ← find_place_ctx e; Some (λ T, T' (λ K l, T (K ++ [DerefPCtx o ot]) l))
+    | W.Deref o ot mc e => T' ← find_place_ctx e; Some (λ T, T' (λ K l, T (K ++ [DerefPCtx o ot mc]) l))
     | W.GetMember e sl m => T' ← find_place_ctx e; Some (λ T, T' (λ K l, T (K ++ [GetMemberPCtx sl m]) l))
     | W.GetMemberUnion e ul m => T' ← find_place_ctx e; Some (λ T, T' (λ K l, T (K ++ [GetMemberUnionPCtx ul m]) l))
     | W.AnnotExpr n x e => T' ← find_place_ctx e; Some (λ T, T' (λ K l, T (K ++ [AnnotExprPCtx n x]) l))
@@ -358,7 +358,7 @@ Global Hint Mode TypedCall + + + + + + : typeclass_instances.
 Global Hint Mode TypedCallVal + + + + + + : typeclass_instances.
 Global Hint Mode TypedCopyAllocId + + + + + + + : typeclass_instances.
 Global Hint Mode TypedCopyAllocIdVal + + + + + + + : typeclass_instances.
-Global Hint Mode TypedReadEnd + + + + + + + + : typeclass_instances.
+Global Hint Mode TypedReadEnd + + + + + + + + + : typeclass_instances.
 Global Hint Mode TypedWriteEnd + + + + + + + + + + : typeclass_instances.
 Global Hint Mode TypedAddrOfEnd + + + + + : typeclass_instances.
 Global Hint Mode TypedPlace + + + + + + : typeclass_instances.
@@ -466,13 +466,13 @@ Section proper.
   Qed.
 
   (** typed_read_end *)
-  Lemma typed_read_end_mono_strong (a : bool) E1 E2 l β ty ot T:
+  Lemma typed_read_end_mono_strong (a : bool) E1 E2 l β ty ot mc T:
     (if a then ∅ else E2) = (if a then ∅ else E1) →
     (l ◁ₗ{β} ty ={E1, E2}=∗ ∃ β' ty' P, l ◁ₗ{β'} ty' ∗ ▷ P ∗
-       typed_read_end a E2 l β' ty' ot (λ v ty2 ty3,
+       typed_read_end a E2 l β' ty' ot mc (λ v ty2 ty3,
           P -∗ l ◁ₗ{β'} ty2 -∗ v ◁ᵥ ty3 ={E2, E1}=∗
           ∃ ty2' ty3', l ◁ₗ{β} ty2' ∗ v ◁ᵥ ty3' ∗ T v ty2' ty3')) -∗
-    typed_read_end a E1 l β ty ot T.
+    typed_read_end a E1 l β ty ot mc T.
   Proof.
     iIntros (Ha) "HT Hl". iMod ("HT" with "Hl") as (β' ty' P) "(Hl&HP&HT)".
     iMod ("HT" with " Hl") as (?????) "(Hl&Hv&HT)". rewrite Ha.
@@ -482,10 +482,10 @@ Section proper.
     iMod ("HT" with "HP Hl Hcast") as (ty2' ty3') "(?&?&?)". iExists _, _. by iFrame.
   Qed.
 
-  Lemma typed_read_end_wand (a : bool) E l β ty ot T T':
-    typed_read_end a E l β ty ot T' -∗
+  Lemma typed_read_end_wand (a : bool) E l β ty ot mc T T':
+    typed_read_end a E l β ty ot mc T' -∗
     (∀ v ty1 ty2, T' v ty1 ty2 -∗ T v ty1 ty2) -∗
-    typed_read_end a E l β ty ot T.
+    typed_read_end a E l β ty ot mc T.
   Proof.
     iIntros "HT Hw Hl". iMod ("HT" with "Hl") as (???) "(%&%&Hl&Hv&HT)".
     iModIntro. iExists _, _, _.
@@ -494,29 +494,29 @@ Section proper.
     iExists _, _. iFrame. by iApply "Hw".
   Qed.
 
-  Lemma fupd_typed_read_end a E l β ty ot T:
-    (|={E}=> typed_read_end a E l β ty ot T) -∗
-    typed_read_end a E l β ty ot T.
+  Lemma fupd_typed_read_end a E l β ty ot mc T:
+    (|={E}=> typed_read_end a E l β ty ot mc T) -∗
+    typed_read_end a E l β ty ot mc T.
   Proof. iIntros ">H". by iApply "H". Qed.
 
   (* TODO: can this be Global? *)
   Local Typeclasses Opaque typed_read_end.
-  Global Instance elim_modal_fupd_typed_read_end p a E l β ty ot T P :
-    ElimModal True p false (|={E}=> P) P (typed_read_end a E l β ty ot T) (typed_read_end a E l β ty ot T).
+  Global Instance elim_modal_fupd_typed_read_end p a E l β ty ot mc T P :
+    ElimModal True p false (|={E}=> P) P (typed_read_end a E l β ty ot mc T) (typed_read_end a E l β ty ot mc T).
   Proof.
     iIntros (?) "[HP HT]".
     rewrite bi.intuitionistically_if_elim -{2}fupd_typed_read_end.
     iMod "HP". by iApply "HT".
   Qed.
 
-  Global Instance is_except_0_typed_read_end a E l β ty ot T : IsExcept0 (typed_read_end a E l β ty ot T).
+  Global Instance is_except_0_typed_read_end a E l β ty ot mc T : IsExcept0 (typed_read_end a E l β ty ot mc T).
   Proof. by rewrite /IsExcept0 -{2}fupd_typed_read_end -except_0_fupd -fupd_intro. Qed.
 
-  Global Instance elim_modal_fupd_typed_read_end_atomic p E1 E2 l β ty ot T P:
+  Global Instance elim_modal_fupd_typed_read_end_atomic p E1 E2 l β ty ot mc T P:
     ElimModal True p false
             (|={E1,E2}=> P) P
-            (typed_read_end true  E1 l β ty ot T)
-            (typed_read_end true E2 l β ty ot (λ v ty ty', |={E2,E1}=> T v ty ty'))%I
+            (typed_read_end true  E1 l β ty ot mc T)
+            (typed_read_end true E2 l β ty ot mc (λ v ty ty', |={E2,E1}=> T v ty ty'))%I
             | 100.
   Proof.
     iIntros (?) "[HP HT]". rewrite bi.intuitionistically_if_elim.
@@ -526,12 +526,12 @@ Section proper.
     iIntros (v ty1 ty2) "HT _ Hl Hv". iMod "HT". iModIntro. iExists _, _. iFrame.
   Qed.
 
-  Global Instance elim_acc_typed_read_end_atomic {X} E1 E2 α β γ l b ty ot T :
+  Global Instance elim_acc_typed_read_end_atomic {X} E1 E2 α β γ l b ty ot mc T :
     ElimAcc (X:=X) True
             (fupd E1 E2) (fupd E2 E1)
             α β γ
-            (typed_read_end true E1 l b ty ot T)
-            (λ x, typed_read_end true E2 l b ty ot (λ v ty ty', |={E2}=> β x ∗ (γ x -∗? T v ty ty')))%I | 100.
+            (typed_read_end true E1 l b ty ot mc T)
+            (λ x, typed_read_end true E2 l b ty ot mc (λ v ty ty', |={E2}=> β x ∗ (γ x -∗? T v ty ty')))%I | 100.
   Proof.
     iIntros (?) "Hinner Hacc".
     iMod "Hacc" as (x) "[Hα Hclose]".
@@ -1371,9 +1371,9 @@ Section typing.
     typed_val_expr (MacroE m es) T.
   Proof. done. Qed.
 
-  Lemma type_use ot T e o:
-    ⌜if o is Na2Ord then False else True⌝ ∗ typed_read (if o is ScOrd then true else false) e ot T -∗
-    typed_val_expr (use{ot, o} e) T.
+  Lemma type_use ot T e o mc:
+    ⌜if o is Na2Ord then False else True⌝ ∗ typed_read (if o is ScOrd then true else false) e ot mc T -∗
+    typed_val_expr (use{ot, o, mc} e) T.
   Proof.
     iIntros "[% Hread]" (Φ) "HΦ".
     wp_bind. iApply "Hread".
@@ -1388,13 +1388,13 @@ Section typing.
     all: by iApply ("HΦ" with "Hv HT").
   Qed.
 
-  Lemma type_read T T' e ot (a : bool):
+  Lemma type_read T T' e ot (a : bool) mc:
     IntoPlaceCtx e T' →
     T' (λ K l, find_in_context (FindLoc l) (λ '(β1, ty1),
       typed_place K l β1 ty1 (λ l2 β2 ty2 typ R,
-          typed_read_end a ⊤ l2 β2 ty2 ot (λ v ty2' ty3,
+          typed_read_end a ⊤ l2 β2 ty2 ot mc (λ v ty2' ty3,
             l ◁ₗ{β1} typ ty2' -∗ R ty2' -∗ T v ty3)))) -∗
-    typed_read a e ot T.
+    typed_read a e ot mc T.
   Proof.
     iIntros (HT') "HT'". iIntros (Φ) "HΦ".
     iApply (HT' with "HT'").
@@ -1408,9 +1408,9 @@ Section typing.
     iMod ("Hc" with "Hl") as "[? ?]". iExists _. iFrame. by iApply ("HT" with "[$]").
   Qed.
 
-  Lemma type_read_copy T a β l ty ly E {HC: CopyAs l β ty}:
+  Lemma type_read_copy T a β l ty ly E mc {HC: CopyAs l β ty}:
     ((HC (λ ty', ⌜ty'.(ty_has_op_type) ly MCCopy⌝ ∗ ⌜mtE ⊆ E⌝ ∗ ∀ v, T v (ty' : type) ty')).(i2p_P)) -∗
-      typed_read_end a E l β ty ly T.
+      typed_read_end a E l β ty ly mc T.
   Proof.
     rewrite /typed_read_end. iIntros "Hs Hl". iDestruct (i2p_proof with "Hs Hl") as (ty') "(Hl&%&%&%&HT)".
     destruct β.
@@ -1421,6 +1421,7 @@ Section typing.
       iExists _, _, _. iFrame "∗Hv". do 2 iSplitR => //=.
       iIntros "!# %st Hl _". iMod "Hclose". iModIntro.
       iExists _, _. iDestruct (ty_ref with "[//] Hl Hv") as "$"; [done|]. iSplitR "HT" => //.
+      destruct mc => //.
       by iApply (ty_memcast_compat_copy with "Hv").
     - iRevert "Hl". iIntros "#Hl".
       iMod (copy_shr_acc with "Hl") as (? q' v) "[Hmt [Hv Hc]]" => //.
@@ -1429,11 +1430,12 @@ Section typing.
       iExists _, _, _. iFrame. do 2 iSplit => //=.
       iIntros "!# %st Hmt Hv". iMod "Hclose". iModIntro.
       iExists _, _. iFrame "Hl". iSplitR "HT"; [|done].
+      destruct mc => //.
       by iApply (ty_memcast_compat_copy with "Hv").
   Qed.
-  Global Instance type_read_copy_inst β l ty ly a E `{!CopyAs l β ty} :
-    TypedReadEnd a E l β ty ly | 10 :=
-    λ T, i2p (type_read_copy T a β l ty ly E).
+  Global Instance type_read_copy_inst β l ty ly a E mc `{!CopyAs l β ty} :
+    TypedReadEnd a E l β ty ly mc | 10 :=
+    λ T, i2p (type_read_copy T a β l ty ly E mc).
 
   Lemma type_write (a : bool) ty T T' e v ot:
     IntoPlaceCtx e T' →

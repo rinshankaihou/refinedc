@@ -1,6 +1,3 @@
-(** [no_mem_cast] controls whether the frontend adds mem casts to memory loads. *)
-val no_mem_cast : bool ref
-
 (** Entry point of the Cerberus typed Ail AST. *)
 type typed_ail =
   Cerb_frontend.GenTypes.genTypeCategory Cerb_frontend.AilSyntax.ail_program

@@ -176,7 +176,7 @@ let run : config -> string -> unit = fun cfg c_file ->
     end;
   if cfg.no_mem_cast then
     begin
-      Ail_to_coq.no_mem_cast := true
+      Coq_pp.no_mem_cast := true
     end;
   (* Obtain the metadata for the input C file. *)
   let c_file = get_c_file_data c_file in

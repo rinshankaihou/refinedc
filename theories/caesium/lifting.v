@@ -40,9 +40,9 @@ Global Instance cas_atomic s ot (v1 v2 v3 : val) : Atomic s (coerce_rtexpr (CAS 
 Proof. solve_atomic. Qed.
 Global Instance skipe_atomic s (v : val) : Atomic s (coerce_rtexpr (SkipE v)).
 Proof. solve_atomic. Qed.
-Global Instance deref_atomic s (l : loc) ly : Atomic s (coerce_rtexpr (Deref ScOrd ly l)).
+Global Instance deref_atomic s (l : loc) ot mc : Atomic s (coerce_rtexpr (Deref ScOrd ot mc l)).
 Proof. solve_atomic. Qed.
-Global Instance use_atomic s (l : loc) ly : Atomic s (coerce_rtexpr (Use ScOrd ly l)).
+Global Instance use_atomic s (l : loc) ot mc : Atomic s (coerce_rtexpr (Use ScOrd ot mc l)).
 Proof. solve_atomic. Qed.
 
 (*** General lifting lemmas *)
@@ -219,12 +219,12 @@ Proof.
   iSplit; [done|]. iModIntro. iMod "He". by iFrame.
 Qed.
 
-Lemma wp_deref v Φ vl l ot q E o:
+Lemma wp_deref v Φ vl l ot q E o (mc : bool):
   o = ScOrd ∨ o = Na1Ord →
   val_to_loc vl = Some l →
   l `has_layout_loc` ot_layout ot →
   v `has_layout_val` ot_layout ot →
-  l↦{q}v -∗ ▷ (∀ st, l ↦{q} v -∗ Φ (mem_cast v ot st)) -∗ WP !{ot, o} (Val vl) @ E {{ Φ }}.
+  l↦{q}v -∗ ▷ (∀ st, l ↦{q} v -∗ Φ (if mc then mem_cast v ot st else v)) -∗ WP !{ot, o, mc} (Val vl) @ E {{ Φ }}.
 Proof.
   iIntros (Ho Hl Hll Hlv) "Hmt HΦ".
   iApply wp_lift_expr_step; auto.

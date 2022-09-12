@@ -223,9 +223,9 @@ Section uninit.
     iExists _. by iFrame.
   Qed.
 
-  Lemma type_read_move_copy T E l ty ot a `{!TCDone (ty.(ty_has_op_type) ot MCCopy)}:
+  Lemma type_read_move_copy T E l ty ot mc a `{!TCDone (ty.(ty_has_op_type) ot MCCopy)}:
     (∀ v, T v (uninit (ot_layout ot)) ty) -∗
-      typed_read_end a E l Own ty ot T.
+      typed_read_end a E l Own ty ot mc T.
   Proof.
     unfold TCDone in *. rewrite /typed_read_end. iIntros "HT Hl".
     iApply fupd_mask_intro; [destruct a; solve_ndisj|]. iIntros "Hclose".
@@ -234,13 +234,12 @@ Section uninit.
     iDestruct (ty_size_eq with "Hv") as %?; [done|].
     iExists _, _, _. iFrame. do 2 iSplit => //=.
     iIntros "!# %st Hl Hv". iMod "Hclose". iModIntro.
-    iDestruct (ty_memcast_compat_copy with "Hv") as "Hv"; [done|].
-    iExists _, ty. iFrame. iSplitR "HT"; [|done].
-    iExists _. iFrame. iPureIntro. split_and! => //. by apply: Forall_true.
+    iExists _, ty. iSplitL "Hv". { destruct mc => //. by iApply ty_memcast_compat_copy. }
+    iSplitR "HT"; [|done]. iExists _. iFrame. iPureIntro. split_and! => //. by apply: Forall_true.
   Qed.
-  Global Instance type_read_move_copy_inst l E ty ot a `{!TCDone (ty.(ty_has_op_type) ot MCCopy)}:
-    TypedReadEnd a E l Own ty ot | 70 :=
-    λ T, i2p (type_read_move_copy T E l ty ot a).
+  Global Instance type_read_move_copy_inst l E ty ot mc a `{!TCDone (ty.(ty_has_op_type) ot MCCopy)}:
+    TypedReadEnd a E l Own ty ot mc | 70 :=
+    λ T, i2p (type_read_move_copy T E l ty ot mc a).
 End uninit.
 
 Notation "uninit< ly >" := (uninit ly) (only printing, format "'uninit<' ly '>'") : printing_sugar.

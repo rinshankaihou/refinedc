@@ -8,8 +8,9 @@ Definition string_to_varname (s : string) : var_name := s.
 Coercion string_to_varname : string >-> var_name.
 Coercion it_layout : int_type >-> layout.
 Notation "☠" := MPoison : val_scope.
-Notation "!{ ot , o } e" := (Deref o ot e%E) (at level 9, format "!{ ot ,  o } e") : expr_scope.
-Notation "!{ ot } e" := (Deref Na1Ord ot e%E) (at level 9, format "!{ ot } e") : expr_scope.
+Notation "!{ ot , o , mc } e" := (Deref o ot mc e%E) (at level 9, format "!{ ot ,  o ,  mc } e") : expr_scope.
+Notation "!{ ot , o } e" := (Deref o ot true e%E) (at level 9, format "!{ ot ,  o } e") : expr_scope.
+Notation "!{ ot } e" := (Deref Na1Ord ot true e%E) (at level 9, format "!{ ot } e") : expr_scope.
 (* − is a unicode minus, not the normal minus to prevent parsing conflicts *)
 Notation "'−' '{' ot } e" := (UnOp NegOp ot e%E)
   (at level 40, format "'−' '{' ot }  e") : expr_scope.
@@ -85,9 +86,10 @@ Notation "'assert{' ot '}' ':' e ; s" := (Assert ot e%E s%E)
 Arguments Assert : simpl never.
 Global Typeclasses Opaque Assert.
 
-Definition Use (o : order) (ot : op_type) (e : expr) := Deref o ot e.
-Notation "'use{' ot , o } e" := (Use o ot e%E) (at level 9, format "'use{' ot ,  o }  e") : expr_scope.
-Notation "'use{' ot } e" := (Use Na1Ord ot e%E) (at level 9, format "'use{' ot }  e") : expr_scope.
+Definition Use (o : order) (ot : op_type) (memcast : bool) (e : expr) := Deref o ot memcast e.
+Notation "'use{' ot , o , mc } e" := (Use o ot mc e%E) (at level 9, format "'use{' ot ,  o ,  mc }  e") : expr_scope.
+Notation "'use{' ot , o } e" := (Use o ot true e%E) (at level 9, format "'use{' ot ,  o }  e") : expr_scope.
+Notation "'use{' ot } e" := (Use Na1Ord ot true e%E) (at level 9, format "'use{' ot }  e") : expr_scope.
 Arguments Use : simpl never.
 Global Typeclasses Opaque Use.
 
@@ -191,10 +193,10 @@ Arguments OffsetOfUnion : simpl never.
 (*** Tests *)
 Example test1 (l : loc) ly ot :
   (l <-{ly} use{ot}(&l +{PtrOp, IntOp size_t} (l ={PtrOp, PtrOp, i32} l)); ExprS (Call l [ (l : expr); (l : expr)]) (l <-{ly, ScOrd} l; Goto "a"))%E =
-  (Assign Na1Ord ly l (Use Na1Ord ot (BinOp AddOp PtrOp (IntOp size_t) (AddrOf l) (BinOp (EqOp i32) PtrOp PtrOp l l))))
+  (Assign Na1Ord ly l (Use Na1Ord ot true (BinOp AddOp PtrOp (IntOp size_t) (AddrOf l) (BinOp (EqOp i32) PtrOp PtrOp l l))))
       (ExprS (Call l [ Val (val_of_loc l); Val (val_of_loc l)]) ((Assign ScOrd ly l l) (Goto "a"))).
 Proof. simpl. reflexivity. Abort.
 
 Example test_get_member (l : loc) (s : struct_layout) ot :
-  (!{ot} (!{ot, ScOrd} l) at{s} "a")%E = GetMember (Deref Na1Ord ot (Deref ScOrd ot l%E)) s "a".
+  (!{ot} (!{ot, ScOrd} l) at{s} "a")%E = GetMember (Deref Na1Ord ot true (Deref ScOrd ot true l%E)) s "a".
 Proof. simpl. reflexivity. Abort.

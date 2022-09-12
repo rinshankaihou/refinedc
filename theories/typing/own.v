@@ -50,22 +50,22 @@ Section own.
     SimpleSubsumePlaceR (frac_ptr β ty1) (frac_ptr β ty2) p p P.
   Proof. iIntros (l β') "HP [$ [$ Hl]]". iApply (@simple_subsume_place with "HP Hl"). Qed.
 
-  Lemma type_place_frac p β K β1 ty1 T l:
+  Lemma type_place_frac p β K β1 ty1 T l mc:
     typed_place K p (own_state_min β1 β) ty1 (λ l2 β2 ty2 typ, T l2 β2 ty2 (λ t, (p @ (frac_ptr β (typ t))))) -∗
-    typed_place (DerefPCtx Na1Ord PtrOp :: K) l β1 (p @ (frac_ptr β ty1)) T.
+    typed_place (DerefPCtx Na1Ord PtrOp mc :: K) l β1 (p @ (frac_ptr β ty1)) T.
   Proof.
     iIntros "HP" (Φ) "(%&Hm&Hl) HΦ" => /=.
     iMod (heap_mapsto_own_state_to_mt with "Hm") as (q Hq) "Hm" => //.
     iApply (wp_deref with "Hm") => //; [naive_solver| by apply val_to_of_loc|].
-    iIntros "!# %st Hm". iExists _. rewrite mem_cast_id_loc. iSplit => //.
+    iIntros "!# %st Hm". iExists p. rewrite mem_cast_id_loc. iSplit; [by destruct mc|].
     iApply ("HP" with "Hl"). iIntros (l' ty2 β2 typ R) "Hl' Htyp HT".
     iApply ("HΦ" with "Hl' [-HT] HT"). iIntros (ty') "Hl'".
     iMod ("Htyp" with "Hl'") as "[? $]". iFrame. iSplitR => //.
     by iApply heap_mapsto_own_state_from_mt.
   Qed.
-  Global Instance type_place_frac_inst p β K β1 ty1 l :
-    TypedPlace (DerefPCtx Na1Ord PtrOp :: K) l β1 (p @ (frac_ptr β ty1)) :=
-    λ T, i2p (type_place_frac _ _ _ _ _ _ _).
+  Global Instance type_place_frac_inst p β K β1 ty1 l mc :
+    TypedPlace (DerefPCtx Na1Ord PtrOp mc :: K) l β1 (p @ (frac_ptr β ty1)) :=
+    λ T, i2p (type_place_frac _ _ _ _ _ _ _ _).
 
   Lemma type_addr_of (T : val → _) e:
     typed_addr_of e (λ l β ty, T l (l @ frac_ptr β ty)) -∗

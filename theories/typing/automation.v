@@ -61,8 +61,8 @@ Ltac convert_to_i2p_tac P bind cont ::=
       cont uconstr:(((_ : TypedSwitch _ _ _) _ _ _ _ _ _ _))
   | typed_assert ?ot ?v ?ty ?s ?fn ?ls ?fr ?Q =>
       cont uconstr:(((_ : TypedAssert _ _ _) _ _ _ _ _))
-  | typed_read_end ?a ?E ?l ?β ?ty ?ly ?T =>
-      cont uconstr:(((_ : TypedReadEnd _ _ _ _ _ _) _))
+  | typed_read_end ?a ?E ?l ?β ?ty ?ly ?mc ?T =>
+      cont uconstr:(((_ : TypedReadEnd _ _ _ _ _ _ _) _))
   | typed_write_end ?a ?E ?ot ?v1 ?ty1 ?l2 ?β2 ?ty2 ?T =>
       cont uconstr:(((_ : TypedWriteEnd _ _ _ _ _ _ _ _) _))
   | typed_addr_of_end ?l ?β ?ty ?T =>
@@ -214,7 +214,7 @@ Ltac liRExpr :=
     lazymatch e' with
     | W.Val _ => notypeclasses refine (tac_fast_apply (type_val _ _) _)
     | W.Loc _ => notypeclasses refine (tac_fast_apply (type_val _ _) _)
-    | W.Use _ _ _ => notypeclasses refine (tac_fast_apply (type_use _ _ _ _) _)
+    | W.Use _ _ _ _ => notypeclasses refine (tac_fast_apply (type_use _ _ _ _ _) _)
     | W.AddrOf _ => notypeclasses refine (tac_fast_apply (type_addr_of _ _) _)
     | W.BinOp _ _ _ _ _ => notypeclasses refine (tac_fast_apply (type_bin_op _ _ _ _ _ _) _)
     | W.CopyAllocId _ _ _ => notypeclasses refine (tac_fast_apply (type_copy_alloc_id _ _ _ _) _)
@@ -236,7 +236,7 @@ Ltac liRExpr :=
 Ltac liRJudgement :=
   lazymatch goal with
     | |- envs_entails _ (typed_write _ _ _ _ _ _) => notypeclasses refine (tac_fast_apply (type_write _ _ _ _ _ _ _ _) _); [ solve [refine _ ] |]
-    | |- envs_entails _ (typed_read _ _ _ _) => notypeclasses refine (tac_fast_apply (type_read _ _ _ _ _ _) _); [ solve [refine _ ] |]
+    | |- envs_entails _ (typed_read _ _ _ _ _) => notypeclasses refine (tac_fast_apply (type_read _ _ _ _ _ _ _) _); [ solve [refine _ ] |]
     | |- envs_entails _ (typed_addr_of _ _) => notypeclasses refine (tac_fast_apply (type_addr_of_place _ _ _ _) _); [solve [refine _] |]
   end.
 

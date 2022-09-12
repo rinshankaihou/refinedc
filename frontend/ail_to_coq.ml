@@ -4,9 +4,6 @@ open Panic
 open Coq_ast
 open Rc_annot
 
-(* Flags set by CLI. *)
-let no_mem_cast = ref false
-
 type typed_ail = GenTypes.genTypeCategory AilSyntax.ail_program
 type ail_expr  = GenTypes.genTypeCategory AilSyntax.expression
 type c_type    = Ctype.ctype
@@ -293,20 +290,6 @@ let ptr_op_type_of : ail_expr -> Coq_ast.op_type = fun e ->
 
 let op_type_of_tc : loc -> type_cat -> Coq_ast.op_type = fun loc tc ->
   op_type_of loc (c_type_of_type_cat tc)
-
-(* [deref_op_type_of] computes the op_type for a memory read and takes
-   the [no_mem_cast] flag into account. *)
-let deref_op_type_of : loc -> c_type -> Coq_ast.op_type = fun loc c_ty ->
-  if !no_mem_cast then
-    OpUntyped (layout_of false c_ty)
-  else
-    op_type_of loc c_ty
-
-let ptr_deref_op_type_of : loc -> c_type -> Coq_ast.op_type = fun loc c_ty ->
-  match c_ty with
-  | Ctype(_, Pointer(_,c_ty)) -> deref_op_type_of loc c_ty
-  | _                         -> assert false
-
 
 (* We need similar function returning options for casts. *)
 let rec op_type_opt loc Ctype.(Ctype(_, c_ty)) =
@@ -693,7 +676,7 @@ let rec translate_expr : bool -> op_type option -> ail_expr -> expr =
           | AnnotatedExpression(_, _, _, AilEcompound(_, _, _)) -> translate e
           | _                                                   ->
           let atomic = is_atomic_tc (tc_of e) in
-          let ty = deref_op_type_of (loc_of e) (c_type_of_type_cat (tc_of e)) in
+          let ty = op_type_of_tc (loc_of e) (tc_of e) in
           let e = translate_expr true None e in
           let gen =
             if lval then Deref(atomic, ty, e)
@@ -799,7 +782,7 @@ and translate_call : type a. a call_place -> loc -> bool -> ail_expr
               | [e1; e2] -> (e1, e2)
               | _        -> assert false
             in
-            let op_type = ptr_deref_op_type_of (loc_of e1) (c_type_of_type_cat (tc_of e1)) in
+            let op_type = ptr_op_type_of e1 in
             let e1 = translate_expr true None e1 in
             let mo = memory_order_of_expr e2 in
             if mo <> Cmm_csem.Seq_cst then
@@ -1103,7 +1086,6 @@ let translate_block stmts blocks ret_ty is_main =
                 locate (Assign(atomic, ot, e1, e2, stmt))
             | AilEunary(op,e) when incr_or_decr op ->
                 let atomic = is_atomic_tc (tc_of e) in
-                let deref_op_type = deref_op_type_of (loc_of e) (c_type_of_type_cat (tc_of e)) in
                 let op_type = op_type_of_tc (loc_of e) (tc_of e) in
                 let (res_ty, int_ty) =
                   let ty_opt = op_type_tc_opt (loc_of e) (tc_of e) in
@@ -1116,7 +1098,7 @@ let translate_block stmts blocks ret_ty is_main =
                 let e1 = translate_expr true None e in
                 let e2 =
                   let one = locate (Val(Int("1", int_ty))) in
-                  let use = locate (Use(atomic, deref_op_type, e1)) in
+                  let use = locate (Use(atomic, op_type, e1)) in
                   locate (BinOp(op, res_ty, OpInt(int_ty), use, one))
                 in
                 locate (Assign(atomic, op_type, e1, e2, stmt))

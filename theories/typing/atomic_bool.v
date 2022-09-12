@@ -80,7 +80,7 @@ Section programs.
     Subsume (l ◁ₗ b @ boolean it)%I (l ◁ₗ atomic_bool it PT PF) :=
     λ T, i2p (subsume_atomic_bool_own_bool l b it PT PF T).
 
-  Lemma type_read_atomic_bool l β it ot PT PF T:
+  Lemma type_read_atomic_bool l β it ot PT PF mc T:
     (⌜match ot with | BoolOp => it = u8 | IntOp it' => it = it' | _ => False end⌝ ∗
       ∀ b v,
       destruct_hint (DHintDestruct bool b) tt (
@@ -89,7 +89,7 @@ Section programs.
         T v (atomic_bool it PT PF) (b @ boolean it)
       )
     ) -∗
-    typed_read_end true ⊤ l β (atomic_bool it PT PF) ot T.
+    typed_read_end true ⊤ l β (atomic_bool it PT PF) ot mc T.
   Proof.
     unfold destruct_hint. iIntros "[%Hot HT]".
     iApply typed_read_end_mono_strong; [done|]. destruct β.
@@ -111,9 +111,9 @@ Section programs.
       iSplitL "Hl Hif". { iExists _. by iFrame. }
       iIntros "_ _ _ !>". iExists _, _. iFrame "∗Hv". by iSplit.
   Qed.
-  Global Instance type_read_atomic_bool_inst l β it ot PT PF:
-    TypedReadEnd true ⊤ l β (atomic_bool it PT PF) ot | 10 :=
-    λ T, i2p (type_read_atomic_bool l β it ot PT PF T).
+  Global Instance type_read_atomic_bool_inst l β it ot mc PT PF:
+    TypedReadEnd true ⊤ l β (atomic_bool it PT PF) ot mc | 10 :=
+    λ T, i2p (type_read_atomic_bool l β it ot PT PF mc T).
 
   Lemma type_write_atomic_bool l β it ot PT PF v ty T:
     (⌜match ot with | BoolOp => it = u8 | IntOp it' => it = it' | _ => False end⌝ ∗ ∃ b,

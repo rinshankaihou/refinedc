@@ -442,14 +442,14 @@ Section optionalO.
     TypedBinOp v1 (v1 ◁ᵥ b @ optionalO ty optty)%I v2 (v2 ◁ᵥ optty) (NeOp i32) ot1 ot2 :=
     λ T, i2p (type_neq_optionalO A v1 v2 ty optty ot1 ot2 T b).
 
-  Lemma read_optionalO_case A E l b (ty : A → type) optty ly (T : val → type → _) a:
-    destruct_hint (DHintDestruct _ b) DestructHintOptionalO (typed_read_end a E l Own (if b is Some x then ty x else optty) ly T) -∗
-      typed_read_end a E l Own (b @ optionalO ty optty) ly T.
+  Lemma read_optionalO_case A E l b (ty : A → type) optty ly mc (T : val → type → _) a:
+    destruct_hint (DHintDestruct _ b) DestructHintOptionalO (typed_read_end a E l Own (if b is Some x then ty x else optty) ly mc T) -∗
+      typed_read_end a E l Own (b @ optionalO ty optty) ly mc T.
   Proof. by destruct b. Qed.
   (* This should be tried very late *)
-  Global Instance read_optionalO_case_inst A E l b (ty : A → type) optty ly a:
-    TypedReadEnd a E l Own (b @ optionalO ty optty) ly | 1001 :=
-    λ T, i2p (read_optionalO_case A E l b ty optty ly T a).
+  Global Instance read_optionalO_case_inst A E l b (ty : A → type) optty ly mc a :
+    TypedReadEnd a E l Own (b @ optionalO ty optty) ly mc | 1001 :=
+    λ T, i2p (read_optionalO_case A E l b ty optty ly mc T a).
 
   Global Program Instance optionalO_copyable A (ty : A → type) optty x `{!∀ x, Copyable (ty x)} `{!Copyable optty} : Copyable (x @ optionalO ty optty).
   Next Obligation.

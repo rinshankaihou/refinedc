@@ -8,6 +8,7 @@ open Comment_annot
 (* Flags set by CLI. *)
 let print_expr_locs = ref true
 let print_stmt_locs = ref true
+let no_mem_cast = ref false
 
 let pp_str = pp_print_string
 
@@ -199,10 +200,16 @@ let rec pp_expr : Coq_ast.expr pp = fun ff e ->
                   pp_op_type ty1 pp_op_type ty2 pp_expr e2
         end
     | Deref(atomic,ty,e)            ->
-        if atomic then
-          pp "!{%a, ScOrd} (%a)" pp_op_type ty pp_expr e
+       if !no_mem_cast then
+         if atomic then
+           pp "!{%a, ScOrd, false} (%a)" pp_op_type ty pp_expr e
+         else
+           pp "!{%a, Na1Ord, false} (%a)" pp_op_type ty pp_expr e
         else
-          pp "!{%a} (%a)" pp_op_type ty pp_expr e
+         if atomic then
+           pp "!{%a, ScOrd} (%a)" pp_op_type ty pp_expr e
+         else
+           pp "!{%a} (%a)" pp_op_type ty pp_expr e
     | CAS(ty,e1,e2,e3)              ->
         pp "CAS@ (%a)@ (%a)@ (%a)@ (%a)" pp_op_type ty
           pp_expr e1 pp_expr e2 pp_expr e3
@@ -221,10 +228,16 @@ let rec pp_expr : Coq_ast.expr pp = fun ff e ->
     | SkipE(e)                      ->
         pp "SkipE (%a)" pp_expr e
     | Use(atomic,ty,e)              ->
-        if atomic then
-          pp "use{%a, ScOrd} (%a)" pp_op_type ty pp_expr e
-        else
-          pp "use{%a} (%a)" pp_op_type ty pp_expr e
+       if !no_mem_cast then
+         if atomic then
+           pp "use{%a, ScOrd, false} (%a)" pp_op_type ty pp_expr e
+         else
+           pp "use{%a, Na1Ord, false} (%a)" pp_op_type ty pp_expr e
+       else
+         if atomic then
+           pp "use{%a, ScOrd} (%a)" pp_op_type ty pp_expr e
+         else
+           pp "use{%a} (%a)" pp_op_type ty pp_expr e
     | AddrOf(e)                     ->
         pp "&(%a)" pp_expr e
     | LValue(e)                     ->
