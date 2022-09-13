@@ -83,7 +83,7 @@ Section tyfold.
     rewrite last_snoc /=. iFrame. iSplitL "Htys" => /=.
     - iApply (big_sepL_mono with "Htys") => k y /(lookup_lt_Some _ _ _). rewrite -Hlen => Hl /=.
       rewrite ?app_comm_cons !lookup_app_l//=. lia.
-    - iSplit => //. rewrite -plus_n_O !lookup_app_r -?Hlen -?minus_n_n /=; try lia.
+    - iSplit => //. rewrite Nat.add_0_r !lookup_app_r -?Hlen ?Nat.sub_diag /=; try lia.
       iExists _, _. iFrame. iSplit => //. iPureIntro. rewrite ?app_comm_cons lookup_app_l /=; try lia.
       by apply list_lookup_length_default_last.
   Qed.

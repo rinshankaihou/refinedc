@@ -368,7 +368,7 @@ Section loc_in_bounds.
     (m ≤ n)%nat ->
     loc_in_bounds l n -∗ loc_in_bounds l m.
   Proof.
-    move => ?. rewrite (le_plus_minus m n) // -loc_in_bounds_split. iIntros "[$ _]".
+    move => ?. rewrite -(Nat.sub_add m n) // Nat.add_comm -loc_in_bounds_split. iIntros "[$ _]".
   Qed.
 
   Lemma loc_in_bounds_offset l1 l2 (n m : nat):

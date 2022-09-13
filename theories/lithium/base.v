@@ -329,7 +329,7 @@ Lemma length_filter_insert {A} P `{!∀ x, Decision (P x)} (l : list A) i x x':
   (length (filter P l) + (if bool_decide (P x) then 1 else 0) - (if bool_decide (P x') then 1 else 0))%nat.
 Proof.
   elim: i l. move => [] //=??[->]. rewrite !filter_cons. by repeat (case_decide; case_bool_decide) => //=; lia.
-  move => i IH [|? l]//=?. rewrite !filter_cons. case_decide => //=; rewrite IH // -minus_Sn_m //.
+  move => i IH [|? l]//=?. rewrite !filter_cons. case_decide => //=; rewrite IH // Nat.sub_succ_l //.
   repeat case_bool_decide => //; try lia. feed pose proof (length_filter_gt P l x') => //; try lia.
     by apply: elem_of_list_lookup_2.
 Qed.
@@ -397,7 +397,7 @@ Proof.
   move => Hs Hi Hj HR Hneq. elim: Hs j i Hj Hi => // z {}l _ IH /Forall_forall Hall.
   case => /=.
   - case; first naive_solver. move => n [?]/= /(elem_of_list_lookup_2 _ _ _)?; subst. naive_solver.
-  - move => n. case; first lia. move => n2 /= ??. apply lt_n_S. naive_solver.
+  - move => n. case; first lia. move => n2 /= ??. apply->Nat.succ_lt_mono. naive_solver.
 Qed.
 
 (* TODO: Is it possible to make this lemma more general and add it as an instance? *)
@@ -637,7 +637,7 @@ Definition factor2 (n : nat) (def : nat) : nat :=
   default def (factor2' n).
 
 Definition keep_factor2 (n : nat) (def : nat) : nat :=
-  default def (pow 2 <$> factor2' n).
+  default def (Nat.pow 2 <$> factor2' n).
 
 Lemma Pos_pow_add_r a b c:
   (a ^ (b + c) = a ^ b * a ^ c)%positive.
@@ -673,7 +673,7 @@ Lemma Zdivide_nat_pow a b c:
   ((b ≤ c)%nat → ((a ^ b)%nat | (a ^ c)%nat))%Z.
 Proof.
   move => ?. apply: (Zdivide_mult_l _ (a^(c - b))%nat).
-  by rewrite -Nat2Z.inj_mul -Nat.pow_add_r le_plus_minus_r.
+  by rewrite -Nat2Z.inj_mul -Nat.pow_add_r Nat.add_comm Nat.sub_add.
 Qed.
 
 Lemma Pos_factor2_divide p :
@@ -798,16 +798,16 @@ Lemma is_power_of_two_mult n1 n2:
 Proof.
   rewrite /is_power_of_two. split.
   - move => [m Hm]. move: n1 n2 Hm. elim: m.
-    + move => /= ?? /mult_is_one [->->]. split; by exists 0.
+    + move => /= ?? /Nat.eq_mul_1 [->->]. split; by exists 0.
     + move => n IH n1 n2 H. rewrite Nat.pow_succ_r' in H.
       assert (divide 2 (n1 * n2)) as Hdiv. { exists (2 ^ n). lia. }
       apply divide_mult_2 in Hdiv as [[k ->]|[k ->]].
       * assert (k * n2 = 2 ^ n) as Hkn2 by lia.
         apply IH in Hkn2 as [[m ->] Hn2]. split => //.
-        exists (S m). by rewrite mult_comm -Nat.pow_succ_r'.
+        exists (S m). by rewrite Nat.mul_comm -Nat.pow_succ_r'.
       * assert (n1 * k = 2 ^ n) as Hn1k by lia.
         apply IH in Hn1k as [Hn1 [m ->]]. split => //.
-        exists (S m). by rewrite mult_comm -Nat.pow_succ_r'.
+        exists (S m). by rewrite Nat.mul_comm -Nat.pow_succ_r'.
   - move => [[m1 ->] [m2 ->]]. exists (m1 + m2). by rewrite Nat.pow_add_r.
 Qed.
 
@@ -815,7 +815,7 @@ Lemma Z_distr_mul_sub_1 a b:
   (a * b - b = (a - 1) * b)%Z.
 Proof. nia. Qed.
 
-Lemma mult_le_compat_r_1 m p:
+Lemma mul_le_mono_r_1 m p:
   (1 ≤ m)%nat → (p ≤ m * p)%nat.
 Proof. nia. Qed.
 

@@ -17,7 +17,7 @@ Ltac normalize_autorewrite :=
 #[export] Hint Rewrite <- @app_assoc @cons_middle : lithium_rewrite.
 #[export] Hint Rewrite @app_nil_r @rev_involutive : lithium_rewrite.
 #[export] Hint Rewrite <- @list_fmap_insert : lithium_rewrite.
-#[export] Hint Rewrite <- minus_n_O plus_n_O minus_n_n : lithium_rewrite.
+#[export] Hint Rewrite Nat.sub_0_r Nat.add_0_r Nat.sub_diag : lithium_rewrite.
 #[export] Hint Rewrite Nat2Z.id : lithium_rewrite.
 #[export] Hint Rewrite Z2Nat.inj_mul Z2Nat.inj_sub Z2Nat.id using can_solve_tac : lithium_rewrite.
 #[export] Hint Rewrite Nat.succ_pred_pos using can_solve_tac : lithium_rewrite.
@@ -93,7 +93,7 @@ Proof. unfold Normalize in *; subst. by rewrite rev_involutive. Qed.
 Global Hint Extern 5 (Normalize _ (rev (rev _)) _) => class_apply normalize_rev_involutive : typeclass_instances.
 Lemma normalize_minus_n_O n:
   Normalize true (n - 0)%nat n.
-Proof. unfold Normalize in *; subst. by rewrite -minus_n_O. Qed.
+Proof. unfold Normalize in *; subst. by rewrite Nat.sub_0_r. Qed.
 Global Hint Extern 5 (Normalize _ (_ - 0)%nat _) => class_apply normalize_minus_n_O : typeclass_instances.
 Lemma normalize_rotate_length A n (l : list A) r p `{!Normalize p (length l) r} :
   Normalize true (length (rotate n l)) r.

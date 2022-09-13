@@ -273,10 +273,10 @@ Proof.
   rewrite {1 4}Heq.
   eexists _, _. split; [done|]. split. {
     simplify_length. rewrite {3}Heq/=.
-    rewrite Min.min_l; [|lia].
+    rewrite Nat.min_l; [|lia].
     by simplify_list.
   }
-  rewrite /= -minus_n_O/swap/=.
+  rewrite /= Nat.sub_0_r/swap/=.
   apply: (list_eq_split 1); simplify_list; [done|].
   by apply: (list_eq_split (length A - 1)); simplify_list.
 Qed.
@@ -443,26 +443,26 @@ Proof.
     rewrite swap_app_r ?take_length; [ |lia..].
     rewrite swap_app_r //=; [ |lia..].
     do 2 f_equal.
-    rewrite Min.min_l; [ |lia].
+    rewrite Nat.min_l; [ |lia].
     have ->: (Init.Nat.pred i - (s - 1) - 1 = i - s - 1)%nat by lia.
     have ->: ((S j - (s - 1) - 1) = j + 1 - s)%nat by lia.
     have -> : ((length A - 1 - S j) = length A - j - 2)%nat by lia.
     have ?: ((i - s - 1) ≤ (j + 1 - s))%nat by lia.
     rewrite swap_app_r ?rev_length ?take_length ?drop_length ?insert_length//=.
-    2, 3: rewrite Min.min_l; lia.
+    2, 3: rewrite Nat.min_l; lia.
     rewrite swap_app_l ?rev_length ?take_length ?drop_length ?insert_length//=.
-    2, 3: rewrite ?Min.min_l; [|lia..]; lia.
-    rewrite Min.min_l; [|lia].
+    2, 3: rewrite ?Nat.min_l; [|lia..]; lia.
+    rewrite Nat.min_l; [|lia].
     have ->: (i - s - 1 - (length A - j - 2) = 0)%nat by lia.
     have ->: (S (j + 1) - Init.Nat.pred i = S (S (j + 1 - i)))%nat by lia.
     pose proof (swap_start_end 0 ((j + 1 - s - (length A - j - 2)))%nat (take (S (S (j + 1 - i))) (drop (Init.Nat.pred i) (<[xx:=xxx]> A)))) as [?[?[? [? ->]]]].
     { done. }
-    { rewrite ?take_length ?drop_length ?insert_length. rewrite Min.min_l; lia. }
+    { rewrite ?take_length ?drop_length ?insert_length. rewrite Nat.min_l; lia. }
     { lia. }
-    rewrite take_length drop_length insert_length Min.min_l; [|lia].
+    rewrite take_length drop_length insert_length Nat.min_l; [|lia].
     simpl.
     rewrite !skipn_firstn_comm drop_drop take_take.
-    rewrite Min.min_l. 2: lia.
+    rewrite Nat.min_l. 2: lia.
     move Hl: ((<[xx:=xxx]> A)) => l.
     have ?: length l = length A by rewrite -Hl insert_length.
     have ->: (take (length A - 1 - j) (drop (j + 1) l) =

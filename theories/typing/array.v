@@ -45,7 +45,7 @@ Section array.
     move => ly tys ot mt l v [-> [? [? ]]]. iIntros (Hlys Hl) "Hl".
     iDestruct 1 as (Hv) "Htys". iSplit => //.
     iInduction (tys) as [|ty tys] "IH" forall (l v Hlys Hv Hl); csimpl in *.
-    { rewrite mult_0_r right_id. by iApply heap_mapsto_loc_in_bounds_0. }
+    { rewrite Nat.mul_0_r right_id. by iApply heap_mapsto_loc_in_bounds_0. }
     move: Hlys. intros [? ?]%Forall_cons. iDestruct "Htys" as "[Hty Htys]".
     rewrite -{1}(take_drop (ly_size ly) v).
     rewrite offset_loc_0 heap_mapsto_app take_length_le ?Hv; last by repeat unfold ly_size => /=; lia.
@@ -161,7 +161,7 @@ Section array.
   Proof.
     rewrite /ty_own/= => ?. iSplit.
     - iInduction n as [|n] "IH" forall (l) => /=; iIntros "(%&Hlib&Htys)".
-      { iExists []. rewrite heap_mapsto_own_state_nil mult_0_r Forall_nil.
+      { iExists []. rewrite heap_mapsto_own_state_nil Nat.mul_0_r Forall_nil.
         iFrame "Hlib". iPureIntro. rewrite /has_layout_val/ly_size/=. naive_solver lia. }
       setoid_rewrite offset_loc_S. setoid_rewrite offset_loc_1. rewrite offset_loc_0.
       iDestruct "Htys" as "[Hty Htys]".
@@ -176,7 +176,7 @@ Section array.
       rewrite {2 3}/ly_size/=. lia.
     - iDestruct 1 as (v Hv Hl _) "Hl". iSplit => //.
       iInduction n as [|n] "IH" forall (v l Hv Hl) => /=.
-      { rewrite mult_0_r right_id.
+      { rewrite Nat.mul_0_r right_id.
         iApply loc_in_bounds_shorten; last by iApply heap_mapsto_own_state_loc_in_bounds. lia. }
       setoid_rewrite offset_loc_S. setoid_rewrite offset_loc_1. rewrite offset_loc_0.
       rewrite -(take_drop (ly.(ly_size)) v) heap_mapsto_own_state_app.

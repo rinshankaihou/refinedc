@@ -109,7 +109,7 @@ Lemma StronglySorted_lookup_index_lt {A} {R : A → A → Prop} `{!StrictOrder R
 Proof.
   move => HSS H1 H2 HR.
   assert (¬ i2 ≤ i1)%nat; last by lia.
-  move => /le_lt_or_eq [H|H]; last first.
+  move => /Nat.lt_eq_cases [H|H]; last first.
   { assert (x1 = x2) as Heq by naive_solver. by apply (@irreflexive_eq _ R _ _ _ Heq). }
   apply (asymmetry HR). move: (take_drop (S i2) l) => Heq. rewrite -Heq in HSS.
   apply (elem_of_StronglySorted_app _ _ _ _ _ HSS).
