@@ -76,7 +76,7 @@ and stmt_aux =
   | Switch of int_type * expr * (string * int) list * stmt list * stmt
   | Assign of bool (* Atomic? *) * op_type * expr * expr * stmt
   | SkipS  of stmt
-  | If     of op_type * expr * stmt * stmt
+  | If     of op_type * string option (* join label *) * expr * stmt * stmt
   | Assert of op_type * expr * stmt
   | ExprS  of expr_annot option * expr * stmt
 

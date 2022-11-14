@@ -164,7 +164,7 @@ Ltac liRStmt :=
       lazymatch s' with
       | W.Assign _ _ _ _ _ => notypeclasses refine (tac_fast_apply (type_assign _ _ _ _ _ _ _ _ _) _)
       | W.Return _ => notypeclasses refine (tac_fast_apply (type_return _ _ _ _ _) _)
-      | W.IfS _ _ _ _ => notypeclasses refine (tac_fast_apply (type_if _ _ _ _ _ _ _ _) _)
+      | W.IfS _ _ _ _ _ => notypeclasses refine (tac_fast_apply (type_if _ _ _ _ _ _ _ _ _) _)
       | W.Switch _ _ _ _ _ => notypeclasses refine (tac_fast_apply (type_switch _ _ _ _ _ _ _ _ _) _)
       | W.Assert _ _ _ => notypeclasses refine (tac_fast_apply (type_assert _ _ _ _ _ _ _) _)
       | W.Goto ?bid => first [

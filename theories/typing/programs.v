@@ -1092,10 +1092,10 @@ Section typing.
     all: by iApply ("HT" with "Hl").
   Qed.
 
-  Lemma type_if Q ot e s1 s2 fn ls R:
+  Lemma type_if Q ot join e s1 s2 fn ls R:
     typed_val_expr e (λ v ty, typed_if ot v (v ◁ᵥ ty)
           (typed_stmt s1 fn ls R Q) (typed_stmt s2 fn ls R Q))
-    ⊢ typed_stmt (if{ot}: e then s1 else s2) fn ls R Q.
+    ⊢ typed_stmt (if{ot, join}: e then s1 else s2) fn ls R Q.
   Proof.
     iIntros "He" (Hls). wps_bind.
     iApply "He". iIntros (v ty) "Hv Hs".

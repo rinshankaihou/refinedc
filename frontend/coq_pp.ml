@@ -278,6 +278,13 @@ let rec pp_expr : Coq_ast.expr pp = fun ff e ->
   | _                             ->
       pp "%a" pp_expr_body e
 
+
+let pp_if_join : string option pp = fun ff opt ->
+  let pp fmt = Format.fprintf ff fmt in
+    match opt with
+    | None -> pp "None"
+    | Some lb -> pp "Some %S" lb
+
 let rec pp_stmt : Coq_ast.stmt pp = fun ff stmt ->
   let pp fmt = Format.fprintf ff fmt in
   if !print_stmt_locs then
@@ -317,9 +324,9 @@ let rec pp_stmt : Coq_ast.stmt pp = fun ff stmt ->
         pp_expr e1 pp_op_type ot order pp_expr e2 pp_stmt stmt
   | SkipS(stmt)                   ->
       pp_stmt ff stmt
-  | If(ot,e,stmt1,stmt2)          ->
-      pp "if{%a}: @[<hov 0>%a@]@;then@;@[<v 2>%a@]@;else@;@[<v 2>%a@]"
-        pp_op_type ot pp_expr e pp_stmt stmt1 pp_stmt stmt2
+  | If(ot,lb_opt,e,stmt1,stmt2)   ->
+      pp "if{%a, %a}: @[<hov 0>%a@]@;then@;@[<v 2>%a@]@;else@;@[<v 2>%a@]"
+        pp_op_type ot pp_if_join lb_opt pp_expr e pp_stmt stmt1 pp_stmt stmt2
   | Assert(ot,e,stmt)             ->
       pp "assert{%a}: (%a) ;@;%a" pp_op_type ot pp_expr e pp_stmt stmt
   | ExprS(annot, e, stmt)         ->

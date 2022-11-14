@@ -1027,10 +1027,10 @@ let k_stack_print : out_channel -> k_data list -> unit = fun oc l ->
   Printf.fprintf oc "\n%!"
 
 let translate_block stmts blocks ret_ty is_main =
-  let translate_bool_expr then_goto else_goto e =
+  let translate_bool_expr id_cont then_goto else_goto e =
     let ot = op_type_of_tc (loc_of e) (tc_of e) in
     let e = translate_expr false None e in
-    mkloc (If(ot, e, then_goto, else_goto)) e.loc
+    mkloc (If(ot, id_cont, e, then_goto, else_goto)) e.loc
   in
   let rec trans extra_attrs swstk ks stmts blocks =
     let open AilSyntax in
@@ -1170,12 +1170,12 @@ let translate_block stmts blocks ret_ty is_main =
       | AilSif(e,s1,s2)     ->
           warn_ignored_attrs None extra_attrs;
           (* Translate the continuation. *)
-          let (blocks, ks) =
-            if stmts = [] then (blocks, ks) else
+          let (blocks, id_cont, ks) =
+            if stmts = [] then (blocks, None, ks) else
             let id_cont = fresh_block_id () in
             let (s, blocks) = trans [] swstk ks stmts blocks in
             let blocks = add_block id_cont s blocks in
-            (blocks, k_push_final (mkloc (Goto(id_cont)) s.loc) ks)
+            (blocks, Some id_cont, k_push_final (mkloc (Goto(id_cont)) s.loc) ks)
           in
           (* Translate the two branches. *)
           let (blocks, then_goto) =
@@ -1194,7 +1194,7 @@ let translate_block stmts blocks ret_ty is_main =
             let blocks = add_block id_else s blocks in
             (blocks, mkloc (Goto(id_else)) s.loc)
           in
-          (translate_bool_expr then_goto else_goto e, blocks)
+          (translate_bool_expr id_cont then_goto else_goto e, blocks)
       | AilSwhile(e,s,_)    ->
           let attrs = extra_attrs @ attrs in
           let id_cond = fresh_block_id () in
@@ -1216,7 +1216,7 @@ let translate_block stmts blocks ret_ty is_main =
             (blocks, mkloc (Goto(id_body)) s.loc)
           in
           (* Translate the condition. *)
-          let s = translate_bool_expr goto_body goto_cont e in
+          let s = translate_bool_expr None goto_body goto_cont e in
           let blocks = add_loop_block loc id_cond s attrs blocks in
           (locate (Goto(id_cond)), blocks)
       | AilSdo(s,e,_)       ->
@@ -1242,7 +1242,7 @@ let translate_block stmts blocks ret_ty is_main =
             (blocks, locate (Goto(id_body)))
           in
           (* Translate the condition. *)
-          let s = translate_bool_expr goto_body goto_cont e in
+          let s = translate_bool_expr None goto_body goto_cont e in
           let blocks = add_loop_block loc id_cond s attrs blocks in
           (locate (Goto(id_body)), blocks)
       | AilSswitch(e,s)     ->
