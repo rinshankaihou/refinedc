@@ -145,7 +145,7 @@ let layout_of : bool -> c_type -> Coq_ast.layout = fun fa c_ty ->
     | Array(c_ty,None )     -> LPtr
     | Array(c_ty,Some(n))   -> LArray(layout_of c_ty, Z.to_string n)
     | FunctionNoParams(_,_)
-    | Function(_,_,_,_)     -> LPtr
+    | Function(_,_,_)       -> LPtr
     | Pointer(_,_)          -> LPtr
     | Atomic(c_ty)          -> layout_of c_ty
     | Struct(sym)           -> LStruct(sym_to_str sym, false)
@@ -215,7 +215,7 @@ let is_expr_annot e =
 let rec get_function_type loc Ctype.(Ctype(_, c_ty)) =
   match c_ty with
   | Pointer(_,c_ty)          -> get_function_type loc c_ty
-  | Function(_,c_ty,c_tys,_) -> (snd c_ty, List.map (fun (_,x,_) -> x) c_tys)
+  | Function(c_ty,c_tys,_)   -> (snd c_ty, List.map (fun (_,x,_) -> x) c_tys)
   | _                        -> panic loc "Not a function expression."
 
 let struct_data : ail_expr -> string * bool = fun e ->
@@ -243,7 +243,7 @@ let rec function_decls decls =
   | []                                                           -> []
   | (id, (_, attrs, Decl_function(_,(_,ty),args,_,_,_))) :: decls ->
       (sym_to_str id, (ty, args, attrs)) :: function_decls decls
-  | (_ , (_, _    , Decl_object(_,_,_)                )) :: decls ->
+  | (_ , (_, _    , Decl_object(_,_,_,_)                )) :: decls ->
       function_decls decls
 
 let global_fun_decls = ref []
@@ -255,7 +255,7 @@ let rec tag_def_data : loc -> string -> (string * op_type) list = fun loc id ->
     | (_, (_, Ctype.StructDef(fs,_)))
     | (_, (_, Ctype.UnionDef(fs)   )) -> fs
   in
-  let fn (s, (_, _, c_ty)) = (id_to_str s, op_type_of loc c_ty) in
+  let fn (s, (_, _, _, c_ty)) = (id_to_str s, op_type_of loc c_ty) in
   List.map fn fs
 and op_type_of loc Ctype.(Ctype(_, c_ty)) =
   let op_type_of_int_type loc i =
@@ -269,7 +269,7 @@ and op_type_of loc Ctype.(Ctype(_, c_ty)) =
   | Basic(Floating(_))    -> not_impl loc "op_type_of (Basic float)"
   | Array(_,_)            -> not_impl loc "op_type_of (Array)"
   | FunctionNoParams(_,_)
-  | Function(_,_,_,_)     -> not_impl loc "op_type_of (Function)"
+  | Function(_,_,_)       -> not_impl loc "op_type_of (Function)"
   | Pointer(_,c_ty)       -> OpPtr(layout_of false c_ty)
   | Atomic(c_ty)          ->
       begin
@@ -304,7 +304,7 @@ let rec op_type_opt loc Ctype.(Ctype(_, c_ty)) =
   | Basic(Floating(_))    -> None
   | Array(_,_)            -> None
   | FunctionNoParams(_,_)
-  | Function(_,_,_,_)     -> None
+  | Function(_,_,_)       -> None
   | Pointer(_,c_ty)       -> Some(OpPtr(layout_of false c_ty))
   | Atomic(c_ty)          ->
       begin
@@ -333,7 +333,7 @@ let rec align_of : c_type -> int = fun c_ty ->
   | Basic(Floating(f))    -> unwrap (alignof_fty f)
   | Array(c_ty,_)         -> align_of c_ty
   | FunctionNoParams(_,_)
-  | Function(_,_,_,_)     -> unwrap alignof_pointer
+  | Function(_,_,_)       -> unwrap alignof_pointer
   | Pointer(_,_)          -> unwrap alignof_pointer
   | Atomic(c_ty)          -> align_of c_ty (* FIXME may not be the same? *)
   | Struct(sym)           -> align_of_struct false sym
@@ -346,7 +346,7 @@ and align_of_struct : bool -> Symbol.sym -> int = fun is_union id ->
     | (_, (_, Ctype.StructDef(fs,_)))
     | (_, (_, Ctype.UnionDef(fs)   )) -> fs
   in
-  let fn acc (_, (_, _, c_ty)) = max acc (align_of c_ty) in
+  let fn acc (_, (_, _, _, c_ty)) = max acc (align_of c_ty) in
   List.fold_left fn 1 fs
 
 let rec size_of : c_type -> int = fun c_ty ->
@@ -363,7 +363,7 @@ let rec size_of : c_type -> int = fun c_ty ->
   | Basic(Floating(f))    -> unwrap (sizeof_fty f)
   | Array(c_ty,None)      -> unwrap sizeof_pointer
   | Array(c_ty,Some(n))   -> size_of c_ty * Nat_big_num.to_int n
-  | Function(_,_,_,_)
+  | Function(_,_,_)
   | FunctionNoParams(_,_) -> unwrap sizeof_pointer
   | Pointer(_,_)          -> unwrap sizeof_pointer
   | Atomic(c_ty)          -> size_of c_ty (* FIXME may not be the same? *)
@@ -377,7 +377,7 @@ and size_of_struct : bool -> Symbol.sym -> int = fun is_union s ->
     | (_, (_, Ctype.StructDef(fs,_)))
     | (_, (_, Ctype.UnionDef(fs)   )) -> fs
   in
-  let fn (_,(_,_,c_ty)) = (align_of c_ty, size_of c_ty) in
+  let fn (_,(_,_,_,c_ty)) = (align_of c_ty, size_of c_ty) in
   let data = List.map fn fs in
   if is_union then
     List.fold_left (fun acc (_, sz) -> max acc sz) 0 data
@@ -522,7 +522,7 @@ let rec translate_expr : bool -> op_type option -> ail_expr -> expr =
         locate (BinOp(op, ty1, ty2, e1, e2))
     | AilEassign(e1,e2)            -> forbidden loc "nested assignment"
     | AilEcompoundAssign(e1,op,e2) -> not_impl loc "expr compound assign"
-    | AilEcond(e1,e2,e3) when is_const_0 e1 && is_macro_annot e2 ->
+    | AilEcond(e1,Some e2,e3) when is_const_0 e1 && is_macro_annot e2 ->
        begin
        match macro_annot_to_list e2 with
        | _ :: MacroString(name) :: rest ->
@@ -543,7 +543,7 @@ let rec translate_expr : bool -> op_type option -> ail_expr -> expr =
           locate (Macro(name, args, es, e3))
        | _ -> not_impl loc "wrong macro"
        end
-    | AilEcond(e1,e2,e3) when is_const_0 e1 && is_expr_annot e2 ->
+    | AilEcond(e1,Some e2,e3) when is_const_0 e1 && is_expr_annot e2 ->
        begin
        match macro_annot_to_list e2 with
        | _ :: MacroString(name) :: _ ->
@@ -557,7 +557,9 @@ let rec translate_expr : bool -> op_type option -> ail_expr -> expr =
           locate (AnnotExpr(1, Coq_ident(name), e3))
        | _ -> not_impl loc "wrong annot expr"
        end
-    | AilEcond(e1,e2,e3)           ->
+    | AilEcond(e1,None,e3)           ->
+       not_impl loc "GNU :? operator not implemented"
+    | AilEcond(e1,Some e2,e3)           ->
        let ty = op_type_of_tc (loc_of e1) (tc_of e1) in
        let e1 = translate_expr lval None e1 in
        let e2 = translate_expr lval (!res_ty) e2 in
@@ -875,7 +877,7 @@ let add_block ?annots id s blocks =
 
 (* Insert local variables. *)
 let insert_bindings bindings =
-  let fn (id, ((loc, _, _), _, c_ty)) =
+  let fn (id, ((loc, _, _), _, _, c_ty)) =
     let id = sym_to_str id in
     if Hashtbl.mem local_vars id then
       not_impl loc "Variable name collision with [%s]." id;
@@ -907,28 +909,31 @@ let warn_ignored_attrs so attrs =
     let desc s =
       let open AilSyntax in
       match s with
-      | AilSblock(_,_)     -> "a block"
-      | AilSgoto(_)        -> "a goto"
+      | AilSblock(_,_)           -> "a block"
+      | AilSgoto(_)              -> "a goto"
       | AilSreturnVoid
-      | AilSreturn(_)      -> "a return"
-      | AilSbreak          -> "a break"
-      | AilScontinue       -> "a continue"
-      | AilSskip           -> "a skip"
-      | AilSexpr(_)        -> "an expression"
-      | AilSif(_,_,_)      -> "an if statement"
-      | AilSwhile(_,_,_)   -> "a while loop"
-      | AilSdo(_,_,_)      -> "a do-while loop"
-      | AilSswitch(_,_)    -> "a switch statement"
-      | AilScase(_,_)      -> "a case statement"
-      | AilSdefault(_)     -> "a default statement"
-      | AilSlabel(_,_,_)   -> "a label"
-      | AilSdeclaration(_) -> "a declaration"
-      | AilSpar(_)         -> "a par statement"
-      | AilSreg_store(_,_) -> "a register store statement"
-      | AilSpack(_,_)      -> assert false (* FIXME *)
-      | AilSunpack(_,_)    -> assert false (* FIXME *)
-      | AilShave(_,_)      -> assert false (* FIXME *)
-      | AilSshow(_,_)      -> assert false (* FIXME *)
+      | AilSreturn(_)            -> "a return"
+      | AilSbreak                -> "a break"
+      | AilScontinue             -> "a continue"
+      | AilSskip                 -> "a skip"
+      | AilSexpr(_)              -> "an expression"
+      | AilSif(_,_,_)            -> "an if statement"
+      | AilSwhile(_,_,_)         -> "a while loop"
+      | AilSdo(_,_,_)            -> "a do-while loop"
+      | AilSswitch(_,_)          -> "a switch statement"
+      | AilScase(_,_)
+      | AilScase_rangeGNU(_,_,_) -> "a case statement"
+      | AilSdefault(_)           -> "a default statement"
+      | AilSlabel(_,_,_)         -> "a label"
+      | AilSdeclaration(_)       -> "a declaration"
+      | AilSpar(_)               -> "a par statement"
+      | AilSreg_store(_,_)       -> "a register store statement"
+      | AilSpack(_,_)            -> assert false (* FIXME *)
+      | AilSunpack(_,_)          -> assert false (* FIXME *)
+      | AilShave(_,_)            -> assert false (* FIXME *)
+      | AilSshow(_,_)            -> assert false (* FIXME *)
+      | AilSinstantiate(_,_)     -> assert false (* FIXME *)
+      | AilSmarker(_,_)          -> assert false (* FIXME *)
     in
     let desc =
       match so with
@@ -1268,7 +1273,7 @@ let translate_block stmts blocks ret_ty is_main =
       | AilScase(i,s)       ->
           warn_ignored_attrs None extra_attrs;
           (* Get the value of the current case. *)
-          let i = fst (integer_constant_to_string loc i) in
+          let i = Z.to_string i in
           (* Prepare the ref to eventually store the compiled [s]. *)
           let (case_ref, cur_label, next_label) =
             (* Obtain the state of the current switch. *)
@@ -1294,6 +1299,8 @@ let translate_block stmts blocks ret_ty is_main =
           (* Update the case ref. *)
           case_ref := Some(case_s);
           (case_s, blocks)
+      | AilScase_rangeGNU(_,_,_)       ->
+         not_impl loc "GNU range expression"
       | AilSdefault(s)      ->
           warn_ignored_attrs None extra_attrs;
           (* Prepare the ref to eventually store the compiled [s]. *)
@@ -1343,6 +1350,8 @@ let translate_block stmts blocks ret_ty is_main =
       | AilSunpack(_,_)     -> assert false (* FIXME *)
       | AilShave(_,_)       -> assert false (* FIXME *)
       | AilSshow(_,_)       -> assert false (* FIXME *)
+      | AilSinstantiate(_,_)-> assert false (* FIXME *)
+      | AilSmarker(_,_)     -> assert false (* FIXME *)
     in
     if not !attrs_used then warn_ignored_attrs (Some(s)) attrs;
     res
@@ -1404,7 +1413,7 @@ let translate : string -> typed_ail -> Coq_ast.t = fun source_file ail ->
         handle_invalid_annot None (fun _ -> Some(struct_annot attrs)) ()
       in
       let struct_members =
-        let fn (id, (attrs, loc, c_ty)) =
+        let fn (id, (attrs, _, loc, c_ty)) =
           let annot =
             let loc = loc_of_id id in
             let annots = collect_rc_attrs attrs in
@@ -1459,7 +1468,7 @@ let translate : string -> typed_ail -> Coq_ast.t = fun source_file ail ->
       | exception Not_found                                       ->
           (* Function is only declared. *)
           (func_name, FDec(func_annot))
-      | (_, (_, _, args, AnnotatedStatement(loc, s_attrs, stmt))) ->
+      | (_, (_, _, _, args, AnnotatedStatement(loc, s_attrs, stmt))) ->
       (* Attributes on the function body are ignored. *)
       warn_ignored_attrs None (List.rev (collect_rc_attrs s_attrs));
       (* Function is defined. *)

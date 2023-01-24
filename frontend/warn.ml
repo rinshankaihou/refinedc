@@ -4,31 +4,31 @@ open AilSyntax
 module Scopes = struct
   module C2A_eff = Cabs_to_ail_effect
   type scope = C2A_eff.scope
-  
+
   let scopeEqual =
     C2A_eff.scopeEqual
-  
+
   let string_of_scope =
     C2A_eff.string_of_scope
-  
+
   type table = (scope, Symbol.sym, unit) Scope_table.t3
-  
+
   let dict: Symbol.sym Lem_pervasives.mapKeyType_class = {
     mapKeyCompare_method=  Symbol.instance_Basic_classes_Ord_Symbol_sym_dict.compare_method
   }
-  
+
   let empty: table =
     []
-  
+
   let register sym (tbl: table) =
     Scope_table.register dict sym () tbl
-  
+
   let create_scope scope (tbl: table) =
     Scope_table.create_scope dict scope tbl
-  
+
   let resolve sym (tbl: table) =
     Scope_table.resolve dict sym tbl
-  
+
   let current_scope_is tbl =
     Scope_table.current_scope_is tbl
 end
@@ -177,7 +177,7 @@ let points_to classify expr =
           true
       | AnnotatedExpression (GenTypes.GenRValueType _, _, _, _) ->
           false in
-  
+
   let rec aux (AnnotatedExpression (_, _, loc, expr_)) =
     match expr_ with
       | AilEbuiltin _
@@ -194,7 +194,7 @@ let points_to classify expr =
           [classify sym]
       | AilEunary (Address, e) ->
           List.map (fun z -> PTRVAL z) (aux e)
-      
+
       | AilEunary (Indirection, e) ->
           let pts = aux e in
           let pts_deref =
@@ -234,17 +234,17 @@ let points_to classify expr =
           aux e
       | AilEannot (_, e) ->
           aux e
-      
+
       | AilEva_start _
       | AilEva_arg _
       | AilEva_end _
       | AilEva_copy _ ->
           []
-      
+
       | AilEprint_type e
       | AilEbmc_assume e ->
           aux e
-      
+
       | AilErvalue e ->
           if AilTypesAux.is_pointer (get_ctype e) then
             (* if we read the value of a pointer, this can point to anything that has
@@ -262,12 +262,14 @@ let points_to classify expr =
           aux e2
       | AilEcompoundAssign (e1, _, e2) ->
           aux e2
-      | AilEcond (_, e2, e3) ->
+      | AilEcond (_, None, e3) ->
+          aux e3
+      | AilEcond (_, Some e2, e3) ->
           aux e2 @ aux e3
-      
+
       | AilEcall (e, es) ->
           []
-      
+
       | AilEgeneric (e ,gas) ->
           []
       | AilEarray (_, _, xs) ->
@@ -346,7 +348,7 @@ let rec taint_expr points_to (AnnotatedExpression (_, _, loc, expr_)) =
   match expr_ with
     | AilErvalue e ->
         List.map (fun z -> `LOAD z) (points_to e)
-    
+
     | AilEoffsetof _
     | AilEbuiltin _
     | AilEstr _
@@ -357,7 +359,7 @@ let rec taint_expr points_to (AnnotatedExpression (_, _, loc, expr_)) =
     | AilEreg_load _
     | AilEunion (_, _, None) ->
         []
-    
+
     | AilEunary (_, e)
     | AilEcast (_, _, e)
     | AilEassert e
@@ -375,7 +377,7 @@ let rec taint_expr points_to (AnnotatedExpression (_, _, loc, expr_)) =
     | AilEfunction_decay e
     | AilEunion (_, _, Some e) ->
         self e
-    
+
     | AilEbinary (e1, _, e2) ->
         begin match self e1, self e2 with
           | [], xs
@@ -389,8 +391,10 @@ let rec taint_expr points_to (AnnotatedExpression (_, _, loc, expr_)) =
     | AilEassign (e1, e2)
     | AilEcompoundAssign (e1, _, e2) ->
         merge_pointsto [List.map (fun z -> `STORE z) (points_to e1); self e1; self e2]
-    
-    | AilEcond (e1, e2, e3) ->
+
+    | AilEcond (e1, None, e3) ->
+          merge_pointsto [self e1; self e3]
+    | AilEcond (e1, Some e2, e3) ->
           merge_pointsto [self e1; self e2; self e3]
     | AilEcall (e, es) ->
         begin match e with
@@ -426,7 +430,7 @@ let taints_of_functions sigm =
             | None ->
                 (* no definition for this function, assuming wild taint *)
                 (sym_decl, [`STORE Wild]) :: acc
-            | Some (_, _, params, stmt) ->
+            | Some (_, _, _, params, stmt) ->
                 let fun_scopes =
                   List.fold_left (fun acc sym ->
                     Scopes.register sym acc
@@ -462,6 +466,7 @@ let taints_of_functions sigm =
                     | AilSswitch (e, s) ->
                         merge_pointsto [taint_expr e; fold_stmt env s]
                     | AilScase (_, s)
+                    | AilScase_rangeGNU (_, _, s)
                     | AilSdefault s
                     | AilSlabel (_, s, _) ->
                         fold_stmt env s
@@ -473,6 +478,8 @@ let taints_of_functions sigm =
                     | AilSunpack(_,_) -> assert false (* FIXME *)
                     | AilShave(_,_) -> assert false (* FIXME *)
                     | AilSshow(_,_) -> assert false (* FIXME *)
+                    | AilSinstantiate(_,_) -> assert false (* FIXME *)
+                    | AilSmarker(_,_) -> assert false (* FIXME *)
                 in
                 (sym_decl, fold_stmt { counter= 1; block_depth= 0; scopes= fun_scopes } stmt) :: acc
           end
@@ -535,7 +542,7 @@ let warn_unseq taints_map expr =
       | AilEreg_load _
       | AilEunion (_, _, None) ->
           NO_CALL
-      
+
       | AilEunary (_, e)
       | AilEcast (_, _, e)
       | AilEassert e
@@ -554,7 +561,7 @@ let warn_unseq taints_map expr =
       | AilEfunction_decay e
       | AilEunion (_, _, Some e) ->
           aux e
-      
+
       | AilEbinary (e1, bop, e2) when is_unseq bop ->
           begin match aux e1, aux e2 with
             | HAS_CALLS calls1, HAS_CALLS calls2 ->
@@ -565,13 +572,15 @@ let warn_unseq taints_map expr =
             | NO_CALL, NO_CALL ->
                 NO_CALL
           end
-      
+
       | AilEbinary (e1, _, e2)
       | AilEassign (e1, e2)
       | AilEcompoundAssign (e1, _, e2) ->
           merge_status [aux e1; aux e2]
 
-      | AilEcond (e1, e2, e3) ->
+      | AilEcond (e1, None, e3) ->
+          merge_status [aux e1; aux e3]
+      | AilEcond (e1, Some e2, e3) ->
           merge_status [aux e1; aux e2; aux e3]
 
       | AilEcall (e, es) ->
@@ -581,7 +590,7 @@ let warn_unseq taints_map expr =
             | _ ->
                 [HAS_CALLS []]
           end @ (List.map aux es))
-      
+
       | AilEgeneric (e, gas) ->
           merge_status begin
             aux e ::
@@ -607,7 +616,7 @@ let warn_unseq taints_map expr =
 (* Driver *)
 let warn_file (_, sigm) =
   let taints_map = resolve_calls (taints_of_functions sigm) in
-  
+
   let rec aux_expr env (AnnotatedExpression (_, _, loc, expr_)) =
     let self = aux_expr env in
     match expr_ with
@@ -619,16 +628,16 @@ let warn_file (_, sigm) =
       | AilEalignof _
       | AilEreg_load _ ->
           ()
-      
+
       | AilEassign (e1, e2)
       | AilEcompoundAssign (e1, _, e2) ->
           (* Warn if [[e2]] points to objects whose scope is smaller than the scope of
              the object referred by the lvalue [[e1]] *)
           let xs1 = points_to (classify sigm env) e1 in
           let xs2 = points_to (classify sigm env) e2 in
-          
+
           let sym_of = function
-            | Current sym 
+            | Current sym
             | Local (_, sym)
             | Global sym ->
                 Some sym
@@ -657,10 +666,10 @@ let warn_file (_, sigm) =
               (if List.exists (fun (x, y) -> gt_pointsto x y) (Utils.product_list xs1 xs2) then "\x1b[31m" else "")
               (Location_ocaml.location_to_string loc)
               (foo xs1)
-              (foo xs2); 
+              (foo xs2);
 *)
 
-      
+
       | AilEunary (_, e)
       | AilEcast (_, _, e)
       | AilEassert e
@@ -682,7 +691,10 @@ let warn_file (_, sigm) =
       | AilEva_copy (e1, e2) ->
           self e1;
           self e2
-      | AilEcond (e1, e2, e3) ->
+      | AilEcond (e1, None, e3) ->
+          self e1;
+          self e3
+      | AilEcond (e1, Some e2, e3) ->
           self e1;
           self e2;
           self e3
@@ -765,6 +777,7 @@ let warn_file (_, sigm) =
           warn_unseq e;
           self s
       | AilScase (_, s)
+      | AilScase_rangeGNU (_, _, s)
       | AilSdefault s
       | AilSlabel (_, s, _) ->
           self s
@@ -792,8 +805,10 @@ let warn_file (_, sigm) =
       | AilSunpack(_,_) -> assert false (* FIXME *)
       | AilShave(_,_) -> assert false (* FIXME *)
       | AilSshow(_,_) -> assert false (* FIXME *)
+      | AilSinstantiate(_,_) -> assert false (* FIXME *)
+      | AilSmarker(_,_) -> assert false (* FIXME *)
   in
-  List.iter (fun (fsym, (_, _, params, stmt)) ->
+  List.iter (fun (fsym, (_, _, _, params, stmt)) ->
     (* NOTE: following (§6.2.1#4), the function parameters are placed in a block scope *)
     let fun_scopes =
       List.fold_left (fun acc sym ->
@@ -802,7 +817,7 @@ let warn_file (_, sigm) =
     aux { counter= 1; block_depth= 0; scopes= fun_scopes } stmt;
     flush_all ()
   ) sigm.function_definitions;
-  
+
   let resolve_calls2 pts =
     List.fold_left (fun acc pt ->
       match pt with

@@ -15,8 +15,8 @@ bug-reports: "https://gitlab.mpi-sws.org/iris/refinedc/issues"
 dev-repo: "git+https://gitlab.mpi-sws.org/iris/refinedc.git"
 
 depends: [
-  "coq" { (= "8.16.0" ) }
-  "coq-iris" { (= "dev.2022-09-06.0.a72eb0d7") | (= "dev") }
+  "coq" { (= "8.16.1" ) }
+  "coq-iris" { (= "dev.2023-01-08.0.a34184ae") | (= "dev") }
   "coq-stdpp-unstable"
   "dune" {>= "3.0.3"}
   "coq-record-update" {= "0.3.0"}

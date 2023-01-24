@@ -29,7 +29,7 @@ let impl_name =
 
 let set_cerb_conf () =
   let open Global_ocaml in
-  set_cerb_conf false Random false Basic false false false false
+  set_cerb_conf "RefinedC" false Random false Basic false false false false
 
 let frontend cpp_cmd filename =
   let conf =
