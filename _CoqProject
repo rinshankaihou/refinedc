@@ -66,3 +66,4 @@
 -Q _build/default/tutorial/VerifyThis/proofs/t04_loops refinedc.tutorial.VerifyThis.t04_loops
 -Q _build/default/examples/exampleScheduler/src/proofs/main refinedc.examples.exampleScheduler.src.main
 -Q _build/default/examples/exampleScheduler/src/proofs/fdsched refinedc.examples.exampleScheduler.src.fdsched
+-Q _build/default/examples/proofs/talk_demo_alloc refinedc.examples.talk_demo_alloc

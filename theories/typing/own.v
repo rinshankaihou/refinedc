@@ -601,6 +601,18 @@ Section null.
     TypedUnOpVal v (0 @ int it) (CastOp PtrOp) (IntOp it) | 10 :=
     λ T, i2p (type_cast_zero_ptr v it T).
 
+  Lemma type_cast_null_ptr v T:
+    (T v null) -∗
+    typed_un_op v (v ◁ᵥ null) (CastOp PtrOp) PtrOp T.
+  Proof.
+    iIntros "HT" (-> Φ) "HΦ".
+    iApply wp_cast_loc; [by apply val_to_of_loc|].
+    by iApply ("HΦ" with "[] HT").
+  Qed.
+  Global Instance type_cast_null_ptr_inst v :
+    TypedUnOp v (v ◁ᵥ null)%I (CastOp PtrOp) PtrOp :=
+    λ T, i2p (type_cast_null_ptr v T).
+
   Lemma type_if_null v T1 T2:
     T2 -∗
     typed_if PtrOp v (v ◁ᵥ null) T1 T2.
@@ -657,6 +669,38 @@ Section optionable.
   Global Instance subsume_optionalO_place_val_null_inst A (ty : A → type) l β b ty' `{!∀ x, Optionable (ty x) null ot1 ot2}:
     Subsume (l ◁ₗ{β} ty') (l ◁ᵥ b @ optionalO ty null)%I | 20 :=
     λ T, i2p (subsume_optionalO_place_val_null A ty l β T b ty').
+
+  (* TODO: generalize this with a IsLoc typeclass or similar *)
+  Lemma type_cast_optional_own_ptr b v β ty T:
+    (T v (b @ optional (&frac{β} ty) null)) -∗
+    typed_un_op v (v ◁ᵥ b @ optional (&frac{β} ty) null) (CastOp PtrOp) PtrOp T.
+  Proof.
+    iIntros "HT Hv" (Φ) "HΦ". unfold optional; simpl_type.
+    iDestruct "Hv" as "[[% [%l [% Hl]]]|[% ->]]"; subst.
+    all: iApply wp_cast_loc; [by apply val_to_of_loc|].
+    - iApply ("HΦ" with "[Hl] HT"). simpl_type. iLeft. iSplitR; [done|]. iExists _. by iFrame.
+    - iApply ("HΦ" with "[] HT"). simpl_type. by iRight.
+  Qed.
+  Global Instance type_cast_optional_own_ptr_inst b v β ty :
+    TypedUnOp v (v ◁ᵥ b @ optional (&frac{β} ty) null)%I (CastOp PtrOp) PtrOp :=
+    λ T, i2p (type_cast_optional_own_ptr b v β ty T).
+
+  Lemma type_cast_optionalO_own_ptr A (b : option A) v β ty T:
+    (T v (b @ optionalO (λ x, &frac{β} (ty x)) null)) -∗
+    typed_un_op v (v ◁ᵥ b @ optionalO (λ x, &frac{β} (ty x)) null) (CastOp PtrOp) PtrOp T.
+  Proof.
+    iIntros "HT Hv" (Φ) "HΦ". unfold optionalO; simpl_type.
+    destruct b as [?|].
+    - iDestruct "Hv" as "[%l [% Hl]]"; subst.
+      iApply wp_cast_loc; [by apply val_to_of_loc|].
+      iApply ("HΦ" with "[Hl] HT"). simpl_type. iExists _. by iFrame.
+    - iDestruct "Hv" as "->".
+      iApply wp_cast_loc; [by apply val_to_of_loc|].
+      iApply ("HΦ" with "[] HT"). simpl_type. done.
+  Qed.
+  Global Instance type_cast_optionalO_own_ptr_inst A (b : option A) v β ty :
+    TypedUnOp v (v ◁ᵥ b @ optionalO (λ x, &frac{β} (ty x)) null)%I (CastOp PtrOp) PtrOp :=
+    λ T, i2p (type_cast_optionalO_own_ptr A b v β ty T).
 End optionable.
 
 Global Typeclasses Opaque ptr_type.
