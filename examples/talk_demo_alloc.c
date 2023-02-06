@@ -38,11 +38,13 @@ void* alloc_2(struct mem_t* d, size_t sz) {
   return d->buffer + d->len;
 }
 
+struct xy { char x, y; };
+
 [[rc::args   ("&own<mem_t>")]]
 void client_2(struct mem_t* d) {
-  char * c1 = alloc_2(d, 1);
-  if(c1 == NULL) { return; }
-  *c1 = 0;
+  struct xy * s = alloc_2(d, sizeof(struct xy));
+  if(s == NULL) { return; }
+  s->x = 0;
 }
 
 
@@ -78,12 +80,12 @@ void* alloc_full(struct mem_t* d, size_t sz) {
 
 [[rc::args   ("&own<mem_t>")]]
 void client_full(struct mem_t* d) {
-  char * c1 = alloc_full(d, 1);
-  if(c1 == NULL) { return; }
-  *c1 = 0;
-  char * c2 = alloc_full(d, 1);
-  if(c2 == NULL) { return; }
-  *c2 = 0;
+  struct xy * s = alloc_full(d, sizeof(struct xy));
+  if(s == NULL) { return; }
+  s->x = 0;
+  struct xy * t = alloc_full(d, sizeof(struct xy));
+  if(t == NULL) { return; }
+  t->x = 0;
 }
 
 [[rc::parameters("a: nat", "n: nat", "p: loc")]]
