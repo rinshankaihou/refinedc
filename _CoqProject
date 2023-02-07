@@ -67,3 +67,4 @@
 -Q _build/default/examples/exampleScheduler/src/proofs/main refinedc.examples.exampleScheduler.src.main
 -Q _build/default/examples/exampleScheduler/src/proofs/fdsched refinedc.examples.exampleScheduler.src.fdsched
 -Q _build/default/examples/proofs/talk_demo_alloc refinedc.examples.talk_demo_alloc
+-Q _build/default/examples/proofs/talk_demo_alloc_full refinedc.examples.talk_demo_alloc_full
