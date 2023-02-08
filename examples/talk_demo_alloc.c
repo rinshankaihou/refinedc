@@ -44,9 +44,6 @@ void client(struct mem_t* d) {
   struct xy * s = alloc(d, sizeof(struct xy));
   if(s == NULL) { return; }
   s->x = 0;
-  struct xy * t = alloc(d, sizeof(struct xy));
-  if(t == NULL) { return; }
-  t->x = 0;
 }
 
 
