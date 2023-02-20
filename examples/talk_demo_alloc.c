@@ -10,7 +10,8 @@
 //@
 //@Close Scope Z.
 //@
-//@Definition byte_layout : nat → layout := ly_set_size u8.
+//@(*Definition byte_layout : nat → layout := ly_set_size u8.*)
+//@Definition byte_layout : nat → layout := mk_array_layout u8.
 //@Coercion byte_layout : nat >-> layout.
 //@
 //@Notation Uninit := (∃ₜ n : nat, uninit n)%I.
@@ -32,18 +33,25 @@ struct [[rc::refined_by("a: nat")]] mem_t {
   [[rc::field("&own<uninit<a>>")]] unsigned char* buffer;
 };
 
+[[rc::parameters("p : loc", "a : nat", "n : nat")]]
+[[rc::args   ("p @ &own<a @ mem_t>", "n @ int<size_t>")]]
+[[rc::requires("{n <= a}")]]
+[[rc::returns("&own<uninit<n>>")]]
+[[rc::ensures("own p : {a - n} @ mem_t")]]
 void* alloc(struct mem_t* d, size_t sz) {
-  if(sz > d->len) return NULL;
+  assert(sz <= d->len);
   d->len -= sz;
   return d->buffer + d->len;
 }
 
-struct xy { char x, y; };
 
-void client(struct mem_t* d) {
-  struct xy * s = alloc(d, sizeof(struct xy));
-  if(s == NULL) { return; }
-  s->x = 0;
+[[rc::args("&own<{10} @ mem_t>")]]
+[[rc::returns("{2} @ int<u8>")]]
+char client(struct mem_t* d) {
+  char *a = alloc(d, 3);
+  a[0] = 0; a[1] = 1; a[2] = 2;
+  char *x = a + 2;
+  return *x;
 }
 
 
@@ -61,6 +69,7 @@ void client(struct mem_t* d) {
 
 
 /*
+  Old instructions:
 (emacs copy to register: C-x r s 1/2, insert from register: C-x r i 1/2)
 
 change spec of alloc:
