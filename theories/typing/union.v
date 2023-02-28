@@ -39,7 +39,8 @@ Section union.
     iIntros "HP" (Φ) "Hs HΦ" => /=.
     iDestruct "Hs" as (ly ?) "Hpad".
     rewrite /padded. iDestruct "Hpad" as (??) "[Hb [Hty Hpad]]".
-    iApply wp_get_member_union. 1: by apply val_to_of_loc. iExists _. iSplit => //.
+    iApply (wp_get_member_union with "[#//]"). 1: by apply val_to_of_loc.
+    iExists _. iSplit => //.
     iApply ("HP" with "[Hty]"). 1: by rewrite /GetMemberUnionLoc.
     iIntros (l2 β2 ty2 typ R) "Hl Hc HT".
     iApply ("HΦ" with "Hl [-HT] HT").
@@ -194,7 +195,8 @@ Section union.
     move: Heq => /TCEq_eq <-.
     iIntros "[-> HP]" (Φ) "Hs HΦ" => /=.
     rewrite {2}/variant /padded/=. iDestruct "Hs" as (??) "[Hb [Hty Hpad]]".
-    iApply wp_get_member_union. 1: by apply val_to_of_loc. iExists _. iSplit => //.
+    iApply (wp_get_member_union with "[#//]"). 1: by apply val_to_of_loc.
+    iExists _. iSplit => //.
     iApply ("HP" with "[Hty]"). 1: by rewrite /GetMemberUnionLoc.
     iIntros (l2 β2 ty2 typ R) "Hl Hc HT".
     iApply ("HΦ" with "Hl [-HT] HT").

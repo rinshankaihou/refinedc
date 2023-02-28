@@ -782,13 +782,17 @@ Proof.
     iApply (loc_in_bounds_offset with "Hl"); simpl; [done| destruct l => /=; lia  | destruct l => /=; lia ]. }
   by rewrite offset_loc_sz1.
 Qed.
-Lemma wp_get_member_union Φ vl l ul n E:
+Lemma wp_get_member_union Φ vl l (ul : union_layout) n E:
   val_to_loc vl = Some l →
-  Φ (val_of_loc (l at_union{ul}ₗ n)) -∗ WP Val vl at_union{ul} n @ E {{ Φ }}.
+  (* Technically, we only need vl ≠ NULL_bytes here, but we use
+  the loc_in_bounds precondition for uniformity with wp_get_member *)
+  loc_in_bounds l (ly_size ul) -∗
+  Φ (val_of_loc (l at_union{ul}ₗ n)) -∗
+  WP Val vl at_union{ul} n @ E {{ Φ }}.
 Proof.
-  iIntros (->%val_of_to_loc) "?".
-  rewrite /GetMemberUnion/GetMemberUnionLoc.
-  by iApply @wp_value.
+  iIntros ([|[??]]%val_of_to_loc) "Hlib HΦ"; subst.
+  2: { by iDestruct (loc_in_bounds_has_alloc_id with "Hlib") as %[??]. }
+  rewrite /GetMemberUnion/GetMemberUnionLoc. by iApply @wp_value.
 Qed.
 
 Lemma wp_offset_of Φ s m i E:
@@ -1127,14 +1131,10 @@ Proof.
   iApply wp_lift_stmt_step. iIntros (σ) "(Hhctx&Hfctx)".
   iMod (heap_free_block_upd with "Hl Hf Hhctx") as (σ') "(%Hf & Hhctx)".
   iModIntro. iSplit; first by eauto 10 using FreeS, val_to_of_loc.
-  iNext. iIntros (???? Hstep ?). inv_stmt_step. iModIntro.
-  iSplitR; first done.
-  match goal with
-  | H : val_to_loc _ = Some ?l |- _ => apply val_of_to_loc in H; injection H; intros <-; intros
-  end.
-  rewrite (free_block_inj σ.(st_heap) l ly HeapAlloc hs' σ'); [ | done..].
-  iFrame.
-  by iApply "HWP".
+  iNext. iIntros (???? Hstep ?). inv_stmt_step. iModIntro. iSplitR; first done.
+  revert select (val_to_loc _ = Some _) => /val_of_to_loc[/(inj _ _ _)Heq|[??]//]. subst.
+  erewrite (free_block_inj σ.(st_heap) _ ly HeapAlloc hs' σ'); [ | done..].
+  iFrame. by iApply "HWP".
 Qed.
 
 Lemma wps_skip Q Ψ s:
