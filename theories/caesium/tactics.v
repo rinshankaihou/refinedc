@@ -541,9 +541,17 @@ Proof.
 Qed.
 
 (*** Substitution *)
+Definition list_find_fast {A} (P : A → Prop) `{!∀ x, Decision (P x)} :=
+  fix go (l : list A) : option A :=
+    match l with
+    | [] => None
+    | x :: l => if decide (P x) then Some x else go l
+    end.
+Global Instance: Params (@list_find_fast) 3 := {}.
+
 Fixpoint subst_l (xs : list (var_name * val)) (e : expr)  : expr :=
   match e with
-  | Var y => if list_find (λ x, x.1 = y) xs is Some (_, (_, v)) then Val v else Var y
+  | Var y => if list_find_fast (λ x, x.1 = y) xs is Some (_, v) then Val v else Var y
   | Loc l => Loc l
   | Val v => Val v
   | UnOp op ot e => UnOp op ot (subst_l xs e)
@@ -636,8 +644,7 @@ Proof.
     elim: e => //= >; try congruence; try move => ->.
     all: try move => /Forall_eq_fmap; try move/fmap_snd_prod_map.
     all: try by move => ->; by rewrite -list_fmap_compose.
-    case_decide => //. rewrite /subst_l.
-    by match goal with | |- context [list_find ?f ?xs] => destruct (list_find f xs) as [[?[??]]|] end.
+    case_decide => //.
 Qed.
 
 Fixpoint subst_stmt (xs : list (var_name * val)) (s : stmt) : stmt :=
