@@ -413,7 +413,7 @@ Proof.
     all: destruct l; simplify_eq/=.
     all: have ? := val_to_of_loc NULL_loc.
     all: unfold NULL in *; by simplify_eq.
-  - move => ->. by econstructor.
+  - move => ->. by econstructor; try apply val_to_of_loc.
 Qed.
 
 Lemma wp_cast_int_ptr_weak Φ v a E it:

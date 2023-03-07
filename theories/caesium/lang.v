@@ -353,8 +353,9 @@ Inductive eval_un_op : un_op → op_type → state → val → val → Prop :=
     val_of_Z l.2 it None = Some vt →
     is_Some (σ.(st_fntbl) !! l.2) →
     eval_un_op (CastOp (IntOp it)) PtrOp σ vs vt
-| CastOpPINull it σ vs vt:
-    vs = NULL →
+| CastOpPINull it σ vs vt l :
+    val_to_loc vs = Some l →
+    l = NULL_loc →
     val_of_Z 0 it None = Some vt →
     eval_un_op (CastOp (IntOp it)) PtrOp σ vs vt
 | CastOpIP it σ vs vt l l' a:
