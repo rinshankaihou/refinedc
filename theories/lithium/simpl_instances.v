@@ -331,13 +331,12 @@ Global Instance simpl_subequiv_protected {A} (l1 l2 : list A) ig `{!IsProtected 
     foldr (λ i f, (λ l', ∃ x, f (<[i:=x]> l'))) (λ l', l2 = l' ∧ T) ig l1).
 Proof.
   (* TODO: add a lemma for list_subequiv such that this unfolding is not necessary anymore. *)
-  Local Transparent list_subequiv.
-  unfold list_subequiv, IsProtected in * => T. elim: ig l1 l2.
+  unfold_opaque @list_subequiv.
+  unfold IsProtected in * => T. elim: ig l1 l2.
   - move => ??/=. move => [??]. naive_solver.
   - move => i ig IH l1 l2/= [x /IH [Hi ?]]. split => // i'.
     move: (Hi i') => [<- Hlookup]. rewrite insert_length. split => //.
     move => Hi'. rewrite -Hlookup ?list_lookup_insert_ne; set_solver.
-  Local Opaque list_subequiv.
 Qed.
 
 Global Instance simpl_fmap_nil {A B} (l : list A) (f : A → B) : SimplBothRel (=) (f <$> l) [] (l = []).

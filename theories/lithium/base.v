@@ -111,6 +111,11 @@ Ltac evar_safe_vm_compute :=
   vm_compute;
   apply H.
 
+(* see https://github.com/coq/coq/issues/15768#issuecomment-1380773542 *)
+(* TODO: This must be called as [unfold_opaque @x]. Is there a way to
+get rid of the @? *)
+Tactic Notation "unfold_opaque" constr(c) := with_strategy 0 [c] (unfold c).
+
 (*
 The following tactics are currently not used.
 
