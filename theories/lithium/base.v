@@ -41,6 +41,7 @@ Global Arguments Pos.shiftl : simpl never.
 Global Arguments Pos.shiftr : simpl never.
 Global Opaque Z.shiftl Z.shiftr.
 
+(* TODO: upstream to stdpp? *)
 Notation "'[@{' A '}' x ; y ; .. ; z ]" :=  (@cons A x (@cons A y .. (@cons A z (@nil A)) ..)) (only parsing) : list_scope.
 Notation "'[@{' A '}' x ]" := (@cons A x nil) (only parsing) : list_scope.
 Notation "'[@{' A '}' ]" := (@nil A) (only parsing) : list_scope.
