@@ -756,7 +756,7 @@ let rec pp_struct_def_np structs r annot fields ff id =
                 Panic.panic_no_pos "Annotations on struct [%s] are invalid \
                   since it is not a tagged union." s_id
             | SA_basic(annot) ->
-            if annot = default_basic_struct_annot then
+            if annot = default_basic_struct_annot || basic_struct_annot_defines_type annot then
               (* No annotation on struct, fall back to normal printing. *)
               pp_type_expr_rec None r ff ty
             else
@@ -858,7 +858,7 @@ let pp_spec : Coq_path.t -> import list -> inlined_code ->
   (* Definition of types. *)
   let pp_struct struct_id annot s =
     (* Check if a type must be generated. *)
-    if annot.st_refined_by = [] && annot.st_ptr_type = None then () else
+    if not (basic_struct_annot_defines_type annot) then () else
     (* Gather the field annotations. *)
     let fields = gather_struct_fields struct_id s in
     let (ref_names, ref_types) = List.split annot.st_refined_by in

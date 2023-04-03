@@ -616,6 +616,11 @@ let default_basic_struct_annot : basic_struct_annot =
   ; st_immovable   = false
   ; st_unfold_prio = 100 }
 
+(* Decides whether the annotation on the structure should lead to the
+   definition of a RefinedC type. *)
+let basic_struct_annot_defines_type : basic_struct_annot -> bool = fun annot ->
+  annot.st_refined_by <> [] || annot.st_ptr_type <> None
+
 type struct_annot =
   | SA_union
   | SA_basic    of basic_struct_annot
