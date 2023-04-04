@@ -181,7 +181,7 @@ the function has returned).
 
 ## `rc::exists`
 
-This annotation may appear on functions and on loops. It should carry at least
+This annotation may appear on functions, loops and structs. It should carry at least
 one argument, and its arguments should all be of the following form.
 ```
 <ident (as variable name)> ":" <coq_expr (as Coq type)>
@@ -284,7 +284,7 @@ following form.
 <ident (as pointer type name)> : <type_expr (as type wrapper containing an ellipsis)>
 ```
 The identifier should correspond to the name defined (using a `typedef`) for a
-pointer to a structure in the C code. When give, this annotation instructs the
+pointer to a structure in the C code. When given, this annotation instructs the
 system to generate a refinement type corresponding to the pointer type instead
 of the structure directly. The type expression specified inside the annotation
 should contain an ellipsis (i.e., a type expression of the form `...`), in the
