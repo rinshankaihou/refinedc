@@ -35,7 +35,7 @@ Second, a style guide for RefinedC development.
   - Use snake_case for definitions and PascalCase for typeclasses
   - Avoid overly broad names (e.g. `list_bool_to_list_int` should be
     used for a canonical function of converting `list bool` to `list
-    int`, but not for a more specific function that it tailored to a
+    int`, but not for a more specific function that is tailored to a
     specific use case)
   - Avoid the boolean comparison functions on integers like `<?`.
     Instead use `bool_decide (a < b)`.
