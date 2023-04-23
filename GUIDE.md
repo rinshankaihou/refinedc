@@ -45,6 +45,7 @@ Second, a style guide for RefinedC development.
     Iris styleguide).
   - Put the rewrite modifiers next to the lemma without a space, i.e. Bad: `rewrite! andb_true_l.`
     Good: `rewrite !andb_true_l.`
+  - Start names of introduced hypothesis with `H` followed by small letters, e.g. `Hx` or `Hlen`.
 2. Prefer the ssreflect tactics to the Coq tactics. I.e. use `move =>
    ...` instead of `intros ...`, `have ... : ...` instead of `assert`,
    `have ... := ...` instead of `pose proof`, `move Heq: (...) => ?`
