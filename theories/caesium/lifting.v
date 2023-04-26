@@ -231,7 +231,8 @@ Proof.
   iIntros ([[h ub] fn]) "((%&Hhctx&Hactx)&Hfctx)/=".
   iDestruct (heap_mapsto_has_alloc_id with "Hmt") as %Haid.
   destruct o; try by destruct Ho.
-  - iModIntro. iDestruct (heap_mapsto_lookup_q (λ st, ∃ n, st = RSt n) with "Hhctx Hmt") as %Hat. naive_solver.
+  - iModIntro.
+    iDestruct (heap_mapsto_lookup_q (λ st, ∃ n, st = RSt n) with "Hhctx Hmt") as %Hat; [naive_solver|].
     iSplit; first by eauto 11 using DerefS.
     iIntros (? e2 σ2 efs Hst ?) "!> !>". inv_expr_step.
     iSplit => //. unfold end_st, end_expr.
@@ -933,7 +934,7 @@ Lemma wp_struct_init E Φ sl fs:
 Proof.
   iIntros "He". unfold StructInit. iApply wp_concat_bind.
   move: {2 4}[] => vs.
-  iInduction (sl_members sl) as [|[o?]?] "IH" forall (vs) => /=. by iApply wp_concat.
+  iInduction (sl_members sl) as [|[o?]?] "IH" forall (vs) => /=. 1: by iApply wp_concat.
   iApply (wp_wand with "He"). iIntros (v') "Hfold". by iApply "IH".
 Qed.
 
@@ -1071,7 +1072,8 @@ Proof.
   iDestruct ("HWP" $! lsa lsv with "[//] Hla [Hlv]") as (Ψ') "(HQinit & HΨ')". {
     rewrite big_sepL2_fmap_r. iApply (big_sepL2_mono with "Hlv") => ??? ?? /=.
     iIntros "?". iExists _. iFrame. iPureIntro. split; first by apply replicate_length.
-    apply: Forall2_lookup_lr. 2: done. done. rewrite list_lookup_fmap. apply fmap_Some. naive_solver.
+    apply: Forall2_lookup_lr. 2: done. 1: done.
+    rewrite list_lookup_fmap. apply fmap_Some. naive_solver.
   }
   iFrame. rewrite stmt_wp_eq. iApply "HQinit" => //.
 
@@ -1162,7 +1164,7 @@ Qed.
 Lemma wps_annot n A (a : A) Q Ψ s:
   (|={⊤}[∅]▷=>^n WPs s {{ Q, Ψ }}) -∗ WPs AnnotStmt n a s {{ Q , Ψ }}.
 Proof.
-  iIntros "Hs". iInduction n as [|n] "IH" => /=. by iApply "Hs".
+  iIntros "Hs". iInduction n as [|n] "IH" => /=. 1: by iApply "Hs".
   rewrite /AnnotStmt. iApply wps_skip. by iApply (step_fupd_wand with "Hs IH").
 Qed.
 
@@ -1183,7 +1185,7 @@ Proof.
     iDestruct (heap_mapsto_lookup_1 (λ st : lock_state, st = RSt 0%nat) with "Hhctx Hl") as %? => //.
     iSplit; first by eauto 12 using AssignS.
     iIntros (? e2 σ2 efs Hstep ?) "!> !>". inv_stmt_step. unfold end_val.
-    iMod (heap_write with "Hhctx Hl") as "[$ Hl]" => //. congruence.
+    iMod (heap_write with "Hhctx Hl") as "[$ Hl]" => //; [congruence|].
     iMod ("HWP" with "Hl") as "HWP".
     iModIntro => /=. iSplit; first done. iFrame. iSplit; first done. by iApply "HWP".
   - iMod (heap_write_na _ _ _ vr with "Hhctx Hl") as (?) "[Hhctx Hc]" => //; first by congruence.
@@ -1313,7 +1315,7 @@ Proof.
   iIntros "!#" (b P HPs).
   iDestruct 1 as (s HQ) "#Hs".
   iIntros "!# HP".
-  iApply wps_goto. by apply: lookup_weaken.
+  iApply wps_goto; [by apply: lookup_weaken|].
   iModIntro. by iApply "Hs".
 Qed.
 

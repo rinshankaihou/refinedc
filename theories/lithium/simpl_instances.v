@@ -6,7 +6,7 @@ Local Open Scope Z_scope.
 (* Global Instance simpl_exist_impl A P : SimplImpl true (@ex A P) (λ T, ∀ x, P x → T). *)
 (* Proof. split; try naive_solver. intros ?[??]. eauto. Qed. *)
 Global Instance simpl_exist_and A P : SimplAnd (@ex A P) (λ T, ∃ x, P x ∧ T).
-Proof. split. naive_solver. intros [[??]?]. eauto. Qed.
+Proof. split; [naive_solver|]. intros [[??]?]. eauto. Qed.
 Global Instance simpl_and_and (P1 P2 : Prop):
   SimplAnd (P1 ∧ P2) (λ T, P1 ∧ P2 ∧ T).
 Proof. split; naive_solver. Qed.
@@ -369,7 +369,7 @@ Proof.
     have ->: (n = n' + (n - n'))%nat by lia. rewrite replicate_add. do 2 f_equal. lia.
   - move => [Hr ?].
     have Hn: (n = length l1 + length l2)%nat by rewrite -(replicate_length n x) -app_length Hr.
-    move: Hr. rewrite Hn replicate_add => /app_inj_1[|<- <-]. by rewrite replicate_length.
+    move: Hr. rewrite Hn replicate_add => /app_inj_1[|<- <-]. 1: by rewrite replicate_length.
     exists (length l1). repeat split => //.
     + rewrite !replicate_length. lia.
     + rewrite !replicate_length. f_equal. lia.

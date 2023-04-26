@@ -134,10 +134,11 @@ Section type.
     iModIntro. iExists γ. iInduction ks as [|k ks] "IH" => //=.
     apply Forall_cons in Hks1 as [Hk1 Hks1].
     apply NoDup_cons in Hks2 as [Hk2 Hks2].
-    rewrite insert_singleton_op. iDestruct "Hγ" as "[$ Hks]".
-    { iSplit; first done. by iApply "IH". }
-    rewrite -/fmap /cmra_car /=. apply not_elem_of_list_to_map.
-    by rewrite -list_fmap_compose elem_of_list_fmap_inj.
+    rewrite insert_singleton_op.
+    - iDestruct "Hγ" as "[$ Hks]".
+      iSplit; first done. by iApply "IH".
+    - rewrite -/fmap /cmra_car /=. apply not_elem_of_list_to_map.
+      by rewrite -list_fmap_compose elem_of_list_fmap_inj.
   Qed.
 
   Theorem alloc_tickets_aux :

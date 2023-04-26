@@ -128,7 +128,7 @@ Section proofs.
              iRename select (_ ◁ₗ (next + 1) @ int u16)%I into "Hnext+1".
              iDestruct select (local_ticket ◁ᵥ _)%I as "[_ Hticket]".
              iDestruct select (p at{_}ₗ _ ◁ᵥ _)%I as "[_ ->]".
-             iApply (wp_cas_suc_int with "Hnext Hticket [$]"). { cbv. lia. } done.
+             iApply (wp_cas_suc_int with "Hnext Hticket [$]"). { cbv. lia. } 1: done.
              iNext. iIntros "??". iApply ("HΦ" $! _ (true @ builtin_boolean)%I) => //.
              { iExists _. done. }
              repeat liRStep; liShow.
@@ -151,7 +151,7 @@ Section proofs.
              iDestruct select (_ ◁ᵥ (i + 1) @ int u16)%I as "Hv".
              iDestruct select (local_ticket ◁ᵥ _)%I as "[_ Hticket]".
              iDestruct select (p at{_}ₗ _ ◁ᵥ _)%I as "[_ ->]".
-             iApply (wp_cas_fail_int with "Hnext Hticket [$]"). { cbv. lia. } done.
+             iApply (wp_cas_fail_int with "Hnext Hticket [$]"). { cbv. lia. } 1: done.
              iNext. iIntros "??". iApply ("HΦ" $! _ (false @ builtin_boolean)%I) => //.
              { by iExists _. }
              repeat liRStep; liShow.
@@ -189,7 +189,7 @@ Section proofs.
              iDestruct select (_ ◁ᵥ (next + 1) @ int u16)%I as "Hv".
              iDestruct select (local_ticket ◁ᵥ _)%I as "[_ Hticket]".
              iDestruct select (p at{_}ₗ _ ◁ᵥ _)%I as "[_ ->]".
-             iApply (wp_cas_suc_int with "Hnext Hticket [$]"). { cbv. lia. } done.
+             iApply (wp_cas_suc_int with "Hnext Hticket [$]"). { cbv. lia. } 1: done.
              iNext. iIntros "??". iApply ("HΦ" $! _ (true @ builtin_boolean)%I) => //.
              { by iExists _. }
              iRename select (p at{struct_hyp_spinlock}ₗ "next" ◁ₗ _)%I into "Hnext".
@@ -208,7 +208,7 @@ Section proofs.
              iDestruct select (_ ◁ᵥ (i + 1) @ int u16)%I as "Hv".
              iDestruct select (local_ticket ◁ᵥ _)%I as "[_ Hticket]".
              iDestruct select (p at{_}ₗ _ ◁ᵥ _)%I as "[_ ->]".
-             iApply (wp_cas_fail_int with "Hnext Hticket [$]"). { cbv. lia. } done.
+             iApply (wp_cas_fail_int with "Hnext Hticket [$]"). { cbv. lia. } 1: done.
              iNext. iIntros "??". iApply ("HΦ" $! _ (false @ builtin_boolean)%I) => //.
              { by iExists _. }
              iRename select (p at{struct_hyp_spinlock}ₗ _ ◁ₗ _)%I into "Hnext".

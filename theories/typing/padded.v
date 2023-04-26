@@ -145,7 +145,8 @@ Section padded.
     typed_place (GetMemberPCtx sl n :: K) l β (uninit ly) T.
   Proof.
     iIntros "[% HT]" (Φ) "Hl".
-    iDestruct (apply_subsume_place_true with "Hl []") as "Hl". iApply (subsume_uninit_padded _ _ _ sl) => //.
+    iDestruct (apply_subsume_place_true with "Hl []") as "Hl".
+    { by iApply (subsume_uninit_padded _ _ _ sl). }
     iApply "HT". iDestruct "Hl" as "[$ [$ [$ [Hl $]]]]". by rewrite uninit_struct_equiv.
   Qed.
   Global Instance type_place_padded_uninit_struct_inst K l β sl n ly :

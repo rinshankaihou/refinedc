@@ -112,7 +112,7 @@ Section type.
       iDestruct (own_valid_2 with "Hs Hn") as %Hown. exfalso. move: Hown.
       rewrite -auth_frag_op auth_frag_valid gset_disj_valid_op. set_solver.
     }
-    iMod ("Hc" with "[Hs]") as "_". by iRight.
+    iMod ("Hc" with "[Hs]") as "_"; [by iRight|].
     iIntros "!# !#". iDestruct "Hl" as (x') "[Hl Hexcl]".
     iExists _. iFrame. iSplitL => //.
     (** locked_token *)
@@ -136,9 +136,9 @@ Section type.
     iDestruct "Hlock" as (st Hst) "Htok".
     iExists (st ∖ {[n]}). iSplitR. {
       iPureIntro. move: (Hst). rewrite {1}(union_difference_L {[n]} st).
-      rewrite ->elements_union_singleton => ?; last set_solver.
-      by apply: Permutation.Permutation_cons_inv.
-      set_unfold => ??. subst. apply elem_of_elements. rewrite -Hst. set_solver.
+      - rewrite ->elements_union_singleton => ?; last set_solver.
+        by apply: Permutation.Permutation_cons_inv.
+      - set_unfold => ??. subst. apply elem_of_elements. rewrite -Hst. set_solver.
     }
     iCombine "Htok" "Hn" as "Htok".
     iMod (own_update with "Htok") as "$" => //.
@@ -173,7 +173,7 @@ Section type.
     iIntros "H Hty".
     iDestruct "H" as (s) "[Htok Hs]".
     iApply step_fupd_intro => //. iModIntro.
-    iInduction s as [|t s] "IH" => /=. by iApply ("Hs" with "Hty Htok").
+    iInduction s as [|t s] "IH" => /=. 1: by iApply ("Hs" with "Hty Htok").
     iDestruct "Hs" as ([A [l2 ty2]]) "[Hlt H]".
     iDestruct "H" as (x) "[Hl HT]".
     iMod (locked_close with "Hlt Hl Htok") as "[Htok Hl]" => //.

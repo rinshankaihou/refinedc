@@ -56,7 +56,7 @@ Section tyfold.
       simplify_goal (l◁ₗ{β} ls @ tyfold (ty :: tys) b) T.
   Proof.
     iIntros "HT". iExists _. iFrame. iDestruct 1 as (l2 ls2 ->) "[Hl [% [Htys Hb]]]".
-    iSplit => /=. by iPureIntro; f_equal. iFrame.
+    iSplit => /=. 1: by iPureIntro; f_equal. iFrame.
     iSplitR "Hb"; first by eauto with iFrame.
     iStopProof. f_equiv. destruct ls2 =>//=. by apply default_last_cons.
   Qed.

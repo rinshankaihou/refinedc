@@ -98,7 +98,7 @@ Section defs.
     rewrite /probe_ref. move: x => [??]. split; naive_simpl.
     - revert select (_ ∈ rotate_take _ _ _). rewrite rotate_take_add //. eauto.
     - eexists (rotate_nat_sub (slot_for_key_ref key (length l)) _ (length l), _) => /=.
-      rewrite rotate_nat_add_sub. split_and! => //. 2: done.
+      rewrite rotate_nat_add_sub. 1: split_and! => //. 2: done.
       naive_simpl; rewrite ?rotate_nat_add_sub //; [apply rotate_nat_sub_lt|]; naive_solver lia.
   Qed.
 

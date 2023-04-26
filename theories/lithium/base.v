@@ -22,6 +22,8 @@ Export Set Warnings "+deprecated-hint-without-locality".
 Export Set Warnings "+deprecated-hint-rewrite-without-locality".
 Export Set Warnings "+deprecated-typeclasses-transparency-without-locality".
 
+Export Set Default Goal Selector "!".
+
 (* ensure that set from RecordUpdate simplifies when it is applied to a concrete value *)
 Global Arguments set _ _ _ _ _ !_ /.
 
@@ -297,8 +299,8 @@ Global Instance set_unfold_imap A B f (l : list A) (x : B):
   SetUnfoldElemOf x (imap f l) (∃ i y, x = f i y ∧ l !! i = Some y).
 Proof.
   constructor.
-  elim: l f => /=. set_solver. set_unfold. move => ? ? IH f.
-  rewrite IH {IH}. split. case.
+  elim: l f => /=; [set_solver|]. set_unfold. move => ? ? IH f.
+  rewrite IH {IH}. split; [case|].
   - move => ->. set_solver.
   - move => [n [v [-> ?]]]. exists (S n), v => /=. set_solver.
   - move => [[|n] /= [v [-> ?]]]; simplify_eq; [by left | right].
@@ -334,9 +336,10 @@ Lemma length_filter_insert {A} P `{!∀ x, Decision (P x)} (l : list A) i x x':
   length (filter P (<[i:=x]>l)) =
   (length (filter P l) + (if bool_decide (P x) then 1 else 0) - (if bool_decide (P x') then 1 else 0))%nat.
 Proof.
-  elim: i l. move => [] //=??[->]. rewrite !filter_cons. by repeat (case_decide; case_bool_decide) => //=; lia.
-  move => i IH [|? l]//=?. rewrite !filter_cons. case_decide => //=; rewrite IH // Nat.sub_succ_l //.
-  repeat case_bool_decide => //; try lia. feed pose proof (length_filter_gt P l x') => //; try lia.
+  elim: i l.
+  - move => [] //=??[->]. rewrite !filter_cons. by repeat (case_decide; case_bool_decide) => //=; lia.
+  - move => i IH [|? l]//=?. rewrite !filter_cons. case_decide => //=; rewrite IH // Nat.sub_succ_l //.
+    repeat case_bool_decide => //; try lia. feed pose proof (length_filter_gt P l x') => //; try lia.
     by apply: elem_of_list_lookup_2.
 Qed.
 
@@ -349,7 +352,7 @@ Lemma reshape_app {A} (ln1 ln2 : list nat) (l : list A) :
 Proof. elim: ln1 l => //= n ln1 IH l. rewrite take_take skipn_firstn_comm IH drop_drop. repeat f_equal; lia. Qed.
 Lemma sum_list_with_take {A} f (l : list A) i:
    (sum_list_with f (take i l) ≤ sum_list_with f l)%nat.
-Proof. elim: i l => /=. lia. move => ? IH [|? l2] => //=. move: (IH l2). lia.  Qed.
+Proof. elim: i l => /=; [lia|]. move => ? IH [|? l2] => //=. move: (IH l2). lia.  Qed.
 
 Lemma omap_length_eq {A B C} (f : A → option B) (g : A → option C) (l : list A):
   (∀ i x, l !! i = Some x → const () <$> (f x) = const () <$> (g x)) →
@@ -597,11 +600,11 @@ Lemma big_sepL_impl' {B} Φ (Ψ : _ → B → _) (l1 : list A) (l2 : list B) :
   Proof.
     iIntros (Hlen) "Hl #Himpl".
     iInduction l1 as [|x1 l1] "IH" forall (Φ Ψ l2 Hlen); destruct l2 => //=; simpl in *.
-    iDestruct "Hl" as "[Hx1 Hl]". iSplitL "Hx1". by iApply "Himpl".
+    iDestruct "Hl" as "[Hx1 Hl]". iSplitL "Hx1"; [by iApply "Himpl"|].
     iApply ("IH" $! (Φ ∘ S) (Ψ ∘ S) l2 _ with "[] Hl").
     iIntros "!>" (k y1 y2 ?) "Hl2 /= ?".
-      by iApply ("Himpl" with "[] [Hl2]").
-      Unshelve. lia.
+    by iApply ("Himpl" with "[] [Hl2]").
+    Unshelve. lia.
   Qed.
 End sep_list.
 
@@ -685,7 +688,7 @@ Qed.
 Lemma Pos_factor2_divide p :
   ((2 ^ Pos_factor2 p)%nat | Z.pos p)%Z.
 Proof.
-  elim: p => //=. by move => *; apply Z.divide_1_l.
+  elim: p => //=. 1: by move => *; apply Z.divide_1_l.
   move => p IH. rewrite -plus_n_O Pos2Z.inj_xO Nat2Z.inj_add Z.add_diag. by apply Z.mul_divide_mono_l.
 Qed.
 

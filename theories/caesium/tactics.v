@@ -326,7 +326,7 @@ Qed.
 Lemma ectx_item_correct Ks:
   ∃ Ks', ∀ e, to_rtexpr (to_expr (fill Ks e)) = ectxi_language.fill Ks' (to_rtexpr (to_expr e)).
 Proof.
-  elim/rev_ind: Ks. by exists [].
+  elim/rev_ind: Ks; [by exists []|].
   move => K Ks [Ks' IH].
   eexists (Ks' ++ (ExprCtx <$> ?[K])) => ?. rewrite fill_app ectxi_language.fill_app /= -IH.
   only [K]: (destruct K; [

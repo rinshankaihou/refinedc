@@ -66,10 +66,10 @@ Section array.
     move => ? sl -> tys1 tys2 Htys. constructor.
     - move => β l; rewrite/ty_own/=.
       f_equiv. f_equiv; first by rewrite ->Htys.
-      elim: Htys l => // ???????? /=. f_equiv. solve_proper.
+      elim: Htys l => // ???????? /=. f_equiv; [solve_proper|].
       by setoid_rewrite offset_loc_S.
     - move => v; rewrite/ty_own_val/=.
-      f_equiv. f_equiv; first by rewrite ->Htys.
+      f_equiv. { f_equiv; first by rewrite ->Htys. }
       elim: Htys v => // ???? Hty Htys IH v /=. f_equiv. { solve_proper. }
       apply: IH.
   Qed.
@@ -247,7 +247,7 @@ Section array.
     unfold int; simpl_type.
     iDestruct ("HP" with "Hv") as (Hv) "HP".
     iDestruct "HP" as (? Hlen) "HP".
-    have [|ty ?]:= lookup_lt_is_Some_2 tys (Z.to_nat i). lia.
+    have [|ty ?]:= lookup_lt_is_Some_2 tys (Z.to_nat i). 1: lia.
     iApply wp_ptr_offset => //; [by apply val_to_of_loc | | ].
     { iApply (loc_in_bounds_offset with "Hb"); simpl; [done| destruct l => /=; lia | destruct l => /=; nia]. }
     iIntros "!#". iExists _. iSplit => //.
@@ -397,8 +397,8 @@ Section array.
   Proof.
     iIntros "HT (->&%&%&?)".
     iDestruct ("HT" with "[//] [//] [$]") as (tys) "(Harray&%&HT)".
-    have [|ty ?]:= lookup_lt_is_Some_2 tys (Z.to_nat idx). lia.
-    iDestruct (array_get_type (Z.to_nat idx) with "Harray") as "[Hty Harray]". done.
+    have [|ty ?]:= lookup_lt_is_Some_2 tys (Z.to_nat idx). 1: lia.
+    iDestruct (array_get_type (Z.to_nat idx) with "Harray") as "[Hty Harray]"; [done|].
     rewrite Z2Nat.id; [|lia].
     by iApply ("HT" with "[//] Harray Hty").
   Qed.

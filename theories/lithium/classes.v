@@ -193,7 +193,7 @@ Lemma subsume_simplify {Σ} (P1 P2 : iProp Σ) T o1 o2 {SH : SimplifyHyp P1 o1} 
     G -∗ subsume P1 P2 T.
 Proof.
   iIntros "Hs Hl".
-  destruct o1 as [n1|], o2 as [n2|] => //. case_match.
+  destruct o1 as [n1|], o2 as [n2|] => //. 1: case_match.
   1,3,4: by iDestruct (i2p_proof with "Hs Hl") as "Hsub".
   all: iDestruct (i2p_proof with "Hs") as (P) "[HP HT]".
   all: iDestruct ("HT" with "Hl") as "[HP' $]".

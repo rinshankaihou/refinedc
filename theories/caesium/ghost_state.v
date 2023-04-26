@@ -437,7 +437,7 @@ Section heap.
 
   Global Instance heap_mapsto_mbyte_as_fractional l q v:
     AsFractional (heap_mapsto_mbyte l q v) (λ q, heap_mapsto_mbyte l q v)%I q.
-  Proof. split. done. apply _. Qed.
+  Proof. split; [done|]. apply _. Qed.
 
   Global Instance heap_mapsto_timeless l q v : Timeless (l↦{q}v).
   Proof.  rewrite heap_mapsto_eq. apply _. Qed.
@@ -447,7 +447,7 @@ Section heap.
 
   Global Instance heap_mapsto_as_fractional l q v:
     AsFractional (l ↦{q} v) (λ q, l ↦{q} v)%I q.
-  Proof. split. done. apply _. Qed.
+  Proof. split; [done|]. apply _. Qed.
 
   Lemma heap_mapsto_loc_in_bounds l q v:
     l ↦{q} v -∗ loc_in_bounds l (length v).
@@ -499,7 +499,7 @@ Section heap.
     - move => b v1 IH l /=.
       rewrite heap_mapsto_cons IH assoc -heap_mapsto_cons.
       rewrite shift_loc_assoc.
-      by have ->:(∀ n : nat, 1 + n = S n) by lia.
+      by have -> : (∀ n : nat, 1 + n = S n) by lia.
   Qed.
 
   Lemma heap_mapsto_mbyte_agree l q1 q2 v1 v2 :
@@ -518,7 +518,7 @@ Section heap.
     length v1 = length v2 →
     l ↦{q1} v1 -∗ l ↦{q2} v2 -∗ ⌜v1 = v2⌝.
   Proof.
-    elim: v1 v2 l. by iIntros ([] ??)"??".
+    elim: v1 v2 l. 1: by iIntros ([] ??)"??".
     move => ?? IH []//=???[?].
     rewrite !heap_mapsto_cons_mbyte.
     iIntros "[? [_ ?]] [? [_ ?]]".
@@ -596,7 +596,9 @@ Section heap.
       /to_agree_included ?; simplify_eq.
     destruct ls as [|n], ls'' as [|n''],
       Hincl as [[[|n'|]|] [=]%leibniz_equiv]; subst.
-    by exists O. eauto. exists O. by rewrite Nat.add_0_r.
+    - by exists O.
+    - by eauto.
+    - exists O. by rewrite Nat.add_0_r.
   Qed.
 
   Lemma heap_mapsto_mbyte_lookup_1 ls l aid h b:
@@ -778,7 +780,7 @@ Section heap.
   Proof.
     iIntros "Hctx Hl".
     iDestruct (heap_mapsto_has_alloc_id with "Hl") as %[??].
-    iMod (heap_free_free_st with "[$Hctx Hl]"); last done. done.
+    iMod (heap_free_free_st with "[$Hctx Hl]"); [done| |done].
     rewrite heap_mapsto_eq /heap_mapsto_def. iDestruct "Hl" as "[_ Hl]".
     iApply (big_sepL_impl with "Hl"). iIntros (???) "!> H".
     rewrite heap_mapsto_mbyte_eq /heap_mapsto_mbyte_def /=.

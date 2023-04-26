@@ -174,7 +174,7 @@ Proof.
   rewrite /bits_per_byte.
   elim: sz z => /=. 1: rewrite /Z.of_nat; move => ??; f_equal; lia.
   move => sz IH z [? Hlt]. rewrite IH /byte_modulus /= -?Z_div_mod_eq_full //.
-  split. apply Z_div_pos => //. apply Zdiv_lt_upper_bound => //.
+  split; [by apply Z_div_pos|]. apply Zdiv_lt_upper_bound => //.
   rewrite Nat2Z.inj_succ -Zmult_succ_l_reverse Z.pow_add_r // in Hlt.
   lia.
 Qed.

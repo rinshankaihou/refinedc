@@ -29,7 +29,7 @@ Section optional.
   |}.
   Next Obligation.
     iIntros(r????? bty beq v1 v2 σ v) "Hpre Hv1 Hv2".
-    destruct bty. iDestruct "Hv1" as (y) "Hv1".
+    destruct bty. 1: iDestruct "Hv1" as (y) "Hv1".
     all: iApply (opt_bin_op with "Hpre [Hv1] Hv2") => /= //.
     Unshelve.
     apply inhabitant.
@@ -251,8 +251,8 @@ Section optional.
     iIntros (b ty optty ? ? E ly l ? [??]) "[[% Hl]|[% Hl]]".
     all: iMod (copy_shr_acc with "Hl") as (?? ?) "[?[??]]" => //.
     all: iModIntro; iSplit => //; rewrite /=?opt_alt_sz => //; iExists _, _; iFrame.
-    by iLeft; iFrame.
-    by iRight; iFrame.
+    - by iLeft; iFrame.
+    - by iRight; iFrame.
   Qed.
 
 End optional.
@@ -388,8 +388,8 @@ Section optionalO.
       iIntros (σ) "Hctx". iApply fupd_mask_intro; [set_solver|]. iIntros "HE".
       iSplit. {
         iIntros (v). iDestruct "HT" as "[Hpre _]".
-        iDestruct (opt_bin_op true true with "Hpre [Hv1] [Hv2] Hctx") as %->.
-        iFrame. iFrame. iPureIntro. by split => ?; simpl in *; simplify_eq.
+        iDestruct (opt_bin_op true true with "Hpre [$Hv1] [$Hv2] Hctx") as %->.
+        iPureIntro. by split => ?; simpl in *; simplify_eq.
       }
       iDestruct ("HT" with "Hv1") as "HT". iModIntro. iMod "HE". iModIntro. iFrame.
       iApply "HΦ" => //. iExists _. iSplit; iPureIntro; first by apply: val_to_of_Z. done.
@@ -398,8 +398,8 @@ Section optionalO.
       iIntros (σ) "Hctx". iApply fupd_mask_intro; [set_solver|]. iIntros "HE".
       iSplit. {
         iIntros (v). iDestruct "HT" as "[Hpre _]".
-        iDestruct (opt_bin_op false true with "Hpre [Hv1] [Hv2] Hctx") as %->.
-        iFrame. iFrame. iPureIntro. by split => ?; simpl in *; simplify_eq.
+        iDestruct (opt_bin_op false true with "Hpre [$Hv1] [$Hv2] Hctx") as %->.
+        iPureIntro. by split => ?; simpl in *; simplify_eq.
       }
       iDestruct ("HT" with "Hv1") as "HT". iModIntro. iMod "HE". iModIntro. iFrame.
       iApply "HΦ" => //. iExists _. iSplit; iPureIntro; first by apply: val_to_of_Z. done.
@@ -422,8 +422,8 @@ Section optionalO.
       iIntros (σ) "Hctx". iApply fupd_mask_intro; [set_solver|]. iIntros "HE".
       iSplit. {
         iIntros (v). iDestruct "HT" as "[Hpre _]".
-        iDestruct (opt_bin_op true false with "Hpre [Hv1] [Hv2] Hctx") as %->.
-        iFrame. iFrame. iPureIntro. by split => ?; simpl in *; simplify_eq.
+        iDestruct (opt_bin_op true false with "Hpre [$Hv1] [$Hv2] Hctx") as %->.
+        iPureIntro. by split => ?; simpl in *; simplify_eq.
       }
       iDestruct ("HT" with "Hv1") as "HT". iModIntro. iMod "HE". iModIntro. iFrame.
       iApply "HΦ" => //. iExists _. iSplit; iPureIntro; first by apply: val_to_of_Z. done.
@@ -432,8 +432,8 @@ Section optionalO.
       iIntros (σ) "Hctx". iApply fupd_mask_intro; [set_solver|]. iIntros "HE".
       iSplit. {
         iIntros (v). iDestruct "HT" as "[Hpre _]".
-        iDestruct (opt_bin_op false false with "Hpre [Hv1] [Hv2] Hctx") as %->.
-        iFrame. iFrame. iPureIntro. by split => ?; simpl in *; simplify_eq.
+        iDestruct (opt_bin_op false false with "Hpre [$Hv1] [$Hv2] Hctx") as %->.
+        iPureIntro. by split => ?; simpl in *; simplify_eq.
       }
       iDestruct ("HT" with "Hv1") as "HT". iModIntro. iMod "HE". iModIntro. iFrame.
       iApply "HΦ" => //. iExists _. iSplit; iPureIntro; first by apply: val_to_of_Z. done.

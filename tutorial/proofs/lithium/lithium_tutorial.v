@@ -775,7 +775,7 @@ Section proof_lithium_test.
       liRStep; liShow.
 
       (** Let's skip over the type-checking of arguments. *)
-      do 18 liRStep; liShow.
+      do 16 liRStep; liShow.
 
       (** Now we have inferred the types of the two sides of the !=
       and can apply a rule for type-checking comparison between
@@ -840,7 +840,7 @@ Section proof_lithium_test.
       liRStep; liShow.
 
       (** We skip over type-checking of the arguments to + *)
-      do 41 liRStep; liShow.
+      do 38 liRStep; liShow.
 
       (** Now Lithium applies the typing rule for + *)
       liRStep; liShow.

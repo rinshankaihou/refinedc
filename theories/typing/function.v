@@ -73,7 +73,7 @@ Section function.
     have [|lsa' Hlsa]:= vec_cast _ lsa (length (fp_atys (fp1 x))). { by rewrite Hatys. }
     iApply (wps_wand with "[Hv Ha]").
     - iSpecialize ("HT" $! lsa' lsv with "[Hv Ha]"); rewrite Hlsa. {
-        iFrame. iApply (big_sepL2_impl' with "Hv") => //. by rewrite Hatys.
+        iFrame. iApply (big_sepL2_impl' with "Hv") => //. 1: by rewrite Hatys.
         move: Hatys => /list_equiv_lookup Hatys.
         iIntros "!>" (k ????? Haty2 ? Haty1) "?".
         have := Hatys k. rewrite Haty1 Haty2=> /(Some_equiv_eq _ _)[?[? [Heql ?]]].
@@ -110,8 +110,9 @@ Section function.
   Next Obligation.
     iIntros (p fp E ly l ? ->%is_ptr_ot_layout). iDestruct 1 as (fn Hl) "(Hl&?&?)".
     iMod (heap_mapsto_own_state_to_mt with "Hl") as (q) "[_ Hl]" => //. iSplitR => //.
-    iExists _, _. iFrame. iModIntro. iSplit. by iExists _; iFrame.
-    by iIntros "_".
+    iExists _, _. iFrame. iModIntro. iSplit.
+    - by iExists _; iFrame.
+    - by iIntros "_".
   Qed.
 
   Lemma type_call_fnptr l v vl tys T fp:

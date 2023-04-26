@@ -145,7 +145,7 @@ Section own.
     iAssert (loc_in_bounds l 0) as "#Hlib".
     { iDestruct "HT" as "[HT _]". by iDestruct ("HT" with "HP") as "[$ _]". }
     iDestruct "HT" as "[_ HT]".
-    iApply wp_ptr_neg_offset. by apply val_to_of_loc. done.
+    iApply wp_ptr_neg_offset; [by apply val_to_of_loc|done|..].
     all: rewrite offset_loc_sz1 // /GetMemberLoc shift_loc_assoc Ho /= Z.add_opp_diag_r shift_loc_0.
     1: done.
     iModIntro. iApply "HΦ"; [ | by iApply "HT"]. done.
@@ -326,8 +326,9 @@ Section own.
   Next Obligation.
     iIntros (p ty E ot l ? ->%is_ptr_ot_layout) "(%&#Hmt&#Hty)".
     iMod (heap_mapsto_own_state_to_mt with "Hmt") as (q) "[_ Hl]" => //. iSplitR => //.
-    iExists _, _. iFrame. iModIntro. iSplit => //. by iSplit.
-    by iIntros "_".
+    iExists _, _. iFrame. iModIntro. iSplit => //.
+    - by iSplit.
+    - by iIntros "_".
   Qed.
 
   Lemma find_in_context_type_loc_own l T:

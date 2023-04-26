@@ -117,10 +117,10 @@ Proof.
   { move => ? k. inversion 1; subst. apply: tree_rel_trans => //. set_solver. }
   move => tl IHl m tr IHr s k. inversion_clear 1; simplify_eq.
   case_bool_decide; subst.
-  - assert (k ∉ sr) as ?. by set_unfold; naive_solver lia.
-    assert (k ∉ sl) as ?. by set_unfold; naive_solver lia.
+  - have ? : (k ∉ sr) by set_unfold; naive_solver lia.
+    have ? : (k ∉ sl) by set_unfold; naive_solver lia.
     destruct (tree_rel_tree_max sl tl) as [[-> ->] |[? [-> [??]]]] => //.
-    + apply: tree_rel_trans => //. assert (k ∉ sr) as ?. by set_unfold; naive_solver lia. set_solver.
+    + apply: tree_rel_trans => //. have : (k ∉ sr) by set_unfold; naive_solver lia. set_solver.
     + apply: NodeRel => //; [ by apply: IHl| |set_unfold; naive_solver lia..].
       rewrite difference_union_L !difference_union_distr_l_L !difference_diag_L !difference_disjoint_L; set_solver.
   - case_bool_decide; apply: NodeRel; try apply: IHl; try apply: IHr; try done; by set_unfold; refined_solver lia.
@@ -133,10 +133,10 @@ Proof.
   { move => ? Hrel. inversion Hrel; subst. set_solver. }
   move => tl IHl m tr IHr s.
   inversion_clear 1; simplify_eq.
-  case_bool_decide; subst. by set_solver.
+  case_bool_decide; subst; [by set_solver|].
   case_bool_decide; etrans; [|by apply IHl| |by apply IHr].
-  - assert (k ∉ sr) as ?. by set_unfold; naive_solver lia. set_solver.
-  - assert (k ∉ sl) as ?. by set_unfold; naive_solver lia. set_solver.
+  - have ? : (k ∉ sr) by set_unfold; naive_solver lia. set_solver.
+  - have ? : (k ∉ sl) by set_unfold; naive_solver lia. set_solver.
 Qed.
 
 Inductive list_tree_eq_aux {A : Type} : nat → list A → tree A → list A → Prop :=

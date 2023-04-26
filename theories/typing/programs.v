@@ -246,7 +246,7 @@ Section judgements.
     place_to_wp K Φ1 l -∗ (∀ l, Φ1 l -∗ Φ2 l) -∗ place_to_wp K Φ2 l.
   Proof.
     iIntros "HP HΦ".
-    iInduction (K) as [] "IH" forall (l) => /=. by iApply "HΦ".
+    iInduction (K) as [] "IH" forall (l) => /=. 1: by iApply "HΦ".
     iApply (place_item_to_wp_mono with "HP").
     iIntros (l') "HP". by iApply ("IH" with "HP HΦ").
   Qed.
@@ -941,7 +941,7 @@ Section typing.
     G -∗ typed_bin_op v1 P1 v2 P2 op ot1 ot2 T.
   Proof.
     iIntros "Hs Hv1 Hv2".
-    destruct o1 as [n1|], o2 as [n2|] => //. case_match.
+    destruct o1 as [n1|], o2 as [n2|] => //. 1: case_match.
     1,3,4: iDestruct (i2p_proof with "Hs Hv1") as (P) "[Hv Hsub]".
     4,5,6: iDestruct (i2p_proof with "Hs Hv2") as (P) "[Hv Hsub]".
     all: by simpl in *; iApply ("Hsub" with "[$]").
@@ -984,7 +984,7 @@ Section typing.
     G -∗ typed_copy_alloc_id v1 P1 v2 P2 ot T.
   Proof.
     iIntros "Hs Hv1 Hv2".
-    destruct o1 as [n1|], o2 as [n2|] => //. case_match.
+    destruct o1 as [n1|], o2 as [n2|] => //. 1: case_match.
     1,3,4: iDestruct (i2p_proof with "Hs Hv1") as (P) "[Hv Hsub]".
     4,5,6: iDestruct (i2p_proof with "Hs Hv2") as (P) "[Hv Hsub]".
     all: by simpl in *; iApply ("Hsub" with "[$]").

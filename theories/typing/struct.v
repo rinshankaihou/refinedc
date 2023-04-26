@@ -255,7 +255,7 @@ Section struct.
     { destruct tys1, tys2 => //. iFrame. by iApply "Hc". }
     iDestruct (big_sepL2_cons_inv_l with "Hs") as (ty1 tys1' ?) "[H1 Hs]"; subst.
     destruct tys2 => //=. iDestruct ("H" with "H1") as "[H1 H]".
-    iApply ("IH" with "[] H Hs"). naive_solver.
+    iApply ("IH" with "[] H Hs"). 1: naive_solver.
     iIntros "H". iApply "Hc". by iFrame.
   Qed.
   Global Instance struct_mono_inst sl tys1 tys2 l β:
@@ -294,9 +294,10 @@ Section struct.
     iDestruct 1 as (i ty1 Hi Hn) "HP".
     move: (Hi) => /field_index_of_to_index_of[? Hi2].
     iIntros (Φ) "[% [% [#Hb Hs]]] HΦ" => /=.
-    iApply wp_get_member. by apply val_to_of_loc. by eauto. done.
+    iApply wp_get_member; [by apply val_to_of_loc|by eauto|done|].
     iIntros "!#". iExists _. iSplit => //.
-    iDestruct (big_sepL_insert_acc with "Hs") as "[Hl Hs]" => //=. by eapply pad_struct_lookup_field.
+    iDestruct (big_sepL_insert_acc with "Hs") as "[Hl Hs]" => //=.
+    1: by eapply pad_struct_lookup_field.
     rewrite /GetMemberLoc/offset_of Hi2/=.
     iApply ("HP" with "Hl"). iIntros (l' ty2 β2 typ R) "Hl' Hc HT".
     iApply ("HΦ" with "Hl' [-HT] HT").
@@ -318,7 +319,7 @@ Section struct.
     typed_val_expr (StructInit sl fs) T.
   Proof.
     iIntros "He" (Φ) "HΦ". iApply wp_struct_init.
-    iAssert ([∗ list] v';ty∈[];pad_struct ([@{option var_name * layout}]) [] (λ ly, uninit ly), (v' ◁ᵥ ty))%I as "-#Hvs". done.
+    iAssert ([∗ list] v';ty∈[];pad_struct ([@{option var_name * layout}]) [] (λ ly, uninit ly), (v' ◁ᵥ ty))%I as "-#Hvs". 1: done.
     have : [] ++ sl.(sl_members) = sl.(sl_members) by simplify_list_eq.
     have : [] = reshape (ly_size <$> (snd <$> ([] : field_list))) [@{mbyte}] by [].
     have : length (@nil mbyte) = sum_list (ly_size <$> (snd <$> ([] : field_list))) by [].

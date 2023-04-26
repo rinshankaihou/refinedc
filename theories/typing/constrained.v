@@ -79,8 +79,8 @@ Section own_constrained.
   |}.
   Next Obligation.
     iIntros (???????[]?????) "Hpre H1 H2". 1: iDestruct "H1" as "[H1 _]".
-    by iApply (opt_bin_op true with "Hpre H1 H2").
-    by iApply (opt_bin_op false with "Hpre H1 H2").
+    - by iApply (opt_bin_op true with "Hpre H1 H2").
+    - by iApply (opt_bin_op false with "Hpre H1 H2").
   Qed.
 
   Global Instance optionable_agree_own_constrained P (ty2 : type) `{!OwnConstraint P} `{!OptionableAgree ty1 ty2} : OptionableAgree (own_constrained P ty1) ty2.

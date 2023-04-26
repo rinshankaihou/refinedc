@@ -128,7 +128,7 @@ Lemma pad_struct_snoc_Some {A} s n ly ls (l : A) f :
   length (field_names s) = length ls →
   pad_struct (s ++ [(Some n, ly)]) (ls ++ [l]) f = pad_struct s ls f ++ [l].
 Proof.
-  elim: s ls => /=. by destruct ls.
+  elim: s ls => /=. 1: by destruct ls.
   move => -[n' ly'] s IH ls /=. case_match.
   - destruct ls => //= -[?]. f_equal. by apply IH.
   - move => ?. f_equal. by apply IH.
@@ -154,10 +154,10 @@ Qed.
 Lemma offset_of_from_in m s:
   Some m ∈ s.*1 → ∃ n, offset_of s m = Some n.
 Proof.
-  elim: s. set_solver.
+  elim: s. 1: set_solver.
   move => [??]? IH. rewrite offset_of_cons'. csimpl => ?.
   case_decide => //; [ naive_solver |].
-  have [|? ->]:= IH. by set_solver.
+  have [|? ->] := IH. 1: by set_solver.
   naive_solver.
 Qed.
 

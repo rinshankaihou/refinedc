@@ -321,8 +321,10 @@ Section defs.
     destruct Hinv as (Hlen&->&_&_&_&_&_&HSS&HB&_&_&_&_&_&Heq). apply HB.
     assert (is_Some (vs !! i)) as [v Hv] by by eapply same_length_lookup_Some.
     rewrite Heq. assert ((list_to_map (zip ks vs) : gmap Z type) !! k = Some v).
-    { apply elem_of_list_to_map. rewrite fst_zip; last by lia.
-      apply (StronglySorted_strict_NoDup _ HSS). apply elem_of_zip. by exists i. }
+    { apply elem_of_list_to_map.
+      - rewrite fst_zip; last by lia.
+        by apply (StronglySorted_strict_NoDup _ HSS).
+      - apply elem_of_zip. by exists i. }
     exists v. by apply lookup_union_Some_l.
   Qed.
 

@@ -178,12 +178,12 @@ Definition to_rtstmt (rf : runtime_function) (s : stmt) : runtime_expr :=
 Global Instance to_rtexpr_inj : Inj (=) (=) to_rtexpr.
 Proof.
   elim => [ ^ e1 ] [ ^ e2 ] // ?; simplify_eq => //; try naive_solver.
-  - f_equal. naive_solver.
+  - f_equal; [naive_solver|].
     generalize dependent e2args.
-    revert select (Forall _ _). elim. by case.
+    revert select (Forall _ _). elim; [by case|].
     move => ????? [|??]//. naive_solver.
   - generalize dependent e2es.
-    revert select (Forall _ _). elim. by case.
+    revert select (Forall _ _). elim; [by case|].
     move => ????? [|??]//. naive_solver.
 Qed.
 Global Instance to_rtstmt_inj : Inj2 (=) (=) (=) to_rtstmt.

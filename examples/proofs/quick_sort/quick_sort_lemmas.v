@@ -356,25 +356,27 @@ Proof.
     - rewrite /range_forall /elem_of => i x Hi Hx.
       rewrite Heq32 in Hx; last solve_goal.
       eapply filter_in_range_perm in Hp21.
-      symmetry in Hp21.
-      apply range_forall_iff_Forall in Hle.
-      eapply Permutation_Forall in Hle; last by apply Hp21.
-      apply range_forall_iff_Forall in Hle.
-      by apply (Hle i).
-      { rewrite /range_forall /elem_of /interval_eq => j Hj.
-        destruct (decide (j < lo)). apply (Heq21 j); solve_goal.
-        apply (Heq21' j); solve_goal. }
+      * symmetry in Hp21.
+        apply range_forall_iff_Forall in Hle.
+        eapply Permutation_Forall in Hle; last by apply Hp21.
+        apply range_forall_iff_Forall in Hle.
+        by apply (Hle i).
+      * rewrite /range_forall /elem_of /interval_eq => j Hj.
+        destruct (decide (j < lo)).
+        -- apply (Heq21 j); solve_goal.
+        -- apply (Heq21' j); solve_goal.
     - eapply filter_in_range_perm in Hp32.
-      symmetry in Hp32.
-      apply range_forall_iff_Forall.
-      eapply Permutation_Forall. { by apply Hp32. }
-      apply range_forall_iff_Forall.
-      rewrite /range_forall /elem_of => i x Hi Hx.
-      rewrite Heq21' in Hx; last solve_goal.
-      by apply (Hge i).
-      { rewrite /range_forall /elem_of /interval_eq => j Hj.
-        destruct (decide (j > hi)). apply (Heq32' j); solve_goal.
-        apply (Heq32 j); solve_goal. }
+      * symmetry in Hp32.
+        apply range_forall_iff_Forall.
+        eapply Permutation_Forall. { by apply Hp32. }
+        apply range_forall_iff_Forall.
+        rewrite /range_forall /elem_of => i x Hi Hx.
+        rewrite Heq21' in Hx; last solve_goal.
+        by apply (Hge i).
+      * rewrite /range_forall /elem_of /interval_eq => j Hj.
+        destruct (decide (j > hi)).
+        -- apply (Heq32' j); solve_goal.
+        -- apply (Heq32 j); solve_goal.
   + move => i j x y ? Hx Hy.
     rewrite Heq32 in Hx; last solve_goal.
     rewrite Heq32 in Hy; last solve_goal.
