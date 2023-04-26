@@ -44,8 +44,7 @@ Section struct.
       apply/lookup_zip_with_Some. eexists _, _. split_and!; [done..|].
       by apply: field_members_idx_lookup.
     - move => [-> /Forall_fold_right Hfold]. split; [done|].
-      elim: (sl_members sl) tys Hlen Hfold; clear.
-      { move => [|??]//??. by constructor. }
+      elim: (sl_members sl) tys Hlen Hfold; clear; [done|].
       move => [n ly] s IH tys//=?. destruct n; simplify_eq/=.
       + destruct tys => //. move => /Forall_cons/=[? /IH?]. constructor => //; [|naive_solver].
         eexists _, _. split; [|done]. done.

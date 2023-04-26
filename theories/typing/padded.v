@@ -106,7 +106,7 @@ Section padded.
   (* Only works for Own since ty might have interior mutability, but
   uninit ty assumes that the values are frozen *)
   Lemma subsume_padded_uninit l ly1 ly2 lyty ty T:
-    (⌜ty.(ty_has_op_type) (UntypedOp lyty) MCNone⌝ ∗ ∀ v, v◁ᵥty -∗ subsume (l ◁ₗ uninit ly1) (l ◁ₗ uninit ly2) T) -∗
+    (⌜ty.(ty_has_op_type) (UntypedOp lyty) MCNone⌝ ∗ ∀ v, v ◁ᵥ ty -∗ subsume (l ◁ₗ uninit ly1) (l ◁ₗ uninit ly2) T) -∗
     subsume (l ◁ₗ padded ty lyty ly1) (l ◁ₗ uninit ly2) T.
   Proof.
     iIntros "[% HT]". iDestruct 1 as ([? ?] ?) "(Hb & Hl & Hr)".

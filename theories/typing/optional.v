@@ -15,7 +15,7 @@ Class Optionable `{!typeG Σ} (ty : type) (optty : type) (ot1 ot2 : op_type) := 
 Arguments opt_pre {_ _} _ {_ _ _ _} _ _.
 
 Class ROptionable `{!typeG Σ} (r : rtype) (optty : type) (ot1 ot2 : op_type) := {
-  ropt_opt x :> Optionable (r.(rty) x) optty ot1 ot2;
+  ropt_opt x :: Optionable (r.(rty) x) optty ot1 ot2;
 }.
 
 Class OptionableAgree `{!typeG Σ} (ty1 ty2 : type) : Prop :=
@@ -46,7 +46,7 @@ Section optional.
   Program Definition optional_type (ty : type) (optty : type) (b : Prop) : type := {|
       ty_has_op_type ot mt := ty.(ty_has_op_type) ot mt ∧ optty.(ty_has_op_type) ot mt;
       ty_own β l := (⌜b⌝ ∗ l◁ₗ{β}ty ∨ ⌜¬b⌝ ∗ l◁ₗ{β}optty)%I;
-      ty_own_val v := (⌜b⌝ ∗ v◁ᵥty ∨ ⌜¬b⌝ ∗ v◁ᵥoptty)%I
+      ty_own_val v := (⌜b⌝ ∗ v ◁ᵥ ty ∨ ⌜¬b⌝ ∗ v ◁ᵥ optty)%I
   |}.
   Next Obligation.
     iIntros (??????).
@@ -269,7 +269,7 @@ Section optionalO.
   Program Definition optionalO_type {A : Type} (ty : A → type) (optty : type) (b : option A) : type := {|
       ty_has_op_type ot mt := (∀ x, (ty x).(ty_has_op_type) ot mt) ∧ optty.(ty_has_op_type) ot mt;
       ty_own β l := (if b is Some x return _ then l◁ₗ{β}(ty x) else l◁ₗ{β}optty)%I;
-      ty_own_val v := (if b is Some x return _ then v◁ᵥ(ty x) else v◁ᵥoptty)%I
+      ty_own_val v := (if b is Some x return _ then v ◁ᵥ (ty x) else v ◁ᵥ optty)%I
   |}.
   Next Obligation.
     iIntros (A ty? [x|]); apply ty_share.

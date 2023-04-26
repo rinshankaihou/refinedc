@@ -19,8 +19,8 @@ Record lock_id := mk_lock_id {
 
 (** Registering the necessary ghost state. *)
 Class spinlockG Σ := SpinLockG {
-   lock_tickets_inG :> inG Σ (gmapR Z (exclR unitO));
-   lock_owner_inG :> inG Σ (excl_authR ZO);
+   lock_tickets_inG :: inG Σ (gmapR Z (exclR unitO));
+   lock_owner_inG :: inG Σ (excl_authR ZO);
 }.
 Definition spinlockΣ : gFunctors :=
   #[GFunctor (constRF (gmapR Z (exclR unitO)));

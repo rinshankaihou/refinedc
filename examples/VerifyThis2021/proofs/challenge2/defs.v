@@ -231,7 +231,7 @@ Proof.
   change (Z.to_nat 2) with 2%nat. move => H Hnz Hle.
   assert (rest ≠ []); last first. { destruct rest; naive_solver. }
   assert (n `div` 2 ≤ length l)%nat as Hlediv2.
-  { etransitivity; last done. apply Nat.div_le_upper_bound; lia. }
+  { etransitivity; last done. apply Nat.Div0.div_le_upper_bound; lia. }
   move: (tree_list_eq_annoying _ _ _ _ H Hlediv2) => Hlen.
   assert (n `div` 2 < n)%nat as Hdiv. { apply Nat.div_lt; lia. }
   move => ?. subst rest. simpl in *. lia.
@@ -247,7 +247,7 @@ Proof.
   change (Z.to_nat 2) with 2%nat. change (Z.to_nat 1) with 1%nat.
   move => H Hnx Hle.
   assert (n `div` 2 ≤ length l)%nat as Hlediv2.
-  { etransitivity; last done. apply Nat.div_le_upper_bound; lia. }
+  { etransitivity; last done. apply Nat.Div0.div_le_upper_bound; lia. }
   move: (tree_list_eq_annoying _ _ _ _ H Hlediv2). simpl. lia.
 Qed.
 

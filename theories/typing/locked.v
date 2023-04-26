@@ -8,8 +8,8 @@ Definition lock_id := gname.
 
 (** Registering the necessary ghost state. *)
 Class lockG Σ := LockG {
-   lock_inG :> inG Σ (authR (gset_disjUR string));
-   lock_excl_inG :> inG Σ (exclR unitO);
+   lock_inG :: inG Σ (authR (gset_disjUR string));
+   lock_excl_inG :: inG Σ (exclR unitO);
 }.
 Definition lockΣ : gFunctors :=
   #[GFunctor (constRF (authR (gset_disjUR string)));

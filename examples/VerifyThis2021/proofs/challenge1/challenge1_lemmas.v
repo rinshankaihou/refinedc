@@ -210,7 +210,7 @@ Lemma lexico_bot' l l2:
   ¬ (l2 <ₗ l).
 Proof.
   move => Hs ?. rewrite -(rev_involutive l). apply lexico_bot; [|by rewrite -Permutation_rev].
-  elim: Hs => //. { constructor. }
+  elim: Hs => //.
   move => ????/= Hhd. apply: Sorted_snoc => //.
   inversion Hhd; constructor. lia.
 Qed.

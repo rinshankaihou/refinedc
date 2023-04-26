@@ -15,19 +15,19 @@ Section judgements.
   .
 
   Class SimplifyHypPlace (l : loc) (β : own_state) (ty : type) (n : option N) : Type :=
-    simplify_hyp_place :> SimplifyHyp (l ◁ₗ{β} ty) n.
+    simplify_hyp_place :: SimplifyHyp (l ◁ₗ{β} ty) n.
   Class SimplifyHypVal (v : val) (ty : type) (n : option N) : Type :=
-    simplify_hyp_val :> SimplifyHyp (v ◁ᵥ ty) n.
+    simplify_hyp_val :: SimplifyHyp (v ◁ᵥ ty) n.
 
   Class SimplifyGoalPlace (l : loc) (β : own_state) (ty : type) (n : option N) : Type :=
-    simplify_goal_place :> SimplifyGoal (l ◁ₗ{β} ty) n.
+    simplify_goal_place :: SimplifyGoal (l ◁ₗ{β} ty) n.
   Class SimplifyGoalVal (v : val) (ty : type) (n : option N) : Type :=
-    simplify_goal_val :> SimplifyGoal (v ◁ᵥ ty) n.
+    simplify_goal_val :: SimplifyGoal (v ◁ᵥ ty) n.
 
   Class SubsumePlace (l : loc) (β : own_state) (ty1 ty2 : type) : Type :=
-    subsume_place :> Subsume (l ◁ₗ{β} ty1) (l ◁ₗ{β} ty2).
+    subsume_place :: Subsume (l ◁ₗ{β} ty1) (l ◁ₗ{β} ty2).
   Class SubsumeVal (v : val) (ty1 ty2 : type) : Type :=
-    subsume_val :> Subsume (v ◁ᵥ ty1) (v ◁ᵥ ty2).
+    subsume_val :: Subsume (v ◁ᵥ ty1) (v ◁ᵥ ty2).
 
   (* Variants of Subsume which don't need the continuation. P is an
   additional sidecondition. Not via iProp_to_Prop since there is no
@@ -123,7 +123,7 @@ Section judgements.
   Class TypedBinOp (v1 : val) (P1 : iProp Σ) (v2 : val) (P2 : iProp Σ) (o : bin_op) (ot1 ot2 : op_type) : Type :=
     typed_bin_op_proof T : iProp_to_Prop (typed_bin_op v1 P1 v2 P2 o ot1 ot2 T).
   Class TypedBinOpVal (v1 : val) (ty1 : type) (v2 : val) (ty2 : type) (o : bin_op) (ot1 ot2 : op_type) : Type :=
-    typed_bin_op_val :> TypedBinOp v1 (v1 ◁ᵥ ty1) v2 (v2 ◁ᵥ ty2) o ot1 ot2.
+    typed_bin_op_val :: TypedBinOp v1 (v1 ◁ᵥ ty1) v2 (v2 ◁ᵥ ty2) o ot1 ot2.
 
   Definition typed_un_op (v : val) (P : iProp Σ) (o : un_op) (ot : op_type) (T : val → type → iProp Σ) : iProp Σ :=
     (P -∗ typed_val_expr (UnOp o ot v) T).
@@ -131,14 +131,14 @@ Section judgements.
   Class TypedUnOp (v : val) (P : iProp Σ) (o : un_op) (ot : op_type) : Type :=
     typed_un_op_proof T : iProp_to_Prop (typed_un_op v P o ot T).
   Class TypedUnOpVal (v : val) (ty : type) (o : un_op) (ot : op_type) : Type :=
-    typed_un_op_val :> TypedUnOp v (v ◁ᵥ ty) o ot.
+    typed_un_op_val :: TypedUnOp v (v ◁ᵥ ty) o ot.
 
   Definition typed_call (v : val) (P : iProp Σ) (vl : list val) (tys : list type) (T : val → type → iProp Σ) : iProp Σ :=
     (P -∗ ([∗ list] v;ty∈vl;tys, v ◁ᵥ ty) -∗ typed_val_expr (Call v (Val <$> vl)) T)%I.
   Class TypedCall (v : val) (P : iProp Σ) (vl : list val) (tys : list type) : Type :=
     typed_call_proof T : iProp_to_Prop (typed_call v P vl tys T).
   Class TypedCallVal (v : val) (ty : type) (vl : list val) (tys : list type) : Type :=
-    typed_call_val :> TypedCall v (v ◁ᵥ ty) vl tys.
+    typed_call_val :: TypedCall v (v ◁ᵥ ty) vl tys.
 
   Definition typed_copy_alloc_id (v1 : val) (P1 : iProp Σ) (v2 : val) (P2 : iProp Σ) (ot : op_type) (T : val → type → iProp Σ) : iProp Σ :=
     (P1 -∗ P2 -∗ typed_val_expr (CopyAllocId ot v1 v2) T).
@@ -146,7 +146,7 @@ Section judgements.
   Class TypedCopyAllocId (v1 : val) (P1 : iProp Σ) (v2 : val) (P2 : iProp Σ) (ot : op_type) : Type :=
     typed_copy_alloc_id_proof T : iProp_to_Prop (typed_copy_alloc_id v1 P1 v2 P2 ot T).
   Class TypedCopyAllocIdVal (v1 : val) (ty1 : type) (v2 : val) (ty2 : type) (ot : op_type) : Type :=
-    typed_copy_alloc_id_val :> TypedCopyAllocId v1 (v1 ◁ᵥ ty1) v2 (v2 ◁ᵥ ty2) ot.
+    typed_copy_alloc_id_val :: TypedCopyAllocId v1 (v1 ◁ᵥ ty1) v2 (v2 ◁ᵥ ty2) ot.
 
   Definition typed_cas (ot : op_type) (v1 : val) (P1 : iProp Σ) (v2 : val) (P2 : iProp Σ) (v3 : val) (P3 : iProp Σ)  (T : val → type → iProp Σ) : iProp Σ :=
     (P1 -∗ P2 -∗ P3 -∗ typed_val_expr (CAS ot v1 v2 v3) T).
@@ -825,7 +825,7 @@ Section typing.
     λ T, i2p (simplify_place_refine_l ty l β T).
 
   Lemma simplify_val_refine_l (ty : rtype) v T `{!Inhabited (ty.(rty_type))}:
-    (∀ x, v◁ᵥ (x @ ty) -∗ T) -∗ simplify_hyp (v◁ᵥty) T.
+    (∀ x, v◁ᵥ (x @ ty) -∗ T) -∗ simplify_hyp (v ◁ᵥ ty) T.
   Proof.
     iIntros "HT Hl". iDestruct "Hl" as (x) "Hv". by iApply "HT".
   Qed.
@@ -843,7 +843,7 @@ Section typing.
     λ T, i2p (simplify_goal_place_refine_r ty l β T).
 
   Lemma simplify_goal_val_refine_r (ty : rtype) v T `{!Inhabited (ty.(rty_type))} :
-    (∃ x, T (v ◁ᵥ (x @ ty))) -∗ simplify_goal (v◁ᵥty) T.
+    (∃ x, T (v ◁ᵥ (x @ ty))) -∗ simplify_goal (v ◁ᵥ ty) T.
   Proof. iDestruct 1 as (x) "HT". iExists _. iFrame. iIntros "?". by iExists _. Qed.
   Global Instance simplfy_goal_val_refine_r_inst (ty : rtype) v `{!Inhabited (ty.(rty_type))} :
     SimplifyGoalVal v ty (Some 10%N) :=

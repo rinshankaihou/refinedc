@@ -8,7 +8,7 @@ Import uPred.
 
 Class refinedcG Σ := RefinedCG {
   refinedcG_invG : invGS Σ;
-  refinedcG_gen_heapG :> heapG Σ
+  refinedcG_gen_heapG :: heapG Σ
 }.
 
 Global Instance c_irisG `{!refinedcG Σ} : irisGS c_lang Σ := {

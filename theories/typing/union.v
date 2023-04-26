@@ -206,7 +206,7 @@ Section union.
     λ T, i2p (type_place_variant K β T ul n l ty ti x).
 
   Lemma type_place_variant_neq K T ul n l ty ti x :
-    (⌜ul = ti.(ti_union_layout)⌝ ∗ ⌜ty.(ty_has_op_type) (UntypedOp (ti_member ti x).2) MCNone⌝ ∗ ∀ v, v◁ᵥty -∗ typed_place (GetMemberUnionPCtx ul n :: K) l Own (uninit ul) T) -∗
+    (⌜ul = ti.(ti_union_layout)⌝ ∗ ⌜ty.(ty_has_op_type) (UntypedOp (ti_member ti x).2) MCNone⌝ ∗ ∀ v, v ◁ᵥ ty -∗ typed_place (GetMemberUnionPCtx ul n :: K) l Own (uninit ul) T) -∗
     typed_place (GetMemberUnionPCtx ul n :: K) l Own (variant ti x ty) T.
   Proof.
     iIntros "[-> [% HP]]". rewrite /variant/=. iApply typed_place_subsume.

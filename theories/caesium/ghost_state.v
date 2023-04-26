@@ -20,13 +20,13 @@ Definition heapUR : ucmra :=
   gmapUR addr heap_cellR.
 
 Class heapG Σ := HeapG {
-  heap_heap_inG              :> inG Σ (authR heapUR);
+  heap_heap_inG              :: inG Σ (authR heapUR);
   heap_heap_name             : gname;
-  heap_alloc_meta_map_inG   :> ghost_mapG Σ alloc_id (Z * nat * alloc_kind);
+  heap_alloc_meta_map_inG   :: ghost_mapG Σ alloc_id (Z * nat * alloc_kind);
   heap_alloc_meta_map_name  : gname;
-  heap_alloc_alive_map_inG  :> ghost_mapG Σ alloc_id bool;
+  heap_alloc_alive_map_inG  :: ghost_mapG Σ alloc_id bool;
   heap_alloc_alive_map_name : gname;
-  heap_fntbl_inG             :> ghost_mapG Σ addr function;
+  heap_fntbl_inG             :: ghost_mapG Σ addr function;
   heap_fntbl_name            : gname;
 }.
 

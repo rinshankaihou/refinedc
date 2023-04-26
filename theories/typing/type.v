@@ -6,7 +6,7 @@ From refinedc.typing Require Export base annotations.
 Set Default Proof Using "Type".
 
 Class typeG Σ := TypeG {
-  type_heapG :> refinedcG Σ;
+  type_heapG :: refinedcG Σ;
 }.
 
 (*** type *)

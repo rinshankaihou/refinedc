@@ -8,11 +8,11 @@ From iris.program_logic Require Export language. (* must be last to get the corr
 Set Default Proof Using "Type".
 
 Class typePreG Σ := PreTypeG {
-  type_invG                      :> invGpreS Σ;
-  type_heap_heap_inG             :> inG Σ (authR heapUR);
-  type_heap_alloc_meta_map_inG  :> ghost_mapG Σ alloc_id (Z * nat * alloc_kind);
-  type_heap_alloc_alive_map_inG  :> ghost_mapG Σ alloc_id bool;
-  type_heap_fntbl_inG            :> ghost_mapG Σ addr function;
+  type_invG                      :: invGpreS Σ;
+  type_heap_heap_inG             :: inG Σ (authR heapUR);
+  type_heap_alloc_meta_map_inG  :: ghost_mapG Σ alloc_id (Z * nat * alloc_kind);
+  type_heap_alloc_alive_map_inG  :: ghost_mapG Σ alloc_id bool;
+  type_heap_fntbl_inG            :: ghost_mapG Σ addr function;
 }.
 
 Definition typeΣ : gFunctors :=
