@@ -16,8 +16,6 @@ opam repo add iris-dev "https://gitlab.mpi-sws.org/iris/opam.git"
 make builddep
 ```
 
-**NOTE:** Due to [this currently open issue](https://github.com/ocaml/opam-repository/issues/23436) in the mlgmpidl library, `make builddep` might fail on arm64-MacOS. The linked issue also contains a workaround for this issue.
-
 To build the files in this repository you also need to make sure that
 your shell contains the correct opam environment, e.g. by running:
 ```
