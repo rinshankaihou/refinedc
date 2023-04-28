@@ -34,7 +34,7 @@ variables:
 build-coq.8.17.0-timing:
   <<: *template
   variables:
-    OPAM_PINS: "coq version 8.17.0   cerberus git git+https://github.com/rems-project/cerberus.git#6667765c3f1faa2d0ca3427bb4ed5fef1c63cb2b   z3 version 4.8.11"
+    OPAM_PINS: "coq version 8.17.0   z3 version 4.8.11"
     DENY_WARNINGS: "1"
     OPAM_PKG: "1"
   only:
@@ -47,7 +47,7 @@ build-coq.8.17.0-timing:
 build-coq.8.17.0:
   <<: *template
   variables:
-    OPAM_PINS: "coq version 8.17.0   cerberus git git+https://github.com/rems-project/cerberus.git#6667765c3f1faa2d0ca3427bb4ed5fef1c63cb2b   z3 version 4.8.11"
+    OPAM_PINS: "coq version 8.17.0   z3 version 4.8.11"
     DENY_WARNINGS: "1"
   only:
   - /^ci/@iris/refinedc
@@ -57,7 +57,7 @@ trigger-iris.dev:
   variables:
     STDPP_REPO: "iris/stdpp"
     IRIS_REPO: "iris/iris"
-    OPAM_PINS: "coq version 8.17.0   git+https://gitlab.mpi-sws.org/$STDPP_REPO#$STDPP_REV   coq-iris.dev git git+https://gitlab.mpi-sws.org/$IRIS_REPO#$IRIS_REV  cerberus git git+https://github.com/rems-project/cerberus.git#6667765c3f1faa2d0ca3427bb4ed5fef1c63cb2b   z3 version 4.8.11"
+    OPAM_PINS: "coq version 8.17.0   git+https://gitlab.mpi-sws.org/$STDPP_REPO#$STDPP_REV   coq-iris.dev git git+https://gitlab.mpi-sws.org/$IRIS_REPO#$IRIS_REV  z3 version 4.8.11"
   except:
   only:
   - triggers
