@@ -36,6 +36,11 @@ clean: clean_generated
 	@dune clean
 .PHONY: clean
 
+# We cannot use builddep-pins as a dependency of builddep-opamfiles because the CI removes all pins.
+builddep-pins:
+	@opam pin add -n -y cerberus "git+https://github.com/rems-project/cerberus.git#6667765c3f1faa2d0ca3427bb4ed5fef1c63cb2b"
+.PHONY: builddep-pins
+
 builddep-opamfiles: builddep/refinedc-builddep.opam
 	@true
 .PHONY: builddep-opamfiles
@@ -73,9 +78,10 @@ builddep/refinedc-builddep.opam: refinedc.opam coq-lithium.opam Makefile
 #  1) dependencies of RefinedC are installed,
 #  2) they will remain satisfied even if other packages are updated/installed,
 #  3) we do not have to pin the RefinedC package itself (which takes time).
-builddep: builddep/refinedc-builddep.opam
-	@echo "# Installing package $^."
-	@opam install $(OPAMFLAGS) $^
+# Note: We also need to install cerberus to make sure that new pins are propagated correctly.
+builddep: builddep/refinedc-builddep.opam builddep-pins
+	@echo "# Installing package $<."
+	@opam install $(OPAMFLAGS) $< cerberus
 .PHONY: builddep
 
 DUNE_FILES = $(shell find theories/ -type f -name 'dune')
