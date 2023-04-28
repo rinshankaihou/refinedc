@@ -38,7 +38,7 @@ clean: clean_generated
 
 # We cannot use builddep-pins as a dependency of builddep-opamfiles because the CI removes all pins.
 builddep-pins:
-	@opam pin add -n -y cerberus "git+https://github.com/rems-project/cerberus.git#6667765c3f1faa2d0ca3427bb4ed5fef1c63cb2b"
+	@opam pin add -n -y cerberus "git+https://github.com/rems-project/cerberus.git#db06a0a296a34b0ca1b280484c0c07790799b6a4"
 .PHONY: builddep-pins
 
 builddep-opamfiles: builddep/refinedc-builddep.opam
