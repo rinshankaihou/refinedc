@@ -61,28 +61,28 @@ Section tyexist.
   Context `{!typeG Σ} {A : Type}.
 
   Lemma simplify_hyp_place_tyexists x l β (ty : A → _) T:
-    (l ◁ₗ{β} ty x -∗ T) -∗ simplify_hyp (l◁ₗ{β} x @ tyexists ty) T.
+    (l ◁ₗ{β} ty x -∗ T) ⊢ simplify_hyp (l◁ₗ{β} x @ tyexists ty) T.
   Proof. iIntros "HT Hl". rewrite tyexists_eq. by iApply "HT". Qed.
   Global Instance simplify_hyp_place_tyexists_inst x l β ty :
     SimplifyHypPlace l β (x @ tyexists ty)%I (Some 0%N) :=
     λ T, i2p (simplify_hyp_place_tyexists x l β ty T).
 
   Lemma simplify_goal_place_tyexists x l β (ty : A → _) T:
-    T (l ◁ₗ{β} ty x) -∗ simplify_goal (l◁ₗ{β} x @ tyexists ty) T.
+    T (l ◁ₗ{β} ty x) ⊢ simplify_goal (l◁ₗ{β} x @ tyexists ty) T.
   Proof. iIntros "HT". iExists _. iFrame. rewrite tyexists_eq. by iIntros "?". Qed.
   Global Instance simplify_goal_place_tyexists_inst x l β ty :
     SimplifyGoalPlace l β (x @ tyexists ty)%I (Some 0%N) :=
     λ T, i2p (simplify_goal_place_tyexists x l β ty T).
 
   Lemma simplify_hyp_val_tyexists x v ty T :
-    (v ◁ᵥ ty x -∗ T) -∗ simplify_hyp (v◁ᵥ x @ tyexists (A:=A) ty) T.
+    (v ◁ᵥ ty x -∗ T) ⊢ simplify_hyp (v◁ᵥ x @ tyexists (A:=A) ty) T.
   Proof. iIntros "HT Hl". rewrite tyexists_eq. by iApply "HT". Qed.
   Global Instance simplify_hyp_val_tyexists_inst x v ty:
     SimplifyHypVal v (x @ tyexists ty)%I (Some 0%N) :=
     λ T, i2p (simplify_hyp_val_tyexists x v ty T).
 
   Lemma simplify_goal_val_tyexists x v ty T:
-    T (v ◁ᵥ ty x) -∗ simplify_goal (v◁ᵥ x @ tyexists (A:=A) ty) T.
+    T (v ◁ᵥ ty x) ⊢ simplify_goal (v◁ᵥ x @ tyexists (A:=A) ty) T.
   Proof. iIntros "HT". iExists _. iFrame. rewrite tyexists_eq. by iIntros "?". Qed.
   Global Instance simplify_goal_val_tyexists_inst x v ty:
     SimplifyGoalVal v (x @ tyexists ty)%I (Some 0%N) :=

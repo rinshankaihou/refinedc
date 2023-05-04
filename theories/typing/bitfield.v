@@ -97,7 +97,7 @@ Section programs.
   (* int ↔ bitfield_raw *)
 
   Lemma subsume_val_int_bitfield_raw T it v n bv :
-    (⌜n = bv⌝ ∗ T) -∗ subsume (v ◁ᵥ n @ int it) (v ◁ᵥ bv @ bitfield_raw it) T.
+    (⌜n = bv⌝ ∗ T) ⊢ subsume (v ◁ᵥ n @ int it) (v ◁ᵥ bv @ bitfield_raw it) T.
   Proof.
     by iIntros "[-> $] ?".
   Qed.
@@ -105,7 +105,7 @@ Section programs.
     λ T, i2p (subsume_val_int_bitfield_raw T it v n bv).
 
   Lemma subsume_val_bitfield_raw_int T it v n bv :
-    (⌜bv = n⌝ ∗ T) -∗ subsume (v ◁ᵥ bv @ bitfield_raw it) (v ◁ᵥ n @ int it) T.
+    (⌜bv = n⌝ ∗ T) ⊢ subsume (v ◁ᵥ bv @ bitfield_raw it) (v ◁ᵥ n @ int it) T.
   Proof.
     by iIntros "[-> $] ?".
   Qed.
@@ -117,8 +117,8 @@ Section programs.
   Lemma type_arithop_bitfield_raw it v1 bv1 v2 bv2 T bv op:
     int_arithop_result it bv1 bv2 op = Some bv →
     (⌜bv1 ∈ it⌝ -∗ ⌜bv2 ∈ it⌝ -∗ ⌜int_arithop_sidecond it bv1 bv2 bv op⌝ ∗
-      (tactic_hint (normalize_bitfield bv) (λ norm, T (i2v norm it) (norm @ bitfield_raw it)))) -∗
-    typed_bin_op v1 (v1 ◁ᵥ bv1 @ bitfield_raw it) v2 (v2 ◁ᵥ bv2 @ bitfield_raw it) op (IntOp it) (IntOp it) T.
+      (tactic_hint (normalize_bitfield bv) (λ norm, T (i2v norm it) (norm @ bitfield_raw it))))
+    ⊢ typed_bin_op v1 (v1 ◁ᵥ bv1 @ bitfield_raw it) v2 (v2 ◁ᵥ bv2 @ bitfield_raw it) op (IntOp it) (IntOp it) T.
   Proof.
     iIntros "%Hop HT Hv1 Hv2". unfold tactic_hint, normalize_bitfield.
     iApply type_val_expr_mono_strong.
@@ -145,8 +145,8 @@ Section programs.
 
   Lemma type_not_bitfield_raw bv it v T:
     let bv' := if it_signed it then Z.lnot bv else Z_lunot (bits_per_int it) bv in
-    (⌜bv ∈ it⌝ -∗ T (i2v bv' it) (bv' @ bitfield_raw it)) -∗
-    typed_un_op v (v ◁ᵥ bv @ bitfield_raw it)%I (NotIntOp) (IntOp it) T.
+    (⌜bv ∈ it⌝ -∗ T (i2v bv' it) (bv' @ bitfield_raw it))
+    ⊢ typed_un_op v (v ◁ᵥ bv @ bitfield_raw it)%I (NotIntOp) (IntOp it) T.
   Proof.
     iIntros "HT Hv".
     iApply type_val_expr_mono_strong.
@@ -169,8 +169,8 @@ Section programs.
     | GeOp rit => Some (bool_decide (bv1 >= bv2), rit)
     | _ => None
     end = Some (b, i32) →
-    (⌜bv1 ∈ it⌝ -∗ ⌜bv2 ∈ it⌝ -∗ T (i2v (bool_to_Z b) i32) (b @ boolean i32)) -∗
-      typed_bin_op v1 (v1 ◁ᵥ bv1 @ bitfield_raw it) v2 (v2 ◁ᵥ bv2 @ bitfield_raw it) op (IntOp it) (IntOp it) T.
+    (⌜bv1 ∈ it⌝ -∗ ⌜bv2 ∈ it⌝ -∗ T (i2v (bool_to_Z b) i32) (b @ boolean i32))
+    ⊢ typed_bin_op v1 (v1 ◁ᵥ bv1 @ bitfield_raw it) v2 (v2 ◁ᵥ bv2 @ bitfield_raw it) op (IntOp it) (IntOp it) T.
   Proof.
     iIntros "%Hop HT Hv1 Hv2".
     iApply type_val_expr_mono_strong.
@@ -193,8 +193,8 @@ Section programs.
   Lemma type_arithop_bitfield_raw_int it v1 bv v2 n T bv' op:
     int_arithop_result it bv n op = Some bv' →
     (⌜bv ∈ it⌝ -∗ ⌜n ∈ it⌝ -∗ ⌜int_arithop_sidecond it bv n bv' op⌝ ∗
-      (tactic_hint (normalize_bitfield bv') (λ norm, T (i2v norm it) (norm @ bitfield_raw it)))) -∗
-      typed_bin_op v1 (v1 ◁ᵥ bv @ bitfield_raw it) v2 (v2 ◁ᵥ n @ int it) op (IntOp it) (IntOp it) T.
+      (tactic_hint (normalize_bitfield bv') (λ norm, T (i2v norm it) (norm @ bitfield_raw it))))
+     ⊢ typed_bin_op v1 (v1 ◁ᵥ bv @ bitfield_raw it) v2 (v2 ◁ᵥ n @ int it) op (IntOp it) (IntOp it) T.
   Proof.
     iIntros "%Hop HT Hv1 Hv2". unfold tactic_hint, normalize_bitfield.
     iApply type_val_expr_mono_strong.
@@ -214,8 +214,8 @@ Section programs.
   Lemma type_arithop_int_bitfield_raw it v1 n v2 bv T bv' op:
     int_arithop_result it n bv op = Some bv' →
     (⌜n ∈ it⌝ -∗ ⌜bv ∈ it⌝ -∗ ⌜int_arithop_sidecond it n bv bv' op⌝ ∗
-      (tactic_hint (normalize_bitfield bv') (λ norm, T (i2v norm it) (norm @ bitfield_raw it)))) -∗
-    typed_bin_op v1 (v1 ◁ᵥ n @ int it) v2 (v2 ◁ᵥ bv @ bitfield_raw it) op (IntOp it) (IntOp it) T.
+      (tactic_hint (normalize_bitfield bv') (λ norm, T (i2v norm it) (norm @ bitfield_raw it))))
+    ⊢ typed_bin_op v1 (v1 ◁ᵥ n @ int it) v2 (v2 ◁ᵥ bv @ bitfield_raw it) op (IntOp it) (IntOp it) T.
   Proof.
     iIntros "%Hop HT Hv1 Hv2". unfold tactic_hint, normalize_bitfield.
     iApply type_val_expr_mono_strong.
@@ -230,8 +230,8 @@ Section programs.
   Next Obligation. done. Qed.
 
   Lemma type_bitfield_raw_is_false it v1 v2 bv T :
-    (∃ a b, ⌜bv = bf_cons a 1 (bool_to_Z b) bf_nil⌝ ∗ ⌜0 ≤ a⌝ ∗ T (i2v (bool_to_Z (negb b)) i32) ((bool_to_Z (negb b) @ int i32))) -∗
-      typed_bin_op v1 (v1 ◁ᵥ 0 @ int it) v2 (v2 ◁ᵥ bv @ bitfield_raw it) (EqOp i32) (IntOp it) (IntOp it) T.
+    (∃ a b, ⌜bv = bf_cons a 1 (bool_to_Z b) bf_nil⌝ ∗ ⌜0 ≤ a⌝ ∗ T (i2v (bool_to_Z (negb b)) i32) ((bool_to_Z (negb b) @ int i32)))
+    ⊢ typed_bin_op v1 (v1 ◁ᵥ 0 @ int it) v2 (v2 ◁ᵥ bv @ bitfield_raw it) (EqOp i32) (IntOp it) (IntOp it) T.
   Proof.
     iIntros "HT Hv1 Hv2".
     iDestruct "HT" as (a b Hbv ?) "HT".
@@ -249,8 +249,8 @@ Section programs.
       λ T, i2p (type_bitfield_raw_is_false it v1 v2 bv T).
 
   Lemma type_bitfield_raw_is_true it v1 v2 bv T :
-    (∃ a b, ⌜bv = bf_cons a 1 (bool_to_Z b) bf_nil⌝ ∗ ⌜0 ≤ a⌝ ∗ T (i2v (bool_to_Z b) i32) ((bool_to_Z b) @ int i32)) -∗
-      typed_bin_op v1 (v1 ◁ᵥ 0 @ int it) v2 (v2 ◁ᵥ bv @ bitfield_raw it) (NeOp i32) (IntOp it) (IntOp it) T.
+    (∃ a b, ⌜bv = bf_cons a 1 (bool_to_Z b) bf_nil⌝ ∗ ⌜0 ≤ a⌝ ∗ T (i2v (bool_to_Z b) i32) ((bool_to_Z b) @ int i32))
+    ⊢ typed_bin_op v1 (v1 ◁ᵥ 0 @ int it) v2 (v2 ◁ᵥ bv @ bitfield_raw it) (NeOp i32) (IntOp it) (IntOp it) T.
   Proof.
     iIntros "HT Hv1 Hv2".
     iDestruct "HT" as (a b Hbv ?) "HT".
@@ -270,8 +270,8 @@ Section programs.
 
   Lemma type_if_bitfield_raw it n v T1 T2:
     destruct_hint (DHintDecide (n ≠ 0)) (DestructHintIfInt n)
-    (if decide (n ≠ 0) then T1 else T2) -∗
-    typed_if (IntOp it) v (v ◁ᵥ n @ bitfield_raw it) T1 T2.
+      (if decide (n ≠ 0) then T1 else T2)
+    ⊢ typed_if (IntOp it) v (v ◁ᵥ n @ bitfield_raw it) T1 T2.
   Proof. unfold bitfield_raw; simpl_type. apply type_if_int. Qed.
   Global Instance type_if_bitfield_inst n v it :
     TypedIf (IntOp it) v (v ◁ᵥ n @ bitfield_raw it)%I :=
@@ -280,16 +280,16 @@ Section programs.
   (* typing rules for bitfield: unfold to bitfield_raw *)
 
   Lemma simplify_hyp_place_bitfield l β R `{BitfieldDesc R} bv T :
-    (l ◁ₗ{β} bitfield_repr bv @ bitfield_raw bitfield_it -∗ T) -∗
-    simplify_hyp (l ◁ₗ{β} bv @ bitfield R) T.
+    (l ◁ₗ{β} bitfield_repr bv @ bitfield_raw bitfield_it -∗ T)
+    ⊢ simplify_hyp (l ◁ₗ{β} bv @ bitfield R) T.
   Proof. done. Qed.
   Global Instance simplify_hyp_place_bitfield_inst l β R `{BitfieldDesc R} bv :
     SimplifyHyp (l ◁ₗ{β} bv @ bitfield R)%I (Some 0%N) :=
     λ T, i2p (simplify_hyp_place_bitfield l β R bv T).
 
   Lemma simplify_goal_place_bitfield l β R `{BitfieldDesc R} bv T :
-    T (l ◁ₗ{β} bitfield_repr bv @ bitfield_raw bitfield_it) -∗
-    simplify_goal (l ◁ₗ{β} bv @ bitfield R) T.
+    T (l ◁ₗ{β} bitfield_repr bv @ bitfield_raw bitfield_it)
+    ⊢ simplify_goal (l ◁ₗ{β} bv @ bitfield R) T.
   Proof.
     iIntros "HT". iExists _. iFrame. by iIntros "?".
   Qed.
@@ -298,16 +298,16 @@ Section programs.
     λ T, i2p (simplify_goal_place_bitfield l β R bv T).
 
   Lemma simplify_hyp_val_bitfield v R `{BitfieldDesc R} bv T :
-    (v ◁ᵥ bitfield_repr bv @ bitfield_raw bitfield_it -∗ T) -∗
-    simplify_hyp (v ◁ᵥ bv @ bitfield R) T.
+    (v ◁ᵥ bitfield_repr bv @ bitfield_raw bitfield_it -∗ T)
+    ⊢ simplify_hyp (v ◁ᵥ bv @ bitfield R) T.
   Proof. done. Qed.
   Global Instance simplify_hyp_val_bitfield_inst v R `{BitfieldDesc R} bv :
     SimplifyHypVal v (bv @ bitfield R)%I (Some 0%N) :=
     λ T, i2p (simplify_hyp_val_bitfield v R bv T).
 
   Lemma simplify_goal_val_bitfield v R `{BitfieldDesc R} bv T :
-    T (v ◁ᵥ bitfield_repr bv @ bitfield_raw bitfield_it) -∗
-    simplify_goal (v ◁ᵥ bv @ bitfield R) T.
+    T (v ◁ᵥ bitfield_repr bv @ bitfield_raw bitfield_it)
+    ⊢ simplify_goal (v ◁ᵥ bv @ bitfield R) T.
   Proof.
     iIntros "HT". iExists _. iFrame. by iIntros "?".
   Qed.

@@ -56,8 +56,8 @@ Section tagged_ptr.
      {| rt_fic := FindValOrLoc v r.1 |}.
 
   Lemma subsume_tagged_ptr v r1 r2 n1 n2 β1 β2 ty1 ty2 T:
-    (⌜r1 = r2⌝ ∗ ⌜n1 = n2⌝ ∗ ⌜β1 = β2⌝ ∗ subsume (r1.1 ◁ₗ{β1} ty1) (r2.1 ◁ₗ{β2} ty2) T) -∗
-    subsume (v ◁ᵥ r1 @ tagged_ptr β1 n1 ty1) (v ◁ᵥ r2 @ tagged_ptr β2 n2 ty2) T.
+    (⌜r1 = r2⌝ ∗ ⌜n1 = n2⌝ ∗ ⌜β1 = β2⌝ ∗ subsume (r1.1 ◁ₗ{β1} ty1) (r2.1 ◁ₗ{β2} ty2) T)
+    ⊢ subsume (v ◁ᵥ r1 @ tagged_ptr β1 n1 ty1) (v ◁ᵥ r2 @ tagged_ptr β2 n2 ty2) T.
   Proof.
     iIntros "(->&->&->&HT) ($&$&$&$&?)". by iApply "HT".
   Qed.
@@ -68,8 +68,8 @@ Section tagged_ptr.
   Lemma subsume_frac_ptr_tagged_ptr l β (v : val) r n ty1 ty2 m T `{!LearnAlignment β ty1 m}:
     (⌜if m is Some m' then l `aligned_to` m' else True⌝ -∗
       ⌜l = r.1⌝ ∗ ⌜v = r.1 +ₗ r.2⌝ ∗ ⌜l `aligned_to` n⌝ ∗ ⌜0 ≤ r.2 < n⌝ ∗
-     ((l ◁ₗ{β} ty1 -∗ loc_in_bounds l n ∗ True) ∧ subsume (l ◁ₗ{β} ty1) (l ◁ₗ{β} ty2) T)) -∗
-    subsume (l ◁ₗ{β} ty1) (v ◁ᵥ r @ tagged_ptr β n ty2) T.
+     ((l ◁ₗ{β} ty1 -∗ loc_in_bounds l n ∗ True) ∧ subsume (l ◁ₗ{β} ty1) (l ◁ₗ{β} ty2) T))
+    ⊢ subsume (l ◁ₗ{β} ty1) (v ◁ᵥ r @ tagged_ptr β n ty2) T.
   Proof.
     iIntros "HT Hl".
     iDestruct (learnalign_learn with "Hl") as %?.
@@ -83,8 +83,8 @@ Section tagged_ptr.
     λ T, i2p (subsume_frac_ptr_tagged_ptr l β v r n ty1 ty2 m T).
 
   Lemma simplify_hyp_tagged_ptr_0 v r β n ty `{!CanSolve (r.2 = 0)} T:
-    (v ◁ᵥ r.1 @ frac_ptr β ty -∗ T) -∗
-    simplify_hyp (v ◁ᵥ r @ tagged_ptr β n ty) T.
+    (v ◁ᵥ r.1 @ frac_ptr β ty -∗ T)
+    ⊢ simplify_hyp (v ◁ᵥ r @ tagged_ptr β n ty) T.
   Proof.
     unfold CanSolve in *. destruct r as [l ?]. simpl in *. simplify_eq.
     iIntros "HT (->&%&%&?&?)". iApply "HT". rewrite /= shift_loc_0. unfold frac_ptr; simpl_type. by iFrame.
@@ -94,19 +94,17 @@ Section tagged_ptr.
     λ T, i2p (simplify_hyp_tagged_ptr_0 v r β n ty T).
 
   Lemma type_cast_tagged_ptr_intptr_val (v : val) (r : loc * Z) β (align : nat) it ty T:
-    (
-        ⌜v = r.1 +ₗ r.2⌝ -∗
-        ⌜aligned_to r.1 align⌝ -∗
-        ⌜0 ≤ r.2 < align⌝ -∗
-        ⌜min_alloc_start ≤ r.1.2 ∧ r.1.2 + align ≤ max_alloc_end⌝ -∗
-        loc_in_bounds r.1 align -∗
-        r.1 ◁ₗ{β} ty -∗
-        v ◁ᵥ r @ tagged_ptr β align (place r.1) -∗
-        ⌜(r.1.2 + r.2)%Z ∈ it⌝ ∗
-        ((alloc_alive_loc r.1 ∗ True) ∧
-        ∀ v, T v ((r.1 +ₗ r.2) @ intptr it))
-    ) -∗
-    typed_un_op v (v ◁ᵥ r @ tagged_ptr β align ty) (CastOp (IntOp it)) PtrOp T.
+    (⌜v = r.1 +ₗ r.2⌝ -∗
+     ⌜aligned_to r.1 align⌝ -∗
+     ⌜0 ≤ r.2 < align⌝ -∗
+     ⌜min_alloc_start ≤ r.1.2 ∧ r.1.2 + align ≤ max_alloc_end⌝ -∗
+     loc_in_bounds r.1 align -∗
+     r.1 ◁ₗ{β} ty -∗
+     v ◁ᵥ r @ tagged_ptr β align (place r.1) -∗
+     ⌜(r.1.2 + r.2)%Z ∈ it⌝ ∗
+     ((alloc_alive_loc r.1 ∗ True) ∧
+     ∀ v, T v ((r.1 +ₗ r.2) @ intptr it)))
+    ⊢ typed_un_op v (v ◁ᵥ r @ tagged_ptr β align ty) (CastOp (IntOp it)) PtrOp T.
   Proof.
     iIntros "HT (->&%&%&#Hlib&Hp)" (Φ) "HΦ".
     iDestruct (loc_in_bounds_ptr_in_range with "Hlib") as %Hrange.
@@ -128,14 +126,12 @@ Section tagged_ptr.
     λ T, i2p (type_cast_tagged_ptr_intptr_val v r β align it ty T).
 
   Lemma type_copy_aid_tagged_ptr v1 a it v2 r β align ty T:
-    (
-      v1 ◁ᵥ a @ int it -∗
-      v2 ◁ᵥ r @ tagged_ptr β align ty -∗
-      ⌜r.1.2 ≤ a ≤ r.1.2 + align⌝ ∗
-      (alloc_alive_loc r.1 ∗ True) ∧
-      T (val_of_loc (r.1.1, a)) (value PtrOp (val_of_loc (r.1.1, a)))
-    ) -∗
-    typed_copy_alloc_id v1 (v1 ◁ᵥ a @ int it) v2 (v2 ◁ᵥ r @ tagged_ptr β align ty) (IntOp it) T.
+    (v1 ◁ᵥ a @ int it -∗
+     v2 ◁ᵥ r @ tagged_ptr β align ty -∗
+     ⌜r.1.2 ≤ a ≤ r.1.2 + align⌝ ∗
+     (alloc_alive_loc r.1 ∗ True) ∧
+     T (val_of_loc (r.1.1, a)) (value PtrOp (val_of_loc (r.1.1, a))))
+    ⊢ typed_copy_alloc_id v1 (v1 ◁ᵥ a @ int it) v2 (v2 ◁ᵥ r @ tagged_ptr β align ty) (IntOp it) T.
   Proof.
     unfold int; simpl_type.
     iIntros "HT %Hv1 (->&%&%&#Hlib&Hp)" (Φ) "HΦ".

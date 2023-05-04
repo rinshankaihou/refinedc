@@ -82,14 +82,14 @@ Section automation.
   Context `{!typeG Σ}.
 
   Lemma tac_simpl_subst xs s fn ls Q R:
-    typed_stmt (W.to_stmt (W.subst_stmt xs s)) fn ls R Q -∗
-    typed_stmt (subst_stmt xs (W.to_stmt s)) fn ls R Q.
+    typed_stmt (W.to_stmt (W.subst_stmt xs s)) fn ls R Q
+    ⊢ typed_stmt (subst_stmt xs (W.to_stmt s)) fn ls R Q.
   Proof. by rewrite W.to_stmt_subst. Qed.
 
   Lemma tac_typed_single_block_rec P b Q fn ls R s:
     Q !! b = Some s →
-    (P ∗ accu (λ A, typed_block (P ∗ A) b fn ls R Q -∗ P -∗ A -∗ typed_stmt s fn ls R Q)) -∗
-    typed_stmt (Goto b) fn ls R Q.
+    (P ∗ accu (λ A, typed_block (P ∗ A) b fn ls R Q -∗ P -∗ A -∗ typed_stmt s fn ls R Q))
+    ⊢ typed_stmt (Goto b) fn ls R Q.
   Proof.
     iIntros (HQ) "[HP Hs]". iIntros (Hls). unfold accu, typed_block.
     iDestruct "Hs" as (A) "[HA #Hs]". iLöb as "Hl".

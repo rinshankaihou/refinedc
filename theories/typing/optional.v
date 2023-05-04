@@ -119,28 +119,28 @@ Section optional.
   Qed.
 
   Lemma subsume_optional_optty_ref b ty optty l β T:
-    ⌜¬ b⌝ ∗ T -∗ subsume (l ◁ₗ{β} optty) (l ◁ₗ{β} b @ optional ty optty) T.
+    ⌜¬ b⌝ ∗ T ⊢ subsume (l ◁ₗ{β} optty) (l ◁ₗ{β} b @ optional ty optty) T.
   Proof. iIntros "[Hb $] Hl". iRight. by iFrame. Qed.
   Global Instance subsume_optional_optty_ref_inst b ty optty l β:
     SubsumePlace l β (optty) (b @ optional ty optty)%I :=
     λ T, i2p (subsume_optional_optty_ref b ty optty l β T).
 
   Lemma subsume_optional_ty_ref b ty ty' optty l β T:
-    ⌜b⌝ ∗ subsume (l ◁ₗ{β} ty') (l ◁ₗ{β} ty) T -∗ subsume (l ◁ₗ{β} ty') (l ◁ₗ{β} b @ optional ty optty) T.
+    ⌜b⌝ ∗ subsume (l ◁ₗ{β} ty') (l ◁ₗ{β} ty) T ⊢ subsume (l ◁ₗ{β} ty') (l ◁ₗ{β} b @ optional ty optty) T.
   Proof. iIntros "[Hb Hsub] Hl". iDestruct ("Hsub" with "Hl") as "[? $]". iLeft. by iFrame. Qed.
   Global Instance subsume_optional_ty_ref_inst b ty ty' optty l β `{!OptionableAgree ty ty'}:
     SubsumePlace l β ty' (b @ optional ty optty)%I :=
     λ T, i2p (subsume_optional_ty_ref b ty ty' optty l β T).
 
   Lemma subsume_optional_val_optty_ref b ty optty v T:
-    ⌜¬ b⌝ ∗ T -∗ subsume (v ◁ᵥ optty) (v ◁ᵥ b @ optional ty optty) T.
+    ⌜¬ b⌝ ∗ T ⊢ subsume (v ◁ᵥ optty) (v ◁ᵥ b @ optional ty optty) T.
   Proof. iIntros "[Hb $] Hl". iRight. by iFrame. Qed.
   Global Instance subsume_optional_val_optty_ref_inst b ty optty v:
     SubsumeVal v (optty) (b @ optional ty optty)%I :=
     λ T, i2p (subsume_optional_val_optty_ref b ty optty v T).
 
   Lemma subsume_optional_val_ty_ref b ty ty' optty v T:
-    ⌜b⌝ ∗ subsume (v ◁ᵥ ty') (v ◁ᵥ ty) T -∗ subsume (v ◁ᵥ ty') (v ◁ᵥ b @ optional ty optty) T.
+    ⌜b⌝ ∗ subsume (v ◁ᵥ ty') (v ◁ᵥ ty) T ⊢ subsume (v ◁ᵥ ty') (v ◁ᵥ b @ optional ty optty) T.
   Proof. iIntros "[Hb Hsub] Hl". iDestruct ("Hsub" with "Hl") as "[? $]". iLeft. by iFrame. Qed.
   Global Instance subsume_optional_val_ty_ref_inst b ty ty' optty v `{!OptionableAgree ty ty'}:
     SubsumeVal v ty' (b @ optional ty optty)%I :=
@@ -153,8 +153,8 @@ Section optional.
   Lemma type_eq_optional_refined v1 v2 ty optty ot1 ot2 `{!Optionable ty optty ot1 ot2} T b :
     opt_pre ty v1 v2 ∧
     destruct_hint DHintInfo (DestructHintOptionalEq b) (⌜b⌝ -∗ v1 ◁ᵥ ty -∗ T (i2v (bool_to_Z false) i32) (false @ boolean i32)) ∧
-    destruct_hint DHintInfo (DestructHintOptionalEq (¬ b)) (⌜¬ b⌝ -∗ v1 ◁ᵥ optty -∗ T (i2v (bool_to_Z true) i32) (true @ boolean i32)) -∗
-      typed_bin_op v1 (v1 ◁ᵥ b @ (optional ty optty)) v2 (v2 ◁ᵥ optty) (EqOp i32) ot1 ot2 T.
+    destruct_hint DHintInfo (DestructHintOptionalEq (¬ b)) (⌜¬ b⌝ -∗ v1 ◁ᵥ optty -∗ T (i2v (bool_to_Z true) i32) (true @ boolean i32))
+    ⊢ typed_bin_op v1 (v1 ◁ᵥ b @ (optional ty optty)) v2 (v2 ◁ᵥ optty) (EqOp i32) ot1 ot2 T.
   Proof.
     unfold destruct_hint. iIntros "HT Hv1 Hv2" (Φ) "HΦ".
     iDestruct "Hv1" as "[[% Hv1]|[% Hv1]]".
@@ -188,9 +188,8 @@ Section optional.
     λ T, i2p (type_eq_optional_refined v1 v2 ty optty ot1 ot2 T b).
 
   Lemma type_eq_optional_neq v1 v2 ty optty ot1 ot2 `{!Optionable ty optty ot1 ot2} T :
-    opt_pre ty v1 v2 ∧
-    (∀ v, v1 ◁ᵥ ty -∗ T v (false @ boolean i32) ) -∗
-      typed_bin_op v1 (v1 ◁ᵥ ty) v2 (v2 ◁ᵥ optty) (EqOp i32) ot1 ot2 T.
+    opt_pre ty v1 v2 ∧ (∀ v, v1 ◁ᵥ ty -∗ T v (false @ boolean i32))
+    ⊢ typed_bin_op v1 (v1 ◁ᵥ ty) v2 (v2 ◁ᵥ optty) (EqOp i32) ot1 ot2 T.
   Proof.
     iIntros "HT Hv1 Hv2". iIntros (Φ) "HΦ".
     have [|v' Hv] := val_of_Z_is_Some None i32 (bool_to_Z false) => //.
@@ -212,8 +211,8 @@ Section optional.
   Lemma type_neq_optional v1 v2 ty optty ot1 ot2 `{!Optionable ty optty ot1 ot2} T b :
     opt_pre ty v1 v2 ∧
     destruct_hint DHintInfo (DestructHintOptionalNe b) (⌜b⌝ -∗ v1 ◁ᵥ ty -∗ T (i2v (bool_to_Z true) i32) (true @ boolean i32)) ∧
-    destruct_hint DHintInfo (DestructHintOptionalNe (¬ b)) (⌜¬ b⌝ -∗ v1 ◁ᵥ optty -∗ T (i2v (bool_to_Z false) i32) (false @ boolean i32)) -∗
-      typed_bin_op v1 (v1 ◁ᵥ b @ (optional ty optty)) v2 (v2 ◁ᵥ optty) (NeOp i32) ot1 ot2 T.
+    destruct_hint DHintInfo (DestructHintOptionalNe (¬ b)) (⌜¬ b⌝ -∗ v1 ◁ᵥ optty -∗ T (i2v (bool_to_Z false) i32) (false @ boolean i32))
+    ⊢ typed_bin_op v1 (v1 ◁ᵥ b @ (optional ty optty)) v2 (v2 ◁ᵥ optty) (NeOp i32) ot1 ot2 T.
   Proof.
     unfold destruct_hint. iIntros "HT Hv1 Hv2" (Φ) "HΦ".
     iDestruct "Hv1" as "[[% Hv1]|[% Hv1]]".
@@ -312,60 +311,62 @@ Section optionalO.
 
   (* TODO: Should we have more instances like this? E.g. for the goal? *)
   Lemma simpl_hyp_optionalO_Some A (ty : A → type) optty l β x T:
-    (l ◁ₗ{β} ty x -∗ T) -∗ simplify_hyp (l ◁ₗ{β} Some x @ optionalO ty optty) T.
+    (l ◁ₗ{β} ty x -∗ T) ⊢ simplify_hyp (l ◁ₗ{β} Some x @ optionalO ty optty) T.
   Proof. iIntros "HT Hl". by iApply "HT". Qed.
   Global Instance simpl_hyp_optionalO_Some_inst A (ty : A → type) optty l β x:
     SimplifyHypPlace l β (Some x @ optionalO ty optty) (Some 0%N) :=
     λ T, i2p (simpl_hyp_optionalO_Some A ty optty l β x T).
   Lemma simpl_hyp_optionalO_None A (ty : A → type) optty l β T:
-    (l ◁ₗ{β} optty -∗ T) -∗ simplify_hyp (l ◁ₗ{β} None @ optionalO ty optty) T.
+    (l ◁ₗ{β} optty -∗ T) ⊢ simplify_hyp (l ◁ₗ{β} None @ optionalO ty optty) T.
   Proof. iIntros "HT Hl". by iApply "HT". Qed.
   Global Instance simpl_hyp_optionalO_None_inst A (ty : A → type) optty l β:
     SimplifyHypPlace l β (None @ optionalO ty optty) (Some 0%N) :=
     λ T, i2p (simpl_hyp_optionalO_None A ty optty l β T).
   Lemma simpl_hyp_optionalO_Some_val A (ty : A → type) optty v x T:
-    (v ◁ᵥ ty x -∗ T) -∗ simplify_hyp (v ◁ᵥ Some x @ optionalO ty optty) T.
+    (v ◁ᵥ ty x -∗ T) ⊢ simplify_hyp (v ◁ᵥ Some x @ optionalO ty optty) T.
   Proof. iIntros "HT Hl". by iApply "HT". Qed.
   Global Instance simpl_hyp_optionalO_Some_val_inst A (ty : A → type) optty v x:
     SimplifyHypVal v (Some x @ optionalO ty optty) (Some 0%N) :=
     λ T, i2p (simpl_hyp_optionalO_Some_val A ty optty v x T).
   Lemma simpl_hyp_optionalO_None_val A (ty : A → type) optty v T:
-    (v ◁ᵥ optty -∗ T) -∗ simplify_hyp (v ◁ᵥ None @ optionalO ty optty) T.
+    (v ◁ᵥ optty -∗ T) ⊢ simplify_hyp (v ◁ᵥ None @ optionalO ty optty) T.
   Proof. iIntros "HT Hl". by iApply "HT". Qed.
   Global Instance simpl_hyp_optionalO_None_val_inst A (ty : A → type) optty v:
     SimplifyHypVal v (None @ optionalO ty optty) (Some 0%N) :=
     λ T, i2p (simpl_hyp_optionalO_None_val A ty optty v T).
 
   Lemma subsume_optionalO_optty A (ty : A → type) optty l β T b:
-    ⌜b = None⌝ ∗ T -∗ subsume (l ◁ₗ{β} optty) (l ◁ₗ{β} b @ optionalO ty optty) T.
+    ⌜b = None⌝ ∗ T ⊢ subsume (l ◁ₗ{β} optty) (l ◁ₗ{β} b @ optionalO ty optty) T.
   Proof. by iIntros "[-> $] Hl". Qed.
   Global Instance subsume_optionalO_optty_inst A (ty : A → type) optty l β b:
     SubsumePlace l β (optty) (b @ optionalO ty optty)%I | 10 :=
     λ T, i2p (subsume_optionalO_optty A ty optty l β T b).
 
   Lemma subsume_optionalO_ty A (ty : A → type) optty l β T b ty':
-    (⌜is_Some b⌝ ∗ ∀ x, ⌜b = Some x⌝ -∗ subsume (l ◁ₗ{β} ty') (l ◁ₗ{β} ty x) T) -∗ subsume (l ◁ₗ{β} ty') (l ◁ₗ{β} b @ optionalO ty optty) T.
+    (⌜is_Some b⌝ ∗ ∀ x, ⌜b = Some x⌝ -∗ subsume (l ◁ₗ{β} ty') (l ◁ₗ{β} ty x) T)
+    ⊢ subsume (l ◁ₗ{β} ty') (l ◁ₗ{β} b @ optionalO ty optty) T.
   Proof. iDestruct 1 as ([x ->]) "Hsub". iIntros "Hl". by iApply "Hsub". Qed.
   Global Instance subsume_optionalO_ty_inst A (ty : A → type) optty l β b ty' `{!∀ x, OptionableAgree (ty x) ty'}:
     SubsumePlace l β ty' (b @ optionalO ty optty)%I | 20 :=
     λ T, i2p (subsume_optionalO_ty A ty optty l β T b ty').
 
   Lemma subsume_optionalO_optty_val A (ty : A → type) optty v T b:
-    ⌜b = None⌝ ∗ T -∗ subsume (v ◁ᵥ optty) (v ◁ᵥ b @ optionalO ty optty) T.
+    ⌜b = None⌝ ∗ T ⊢ subsume (v ◁ᵥ optty) (v ◁ᵥ b @ optionalO ty optty) T.
   Proof. by iIntros "[-> $] Hl". Qed.
   Global Instance subsume_optionalO_optty_val_inst A (ty : A → type) optty v b:
     SubsumeVal v (optty) (b @ optionalO ty optty)%I | 10 :=
     λ T, i2p (subsume_optionalO_optty_val A ty optty v T b).
 
   Lemma subsume_optionalO_ty_val A (ty : A → type) optty v T b ty':
-    (⌜is_Some b⌝ ∗ ∀ x, ⌜b = Some x⌝ -∗ subsume (v ◁ᵥ ty') (v ◁ᵥ ty x) T) -∗ subsume (v ◁ᵥ ty') (v ◁ᵥ b @ optionalO ty optty) T.
+    (⌜is_Some b⌝ ∗ ∀ x, ⌜b = Some x⌝ -∗ subsume (v ◁ᵥ ty') (v ◁ᵥ ty x) T)
+    ⊢ subsume (v ◁ᵥ ty') (v ◁ᵥ b @ optionalO ty optty) T.
   Proof. iDestruct 1 as ([x ->]) "Hsub". iIntros "Hl". by iApply "Hsub". Qed.
   Global Instance subsume_optionalO_ty_val_inst A (ty : A → type) optty v b ty' `{!∀ x, OptionableAgree (ty x) ty'}:
     SubsumeVal v ty' (b @ optionalO ty optty)%I | 20 :=
     λ T, i2p (subsume_optionalO_ty_val A ty optty v T b ty').
 
   Lemma subsume_optional_optionalO_val ty optty b T v:
-    T -∗
+    T ⊢
     subsume (v ◁ᵥ b @ optional ty optty) (v ◁ᵥ optionalO (λ _ : (), ty) optty) T.
   Proof. unfold optional; simpl_type. iIntros "$ [[% ?]|[% ?]]"; [iExists (Some ())|iExists None]; iFrame. Qed.
   Global Instance subsume_optional_optionalO_val_inst ty optty b v :
@@ -378,8 +379,8 @@ Section optionalO.
   Lemma type_eq_optionalO A v1 v2 (ty : A → type) optty ot1 ot2 `{!∀ x, Optionable (ty x) optty ot1 ot2} T b `{!Inhabited A} :
     opt_pre (ty (default inhabitant b)) v1 v2 ∧
     destruct_hint (DHintDestruct _ b) DestructHintOptionalO
-      (∀ v, (if b  is Some x then v1 ◁ᵥ ty x else v1 ◁ᵥ optty) -∗ T v ((if b is Some x then false else true) @ boolean i32)) -∗
-      typed_bin_op v1 (v1 ◁ᵥ b @ optionalO ty optty) v2 (v2 ◁ᵥ optty) (EqOp i32) ot1 ot2 T.
+      (∀ v, (if b  is Some x then v1 ◁ᵥ ty x else v1 ◁ᵥ optty) -∗ T v ((if b is Some x then false else true) @ boolean i32))
+    ⊢ typed_bin_op v1 (v1 ◁ᵥ b @ optionalO ty optty) v2 (v2 ◁ᵥ optty) (EqOp i32) ot1 ot2 T.
   Proof.
     unfold destruct_hint. iIntros "HT Hv1 Hv2". iIntros (Φ) "HΦ".
     destruct b.
@@ -412,8 +413,8 @@ Section optionalO.
   Lemma type_neq_optionalO A v1 v2 (ty : A → type) optty ot1 ot2 `{!∀ x, Optionable (ty x) optty ot1 ot2} T b `{!Inhabited A} :
     opt_pre (ty (default inhabitant b)) v1 v2 ∧
     destruct_hint (DHintDestruct _ b) DestructHintOptionalO
-      (∀ v, (if b is Some x then v1 ◁ᵥ ty x else v1 ◁ᵥ optty) -∗ T v ((if b is Some x then true else false) @ boolean i32)) -∗
-      typed_bin_op v1 (v1 ◁ᵥ b @ optionalO ty optty) v2 (v2 ◁ᵥ optty) (NeOp i32) ot1 ot2 T.
+      (∀ v, (if b is Some x then v1 ◁ᵥ ty x else v1 ◁ᵥ optty) -∗ T v ((if b is Some x then true else false) @ boolean i32))
+    ⊢ typed_bin_op v1 (v1 ◁ᵥ b @ optionalO ty optty) v2 (v2 ◁ᵥ optty) (NeOp i32) ot1 ot2 T.
   Proof.
     unfold destruct_hint. iIntros "HT Hv1 Hv2". iIntros (Φ) "HΦ".
     destruct b.
@@ -443,8 +444,8 @@ Section optionalO.
     λ T, i2p (type_neq_optionalO A v1 v2 ty optty ot1 ot2 T b).
 
   Lemma read_optionalO_case A E l b (ty : A → type) optty ly mc (T : val → type → _) a:
-    destruct_hint (DHintDestruct _ b) DestructHintOptionalO (typed_read_end a E l Own (if b is Some x then ty x else optty) ly mc T) -∗
-      typed_read_end a E l Own (b @ optionalO ty optty) ly mc T.
+    destruct_hint (DHintDestruct _ b) DestructHintOptionalO (typed_read_end a E l Own (if b is Some x then ty x else optty) ly mc T)
+    ⊢ typed_read_end a E l Own (b @ optionalO ty optty) ly mc T.
   Proof. by destruct b. Qed.
   (* This should be tried very late *)
   Global Instance read_optionalO_case_inst A E l b (ty : A → type) optty ly mc a :

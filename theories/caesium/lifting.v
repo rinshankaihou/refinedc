@@ -1017,7 +1017,7 @@ Lemma stmt_wp_unfold s E Q Ψ  :
 Proof. by rewrite stmt_wp_eq. Qed.
 
 Lemma fupd_wps s E Q Ψ :
-  (|={E}=> WPs s @ E {{ Q, Ψ }}) -∗ WPs s @ E{{ Q, Ψ }}.
+  (|={E}=> WPs s @ E {{ Q, Ψ }}) ⊢ WPs s @ E{{ Q, Ψ }}.
 Proof.
   rewrite stmt_wp_unfold. iIntros "Hs" (? rf HQ) "HΨ".
   iApply fupd_wp. by iApply "Hs".

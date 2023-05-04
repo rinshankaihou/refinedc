@@ -18,8 +18,8 @@ Section union.
 
   Lemma type_place_uninit_union K β T ul n l:
     (∃ ly, ⌜layout_of_union_member n ul = Some ly⌝ ∗
-    typed_place (GetMemberUnionPCtx ul n :: K) l β (active_union ul n (uninit ly)) T) -∗
-    typed_place (GetMemberUnionPCtx ul n :: K) l β (uninit ul) T.
+    typed_place (GetMemberUnionPCtx ul n :: K) l β (active_union ul n (uninit ly)) T)
+    ⊢ typed_place (GetMemberUnionPCtx ul n :: K) l β (uninit ul) T.
   Proof.
     iDestruct 1 as (ly Hly) "HP".
     iIntros (Φ) "Hs HΦ" => /=.
@@ -34,8 +34,8 @@ Section union.
     λ T, i2p (type_place_uninit_union K β T ul n l).
 
   Lemma type_place_active_union K β T ul n l ty:
-    typed_place K (l at_union{ul}ₗ n) β ty (λ l2 β ty2 typ, T l2 β ty2 (λ t, active_union ul n (typ t))) -∗
-    typed_place (GetMemberUnionPCtx ul n :: K) l β (active_union ul n ty) T.
+    typed_place K (l at_union{ul}ₗ n) β ty (λ l2 β ty2 typ, T l2 β ty2 (λ t, active_union ul n (typ t)))
+    ⊢ typed_place (GetMemberUnionPCtx ul n :: K) l β (active_union ul n ty) T.
   Proof.
     iIntros "HP" (Φ) "Hs HΦ" => /=.
     iDestruct "Hs" as (ly ?) "Hpad".
@@ -107,16 +107,16 @@ Section union.
   Qed.
 
   Lemma subsume_int_tunion_tag ti x (n : Z) l β T:
-    ⌜ti.(ti_tag) x =@{Z} n⌝ ∗ T -∗
-    subsume (l ◁ₗ{β} n @ int size_t) (l ◁ₗ{β} tunion_tag ti x) T.
+    ⌜ti.(ti_tag) x =@{Z} n⌝ ∗ T
+    ⊢ subsume (l ◁ₗ{β} n @ int size_t) (l ◁ₗ{β} tunion_tag ti x) T.
   Proof. iIntros "[<- $] ?". by rewrite /tunion_tag/=. Qed.
   Global Instance subsume_int_tunion_tag_inst ti x (n : Z) l β:
     SubsumePlace l β (n @ int size_t)%I (tunion_tag ti x) :=
     λ T, i2p (subsume_int_tunion_tag ti x n l β T).
 
   Lemma subsume_tunion_tag ti x1 x2 l β T:
-    ⌜ti.(ti_tag) x1 = ti.(ti_tag) x2⌝ ∗ T -∗
-    subsume (l ◁ₗ{β} tunion_tag ti x1) (l ◁ₗ{β} tunion_tag ti x2) T.
+    ⌜ti.(ti_tag) x1 = ti.(ti_tag) x2⌝ ∗ T
+    ⊢ subsume (l ◁ₗ{β} tunion_tag ti x1) (l ◁ₗ{β} tunion_tag ti x2) T.
   Proof. rewrite /ty_own/=. iIntros "[-> $] $". Qed.
   Global Instance subsume_tunion_tag_inst ti x1 x2 l β:
     SubsumePlace l β (tunion_tag ti x1)%I (tunion_tag ti x2) :=
@@ -126,8 +126,8 @@ Section union.
   | DestructHintUnion (info : tunion_info).
 
   Lemma type_binop_tunion_tag_int ti x it v1 n v2 T op:
-    destruct_hint (DHintDestruct _ x) (DestructHintUnion ti) (typed_bin_op v1 (v1 ◁ᵥ ti.(ti_tag) x @ int size_t) v2 (v2 ◁ᵥ n @ int it) op (IntOp size_t) (IntOp it) T) -∗
-    typed_bin_op v1 (v1 ◁ᵥ tunion_tag ti x) v2 (v2 ◁ᵥ n @ int it) op (IntOp size_t) (IntOp it) T.
+    destruct_hint (DHintDestruct _ x) (DestructHintUnion ti) (typed_bin_op v1 (v1 ◁ᵥ ti.(ti_tag) x @ int size_t) v2 (v2 ◁ᵥ n @ int it) op (IntOp size_t) (IntOp it) T)
+    ⊢ typed_bin_op v1 (v1 ◁ᵥ tunion_tag ti x) v2 (v2 ◁ᵥ n @ int it) op (IntOp size_t) (IntOp it) T.
   Proof. by rewrite /(ty_own_val (tunion_tag _ _))/=. Qed.
   Global Instance type_binop_tunion_tag_int_eq_inst it v1 n v2 ti x:
     TypedBinOpVal v1 (tunion_tag ti x) v2 (n @ int it)%I (EqOp i32) (IntOp size_t) (IntOp it) :=
@@ -164,8 +164,8 @@ Section union.
 
   Lemma subsume_active_union_variant ti ul x l β ty1 ty2 T n:
     ⌜ti.(ti_union_layout) = ul⌝ ∗ ⌜(ti_member ti x).1 = n⌝ ∗
-      subsume (l at_union{ul}ₗ n ◁ₗ{β} ty1) (l at_union{ul}ₗ n ◁ₗ{β} ty2) T -∗
-    subsume (l ◁ₗ{β} active_union ul n ty1) (l ◁ₗ{β} variant ti x ty2) T.
+      subsume (l at_union{ul}ₗ n ◁ₗ{β} ty1) (l at_union{ul}ₗ n ◁ₗ{β} ty2) T
+    ⊢ subsume (l ◁ₗ{β} active_union ul n ty1) (l ◁ₗ{β} variant ti x ty2) T.
   Proof.
     iDestruct 1 as (<- <-) "HT". iDestruct 1 as (ly ->%layout_of_member_ti_member) "Hu". rewrite /variant/GetMemberUnionLoc/=.
     by iApply (padded_mono with "[$HT]").
@@ -176,8 +176,8 @@ Section union.
 
   Lemma subsume_variant_variant ti x1 x2 l β ty1 ty2 T:
     ⌜ti.(ti_tag) x1 = ti.(ti_tag) x2⌝ ∗ subsume (l at_union{ti.(ti_union_layout)}ₗ (ti_member ti x1).1 ◁ₗ{β} ty1)
-            (l at_union{ti.(ti_union_layout)}ₗ (ti_member ti x1).1 ◁ₗ{β} ty2) T -∗
-    subsume (l ◁ₗ{β} variant ti x1 ty1) (l ◁ₗ{β} variant ti x2 ty2) T.
+            (l at_union{ti.(ti_union_layout)}ₗ (ti_member ti x1).1 ◁ₗ{β} ty2) T
+    ⊢ subsume (l ◁ₗ{β} variant ti x1 ty1) (l ◁ₗ{β} variant ti x2 ty2) T.
   Proof.
     iDestruct 1 as (Htag) "HT". rewrite !/(ty_own (variant _ _ _))/=/ti_member Htag.
       by iApply (padded_mono with "[$HT]").
@@ -188,8 +188,8 @@ Section union.
 
   Lemma type_place_variant K β T ul n l ty ti x {Heq: TCEq (ti_member ti x).1 n} :
     ⌜ul = ti.(ti_union_layout)⌝ ∗
-     typed_place K (l at_union{ul}ₗ n) β ty (λ l2 β ty2 typ, T l2 β ty2 (λ t, variant ti x (typ t))) -∗
-    typed_place (GetMemberUnionPCtx ul n :: K) l β (variant ti x ty) T.
+     typed_place K (l at_union{ul}ₗ n) β ty (λ l2 β ty2 typ, T l2 β ty2 (λ t, variant ti x (typ t)))
+    ⊢ typed_place (GetMemberUnionPCtx ul n :: K) l β (variant ti x ty) T.
   Proof.
     move: Heq => /TCEq_eq <-.
     iIntros "[-> HP]" (Φ) "Hs HΦ" => /=.
@@ -206,8 +206,8 @@ Section union.
     λ T, i2p (type_place_variant K β T ul n l ty ti x).
 
   Lemma type_place_variant_neq K T ul n l ty ti x :
-    (⌜ul = ti.(ti_union_layout)⌝ ∗ ⌜ty.(ty_has_op_type) (UntypedOp (ti_member ti x).2) MCNone⌝ ∗ ∀ v, v ◁ᵥ ty -∗ typed_place (GetMemberUnionPCtx ul n :: K) l Own (uninit ul) T) -∗
-    typed_place (GetMemberUnionPCtx ul n :: K) l Own (variant ti x ty) T.
+    (⌜ul = ti.(ti_union_layout)⌝ ∗ ⌜ty.(ty_has_op_type) (UntypedOp (ti_member ti x).2) MCNone⌝ ∗ ∀ v, v ◁ᵥ ty -∗ typed_place (GetMemberUnionPCtx ul n :: K) l Own (uninit ul) T)
+    ⊢ typed_place (GetMemberUnionPCtx ul n :: K) l Own (variant ti x ty) T.
   Proof.
     iIntros "[-> [% HP]]". rewrite /variant/=. iApply typed_place_subsume.
     iApply subsume_padded_uninit. iSplit; [done|]. iIntros (v) "Hv".
@@ -246,7 +246,8 @@ Section tunion.
   Lemma simplify_hyp_tunion ti x l β T:
     (l ◁ₗ{β} struct ti.(ti_base_layout) [
          tunion_tag ti x;
-         variant ti x (ti.(ti_type) x) ] -∗ T) -∗ simplify_hyp (l◁ₗ{β} x @ tunion ti) T.
+         variant ti x (ti.(ti_type) x) ] -∗ T)
+    ⊢ simplify_hyp (l◁ₗ{β} x @ tunion ti) T.
   Proof. iIntros "HT Hl". by iApply "HT". Qed.
   Global Instance simplify_hyp_tunion_inst ti x l β :
     SimplifyHypPlace l β (x @ tunion ti)%I (Some 0%N) :=
@@ -255,7 +256,8 @@ Section tunion.
   Lemma simplify_goal_tunion ti x l β T:
     T (l ◁ₗ{β} struct ti.(ti_base_layout) [
          tunion_tag ti x;
-         variant ti x (ti.(ti_type) x) ]) -∗ simplify_goal (l◁ₗ{β} x @ tunion ti) T.
+         variant ti x (ti.(ti_type) x) ])
+    ⊢ simplify_goal (l◁ₗ{β} x @ tunion ti) T.
   Proof. iIntros "HT". iExists _. iFrame. by iIntros "?". Qed.
   Global Instance simplify_goal_tunion_inst ti x l β :
     SimplifyGoalPlace l β (x @ tunion ti)%I (Some 0%N) :=

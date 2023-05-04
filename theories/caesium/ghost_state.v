@@ -249,7 +249,10 @@ Section alloc_meta.
     alloc_same_range a1 a2 →
     a1.(al_kind) = a2.(al_kind) →
     alloc_meta id a1 -∗ alloc_meta id a2.
-  Proof. destruct a1 as [????], a2 as [????] => -[/= <- <-] <-. by rewrite alloc_meta_eq. Qed.
+  Proof.
+    destruct a1 as [????], a2 as [????] => -[/= <- <-] <-.
+    rewrite alloc_meta_eq. iIntros "$".
+  Qed.
 
   Lemma alloc_meta_agree id a1 a2 :
     alloc_meta id a1 -∗ alloc_meta id a2 -∗ ⌜alloc_same_range a1 a2⌝.
@@ -404,7 +407,8 @@ Section loc_in_bounds.
   Lemma loc_in_bounds_in_range_uintptr_t l n:
     loc_in_bounds l n -∗ ⌜l.2 ∈ uintptr_t⌝.
   Proof.
-    etrans; first by apply loc_in_bounds_ptr_in_range. iPureIntro.
+    iIntros "Hl". iDestruct (loc_in_bounds_ptr_in_range with "Hl") as %Hrange.
+    iPureIntro. move: Hrange.
     rewrite /min_alloc_start /max_alloc_end /bytes_per_addr /bytes_per_addr_log /=.
     move => [??]. split; cbn; first by lia.
     rewrite /max_int /= /int_modulus /bits_per_int /bytes_per_int /=. lia.
@@ -648,7 +652,7 @@ Section heap.
     ==∗ heap_ctx (<[l.2:=HeapCell aid (RSt (n2 + nf)) b]> h)
         ∗ heap_mapsto_mbyte_st (RSt n2) l aid q b.
   Proof.
-    intros Hσv. apply wand_intro_r. rewrite -!own_op to_heapUR_insert.
+    intros Hσv. do 2 apply wand_intro_r. rewrite left_id -!own_op to_heapUR_insert.
     eapply own_update, auth_update, singleton_local_update.
     { by rewrite /to_heapUR lookup_fmap Hσv. }
     apply prod_local_update_1, prod_local_update_2, csum_local_update_r.
@@ -692,7 +696,7 @@ Section heap.
     heap_ctx h -∗ heap_mapsto_mbyte_st st1 l aid 1%Qp b
     ==∗ heap_ctx (<[l.2:=HeapCell aid st2 b']> h) ∗ heap_mapsto_mbyte_st st2 l aid 1%Qp b'.
   Proof.
-    intros Hσv. apply wand_intro_r. rewrite -!own_op to_heapUR_insert.
+    intros Hσv. do 2 apply wand_intro_r. rewrite left_id -!own_op to_heapUR_insert.
     eapply own_update, auth_update, singleton_local_update.
     { by rewrite /to_heapUR lookup_fmap Hσv. }
     apply exclusive_local_update. by destruct st2.
@@ -794,7 +798,7 @@ Section alloc_alive.
   Lemma alloc_alive_loc_mono (l1 l2 : loc) :
     l1.1 = l2.1 →
     alloc_alive_loc l1 -∗ alloc_alive_loc l2.
-  Proof. by rewrite alloc_alive_loc_eq /alloc_alive_loc_def => ->. Qed.
+  Proof. rewrite alloc_alive_loc_eq /alloc_alive_loc_def => ->. by iIntros "$". Qed.
 
   Lemma heap_mapsto_alive_strong l :
     (|={⊤, ∅}=> (∃ q v, ⌜length v ≠ 0%nat⌝ ∗ l ↦{q} v)) -∗ alloc_alive_loc l.

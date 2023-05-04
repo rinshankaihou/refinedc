@@ -243,8 +243,8 @@ Section struct.
   Qed.
 
   Lemma struct_mono sl tys1 tys2 l β T:
-    ⌜length tys1 = length tys2⌝ ∗ foldr (λ e T, subsume (l at{sl}ₗ e.2.2 ◁ₗ{β} e.1) (l at{sl}ₗ e.2.2 ◁ₗ{β} e.2.1) T) T (zip tys1 (zip tys2 (field_names sl.(sl_members)))) -∗
-    subsume (l ◁ₗ{β} struct sl tys1) (l ◁ₗ{β} struct sl tys2) T.
+    ⌜length tys1 = length tys2⌝ ∗ foldr (λ e T, subsume (l at{sl}ₗ e.2.2 ◁ₗ{β} e.1) (l at{sl}ₗ e.2.2 ◁ₗ{β} e.2.1) T) T (zip tys1 (zip tys2 (field_names sl.(sl_members))))
+    ⊢ subsume (l ◁ₗ{β} struct sl tys1) (l ◁ₗ{β} struct sl tys2) T.
   Proof.
     iDestruct 1 as (Hlen) "H". iIntros "Hl".
     iDestruct (struct_focus with "Hl") as "[Hs Hc]".
@@ -264,8 +264,8 @@ Section struct.
   Lemma struct_mono_val sl tys1 tys2 v T:
     ⌜length tys1 = length tys2⌝ ∗ foldr (λ e T, ∀ v,
         subsume (v ◁ᵥ e.1) (v ◁ᵥ e.2) T) T
-         (zip tys1 tys2) -∗
-    subsume (v ◁ᵥ struct sl tys1) (v ◁ᵥ struct sl tys2) T.
+         (zip tys1 tys2)
+    ⊢ subsume (v ◁ᵥ struct sl tys1) (v ◁ᵥ struct sl tys2) T.
   Proof.
     iDestruct 1 as (Hlen) "H". iIntros "(%Hly&%Htys1&Hm)".
     rewrite /(ty_own_val (struct _ _))/= -!assoc.
@@ -287,8 +287,8 @@ Section struct.
   Lemma type_place_struct K β1 T tys sl n l :
     (∃ i ty1, ⌜field_index_of sl.(sl_members) n = Some i⌝ ∗
     ⌜tys !! i = Some ty1⌝ ∗
-    typed_place K (l at{sl}ₗ n) β1 ty1 (λ l2 β ty2 typ, T l2 β ty2 (λ t, struct sl (<[i := (typ t)]> tys)))) -∗
-    typed_place (GetMemberPCtx sl n :: K) l β1 (struct sl tys) T.
+    typed_place K (l at{sl}ₗ n) β1 ty1 (λ l2 β ty2 typ, T l2 β ty2 (λ t, struct sl (<[i := (typ t)]> tys))))
+    ⊢ typed_place (GetMemberPCtx sl n :: K) l β1 (struct sl tys) T.
   Proof.
     iDestruct 1 as (i ty1 Hi Hn) "HP".
     move: (Hi) => /field_index_of_to_index_of[? Hi2].
@@ -314,8 +314,8 @@ Section struct.
   Lemma type_struct_init sl fs T:
     foldr (λ '(n, ly) f, (λ tys, ∃ e : expr, ⌜(list_to_map fs : gmap _ _) !! n = Some e⌝ ∗
       typed_val_expr e (λ _ ty, ⌜ty.(ty_has_op_type) (UntypedOp ly) MCNone⌝ ∗ f (tys ++ [ty]))))
-    (λ tys, ∀ v, T v (struct sl tys)) (field_members sl.(sl_members)) [] -∗
-    typed_val_expr (StructInit sl fs) T.
+    (λ tys, ∀ v, T v (struct sl tys)) (field_members sl.(sl_members)) []
+    ⊢ typed_val_expr (StructInit sl fs) T.
   Proof.
     iIntros "He" (Φ) "HΦ". iApply wp_struct_init.
     iAssert ([∗ list] v';ty∈[];pad_struct ([@{option var_name * layout}]) [] (λ ly, uninit ly), (v' ◁ᵥ ty))%I as "-#Hvs". 1: done.
@@ -386,16 +386,16 @@ Section struct.
   Qed.
 
   Lemma uninit_struct_simpl_hyp l β (s : struct_layout) T:
-    (l ◁ₗ{β} (struct s (uninit <$> omap (λ '(n, ly), const ly <$> n) s.(sl_members))) -∗ T) -∗
-    simplify_hyp (l ◁ₗ{β} uninit s) T.
+    (l ◁ₗ{β} (struct s (uninit <$> omap (λ '(n, ly), const ly <$> n) s.(sl_members))) -∗ T)
+    ⊢ simplify_hyp (l ◁ₗ{β} uninit s) T.
   Proof. iIntros "HT Hl". rewrite uninit_struct_equiv. by iApply "HT". Qed.
   Global Instance uninit_struct_simpl_hyp_inst l β (s : struct_layout):
     SimplifyHypPlace l β (uninit s) (Some 0%N) :=
     λ T, i2p (uninit_struct_simpl_hyp l β s T).
 
   Lemma uninit_struct_simpl_goal l β (s : struct_layout) T:
-    T (l ◁ₗ{β} (struct s (uninit <$> omap (λ '(n, ly), const ly <$> n) s.(sl_members)))) -∗
-    simplify_goal (l ◁ₗ{β} uninit s) T.
+    T (l ◁ₗ{β} (struct s (uninit <$> omap (λ '(n, ly), const ly <$> n) s.(sl_members))))
+    ⊢ simplify_goal (l ◁ₗ{β} uninit s) T.
   Proof. iIntros "HT". iExists _. iFrame. iIntros "?". by rewrite uninit_struct_equiv. Qed.
   Global Instance uninit_struct_simpl_goal_inst l β (s : struct_layout):
     SimplifyGoalPlace l β (uninit s) (Some 50%N) :=

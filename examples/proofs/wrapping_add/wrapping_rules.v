@@ -10,8 +10,8 @@ Section type.
       ∃ n1 n2, subsume (v1 ◁ᵥ ty1) (v1 ◁ᵥ n1 @ int it1) (
                subsume (v2 ◁ᵥ ty2) (v2 ◁ᵥ n2 @ int it2) (
                (⌜n1 ∈ it1⌝ -∗ ⌜n2 ∈ it2⌝ -∗ ⌜it1 = it2⌝ ∗ ⌜it_signed it1 = false⌝ ∗ (
-               ∀ v, T v (((n1 + n2) `mod` int_modulus it1) @ int it1))))))) -∗
-    typed_macro_expr (WrappingAdd it1 it2) [e1 ; e2] T.
+               ∀ v, T v (((n1 + n2) `mod` int_modulus it1) @ int it1)))))))
+    ⊢ typed_macro_expr (WrappingAdd it1 it2) [e1 ; e2] T.
   Proof.
     iIntros "HT". rewrite /typed_macro_expr/WrappingAdd. iApply type_bin_op.
     iIntros (Φ) "HΦ". iApply "HT". iIntros (v1 ty1) "Hty1 HT". iApply ("HΦ" with "Hty1"). clear.

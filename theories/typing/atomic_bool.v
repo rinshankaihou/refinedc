@@ -61,8 +61,8 @@ Section programs.
   Context `{!typeG Σ}.
 
   Lemma subsume_atomic_bool_own_int l n it PT PF T:
-    (∃ b, subsume (l ◁ₗ n @ int it) (l ◁ₗ b @ boolean it) ((if b then PT else PF) ∗ T)) -∗
-    subsume (l ◁ₗ n @ int it) (l ◁ₗ atomic_bool it PT PF) T.
+    (∃ b, subsume (l ◁ₗ n @ int it) (l ◁ₗ b @ boolean it) ((if b then PT else PF) ∗ T))
+    ⊢ subsume (l ◁ₗ n @ int it) (l ◁ₗ atomic_bool it PT PF) T.
   Proof.
     iDestruct 1 as (b) "Hsub". iIntros "Hl".
     iDestruct ("Hsub" with "Hl") as "[? [? $]]".
@@ -73,8 +73,8 @@ Section programs.
     λ T, i2p (subsume_atomic_bool_own_int l n it PT PF T).
 
   Lemma subsume_atomic_bool_own_bool l (b : bool) it PT PF T:
-    ((if b then PT else PF) ∗ T) -∗
-    subsume (l ◁ₗ b @ boolean it) (l ◁ₗ atomic_bool it PT PF) T.
+    (if b then PT else PF) ∗ T
+    ⊢ subsume (l ◁ₗ b @ boolean it) (l ◁ₗ atomic_bool it PT PF) T.
   Proof. iIntros "[? $] Hl". iExists _. by iFrame. Qed.
   Global Instance subsume_atomic_bool_own_bool_inst l b it PT PF:
     Subsume (l ◁ₗ b @ boolean it)%I (l ◁ₗ atomic_bool it PT PF) :=
@@ -86,10 +86,8 @@ Section programs.
       destruct_hint (DHintDestruct bool b) tt (
         (if b then PT else PF) -∗
         (if b then PT else PF) ∗
-        T v (atomic_bool it PT PF) (b @ boolean it)
-      )
-    ) -∗
-    typed_read_end true ⊤ l β (atomic_bool it PT PF) ot mc T.
+        T v (atomic_bool it PT PF) (b @ boolean it)))
+    ⊢ typed_read_end true ⊤ l β (atomic_bool it PT PF) ot mc T.
   Proof.
     unfold destruct_hint. iIntros "[%Hot HT]".
     iApply typed_read_end_mono_strong; [done|]. destruct β.
@@ -120,9 +118,8 @@ Section programs.
       subsume (v ◁ᵥ ty) (v ◁ᵥ b @ boolean it) (
         (if b then PT else PF) ∗
         T (atomic_bool it PT PF)
-      )
-    ) -∗
-    typed_write_end true ⊤ ot v ty l β (atomic_bool it PT PF) T.
+      ))
+    ⊢ typed_write_end true ⊤ ot v ty l β (atomic_bool it PT PF) T.
   Proof.
     iIntros "[% [%bnew Hsub]]". iApply typed_write_end_mono_strong; [done|].
     iIntros "Hv Hl". iModIntro.
@@ -162,9 +159,8 @@ Section programs.
              T (val_of_bool false) (false @ builtin_boolean))
            )
         )
-      )
-    ) -∗
-    typed_cas ot l (l ◁ₗ{β} (atomic_bool it PT PF))%I lexp Pexp vnew Pnew T.
+      ))
+    ⊢ typed_cas ot l (l ◁ₗ{β} (atomic_bool it PT PF))%I lexp Pexp vnew Pnew T.
   Proof.
     iIntros "(%&%bexp&%bnew&Hsub) Hl Hlexp Hvnew".
     iDestruct ("Hsub" with "Hlexp") as "[Hlexp Hsub]".

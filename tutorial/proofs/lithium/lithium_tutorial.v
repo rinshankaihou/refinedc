@@ -13,8 +13,8 @@ Section lithium.
   Context `{!typeG Σ}.
 
   Axiom wp_add : ∀ n1 n2 Φ,
-      Φ (ValInt $ n1 + n2) -∗
-      WP ValInt n1 + ValInt n2 {{ Φ }}.
+      Φ (ValInt $ n1 + n2)
+      ⊢ WP ValInt n1 + ValInt n2 {{ Φ }}.
 
   Lemma ex1 :
     ⊢ ∀ n, ⌜n > 0⌝ -∗
@@ -113,8 +113,8 @@ Section lithium.
 
   (* Let's add a sidecondition to wp_add. *)
   Axiom wp_add2 : ∀ n1 n2 Φ,
-      ⌜n1 + n2 < 2 ^ 64⌝ ∗ Φ (ValInt $ n1 + n2) -∗
-      WP ValInt n1 + ValInt n2 {{ Φ }}.
+      ⌜n1 + n2 < 2 ^ 64⌝ ∗ Φ (ValInt $ n1 + n2)
+      ⊢ WP ValInt n1 + ValInt n2 {{ Φ }}.
 
   (* We need to update liEExpr. *)
   Ltac liEExpr ::=
@@ -157,8 +157,8 @@ Section lithium.
   Axiom wp_add3 : ∀ e1 e2 Φ,
     WP e1 {{ v1,
       WP e2 {{ v2, ∃ n1 n2,
-        ⌜v1 = ValInt n1⌝ ∗ ⌜v2 = ValInt n2⌝ ∗ Φ (ValInt $ n1 + n2) }} }} -∗
-    WP e1 + e2 {{ Φ }}.
+        ⌜v1 = ValInt n1⌝ ∗ ⌜v2 = ValInt n2⌝ ∗ Φ (ValInt $ n1 + n2) }} }}
+    ⊢ WP e1 + e2 {{ Φ }}.
 
   (* We need to update liEExpr. *)
   Ltac liEExpr ::=
@@ -184,8 +184,8 @@ Section lithium.
 
   (* Let's add a wp rule for values. *)
   Axiom wp_val : ∀ v Φ,
-      Φ v -∗
-      WP Val v {{ Φ }}.
+      Φ v
+      ⊢ WP Val v {{ Φ }}.
 
   Ltac liEExpr ::=
     match goal with
@@ -215,8 +215,8 @@ Section lithium.
       WP e2 {{ v2, ∃ n1 n2,
         ⌜v1 = ValInt n1⌝ ∗ ⌜v2 = ValInt n2⌝ ∗
         ⌜n1 + n2 < 2 ^ 64⌝ ∗
-        Φ (ValInt $ n1 + n2) }} }} -∗
-    WP e1 + e2 {{ Φ }}.
+        Φ (ValInt $ n1 + n2) }} }}
+    ⊢ WP e1 + e2 {{ Φ }}.
 
   Ltac liEExpr ::=
     match goal with
@@ -243,8 +243,8 @@ Section lithium.
 
   Axiom wp_load : ∀ e Φ,
     WP e {{ v, ∃ l,
-     ⌜v = ValLoc l⌝ ∗ l ↦ ValInt 5 ∗ (l ↦ ValInt 5 -∗ Φ (ValInt 5)) }} -∗
-    WP Load e {{ Φ }}.
+     ⌜v = ValLoc l⌝ ∗ l ↦ ValInt 5 ∗ (l ↦ ValInt 5 -∗ Φ (ValInt 5)) }}
+    ⊢ WP Load e {{ Φ }}.
 
   Ltac liEExpr ::=
     match goal with
@@ -267,8 +267,8 @@ Section lithium.
 
   Axiom wp_load2 : ∀ e Φ,
     WP e {{ v, ∃ l v',
-     ⌜v = ValLoc l⌝ ∗ l ↦ v' ∗ (l ↦ v' -∗ Φ v') }} -∗
-    WP Load e {{ Φ }}.
+     ⌜v = ValLoc l⌝ ∗ l ↦ v' ∗ (l ↦ v' -∗ Φ v') }}
+    ⊢ WP Load e {{ Φ }}.
 
   Ltac liEExpr ::=
     match goal with
@@ -303,8 +303,8 @@ Section lithium.
   Abort.
 
   Lemma subsume_mapsto l v1 v2 G:
-    ⌜v1 = v2⌝ ∗ G -∗
-    subsume (l ↦ v1) (l ↦ v2) G.
+    ⌜v1 = v2⌝ ∗ G
+    ⊢ subsume (l ↦ v1) (l ↦ v2) G.
   Proof. iIntros "[-> $] $". Qed.
   Global Instance subsume_mapsto_inst l v1 v2 :
     Subsume (l ↦ v1) (l ↦ v2) :=
@@ -557,8 +557,8 @@ Section lithium.
   should be transformed into (here we reduce proving the subsumption
   to proving equality between the numbers). *)
   Lemma subsume_myint l n n' G:
-    ⌜n = n'⌝ ∗ G -∗
-    subsume (l ◁ₗ myint n) (l ◁ₗ myint n') G.
+    ⌜n = n'⌝ ∗ G
+    ⊢ subsume (l ◁ₗ myint n) (l ◁ₗ myint n') G.
   Proof. iIntros "[-> HG]". iIntros "Hl". by iFrame. Qed.
 
   (** The [subsume_myint] needs to be registered with the Lithium
@@ -633,7 +633,7 @@ Section lithium.
         (** and the continuation G. *)
         G)
     )
-    -∗
+    ⊢
     subsume (l ◁ₗ myarray (<[i:=ty]> tys)) (l ◁ₗ myarray tys) G.
   Proof.
     (** This lemma is easy to prove using myarray_access. *)

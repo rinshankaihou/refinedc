@@ -27,11 +27,11 @@ Section coq_tactics.
   TODO: investigate this more
 *)
   Lemma tac_fast_apply {Δ} {P1 P2 : iProp Σ} :
-    (P1 -∗ P2) → envs_entails Δ P1 → envs_entails Δ P2.
+    (P1 ⊢ P2) → envs_entails Δ P1 → envs_entails Δ P2.
   Proof. by rewrite envs_entails_unseal => -> HP. Qed.
 
   Lemma tac_fast_apply_below_sep {Δ} {P1 P2 T : iProp Σ} :
-    (P1 -∗ P2) → envs_entails Δ (P1 ∗ T) → envs_entails Δ (P2 ∗ T).
+    (P1 ⊢ P2) → envs_entails Δ (P1 ∗ T) → envs_entails Δ (P2 ∗ T).
   Proof. by rewrite envs_entails_unseal => -> HP. Qed.
 
   Lemma tac_apply_i2p {Δ} {P : iProp Σ} (P' : iProp_to_Prop P) :
@@ -184,15 +184,15 @@ Section coq_tactics.
   Proof. by rewrite bi.sep_exist_r. Qed.
 
   Lemma tac_do_simplify_goal (n : N) (P : iProp Σ) T {SG : SimplifyGoal P (Some n)} :
-    (SG (λ P, P ∗ T)%I).(i2p_P) -∗ P ∗ T.
+    (SG (λ P, P ∗ T)%I).(i2p_P) ⊢ P ∗ T.
   Proof. iIntros "HP". iDestruct (i2p_proof with "HP") as (?) "(H&?&$)". by iApply "H". Qed.
 
   Lemma tac_intro_subsume_related P T {Hrel : RelatedTo P}:
-    find_in_context Hrel.(rt_fic) (λ x, subsume (Σ:=Σ) (Hrel.(rt_fic).(fic_Prop) x) P T) -∗ P ∗ T.
+    find_in_context Hrel.(rt_fic) (λ x, subsume (Σ:=Σ) (Hrel.(rt_fic).(fic_Prop) x) P T) ⊢ P ∗ T.
   Proof. iDestruct 1 as (x) "[HP HT]". by iApply "HT". Qed.
 
   Lemma tac_remove_inuit (P T : iProp Σ) `{!Persistent P} :
-    P ∗ T -∗ □ P ∗ T.
+    P ∗ T ⊢ □ P ∗ T.
   Proof. by iIntros "[#? $]". Qed.
 
   Lemma tac_do_accu Δ (f : iProp Σ → iProp Σ):
@@ -211,7 +211,7 @@ Section coq_tactics.
 
   Lemma tac_split_big_sepM {K A} `{!EqDecision K} `{!Countable K} (m : gmap K A) i x Φ (P : iProp Σ):
     m !! i = None →
-    (Φ i x -∗ ([∗ map] k ↦x∈m, Φ k x) -∗ P) -∗
+    (Φ i x -∗ ([∗ map] k ↦x∈m, Φ k x) -∗ P) ⊢
     ([∗ map] k ↦x∈<[i := x]>m, Φ k x) -∗ P.
   Proof.
     move => Hin. rewrite big_sepM_insert //.
@@ -219,12 +219,12 @@ Section coq_tactics.
   Qed.
 
   Lemma tac_big_andM_insert {A B} `{Countable A} (m : gmap A B) i n (Φ : _ → _→ iProp Σ) :
-    ⌜m !! i = None⌝ ∗ (Φ i n ∧ [∧ map] k↦v∈m, Φ k v) -∗
+    ⌜m !! i = None⌝ ∗ (Φ i n ∧ [∧ map] k↦v∈m, Φ k v) ⊢
     [∧ map] k↦v∈<[i:=n]>m, Φ k v.
   Proof. iIntros "[% HT]". by rewrite big_andM_insert. Qed.
 
   Lemma tac_big_andM_empty {A B} `{Countable A} (Φ : _ → _→ iProp Σ) :
-    True -∗ [∧ map] k↦v∈(∅ : gmap A B), Φ k v.
+    True ⊢ [∧ map] k↦v∈(∅ : gmap A B), Φ k v.
   Proof. iIntros "_". by rewrite big_andM_empty. Qed.
 
 End coq_tactics.

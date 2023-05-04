@@ -30,8 +30,8 @@ Section tyfold.
   Lemma simplify_hyp_place_tyfold_optional l β ls tys b T:
     (l ◁ₗ{β} (maybe2 cons tys) @ optionalO (λ '(ty, tys), tyexists (λ l2, tyexists (λ ls2,
        constrained (
-       own_constrained (tyown_constraint l2 (ls2 @ tyfold tys b)) (ty (place l2))) (⌜ls = l2::ls2⌝)))) b -∗ T) -∗
-    simplify_hyp (l◁ₗ{β} ls @ tyfold tys b) T.
+       own_constrained (tyown_constraint l2 (ls2 @ tyfold tys b)) (ty (place l2))) (⌜ls = l2::ls2⌝)))) b -∗ T)
+    ⊢ simplify_hyp (l◁ₗ{β} ls @ tyfold tys b) T.
   Proof.
     iIntros "HT Hl". iApply "HT". iDestruct "Hl" as (Hlen) "[Htys Hb]".
     destruct tys as [|ty tys], ls as [ |l' ls] => //=.
@@ -45,15 +45,15 @@ Section tyfold.
     λ T, i2p (simplify_hyp_place_tyfold_optional l β ls tys b T).
 
   Lemma simplify_goal_place_tyfold_nil l β ls b T:
-    T (⌜ls = []⌝ ∗ l ◁ₗ{β} b) -∗ simplify_goal (l◁ₗ{β} ls @ tyfold [] b) T.
+    T (⌜ls = []⌝ ∗ l ◁ₗ{β} b) ⊢ simplify_goal (l◁ₗ{β} ls @ tyfold [] b) T.
   Proof. iIntros "HT". iExists _. iFrame. iIntros "[-> Hl]". repeat iSplit => //. Qed.
   Global Instance simplify_goal_place_tyfold_nil_inst l β ls b:
     SimplifyGoalPlace l β (ls @ tyfold [] b) (Some 0%N) :=
     λ T, i2p (simplify_goal_place_tyfold_nil l β ls b T).
 
   Lemma simplify_goal_place_tyfold_cons l β ls ty tys b T:
-    T (∃ l2 ls2, ⌜ls = l2::ls2⌝ ∗ l ◁ₗ{β} (ty (place l2)) ∗ (l2 ◁ₗ{β} ls2 @ tyfold tys b)) -∗
-      simplify_goal (l◁ₗ{β} ls @ tyfold (ty :: tys) b) T.
+    T (∃ l2 ls2, ⌜ls = l2::ls2⌝ ∗ l ◁ₗ{β} (ty (place l2)) ∗ (l2 ◁ₗ{β} ls2 @ tyfold tys b))
+    ⊢ simplify_goal (l◁ₗ{β} ls @ tyfold (ty :: tys) b) T.
   Proof.
     iIntros "HT". iExists _. iFrame. iDestruct 1 as (l2 ls2 ->) "[Hl [% [Htys Hb]]]".
     iSplit => /=. 1: by iPureIntro; f_equal. iFrame.
@@ -65,8 +65,8 @@ Section tyfold.
     λ T, i2p (simplify_goal_place_tyfold_cons l β ls ty tys b T).
 
   Lemma subsume_tyfold_eq l β ls1 ls2 tys b1 b2 T :
-    (⌜ls1 = ls2⌝ ∗ subsume (default l (last ls1) ◁ₗ{β} b1) (default l (last ls1) ◁ₗ{β} b2) T) -∗
-    subsume (l ◁ₗ{β} ls1 @ tyfold tys b1) (l ◁ₗ{β} ls2 @ tyfold tys b2) T.
+    (⌜ls1 = ls2⌝ ∗ subsume (default l (last ls1) ◁ₗ{β} b1) (default l (last ls1) ◁ₗ{β} b2) T)
+    ⊢ subsume (l ◁ₗ{β} ls1 @ tyfold tys b1) (l ◁ₗ{β} ls2 @ tyfold tys b2) T.
   Proof. iIntros "[-> HT]". iDestruct 1 as (?) "[$ Hb]". by iDestruct ("HT" with "Hb") as "[$ $]". Qed.
   Global Instance subsume_tyfold_eq_inst l β ls1 ls2 tys b1 b2:
     Subsume (l ◁ₗ{β} ls1 @ tyfold tys b1)%I (l ◁ₗ{β} ls2 @ tyfold tys b2)%I :=
@@ -74,8 +74,8 @@ Section tyfold.
 
   Lemma subsume_tyfold_snoc A l β f ls1 ls2 tys (ty : A) b1 b2 T :
     (∃ l2, ⌜ls2 = ls1 ++ [l2]⌝ ∗ (default l (last ls1) ◁ₗ{β} b1 -∗
-        default l (last ls1) ◁ₗ{β} f ty (place l2) ∗ l2 ◁ₗ{β} b2 ∗ T)) -∗
-    subsume (l ◁ₗ{β} ls1 @ tyfold (f <$> tys) b1) (l ◁ₗ{β} ls2 @ tyfold (f <$> (tys ++ [ty])) b2) T.
+        default l (last ls1) ◁ₗ{β} f ty (place l2) ∗ l2 ◁ₗ{β} b2 ∗ T))
+    ⊢ subsume (l ◁ₗ{β} ls1 @ tyfold (f <$> tys) b1) (l ◁ₗ{β} ls2 @ tyfold (f <$> (tys ++ [ty])) b2) T.
   Proof.
     iDestruct 1 as (l2 ->) "Hd". iDestruct 1 as (Hlen) "(Htys&Hb)". rewrite fmap_app.
     iDestruct ("Hd" with "Hb") as "[Hb1 [Hb $]]". iSplit.

@@ -65,16 +65,16 @@ Section type.
   Next Obligation. iIntros (A γ n x ty v ot mt st ?) "Hl". by iApply ty_memcast_compat. Qed.
 
   Lemma tylocked_simplify_hyp_place A γ n x (ty : A → type) T l:
-    (l ◁ₗ ty x -∗ T)  -∗
-    simplify_hyp (l ◁ₗ tylocked_ex γ n x ty) T.
+    (l ◁ₗ ty x -∗ T)
+    ⊢ simplify_hyp (l ◁ₗ tylocked_ex γ n x ty) T.
   Proof. done. Qed.
   Global Instance tylocked_simplify_hyp_place_inst A γ n x (ty : A → type) l:
     SimplifyHypPlace l Own (tylocked_ex γ n x ty) (Some 0%N) :=
     λ T, i2p (tylocked_simplify_hyp_place A γ n x ty T l).
 
   Lemma tylocked_simplify_goal_place A γ n x (ty : A → type) T l:
-    T (l ◁ₗ ty x) -∗
-    simplify_goal (l ◁ₗ tylocked_ex γ n x ty) T.
+    T (l ◁ₗ ty x)
+    ⊢ simplify_goal (l ◁ₗ tylocked_ex γ n x ty) T.
   Proof. iIntros "HT". iExists _. iFrame. iIntros "$". Qed.
 
   Global Instance tylocked_simplify_goal_place_inst A γ n x (ty : A → type) l:
@@ -82,8 +82,8 @@ Section type.
     λ T, i2p (tylocked_simplify_goal_place A γ n x ty T l).
 
   Lemma tylocked_subsume A γ n x1 x2 (ty : A → type) l β T:
-    ⌜β = Own → x1 = x2⌝ ∗ T -∗
-    subsume (l ◁ₗ{β} tylocked_ex γ n x1 ty) (l ◁ₗ{β} tylocked_ex γ n x2 ty) T.
+    ⌜β = Own → x1 = x2⌝ ∗ T
+    ⊢ subsume (l ◁ₗ{β} tylocked_ex γ n x1 ty) (l ◁ₗ{β} tylocked_ex γ n x2 ty) T.
   Proof. iIntros "[% $] Hl". by destruct β; naive_solver. Qed.
   Global Instance tylocked_subsume_inst A γ n x1 x2 (ty : A → type) l β:
     Subsume (l ◁ₗ{β} tylocked_ex γ n x1 ty) (l ◁ₗ{β} tylocked_ex γ n x2 ty) | 10 :=
@@ -149,8 +149,8 @@ Section type.
   Lemma annot_unlock A l T β γ n ty (x : A):
     (find_in_context (FindDirect (lock_token γ)) (λ s : list string, ⌜n∉s⌝ ∗ (∀ x',
         lock_token γ (n :: s) -∗ tylocked_ex_token γ n l β ty -∗ ⌜β = Own → x = x'⌝ -∗
-                       l ◁ₗ ty x' -∗ T))) -∗
-    typed_annot_stmt UnlockA l (l ◁ₗ{β} tylocked_ex γ n x ty) T.
+                       l ◁ₗ ty x' -∗ T)))
+    ⊢ typed_annot_stmt UnlockA l (l ◁ₗ{β} tylocked_ex γ n x ty) T.
   Proof.
     iDestruct 1 as (s) "(Hs&%&HT)". iIntros "Hlocked".
     iMod (locked_open with "Hlocked Hs") as "Htok" => //.
@@ -167,8 +167,8 @@ Section type.
   Lemma type_annot_lock (l : loc) β ty γ T `{!WithLockId ty γ}:
     (find_in_context (FindDirect (lock_token γ)) (λ s : list string, foldr (λ t T,
         find_in_context (FindDirect (λ '(existT A (l2, ty)), tylocked_ex_token (A:=A) γ t l2 β ty)) (λ '(existT A (l2, ty)), ∃ x,
-          l2 ◁ₗ ty x ∗ (l2 ◁ₗ{β} tylocked_ex γ t x ty -∗ T))) (l ◁ₗ{β} ty -∗ lock_token γ [] -∗ T) s)) -∗
-    typed_annot_expr 1%nat LockA l (l ◁ₗ{β} ty) T.
+          l2 ◁ₗ ty x ∗ (l2 ◁ₗ{β} tylocked_ex γ t x ty -∗ T))) (l ◁ₗ{β} ty -∗ lock_token γ [] -∗ T) s))
+    ⊢ typed_annot_expr 1%nat LockA l (l ◁ₗ{β} ty) T.
   Proof.
     iIntros "H Hty".
     iDestruct "H" as (s) "[Htok Hs]".
@@ -184,7 +184,7 @@ Section type.
     λ T, i2p (type_annot_lock l β ty γ T).
 End type.
 
-(* TODO> DO something stronger, e.g. sealing? *)
+(* TODO: Do something stronger, e.g. sealing? *)
 Global Typeclasses Opaque tylocked_ex lock_token tylocked_ex_token.
 Notation tylocked γ n ty := (tylocked_ex γ n tt (λ _, ty)).
 Notation tylocked_token γ n l β ty := (tylocked_ex_token γ n l β (λ _ : unit, ty)).

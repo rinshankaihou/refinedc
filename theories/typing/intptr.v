@@ -77,9 +77,8 @@ Section programs.
       (loc_in_bounds p n ∗ True) ∧
       (⌜min_alloc_start ≤ p.2 ∧ p.2 + n ≤ max_alloc_end⌝ -∗
        ⌜p.2 ∈ it⌝ ∗
-         ((alloc_alive_loc p ∗ True) ∧ ∀ v, T v (p @ intptr it)))
-    ) -∗
-    typed_un_op p (p ◁ₗ{β} ty) (CastOp (IntOp it)) PtrOp T.
+         ((alloc_alive_loc p ∗ True) ∧ ∀ v, T v (p @ intptr it))))
+    ⊢ typed_un_op p (p ◁ₗ{β} ty) (CastOp (IntOp it)) PtrOp T.
   Proof.
     iIntros "[%n HT] Hp" (Φ) "HΦ".
     iDestruct (learnalign_learn with "Hp") as %?.
@@ -104,9 +103,8 @@ Section programs.
     (⌜min_alloc_start ≤ p.2 ∧ p.2 + n ≤ max_alloc_end⌝ -∗
       v ◁ᵥ p @ ptr n -∗
       ⌜p.2 ∈ it⌝ ∗
-       (alloc_alive_loc p ∗ True) ∧ ∀ v, T v (p @ intptr it)
-    ) -∗
-    typed_un_op v (v ◁ᵥ p @ ptr n) (CastOp (IntOp it)) PtrOp T.
+       (alloc_alive_loc p ∗ True) ∧ ∀ v, T v (p @ intptr it))
+    ⊢ typed_un_op v (v ◁ᵥ p @ ptr n) (CastOp (IntOp it)) PtrOp T.
   Proof.
     unfold ptr; simpl_type.
     iIntros "HT [-> #Hlib]" (Φ) "HΦ".
@@ -127,8 +125,8 @@ Section programs.
     λ T, i2p (type_cast_ptr_intptr_val v p it n T).
 
   Lemma type_cast_intptr_ptr p v it T:
-    ((alloc_alive_loc p ∗ True) ∧ T (val_of_loc p) (p @ frac_ptr Own (place p))) -∗
-    typed_un_op v (v ◁ᵥ p @ intptr it) (CastOp PtrOp) (IntOp it) T.
+    ((alloc_alive_loc p ∗ True) ∧ T (val_of_loc p) (p @ frac_ptr Own (place p)))
+    ⊢ typed_un_op v (v ◁ᵥ p @ intptr it) (CastOp PtrOp) (IntOp it) T.
   Proof.
     iIntros "HT (%aid&%&%&%&#Hlib)" (Φ) "HΦ".
     destruct p; simplify_eq /=.
@@ -145,8 +143,8 @@ Section programs.
   Proof. iIntros "(%aid&%&%&%&#Hlib)". unfold int; simpl_type. by iPureIntro. Qed.
 
   Lemma subsume_intptr_int_val v it (n : Z) (p : loc) T:
-    ⌜n = p.2⌝ ∗ T -∗
-    subsume (v ◁ᵥ p @ intptr it) (v ◁ᵥ n @ int it) T.
+    ⌜n = p.2⌝ ∗ T
+    ⊢ subsume (v ◁ᵥ p @ intptr it) (v ◁ᵥ n @ int it) T.
   Proof.
     iIntros "[-> $]". iApply intptr_wand_int.
   Qed.
@@ -155,8 +153,8 @@ Section programs.
     λ T, i2p (subsume_intptr_int_val v it n p T).
 
   Lemma subsume_intptr_int_place l β it n p T:
-    ⌜n = p.2⌝ ∗ T -∗
-    subsume (l ◁ₗ{β} p @ intptr it) (l ◁ₗ{β} n @ int it) T.
+    ⌜n = p.2⌝ ∗ T
+    ⊢ subsume (l ◁ₗ{β} p @ intptr it) (l ◁ₗ{β} n @ int it) T.
   Proof.
     iIntros "[-> $]". rewrite /ty_own /=. iIntros "(%v&%aid&%&%&%&%&?&?)".
     iExists v. by iFrame.
@@ -166,8 +164,8 @@ Section programs.
     λ T, i2p (subsume_intptr_int_place l β it n p T).
 
   Lemma typed_un_op_intptr it v l op T:
-    typed_un_op v (v ◁ᵥ l.2 @ int    it) op (IntOp it) T -∗
-    typed_un_op v (v ◁ᵥ l   @ intptr it) op (IntOp it) T.
+      typed_un_op v (v ◁ᵥ l.2 @ int    it) op (IntOp it) T
+    ⊢ typed_un_op v (v ◁ᵥ l   @ intptr it) op (IntOp it) T.
   Proof.
     iIntros "HT". iApply (typed_un_op_wand with "HT"). iApply intptr_wand_int.
   Qed.
@@ -176,8 +174,8 @@ Section programs.
     λ T, i2p (typed_un_op_intptr it v l op T).
 
   Lemma typed_bin_op_intptr_l it v1 l v2 ty op ot T:
-    typed_bin_op v1 (v1 ◁ᵥ l.2 @ int    it) v2 (v2 ◁ᵥ ty) op (IntOp it) ot T -∗
-    typed_bin_op v1 (v1 ◁ᵥ l   @ intptr it) v2 (v2 ◁ᵥ ty) op (IntOp it) ot T.
+      typed_bin_op v1 (v1 ◁ᵥ l.2 @ int    it) v2 (v2 ◁ᵥ ty) op (IntOp it) ot T
+    ⊢ typed_bin_op v1 (v1 ◁ᵥ l   @ intptr it) v2 (v2 ◁ᵥ ty) op (IntOp it) ot T.
   Proof.
     iIntros "HT". iApply (typed_bin_op_wand with "HT"); last by iIntros "$".
     iApply intptr_wand_int.
@@ -187,8 +185,8 @@ Section programs.
     λ T, i2p (typed_bin_op_intptr_l it v1 l v2 ty op ot T).
 
   Lemma typed_bin_op_intptr_r it v1 ty v2 l op ot T:
-    typed_bin_op v1 (v1 ◁ᵥ ty) v2 (v2 ◁ᵥ l.2 @ int    it) op ot (IntOp it) T -∗
-    typed_bin_op v1 (v1 ◁ᵥ ty) v2 (v2 ◁ᵥ l   @ intptr it) op ot (IntOp it) T.
+      typed_bin_op v1 (v1 ◁ᵥ ty) v2 (v2 ◁ᵥ l.2 @ int    it) op ot (IntOp it) T
+    ⊢ typed_bin_op v1 (v1 ◁ᵥ ty) v2 (v2 ◁ᵥ l   @ intptr it) op ot (IntOp it) T.
   Proof.
     iIntros "HT". iApply (typed_bin_op_wand with "HT"); first by iIntros "$".
     iApply intptr_wand_int.

@@ -79,7 +79,7 @@ Section programs.
 
   (*** int *)
   Lemma type_val_int n it T:
-    ⌜n ∈ it⌝ ∗ T (n @ (int it)) -∗ typed_value (i2v n it) T.
+    ⌜n ∈ it⌝ ∗ T (n @ (int it)) ⊢ typed_value (i2v n it) T.
   Proof.
     iIntros "[%Hn HT]".
     move: Hn => /(val_of_Z_is_Some None) [v Hv].
@@ -103,8 +103,8 @@ Section programs.
     | GeOp rit => Some (bool_decide (n1 >= n2), rit)
     | _ => None
     end = Some (b, i32) →
-    (⌜n1 ∈ it⌝ -∗ ⌜n2 ∈ it⌝ -∗ T (i2v (bool_to_Z b) i32) (b @ boolean i32)) -∗
-      typed_bin_op v1 (v1 ◁ᵥ n1 @ int it) v2 (v2 ◁ᵥ n2 @ int it) op (IntOp it) (IntOp it) T.
+    (⌜n1 ∈ it⌝ -∗ ⌜n2 ∈ it⌝ -∗ T (i2v (bool_to_Z b) i32) (b @ boolean i32))
+    ⊢ typed_bin_op v1 (v1 ◁ᵥ n1 @ int it) v2 (v2 ◁ᵥ n2 @ int it) op (IntOp it) (IntOp it) T.
   Proof.
     iIntros "%Hop HT %Hv1 %Hv2 %Φ HΦ".
     iDestruct ("HT" with "[] []" ) as "HT".
@@ -138,8 +138,8 @@ Section programs.
 
   Lemma type_arithop_int_int it v1 n1 v2 n2 T n op:
     int_arithop_result it n1 n2 op = Some n →
-    (⌜n1 ∈ it⌝ -∗ ⌜n2 ∈ it⌝ -∗ ⌜int_arithop_sidecond it n1 n2 n op⌝ ∗ T (i2v n it) (n @ int it)) -∗
-      typed_bin_op v1 (v1 ◁ᵥ n1 @ int it) v2 (v2 ◁ᵥ n2 @ int it) op (IntOp it) (IntOp it) T.
+    (⌜n1 ∈ it⌝ -∗ ⌜n2 ∈ it⌝ -∗ ⌜int_arithop_sidecond it n1 n2 n op⌝ ∗ T (i2v n it) (n @ int it))
+    ⊢ typed_bin_op v1 (v1 ◁ᵥ n1 @ int it) v2 (v2 ◁ᵥ n2 @ int it) op (IntOp it) (IntOp it) T.
   Proof.
     iIntros "%Hop HT %Hv1 %Hv2 %Φ HΦ".
     iDestruct ("HT" with "[] []" ) as (Hsc) "HT".
@@ -184,8 +184,8 @@ Section programs.
 
   Lemma type_if_int it n v T1 T2:
     destruct_hint (DHintDecide (n ≠ 0)) (DestructHintIfInt n)
-    (if decide (n ≠ 0) then T1 else T2) -∗
-    typed_if (IntOp it) v (v ◁ᵥ n @ int it) T1 T2.
+      (if decide (n ≠ 0) then T1 else T2)
+    ⊢ typed_if (IntOp it) v (v ◁ᵥ n @ int it) T1 T2.
   Proof.
     unfold destruct_hint. iIntros "Hs %Hb" => /=.
     iExists n. iSplit; first done. by do !case_decide.
@@ -194,8 +194,8 @@ Section programs.
     λ T1 T2, i2p (type_if_int it n v T1 T2).
 
   Lemma type_assert_int it n s Q fn ls R v :
-    (⌜n ≠ 0⌝ ∗ typed_stmt s fn ls R Q) -∗
-    typed_assert (IntOp it) v (v ◁ᵥ n @ int it) s fn ls R Q.
+    (⌜n ≠ 0⌝ ∗ typed_stmt s fn ls R Q)
+    ⊢ typed_assert (IntOp it) v (v ◁ᵥ n @ int it) s fn ls R Q.
   Proof. iIntros "[% Hs] %Hb". iExists _. by iFrame. Qed.
   Global Instance type_assert_int_inst it n v : TypedAssert (IntOp it) v (v ◁ᵥ n @ int it)%I :=
     λ s fn ls R Q, i2p (type_assert_int _ _ _ _ _ _ _ _).
@@ -208,8 +208,8 @@ Section programs.
     ([∧ map] i↦mi ∈ m, destruct_hint DHintInfo (DestructHintSwitchIntCase i) (
              ⌜n = i⌝ -∗ ∃ s, ⌜ss !! mi = Some s⌝ ∗ typed_stmt s fn ls R Q)) ∧
     (destruct_hint DHintInfo (DestructHintSwitchIntDefault) (
-                     ⌜n ∉ (map_to_list m).*1⌝ -∗ typed_stmt def fn ls R Q)) -∗
-    typed_switch v (n @ int it) it m ss def fn ls R Q.
+                     ⌜n ∉ (map_to_list m).*1⌝ -∗ typed_stmt def fn ls R Q))
+    ⊢ typed_switch v (n @ int it) it m ss def fn ls R Q.
   Proof.
     unfold destruct_hint. iIntros "HT %Hv". iExists n. iSplit; first done.
     iInduction m as [] "IH" using map_ind; simplify_map_eq => //.
@@ -225,8 +225,8 @@ Section programs.
     λ m ss def fn ls R Q, i2p (type_switch_int n it m ss def Q fn ls R v).
 
   Lemma type_neg_int n it v T:
-    (⌜n ∈ it⌝ -∗ ⌜it.(it_signed)⌝ ∗ ⌜n ≠ min_int it⌝ ∗ T (i2v (-n) it) ((-n) @ int it)) -∗
-    typed_un_op v (v ◁ᵥ n @ int it)%I (NegOp) (IntOp it) T.
+    (⌜n ∈ it⌝ -∗ ⌜it.(it_signed)⌝ ∗ ⌜n ≠ min_int it⌝ ∗ T (i2v (-n) it) ((-n) @ int it))
+    ⊢ typed_un_op v (v ◁ᵥ n @ int it)%I (NegOp) (IntOp it) T.
   Proof.
     iIntros "HT %Hv %Φ HΦ". move: (Hv) => /val_to_Z_in_range ?.
     iDestruct ("HT" with "[//]") as (Hs Hn) "HT".
@@ -243,8 +243,8 @@ Section programs.
     λ T, i2p (type_neg_int n it v T).
 
   Lemma type_cast_int n it1 it2 v T:
-    (⌜n ∈ it1⌝ -∗ ⌜n ∈ it2⌝ ∗ ∀ v, T v (n @ int it2)) -∗
-    typed_un_op v (v ◁ᵥ n @ int it1)%I (CastOp (IntOp it2)) (IntOp it1) T.
+    (⌜n ∈ it1⌝ -∗ ⌜n ∈ it2⌝ ∗ ∀ v, T v (n @ int it2))
+    ⊢ typed_un_op v (v ◁ᵥ n @ int it1)%I (CastOp (IntOp it2)) (IntOp it1) T.
   Proof.
     iIntros "HT %Hv %Φ HΦ".
     iDestruct ("HT" with "[]") as ([v' Hv']%(val_of_Z_is_Some (val_to_byte_prov v))) "HT".
@@ -258,8 +258,8 @@ Section programs.
 
   Lemma type_not_int n1 it v1 T:
     let n := if it_signed it then Z.lnot n1 else Z_lunot (bits_per_int it) n1 in
-    (⌜n1 ∈ it⌝ -∗ T (i2v n it) (n @ int it)) -∗
-    typed_un_op v1 (v1 ◁ᵥ n1 @ int it)%I (NotIntOp) (IntOp it) T.
+    (⌜n1 ∈ it⌝ -∗ T (i2v n it) (n @ int it))
+    ⊢ typed_un_op v1 (v1 ◁ᵥ n1 @ int it)%I (NotIntOp) (IntOp it) T.
   Proof.
     iIntros "%n HT %Hv1 %Φ HΦ".
     move: (Hv1) => /val_to_Z_in_range Hn1.
@@ -318,8 +318,8 @@ Section programs.
 
   (*** int <-> bool *)
   Lemma subsume_int_boolean_place l β n b it T:
-    ⌜n = bool_to_Z b⌝ ∗ T -∗
-    subsume (l ◁ₗ{β} n @ int it) (l ◁ₗ{β} b @ boolean it) T.
+    ⌜n = bool_to_Z b⌝ ∗ T
+    ⊢ subsume (l ◁ₗ{β} n @ int it) (l ◁ₗ{β} b @ boolean it) T.
   Proof.
     iIntros "[-> $] Hint". iDestruct "Hint" as (???) "?".
     iExists _, _. iFrame. iSplit; first done. iSplit; last done. by destruct b.
@@ -329,16 +329,16 @@ Section programs.
     λ T, i2p (subsume_int_boolean_place l β n b it T).
 
   Lemma subsume_int_boolean_val v n b it T:
-    ⌜n = bool_to_Z b⌝ ∗ T -∗
-    subsume (v ◁ᵥ n @ int it) (v ◁ᵥ b @ boolean it) T.
+    ⌜n = bool_to_Z b⌝ ∗ T
+    ⊢ subsume (v ◁ᵥ n @ int it) (v ◁ᵥ b @ boolean it) T.
   Proof. iIntros "[-> $] %". iExists (bool_to_Z b). iSplit; first done. by destruct b. Qed.
   Global Instance subsume_int_boolean_val_inst v n b it:
     SubsumeVal v (n @ int it) (b @ boolean it) :=
     λ T, i2p (subsume_int_boolean_val v n b it T).
 
   Lemma type_binop_boolean_int it1 it2 it3 it4 v1 b1 v2 n2 T op:
-    typed_bin_op v1 (v1 ◁ᵥ (bool_to_Z b1) @ int it1) v2 (v2 ◁ᵥ n2 @ int it2) op (IntOp it3) (IntOp it4) T -∗
-    typed_bin_op v1 (v1 ◁ᵥ b1 @ boolean it1) v2 (v2 ◁ᵥ n2 @ int it2) op (IntOp it3) (IntOp it4) T.
+    typed_bin_op v1 (v1 ◁ᵥ (bool_to_Z b1) @ int it1) v2 (v2 ◁ᵥ n2 @ int it2) op (IntOp it3) (IntOp it4) T
+    ⊢ typed_bin_op v1 (v1 ◁ᵥ b1 @ boolean it1) v2 (v2 ◁ᵥ n2 @ int it2) op (IntOp it3) (IntOp it4) T.
   Proof.
     iIntros "HT H1 H2". iApply ("HT" with "[H1] H2"). unfold boolean; simpl_type.
     iDestruct "H1" as "(%&%H1&%H2)". iPureIntro.
@@ -349,8 +349,8 @@ Section programs.
     λ T, i2p (type_binop_boolean_int it1 it2 it3 it4 v1 b1 v2 n2 T op).
 
   Lemma type_binop_int_boolean it1 it2 it3 it4 v1 b1 v2 n2 T op:
-    typed_bin_op v1 (v1 ◁ᵥ n2 @ int it2) v2 (v2 ◁ᵥ (bool_to_Z b1) @ int it1) op (IntOp it3) (IntOp it4) T -∗
-    typed_bin_op v1 (v1 ◁ᵥ n2 @ int it2) v2 (v2 ◁ᵥ b1 @ boolean it1) op (IntOp it3) (IntOp it4) T.
+    typed_bin_op v1 (v1 ◁ᵥ n2 @ int it2) v2 (v2 ◁ᵥ (bool_to_Z b1) @ int it1) op (IntOp it3) (IntOp it4) T
+    ⊢ typed_bin_op v1 (v1 ◁ᵥ n2 @ int it2) v2 (v2 ◁ᵥ b1 @ boolean it1) op (IntOp it3) (IntOp it4) T.
   Proof.
     iIntros "HT H1 H2". iApply ("HT" with "H1 [H2]"). unfold boolean; simpl_type.
     iDestruct "H2" as "(%&%H1&%H2)". iPureIntro.
@@ -361,8 +361,8 @@ Section programs.
     λ T, i2p (type_binop_int_boolean it1 it2 it3 it4 v1 b1 v2 n2 T op).
 
   Lemma type_cast_int_builtin_boolean n it v T:
-    (∀ v, T v ((bool_decide (n ≠ 0)) @ builtin_boolean)) -∗
-    typed_un_op v (v ◁ᵥ n @ int it)%I (CastOp BoolOp) (IntOp it) T.
+    (∀ v, T v ((bool_decide (n ≠ 0)) @ builtin_boolean))
+    ⊢ typed_un_op v (v ◁ᵥ n @ int it)%I (CastOp BoolOp) (IntOp it) T.
   Proof.
     iIntros "HT %Hn %Φ HΦ". iApply wp_cast_int_bool => //.
     iApply ("HΦ" with "[] HT") => //=. unfold boolean; simpl_type. iPureIntro. naive_solver.
@@ -372,8 +372,8 @@ Section programs.
     λ T, i2p (type_cast_int_builtin_boolean n it v T).
 
   Lemma annot_reduce_int v n it T:
-    (tactic_hint (vm_compute_hint Some n) (λ n', v ◁ᵥ n' @ int it -∗ T)) -∗
-    typed_annot_expr 1 (ReduceAnnot) v (v ◁ᵥ n @ int it) T.
+    (tactic_hint (vm_compute_hint Some n) (λ n', v ◁ᵥ n' @ int it -∗ T))
+    ⊢ typed_annot_expr 1 (ReduceAnnot) v (v ◁ᵥ n @ int it) T.
   Proof.
     unfold tactic_hint, vm_compute_hint.
     iIntros "[%y [% HT]] Hv"; simplify_eq. iApply step_fupd_intro => //. iModIntro.
@@ -427,8 +427,8 @@ Section offsetof.
   Qed.
 
   Lemma type_offset_of s m T:
-    ⌜Some m ∈ s.(sl_members).*1⌝ ∗ (∀ v, T v (offsetof s m)) -∗
-    typed_val_expr (OffsetOf s m) T.
+    ⌜Some m ∈ s.(sl_members).*1⌝ ∗ (∀ v, T v (offsetof s m))
+    ⊢ typed_val_expr (OffsetOf s m) T.
   Proof.
     iIntros "[%Hin HT] %Φ HΦ". move: Hin => /offset_of_from_in [n Hn].
     iApply wp_offset_of => //. iIntros "%v %Hv". iApply "HΦ" => //.

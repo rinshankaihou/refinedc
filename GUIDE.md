@@ -61,3 +61,18 @@ Second, a style guide for RefinedC development.
    This works better for automation since one can rewrite with
    `bool_decide P = true` in the first version, but not in the second
    version.
+6. Prefer using `-∗` to `⊢`, except for Lithium rules and where necessary for the automation.
+7. Put `⊢` at the start of the line instead of at the end of the (previous) line.
+   Good:
+   ```
+   Lemma test P1 Pn Q:
+     P ∗ ... ∗ Pn
+     ⊢ Q.
+   ```
+   Bad:
+   ```
+   Lemma test P1 Pn Q:
+     P ∗ ... ∗ Pn ⊢
+     Q.
+   ```
+

@@ -118,8 +118,8 @@ Section generic_boolean.
 
   Lemma type_if_generic_boolean stn it ot (b : bool) v T1 T2 :
     ⌜match ot with | BoolOp => it = u8 ∧ stn = StrictBool | IntOp it' => it = it' | _ => False end⌝ ∗
-     destruct_hint (DHintDestruct _ b) (DestructHintIfBool b) (if b then T1 else T2) -∗
-    typed_if ot v (v ◁ᵥ b @ generic_boolean stn it) T1 T2.
+     destruct_hint (DHintDestruct _ b) (DestructHintIfBool b) (if b then T1 else T2)
+    ⊢ typed_if ot v (v ◁ᵥ b @ generic_boolean stn it) T1 T2.
   Proof.
     unfold destruct_hint. iIntros "[% Hs] (%n&%Hv&%Hb)".
     destruct ot; destruct_and? => //; simplify_eq/=.
@@ -132,8 +132,8 @@ Section generic_boolean.
 
   Lemma type_assert_generic_boolean stn it ot (b : bool) s Q fn ls R v :
     (⌜match ot with | BoolOp => it = u8 ∧ stn = StrictBool | IntOp it' => it = it' | _ => False end⌝ ∗
-      ⌜b⌝ ∗ typed_stmt s fn ls R Q) -∗
-    typed_assert ot v (v ◁ᵥ b @ generic_boolean stn it) s fn ls R Q.
+      ⌜b⌝ ∗ typed_stmt s fn ls R Q)
+    ⊢ typed_assert ot v (v ◁ᵥ b @ generic_boolean stn it) s fn ls R Q.
   Proof.
     iIntros "[% [% ?]] (%n&%&%Hb)". destruct b; last by exfalso.
     destruct ot; destruct_and? => //; simplify_eq/=.
@@ -155,8 +155,8 @@ Section boolean.
     | NeOp rit => Some (negb (eqb b1 b2), rit)
     | _ => None
     end = Some (b, i32) →
-    T (i2v (bool_to_Z b) i32) (b @ boolean i32) -∗
-    typed_bin_op v1 (v1 ◁ᵥ b1 @ boolean it)
+    T (i2v (bool_to_Z b) i32) (b @ boolean i32)
+    ⊢ typed_bin_op v1 (v1 ◁ᵥ b1 @ boolean it)
                  v2 (v2 ◁ᵥ b2 @ boolean it) op (IntOp it) (IntOp it) T.
   Proof.
     iIntros "%Hop HT (%n1&%Hv1&%Hb1) (%n2&%Hv2&%Hb2) %Φ HΦ".
@@ -230,8 +230,8 @@ Section boolean.
   Qed.
 
   Lemma type_cast_boolean b it1 it2 v T:
-    (∀ v, T v (b @ boolean it2)) -∗
-    typed_un_op v (v ◁ᵥ b @ boolean it1)%I (CastOp (IntOp it2)) (IntOp it1) T.
+    (∀ v, T v (b @ boolean it2))
+    ⊢ typed_un_op v (v ◁ᵥ b @ boolean it1)%I (CastOp (IntOp it2)) (IntOp it1) T.
   Proof.
     iIntros "HT (%n&%Hv&%Hb) %Φ HΦ". move: Hb => /= ?. subst n.
     have [??] := val_of_Z_bool_is_Some (val_to_byte_prov v) it2 b.
@@ -250,7 +250,7 @@ Section builtin_boolean.
   Context `{!typeG Σ}.
 
   Lemma type_val_builtin_boolean b T:
-    (T (b @ builtin_boolean)) -∗ typed_value (val_of_bool b) T.
+    (T (b @ builtin_boolean)) ⊢ typed_value (val_of_bool b) T.
   Proof.
     iIntros "HT". iExists _. iFrame. iPureIntro. naive_solver.
   Qed.
@@ -258,8 +258,8 @@ Section builtin_boolean.
     λ T, i2p (type_val_builtin_boolean b T).
 
   Lemma type_cast_boolean_builtin_boolean b it v T:
-    (∀ v, T v (b @ builtin_boolean)) -∗
-    typed_un_op v (v ◁ᵥ b @ boolean it)%I (CastOp BoolOp) (IntOp it) T.
+    (∀ v, T v (b @ builtin_boolean))
+    ⊢ typed_un_op v (v ◁ᵥ b @ boolean it)%I (CastOp BoolOp) (IntOp it) T.
   Proof.
     iIntros "HT (%n&%Hv&%Hb) %Φ HΦ". move: Hb => /= ?. subst n.
     iApply wp_cast_int_bool => //. iApply ("HΦ" with "[] HT") => //.
@@ -270,8 +270,8 @@ Section builtin_boolean.
     λ T, i2p (type_cast_boolean_builtin_boolean b it v T).
 
   Lemma type_cast_builtin_boolean_boolean b it v T:
-    (∀ v, T v (b @ boolean it)) -∗
-    typed_un_op v (v ◁ᵥ b @ builtin_boolean)%I (CastOp (IntOp it)) BoolOp T.
+    (∀ v, T v (b @ boolean it))
+    ⊢ typed_un_op v (v ◁ᵥ b @ builtin_boolean)%I (CastOp (IntOp it)) BoolOp T.
   Proof.
     iIntros "HT (%n&%Hv&%Hb) %Φ HΦ". move: Hb => /= ?. subst n.
     have [??] := val_of_Z_bool_is_Some None it b.

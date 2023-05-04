@@ -39,8 +39,8 @@ Section own.
   Qed.
 
   Lemma frac_ptr_mono ty1 ty2 l β β' p p' T:
-    ⌜p = p'⌝ ∗ subsume (p ◁ₗ{own_state_min β β'} ty1) (p ◁ₗ{own_state_min β β'} ty2) T -∗
-    subsume (l ◁ₗ{β} p @ frac_ptr β' ty1) (l ◁ₗ{β} p' @ frac_ptr β' ty2) T.
+    ⌜p = p'⌝ ∗ subsume (p ◁ₗ{own_state_min β β'} ty1) (p ◁ₗ{own_state_min β β'} ty2) T
+    ⊢ subsume (l ◁ₗ{β} p @ frac_ptr β' ty1) (l ◁ₗ{β} p' @ frac_ptr β' ty2) T.
   Proof. iIntros "[-> Hsub] [$ [$ Hl]]". by iApply "Hsub". Qed.
   Global Instance frac_ptr_mono_inst ty1 ty2 l β β' p p':
     SubsumePlace l β (p @ frac_ptr β' ty1)%I (p' @ frac_ptr β' ty2)%I :=
@@ -51,8 +51,8 @@ Section own.
   Proof. iIntros (l β') "HP [$ [$ Hl]]". iApply (@simple_subsume_place with "HP Hl"). Qed.
 
   Lemma type_place_frac p β K β1 ty1 T l mc:
-    typed_place K p (own_state_min β1 β) ty1 (λ l2 β2 ty2 typ, T l2 β2 ty2 (λ t, (p @ (frac_ptr β (typ t))))) -∗
-    typed_place (DerefPCtx Na1Ord PtrOp mc :: K) l β1 (p @ (frac_ptr β ty1)) T.
+    typed_place K p (own_state_min β1 β) ty1 (λ l2 β2 ty2 typ, T l2 β2 ty2 (λ t, (p @ (frac_ptr β (typ t)))))
+    ⊢ typed_place (DerefPCtx Na1Ord PtrOp mc :: K) l β1 (p @ (frac_ptr β ty1)) T.
   Proof.
     iIntros "HP" (Φ) "(%&Hm&Hl) HΦ" => /=.
     iMod (heap_mapsto_own_state_to_mt with "Hm") as (q Hq) "Hm" => //.
@@ -68,8 +68,8 @@ Section own.
     λ T, i2p (type_place_frac _ _ _ _ _ _ _ _).
 
   Lemma type_addr_of (T : val → _) e:
-    typed_addr_of e (λ l β ty, T l (l @ frac_ptr β ty)) -∗
-    typed_val_expr (& e) T.
+    typed_addr_of e (λ l β ty, T l (l @ frac_ptr β ty))
+    ⊢ typed_val_expr (& e) T.
   Proof.
     iIntros "Haddr" (Φ) "HΦ". rewrite /AddrOf.
     iApply "Haddr". iIntros (l β ty) "Hl HT".
@@ -78,16 +78,16 @@ Section own.
   Qed.
 
   Lemma simplify_frac_ptr (v : val) (p : loc) ty β T:
-    (⌜v = p⌝ -∗ p ◁ₗ{β} ty -∗ T) -∗
-    simplify_hyp (v◁ᵥ p @ frac_ptr β ty) T.
+    (⌜v = p⌝ -∗ p ◁ₗ{β} ty -∗ T)
+    ⊢ simplify_hyp (v◁ᵥ p @ frac_ptr β ty) T.
   Proof. iIntros "HT Hl". iDestruct "Hl" as (->) "Hl". by iApply "HT". Qed.
   Global Instance simplify_frac_ptr_inst (v : val) (p : loc) ty β:
     SimplifyHypVal v (p @ frac_ptr β ty) (Some 0%N) :=
     λ T, i2p (simplify_frac_ptr v p ty β T).
 
   Lemma simplify_goal_frac_ptr_val ty (v : val) β (p : loc) T:
-    T (⌜v = p⌝ ∗ p ◁ₗ{β} ty) -∗
-      simplify_goal (v◁ᵥ p @ frac_ptr β ty) T.
+    T (⌜v = p⌝ ∗ p ◁ₗ{β} ty)
+    ⊢ simplify_goal (v ◁ᵥ p @ frac_ptr β ty) T.
   Proof.
     iIntros "HT". iExists _. iFrame.
     iIntros "[-> Hl]". iSplit => //.
@@ -97,16 +97,16 @@ Section own.
     λ T, i2p (simplify_goal_frac_ptr_val ty v β p T).
 
   Lemma simplify_goal_frac_ptr_val_unrefined ty (v : val) β T:
-    T (∃ p : loc, ⌜v = p⌝ ∗ p ◁ₗ{β} ty) -∗
-      simplify_goal (v◁ᵥ frac_ptr β ty) T.
+    T (∃ p : loc, ⌜v = p⌝ ∗ p ◁ₗ{β} ty)
+    ⊢ simplify_goal (v ◁ᵥ frac_ptr β ty) T.
   Proof. iIntros "HT". iExists _. iFrame. iDestruct 1 as (p) "[-> Hp]". iExists _. by iSplit. Qed.
   Global Instance simplify_goal_frac_ptr_val_unrefined_inst ty (v : val) β:
     SimplifyGoalVal v (frac_ptr β ty) (Some 0%N) :=
     λ T, i2p (simplify_goal_frac_ptr_val_unrefined ty v β T).
 
   Lemma simplify_frac_ptr_place_shr_to_own l p1 p2 β T:
-    (⌜p1 = p2⌝ -∗ l ◁ₗ{β} p1 @ frac_ptr Own (place p2) -∗ T) -∗
-    simplify_hyp (l ◁ₗ{β} p1 @ frac_ptr Shr (place p2)) T.
+    (⌜p1 = p2⌝ -∗ l ◁ₗ{β} p1 @ frac_ptr Own (place p2) -∗ T)
+    ⊢ simplify_hyp (l ◁ₗ{β} p1 @ frac_ptr Shr (place p2)) T.
   Proof. iIntros "HT (%&Hl&%)". subst. iApply "HT" => //. by iFrame. Qed.
   Global Instance simplify_frac_ptr_place_inst l p1 p2 β:
     SimplifyHypPlace l β (p1 @ frac_ptr Shr (place p2)) (Some 50%N) :=
@@ -117,8 +117,8 @@ Section own.
   Ideally we would like to have this version:
   Lemma own_val_to_own_place v l ty β T:
     val_to_loc v = Some l →
-    l ◁ₗ{β} ty ∗ T -∗
-    v ◁ᵥ l @ frac_ptr β ty ∗ T.
+    l ◁ₗ{β} ty ∗ T
+    ⊢ v ◁ᵥ l @ frac_ptr β ty ∗ T.
   Proof. by iIntros (->%val_of_to_loc) "[$ $]". Qed.
   But the sidecondition is a problem since solving it requires
   calling apply which triggers https://github.com/coq/coq/issues/6583
@@ -126,19 +126,19 @@ Section own.
   a Movable (tc_opaque x) in the context. *)
 
   Lemma own_val_to_own_place (l : loc) ty β T:
-    l ◁ₗ{β} ty ∗ T -∗
-    l ◁ᵥ l @ frac_ptr β ty ∗ T.
+    l ◁ₗ{β} ty ∗ T
+    ⊢ l ◁ᵥ l @ frac_ptr β ty ∗ T.
   Proof. by iIntros "[$ $]". Qed.
 
   Lemma own_val_to_own_place_singleton (l : loc) β T:
-    T -∗
-    l ◁ᵥ l @ frac_ptr β (place l) ∗ T.
+    T
+    ⊢ l ◁ᵥ l @ frac_ptr β (place l) ∗ T.
   Proof. by iIntros "$". Qed.
 
   Lemma type_offset_of_sub v1 l s m P ly T:
     ⌜ly_size ly = 1%nat⌝ ∗ (
-      (P -∗ loc_in_bounds l 0 ∗ True) ∧ (P -∗ T (val_of_loc l) (l @ frac_ptr Own (place l)))) -∗
-    typed_bin_op v1 (v1 ◁ᵥ offsetof s m) (l at{s}ₗ m) P (PtrNegOffsetOp ly) (IntOp size_t) PtrOp T.
+      (P -∗ loc_in_bounds l 0 ∗ True) ∧ (P -∗ T (val_of_loc l) (l @ frac_ptr Own (place l))))
+    ⊢ typed_bin_op v1 (v1 ◁ᵥ offsetof s m) (l at{s}ₗ m) P (PtrNegOffsetOp ly) (IntOp size_t) PtrOp T.
   Proof.
     iDestruct 1 as (Hly) "HT". unfold offsetof, int, int_inner_type; simpl_type.
     iIntros ([n [Ho Hi]]) "HP". iIntros (Φ) "HΦ".
@@ -155,8 +155,8 @@ Section own.
     λ T, i2p (type_offset_of_sub v1 l s m P ly T).
 
   Lemma type_cast_ptr_ptr p β ty T:
-    (T (val_of_loc p) (p @ frac_ptr β ty)) -∗
-    typed_un_op p (p ◁ₗ{β} ty) (CastOp PtrOp) PtrOp T.
+    (T (val_of_loc p) (p @ frac_ptr β ty))
+    ⊢ typed_un_op p (p ◁ₗ{β} ty) (CastOp PtrOp) PtrOp T.
   Proof.
     iIntros "HT Hp" (Φ) "HΦ".
     iApply wp_cast_loc; [by apply val_to_of_loc|].
@@ -167,8 +167,8 @@ Section own.
     λ T, i2p (type_cast_ptr_ptr p β ty T).
 
   Lemma type_if_ptr_own l β ty T1 T2:
-    (l ◁ₗ{β} ty -∗ (loc_in_bounds l 0 ∗ True) ∧ T1) -∗
-    typed_if PtrOp l (l ◁ₗ{β} ty) T1 T2.
+    (l ◁ₗ{β} ty -∗ (loc_in_bounds l 0 ∗ True) ∧ T1)
+    ⊢ typed_if PtrOp l (l ◁ₗ{β} ty) T1 T2.
   Proof.
     iIntros "HT1 Hl".
     iDestruct ("HT1" with "Hl") as "[[#Hlib _] HT]".
@@ -182,8 +182,8 @@ Section own.
     λ T1 T2, i2p (type_if_ptr_own l β ty T1 T2).
 
   Lemma type_assert_ptr_own l β ty s fn ls R Q:
-    (l ◁ₗ{β} ty -∗ (loc_in_bounds l 0 ∗ True) ∧ typed_stmt s fn ls R Q) -∗
-    typed_assert PtrOp l (l ◁ₗ{β} ty) s fn ls R Q.
+    (l ◁ₗ{β} ty -∗ (loc_in_bounds l 0 ∗ True) ∧ typed_stmt s fn ls R Q)
+    ⊢ typed_assert PtrOp l (l ◁ₗ{β} ty) s fn ls R Q.
   Proof.
     iIntros "HT1 Hl".
     iDestruct ("HT1" with "Hl") as "[[#Hlib _] HT]".
@@ -198,8 +198,8 @@ Section own.
     λ s fn ls R Q, i2p (type_assert_ptr_own l β ty s fn ls R Q).
 
   Lemma type_place_cast_ptr_ptr K l ty β T:
-    typed_place K l β ty T -∗
-    typed_place (UnOpPCtx (CastOp PtrOp) :: K) l β ty T.
+    typed_place K l β ty T
+    ⊢ typed_place (UnOpPCtx (CastOp PtrOp) :: K) l β ty T.
   Proof.
     iIntros "HP" (Φ) "Hl HΦ" => /=.
     iApply wp_cast_loc. { by apply val_to_of_loc. }
@@ -213,8 +213,8 @@ Section own.
     λ T, i2p (type_place_cast_ptr_ptr K l ty β T).
 
   Lemma type_cast_int_ptr n v it T:
-    (⌜n ∈ it⌝ -∗ ∀ oid, T (val_of_loc (oid, n)) ((oid, n) @ frac_ptr Own (place (oid, n)))) -∗
-    typed_un_op v (v ◁ᵥ n @ int it) (CastOp PtrOp) (IntOp it) T.
+    (⌜n ∈ it⌝ -∗ ∀ oid, T (val_of_loc (oid, n)) ((oid, n) @ frac_ptr Own (place (oid, n))))
+    ⊢ typed_un_op v (v ◁ᵥ n @ int it) (CastOp PtrOp) (IntOp it) T.
   Proof.
     unfold int; simpl_type.
     iIntros "HT" (Hn Φ) "HΦ".
@@ -228,13 +228,11 @@ Section own.
     λ T, i2p (type_cast_int_ptr n v it T).
 
   Lemma type_copy_aid v a it l β ty T:
-    (
-      l ◁ₗ{β} ty -∗
+    (l ◁ₗ{β} ty -∗
       (loc_in_bounds (l.1, a) 0 ∗ True) ∧
       (alloc_alive_loc l ∗ True) ∧
-      T (val_of_loc (l.1, a)) ((l.1, a) @ frac_ptr Own (place (l.1, a)))
-    ) -∗
-    typed_copy_alloc_id v (v ◁ᵥ a @ int it) l (l ◁ₗ{β} ty) (IntOp it) T.
+      T (val_of_loc (l.1, a)) ((l.1, a) @ frac_ptr Own (place (l.1, a))))
+    ⊢ typed_copy_alloc_id v (v ◁ᵥ a @ int it) l (l ◁ₗ{β} ty) (IntOp it) T.
   Proof.
     unfold int; simpl_type.
     iIntros "HT %Hv Hl" (Φ) "HΦ". iDestruct ("HT" with "Hl") as "HT".
@@ -262,8 +260,8 @@ Section own.
       (loc_in_bounds l1 0 ∗ True) ∧
       (loc_in_bounds l2 0 ∗ True) ∧
       (alloc_alive_loc l1 ∗ True) ∧
-      T (i2v (bool_to_Z b) i32) (b @ boolean i32))) -∗
-    typed_bin_op l1 (l1 ◁ₗ{β1} ty1) l2 (l2 ◁ₗ{β2} ty2) op PtrOp PtrOp T.
+      T (i2v (bool_to_Z b) i32) (b @ boolean i32)))
+    ⊢ typed_bin_op l1 (l1 ◁ₗ{β1} ty1) l2 (l2 ◁ₗ{β2} ty2) op PtrOp PtrOp T.
   Proof.
     iIntros (?) "HT Hl1 Hl2". iIntros (Φ) "HΦ". iDestruct ("HT" with "Hl1 Hl2") as (Heq) "([#? _]&[#? _]&HT)".
     have [v' Hv'] := val_of_Z_bool_is_Some None i32 b.
@@ -297,7 +295,7 @@ Section own.
 
 
   (* Lemma type_roundup_frac_ptr v2 β ty P2 T p: *)
-  (*   (P2 -∗ T (val_of_loc p) (t2mt (p @ frac_ptr β ty))) -∗ *)
+  (*   (P2 -∗ T (val_of_loc p) (t2mt (p @ frac_ptr β ty))) ⊢ *)
   (*     typed_bin_op p (p ◁ₗ{β} ty) v2 P2 RoundUpOp T. *)
   (* Proof. *)
   (*   iIntros "HT Hv1 Hv2". iIntros (Φ) "HΦ". *)
@@ -310,7 +308,7 @@ Section own.
   (*   i2p (type_roundup_frac_ptr v2 β ty P2 T p). *)
 
   (* Lemma type_rounddown_frac_ptr v2 β ty P2 T p: *)
-  (*   (P2 -∗ T (val_of_loc p) (t2mt (p @ frac_ptr β ty))) -∗ *)
+  (*   (P2 -∗ T (val_of_loc p) (t2mt (p @ frac_ptr β ty))) ⊢ *)
   (*     typed_bin_op p (p ◁ₗ{β} ty) v2 P2 RoundDownOp T. *)
   (* Proof. *)
   (*   iIntros "HT Hv1 Hv2". iIntros (Φ) "HΦ". *)
@@ -333,8 +331,8 @@ Section own.
 
   Lemma find_in_context_type_loc_own l T:
     (∃ l1 β1 β ty, l1 ◁ₗ{β1} (l @ frac_ptr β ty) ∗ (l1 ◁ₗ{β1} (l @ frac_ptr β (place l)) -∗
-      T (own_state_min β1 β, ty))) -∗
-    find_in_context (FindLoc l) T.
+      T (own_state_min β1 β, ty)))
+    ⊢ find_in_context (FindLoc l) T.
   Proof.
     iDestruct 1 as (l1 β1 β ty) "[[% [Hmt Hl]] HT]".
     iExists (_, _) => /=. iFrame. iApply "HT".
@@ -345,16 +343,16 @@ Section own.
     λ T, i2p (find_in_context_type_loc_own l T).
 
   Lemma find_in_context_type_val_own l T:
-    (∃ ty : type, l ◁ₗ ty ∗ T (l @ frac_ptr Own ty)) -∗
-    find_in_context (FindVal l) T.
+    (∃ ty : type, l ◁ₗ ty ∗ T (l @ frac_ptr Own ty))
+    ⊢ find_in_context (FindVal l) T.
   Proof. iDestruct 1 as (ty) "[Hl HT]". iExists _ => /=. by iFrame. Qed.
   Global Instance find_in_context_type_val_own_inst (l : loc) :
     FindInContext (FindVal l) FICSyntactic | 10 :=
     λ T, i2p (find_in_context_type_val_own l T).
 
   Lemma find_in_context_type_val_own_singleton (l : loc) T:
-    (True ∗ T (l @ frac_ptr Own (place l))) -∗
-    find_in_context (FindVal l) T.
+    (True ∗ T (l @ frac_ptr Own (place l)))
+    ⊢ find_in_context (FindVal l) T.
   Proof. iIntros "[_ HT]". iExists _ => /=. iFrame "HT". simpl. done. Qed.
   Global Instance find_in_context_type_val_own_singleton_inst (l : loc):
     FindInContext (FindVal l) FICSyntactic | 20 :=
@@ -366,8 +364,8 @@ Section own.
   rules for place', but for place instead. *)
   Definition place' (l : loc) : type := place l.
   Lemma find_in_context_type_val_P_own_singleton (l : loc) T:
-    (True ∗ T (l ◁ₗ place' l)) -∗
-    find_in_context (FindValP l) T.
+    (True ∗ T (l ◁ₗ place' l))
+    ⊢ find_in_context (FindValP l) T.
   Proof. rewrite /place'. iIntros "[_ HT]". iExists _. iFrame "HT" => //=. Qed.
   Global Instance find_in_context_type_val_P_own_singleton_inst (l : loc):
     FindInContext (FindValP l) FICSyntactic | 30 :=
@@ -412,8 +410,8 @@ Section ptr.
   Qed.
 
   Lemma simplify_ptr_hyp_place (p:loc) l n T:
-    (loc_in_bounds p n -∗ l ◁ₗ value PtrOp (val_of_loc p) -∗ T) -∗
-      simplify_hyp (l ◁ₗ p @ ptr n) T.
+    (loc_in_bounds p n -∗ l ◁ₗ value PtrOp (val_of_loc p) -∗ T)
+    ⊢ simplify_hyp (l ◁ₗ p @ ptr n) T.
   Proof.
     iIntros "HT [% [#? Hl]]". iApply "HT"; first done.
     repeat iSplit => //. iPureIntro. by apply: mem_cast_id_loc.
@@ -423,15 +421,15 @@ Section ptr.
     λ T, i2p (simplify_ptr_hyp_place p l n T).
 
   Lemma simplify_ptr_goal_val (p:loc) l n T:
-    T (⌜l = p⌝ ∗ loc_in_bounds l n) -∗ simplify_goal (p ◁ᵥ l @ ptr n) T.
+    T (⌜l = p⌝ ∗ loc_in_bounds l n) ⊢ simplify_goal (p ◁ᵥ l @ ptr n) T.
   Proof. iIntros "HT". iExists _. iFrame. iIntros "[-> ?]". by iFrame. Qed.
   Global Instance simplify_ptr_goal_val_inst (p : loc) l n:
     SimplifyGoalVal p (l @ ptr n)%I (Some 10%N) :=
     λ T, i2p (simplify_ptr_goal_val p l n T).
 
   Lemma subsume_own_ptr p l1 l2 ty n T:
-    ⌜l1 = l2⌝ ∗ (l1 ◁ₗ ty -∗ loc_in_bounds l1 n ∗ T) -∗
-    subsume (p ◁ₗ l1 @ &own ty)%I (p ◁ₗ l2 @ ptr n)%I T.
+    ⌜l1 = l2⌝ ∗ (l1 ◁ₗ ty -∗ loc_in_bounds l1 n ∗ T)
+    ⊢ subsume (p ◁ₗ l1 @ &own ty)%I (p ◁ₗ l2 @ ptr n)%I T.
   Proof.
     iIntros "[-> HT] Hp".
     iDestruct (ty_aligned _ PtrOp MCNone with "Hp") as %?; [done|].
@@ -444,14 +442,12 @@ Section ptr.
     λ T, i2p (subsume_own_ptr p l1 l2 ty n T).
 
   Lemma type_copy_aid_ptr v1 a it v2 l n T:
-    (
-      v1 ◁ᵥ a @ int it -∗
+    (v1 ◁ᵥ a @ int it -∗
       v2 ◁ᵥ l @ ptr n -∗
       ⌜l.2 ≤ a ≤ l.2 + n⌝ ∗
       (alloc_alive_loc l ∗ True) ∧
-      T (val_of_loc (l.1, a)) (value PtrOp (val_of_loc (l.1, a)))
-    ) -∗
-    typed_copy_alloc_id v1 (v1 ◁ᵥ a @ int it) v2 (v2 ◁ᵥ l @ ptr n) (IntOp it) T.
+      T (val_of_loc (l.1, a)) (value PtrOp (val_of_loc (l.1, a))))
+    ⊢ typed_copy_alloc_id v1 (v1 ◁ᵥ a @ int it) v2 (v2 ◁ᵥ l @ ptr n) (IntOp it) T.
   Proof.
     unfold int; simpl_type.
     iIntros "HT %Hv1 Hv2" (Φ) "HΦ". iDestruct "Hv2" as "[-> #Hlib]".
@@ -490,8 +486,8 @@ Section null.
   Qed.
 
   Lemma type_null T :
-    T null -∗
-    typed_value NULL T.
+    T null
+    ⊢ typed_value NULL T.
   Proof. iIntros "HT". iExists  _. iFrame. done. Qed.
   Global Instance type_null_inst : TypedValue NULL := λ T, i2p (type_null T).
 
@@ -516,8 +512,8 @@ Section null.
 
   Lemma type_binop_null_null v1 v2 op T:
     (⌜match op with | EqOp rit | NeOp rit => rit = i32 | _ => False end⌝ ∗ ∀ v,
-          T v ((if op is EqOp i32 then true else false) @ boolean i32)) -∗
-    typed_bin_op v1 (v1 ◁ᵥ null) v2 (v2 ◁ᵥ null) op PtrOp PtrOp T.
+          T v ((if op is EqOp i32 then true else false) @ boolean i32))
+    ⊢ typed_bin_op v1 (v1 ◁ᵥ null) v2 (v2 ◁ᵥ null) op PtrOp PtrOp T.
   Proof.
     iIntros "[% HT]" (-> -> Φ) "HΦ".
     have Hz:= val_of_Z_bool (if op is EqOp i32 then true else false) i32.
@@ -532,8 +528,8 @@ Section null.
 
   Lemma type_binop_ptr_null v op (l : loc) ty β n `{!LocInBounds ty β n} T:
     (⌜match op with EqOp rit | NeOp rit => rit = i32 | _ => False end⌝ ∗ ∀ v, l ◁ₗ{β} ty -∗
-          T v ((if op is EqOp _ then false else true) @ boolean i32)) -∗
-    typed_bin_op l (l ◁ₗ{β} ty) v (v ◁ᵥ null) op PtrOp PtrOp T.
+          T v ((if op is EqOp _ then false else true) @ boolean i32))
+    ⊢ typed_bin_op l (l ◁ₗ{β} ty) v (v ◁ᵥ null) op PtrOp PtrOp T.
   Proof.
     iIntros "[% HT] Hl" (-> Φ) "HΦ".
     iDestruct (loc_in_bounds_in_bounds with "Hl") as "#Hb".
@@ -554,8 +550,8 @@ Section null.
 
   Lemma type_binop_null_ptr v op (l : loc) ty β n `{!LocInBounds ty β n} T:
     (⌜match op with EqOp rit | NeOp rit => rit = i32 | _ => False end⌝ ∗ ∀ v, l ◁ₗ{β} ty -∗
-          T v (((if op is EqOp _ then false else true) @ boolean i32))) -∗
-    typed_bin_op v (v ◁ᵥ null) l (l ◁ₗ{β} ty) op PtrOp PtrOp T.
+          T v (((if op is EqOp _ then false else true) @ boolean i32)))
+    ⊢ typed_bin_op v (v ◁ᵥ null) l (l ◁ₗ{β} ty) op PtrOp PtrOp T.
   Proof.
     iIntros "[% HT] -> Hl %Φ HΦ".
     iDestruct (loc_in_bounds_in_bounds with "Hl") as "#Hb".
@@ -576,8 +572,8 @@ Section null.
     λ T, i2p (type_binop_null_ptr v op l ty β n T).
 
   Lemma type_cast_null_int it v T:
-    (T (i2v 0 it) (0 @ int it)) -∗
-    typed_un_op v (v ◁ᵥ null) (CastOp (IntOp it)) PtrOp T.
+    (T (i2v 0 it) (0 @ int it))
+    ⊢ typed_un_op v (v ◁ᵥ null) (CastOp (IntOp it)) PtrOp T.
   Proof.
     iIntros "HT" (-> Φ) "HΦ".
     iApply wp_cast_null_int.
@@ -590,8 +586,8 @@ Section null.
     λ T, i2p (type_cast_null_int it v T).
 
   Lemma type_cast_zero_ptr v it T:
-    (T (val_of_loc NULL_loc) null) -∗
-    typed_un_op v (v ◁ᵥ 0 @ int it) (CastOp PtrOp) (IntOp it) T.
+    (T (val_of_loc NULL_loc) null)
+    ⊢ typed_un_op v (v ◁ᵥ 0 @ int it) (CastOp PtrOp) (IntOp it) T.
   Proof.
     unfold int; simpl_type.
     iIntros "HT" (Hv Φ) "HΦ".
@@ -603,8 +599,8 @@ Section null.
     λ T, i2p (type_cast_zero_ptr v it T).
 
   Lemma type_cast_null_ptr v T:
-    (T v null) -∗
-    typed_un_op v (v ◁ᵥ null) (CastOp PtrOp) PtrOp T.
+    (T v null)
+    ⊢ typed_un_op v (v ◁ᵥ null) (CastOp PtrOp) PtrOp T.
   Proof.
     iIntros "HT" (-> Φ) "HΦ".
     iApply wp_cast_loc; [by apply val_to_of_loc|].
@@ -615,8 +611,8 @@ Section null.
     λ T, i2p (type_cast_null_ptr v T).
 
   Lemma type_if_null v T1 T2:
-    T2 -∗
-    typed_if PtrOp v (v ◁ᵥ null) T1 T2.
+    T2
+    ⊢ typed_if PtrOp v (v ◁ᵥ null) T1 T2.
   Proof.
     iIntros "HT2 ->". iExists NULL_loc.
     rewrite val_to_of_loc bool_decide_false; last naive_solver. iFrame.
@@ -658,14 +654,16 @@ Section optionable.
   (* Admitted. *)
 
   Lemma subsume_optional_place_val_null ty l β T b ty' `{!Optionable ty null ot1 ot2}:
-    (⌜b⌝ ∗ subsume (l ◁ₗ{β} ty') (l ◁ᵥ ty) T) -∗ subsume (l ◁ₗ{β} ty') (l ◁ᵥ b @ optional ty null) T.
+    (⌜b⌝ ∗ subsume (l ◁ₗ{β} ty') (l ◁ᵥ ty) T)
+    ⊢ subsume (l ◁ₗ{β} ty') (l ◁ᵥ b @ optional ty null) T.
   Proof. iIntros "[% Hsub] Hl". unfold optional; simpl_type. iDestruct ("Hsub" with "Hl") as "[Hl $]". iLeft. by iFrame. Qed.
   Global Instance subsume_optional_place_val_null_inst ty l β b ty' `{!Optionable ty null ot1 ot2}:
     Subsume (l ◁ₗ{β} ty') (l ◁ᵥ b @ optional ty null)%I | 20 :=
     λ T, i2p (subsume_optional_place_val_null ty l β T b ty').
 
   Lemma subsume_optionalO_place_val_null A (ty : A → type) l β T b ty' `{!∀ x, Optionable (ty x) null ot1 ot2}:
-    (⌜is_Some b⌝ ∗ ∀ x, ⌜b = Some x⌝ -∗ subsume (l ◁ₗ{β} ty') (l ◁ᵥ ty x) T) -∗ subsume (l ◁ₗ{β} ty') (l ◁ᵥ b @ optionalO ty null) T.
+    (⌜is_Some b⌝ ∗ ∀ x, ⌜b = Some x⌝ -∗ subsume (l ◁ₗ{β} ty') (l ◁ᵥ ty x) T)
+    ⊢ subsume (l ◁ₗ{β} ty') (l ◁ᵥ b @ optionalO ty null) T.
   Proof. iDestruct 1 as ([x ->]) "Hsub". unfold optionalO; simpl_type. iIntros "Hl". by iApply "Hsub". Qed.
   Global Instance subsume_optionalO_place_val_null_inst A (ty : A → type) l β b ty' `{!∀ x, Optionable (ty x) null ot1 ot2}:
     Subsume (l ◁ₗ{β} ty') (l ◁ᵥ b @ optionalO ty null)%I | 20 :=
@@ -673,8 +671,8 @@ Section optionable.
 
   (* TODO: generalize this with a IsLoc typeclass or similar *)
   Lemma type_cast_optional_own_ptr b v β ty T:
-    (T v (b @ optional (&frac{β} ty) null)) -∗
-    typed_un_op v (v ◁ᵥ b @ optional (&frac{β} ty) null) (CastOp PtrOp) PtrOp T.
+    (T v (b @ optional (&frac{β} ty) null))
+    ⊢ typed_un_op v (v ◁ᵥ b @ optional (&frac{β} ty) null) (CastOp PtrOp) PtrOp T.
   Proof.
     iIntros "HT Hv" (Φ) "HΦ". unfold optional; simpl_type.
     iDestruct "Hv" as "[[% [%l [% Hl]]]|[% ->]]"; subst.
@@ -687,8 +685,8 @@ Section optionable.
     λ T, i2p (type_cast_optional_own_ptr b v β ty T).
 
   Lemma type_cast_optionalO_own_ptr A (b : option A) v β ty T:
-    (T v (b @ optionalO (λ x, &frac{β} (ty x)) null)) -∗
-    typed_un_op v (v ◁ᵥ b @ optionalO (λ x, &frac{β} (ty x)) null) (CastOp PtrOp) PtrOp T.
+    (T v (b @ optionalO (λ x, &frac{β} (ty x)) null))
+    ⊢ typed_un_op v (v ◁ᵥ b @ optionalO (λ x, &frac{β} (ty x)) null) (CastOp PtrOp) PtrOp T.
   Proof.
     iIntros "HT Hv" (Φ) "HΦ". unfold optionalO; simpl_type.
     destruct b as [?|].
@@ -713,8 +711,8 @@ Section optional_null.
   Local Typeclasses Transparent optional_type.
 
   Lemma type_place_optional_null K l β1 b ty T:
-    ⌜b⌝ ∗ typed_place K l β1 ty T -∗
-    typed_place K l β1 (b @ optional ty null) T.
+    ⌜b⌝ ∗ typed_place K l β1 ty T
+    ⊢ typed_place K l β1 (b @ optional ty null) T.
   Proof.
     iIntros "[% H]" (Φ) "[[_ Hl]|[% _]] HH"; last done.
     by iApply ("H" with "Hl").
@@ -726,8 +724,8 @@ Section optional_null.
     λ T, i2p (type_place_optional_null K l β1 b ty T).
 
   Lemma type_place_optionalO_null A K l β1 b (ty : A → _) T:
-    ⌜is_Some b⌝ ∗ (∀ x, ⌜b = Some x⌝ -∗ typed_place K l β1 (ty x) T) -∗
-    typed_place K l β1 (b @ optionalO ty null) T.
+    ⌜is_Some b⌝ ∗ (∀ x, ⌜b = Some x⌝ -∗ typed_place K l β1 (ty x) T)
+    ⊢ typed_place K l β1 (b @ optionalO ty null) T.
   Proof.
     iDestruct 1 as ([? ->]) "Hwp".
     iIntros (Φ) "Hx". by iApply "Hwp".

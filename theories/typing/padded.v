@@ -62,16 +62,16 @@ Section padded.
   Next Obligation. by iIntros (β ty ly lyty l) "(_&%&_)". Qed.
 
   Lemma simpl_padded_hyp_eq_layout l β ty ly T:
-    (l ◁ₗ{β} ty -∗ T) -∗
-    simplify_hyp (l ◁ₗ{β} padded ty ly ly) T.
+    (l ◁ₗ{β} ty -∗ T)
+    ⊢ simplify_hyp (l ◁ₗ{β} padded ty ly ly) T.
   Proof. iIntros "HT (?&?&?&?&?)". by iApply "HT". Qed.
   Global Instance simpl_padded_hyp_eq_layout_inst l β ty ly:
     SimplifyHypPlace l β (padded ty ly ly) (Some 0%N) :=
     λ T, i2p (simpl_padded_hyp_eq_layout l β ty ly T).
   (* TODO: should this also work for Shr? *)
   Lemma simpl_padded_goal_eq_layout l ty ly T:
-    T (⌜ty.(ty_has_op_type) (UntypedOp ly) MCNone⌝ ∗ l ◁ₗ ty) -∗
-    simplify_goal (l ◁ₗ padded ty ly ly) T.
+    T (⌜ty.(ty_has_op_type) (UntypedOp ly) MCNone⌝ ∗ l ◁ₗ ty)
+    ⊢ simplify_goal (l ◁ₗ padded ty ly ly) T.
   Proof.
     iIntros "HT". iExists _. iFrame. iIntros "[% Hl]". iDestruct (ty_aligned with "Hl") as %?; [done|].
     do 2 iSplit => //. iDestruct (movable_loc_in_bounds with "Hl") as "#Hb"; [done|]. iFrame "Hl Hb".
@@ -90,8 +90,8 @@ Section padded.
   same l in the context. (one with padded (l @ place) ...
   and one with the type in the padded *)
   Lemma type_place_padded K l β1 ty T lyty ly:
-    (∀ l', typed_place K l' β1 ty (λ l2 ty2 β typ, T l2 ty2 β (λ t, padded (typ t) lyty ly))) -∗
-    typed_place K l β1 (padded ty lyty ly) T.
+    (∀ l', typed_place K l' β1 ty (λ l2 ty2 β typ, T l2 ty2 β (λ t, padded (typ t) lyty ly)))
+    ⊢ typed_place K l β1 (padded ty lyty ly) T.
   Proof.
     iIntros "HP" (Φ) "(% & % & Hb & Hl & Hpad) HΦ" => /=.
     iApply ("HP" with "Hl"). iIntros (l2 β2 ty2 typ R) "Hl2 Hc".
@@ -106,8 +106,8 @@ Section padded.
   (* Only works for Own since ty might have interior mutability, but
   uninit ty assumes that the values are frozen *)
   Lemma subsume_padded_uninit l ly1 ly2 lyty ty T:
-    (⌜ty.(ty_has_op_type) (UntypedOp lyty) MCNone⌝ ∗ ∀ v, v ◁ᵥ ty -∗ subsume (l ◁ₗ uninit ly1) (l ◁ₗ uninit ly2) T) -∗
-    subsume (l ◁ₗ padded ty lyty ly1) (l ◁ₗ uninit ly2) T.
+    (⌜ty.(ty_has_op_type) (UntypedOp lyty) MCNone⌝ ∗ ∀ v, v ◁ᵥ ty -∗ subsume (l ◁ₗ uninit ly1) (l ◁ₗ uninit ly2) T)
+    ⊢ subsume (l ◁ₗ padded ty lyty ly1) (l ◁ₗ uninit ly2) T.
   Proof.
     iIntros "[% HT]". iDestruct 1 as ([? ?] ?) "(Hb & Hl & Hr)".
     iDestruct (ty_deref with "Hl") as (v1) "[Hl Hv1]"; [done|].
@@ -124,8 +124,8 @@ Section padded.
     λ T, i2p (subsume_padded_uninit l ly1 ly2 lyty ty T).
 
   Lemma subsume_uninit_padded l β ly lyty T:
-    ⌜lyty ⊑ ly⌝ ∗ T -∗
-    subsume (l ◁ₗ{β} uninit ly) (l ◁ₗ{β} padded (uninit lyty) lyty ly) T.
+    ⌜lyty ⊑ ly⌝ ∗ T
+    ⊢ subsume (l ◁ₗ{β} uninit ly) (l ◁ₗ{β} padded (uninit lyty) lyty ly) T.
   Proof.
     iDestruct 1 as ([? ?]) "$". iIntros "Hl".
     iDestruct (bytewise_loc_in_bounds with "Hl") as "#$".
@@ -141,8 +141,8 @@ Section padded.
 
   Lemma type_place_padded_uninit_struct K l β sl n T ly:
     ⌜(layout_of sl) ⊑ ly⌝ ∗
-      typed_place (GetMemberPCtx sl n :: K) l β (padded (struct sl (uninit <$> omap (λ '(n, ly), const ly <$> n) sl.(sl_members))) sl ly) T -∗
-    typed_place (GetMemberPCtx sl n :: K) l β (uninit ly) T.
+      typed_place (GetMemberPCtx sl n :: K) l β (padded (struct sl (uninit <$> omap (λ '(n, ly), const ly <$> n) sl.(sl_members))) sl ly) T
+    ⊢ typed_place (GetMemberPCtx sl n :: K) l β (uninit ly) T.
   Proof.
     iIntros "[% HT]" (Φ) "Hl".
     iDestruct (apply_subsume_place_true with "Hl []") as "Hl".
@@ -157,8 +157,8 @@ Section padded.
 
   (* If lyty is the same, then ly also must be the same. *)
   Lemma padded_mono l β ty1 ty2 T ly1 ly2 lyty:
-    ⌜ly1 = ly2⌝ ∗ subsume (l ◁ₗ{β} ty1) (l ◁ₗ{β} ty2) T -∗
-    subsume (l ◁ₗ{β} padded ty1 lyty ly1) (l ◁ₗ{β} padded ty2 lyty ly2) T.
+    ⌜ly1 = ly2⌝ ∗ subsume (l ◁ₗ{β} ty1) (l ◁ₗ{β} ty2) T
+    ⊢ subsume (l ◁ₗ{β} padded ty1 lyty ly1) (l ◁ₗ{β} padded ty2 lyty ly2) T.
   Proof. iIntros "[-> Hsub] ($&$&$&Hl&$)". by iApply "Hsub". Qed.
   Global Instance padded_mono_inst l β ty1 ty2 ly1 ly2 lyty:
     SubsumePlace l β (padded ty1 lyty ly1) (padded ty2 lyty ly2) :=
@@ -189,8 +189,8 @@ Section padded.
 
   Lemma type_add_padded v2 β ly lyty ty (p : loc) (n : Z) it T:
     (⌜n ∈ it⌝ -∗ ⌜0 ≤ n⌝ ∗ ⌜Z.to_nat n ≤ ly.(ly_size)⌝%nat ∗ ⌜lyty.(ly_size) ≤ Z.to_nat n⌝%nat ∗ (p ◁ₗ{β} padded ty lyty (ly_set_size ly (Z.to_nat n)) -∗ v2 ◁ᵥ n @ int it -∗
-          T (val_of_loc (p +ₗ n)) ((p +ₗ n) @ &frac{β} (uninit (ly_offset ly (Z.to_nat n)))))) -∗
-      typed_bin_op v2 (v2 ◁ᵥ n @ int it) p (p ◁ₗ{β} padded ty lyty ly) (PtrOffsetOp u8) (IntOp it) PtrOp T.
+          T (val_of_loc (p +ₗ n)) ((p +ₗ n) @ &frac{β} (uninit (ly_offset ly (Z.to_nat n))))))
+    ⊢ typed_bin_op v2 (v2 ◁ᵥ n @ int it) p (p ◁ₗ{β} padded ty lyty ly) (PtrOffsetOp u8) (IntOp it) PtrOp T.
   Proof.
     unfold int; simpl_type.
     iIntros "HT" (Hint) "Hp". iIntros (Φ) "HΦ".
@@ -211,8 +211,8 @@ Section padded.
 
 
   Lemma annot_to_uninit_padded l ty ly lyty T:
-    (⌜ty.(ty_has_op_type) (UntypedOp lyty) MCNone⌝ ∗ (l ◁ₗ uninit ly -∗ T)) -∗
-    typed_annot_stmt ToUninit l (l ◁ₗ padded ty lyty ly) T.
+    (⌜ty.(ty_has_op_type) (UntypedOp lyty) MCNone⌝ ∗ (l ◁ₗ uninit ly -∗ T))
+    ⊢ typed_annot_stmt ToUninit l (l ◁ₗ padded ty lyty ly) T.
   Proof.
     iIntros "[% HT] Hl". iApply step_fupd_intro => //. iModIntro.
     iDestruct (ty_aligned _ _ MCNone with "Hl") as %?; [done|].

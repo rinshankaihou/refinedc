@@ -6,7 +6,7 @@ From lithium Require Export base infrastructure.
 (** * [iProp_to_Prop] *)
 Record iProp_to_Prop {Σ} (P : iProp Σ) : Type := i2p {
   i2p_P :> iProp Σ;
-  i2p_proof : i2p_P -∗ P;
+  i2p_proof : i2p_P ⊢ P;
 }.
 Arguments i2p {_ _ _} _.
 Arguments i2p_P {_ _} _.
@@ -32,8 +32,8 @@ Definition FindDirect {Σ A} (P : A → iProp Σ) := {| fic_A := A; fic_Prop := 
 Global Typeclasses Opaque FindDirect.
 
 Lemma find_in_context_direct {Σ B} P (T : B → iProp Σ):
-  (∃ x : B, P x ∗ T x) -∗
-   find_in_context (FindDirect P) T.
+  (∃ x : B, P x ∗ T x) ⊢
+  find_in_context (FindDirect P) T.
 Proof. done. Qed.
 Global Instance find_in_context_direct_inst {Σ B} (P : _ → iProp Σ) :
   FindInContext (FindDirect P) FICSyntactic | 1 :=
@@ -55,7 +55,7 @@ Arguments destruct_hint : simpl never.
 (** * [tactic_hint] *)
 Class TacticHint {Σ A} (t : (A → iProp Σ) → iProp Σ) := {
   tactic_hint_P : (A → iProp Σ) → iProp Σ;
-  tactic_hint_proof T : tactic_hint_P T -∗ t T;
+  tactic_hint_proof T : tactic_hint_P T ⊢ t T;
 }.
 Arguments tactic_hint_proof {_ _ _} _ _.
 Arguments tactic_hint_P {_ _ _} _ _.
@@ -90,7 +90,7 @@ Arguments rt_fic {_ _} _.
 (** * [IntroPersistent] *)
 (** ** Definition *)
 Class IntroPersistent {Σ} (P P' : iProp Σ) := {
-  ip_persistent : P -∗ □ P'
+  ip_persistent : P ⊢ □ P'
 }.
 Global Hint Mode IntroPersistent + + - : typeclass_instances.
 (** ** Instances *)
@@ -125,14 +125,14 @@ Global Hint Mode SimplifyGoal + ! - : typeclass_instances.
 
 (** ** Instances *)
 Lemma simplify_hyp_id {Σ} (P : iProp Σ) T:
-  T -∗ simplify_hyp P T.
+  T ⊢ simplify_hyp P T.
 Proof. iIntros "HT Hl". iFrame. Qed.
 Global Instance simplify_hyp_id_inst {Σ} (P : iProp Σ):
   SimplifyHyp P None | 100 :=
   λ T, i2p (simplify_hyp_id P T).
 
 Lemma simplify_goal_id {Σ} (P : iProp Σ) T:
-  T P -∗ simplify_goal P T.
+  T P ⊢ simplify_goal P T.
 Proof. iIntros "HT". iExists _. iFrame. by iIntros "?". Qed.
 Global Instance simplify_goal_id_inst {Σ} (P : iProp Σ):
   SimplifyGoal P None | 100 :=
@@ -177,7 +177,7 @@ Global Hint Mode SubsumeList + + + + + ! : typeclass_instances.
 
 (** ** Instances *)
 Lemma subsume_id {Σ} (P : iProp Σ) T:
-  T -∗ subsume P P T.
+  T ⊢ subsume P P T.
 Proof. iIntros "$ $". Qed.
 Global Instance subsume_id_inst {Σ} (P : iProp Σ) : Subsume P P | 1 := λ T, i2p (subsume_id P T).
 
@@ -190,7 +190,7 @@ Lemma subsume_simplify {Σ} (P1 P2 : iProp Σ) T o1 o2 {SH : SimplifyHyp P1 o1} 
      | Some n1, _ => GH
      | _, _ => GG
        end in
-    G -∗ subsume P1 P2 T.
+    G ⊢ subsume P1 P2 T.
 Proof.
   iIntros "Hs Hl".
   destruct o1 as [n1|], o2 as [n2|] => //. 1: case_match.
@@ -204,7 +204,7 @@ Global Instance subsume_simplify_inst {Σ} (P1 P2 : iProp Σ) o1 o2 `{!SimplifyH
   λ T, i2p (subsume_simplify P1 P2 T o1 o2).
 
 Lemma subsume_list_eq {Σ} A ig (l1 l2 : list A) (f : nat → A → iProp Σ) (T : iProp Σ) :
-  ⌜list_subequiv ig l1 l2⌝ ∗ T -∗ subsume_list A ig l1 l2 f T.
+  ⌜list_subequiv ig l1 l2⌝ ∗ T ⊢ subsume_list A ig l1 l2 f T.
 Proof.
   iDestruct 1 as (Hequiv) "$". iIntros "Hl".
   have [Hlen _]:= Hequiv 0. iSplit; first done.
@@ -231,7 +231,7 @@ Global Instance subsume_list_eq_inst {Σ} A ig l1 l2 f:
   λ T : iProp Σ, i2p (subsume_list_eq A ig l1 l2 f T).
 
 Lemma subsume_list_insert_in_ig {Σ} A ig i x (l1 l2 : list A) (f : nat → A → iProp Σ) (T : iProp Σ) `{!CanSolve (i ∈ ig)} :
-  subsume_list A ig l1 l2 f T -∗
+  subsume_list A ig l1 l2 f T ⊢
   subsume_list A ig (<[i := x]>l1) l2 f T.
 Proof.
   unfold CanSolve in *. iIntros "Hsub Hl".
@@ -248,7 +248,7 @@ Global Instance subsume_list_insert_in_ig_inst {Σ} A ig i x (l1 l2 : list A) (f
 
 Lemma subsume_list_insert_not_in_ig {Σ} A ig i x (l1 l2 : list A) (f : nat → A → iProp Σ) (T : iProp Σ) `{!CanSolve (i ∉ ig)} :
   ⌜i < length l1⌝%nat ∗ subsume_list A (i :: ig) l1 l2 f (∀ x2,
-    ⌜l2 !! i = Some x2⌝ -∗ subsume (f i x) (f i x2) T) -∗
+    ⌜l2 !! i = Some x2⌝ -∗ subsume (f i x) (f i x2) T) ⊢
   subsume_list A ig (<[i := x]>l1) l2 f T.
 Proof.
   unfold CanSolve in *. iIntros "[% Hsub] Hl". rewrite big_sepL_insert // insert_length.
@@ -269,7 +269,7 @@ Global Instance subsume_list_insert_not_in_ig_inst {Σ} A ig i x (l1 l2 : list A
   λ T, i2p (subsume_list_insert_not_in_ig A ig i x l1 l2 f T).
 
 Lemma subsume_list_trivial_eq {Σ} A ig (l : list A) (f : nat → A → iProp Σ) (T : iProp Σ) :
-  T -∗ subsume_list A ig l l f T.
+  T ⊢ subsume_list A ig l l f T.
 Proof. by iIntros "$ $". Qed.
 Global Instance subsume_list_trivial_eq_inst {Σ} A ig l f:
   SubsumeList A ig l l f | 5 :=
@@ -277,7 +277,7 @@ Global Instance subsume_list_trivial_eq_inst {Σ} A ig l f:
 
 Lemma subsume_list_cons_l {Σ} A ig (x1 : A) (l1 l2 : list A) (f : nat → A → iProp Σ) (T : iProp Σ) :
   (⌜0 ∉ ig⌝ ∗ ∃ x2 l2', ⌜l2 = x2 :: l2'⌝ ∗
-      subsume (f 0%nat x1) (f 0%nat x2) (subsume_list A (pred <$> ig) l1 l2' (λ i, f (S i)) T)) -∗
+      subsume (f 0%nat x1) (f 0%nat x2) (subsume_list A (pred <$> ig) l1 l2' (λ i, f (S i)) T)) ⊢
    subsume_list A ig (x1 :: l1) l2 f T.
 Proof.
   iIntros "[% Hs]". iDestruct "Hs" as (???) "Hs". subst.

@@ -8,8 +8,8 @@ Import uPred.
 
 Lemma tac_wps_bind `{refinedcG Σ} e Ks Q Ψ E s:
   W.find_stmt_fill s = Some (Ks, e) →
-  WP (W.to_expr e) @ E {{ v, WPs W.to_stmt (W.stmt_fill Ks (W.Val v)) @ E {{ Q, Ψ }} }} -∗
-  WPs (W.to_stmt s) @ E {{ Q, Ψ }}.
+  WP (W.to_expr e) @ E {{ v, WPs W.to_stmt (W.stmt_fill Ks (W.Val v)) @ E {{ Q, Ψ }} }}
+  ⊢ WPs (W.to_stmt s) @ E {{ Q, Ψ }}.
 Proof.
   move => /W.find_stmt_fill_correct ->. iIntros "He".
   rewrite stmt_wp_eq. iIntros (? rf ->) "?".
@@ -30,8 +30,8 @@ Tactic Notation "wps_bind" :=
   end.
 
 Lemma tac_wp_bind' `{refinedcG Σ} e Ks Φ E:
-  WP (W.to_expr e) @ E {{ v, WP (W.to_expr (W.fill Ks (W.Val v))) @ E{{ Φ }} }} -∗
-  WP (W.to_expr (W.fill Ks e)) @ E {{ Φ }}.
+  WP (W.to_expr e) @ E {{ v, WP (W.to_expr (W.fill Ks (W.Val v))) @ E{{ Φ }} }}
+  ⊢ WP (W.to_expr (W.fill Ks e)) @ E {{ Φ }}.
 Proof.
   iIntros "HWP".
   have [Ks' HKs']:= W.ectx_item_correct Ks.
@@ -42,8 +42,8 @@ Qed.
 
 Lemma tac_wp_bind `{refinedcG Σ} e Ks e' Φ E:
   W.find_expr_fill e false = Some (Ks, e') →
-  WP (W.to_expr e') @ E {{ v, if Ks is [] then Φ v else WP (W.to_expr (W.fill Ks (W.Val v))) @ E{{ Φ }} }} -∗
-  WP (W.to_expr e) @ E {{ Φ }}.
+  WP (W.to_expr e') @ E {{ v, if Ks is [] then Φ v else WP (W.to_expr (W.fill Ks (W.Val v))) @ E{{ Φ }} }}
+  ⊢ WP (W.to_expr e) @ E {{ Φ }}.
 Proof.
   move => /W.find_expr_fill_correct ->. move: Ks => [|K Ks] //.
   move: (K::Ks) => {K}Ks. by iApply tac_wp_bind'.

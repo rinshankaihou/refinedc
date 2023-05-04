@@ -12,8 +12,8 @@ Section type.
   Proof. apply: _. Qed.
 
   Lemma spinlock_subsume γ1 γ2 l T β:
-    ⌜γ1 = γ2⌝ ∗ T -∗
-    subsume (l ◁ₗ{β} spinlock γ1) (l ◁ₗ{β} spinlock γ2) T.
+    ⌜γ1 = γ2⌝ ∗ T
+    ⊢ subsume (l ◁ₗ{β} spinlock γ1) (l ◁ₗ{β} spinlock γ2) T.
   Proof. iIntros "[-> $] $". Qed.
   Global Instance spinlock_subsume_inst γ1 γ2 l β:
     Subsume (l ◁ₗ{β} spinlock γ1) (l ◁ₗ{β} spinlock γ2) :=

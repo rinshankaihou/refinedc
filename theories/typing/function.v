@@ -61,7 +61,7 @@ Section function.
           (fp1 x).(fp_Pa) ≡ (fp2 x).(fp_Pa) ∧
           (∀ y, ((fp1 x).(fp_fr) y).(fr_rty) ≡ ((fp2 x).(fp_fr) (rew [λ x : Type, x] Heq in y)).(fr_rty) ∧
                 ((fp1 x).(fp_fr) y).(fr_R) ≡ ((fp2 x).(fp_fr) (rew [λ x : Type, x] Heq in y)).(fr_R))) →
-    typed_function fn1 fp1 -∗ typed_function fn2 fp2.
+    typed_function fn1 fp1 ⊢ typed_function fn2 fp2.
   Proof.
     iIntros (-> Hly Hfn) "HT".
     rewrite /typed_function.
@@ -120,8 +120,8 @@ Section function.
       ([∗ list] v;ty∈vl; (fp x).(fp_atys), v ◁ᵥ ty) ∗
       (fp x).(fp_Pa) ∗ ∀ v x',
       ((fp x).(fp_fr) x').(fr_R) -∗
-      T v ((fp x).(fp_fr) x').(fr_rty)
-    ) -∗ typed_call v (v ◁ᵥ l @ function_ptr fp) vl tys T.
+      T v ((fp x).(fp_fr) x').(fr_rty))
+    ⊢ typed_call v (v ◁ᵥ l @ function_ptr fp) vl tys T.
   Proof.
     iIntros "HT (%fn&->&He&Hfn) Htys" (Φ) "HΦ".
     iDestruct ("HT" with "Htys") as "(%x&Hvl&HPa&Hr)".
@@ -176,8 +176,8 @@ Section function.
     λ T, i2p (type_call_fnptr l v vl tys T fp).
 
   Lemma subsume_fnptr v l1 l2 (fnty1 fnty2 : A → fn_params) T:
-    ⌜l1 = l2⌝ ∗ ⌜fnty1 = fnty2⌝ ∗ T -∗
-    subsume (v ◁ᵥ l1 @ function_ptr fnty1) (v ◁ᵥ l2 @ function_ptr fnty2) T.
+    ⌜l1 = l2⌝ ∗ ⌜fnty1 = fnty2⌝ ∗ T
+    ⊢ subsume (v ◁ᵥ l1 @ function_ptr fnty1) (v ◁ᵥ l2 @ function_ptr fnty2) T.
   Proof. iIntros "(->&->&$) $". Qed.
   Global Instance subsume_fnptr_inst v l1 l2 (fnty1 fnty2 : A → fn_params):
     Subsume (v ◁ᵥ l1 @ function_ptr fnty1)%I (v ◁ᵥ l2 @ function_ptr fnty2)%I :=
@@ -237,7 +237,7 @@ Section inline_function.
                     fn.(f_local_vars).*2 [])
       (zip vl tys)
       [])
-    -∗ typed_call v (v ◁ᵥ l @ inline_function_ptr fn) vl tys T.
+    ⊢ typed_call v (v ◁ᵥ l @ inline_function_ptr fn) vl tys T.
   Proof.
     iIntros "[%Hl HT] (->&Hfn) Htys" (Φ) "HΦ".
     iAssert ⌜Forall2 has_layout_val vl (f_args fn).*2⌝%I as %Hall. {

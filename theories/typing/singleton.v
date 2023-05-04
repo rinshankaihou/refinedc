@@ -20,16 +20,16 @@ Section value.
   Qed.
 
   Lemma value_simplify v T ot p:
-    (⌜v = p⌝ -∗ ⌜v `has_layout_val` ot_layout ot⌝ -∗ ⌜mem_cast_id v ot⌝ -∗ T) -∗
-    simplify_hyp (v ◁ᵥ  value ot p) T.
+    (⌜v = p⌝ -∗ ⌜v `has_layout_val` ot_layout ot⌝ -∗ ⌜mem_cast_id v ot⌝ -∗ T)
+    ⊢ simplify_hyp (v ◁ᵥ value ot p) T.
   Proof. iIntros "HT [% [% ->]]". by iApply "HT". Qed.
   Global Instance value_simplify_inst v ot p :
     SimplifyHypVal v (value ot p) (Some 0%N) :=
     λ T, i2p (value_simplify v T ot p).
 
   Lemma value_subsume_goal v v' ly ty T:
-    (⌜ty.(ty_has_op_type) ly MCId⌝ ∗ (v ◁ᵥ ty -∗ ⌜v = v'⌝ ∗ T)) -∗
-    subsume (v ◁ᵥ ty) (v ◁ᵥ value ly v') T.
+    (⌜ty.(ty_has_op_type) ly MCId⌝ ∗ (v ◁ᵥ ty -∗ ⌜v = v'⌝ ∗ T))
+    ⊢ subsume (v ◁ᵥ ty) (v ◁ᵥ value ly v') T.
   Proof.
     iIntros "[% HT] Hty". iDestruct (ty_size_eq with "Hty") as %Hly; [done|].
     iDestruct (ty_memcast_compat_id with "Hty") as %?; [done|].
@@ -40,8 +40,8 @@ Section value.
     λ T, i2p (value_subsume_goal v v' ot ty T).
 
   Lemma value_subsume_goal_loc l v' ot ty T:
-    (⌜ty.(ty_has_op_type) ot MCId⌝ ∗ ∀ v, v ◁ᵥ ty -∗ ⌜v = v'⌝ ∗ T) -∗
-    subsume (l ◁ₗ ty) (l ◁ₗ value ot v') T.
+    (⌜ty.(ty_has_op_type) ot MCId⌝ ∗ ∀ v, v ◁ᵥ ty -∗ ⌜v = v'⌝ ∗ T)
+    ⊢ subsume (l ◁ₗ ty) (l ◁ₗ value ot v') T.
   Proof.
     iIntros "[% HT] Hty".
     iDestruct (ty_aligned with "Hty") as %Hal; [done|].
@@ -56,8 +56,8 @@ Section value.
     λ T, i2p (value_subsume_goal_loc l v' ot ty T).
 
   Lemma value_subsume_own_ptrop l β (v' : val) ty T:
-    (l ◁ₗ{β} ty -∗ ⌜v' = l⌝ ∗ T) -∗
-    subsume (l ◁ₗ{β} ty) (l ◁ᵥ value PtrOp v') T.
+    (l ◁ₗ{β} ty -∗ ⌜v' = l⌝ ∗ T)
+    ⊢ subsume (l ◁ₗ{β} ty) (l ◁ᵥ value PtrOp v') T.
   Proof.
     iIntros "HT Hty". iDestruct ("HT" with "Hty") as "[% $]"; subst.
     iPureIntro. split_and!; [|done..]. apply mem_cast_id_loc.
@@ -67,8 +67,8 @@ Section value.
     λ T, i2p (value_subsume_own_ptrop l β v' ty T).
 
   Lemma value_merge v l ot T:
-    (find_in_context (FindVal v) (λ ty:type, ⌜ty.(ty_has_op_type) (UntypedOp (ot_layout ot)) MCNone⌝ ∗ (l ◁ₗ ty -∗ T))) -∗
-      simplify_hyp (l ◁ₗ value ot v) T.
+    find_in_context (FindVal v) (λ ty:type, ⌜ty.(ty_has_op_type) (UntypedOp (ot_layout ot)) MCNone⌝ ∗ (l ◁ₗ ty -∗ T))
+    ⊢ simplify_hyp (l ◁ₗ value ot v) T.
   Proof.
     iDestruct 1 as (ty) "[Hv [% HT]]".
     iIntros "[% [% [% Hl]]]". iApply "HT". by iApply (ty_ref with "[] Hl Hv").
@@ -78,8 +78,8 @@ Section value.
     λ T, i2p (value_merge v l ot T).
 
   Lemma type_read_move T l ty ot a E mc `{!TCDone (ty.(ty_has_op_type) ot MCId)}:
-    (∀ v, T v (value ot v) ty) -∗
-      typed_read_end a E l Own ty ot mc T.
+    (∀ v, T v (value ot v) ty)
+    ⊢ typed_read_end a E l Own ty ot mc T.
   Proof.
     unfold TCDone, typed_read_end in *. iIntros "HT Hl".
     iApply fupd_mask_intro; [destruct a; solve_ndisj|]. iIntros "Hclose".
@@ -100,8 +100,8 @@ Section value.
   that the length is the same and the alignment is lower. Adapt when necessary. *)
   Lemma type_write_own a ty T E l2 ty2 v ot
         `{!TCDone (ty.(ty_has_op_type) ot MCId ∧ ty2.(ty_has_op_type) (UntypedOp (ot_layout ot)) MCNone)}:
-    (∀ v', v ◁ᵥ ty -∗ v' ◁ᵥ ty2 -∗ T (value ot v)) -∗
-    typed_write_end a E ot v ty l2 Own ty2 T.
+    (∀ v', v ◁ᵥ ty -∗ v' ◁ᵥ ty2 -∗ T (value ot v))
+    ⊢ typed_write_end a E ot v ty l2 Own ty2 T.
   Proof.
     unfold TCDone, typed_write_end in *. destruct_and?. iIntros "HT Hl Hv".
     iDestruct (ty_aligned with "Hl") as %?; [done|].
@@ -142,32 +142,32 @@ Section at_value.
 
 
   Lemma at_value_simplify_hyp_val v v' ty T:
-    (v ◁ᵥ value PtrOp v' -∗ v' ◁ᵥ ty -∗ T) -∗
-    simplify_hyp (v ◁ᵥ at_value v' ty) T.
+    (v ◁ᵥ value PtrOp v' -∗ v' ◁ᵥ ty -∗ T)
+    ⊢ simplify_hyp (v ◁ᵥ at_value v' ty) T.
   Proof. iIntros "HT [??]". by iApply ("HT" with "[$] [$]"). Qed.
   Global Instance at_value_simplify_hyp_val_inst v v' ty :
     SimplifyHypVal v (at_value v' ty) (Some 0%N) :=
     λ T, i2p (at_value_simplify_hyp_val v v' ty T).
 
   Lemma at_value_simplify_goal_val v v' ty T:
-    (T (v ◁ᵥ value PtrOp v' ∗ v' ◁ᵥ ty)) -∗
-    simplify_goal (v ◁ᵥ at_value v' ty) T.
+    (T (v ◁ᵥ value PtrOp v' ∗ v' ◁ᵥ ty))
+    ⊢ simplify_goal (v ◁ᵥ at_value v' ty) T.
   Proof. iIntros "HT". iExists _. iFrame. by iIntros "$". Qed.
   Global Instance at_value_simplify_goal_val_inst v v' ty :
     SimplifyGoalVal v (at_value v' ty) (Some 0%N) :=
     λ T, i2p (at_value_simplify_goal_val v v' ty T).
 
   Lemma at_value_simplify_hyp_loc l v' ty T:
-    (l ◁ₗ value PtrOp v' -∗ v' ◁ᵥ ty -∗ T) -∗
-    simplify_hyp (l ◁ₗ at_value v' ty) T.
+    (l ◁ₗ value PtrOp v' -∗ v' ◁ᵥ ty -∗ T)
+    ⊢ simplify_hyp (l ◁ₗ at_value v' ty) T.
   Proof. iIntros "HT [??]". by iApply ("HT" with "[$] [$]"). Qed.
   Global Instance at_value_simplify_hyp_loc_inst l v' ty :
     SimplifyHypPlace l Own (at_value v' ty) (Some 0%N) :=
     λ T, i2p (at_value_simplify_hyp_loc l v' ty T).
 
   Lemma at_value_simplify_goal_loc l v' ty T:
-    (T (l ◁ₗ value PtrOp v' ∗ v' ◁ᵥ ty)) -∗
-    simplify_goal (l ◁ₗ at_value v' ty) T.
+    (T (l ◁ₗ value PtrOp v' ∗ v' ◁ᵥ ty))
+    ⊢ simplify_goal (l ◁ₗ at_value v' ty) T.
   Proof. iIntros "HT". iExists _. iFrame. by iIntros "$". Qed.
   Global Instance at_value_simplify_goal_loc_inst l v' ty :
     SimplifyGoalPlace l Own (at_value v' ty) (Some 0%N) :=
@@ -189,16 +189,16 @@ Section place.
   Next Obligation. by iIntros (????) "$". Qed.
 
   Lemma place_simplify l β T p:
-    (⌜l = p⌝ -∗ T) -∗
-    simplify_hyp (l◁ₗ{β} place p) T.
+    (⌜l = p⌝ -∗ T)
+    ⊢ simplify_hyp (l◁ₗ{β} place p) T.
   Proof. iIntros "HT ->". by iApply "HT". Qed.
   Global Instance place_simplify_inst l β p :
     SimplifyHypPlace l β (place p)%I (Some 0%N) :=
     λ T, i2p (place_simplify l β T p).
 
   Lemma place_simplify_goal l β T p:
-    (T ⌜l = p⌝) -∗
-    simplify_goal (l◁ₗ{β} place p) T.
+    (T ⌜l = p⌝)
+    ⊢ simplify_goal (l◁ₗ{β} place p) T.
   Proof. iIntros "HT". iExists _. iFrame. by iIntros "->". Qed.
   Global Instance place_simplify_goal_inst l β p :
     SimplifyGoalPlace l β (place p)%I (Some 0%N) :=
@@ -206,8 +206,8 @@ Section place.
 
 
   Lemma type_addr_of_singleton l β ty T:
-    T β ty (place l) -∗
-    typed_addr_of_end l β ty T.
+    T β ty (place l)
+    ⊢ typed_addr_of_end l β ty T.
   Proof. iIntros "HT Hl !#". iExists _, _, _. iFrame "HT". by iFrame. Qed.
   Global Instance type_addr_of_singleton_inst l β ty:
     TypedAddrOfEnd l β ty :=
@@ -216,8 +216,8 @@ Section place.
   Lemma typed_place_simpl P l ty1 β1 T n {SH:SimplifyHyp (l ◁ₗ{β1} ty1) (Some n)}:
     (SH (find_in_context (FindLoc l) (λ '(β2, ty2),
         typed_place P l β2 ty2 (λ l3 β3 ty3 typ R,
-           T l3 β3 ty3 (λ _, place l) (λ ty', l ◁ₗ{β2} typ ty' ∗ R ty' ))))).(i2p_P) -∗
-    typed_place P l β1 ty1 T.
+           T l3 β3 ty3 (λ _, place l) (λ ty', l ◁ₗ{β2} typ ty' ∗ R ty' ))))).(i2p_P)
+    ⊢ typed_place P l β1 ty1 T.
   Proof.
     iIntros "SH" (Φ) "Hl HΦ".
     iDestruct (i2p_proof with "SH Hl") as ([β2 ty2]) "[Hl HP]".
@@ -232,8 +232,8 @@ Section place.
 
   Lemma typed_read_end_simpl E l β ty ly n mc T {SH:SimplifyHyp (l ◁ₗ{β} ty) (Some n)} a:
     (SH (find_in_context (FindLoc l) (λ '(β2, ty2),
-        typed_read_end a E l β2 ty2 ly mc (λ v ty' ty3, l ◁ₗ{β2} ty' -∗ T v (place l) ty3)))).(i2p_P) -∗
-    typed_read_end a E l β ty ly mc T.
+        typed_read_end a E l β2 ty2 ly mc (λ v ty' ty3, l ◁ₗ{β2} ty' -∗ T v (place l) ty3)))).(i2p_P)
+    ⊢ typed_read_end a E l β ty ly mc T.
   Proof.
     iIntros "SH". iApply typed_read_end_mono_strong; [done|]. iIntros "Hl !>".
     iDestruct (i2p_proof with "SH Hl") as ([β2 ty2]) "[Hl HP]" => /=.
@@ -247,8 +247,8 @@ Section place.
 
   Lemma typed_write_end_simpl b E ot v ty1 l β ty2 n T {SH:SimplifyHyp (l ◁ₗ{β} ty2) (Some n)}:
     (SH (find_in_context (FindLoc l) (λ '(β3, ty3),
-        typed_write_end b E ot v ty1 l β3 ty3 (λ ty', l ◁ₗ{β3} ty' -∗ T (place l))))).(i2p_P) -∗
-    typed_write_end b E ot v ty1 l β ty2 T.
+        typed_write_end b E ot v ty1 l β3 ty3 (λ ty', l ◁ₗ{β3} ty' -∗ T (place l))))).(i2p_P)
+    ⊢ typed_write_end b E ot v ty1 l β ty2 T.
   Proof.
     iIntros "SH". iApply typed_write_end_mono_strong; [done|]. iIntros "Hv Hl !>".
     iDestruct (i2p_proof with "SH Hl") as ([β2' ty2']) "[Hl HP]" => /=.

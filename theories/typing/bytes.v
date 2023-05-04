@@ -86,8 +86,8 @@ Section bytewise.
   Lemma subsume_bytewise_eq l β P1 P2 ly1 ly2
         `{!CanSolve (ly1.(ly_size) = ly2.(ly_size))} T:
     ⌜∀ b, P1 b → P2 b⌝ ∗
-    (⌜l `has_layout_loc` ly1⌝ -∗ ⌜l `has_layout_loc` ly2⌝ ∗ T) -∗
-      subsume (l ◁ₗ{β} bytewise P1 ly1) (l ◁ₗ{β} bytewise P2 ly2) T.
+    (⌜l `has_layout_loc` ly1⌝ -∗ ⌜l `has_layout_loc` ly2⌝ ∗ T)
+    ⊢ subsume (l ◁ₗ{β} bytewise P1 ly1) (l ◁ₗ{β} bytewise P2 ly2) T.
   Proof.
     revert select (CanSolve _) => Hsz. unfold CanSolve in *.
     iDestruct 1 as (HPs) "HT". iDestruct 1 as (??? HP) "?".
@@ -104,8 +104,8 @@ Section bytewise.
         `{!CanSolve (ly1.(ly_size) ≤ ly2.(ly_size))%nat} T:
     ⌜∀ b, P1 b → P2 b⌝ ∗
     ⌜ly_align ly2 ≤ ly_align ly1⌝%nat ∗
-    ((l +ₗ ly1.(ly_size)) ◁ₗ{β} bytewise P2 (ly_offset ly2 ly1.(ly_size)) ∗ T) -∗
-    subsume (l ◁ₗ{β} bytewise P1 ly1) (l ◁ₗ{β} bytewise P2 ly2) T.
+    ((l +ₗ ly1.(ly_size)) ◁ₗ{β} bytewise P2 (ly_offset ly2 ly1.(ly_size)) ∗ T)
+    ⊢ subsume (l ◁ₗ{β} bytewise P1 ly1) (l ◁ₗ{β} bytewise P2 ly2) T.
   Proof.
     unfold CanSolve in *.
     iIntros "(%&%&?&$) Hl".
@@ -121,8 +121,8 @@ Section bytewise.
         `{!CanSolve (ly2.(ly_size) ≤ ly1.(ly_size))%nat} T:
     ⌜∀ b, P1 b → P2 b⌝ ∗
     ⌜ly_align ly2 ≤ ly_align ly1⌝%nat ∗
-    ((l +ₗ ly2.(ly_size)) ◁ₗ{β} bytewise P1 (ly_offset ly1 ly2.(ly_size)) -∗ T) -∗
-    subsume (l ◁ₗ{β} bytewise P1 ly1) (l ◁ₗ{β} bytewise P2 ly2) T.
+    ((l +ₗ ly2.(ly_size)) ◁ₗ{β} bytewise P1 (ly_offset ly1 ly2.(ly_size)) -∗ T)
+    ⊢ subsume (l ◁ₗ{β} bytewise P1 ly1) (l ◁ₗ{β} bytewise P2 ly2) T.
   Proof.
     unfold CanSolve in *.
     iIntros "(%&%&HT) Hl".
@@ -143,8 +143,8 @@ Section bytewise.
       ⌜0 ≤ n⌝ ∗
       ⌜Z.to_nat n ≤ ly.(ly_size)⌝%nat ∗
       (p ◁ₗ{β} bytewise P (ly_set_size ly (Z.to_nat n)) -∗ v2 ◁ᵥ n @ int it -∗
-       T (val_of_loc (p +ₗ n)) ((p +ₗ n) @ &frac{β} (bytewise P (ly_offset ly (Z.to_nat n)))))) -∗
-    typed_bin_op v2 (v2 ◁ᵥ n @ int it) p (p ◁ₗ{β} bytewise P ly) (PtrOffsetOp u8) (IntOp it) PtrOp T.
+       T (val_of_loc (p +ₗ n)) ((p +ₗ n) @ &frac{β} (bytewise P (ly_offset ly (Z.to_nat n))))))
+    ⊢ typed_bin_op v2 (v2 ◁ᵥ n @ int it) p (p ◁ₗ{β} bytewise P ly) (PtrOffsetOp u8) (IntOp it) PtrOp T.
   Proof.
     unfold int; simpl_type.
     iIntros "HT" (Hint) "Hp". iIntros (Φ) "HΦ".
@@ -184,8 +184,8 @@ Section uninit.
 
   (* This only works for [Own] since [ty] might have interior mutability. *)
   Lemma uninit_mono l ty ly `{!TCDone (ty.(ty_has_op_type) (UntypedOp ly) MCNone)} T:
-    (∀ v, v ◁ᵥ ty -∗ T) -∗
-    subsume (l ◁ₗ ty) (l ◁ₗ uninit ly) T.
+    (∀ v, v ◁ᵥ ty -∗ T)
+    ⊢ subsume (l ◁ₗ ty) (l ◁ₗ uninit ly) T.
   Proof.
     unfold TCDone in *; subst. iIntros "HT Hl".
     iDestruct (ty_aligned with "Hl") as %?; [done|].
@@ -208,8 +208,8 @@ Section uninit.
     typed_val_expr e (λ v ty,
       foldr (λ (e : (loc * layout)) T, e.1 ◁ₗ uninit e.2 ∗ T)
       (R v ty)
-      (zip ls (fn.(f_args) ++ fn.(f_local_vars)).*2)) -∗
-    typed_stmt (Return e) fn ls R Q.
+      (zip ls (fn.(f_args) ++ fn.(f_local_vars)).*2))
+    ⊢ typed_stmt (Return e) fn ls R Q.
   Proof.
     iIntros "He" (Hls). wps_bind. iApply "He".
     iIntros (v ty) "Hv HR". iApply wps_return.
@@ -224,8 +224,8 @@ Section uninit.
   Qed.
 
   Lemma type_read_move_copy T E l ty ot mc a `{!TCDone (ty.(ty_has_op_type) ot MCCopy)}:
-    (∀ v, T v (uninit (ot_layout ot)) ty) -∗
-      typed_read_end a E l Own ty ot mc T.
+    (∀ v, T v (uninit (ot_layout ot)) ty)
+    ⊢ typed_read_end a E l Own ty ot mc T.
   Proof.
     unfold TCDone in *. rewrite /typed_read_end. iIntros "HT Hl".
     iApply fupd_mask_intro; [destruct a; solve_ndisj|]. iIntros "Hclose".
@@ -259,7 +259,7 @@ Section void.
   Definition void : type := uninit void_layout.
 
   Lemma type_void T:
-    T void -∗ typed_value VOID T.
+    T void ⊢ typed_value VOID T.
   Proof. iIntros "HT". rewrite /VOID. iExists _. iFrame. by unfold void, bytewise; simpl_type. Qed.
   Global Instance type_void_inst : TypedValue VOID :=
     λ T, i2p (type_void T).
@@ -271,8 +271,8 @@ Section zeroed.
   Context `{!typeG Σ}.
 
   Lemma subsume_uninit_zeroed p ly1 ly2 T:
-    ⌜ly_align ly1 = ly_align ly2⌝ ∗ ⌜ly_size ly2 = 0%nat⌝ ∗ (p ◁ₗ uninit ly1 -∗ T) -∗
-    subsume (p ◁ₗ uninit ly1)%I (p ◁ₗ zeroed ly2)%I T.
+    ⌜ly_align ly1 = ly_align ly2⌝ ∗ ⌜ly_size ly2 = 0%nat⌝ ∗ (p ◁ₗ uninit ly1 -∗ T)
+    ⊢ subsume (p ◁ₗ uninit ly1)%I (p ◁ₗ zeroed ly2)%I T.
   Proof.
     iDestruct 1 as (H1 H2) "HT". iIntros "Hp".
     iDestruct (ty_aligned _ (UntypedOp _) MCNone with "Hp") as %Hal; [done|].

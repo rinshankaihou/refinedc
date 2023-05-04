@@ -265,7 +265,9 @@ Record type `{!typeG Σ} := {
   ty_ref ot mt l v : ty_has_op_type ot mt → ⌜l `has_layout_loc` ot_layout ot⌝ -∗ l↦v -∗ ty_own_val v -∗ ty_own Own l;
   ty_memcast_compat v ot mt st:
     ty_has_op_type ot mt →
-    ty_own_val v -∗
+    (* TODO: Should this be a -∗ for consistency with the other properties?
+    We currently use ⊢ because it makes applying some lemmas easier. *)
+    ty_own_val v ⊢
     match mt with
     | MCNone => True
     | MCCopy => ty_own_val (mem_cast v ot st)
@@ -282,12 +284,12 @@ Section memcast.
 
   Lemma ty_memcast_compat_copy v ot ty st:
     ty.(ty_has_op_type) ot MCCopy →
-    ty.(ty_own_val) v -∗ ty.(ty_own_val) (mem_cast v ot st).
+    ty.(ty_own_val) v ⊢ ty.(ty_own_val) (mem_cast v ot st).
   Proof. move => ?. by apply: (ty_memcast_compat _ _ _ MCCopy). Qed.
 
   Lemma ty_memcast_compat_id v ot ty:
     ty.(ty_has_op_type) ot MCId →
-    ty.(ty_own_val) v -∗ ⌜mem_cast_id v ot⌝.
+    ty.(ty_own_val) v ⊢ ⌜mem_cast_id v ot⌝.
   Proof. move => ?. by apply: (ty_memcast_compat _ _ _ MCId inhabitant). Qed.
 
   Lemma mem_cast_compat_id (P : val → iProp Σ) v ot st mt:
@@ -517,8 +519,8 @@ Section mono.
   Inductive type_le' (ty1 ty2 : type) : Prop :=
     Type_le :
       (* We omit [ty_has_op_type] on purpose as it is not preserved by fixpoints. *)
-      (∀ β l, ty1.(ty_own) β l -∗ ty2.(ty_own) β l) →
-      (∀ v, ty1.(ty_own_val) v -∗ ty2.(ty_own_val) v) →
+      (∀ β l, ty1.(ty_own) β l ⊢ ty2.(ty_own) β l) →
+      (∀ v, ty1.(ty_own_val) v ⊢ ty2.(ty_own_val) v) →
       type_le' ty1 ty2.
   Global Instance type_le : SqSubsetEq type := type_le'.
 
@@ -576,7 +578,7 @@ Section mono.
   Proof. intros ?? EQ ??-> ??->. apply EQ. Qed.
   Lemma ty_own_entails `{!typeG Σ} ty1 ty2 β l:
     ty1 ≡@{type} ty2 →
-    ty_own ty1 β l -∗ ty_own ty2 β l.
+    ty_own ty1 β l ⊢ ty_own ty2 β l.
   Proof. by move => [-> ?]. Qed.
 
   Global Instance ty_own_val_le : Proper ((⊑) ==> eq ==> (⊢)) ty_own_val.

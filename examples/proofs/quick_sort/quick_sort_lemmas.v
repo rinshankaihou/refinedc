@@ -126,48 +126,18 @@ From stdpp Require Import natmap.
 
 Section natmap_lemmas.
 
-  Lemma natmap_elem_of_to_list {A : Type} (m : natmap A) i x :
-    (i, x) ∈ natmap_to_list m ↔ m !! i = Some x.
-  Proof.
-    destruct m as [l ?].
-    by rewrite /natmap_to_list /lookup /natmap_lookup natmap_elem_of_to_list_raw.
-  Qed.
-
-  Lemma natmap_to_list_raw_map_snd {A : Type} (l: natmap_raw A) :
-    ∀ i j, snd <$> (natmap_to_list_raw i l) = snd <$> (natmap_to_list_raw j l).
-  Proof.
-    induction l as [|x l IHl]; move => i j => //=.
-    destruct x.
-    - by rewrite !fmap_cons (IHl (S i) (S j)).
-    - by rewrite (IHl (S i) (S j)).
-  Qed.
-
-  Lemma natmap_to_list_raw_map_snd_Some {A : Type} (l: list A) :
-    snd <$> (natmap_to_list_raw 0 (Some <$> l)) = l.
-  Proof.
-    induction l as [|x l IHl] => //.
-    by rewrite !fmap_cons (natmap_to_list_raw_map_snd _ 1 0) IHl.
-  Qed.
-
-  Lemma natmap_to_list_Nodup {A : Type} (m : natmap A) :
-    NoDup (natmap_to_list m).
-  Proof.
-    destruct m as [l ?].
-    by apply natmap_to_list_raw_nodup.
-  Qed.
-
   Lemma natmap_to_list_disjoint_maps {A : Type} (m1 m2 : natmap A) :
     m1 ##ₘ m2 →
-    natmap_to_list (m1 ∪ m2) ≡ₚ natmap_to_list m1 ++ natmap_to_list m2.
+    map_to_list (m1 ∪ m2) ≡ₚ map_to_list m1 ++ map_to_list m2.
   Proof.
     move => Hd. apply NoDup_Permutation.
-    - by apply natmap_to_list_Nodup.
+    - by apply NoDup_map_to_list.
     - rewrite NoDup_app. split; last split.
-      all: try by apply natmap_to_list_Nodup.
-      move => [i x]. rewrite! natmap_elem_of_to_list => ?.
+      all: try by apply NoDup_map_to_list.
+      move => [i x]. rewrite !elem_of_map_to_list => ?.
       by eapply eq_None_ne_Some, map_disjoint_Some_l.
     - move => [i x].
-      by rewrite elem_of_app !natmap_elem_of_to_list lookup_union_Some.
+      by rewrite elem_of_app !elem_of_map_to_list lookup_union_Some.
   Qed.
 
 End natmap_lemmas.
@@ -183,17 +153,17 @@ Proof.
 Qed.
 
 Definition unindexed {A : Type} (m : natmap A) :=
-  snd <$> natmap_to_list m.
+  snd <$> map_to_list m.
 
 Lemma unindexed_elem_of {A : Type} (m : natmap A) x :
   x ∈ unindexed m ↔ ∃ i, m !! i = Some x.
 Proof.
   rewrite elem_of_list_fmap. split.
-  - move => [[i ?] [-> /natmap_elem_of_to_list ?]].
+  - move => [[i ?] [-> /elem_of_map_to_list ?]].
     by exists i.
   - move => [i ?].
     exists (i, x).
-    by rewrite natmap_elem_of_to_list.
+    by rewrite elem_of_map_to_list.
 Qed.
 
 Lemma strip_Nones_Forall_Some {A : Type} (l : natmap_raw A) :
@@ -206,13 +176,22 @@ Proof.
   by destruct Hcontra.
 Qed.
 
+(* TODO: The following proof is quite horrible since it unfolds the
+definition of map_fold for natmap, but I am not sure what a better
+proof would be. *)
 Lemma indexed_unindexed {A : Type} (xs : list A) :
-  unindexed (indexed xs) = xs.
+  unindexed (indexed xs) ≡ₚ xs.
 Proof.
-  rewrite /unindexed /= strip_Nones_Forall_Some ?reverse_involutive.
-  2: { rewrite Forall_reverse Forall_fmap Forall_forall => ? ?.
-       solve_goal. }
-  by apply natmap_to_list_raw_map_snd_Some.
+  rewrite /unindexed /indexed /list_to_natmap/map_to_list/map_fold/=.
+  rewrite -fmap_reverse strip_Nones_Forall_Some.
+  2: { rewrite Forall_fmap Forall_forall => ? ?. simpl. done. }
+  rewrite -fmap_reverse reverse_involutive.
+  move: 0%nat => n. move Hl: ([]) => l.
+  have {2}-> : xs = l.*2 ++ xs by naive_solver.
+  clear Hl.
+  elim: xs n l; csimpl. { move => ??. by rewrite app_nil_r. }
+  move => // x xs IH n l. rewrite IH. csimpl.
+  apply Permutation_middle.
 Qed.
 
 Definition filter_index (I : interval) `{∀ x, Decision (I x)} {A : Type} (xs : list A) :=
@@ -240,7 +219,7 @@ Lemma filter_in_out_range_perm I {A : Type} (xs : list A) :
 Proof.
   rewrite -fmap_app -natmap_to_list_disjoint_maps ?map_filter_union_complement;
     last by apply map_disjoint_filter_complement.
-  by rewrite <- indexed_unindexed.
+  by apply indexed_unindexed.
 Qed.
 
 Lemma filter_in_range_perm I {A : Type} (xs ys : list A) :
