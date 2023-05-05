@@ -941,7 +941,7 @@ Section typing.
     G
     ⊢ typed_bin_op v1 P1 v2 P2 op ot1 ot2 T.
   Proof.
-    iIntros "Hs Hv1 Hv2".
+    iIntros "/= Hs Hv1 Hv2".
     destruct o1 as [n1|], o2 as [n2|] => //. 1: case_match.
     1,3,4: iDestruct (i2p_proof with "Hs Hv1") as (P) "[Hv Hsub]".
     4,5,6: iDestruct (i2p_proof with "Hs Hv2") as (P) "[Hv Hsub]".
@@ -985,7 +985,7 @@ Section typing.
     G
     ⊢ typed_copy_alloc_id v1 P1 v2 P2 ot T.
   Proof.
-    iIntros "Hs Hv1 Hv2".
+    iIntros "/= Hs Hv1 Hv2".
     destruct o1 as [n1|], o2 as [n2|] => //. 1: case_match.
     1,3,4: iDestruct (i2p_proof with "Hs Hv1") as (P) "[Hv Hsub]".
     4,5,6: iDestruct (i2p_proof with "Hs Hv2") as (P) "[Hv Hsub]".
@@ -1009,7 +1009,7 @@ Section typing.
     G
     ⊢ typed_cas ot v1 P1 v2 P2 v3 P3 T.
   Proof.
-    iIntros "Hs Hv1 Hv2 Hv3".
+    iIntros "/= Hs Hv1 Hv2 Hv3".
     destruct o1 as [n1|], o2 as [n2|], o3 as [n3|] => //=; repeat case_match => /=.
     all: try iDestruct (i2p_proof with "Hs Hv1") as (P) "[Hv Hsub]".
     all: try iDestruct (i2p_proof with "Hs Hv2") as (P) "[Hv Hsub]".

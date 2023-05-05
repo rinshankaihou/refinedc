@@ -148,7 +148,7 @@ Section programs.
     (⌜bv ∈ it⌝ -∗ T (i2v bv' it) (bv' @ bitfield_raw it))
     ⊢ typed_un_op v (v ◁ᵥ bv @ bitfield_raw it)%I (NotIntOp) (IntOp it) T.
   Proof.
-    iIntros "HT Hv".
+    iIntros (?) "HT Hv".
     iApply type_val_expr_mono_strong.
     iApply (type_not_int with "[HT] Hv") => //.
     iIntros "Hbv".

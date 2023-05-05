@@ -71,7 +71,6 @@ Proof.
     iIntros "!>" (???) "Hm". rewrite fntbl_entry_eq.
     iExists _. iSplitR; [done|]. by iApply ghost_map_elem_persist.
   }
-  simpl in Hwp.
   iMod (Hwp with "Hmt Hfm") as "Hmains".
 
   iModIntro. iExists _, (replicate (length thread_mains) (λ _, True%I)), _, _.

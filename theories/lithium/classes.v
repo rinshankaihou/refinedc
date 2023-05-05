@@ -32,8 +32,8 @@ Definition FindDirect {Σ A} (P : A → iProp Σ) := {| fic_A := A; fic_Prop := 
 Global Typeclasses Opaque FindDirect.
 
 Lemma find_in_context_direct {Σ B} P (T : B → iProp Σ):
-  (∃ x : B, P x ∗ T x) ⊢
-  find_in_context (FindDirect P) T.
+  (∃ x : B, P x ∗ T x)
+  ⊢ find_in_context (FindDirect P) T.
 Proof. done. Qed.
 Global Instance find_in_context_direct_inst {Σ B} (P : _ → iProp Σ) :
   FindInContext (FindDirect P) FICSyntactic | 1 :=
@@ -190,9 +190,10 @@ Lemma subsume_simplify {Σ} (P1 P2 : iProp Σ) T o1 o2 {SH : SimplifyHyp P1 o1} 
      | Some n1, _ => GH
      | _, _ => GG
        end in
-    G ⊢ subsume P1 P2 T.
+    G
+    ⊢ subsume P1 P2 T.
 Proof.
-  iIntros "Hs Hl".
+  iIntros "/= Hs Hl".
   destruct o1 as [n1|], o2 as [n2|] => //. 1: case_match.
   1,3,4: by iDestruct (i2p_proof with "Hs Hl") as "Hsub".
   all: iDestruct (i2p_proof with "Hs") as (P) "[HP HT]".
@@ -231,8 +232,8 @@ Global Instance subsume_list_eq_inst {Σ} A ig l1 l2 f:
   λ T : iProp Σ, i2p (subsume_list_eq A ig l1 l2 f T).
 
 Lemma subsume_list_insert_in_ig {Σ} A ig i x (l1 l2 : list A) (f : nat → A → iProp Σ) (T : iProp Σ) `{!CanSolve (i ∈ ig)} :
-  subsume_list A ig l1 l2 f T ⊢
-  subsume_list A ig (<[i := x]>l1) l2 f T.
+  subsume_list A ig l1 l2 f T
+  ⊢ subsume_list A ig (<[i := x]>l1) l2 f T.
 Proof.
   unfold CanSolve in *. iIntros "Hsub Hl".
   rewrite insert_length. iApply "Hsub".
@@ -248,8 +249,8 @@ Global Instance subsume_list_insert_in_ig_inst {Σ} A ig i x (l1 l2 : list A) (f
 
 Lemma subsume_list_insert_not_in_ig {Σ} A ig i x (l1 l2 : list A) (f : nat → A → iProp Σ) (T : iProp Σ) `{!CanSolve (i ∉ ig)} :
   ⌜i < length l1⌝%nat ∗ subsume_list A (i :: ig) l1 l2 f (∀ x2,
-    ⌜l2 !! i = Some x2⌝ -∗ subsume (f i x) (f i x2) T) ⊢
-  subsume_list A ig (<[i := x]>l1) l2 f T.
+    ⌜l2 !! i = Some x2⌝ -∗ subsume (f i x) (f i x2) T)
+  ⊢ subsume_list A ig (<[i := x]>l1) l2 f T.
 Proof.
   unfold CanSolve in *. iIntros "[% Hsub] Hl". rewrite big_sepL_insert // insert_length.
   iDestruct "Hl" as "[Hx Hl]". case_bool_decide => //.
@@ -277,8 +278,8 @@ Global Instance subsume_list_trivial_eq_inst {Σ} A ig l f:
 
 Lemma subsume_list_cons_l {Σ} A ig (x1 : A) (l1 l2 : list A) (f : nat → A → iProp Σ) (T : iProp Σ) :
   (⌜0 ∉ ig⌝ ∗ ∃ x2 l2', ⌜l2 = x2 :: l2'⌝ ∗
-      subsume (f 0%nat x1) (f 0%nat x2) (subsume_list A (pred <$> ig) l1 l2' (λ i, f (S i)) T)) ⊢
-   subsume_list A ig (x1 :: l1) l2 f T.
+      subsume (f 0%nat x1) (f 0%nat x2) (subsume_list A (pred <$> ig) l1 l2' (λ i, f (S i)) T))
+   ⊢ subsume_list A ig (x1 :: l1) l2 f T.
 Proof.
   iIntros "[% Hs]". iDestruct "Hs" as (???) "Hs". subst.
   rewrite /subsume_list !big_sepL_cons /=.

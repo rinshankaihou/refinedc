@@ -13,7 +13,10 @@ Proof. by rewrite /PAGES /ly_with_align /ly_size. Qed.
 Lemma ly_offset_PAGES n m:
   (ly_offset (PAGES n) (ly_size (PAGES m))) = PAGES (n - m).
 Proof.
-  rewrite ly_size_PAGES /ly_offset /PAGES /ly_with_align /ly_size /=.
+  rewrite ly_size_PAGES /ly_offset /PAGES /ly_with_align /ly_size.
+  (* TODO: simpl on factor2 with constants is slow, figure out if
+  there is a better solution *)
+  cbn delta beta iota. change (factor2 (Z.to_nat 4096) 0) with (12%nat).
   f_equal; first lia. rewrite min_l // /factor2 /factor2' /=. case_match => //=.
   assert (p = Pos.of_nat m * (2 ^ 12))%positive as ->. { simpl. lia. }
   rewrite Pos_factor2_mult Pos_factor2_pow. lia.
