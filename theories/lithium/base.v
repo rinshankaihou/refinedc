@@ -962,3 +962,33 @@ Proof.
   - move => Hb i ?. by bitblast Hb with i.
   - move => Hf. bitblast. by apply Hf.
 Qed.
+
+(** bitblast for pos *)
+Lemma bitblast_pos_xO p n b :
+  Bitblast (Z.pos p) (n - 1) b →
+  Bitblast (Z.pos p~0) n b.
+Proof.
+  move => [<-]. constructor.
+  destruct (decide (0 ≤ n)%Z). 2: { rewrite !Z.testbit_neg_r //; lia. }
+  destruct (decide (n = 0)%Z). { subst. done. }
+  destruct n; try lia.
+  rewrite !Z_testbit_pos_testbit /=; [|lia..].
+  f_equal. lia.
+Qed.
+(* lower priority than rule for constants *)
+Global Hint Resolve bitblast_pos_xO | 15 : bitblast.
+
+Lemma bitblast_pos_xI p n b :
+  Bitblast (Z.pos p) (n - 1) b →
+  Bitblast (Z.pos p~1) n (bool_decide (n = 0) || b).
+Proof.
+  move => [<-]. constructor.
+  destruct (decide (0 ≤ n)%Z).
+  2: { rewrite bool_decide_false; [|lia]. rewrite !Z.testbit_neg_r //; lia. }
+  case_bool_decide. { subst. done. }
+  destruct n; try lia.
+  rewrite !Z_testbit_pos_testbit /=; [|lia..].
+  f_equal. lia.
+Qed.
+(* lower priority than rule for constants *)
+Global Hint Resolve bitblast_pos_xI | 15 : bitblast.
