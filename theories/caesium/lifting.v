@@ -360,7 +360,7 @@ Qed.
 
 Lemma wp_cast_loc Φ v l E:
   val_to_loc v = Some l →
-  ▷ Φ (val_of_loc l) -∗ WP UnOp (CastOp PtrOp) PtrOp (Val v) @ E {{ Φ }}.
+  ▷ Φ v -∗ WP UnOp (CastOp PtrOp) PtrOp (Val v) @ E {{ Φ }}.
 Proof.
   iIntros (Hv) "HΦ".
   iApply wp_unop_det_pure; [|done].
