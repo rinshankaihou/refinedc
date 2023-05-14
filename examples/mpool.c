@@ -374,13 +374,14 @@ void *mpool_alloc_contiguous_no_fallback(struct mpool *p, size_t count, size_t a
   prev = &p->locked.chunk_list;
 
   [[rc::block]]
-  [[rc::exists("pc : loc",
+  [[rc::exists("pc : loc", "p_chunks : loc",
                "entries_in_chunks1 : nat", "entries_in_chunks2 : nat",
                "entries_in_entry_list : nat")]]
   [[rc::inv_vars("align : {align * entry_size} @ int<size_t>", "ret : null", "p : ∃ l. place<l>",
                  "prev : pc @ &own<entries_in_chunks2 @ mpool_chunk_t<entry_size>>")]]
-  [[rc::constraints("[p at{struct_mpool}ₗ \"locked\" ◁ₗ struct struct_mpool_locked_inner [wand_ex (λ x, pc ◁ₗ x @ mpool_chunk_t entry_size) (λ x, (entries_in_chunks1 + x)%nat @ mpool_chunk_t entry_size) ; entries_in_entry_list @ mpool_entry_t entry_size]]",
+  [[rc::constraints("[p at{struct_mpool}ₗ \"locked\" ◁ₗ struct struct_mpool_locked_inner [place p_chunks ; entries_in_entry_list @ mpool_entry_t entry_size]]",
                     "{shelve_hint (q = Own → n = (entries_in_chunks1 + entries_in_chunks2 + entries_in_entry_list)%nat)}")]]
+  [[rc::constraints("[p_chunks ◁ₗ wand_ex (λ x, pc ◁ₗ x @ mpool_chunk_t entry_size) (λ x, (entries_in_chunks1 + x)%nat @ mpool_chunk_t entry_size)]")]]
   while (*prev != NULL) {
     unsigned char* start;
     struct mpool_chunk *new_chunk;

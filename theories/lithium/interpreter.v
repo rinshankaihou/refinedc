@@ -777,11 +777,7 @@ Ltac liSep :=
     | (□ ?P)%I => notypeclasses refine (tac_do_intro_intuit_sep _ _ _ _ _); [li_pm_reduce|]
     | match ?x with _ => _ end => fail "should not have match in sep"
     | ?P => first [
-               convert_to_i2p P
-                 ltac:(fun T tac => li_let_bind T (fun H => let X := tac H in constr:(envs_entails Δ (X ∗ Q))))
-                 ltac:(fun converted =>
-               simple notypeclasses refine (tac_apply_i2p_below_sep converted _); [solve[refine _] |])
-             | progress liFindHyp FICSyntactic
+               progress liFindHyp FICSyntactic
              | simple notypeclasses refine (tac_fast_apply (tac_do_simplify_goal 0%N _ _) _); [solve [refine _] |]
              | simple notypeclasses refine (tac_fast_apply (tac_intro_subsume_related _ _) _); [solve [refine _] |];
                simpl; liFindInContext
