@@ -4,7 +4,7 @@ From iris.proofmode Require Export tactics.
 From lithium Require Export base infrastructure.
 
 (** * [iProp_to_Prop] *)
-Record iProp_to_Prop {Σ} (P : iProp Σ) : Type := i2p {
+#[projections(primitive)] Record iProp_to_Prop {Σ} (P : iProp Σ) : Type := i2p {
   i2p_P :> iProp Σ;
   i2p_proof : i2p_P ⊢ P;
 }.
