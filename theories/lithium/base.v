@@ -992,3 +992,195 @@ Proof.
 Qed.
 (* lower priority than rule for constants *)
 Global Hint Resolve bitblast_pos_xI | 15 : bitblast.
+
+(** rep
+
+ The [rep] tactic is an alternative to the [repeat] and [do] tactics
+ that supports left-biased depth-first branching with optional
+ backtracking on failure. *)
+Module Rep.
+  Import Ltac2.
+  Import Ltac2.Printf.
+
+  (* Exception to signal how many more steps should be backtracked*)
+  Ltac2 Type exn ::= [ RepBacktrack (int) ].
+
+  (* calls [tac] [n] times (n = None means infinite) on the first goal
+  under focus, stops on failure of [tac] and then backtracks [nback]
+  steps. *)
+  Ltac2 rec rep (n : int option) (nback : int) (tac : (unit -> unit)) : int :=
+    (* if there are no goals left, we are done *)
+    match Control.case (fun _ => Control.focus 1 1 (fun _ => ())) with
+    | Err _ => 0
+    | Val _ =>
+      (* check if we should do another repetition *)
+      let do_rep := match n with | None => true | Some n => Int.gt n 0 end in
+      match do_rep with
+      | false => 0
+      | true =>
+        (* backtracking point *)
+        let res := Control.case (fun _ =>
+          (* run tac on the first goal *)
+          let tac_res := Control.focus 1 1 (fun _ => Control.case tac) in
+          match tac_res  with
+          | Err _ =>
+              (* if tac failed, either start the backtracking or return 0 *)
+              match Int.gt nback 0 with
+              | true => Control.zero (RepBacktrack nback)
+              | false => 0
+              end
+          | Val _ =>
+              (* compute new n and recurse *)
+              let new_n :=
+                match n with | None => None | Some n => Some (Int.sub n 1) end in
+              let n_steps := rep new_n nback tac in
+              Int.add n_steps 1
+          end) in
+        match res with
+        | Err e =>
+            match e with
+            | RepBacktrack n =>
+                (* if we catch a RepBacktrack, either rethrow it with
+                one less or return 0 *)
+                match Int.gt n 0 with
+                | true => Control.zero (RepBacktrack (Int.sub n 1))
+                | false => 0
+                end
+            | _ => Control.zero e
+            end
+        | Val (r, _) => r
+        end
+      end
+    end.
+
+  Ltac2 print_steps (n : int) :=
+    printf "Did %i steps." n.
+
+  Ltac2 rec pos_to_ltac2_int (n : constr) : int :=
+    lazy_match! n with
+    | xH => 1
+    | xO ?n => Int.mul (pos_to_ltac2_int n) 2
+    | xI ?n => Int.add (Int.mul (pos_to_ltac2_int n) 2) 1
+    end.
+
+  Ltac2 rec z_to_ltac2_int (n : constr) : int :=
+    lazy_match! n with
+    | Z0 => 0
+    | Z.pos ?n => pos_to_ltac2_int n
+    | Z.neg ?n => Int.neg (pos_to_ltac2_int n)
+    end.
+
+  (* Calls tac on a new subgoal of type Z and converts the resulting Z
+  to an int. *)
+  Ltac2 int_from_z_subgoal (tac : unit -> unit) : int :=
+    let x := Control.focus 1 1 (fun _ =>
+      let x := open_constr:(_ : Z) in
+      match Constr.Unsafe.kind x with
+      | Constr.Unsafe.Cast x _ _ =>
+          match Constr.Unsafe.kind x with
+          | Constr.Unsafe.Evar e _ =>
+              Control.new_goal e;
+              x
+          | _ => Control.throw Assertion_failure
+          end
+      | _ => Control.throw Assertion_failure
+      end) in
+    (* new goal has index 2 because it was added after goal number 1 *)
+    Control.focus 2 2 (fun _ =>
+      tac ();
+      (* check that the goal is closed *)
+      Control.enter (fun _ => Control.throw Assertion_failure));
+    Control.focus 1 1 (fun _ =>
+      let x := Std.eval_vm None x in
+      z_to_ltac2_int x).
+
+  (* Necessary because Some and None cannot be used in ltac2: quotations. *)
+  Ltac2 some (n : int) : int option := Some n.
+  Ltac2 none : int option := None.
+End Rep.
+
+(** rep repeatedly applies tac to the goal in a depth-first manner. In
+particular, if tac generates multiple subgoals, the process continues
+with the first subgoal and only looks at the second subgoal if the
+first subgoal (and all goals spawed from it) are solved. If [tac]
+fails, the complete process stops (unlike [repeat] which continues
+with other subgoals).
+
+[rep n tac] iterates this process at most n times.
+[rep <- n tac] backtracks n steps on failure. *)
+Tactic Notation "rep" tactic3(tac) :=
+  let r := ltac2:(tac |-
+    Rep.print_steps (Rep.rep Rep.none 0 (fun _ => Ltac1.run tac))) in
+  r tac.
+
+(* rep is carefully written such that all goals are passed to Ltac2
+and rep can apply tac in a depth-first manner to only the first goal.
+In particular, the behavior of [all: rep 10 tac.] is equivalent to
+[all: rep 5 tac. all: rep 5 tac.], even if the first call spawns new
+subgoals. (See also the tests.) *)
+Tactic Notation "rep" int(n) tactic3(tac) :=
+  let ntac := do n (refine (1 + _)%Z); refine 0%Z in
+  let r := ltac2:(ntac tac |-
+    let n := Rep.int_from_z_subgoal (fun _ => Ltac1.run ntac) in
+    Rep.print_steps (Rep.rep (Rep.some n) 0 (fun _ => Ltac1.run tac))) in
+  r ntac tac.
+
+Tactic Notation "rep" "<-" int(n) tactic3(tac) :=
+  let ntac := do n (refine (1 + _)%Z); refine 0%Z in
+  let r := ltac2:(ntac tac |-
+     let n := Rep.int_from_z_subgoal (fun _ => Ltac1.run ntac) in
+     Rep.print_steps (Rep.rep (Rep.none) n (fun _ => Ltac1.run tac))) in
+  r ntac tac.
+
+Module RepTest.
+  Definition DELAY (P : Prop) : Prop := P.
+
+  Ltac DELAY_test_tac :=
+    first [
+        lazymatch goal with | |- DELAY ?P => change P end |
+        exact eq_refl |
+        split
+      ].
+
+  Goal ∃ x, Nat.iter 10 DELAY (x = 1) ∧ Nat.iter 6 DELAY (x = 2). simpl. eexists.
+    all: rep DELAY_test_tac.
+    1: lazymatch goal with | |- 1 = 2 => idtac | |- _ => fail "unexpected goal" end.
+  Abort.
+
+  Goal ∃ x, Nat.iter 10 DELAY (x = 1) ∧ Nat.iter 6 DELAY (x = 2). simpl. eexists.
+    all: rep 5 DELAY_test_tac.
+    1: lazymatch goal with | |- DELAY (DELAY (DELAY (DELAY (DELAY (DELAY (_ = 1)))))) => idtac | |- _ => fail "unexpected goal" end.
+    2: lazymatch goal with | |- DELAY (DELAY (DELAY (DELAY (DELAY (DELAY (_ = 2)))))) => idtac | |- _ => fail "unexpected goal" end.
+    (* This should only apply tac to the first subgoal. *)
+    all: rep 5 DELAY_test_tac.
+    1: lazymatch goal with | |- DELAY (_ = 1) => idtac | |- _ => fail "unexpected goal" end.
+    2: lazymatch goal with | |- DELAY (DELAY (DELAY (DELAY (DELAY (DELAY (_ = 2)))))) => idtac | |- _ => fail "unexpected goal" end.
+    (* This finishes the first subgoal and use the remaining steps on
+    the second subgoal. *)
+    all: rep 5 DELAY_test_tac.
+    1: lazymatch goal with | |- DELAY (DELAY (DELAY (1 = 2))) => idtac | |- _ => fail "unexpected goal" end.
+  Abort.
+
+  Goal ∃ x, Nat.iter 10 DELAY (x = 1) ∧ Nat.iter 6 DELAY (x = 2). simpl. eexists.
+    repeat DELAY_test_tac.
+    (* Same as rep above. *)
+  Abort.
+
+  Goal ∃ x, Nat.iter 10 DELAY (x = 1) ∧ Nat.iter 6 DELAY (x = 2). simpl. eexists.
+    do 5? (DELAY_test_tac).
+    (* Notice the difference to [rep] above: [do] also applies the
+    steps to the second subgoal. *)
+  Abort.
+
+  Goal ∃ x, Nat.iter 10 DELAY (x ≤ 1) ∧ Nat.iter 6 DELAY (x = 2). simpl. eexists.
+    rep <-3 DELAY_test_tac.
+    1: lazymatch goal with | |- DELAY (DELAY (DELAY (_ ≤ 1))) => idtac | |- _ => fail "unexpected goal" end.
+    2: lazymatch goal with | |- DELAY (DELAY (DELAY (DELAY (DELAY (DELAY (_ = 2)))))) => idtac | |- _ => fail "unexpected goal" end.
+  Abort.
+
+  Goal ∃ x, Nat.iter 10 DELAY (x ≤ 1) ∧ Nat.iter 6 DELAY (x = 2). simpl. eexists.
+    repeat DELAY_test_tac.
+    (* Notice the difference to [rep] above: [repeat] continues with
+    the second subgoal on failure. *)
+  Abort.
+End RepTest.
