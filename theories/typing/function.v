@@ -103,7 +103,7 @@ Section function.
     iIntros "[%fn [-> ?]]". iPureIntro. naive_solver.
   Qed.
 
-  Definition function_ptr (fp : A → fn_params) : rtype :=
+  Definition function_ptr (fp : A → fn_params) : rtype _ :=
     RType (function_ptr_type fp).
 
   Global Program Instance copyable_function_ptr p fp : Copyable (p @ function_ptr fp).
@@ -217,7 +217,7 @@ Section inline_function.
     iIntros "[-> ?]". iPureIntro. naive_solver.
   Qed.
 
-  Definition inline_function_ptr (fn : function) : rtype :=
+  Definition inline_function_ptr (fn : function) : rtype _ :=
     RType (inline_function_ptr_type fn).
 
   Global Program Instance copyable_inline_function_ptr p fn : Copyable (p @ inline_function_ptr fn).

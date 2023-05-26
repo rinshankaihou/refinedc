@@ -14,7 +14,7 @@ Class Optionable `{!typeG Σ} (ty : type) (optty : type) (ot1 ot2 : op_type) := 
 }.
 Arguments opt_pre {_ _} _ {_ _ _ _} _ _.
 
-Class ROptionable `{!typeG Σ} (r : rtype) (optty : type) (ot1 ot2 : op_type) := {
+Class ROptionable `{!typeG Σ} {A} (r : rtype A) (optty : type) (ot1 ot2 : op_type) := {
   ropt_opt x :: Optionable (r.(rty) x) optty ot1 ot2;
 }.
 
@@ -24,20 +24,20 @@ Class OptionableAgree `{!typeG Σ} (ty1 ty2 : type) : Prop :=
 Section optional.
   Context `{!typeG Σ}.
 
-  Global Program Instance optionable_ty_of_rty r `{!Inhabited (r.(rty_type))} optty ot1 ot2 `{!ROptionable r optty ot1 ot2}: Optionable r optty ot1 ot2 := {|
+  Global Program Instance optionable_ty_of_rty A (r : rtype A) `{!Inhabited A} optty ot1 ot2 `{!ROptionable r optty ot1 ot2}: Optionable r optty ot1 ot2 := {|
     opt_pre v1 v2 := (∀ x, opt_pre (r.(rty) x) v1 v2)%I
   |}.
   Next Obligation.
-    iIntros(r????? bty beq v1 v2 σ v) "Hpre Hv1 Hv2".
+    iIntros(A r????? bty beq v1 v2 σ v) "Hpre Hv1 Hv2".
     destruct bty. 1: iDestruct "Hv1" as (y) "Hv1".
     all: iApply (opt_bin_op with "Hpre [Hv1] Hv2") => /= //.
     Unshelve.
     apply inhabitant.
   Qed.
 
-  Global Instance optionable_agree_wr1 (ty1 : rtype) p ty2 `{!OptionableAgree ty1 ty2} : OptionableAgree (p @ ty1) ty2.
+  Global Instance optionable_agree_wr1 A (ty1 : rtype A) p ty2 `{!OptionableAgree ty1 ty2} : OptionableAgree (p @ ty1) ty2.
   Proof. done. Qed.
-  Global Instance optionable_agree_wr2 (ty2 : rtype) p ty1 `{!OptionableAgree ty1 ty2} : OptionableAgree ty1 (p @ ty2).
+  Global Instance optionable_agree_wr2 A (ty2 : rtype A) p ty1 `{!OptionableAgree ty1 ty2} : OptionableAgree ty1 (p @ ty2).
   Proof. done. Qed.
   Global Instance optionable_agree_id ty : OptionableAgree ty ty.
   Proof. done. Qed.
@@ -82,7 +82,7 @@ Section optional.
   (* Never use optional without the refinement! This will fail
   horribly since the implicit refinement might not be decidable! Use
   optionalO with () instead. *)
-  Definition optional (ty : type) (optty : type) : rtype := RType (optional_type ty optty).
+  Definition optional (ty : type) (optty : type) : rtype _ := RType (optional_type ty optty).
 
   Global Instance optional_loc_in_bounds ty e ot β n `{!LocInBounds ty β n} `{!LocInBounds ot β n}:
     LocInBounds (e @ optional ty ot) β n.
@@ -295,7 +295,7 @@ Section optionalO.
   Global Instance optionalO_type_proper A : Proper (pointwise_relation A (≡) ==> (≡) ==> (eq) ==> (≡)) optionalO_type.
   Proof. solve_type_proper. Qed.
 
-  Definition optionalO {A : Type} (ty : A → type) (optty : type) : rtype := RType (optionalO_type ty optty).
+  Definition optionalO {A : Type} (ty : A → type) (optty : type) : rtype _ := RType (optionalO_type ty optty).
 
   Global Instance optionalO_loc_in_bounds A (ty : A → type) e ot β n `{!∀ x, LocInBounds (ty x) β n} `{!LocInBounds ot β n}:
     LocInBounds (e @ optionalO ty ot) β n.
@@ -306,7 +306,7 @@ Section optionalO.
 
   (* TODO: should be allow different opttys? *)
   Global Instance simple_subsume_place_optionalO A (ty1 : A → _) ty2 optty b `{!∀ x, SimpleSubsumePlace (ty1 x) (ty2 x) P}:
-    SimpleSubsumePlaceR (optionalO ty1 optty) (optionalO ty2 optty) b b P.
+    SimpleSubsumePlace (b @ optionalO ty1 optty) (b @ optionalO ty2 optty) P.
   Proof. iIntros (l β) "HP Hl". destruct b. 2: by iFrame. unfold optionalO; simpl_type. iApply (@simple_subsume_place with "HP Hl"). Qed.
 
   (* TODO: Should we have more instances like this? E.g. for the goal? *)

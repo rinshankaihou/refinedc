@@ -78,7 +78,7 @@ Section generic_boolean.
     iIntros (????????). apply: mem_cast_compat_bool; [naive_solver|]. iPureIntro. naive_solver.
   Qed.
 
-  Program Definition generic_boolean (stn: bool_strictness) (it: int_type) : rtype :=
+  Program Definition generic_boolean (stn: bool_strictness) (it: int_type) : rtype _ :=
     RType (generic_boolean_type stn it).
 
   Global Program Instance generic_boolean_copyable b stn it : Copyable (b @ generic_boolean stn it).

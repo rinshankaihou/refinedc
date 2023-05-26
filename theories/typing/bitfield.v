@@ -31,7 +31,7 @@ Section bitfield_raw.
     intros. iIntros "Hv". by iApply (ty_memcast_compat with "Hv").
   Qed.
 
-  Definition bitfield_raw (it : int_type) : rtype :=
+  Definition bitfield_raw (it : int_type) : rtype _ :=
     RType (bitfield_raw_type it).
 
   Global Program Instance bitfield_raw_copyable bv it : Copyable (bv @ bitfield_raw it).
@@ -77,7 +77,7 @@ Section bitfield.
     intros. iIntros "Hv". by iApply (ty_memcast_compat with "Hv").
   Qed.
 
-  Definition bitfield (R : Type) `{BitfieldDesc R} : rtype :=
+  Definition bitfield (R : Type) `{BitfieldDesc R} : rtype _ :=
     RType (bitfield_type R).
 
   Global Program Instance bitfield_copyable R `{BitfieldDesc R} bv : Copyable (bv @ bitfield R).

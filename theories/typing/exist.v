@@ -27,7 +27,7 @@ Section tyexist.
   Next Obligation. move => *. rewrite ty_exists_rty_eq. by apply: ty_ref. Qed.
   Next Obligation. move => *. rewrite ty_exists_rty_eq. by apply: ty_memcast_compat. Qed.
 
-  Definition tyexists (ty : A → type) : rtype := RType (tyexists_type ty).
+  Definition tyexists (ty : A → type) : rtype _ := RType (tyexists_type ty).
 
   Lemma tyexists_le_l ty (x : A) :
     (x @ tyexists ty)%I ⊑ ty x.

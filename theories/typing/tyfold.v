@@ -23,7 +23,7 @@ Section tyfold.
     by iApply "IH".
   Qed.
 
-  Definition tyfold (tys : list (type → type)) (base : type) : rtype :=
+  Definition tyfold (tys : list (type → type)) (base : type) : rtype _ :=
     RType (tyfold_type tys base).
 
   Local Typeclasses Transparent own_constrained persistent_own_constraint.

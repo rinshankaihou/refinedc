@@ -29,7 +29,7 @@ Section own.
   Global Instance frac_ptr_type_proper : Proper ((=) ==> (≡) ==> (=) ==> (≡)) frac_ptr_type.
   Proof. solve_type_proper. Qed.
 
-  Definition frac_ptr (β : own_state) (ty : type) : rtype := RType (frac_ptr_type β ty).
+  Definition frac_ptr (β : own_state) (ty : type) : rtype _ := RType (frac_ptr_type β ty).
 
   Global Instance frac_ptr_loc_in_bounds l ty β1 β2 : LocInBounds (l @ frac_ptr β1 ty) β2 bytes_per_addr.
   Proof.
@@ -47,7 +47,7 @@ Section own.
     λ T, i2p (frac_ptr_mono ty1 ty2 l β β' p p' T).
 
   Global Instance frac_ptr_simple_mono ty1 ty2 p β P `{!SimpleSubsumePlace ty1 ty2 P}:
-    SimpleSubsumePlaceR (frac_ptr β ty1) (frac_ptr β ty2) p p P.
+    SimpleSubsumePlace (p @ frac_ptr β ty1) (p @ frac_ptr β ty2) P.
   Proof. iIntros (l β') "HP [$ [$ Hl]]". iApply (@simple_subsume_place with "HP Hl"). Qed.
 
   Lemma type_place_frac p β K β1 ty1 T l mc:
@@ -400,7 +400,7 @@ Section ptr.
     iIntros "[-> ?]". iPureIntro. naive_solver.
   Qed.
 
-  Definition ptr (n : nat) : rtype := RType (ptr_type n).
+  Definition ptr (n : nat) : rtype _ := RType (ptr_type n).
 
   Instance ptr_loc_in_bounds l n β : LocInBounds (l @ ptr n) β bytes_per_addr.
   Proof.

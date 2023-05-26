@@ -100,8 +100,7 @@ Section tests.
   Global Instance fixpoint_test_rec_ne : TypeMono fixpoint_test_rec.
   Proof. solve_type_proper. Qed.
 
-  Definition fixpoint_test : rtype := {|
-    rty_type := nat;
+  Definition fixpoint_test : rtype nat := {|
     rty n := type_fixpoint fixpoint_test_rec n
   |}.
 

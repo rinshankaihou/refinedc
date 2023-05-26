@@ -53,13 +53,13 @@ Section wand.
 
   (* TODO: make this more general, maybe with a SimpleSubsume
   judgement, which does not have a continutation?*)
-  Lemma simplify_goal_wand_eq_ref l ty (x1 x2 : A → _) T:
+  Lemma simplify_goal_wand_eq_ref B l (ty : rtype B) (x1 x2 : A → _) T:
     T ⌜∀ x, x1 x = x2 x⌝
     ⊢ simplify_goal (l ◁ₗ wand_ex (λ x, l ◁ₗ (x1 x) @ ty) (λ x, (x2 x) @ ty)) T.
   Proof. iIntros "HT". iExists _. iFrame. iIntros (Heq x) "?". by rewrite Heq. Qed.
-  Global Instance simplify_goal_wand_eq_ref_inst l ty x1 x2:
+  Global Instance simplify_goal_wand_eq_ref_inst B l ty x1 x2:
     SimplifyGoalPlace l Own (wand_ex (λ x, l ◁ₗ (x1 x) @ ty) (λ x, (x2 x) @ ty))%I (Some 0%N) :=
-    λ T, i2p (simplify_goal_wand_eq_ref l ty x1 x2 T).
+    λ T, i2p (simplify_goal_wand_eq_ref B l ty x1 x2 T).
 
 End wand.
 Notation wand P ty := (wand_ex (A:=unit) (λ _, P) (λ _, ty)).
@@ -138,13 +138,13 @@ Section wand_val.
 
   (* TODO: make this more general, maybe with a SimpleSubsume
   judgement, which does not have a continutation?*)
-  Lemma simplify_goal_wand_val_eq_ref v ly ty (x1 x2 : A → _) T:
+  Lemma simplify_goal_wand_val_eq_ref B v ly ty (x1 x2 : A → B) T:
     ⌜v `has_layout_val` ly⌝ ∗ T ⌜∀ x, x1 x = x2 x⌝
     ⊢ simplify_goal (v ◁ᵥ wand_val_ex ly (λ x, v ◁ᵥ (x1 x) @ ty) (λ x, (x2 x) @ ty)) T.
   Proof. iIntros "[??]". iExists _. iFrame. iIntros (Heq x) "?". by rewrite Heq. Qed.
-  Global Instance simplify_goal_wand_val_eq_ref_inst v ly ty x1 x2:
+  Global Instance simplify_goal_wand_val_eq_ref_inst B v ly ty x1 x2:
     SimplifyGoalVal v (wand_val_ex ly (λ x, v ◁ᵥ (x1 x) @ ty) (λ x, (x2 x) @ ty))%I (Some 0%N) :=
-    λ T, i2p (simplify_goal_wand_val_eq_ref v ly ty x1 x2 T).
+    λ T, i2p (simplify_goal_wand_val_eq_ref B v ly ty x1 x2 T).
 End wand_val.
 Notation wand_val ly P ty := (wand_val_ex (A:=unit) ly (λ _, P) (λ _, ty)).
 Notation "wand_val< ly , P , ty >" := (wand_val ly P ty)

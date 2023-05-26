@@ -34,8 +34,6 @@ Section judgements.
   continuation. *)
   Class SimpleSubsumePlace (ty1 ty2 : type) (P : iProp Σ) : Prop :=
     simple_subsume_place l β: P ⊢ l ◁ₗ{β} ty1 -∗ l ◁ₗ{β} ty2.
-  Class SimpleSubsumePlaceR (ty1 ty2 : rtype) (x1 : ty1.(rty_type)) (x2 : ty2.(rty_type)) (P : iProp Σ) : Prop :=
-    simple_subsume_place_r l β: P ⊢ l ◁ₗ{β} x1 @ ty1 -∗ l ◁ₗ{β} x2 @ ty2.
   (* TODO: add infrastructure like SimpleSubsumePlaceR to
   SimpleSubsumeVal. Not sure if it would work because of the movable
   instance. *)
@@ -345,7 +343,6 @@ Global Hint Mode CopyAs + + + + + : typeclass_instances.
 Global Hint Mode SubsumePlace + + + + + ! : typeclass_instances.
 Global Hint Mode SubsumeVal + + + ! ! : typeclass_instances.
 Global Hint Mode SimpleSubsumePlace + + + ! - : typeclass_instances.
-Global Hint Mode SimpleSubsumePlaceR + + + ! + ! - : typeclass_instances.
 Global Hint Mode SimpleSubsumeVal + + ! ! - : typeclass_instances.
 Global Hint Mode TypedIf + + + + + : typeclass_instances.
 Global Hint Mode TypedAssert + + + + + : typeclass_instances.
@@ -815,39 +812,39 @@ Section typing.
     iDestruct 1 as ([β ty1]) "[Hl Hsub]". iDestruct ("Hsub" with "Hl") as "[Hl HT]". by iApply "HT".
   Qed.
 
-  Lemma simplify_place_refine_l (ty : rtype) l β T:
-    (∀ x, l ◁ₗ{β} x@ty -∗ T) ⊢ simplify_hyp (l◁ₗ{β}ty) T.
+  Lemma simplify_place_refine_l A (ty : rtype A) l β T:
+    (∀ x, l ◁ₗ{β} x @ ty -∗ T) ⊢ simplify_hyp (l◁ₗ{β}ty) T.
   Proof.
     iIntros "HT Hl". iDestruct "Hl" as (x) "Hv". by iApply "HT".
   Qed.
-  Global Instance simplify_place_refine_l_inst (ty : rtype) l β:
+  Global Instance simplify_place_refine_l_inst A (ty : rtype A) l β:
     SimplifyHypPlace l β ty (Some 0%N) :=
-    λ T, i2p (simplify_place_refine_l ty l β T).
+    λ T, i2p (simplify_place_refine_l A ty l β T).
 
-  Lemma simplify_val_refine_l (ty : rtype) v T `{!Inhabited (ty.(rty_type))}:
+  Lemma simplify_val_refine_l A (ty : rtype A) v T `{!Inhabited A}:
     (∀ x, v ◁ᵥ (x @ ty) -∗ T) ⊢ simplify_hyp (v ◁ᵥ ty) T.
   Proof.
     iIntros "HT Hl". iDestruct "Hl" as (x) "Hv". by iApply "HT".
   Qed.
-  Global Instance simplify_val_refine_l_inst (ty : rtype) v `{!Inhabited (ty.(rty_type))}:
+  Global Instance simplify_val_refine_l_inst A (ty : rtype A) v `{!Inhabited A}:
     SimplifyHypVal v ty (Some 0%N) :=
-    λ T, i2p (simplify_val_refine_l ty v T).
+    λ T, i2p (simplify_val_refine_l A ty v T).
 
   (* This is forced since it can create evars in places where we don't
   want them. We might first want to try subtyping without the evar (see e.g. optional ) *)
-  Lemma simplify_goal_place_refine_r (ty : rtype) l β T:
+  Lemma simplify_goal_place_refine_r A (ty : rtype A) l β T:
     (∃ x, T (l ◁ₗ{β} (x @ ty))) ⊢ simplify_goal (l◁ₗ{β}ty) T.
   Proof. iDestruct 1 as (x) "HT". iExists _. iFrame. iIntros "?". by iExists _. Qed.
-  Global Instance simplfy_goal_place_refine_r_inst (ty : rtype) l β :
+  Global Instance simplfy_goal_place_refine_r_inst A (ty : rtype A) l β :
     SimplifyGoalPlace l β ty (Some 10%N) :=
-    λ T, i2p (simplify_goal_place_refine_r ty l β T).
+    λ T, i2p (simplify_goal_place_refine_r A ty l β T).
 
-  Lemma simplify_goal_val_refine_r (ty : rtype) v T `{!Inhabited (ty.(rty_type))} :
+  Lemma simplify_goal_val_refine_r A (ty : rtype A) v T `{!Inhabited A} :
     (∃ x, T (v ◁ᵥ (x @ ty))) ⊢ simplify_goal (v ◁ᵥ ty) T.
   Proof. iDestruct 1 as (x) "HT". iExists _. iFrame. iIntros "?". by iExists _. Qed.
-  Global Instance simplfy_goal_val_refine_r_inst (ty : rtype) v `{!Inhabited (ty.(rty_type))} :
+  Global Instance simplfy_goal_val_refine_r_inst A (ty : rtype A) v `{!Inhabited A} :
     SimplifyGoalVal v ty (Some 10%N) :=
-    λ T, i2p (simplify_goal_val_refine_r ty v T).
+    λ T, i2p (simplify_goal_val_refine_r A ty v T).
 
   (* The match can come from own_state_min *)
   Lemma simplify_bad_own_state_hyp l β ty T:
@@ -877,13 +874,24 @@ Section typing.
 
   Global Instance simple_subsume_place_id ty : SimpleSubsumePlace ty ty True | 1.
   Proof. iIntros (??) "_ $". Qed.
-  Global Instance simple_subsume_place_r_id ty x : SimpleSubsumePlaceR ty ty x x True | 1.
-  Proof. iIntros (??) "_ $". Qed.
   Global Instance simple_subsume_val_id ty : SimpleSubsumeVal ty ty True | 1.
   Proof. iIntros (?) "_ $". Qed.
-  Global Instance simple_subsume_val_refinement_id ty x1 x2 :
+  Global Instance simple_subsume_place_refinement_id A ty (x1 x2 : A) :
+    SimpleSubsumePlace (x1 @ ty) (x2 @ ty) (⌜x1 = x2⌝) | 100.
+  Proof. iIntros (?? ->) "$". Qed.
+  Global Instance simple_subsume_val_refinement_id A ty (x1 x2 : A) :
     SimpleSubsumeVal (x1 @ ty) (x2 @ ty) (⌜x1 = x2⌝) | 100.
   Proof. iIntros (? ->) "$". Qed.
+
+  Global Instance simple_subsume_place_rty_to_ty_l A (ty1 : rtype A) P `{!∀ x, SimpleSubsumePlace (x @ ty1) ty2 P} :
+    SimpleSubsumePlace ty1 ty2 P.
+  Proof.
+    iIntros (l β) "HP Hl". iDestruct "Hl" as (x) "Hl".
+    iApply (@simple_subsume_place with "HP Hl").
+  Qed.
+  Global Instance simple_subsume_place_rty_to_ty_r A (ty1 ty2 : rtype A) x P `{!SimpleSubsumePlace (x @ ty1) (x @ ty2) P} :
+    SimpleSubsumePlace (x @ ty1) ty2 P.
+  Proof. iIntros (l β) "HP Hl". iExists (x). iApply (@simple_subsume_place with "HP Hl"). Qed.
 
   Lemma simple_subsume_place_to_subsume l β ty1 ty2 P `{!SimpleSubsumePlace ty1 ty2 P} T:
     P ∗ T ⊢ subsume (l ◁ₗ{β} ty1) (l ◁ₗ{β} ty2) T.
@@ -896,30 +904,6 @@ Section typing.
   Proof. iIntros "[HP $] Hv". iApply (@simple_subsume_val with "HP Hv"). Qed.
   Global Instance simple_subsume_val_to_subsume_inst v ty1 ty2 P `{!SimpleSubsumeVal ty1 ty2 P}:
     SubsumeVal v ty1 ty2 := λ T, i2p (simple_subsume_val_to_subsume v ty1 ty2 P T).
-
-  Import EqNotations.
-  Lemma simple_subsume_place_refinement ty1 ty2 (x1 : ty1.(rty_type)) x2 P {Heq: ty1.(rty_type) = ty2.(rty_type)} `{!SimpleSubsumePlaceR ty1 ty2 x1 (rew [λ x : Type, x] Heq in x1) P} :
-    SimpleSubsumePlace (x1 @ ty1) (x2 @ ty2) (⌜rew [λ x : Type, x] Heq in x1 = x2⌝ ∗ P).
-  Proof.
-    iIntros (l β) "HP Hl". iDestruct "HP" as (Heq2) "HP".
-    iDestruct (@simple_subsume_place_r with "HP Hl") as "Hl" => //.
-      by rewrite Heq2.
-  Qed.
-
-  Lemma simple_subsume_place_refinement_eq ty1 ty2 (x1 : ty1.(rty_type)) x2 P (Heq: ty1.(rty_type) = ty2.(rty_type)) (Heq2 : rew [λ x : Type, x] Heq in x1 = x2 ) `{!SimpleSubsumePlaceR ty1 ty2 x1 (rew [λ x : Type, x] Heq in x1) P} :
-    SimpleSubsumePlace (x1 @ ty1) (x2 @ ty2) P.
-  Proof. iIntros (l β) "HP Hl". iDestruct (@simple_subsume_place_r with "HP Hl") as "Hl" => //. by rewrite Heq2. Qed.
-
-  Global Instance simple_subsume_place_rty_to_ty_l (ty1 : rtype) P `{!∀ x, SimpleSubsumePlace (x @ ty1) ty2 P} :
-    SimpleSubsumePlace ty1 ty2 P.
-  Proof.
-    iIntros (l β) "HP Hl". iDestruct "Hl" as (x) "Hl".
-    iApply (@simple_subsume_place with "HP Hl").
-  Qed.
-  Lemma simple_subsume_place_rty_to_ty_r (ty1 ty2 : rtype) x P {Heq: ty1.(rty_type) = ty2.(rty_type)} `{!SimpleSubsumePlace (x @ ty1) ((rew [λ x : Type, x] Heq in x) @ ty2) P} :
-    SimpleSubsumePlace (x @ ty1) ty2 P.
-  Proof. iIntros (l β) "HP Hl". iExists (rew [λ x : Type, x] Heq in x). iApply (@simple_subsume_place with "HP Hl"). Qed.
-
 
   Lemma subtype_var {A} (ty : A → type) x y l β T:
     ⌜x = y⌝ ∗ T
@@ -1538,14 +1522,14 @@ Section typing.
   Global Instance copy_as_id_inst l β ty `{!Copyable ty}:
     CopyAs l β ty | 1000 := λ T, i2p (copy_as_id l β ty T).
 
-  Lemma copy_as_refinement l β (ty : rtype) {HC: ∀ x, CopyAs l β (x @ ty)} T:
+  Lemma copy_as_refinement A l β (ty : rtype A) {HC: ∀ x, CopyAs l β (x @ ty)} T:
     (∀ x, (HC x T).(i2p_P)) ⊢ copy_as l β ty T.
   Proof.
     iIntros "HT Hl". iDestruct "Hl" as (x) "Hl".
     iSpecialize ("HT" $! x). iDestruct (i2p_proof with "HT") as "HT". by iApply "HT".
   Qed.
-  Global Instance copy_as_refinement_inst l β (ty : rtype) {HC: ∀ x, CopyAs l β (x @ ty)}:
-    CopyAs l β ty := λ T, i2p (copy_as_refinement l β ty T).
+  Global Instance copy_as_refinement_inst A l β (ty : rtype A) {HC: ∀ x, CopyAs l β (x @ ty)}:
+    CopyAs l β ty := λ T, i2p (copy_as_refinement A l β ty T).
 
   Lemma annot_share l ty T:
     (l ◁ₗ{Shr} ty -∗ T)
@@ -1608,30 +1592,3 @@ Global Hint Extern 1 (SubsumePlace _ _ (?ty _) (?ty2 _)) =>
   match ty with | ty2 => is_var ty; class_apply subtype_var_inst end : typeclass_instances.
 
 Global Typeclasses Opaque typed_block.
-
-(* Low priority since types might want to have a special form of this
-   instance, e.g. optional. The lazymatch is necessary since refine
-   sometimes creates the subgoal in a different order. We need to try
-   eq first since x1 and x2 in (x1 @ _) and (x2 @ _) might not be
-   bound in the scope of P. *)
-Global Hint Extern 99 (SimpleSubsumePlace (_ @ _) (_ @ _) _) =>
-    simple notypeclasses refine (simple_subsume_place_refinement_eq _ _ _ _ _ _ _);
-      lazymatch goal with
-      | |- iProp _ => shelve
-      | |- _ = _ => simpl; exact : eq_refl
-      | |- _ => cbn[eq_rect]
-      end : typeclass_instances.
-Global Hint Extern 100 (SimpleSubsumePlace (_ @ _) (_ @ _) _) =>
-    simple notypeclasses refine (simple_subsume_place_refinement _ _ _ _ _);
-      lazymatch goal with
-      | |- iProp _ => shelve
-      | |- _ = _ => simpl; exact : eq_refl
-      | |- _ => cbn[eq_rect]
-      end : typeclass_instances.
-Global Hint Extern 100 (SimpleSubsumePlace (_ @ _) (ty_of_rty _) _) =>
-  simple notypeclasses refine (simple_subsume_place_rty_to_ty_r _ _ _ _); lazymatch goal with
-      | |- iProp _ => shelve
-      | |- _ = _ => simpl; exact : eq_refl
-      | |- _ => cbn[eq_rect]
-      end
-  : typeclass_instances.

@@ -890,8 +890,7 @@ let pp_spec : Coq_path.t -> import list -> inlined_code ->
     pp "@;Global Instance %s_rec_le : TypeMono %s_rec." id id;
     pp "@;Proof. solve_type_proper. Qed.\n@;";
 
-    pp "@[<v 2>Definition %s %a: rtype := {|@;" id pp_params params;
-    pp "rty_type := %a;@;" pp_prod ref_types;
+    pp "@[<v 2>Definition %s %a: rtype (%a) := {|@;" id pp_params params pp_prod ref_types;
     pp "rty r__ := %s_rec (type_fixpoint %s) %a@]@;|}.\n" id (id ^ "_rec")
       (pp_as_tuple pp_str) ("r__" :: par_names);
 
@@ -1058,7 +1057,7 @@ let pp_spec : Coq_path.t -> import list -> inlined_code ->
     pp "Next Obligation. done. Qed.@;";
     pp "Next Obligation. by case; eauto. Qed.\n@;";
     (* Actual definition of the type. *)
-    pp "Program Definition %s : rtype := tunion %s_tunion_info." id id
+    pp "Program Definition %s : rtype _ := tunion %s_tunion_info." id id
   in
   let pp_struct_or_tagged_union (id, s) =
     match s.struct_annot with

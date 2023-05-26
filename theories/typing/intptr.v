@@ -26,7 +26,7 @@ Section intptr.
     iIntros "(%&%&%&%&?)". iPureIntro. naive_solver.
   Qed.
 
-  Definition intptr (it : int_type) : rtype := RType (intptr_type it).
+  Definition intptr (it : int_type) : rtype _ := RType (intptr_type it).
 
   Lemma intptr_loc_in_bounds l β p it:
      l ◁ₗ{β} p @ intptr it -∗ loc_in_bounds l (bytes_per_int it).

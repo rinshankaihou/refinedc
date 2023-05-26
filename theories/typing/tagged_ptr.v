@@ -40,7 +40,7 @@ Section tagged_ptr.
   Global Instance tagged_ptr_type_proper : Proper ((=) ==> (=) ==> (≡) ==> (=) ==> (≡)) tagged_ptr_type.
   Proof. solve_type_proper. Qed.
 
-  Definition tagged_ptr (β : own_state) (align : nat) (ty : type) : rtype :=
+  Definition tagged_ptr (β : own_state) (align : nat) (ty : type) : rtype _ :=
     RType (tagged_ptr_type β align ty).
 
   Global Instance tagged_ptr_loc_in_bounds r ty align β1 β2 :

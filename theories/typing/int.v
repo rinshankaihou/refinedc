@@ -22,7 +22,7 @@ Section int.
   Next Obligation. iIntros (????? v ->%is_int_ot_layout ?) "Hl %". iExists v. eauto with iFrame. Qed.
   Next Obligation. iIntros (???????). apply: mem_cast_compat_int; [naive_solver|]. iPureIntro. naive_solver. Qed.
 
-  Definition int (it : int_type) : rtype := RType (int_inner_type it).
+  Definition int (it : int_type) : rtype _ := RType (int_inner_type it).
 
   Lemma int_loc_in_bounds l β n it:
      l ◁ₗ{β} n @ int it -∗ loc_in_bounds l (bytes_per_int it).

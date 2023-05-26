@@ -222,8 +222,7 @@ Section tunion.
   Context `{!typeG Σ}.
   (*** tunion *)
   (* TODO: extract the inner type to a separate definition and make it typeclasses opaque. *)
-  Program Definition tunion (ti : tunion_info) : rtype := {|
-    rty_type := ti.(ti_rtype);
+  Program Definition tunion (ti : tunion_info) : rtype (ti.(ti_rtype)) := {|
     rty r := {|
       ty_has_op_type :=
         is_struct_ot ti.(ti_base_layout) [tunion_tag ti r; variant ti r (ti.(ti_type) r)];

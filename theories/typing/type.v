@@ -438,44 +438,44 @@ End true.
 Global Instance inhabited_type `{!typeG Σ} : Inhabited type := populate tytrue.
 
 (*** refinement types *)
-Record rtype `{!typeG Σ} := RType {
-  rty_type : Type;
-  rty : rty_type → type;
+Record rtype `{!typeG Σ} (A : Type) := RType {
+  rty : A → type;
 }.
 Arguments RType {_ _ _} _.
+Arguments rty {_ _ _} _.
 Add Printing Constructor rtype.
 
 Bind Scope bi_scope with type.
 Bind Scope bi_scope with rtype.
 
-Definition with_refinement `{!typeG Σ} (r : rtype) (x : r.(rty_type)) : type := r.(rty) x.
+Definition with_refinement `{!typeG Σ} {A} (r : rtype A) (x : A) : type := r.(rty) x.
 Notation "x @ r" := (with_refinement r x) (at level 14) : bi_scope.
 Arguments with_refinement : simpl never.
 
-Program Definition ty_of_rty `{!typeG Σ} (r : rtype) : type := {|
+Program Definition ty_of_rty `{!typeG Σ} {A} (r : rtype A) : type := {|
   ty_own q l := (∃ x, (x @ r).(ty_own) q l)%I;
   ty_has_op_type ot mt := ∀ x, (x @ r).(ty_has_op_type) ot mt;
   ty_own_val v := (∃ x, (x @ r).(ty_own_val) v)%I;
 |}.
 Next Obligation. iDestruct 1 as (?) "H". iExists _. by iMod (ty_share with "H") as "$". Qed.
 Next Obligation.
-  iIntros (Σ ? r β mt Hly). iDestruct 1 as (x) "Hv". by iDestruct (ty_aligned with "Hv") as %Hv; [done|].
+  iIntros (Σ ? A r β mt l Hly). iDestruct 1 as (x) "Hv". by iDestruct (ty_aligned with "Hv") as %Hv; [done|].
 Qed.
 Next Obligation.
-  iIntros (Σ ? r ot mt v Hly). iDestruct 1 as (x) "Hv". by iDestruct (ty_size_eq with "Hv") as %Hv.
+  iIntros (Σ ? A r ot mt v Hly). iDestruct 1 as (x) "Hv". by iDestruct (ty_size_eq with "Hv") as %Hv.
 Qed.
 Next Obligation.
-  iIntros (Σ ? r ot mt l Hly). iDestruct 1 as (x) "Hl".
+  iIntros (Σ ? A r ot mt l Hly). iDestruct 1 as (x) "Hl".
   iDestruct (ty_deref with "Hl") as (v) "[Hl Hv]"; [done|].
   eauto with iFrame.
 Qed.
 Next Obligation.
-  iIntros (Σ ? r ot mt l v Hly ?) "Hl". iDestruct 1 as (x) "Hv".
+  iIntros (Σ ? A r ot mt l v Hly ?) "Hl". iDestruct 1 as (x) "Hv".
   iDestruct (ty_ref with "[] Hl Hv") as "Hl"; [done..|].
   iExists _. iFrame.
 Qed.
 Next Obligation.
-  iIntros (Σ ? r v ot mt st Hot) "[%x Hv]".
+  iIntros (Σ ? A r v ot mt st Hot) "[%x Hv]".
   iDestruct (ty_memcast_compat with "Hv") as "?"; [done|].
   case_match => //. iExists _. iFrame.
 Qed.
@@ -500,9 +500,9 @@ Coercion ty_of_rty : rtype >-> type.
 Section rmovable.
   Context `{!typeG Σ}.
 
-  Global Program Instance copyable_ty_of_rty r `{!∀ x, Copyable (x @ r)} : Copyable r.
+  Global Program Instance copyable_ty_of_rty A r `{!∀ x : A, Copyable (x @ r)} : Copyable r.
   Next Obligation.
-    iIntros (r ? E ly l ??). iDestruct 1 as (x) "Hl".
+    iIntros (A r ? E ly l ??). iDestruct 1 as (x) "Hl".
     iMod (copy_shr_acc with "Hl") as (? q' vl) "(?&?&?)" => //.
     iSplitR => //. iExists _, _. iFrame. by iExists _.
   Qed.
@@ -587,20 +587,20 @@ Section mono.
   Proof. intros ?? EQ ??->. apply EQ. Qed.
 
   Import EqNotations.
-  Lemma ty_of_rty_le rty1 rty2 (Heq : rty1.(rty_type) = rty2.(rty_type)) :
-    (∀ x, (x @ rty1)%I ⊑ ((rew [λ x : Type, x] Heq in x) @ rty2)%I) →
+  Lemma ty_of_rty_le A rty1 rty2 :
+    (∀ x : A, (x @ rty1)%I ⊑ (x @ rty2)%I) →
     ty_of_rty rty1 ⊑ ty_of_rty rty2.
   Proof.
-    destruct rty1, rty2; simpl in *. destruct Heq => /=. rewrite /with_refinement/=.
+    destruct rty1, rty2; simpl in *. rewrite /with_refinement/=.
     move => Hle. constructor => /=.
     - move => ??. rewrite /ty_own/=. f_equiv => ?. apply Hle.
     - move => ?. rewrite /ty_own_val/=. f_equiv => ?. apply Hle.
   Qed.
-  Lemma ty_of_rty_proper rty1 rty2 (Heq : rty1.(rty_type) = rty2.(rty_type)) :
-    (∀ x, (x @ rty1)%I ≡ ((rew [λ x : Type, x] Heq in x) @ rty2)%I) →
+  Lemma ty_of_rty_proper A rty1 rty2 :
+    (∀ x : A, (x @ rty1)%I ≡ (x @ rty2)%I) →
     ty_of_rty rty1 ≡ ty_of_rty rty2.
   Proof.
-    destruct rty1, rty2; simpl in *. destruct Heq => /=. rewrite /with_refinement/=.
+    destruct rty1, rty2; simpl in *. rewrite /with_refinement/=.
     move => Heq. constructor => /=.
     - move => ??. rewrite /ty_own/=. f_equiv => ?. apply Heq.
     - move => ?. rewrite /ty_own_val/=. f_equiv => ?. apply Heq.
@@ -627,8 +627,8 @@ Ltac unfold_type_equiv :=
   | |- Forall2 _ (_ <$> _) (_ <$> _) => apply list_fmap_Forall2_proper
   | |- (?a @ ?ty1)%I ⊑ (?b @ ?ty2)%I => change (rty ty1 a ⊑ rty ty2 b); simpl
   | |- (?a @ ?ty1)%I ≡ (?b @ ?ty2)%I => change (rty ty1 a ≡ rty ty2 b); simpl
-  | |- ty_of_rty _ ⊑ ty_of_rty _ => simple refine (ty_of_rty_le _ _ _ _) => /=; [exact: eq_refl|] => ? /=
-  | |- ty_of_rty _ ≡ ty_of_rty _ => simple refine (ty_of_rty_proper _ _ _ _) => /=; [exact: eq_refl|] => ? /=
+  | |- ty_of_rty _ ⊑ ty_of_rty _ => simple refine (ty_of_rty_le _ _ _ _) => ? /=
+  | |- ty_of_rty _ ≡ ty_of_rty _ => simple refine (ty_of_rty_proper _ _ _ _) => ? /=
   | |- {| ty_own := _ |} ⊑ {| ty_own := _ |} =>
       constructor => *; simpl_type
   | |- {| ty_own := _ |} ≡ {| ty_own := _ |} =>
@@ -679,6 +679,6 @@ Ltac solve_type_proper :=
 Section tests.
   Context `{!typeG Σ}.
 
-  Example binding l (r : Z → rtype) v x T : True -∗ l ◁ₗ x @ r v ∗ T. Abort.
+  Example binding l (r : Z → rtype N) v x T : True -∗ l ◁ₗ x @ r v ∗ T. Abort.
 
 End tests.
