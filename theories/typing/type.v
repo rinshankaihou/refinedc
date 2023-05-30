@@ -233,6 +233,7 @@ Section own_state.
     l ↦[β]|ly| ⊣⊢ ⌜l `has_layout_loc` ly⌝ ∗ ∃ v, ⌜v `has_layout_val` ly⌝ ∗ l↦[β] v.
   Proof. iSplit; iDestruct 1 as (???) "?"; eauto with iFrame. iExists _. by iFrame. Qed.
 End own_state.
+Arguments heap_mapsto_own_state : simpl never.
 
 (** [memcast_compat_type] describes how a type can transfered via a
 mem_cast (see also [ty_memcast_compat] below):
@@ -436,6 +437,8 @@ Section true.
   Next Obligation. iIntros (???) "?". done. Qed.
 End true.
 Global Instance inhabited_type `{!typeG Σ} : Inhabited type := populate tytrue.
+(* tytrue is not opaque because we don't have typing rules for it. *)
+(* Global Typeclasses Opaque tytrue. *)
 
 (*** refinement types *)
 Record rtype `{!typeG Σ} (A : Type) := RType {
@@ -586,7 +589,6 @@ Section mono.
   Global Instance ty_own_val_proper : Proper ((≡) ==> eq ==> (≡)) ty_own_val.
   Proof. intros ?? EQ ??->. apply EQ. Qed.
 
-  Import EqNotations.
   Lemma ty_of_rty_le A rty1 rty2 :
     (∀ x : A, (x @ rty1)%I ⊑ (x @ rty2)%I) →
     ty_of_rty rty1 ⊑ ty_of_rty rty2.
@@ -608,6 +610,8 @@ Section mono.
 End mono.
 
 Notation TypeMono T := (Proper (pointwise_relation _ (⊑) ==> pointwise_relation _ (⊑)) T).
+
+Global Typeclasses Opaque ty_own ty_own_val ty_of_rty with_refinement.
 
 Ltac simpl_type :=
   simpl;

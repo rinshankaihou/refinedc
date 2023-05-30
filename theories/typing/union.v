@@ -1,6 +1,6 @@
 From refinedc.typing Require Export type.
 From refinedc.typing Require Import programs bytes padded int struct.
-Set Default Proof Using "Type".
+From refinedc.typing Require Import type_options.
 
 Section union.
   Context `{!typeG Σ}.
@@ -268,4 +268,4 @@ Section tunion.
 
 End tunion.
 
-Global Typeclasses Opaque variant.
+Global Typeclasses Opaque active_union variant tunion tunion_tag.

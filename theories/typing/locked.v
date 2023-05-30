@@ -1,7 +1,7 @@
 From iris.algebra Require Import csum excl auth cmra_big_op.
 From iris.algebra Require Import big_op gset frac agree.
 From refinedc.typing Require Import programs.
-Set Default Proof Using "Type".
+From refinedc.typing Require Import type_options.
 
 Definition lockN : namespace := nroot.@"lockN".
 Definition lock_id := gname.

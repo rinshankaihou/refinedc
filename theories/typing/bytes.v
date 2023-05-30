@@ -1,6 +1,6 @@
 From refinedc.typing Require Export type.
 From refinedc.typing Require Import programs int own.
-Set Default Proof Using "Type".
+From refinedc.typing Require Import type_options.
 
 (* NOTE: we might want to have a type [bytes : list mbyte → type] one day,
 and the [bytewise] abstraction could be encoded on top of it. *)

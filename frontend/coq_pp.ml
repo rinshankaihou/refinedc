@@ -885,7 +885,7 @@ let pp_spec : Coq_path.t -> import list -> inlined_code ->
     pp_struct_def_np ast.structs r annot fields ff struct_id;
     pp "@]@;)%%I.@;Global Typeclasses Opaque %s_rec.\n" id;
     if par_names <> [] then sugar := !sugar @ [(id, par_names)];
-    opaque := !opaque @ [id ^ "_rec"];
+    opaque := !opaque @ [id ^ "_rec"; id];
 
     pp "@;Global Instance %s_rec_le : TypeMono %s_rec." id id;
     pp "@;Proof. solve_type_proper. Qed.\n@;";

@@ -1,8 +1,8 @@
 From lithium Require Import simpl_classes.
 From caesium Require Export bitfield.
-From refinedc.typing Require Import programs boolean int.
 From refinedc.typing Require Export type.
-Set Default Proof Using "Type".
+From refinedc.typing Require Import programs boolean int.
+From refinedc.typing Require Import type_options.
 
 Section bitfield_raw.
   Context `{!typeG Σ}.
@@ -88,8 +88,8 @@ Section bitfield.
 End bitfield.
 Notation "bitfield< R >" := (bitfield R) (only printing, format "'bitfield<' R '>'") : printing_sugar.
 
-Global Typeclasses Opaque bitfield_raw_type.
-Global Typeclasses Opaque bitfield_type.
+Global Typeclasses Opaque bitfield_raw_type bitfield_raw.
+Global Typeclasses Opaque bitfield_type bitfield.
 
 Section programs.
   Context `{!typeG Σ}.

@@ -1,6 +1,6 @@
 From refinedc.typing Require Export type.
 From refinedc.typing Require Import programs boolean int.
-Set Default Proof Using "Type".
+From refinedc.typing Require Import type_options.
 
 Definition atomic_boolN : namespace := nroot.@"atomic_boolN".
 Section atomic_bool.

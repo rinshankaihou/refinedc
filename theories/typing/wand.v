@@ -1,6 +1,6 @@
 From refinedc.typing Require Export type.
 From refinedc.typing Require Import programs.
-Set Default Proof Using "Type".
+From refinedc.typing Require Import type_options.
 
 Section wand.
   Context `{!typeG Σ}.
@@ -62,6 +62,7 @@ Section wand.
     λ T, i2p (simplify_goal_wand_eq_ref B l ty x1 x2 T).
 
 End wand.
+Global Typeclasses Opaque wand_ex.
 Notation wand P ty := (wand_ex (A:=unit) (λ _, P) (λ _, ty)).
 Notation "wand< P , ty >" := (wand P ty)
   (only printing, format "'wand<' P ,  ty '>'") : printing_sugar.
@@ -146,6 +147,7 @@ Section wand_val.
     SimplifyGoalVal v (wand_val_ex ly (λ x, v ◁ᵥ (x1 x) @ ty) (λ x, (x2 x) @ ty))%I (Some 0%N) :=
     λ T, i2p (simplify_goal_wand_val_eq_ref B v ly ty x1 x2 T).
 End wand_val.
+Global Typeclasses Opaque wand_val_ex.
 Notation wand_val ly P ty := (wand_val_ex (A:=unit) ly (λ _, P) (λ _, ty)).
 Notation "wand_val< ly , P , ty >" := (wand_val ly P ty)
   (only printing, format "'wand_val<' ly ,  P ,  ty '>'") : printing_sugar.

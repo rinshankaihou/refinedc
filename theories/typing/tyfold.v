@@ -1,6 +1,6 @@
 From refinedc.typing Require Export type.
 From refinedc.typing Require Import programs singleton optional constrained exist.
-Set Default Proof Using "Type".
+From refinedc.typing Require Import type_options.
 
 Section tyfold.
   Context `{!typeG Σ}.
@@ -91,4 +91,4 @@ Section tyfold.
     SubsumePlace l β (ls1 @ tyfold (f <$> tys) b1) (ls2 @ tyfold (f <$> (tys ++ [ty])) b2) :=
     λ T, i2p (subsume_tyfold_snoc A l β f ls1 ls2 tys ty b1 b2 T ).
 End tyfold.
-Global Typeclasses Opaque tyfold_type.
+Global Typeclasses Opaque tyfold_type tyfold.

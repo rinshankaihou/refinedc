@@ -1,6 +1,6 @@
 From refinedc.typing Require Export type.
 From refinedc.typing Require Import programs bytes int own struct.
-Set Default Proof Using "Type".
+From refinedc.typing Require Import type_options.
 
 Section padded.
   Context `{!typeG Σ}.
@@ -115,7 +115,7 @@ Section padded.
     iDestruct (ty_deref _ (UntypedOp _) MCNone with "Hr") as (v2) "[Hr Hv2]"; [done|].
     iDestruct (ty_size_eq _ (UntypedOp _) MCNone with "Hv2") as %Hlen2; [done|].
     iApply ("HT" with "Hv1"). iExists (v1 ++ v2).
-    rewrite /= heap_mapsto_app /has_layout_val app_length Forall_forall Hlen1 Hlen2.
+    rewrite /= heap_mapsto_own_state_app /has_layout_val app_length Forall_forall Hlen1 Hlen2.
     iFrame. iPureIntro; split_and! => //.
     rewrite /= /ly_offset {2}/ly_size. lia.
   Qed.

@@ -1,6 +1,6 @@
 From refinedc.typing Require Import typing.
 From refinedc.examples.spinlock Require Import generated_code.
-Set Default Proof Using "Type".
+From refinedc.typing Require Import type_options.
 
 Section type.
   Context `{!typeG Σ} `{!lockG Σ}.

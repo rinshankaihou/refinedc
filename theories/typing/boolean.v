@@ -1,6 +1,6 @@
 From refinedc.typing Require Export type.
 From refinedc.typing Require Import programs.
-Set Default Proof Using "Type".
+From refinedc.typing Require Import type_options.
 
 (** A [Strict] boolean can only have value 0 (false) or 1 (true). A [Relaxed]
     boolean can have any value: 0 means false, anything else means true. *)
@@ -78,7 +78,7 @@ Section generic_boolean.
     iIntros (????????). apply: mem_cast_compat_bool; [naive_solver|]. iPureIntro. naive_solver.
   Qed.
 
-  Program Definition generic_boolean (stn: bool_strictness) (it: int_type) : rtype _ :=
+  Definition generic_boolean (stn: bool_strictness) (it: int_type) : rtype _ :=
     RType (generic_boolean_type stn it).
 
   Global Program Instance generic_boolean_copyable b stn it : Copyable (b @ generic_boolean stn it).
@@ -284,4 +284,4 @@ Section builtin_boolean.
     λ T, i2p (type_cast_builtin_boolean_boolean b it v T).
 
 End builtin_boolean.
-Global Typeclasses Opaque generic_boolean_type.
+Global Typeclasses Opaque generic_boolean_type generic_boolean.

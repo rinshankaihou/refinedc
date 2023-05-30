@@ -1,6 +1,6 @@
 From refinedc.typing Require Export type.
 From refinedc.typing Require Import programs.
-Set Default Proof Using "Type".
+From refinedc.typing Require Import type_options.
 
 Section value.
   Context `{!typeG Σ}.
@@ -119,6 +119,7 @@ Section value.
     TypedWriteEnd a E ot v ty l2 Own ty2 | 50 :=
     λ T, i2p (type_write_own a ty T E l2 ty2 v ot).
 End value.
+Global Typeclasses Opaque value.
 Notation "value< ot , v >" := (value ot v) (only printing, format "'value<' ot ',' v '>'") : printing_sugar.
 
 Section at_value.
@@ -174,8 +175,8 @@ Section at_value.
     λ T, i2p (at_value_simplify_goal_loc l v' ty T).
 
 End at_value.
-Notation "at_value< v , ty >" := (at_value v ty) (only printing, format "'at_value<' v ',' ty '>'") : printing_sugar.
 Global Typeclasses Opaque at_value.
+Notation "at_value< v , ty >" := (at_value v ty) (only printing, format "'at_value<' v ',' ty '>'") : printing_sugar.
 
 Section place.
   Context `{!typeG Σ}.
@@ -261,4 +262,5 @@ Section place.
     λ T, i2p (typed_write_end_simpl b E ot v ty1 l β ty2 n T).
 
 End place.
+Global Typeclasses Opaque place.
 Notation "place< l >" := (place l) (only printing, format "'place<' l '>'") : printing_sugar.

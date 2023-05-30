@@ -1,6 +1,6 @@
 From refinedc.typing Require Export type.
 From refinedc.typing Require Import programs boolean.
-Set Default Proof Using "Type".
+From refinedc.typing Require Import type_options.
 
 Section int.
   Context `{!typeG Σ}.
@@ -384,7 +384,7 @@ Section programs.
     λ T, i2p (annot_reduce_int v n it T).
 
 End programs.
-Global Typeclasses Opaque int_inner_type.
+Global Typeclasses Opaque int_inner_type int.
 
 Notation "'if' p ≠ 0 " := (DestructHintIfInt p) (at level 100, only printing).
 Notation "'case' n " := (DestructHintSwitchIntCase n) (at level 100, only printing).

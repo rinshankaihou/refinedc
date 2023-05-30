@@ -1,7 +1,7 @@
 From iris.algebra Require Import list.
 From refinedc.typing Require Export type.
 From refinedc.typing Require Import programs singleton bytes int own.
-Set Default Proof Using "Type".
+From refinedc.typing Require Import type_options.
 
 Section array.
   Context `{typeG Σ}.
@@ -86,7 +86,8 @@ Section array.
     rewrite !/(ty_own (array _ _))/=. iIntros (Hi) "($&Hb&Ha)".
     iInduction (i) as [|i] "IH" forall (l tys Hi);
     destruct tys as [|ty' tys] => //; simpl in *; simplify_eq;
-    iDestruct "Ha" as "[$ Ha]"; first by iFrame.
+    iDestruct "Ha" as "[$ Ha]".
+    { unfold place; by iFrame. }
     rewrite offset_loc_S. setoid_rewrite offset_loc_S.
     iDestruct (loc_in_bounds_split_mul_S with "Hb") as "[Hb1 Hb2]".
     rewrite /offset_loc Z.mul_1_r.

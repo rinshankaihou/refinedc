@@ -7,8 +7,10 @@ Set Default Proof Using "Type".
 Section proofs.
   Context `{!typeG Σ} `{!globalG Σ} `{!lockG Σ} `{!spinlockG Σ}.
 
+  (* TODO: refactor proof and remove (some of) these transparent commands *)
+  Local Typeclasses Transparent ty_own ty_own_val with_refinement.
   Local Typeclasses Transparent hyp_spinlock_t spinlock_token.
-  Local Typeclasses Transparent frac_ptr_type.
+  Local Typeclasses Transparent frac_ptr_type frac_ptr place.
 
   (* Typing proof for [hyp_spin_lock_init]. *)
   Lemma type_hyp_spin_lock_init :

@@ -1,6 +1,6 @@
 From refinedc.typing Require Export type.
 From refinedc.typing Require Import programs own intptr singleton int.
-Set Default Proof Using "Type".
+From refinedc.typing Require Import type_options.
 
 Section tagged_ptr.
   Context `{!typeG Σ}.
@@ -110,7 +110,7 @@ Section tagged_ptr.
     iDestruct (loc_in_bounds_ptr_in_range with "Hlib") as %Hrange.
     iDestruct (loc_in_bounds_has_alloc_id with "Hlib") as %[aid ?].
     iDestruct ("HT" with "[//] [//] [//] [//] [$] [$] []") as ([??]%(val_of_Z_is_Some (Some aid))) "HT".
-    { by iFrame "Hlib". }
+    { iFrame "Hlib". unfold place; done. }
     iApply wp_cast_ptr_int; [by apply val_to_of_loc|done|done|].
     iSplit.
     { iDestruct "HT" as "[[HT _] _]". by iApply (alloc_alive_loc_mono with "HT"). }
@@ -142,13 +142,13 @@ Section tagged_ptr.
     iSplit.
     - iDestruct "HT" as "[Halloc _]". by iApply (alloc_alive_loc_mono with "Halloc").
     - iDestruct "HT" as "[_ HT]". iApply ("HΦ" with "[] HT").
-      iSplit => //. iPureIntro. apply: mem_cast_id_loc.
+      unfold value; simpl_type. iSplit => //. iPureIntro. apply: mem_cast_id_loc.
   Qed.
   Global Instance type_copy_aid_tagged_ptr_inst v1 a it v2 r β align ty:
     TypedCopyAllocId v1 (v1 ◁ᵥ a @ int it)%I v2 (v2 ◁ᵥ r @ tagged_ptr β align ty)%I (IntOp it) :=
     λ T, i2p (type_copy_aid_tagged_ptr v1 a it v2 r β align ty T).
 End tagged_ptr.
-Global Typeclasses Opaque tagged_ptr_type.
+Global Typeclasses Opaque tagged_ptr_type tagged_ptr.
 
 Notation "&tagged< align , ty >" :=
   (tagged_ptr Own align ty)

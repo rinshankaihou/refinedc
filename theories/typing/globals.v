@@ -2,7 +2,7 @@ From refinedc.typing Require Import axioms.
 
 From refinedc.typing Require Export type.
 From refinedc.typing Require Import programs.
-Set Default Proof Using "Type".
+From refinedc.typing Require Import type_options.
 
 Record global_type `{!typeG Σ} := GT {
   gt_A : Type;
@@ -86,7 +86,7 @@ Section globals.
 
   (** Subsumption *)
   Definition FindInitialized (name : string) (A : Type) :=
-    {| fic_A := A; fic_Prop x:= (initialized name x); |}.
+    {| fic_A := A; fic_Prop x := (initialized name x); |}.
   Global Instance related_to_initialized name A (x : A) : RelatedTo (initialized name x) :=
     {| rt_fic := FindInitialized name A |}.
 
@@ -108,4 +108,5 @@ Section globals.
 
 End globals.
 
+Global Typeclasses Opaque FindInitialized.
 Global Typeclasses Opaque initialized global_with_type.

@@ -99,12 +99,20 @@ Section definitions.
   Global Instance alloc_alive_tl id dq a : Timeless (alloc_alive id dq a).
   Proof. rewrite alloc_alive_eq. by apply _. Qed.
 
-  Definition alloc_global (l : loc) : iProp Σ :=
+  (** [alloc_global l] is knowledge that the provenance of [l] is
+  alive forever (i.e. corresponds to a global variable). *)
+  Definition alloc_global_def (l : loc) : iProp Σ :=
     ∃ id, ⌜l.1 = ProvAlloc (Some id)⌝ ∗ alloc_alive id DfracDiscarded true.
+  Definition alloc_global_aux : seal (@alloc_global_def). by eexists. Qed.
+  Definition alloc_global := unseal alloc_global_aux.
+  Definition alloc_global_eq : @alloc_global = @alloc_global_def :=
+    seal_eq alloc_global_aux.
+
   Global Instance alloc_global_tl l : Timeless (alloc_global l).
-  Proof. by apply _. Qed.
+  Proof. rewrite alloc_global_eq. by apply _. Qed.
   Global Instance alloc_global_pers l : Persistent (alloc_global l).
-  Proof. rewrite /alloc_global alloc_alive_eq. by apply _. Qed.
+  Proof. rewrite alloc_global_eq /alloc_global_def alloc_alive_eq. by apply _. Qed.
+
   (** * Function table stuff. *)
 
   (** [fntbl_entry l f] persistently records the information that function
@@ -189,7 +197,9 @@ Section definitions.
     fntbl_ctx σ.(st_fntbl).
 End definitions.
 
-Global Typeclasses Opaque heap_mapsto_mbyte heap_mapsto.
+Global Typeclasses Opaque alloc_meta loc_in_bounds alloc_alive alloc_global
+  fntbl_entry heap_mapsto_mbyte heap_mapsto alloc_alive_loc
+  freeable.
 
 Notation "l ↦{ q } v" := (heap_mapsto l q v)
   (at level 20, q at level 50, format "l  ↦{ q }  v") : bi_scope.
@@ -819,7 +829,8 @@ Section alloc_alive.
   Lemma alloc_global_alive l:
     alloc_global l -∗ alloc_alive_loc l.
   Proof.
-    iIntros "(%id&%&Ha)". rewrite alloc_alive_loc_eq. iApply fupd_mask_intro; [set_solver|].
+    rewrite alloc_global_eq alloc_alive_loc_eq. iIntros "(%id&%&Ha)".
+    iApply fupd_mask_intro; [set_solver|].
     iIntros "_". iLeft. eauto.
   Qed.
 

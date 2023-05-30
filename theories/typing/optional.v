@@ -1,6 +1,6 @@
 From refinedc.typing Require Export type.
 From refinedc.typing Require Import programs boolean int.
-Set Default Proof Using "Type".
+From refinedc.typing Require Import type_options.
 
 (** We need to use this unbundled approach to ensure that ROptionable
 uses the same instances as Optionable.
@@ -26,6 +26,7 @@ Section optional.
   |}.
   Next Obligation.
     iIntros(A r????? bty beq v1 v2 σ v) "Hpre Hv1 Hv2".
+    unfold ty_of_rty; simpl_type.
     destruct bty. 1: iDestruct "Hv1" as (y) "Hv1".
     all: iApply (opt_bin_op with "Hpre [Hv1] Hv2") => /= //.
     Unshelve.
@@ -252,7 +253,7 @@ Section optional.
   Qed.
 
 End optional.
-Global Typeclasses Opaque optional_type.
+Global Typeclasses Opaque optional_type optional.
 Notation "optional< ty , optty >" := (optional ty optty)
   (only printing, format "'optional<' ty ,  optty '>'") : printing_sugar.
 
@@ -458,6 +459,6 @@ Section optionalO.
     all: iExists _, _; iFrame.
   Qed.
 End optionalO.
-Global Typeclasses Opaque optionalO_type.
+Global Typeclasses Opaque optionalO_type optionalO.
 Notation "optionalO< ty , optty >" := (optionalO ty optty)
   (only printing, format "'optionalO<' ty ,  optty '>'") : printing_sugar.

@@ -1,6 +1,6 @@
 From refinedc.typing Require Export type.
 From refinedc.typing Require Import programs exist constrained.
-Set Default Proof Using "Type*".
+From refinedc.typing Require Import type_options.
 Import uPred.
 
 Definition type_fixpoint_def `{!typeG Σ} {A} : ((A -> type) → (A -> type)) → (A → type) :=
@@ -90,7 +90,10 @@ Section fixpoint.
   Qed.
 End fixpoint.
 
+Global Typeclasses Opaque type_fixpoint.
+
 (*** Tests *)
+Local Set Default Proof Using "Type*".
 Section tests.
   Context `{!typeG Σ}.
   Context (own_ptr : type → type) {HT: Proper ((⊑) ==> (⊑)) own_ptr}.

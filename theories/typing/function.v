@@ -1,6 +1,6 @@
 From refinedc.typing Require Export type.
 From refinedc.typing Require Import programs bytes.
-Set Default Proof Using "Type".
+From refinedc.typing Require Import type_options.
 
 Definition introduce_typed_stmt {Σ} `{!typeG Σ} (fn : function) (ls : list loc) (R : val → type → iProp Σ) : iProp Σ :=
   let Q := (subst_stmt (zip (fn.(f_args).*1 ++ fn.(f_local_vars).*1)
@@ -197,7 +197,7 @@ Notation "'fn(∀' x ':' A ';' Pa ')' '→' '∃' y ':' B ',' rty ';' Pr" :=
 
 
 Global Typeclasses Opaque typed_function.
-Global Typeclasses Opaque function_ptr_type.
+Global Typeclasses Opaque function_ptr_type function_ptr.
 
 Section inline_function.
   Context `{!typeG Σ} {A : Type}.
@@ -298,7 +298,7 @@ Section inline_function.
     λ T, i2p (type_call_inline_fnptr l v vl tys T fn).
 End inline_function.
 
-Global Typeclasses Opaque inline_function_ptr_type.
+Global Typeclasses Opaque inline_function_ptr_type inline_function_ptr.
 
 (*** Tests *)
 Section test.

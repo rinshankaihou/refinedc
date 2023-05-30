@@ -1,9 +1,11 @@
 From refinedc.typing Require Export type.
 From refinedc.typing Require Import programs optional boolean int singleton.
-Set Default Proof Using "Type".
+From refinedc.typing Require Import type_options.
 
 Section own.
   Context `{!typeG Σ}.
+
+  Local Typeclasses Transparent place.
 
   (* Separate definition such that we can make it typeclasses opaque later. *)
   Program Definition frac_ptr_type (β : own_state) (ty : type) (l' : loc) : type := {|
@@ -413,7 +415,7 @@ Section ptr.
     (loc_in_bounds p n -∗ l ◁ₗ value PtrOp (val_of_loc p) -∗ T)
     ⊢ simplify_hyp (l ◁ₗ p @ ptr n) T.
   Proof.
-    iIntros "HT [% [#? Hl]]". iApply "HT"; first done.
+    iIntros "HT [% [#? Hl]]". iApply "HT"; first done. unfold value; simpl_type.
     repeat iSplit => //. iPureIntro. by apply: mem_cast_id_loc.
   Qed.
   Global Instance simplify_ptr_hyp_place_inst p l n:
@@ -456,7 +458,7 @@ Section ptr.
     iApply wp_copy_alloc_id; [ done | by rewrite val_to_of_loc |  | ].
     { iApply (loc_in_bounds_offset with "Hlib"); simpl; [done | done | etrans; [|done]; lia ]. }
     iSplit; [by iDestruct "HT" as "[$ _]" |].
-    iDestruct "HT" as "[_ HT]". iApply ("HΦ" with "[] HT").
+    iDestruct "HT" as "[_ HT]". iApply ("HΦ" with "[] HT"). unfold value; simpl_type.
     iSplit => //. iPureIntro. apply: mem_cast_id_loc.
   Qed.
   Global Instance type_copy_aid_ptr_inst v1 a it v2 (l : loc) n:
@@ -674,7 +676,7 @@ Section optionable.
     (T v (b @ optional (&frac{β} ty) null))
     ⊢ typed_un_op v (v ◁ᵥ b @ optional (&frac{β} ty) null) (CastOp PtrOp) PtrOp T.
   Proof.
-    iIntros "HT Hv" (Φ) "HΦ". unfold optional; simpl_type.
+    iIntros "HT Hv" (Φ) "HΦ". unfold optional, ty_of_rty at 2; simpl_type.
     iDestruct "Hv" as "[[% [%l [% Hl]]]|[% ->]]"; subst.
     all: iApply wp_cast_loc; [by apply val_to_of_loc|].
     - iApply ("HΦ" with "[Hl] HT"). simpl_type. iLeft. iSplitR; [done|]. iExists _. by iFrame.
@@ -690,7 +692,7 @@ Section optionable.
   Proof.
     iIntros "HT Hv" (Φ) "HΦ". unfold optionalO; simpl_type.
     destruct b as [?|].
-    - iDestruct "Hv" as "[%l [% Hl]]"; subst.
+    - unfold ty_of_rty at 2; simpl_type. iDestruct "Hv" as "[%l [% Hl]]"; subst.
       iApply wp_cast_loc; [by apply val_to_of_loc|].
       iApply ("HΦ" with "[Hl] HT"). simpl_type. iExists _. by iFrame.
     - iDestruct "Hv" as "->".
@@ -702,13 +704,14 @@ Section optionable.
     λ T, i2p (type_cast_optionalO_own_ptr A b v β ty T).
 End optionable.
 
-Global Typeclasses Opaque ptr_type.
-Global Typeclasses Opaque frac_ptr_type.
+Global Typeclasses Opaque ptr_type ptr.
+Global Typeclasses Opaque frac_ptr_type frac_ptr.
+Global Typeclasses Opaque null.
 
 Section optional_null.
   Context `{!typeG Σ}.
 
-  Local Typeclasses Transparent optional_type.
+  Local Typeclasses Transparent optional_type optional.
 
   Lemma type_place_optional_null K l β1 b ty T:
     ⌜b⌝ ∗ typed_place K l β1 ty T

@@ -1,7 +1,7 @@
 From iris.algebra Require Import list.
 From refinedc.typing Require Export type.
 From refinedc.typing Require Import programs bytes.
-Set Default Proof Using "Type".
+From refinedc.typing Require Import type_options.
 
 Section struct.
   Context `{!typeG Σ}.

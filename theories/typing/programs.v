@@ -1,6 +1,6 @@
 From caesium Require Import proofmode.
 From refinedc.typing Require Export type.
-Set Default Proof Using "Type".
+From refinedc.typing Require Import type_options.
 
 Section judgements.
   Context `{!typeG Σ}.
@@ -815,7 +815,7 @@ Section typing.
   Lemma simplify_place_refine_l A (ty : rtype A) l β T:
     (∀ x, l ◁ₗ{β} x @ ty -∗ T) ⊢ simplify_hyp (l◁ₗ{β}ty) T.
   Proof.
-    iIntros "HT Hl". iDestruct "Hl" as (x) "Hv". by iApply "HT".
+    iIntros "HT Hl". unfold ty_of_rty; simpl_type. iDestruct "Hl" as (x) "Hv". by iApply "HT".
   Qed.
   Global Instance simplify_place_refine_l_inst A (ty : rtype A) l β:
     SimplifyHypPlace l β ty (Some 0%N) :=
@@ -824,7 +824,7 @@ Section typing.
   Lemma simplify_val_refine_l A (ty : rtype A) v T `{!Inhabited A}:
     (∀ x, v ◁ᵥ (x @ ty) -∗ T) ⊢ simplify_hyp (v ◁ᵥ ty) T.
   Proof.
-    iIntros "HT Hl". iDestruct "Hl" as (x) "Hv". by iApply "HT".
+    iIntros "HT Hl". unfold ty_of_rty; simpl_type.  iDestruct "Hl" as (x) "Hv". by iApply "HT".
   Qed.
   Global Instance simplify_val_refine_l_inst A (ty : rtype A) v `{!Inhabited A}:
     SimplifyHypVal v ty (Some 0%N) :=
@@ -886,7 +886,7 @@ Section typing.
   Global Instance simple_subsume_place_rty_to_ty_l A (ty1 : rtype A) P `{!∀ x, SimpleSubsumePlace (x @ ty1) ty2 P} :
     SimpleSubsumePlace ty1 ty2 P.
   Proof.
-    iIntros (l β) "HP Hl". iDestruct "Hl" as (x) "Hl".
+    iIntros (l β) "HP Hl". unfold ty_of_rty; simpl_type. iDestruct "Hl" as (x) "Hl".
     iApply (@simple_subsume_place with "HP Hl").
   Qed.
   Global Instance simple_subsume_place_rty_to_ty_r A (ty1 ty2 : rtype A) x P `{!SimpleSubsumePlace (x @ ty1) (x @ ty2) P} :
@@ -1525,7 +1525,7 @@ Section typing.
   Lemma copy_as_refinement A l β (ty : rtype A) {HC: ∀ x, CopyAs l β (x @ ty)} T:
     (∀ x, (HC x T).(i2p_P)) ⊢ copy_as l β ty T.
   Proof.
-    iIntros "HT Hl". iDestruct "Hl" as (x) "Hl".
+    iIntros "HT Hl". unfold ty_of_rty; simpl_type. iDestruct "Hl" as (x) "Hl".
     iSpecialize ("HT" $! x). iDestruct (i2p_proof with "HT") as "HT". by iApply "HT".
   Qed.
   Global Instance copy_as_refinement_inst A l β (ty : rtype A) {HC: ∀ x, CopyAs l β (x @ ty)}:

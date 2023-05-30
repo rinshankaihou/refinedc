@@ -1,6 +1,6 @@
 From refinedc.typing Require Export type.
 From refinedc.typing Require Import programs optional.
-Set Default Proof Using "Type".
+From refinedc.typing Require Import type_options.
 
 Class OwnConstraint `{!typeG Σ} (P : own_state → iProp Σ) : Prop := {
   own_constraint_persistent : Persistent (P Shr);

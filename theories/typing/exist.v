@@ -1,6 +1,6 @@
 From refinedc.typing Require Export type.
 From refinedc.typing Require Import programs optional.
-Set Default Proof Using "Type".
+From refinedc.typing Require Import type_options.
 
 Definition ty_exists_rty_def `{!typeG Σ} {A} (ty : A → type) (a : A) : type := ty a.
 Definition ty_exists_rty_aux : seal (@ty_exists_rty_def). by eexists. Qed.
@@ -47,7 +47,7 @@ Section tyexist.
   Global Instance tyexists_loc_in_bounds ty β n `{!∀ x, LocInBounds (ty x) β n} :
     LocInBounds (tyexists ty) β n.
   Proof.
-    constructor. iIntros (l) "Hl". iDestruct "Hl" as (x) "Hl".
+    constructor. iIntros (l) "Hl". unfold ty_of_rty; simpl_type. iDestruct "Hl" as (x) "Hl".
     rewrite tyexists_eq. by iApply loc_in_bounds_in_bounds.
   Qed.
 End tyexist.
@@ -107,4 +107,4 @@ Section tyexist.
   Proof. done. Qed.
 End tyexist.
 
-Global Typeclasses Opaque tyexists_type.
+Global Typeclasses Opaque tyexists_type tyexists.

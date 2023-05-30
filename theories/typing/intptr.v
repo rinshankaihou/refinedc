@@ -1,6 +1,6 @@
 From refinedc.typing Require Export type.
 From refinedc.typing Require Import programs own singleton int.
-Set Default Proof Using "Type".
+From refinedc.typing Require Import type_options.
 
 Section intptr.
   Context `{!typeG Σ}.
@@ -132,7 +132,7 @@ Section programs.
     destruct p; simplify_eq /=.
     iApply wp_cast_int_ptr_alive => //.
     iSplit; [by iDestruct "HT" as "[[$ _] _]"| iDestruct "HT" as "[_ HT]"].
-    iApply ("HΦ" with "[]"); last iApply "HT". unfold frac_ptr; simpl_type. done.
+    iApply ("HΦ" with "[]"); last iApply "HT". unfold frac_ptr, place; simpl_type. done.
   Qed.
   Global Instance type_cast_intptr_ptr_inst p v it:
     TypedUnOp v (v ◁ᵥ p @ intptr it)%I (CastOp PtrOp) (IntOp it) :=
@@ -196,4 +196,4 @@ Section programs.
     λ T, i2p (typed_bin_op_intptr_r it v1 ty v2 l op ot T).
 
 End programs.
-Global Typeclasses Opaque intptr_type.
+Global Typeclasses Opaque intptr_type intptr.
