@@ -626,11 +626,11 @@ End null.
 Section optionable.
   Context `{!typeG Σ}.
 
-  Global Program Instance frac_ptr_optional ty β: ROptionable (frac_ptr β ty) null PtrOp PtrOp := {|
-    ropt_opt p := {| opt_pre v1 v2 := (p ◁ₗ{β} ty -∗ loc_in_bounds p 0 ∗ True)%I |}
+  Global Program Instance frac_ptr_optional p ty β: Optionable (p @ frac_ptr β ty) null PtrOp PtrOp := {|
+    opt_pre v1 v2 := (p ◁ₗ{β} ty -∗ loc_in_bounds p 0 ∗ True)%I
   |}.
   Next Obligation.
-    iIntros (ty β p bty beq v1 v2 σ v) "Hpre H1 -> Hctx".
+    iIntros (p ty β bty beq v1 v2 σ v) "Hpre H1 -> Hctx".
     destruct bty; [ iDestruct "H1" as (->) "Hty" | iDestruct "H1" as %-> ].
     - iDestruct ("Hpre" with "Hty") as "[#Hlib _]".
       iDestruct (loc_in_bounds_has_alloc_id with "Hlib") as %[??].

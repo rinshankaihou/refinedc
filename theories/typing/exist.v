@@ -96,8 +96,8 @@ Section tyexist.
     SimpleSubsumePlace ty1 (x @ tyexists ty2) P.
   Proof. iIntros (l β) "HP Hl". rewrite ! tyexists_eq. iApply (@simple_subsume_place with "HP Hl"). Qed.
 
-  Global Program Instance tyexist_optional (ty : A → _) optty ot1 ot2 `{!∀ x, Optionable (ty x) optty ot1 ot2} : ROptionable (tyexists ty) optty ot1 ot2 := {|
-    ropt_opt x := {| opt_pre v1 v2 := opt_pre (ty x) v1 v2 |}
+  Global Program Instance tyexist_optional x (ty : A → _) optty ot1 ot2 `{!∀ x, Optionable (ty x) optty ot1 ot2} : Optionable (x @ tyexists ty) optty ot1 ot2 := {|
+    opt_pre v1 v2 := opt_pre (ty x) v1 v2
   |}.
   Next Obligation.
     move => ????????????. rewrite {1}/ty_own_val/= ty_exists_rty_eq /ty_has_op_type/ty_own_val. apply opt_bin_op.

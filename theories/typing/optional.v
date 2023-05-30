@@ -14,18 +14,15 @@ Class Optionable `{!typeG Σ} (ty : type) (optty : type) (ot1 ot2 : op_type) := 
 }.
 Arguments opt_pre {_ _} _ {_ _ _ _} _ _.
 
-Class ROptionable `{!typeG Σ} {A} (r : rtype A) (optty : type) (ot1 ot2 : op_type) := {
-  ropt_opt x :: Optionable (r.(rty) x) optty ot1 ot2;
-}.
-
 Class OptionableAgree `{!typeG Σ} (ty1 ty2 : type) : Prop :=
   optionable_dist : True.
 
 Section optional.
   Context `{!typeG Σ}.
 
-  Global Program Instance optionable_ty_of_rty A (r : rtype A) `{!Inhabited A} optty ot1 ot2 `{!ROptionable r optty ot1 ot2}: Optionable r optty ot1 ot2 := {|
-    opt_pre v1 v2 := (∀ x, opt_pre (r.(rty) x) v1 v2)%I
+  Global Program Instance optionable_ty_of_rty A (r : rtype A) `{!Inhabited A} optty ot1 ot2
+    `{!∀ x, Optionable (x @ r) optty ot1 ot2}: Optionable r optty ot1 ot2 := {|
+    opt_pre v1 v2 := (∀ x, opt_pre (x @ r) v1 v2)%I
   |}.
   Next Obligation.
     iIntros(A r????? bty beq v1 v2 σ v) "Hpre Hv1 Hv2".
