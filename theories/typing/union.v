@@ -51,25 +51,29 @@ Section union.
     TypedPlace (GetMemberUnionPCtx ul n :: K) l β (active_union ul n ty) :=
     λ T, i2p (type_place_active_union K β T ul n l ty).
 
+End union.
   (*** tagged union *)
   (*** tunion_info *)
-  Record tunion_info := {
-    ti_rtype : Type;
-    ti_base_layout : struct_layout;
-    ti_tag_field_name : string;
-    ti_union_field_name : string;
-    ti_union_layout : union_layout;
-    ti_tag : ti_rtype → nat;
-    ti_type : ti_rtype → type;
+Record tunion_info `{!typeG Σ} {A : Type} := {
+  ti_base_layout : struct_layout;
+  ti_tag_field_name : string;
+  ti_union_field_name : string;
+  ti_union_layout : union_layout;
+  ti_tag : A → nat;
+  ti_type : A → type;
 
-    ti_base_layout_members : ti_base_layout.(sl_members) = [(Some ti_tag_field_name, it_layout size_t); (Some ti_union_field_name, ul_layout ti_union_layout)];
-    ti_tags_valid r : is_Some (ti_union_layout.(ul_members) !! ti_tag r);
-  }.
+  ti_base_layout_members : ti_base_layout.(sl_members) = [(Some ti_tag_field_name, it_layout size_t); (Some ti_union_field_name, ul_layout ti_union_layout)];
+  ti_tags_valid r : is_Some (ti_union_layout.(ul_members) !! ti_tag r);
+}.
+Arguments tunion_info {_ _} _.
 
-  Definition ti_member (ti : tunion_info) (r : ti.(ti_rtype)) :=
+Section union.
+  Context `{!typeG Σ} {A : Type}.
+
+  Definition ti_member (ti : tunion_info A) (r : A) :=
     (default ("", void_layout) (ti.(ti_union_layout).(ul_members) !! ti.(ti_tag) r)).
 
-  Lemma index_of_ti_member ti x:
+  Lemma index_of_ti_member ti (x : A):
     index_of_union (ti_member ti x).1 (ti_union_layout ti) = Some (ti.(ti_tag) x).
   Proof.
     rewrite /ti_member.
@@ -86,7 +90,7 @@ Section union.
   Qed.
 
   (*** tag *)
-  Program Definition tunion_tag (ti : tunion_info) (x : ti.(ti_rtype)) : type := {|
+  Program Definition tunion_tag (ti : tunion_info A) (x : A) : type := {|
     ty_has_op_type ot mt := is_int_ot ot size_t;
     ty_own β l := l ◁ₗ{β}ti.(ti_tag) x @ int size_t;
     ty_own_val v := v ◁ᵥ ti.(ti_tag) x @ int size_t;
@@ -123,7 +127,7 @@ Section union.
     λ T, i2p (subsume_tunion_tag ti x1 x2 l β T).
 
   Inductive destruct_hint_union :=
-  | DestructHintUnion (info : tunion_info).
+  | DestructHintUnion (info : tunion_info A).
 
   Lemma type_binop_tunion_tag_int ti x it v1 n v2 T op:
     destruct_hint (DHintDestruct _ x) (DestructHintUnion ti) (typed_bin_op v1 (v1 ◁ᵥ ti.(ti_tag) x @ int size_t) v2 (v2 ◁ᵥ n @ int it) op (IntOp size_t) (IntOp it) T)
@@ -150,7 +154,7 @@ Section union.
 
 
   (*** variant *)
-  Program Definition variant (ti : tunion_info) (x : ti.(ti_rtype)) (ty : type) : type := {|
+  Program Definition variant (ti : tunion_info A) (x : A) (ty : type) : type := {|
     ty_has_op_type ot mt := ot = UntypedOp ti.(ti_union_layout) ∧ ty.(ty_has_op_type) (UntypedOp (ti_member ti x).2) MCNone;
      ty_own β l := (l ◁ₗ{β} (padded ty (ti_member ti x).2 (ul_layout ti.(ti_union_layout))))%I;
     ty_own_val v := (v ◁ᵥ (padded ty (ti_member ti x).2 (ul_layout ti.(ti_union_layout))))%I;
@@ -219,10 +223,10 @@ Section union.
 End union.
 
 Section tunion.
-  Context `{!typeG Σ}.
+  Context `{!typeG Σ} {A : Type}.
   (*** tunion *)
   (* TODO: extract the inner type to a separate definition and make it typeclasses opaque. *)
-  Program Definition tunion (ti : tunion_info) : rtype (ti.(ti_rtype)) := {|
+  Program Definition tunion (ti : tunion_info A) : rtype A := {|
     rty r := {|
       ty_has_op_type :=
         is_struct_ot ti.(ti_base_layout) [tunion_tag ti r; variant ti r (ti.(ti_type) r)];

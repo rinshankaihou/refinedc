@@ -1026,8 +1026,8 @@ let pp_spec : Coq_path.t -> import list -> inlined_code ->
     in
     List.iteri pp_inversion_hint union_cases;
     (* Definition for the tagged union info. *)
-    pp "@[<v 2>Program Definition %s_tunion_info : tunion_info := {|@;" id;
-    pp "ti_rtype := %a;@;" (pp_simple_coq_expr false) tag_type_e;
+    pp "@[<v 2>Program Definition %s_tunion_info : tunion_info %a := {|@;"
+      id (pp_simple_coq_expr true) tag_type_e;
     pp "ti_base_layout := struct_%s;@;" id;
     pp "ti_tag_field_name := \"%s\";@;" tag_field;
     pp "ti_union_field_name := \"%s\";@;" union_field;
