@@ -620,9 +620,9 @@ Definition FindValP {Σ} (v : val) :=
 Definition FindValOrLoc {Σ} (v : val) (l : loc) :=
   {| fic_A := iProp Σ; fic_Prop P := P; |}.
 Definition FindLocInBounds {Σ} (l : loc) :=
-    {| fic_A := iProp Σ; fic_Prop P := P |}.
+  {| fic_A := iProp Σ; fic_Prop P := P |}.
 Definition FindAllocAlive {Σ} (l : loc) :=
-    {| fic_A := iProp Σ; fic_Prop P := P |}.
+  {| fic_A := iProp Σ; fic_Prop P := P |}.
 Global Typeclasses Opaque FindLoc FindVal FindValP FindValOrLoc FindLocInBounds FindAllocAlive.
 
 Section typing.

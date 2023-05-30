@@ -1070,6 +1070,8 @@ Module Rep.
     | Z.neg ?n => Int.neg (pos_to_ltac2_int n)
     end.
 
+  (* TODO: use a mutable record field, see Janno's message *)
+
   (* Calls tac on a new subgoal of type Z and converts the resulting Z
   to an int. *)
   Ltac2 int_from_z_subgoal (tac : unit -> unit) : int :=
