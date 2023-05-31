@@ -1,5 +1,8 @@
 From iris.proofmode Require Import coq_tactics reduction.
-From lithium Require Import base infrastructure classes simpl_classes tactics_extend.
+From lithium Require Export base.
+From lithium Require Import hooks definitions simpl_classes normalize.
+
+(** This file contains the main Lithium interpreter. *)
 
 (** * Definitions of markers for controling the state *)
 Notation "'HIDDEN'" := (Envs _ _ _) (only printing).
@@ -17,7 +20,7 @@ Definition SHELVED_SIDECOND (P : Prop) : Prop := P.
 Arguments SHELVED_SIDECOND : simpl never.
 Strategy expand [SHELVED_SIDECOND].
 
-(** * Lemmas used by tactics *)
+(** * General lemmas used by tactics *)
 Section coq_tactics.
   Context {Σ : gFunctors}.
 
@@ -30,17 +33,9 @@ Section coq_tactics.
     (P1 ⊢ P2) → envs_entails Δ P1 → envs_entails Δ P2.
   Proof. by rewrite envs_entails_unseal => -> HP. Qed.
 
-  Lemma tac_fast_apply_below_sep {Δ} {P1 P2 T : iProp Σ} :
-    (P1 ⊢ P2) → envs_entails Δ (P1 ∗ T) → envs_entails Δ (P2 ∗ T).
-  Proof. by rewrite envs_entails_unseal => -> HP. Qed.
-
   Lemma tac_apply_i2p {Δ} {P : iProp Σ} (P' : iProp_to_Prop P) :
     envs_entails Δ P'.(i2p_P) → envs_entails Δ P.
   Proof. rewrite envs_entails_unseal. etrans; [done|]. apply i2p_proof. Qed.
-
-  Lemma tac_apply_i2p_below_sep {Δ} {P T : iProp Σ} (P' : iProp_to_Prop P) :
-    envs_entails Δ (P'.(i2p_P) ∗ T) → envs_entails Δ (P ∗ T).
-  Proof. rewrite envs_entails_unseal. etrans; [done|]. apply bi.sep_mono_l. apply i2p_proof. Qed.
 
   Lemma tac_protected_eq_app {A} (f : A → Prop) a :
     f a → f (protected a).
@@ -629,7 +624,7 @@ Ltac liImpl :=
                 match P with
                 | ∃ _, _ => fail 1 "handled by do_forall"
                 | _ = _ =>
-                    check_injection_tac;
+                    check_injection_hook;
                     let Hi := fresh "Hi" in move => Hi; injection Hi; clear Hi
                 | _ => assert_is_not_trivial P; intros ?; subst
                 | _ => move => _
@@ -722,7 +717,7 @@ Ltac liDestructHint :=
       record_destruct_hint hint (info, true) |
       record_destruct_hint hint (info, false) ]
     end
-  end; repeat (liForall || liImpl); try by [exfalso; can_solve_tac].
+  end; repeat (liForall || liImpl); try by [exfalso; can_solve].
 
 Ltac liTacticHint :=
   lazymatch goal with

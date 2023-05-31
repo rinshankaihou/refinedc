@@ -355,4 +355,4 @@ Ltac naive_simpl :=
   end.
 
 Ltac naive_solve := naive_simpl; solve_goal.
-Ltac can_solve_tac ::= naive_solve.
+Ltac can_solve_hook ::= naive_solve.

@@ -1,5 +1,5 @@
 From iris.proofmode Require Import coq_tactics reduction.
-From lithium Require Export tactics.
+From lithium Require Export all.
 From refinedc.typing Require Export type.
 From refinedc.typing.automation Require Export normalize solvers simplification proof_state loc_eq.
 From refinedc.typing Require Import programs function singleton own struct bytes int.
@@ -7,7 +7,7 @@ Set Default Proof Using "Type".
 
 (** * Registering extensions *)
 (** We use autorewrite for the moment. *)
-Ltac normalize_tac ::= normalize_autorewrite.
+Ltac normalize_hook ::= normalize_autorewrite.
 (* Goal ∀ l i (x : Z), *)
 (*     0 < length (<[i:=x]> $ <[i:=x]> (<[length (<[i:=x]>l) :=x]> l ++ <[length (<[i:=x]>l) :=x]> l)). *)
 (*   move => ???. normalize_goal. *)
@@ -34,7 +34,7 @@ Ltac solve_protected_eq_unfold_tac ::=
 Ltac unfold_let_goal_tac H ::=
   unfold RETURN_MARKER in H.
 
-Ltac can_solve_tac ::= solve_goal.
+Ltac can_solve_hook ::= solve_goal.
 
 Ltac record_destruct_hint hint info ::= add_case_distinction_info hint info.
 

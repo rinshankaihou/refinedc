@@ -1,5 +1,5 @@
 (** This file collects simplification instances specific to RefinedC *)
-From lithium Require Import tactics.
+From lithium Require Import simpl_classes.
 From refinedc.typing Require Import type.
 
 (** * layout *)

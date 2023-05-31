@@ -1,4 +1,4 @@
-From lithium Require Export lithium.
+From lithium Require Export definitions.
 From caesium Require Export proofmode.
 
 Class CoPsetFact (P : Prop) : Prop := copset_fact : P.

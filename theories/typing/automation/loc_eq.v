@@ -1,4 +1,4 @@
-From lithium Require Import classes.
+From lithium Require Import definitions.
 From caesium Require Import base lang.
 From refinedc.typing Require Import programs.
 

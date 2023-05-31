@@ -1,4 +1,4 @@
-From lithium Require Import tactics.
+From lithium Require Import all.
 From refinedc.typing Require Import type globals.
 From refinedc.typing.automation Require Import solvers.
 

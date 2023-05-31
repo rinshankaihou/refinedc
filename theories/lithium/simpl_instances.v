@@ -1,4 +1,8 @@
-From lithium Require Import base simpl_classes infrastructure.
+From lithium Require Export base.
+From lithium Require Import simpl_classes pure_definitions.
+
+(** This file provides the instances for the simplification
+infrastructure for pure sideconditions. *)
 
 Local Open Scope Z_scope.
 

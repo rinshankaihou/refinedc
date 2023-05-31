@@ -1,5 +1,5 @@
 From stdpp.unstable Require Import bitblast.
-From lithium Require Import simpl_classes tactics_extend infrastructure classes.
+From lithium Require Import simpl_classes definitions.
 From caesium Require Import base int_type builtins_specs.
 
 (* raw bit vector constructors *)
@@ -260,8 +260,8 @@ Qed.
 Create HintDb bitfield_rewrite discriminated.
 
 #[export] Hint Rewrite bf_land_nil : bitfield_rewrite.
-#[export] Hint Rewrite bf_land_mask_cons using can_solve_tac : bitfield_rewrite.
-#[export] Hint Rewrite bf_land_mask_flip using can_solve_tac : bitfield_rewrite.
+#[export] Hint Rewrite bf_land_mask_cons using can_solve : bitfield_rewrite.
+#[export] Hint Rewrite bf_land_mask_flip using can_solve : bitfield_rewrite.
 
 #[export] Hint Rewrite bf_lor_nil_l : bitfield_rewrite.
 #[export] Hint Rewrite bf_lor_nil_r : bitfield_rewrite.
@@ -274,11 +274,11 @@ Create HintDb bitfield_rewrite discriminated.
 #[export] Hint Rewrite bf_lor_mask_cons using lia : bitfield_rewrite.
 
 #[export] Hint Rewrite bf_slice_nil : bitfield_rewrite.
-#[export] Hint Rewrite bf_slice_cons using can_solve_tac : bitfield_rewrite.
+#[export] Hint Rewrite bf_slice_cons using can_solve : bitfield_rewrite.
 #[export] Hint Rewrite bf_slice_cons_ne using lia : bitfield_rewrite.
 
 #[export] Hint Rewrite bf_update_nil : bitfield_rewrite.
-#[export] Hint Rewrite bf_update_cons using can_solve_tac : bitfield_rewrite.
+#[export] Hint Rewrite bf_update_cons using can_solve : bitfield_rewrite.
 #[export] Hint Rewrite bf_update_cons_ne using lia : bitfield_rewrite.
 
 (* Tactic to normalize a bitfield *)

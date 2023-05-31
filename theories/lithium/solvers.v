@@ -1,4 +1,7 @@
-From lithium Require Import base tactics_extend simpl_classes infrastructure.
+From lithium Require Export base.
+From lithium Require Import hooks simpl_classes pure_definitions normalize.
+
+(** This file provides various pure solvers. *)
 
 (** * [refined_solver]
     Version of naive_solver which fails faster. *)
@@ -100,7 +103,7 @@ Ltac normalize_and_simpl_goal_step :=
           match P with
           | ∃ _, _ => case
           | _ = _ =>
-              check_injection_tac;
+              check_injection_hook;
               let Hi := fresh "Hi" in move => Hi; injection Hi; clear Hi
           | _ => assert_is_not_trivial P; intros ?; subst
           | _ => move => _

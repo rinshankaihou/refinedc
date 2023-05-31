@@ -1,4 +1,3 @@
-From lithium Require Import tactics.
 From lithium Require Export solvers.
 From refinedc.typing Require Import type.
 

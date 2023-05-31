@@ -1,4 +1,28 @@
-From lithium Require Import base tactics_extend infrastructure.
+From lithium Require Export base.
+From lithium Require Import hooks pure_definitions.
+
+(** This file provides rewrite-based normalization infrastructure for
+pure sideconditions. *)
+
+(** * General normalization infrastructure *)
+Lemma tac_normalize_goal (P1 P2 : Prop):
+  P2 = P1 → P1 → P2.
+Proof. by move => ->. Qed.
+Lemma tac_normalize_goal_and (P1 P2 T : Prop):
+  P2 = P1 → P1 ∧ T → P2 ∧ T.
+Proof. by move => ->. Qed.
+Lemma tac_normalize_goal_impl (P1 P2 T : Prop):
+  P2 = P1 → (P1 → T) → (P2 → T).
+Proof. by move => ->. Qed.
+
+(* TODO: don't do anything if there is no progress? *)
+Ltac normalize_goal :=
+  notypeclasses refine (tac_normalize_goal _ _ _ _); [normalize_hook|].
+Ltac normalize_goal_and :=
+  notypeclasses refine (tac_normalize_goal_and _ _ _ _ _); [normalize_hook|].
+Ltac normalize_goal_impl :=
+  notypeclasses refine (tac_normalize_goal_impl _ _ _ _ _); [normalize_hook|].
+
 
 (** * First version of normalization based on [autorewrite] *)
 Create HintDb lithium_rewrite discriminated.
@@ -6,8 +30,8 @@ Create HintDb lithium_rewrite discriminated.
 Ltac normalize_autorewrite :=
   autorewrite with lithium_rewrite; exact: eq_refl.
 
-#[export] Hint Rewrite @drop_0 @take_ge using can_solve_tac : lithium_rewrite.
-#[export] Hint Rewrite @take_app_le @drop_app_ge using can_solve_tac : lithium_rewrite.
+#[export] Hint Rewrite @drop_0 @take_ge using can_solve : lithium_rewrite.
+#[export] Hint Rewrite @take_app_le @drop_app_ge using can_solve : lithium_rewrite.
 #[export] Hint Rewrite @insert_length @app_length @fmap_length @rotate_length @replicate_length @drop_length : lithium_rewrite.
 #[export] Hint Rewrite <- @fmap_take @fmap_drop : lithium_rewrite.
 #[export] Hint Rewrite @list_insert_fold : lithium_rewrite.
@@ -19,15 +43,15 @@ Ltac normalize_autorewrite :=
 #[export] Hint Rewrite <- @list_fmap_insert : lithium_rewrite.
 #[export] Hint Rewrite Nat.sub_0_r Nat.add_0_r Nat.sub_diag : lithium_rewrite.
 #[export] Hint Rewrite Nat2Z.id : lithium_rewrite.
-#[export] Hint Rewrite Z2Nat.inj_mul Z2Nat.inj_sub Z2Nat.id using can_solve_tac : lithium_rewrite.
-#[export] Hint Rewrite Nat.succ_pred_pos using can_solve_tac : lithium_rewrite.
+#[export] Hint Rewrite Z2Nat.inj_mul Z2Nat.inj_sub Z2Nat.id using can_solve : lithium_rewrite.
+#[export] Hint Rewrite Nat.succ_pred_pos using can_solve : lithium_rewrite.
 #[export] Hint Rewrite Nat.add_assoc Nat.min_id : lithium_rewrite.
-#[export] Hint Rewrite Z.quot_mul using can_solve_tac : lithium_rewrite.
+#[export] Hint Rewrite Z.quot_mul using can_solve : lithium_rewrite.
 #[export] Hint Rewrite <-Nat.mul_sub_distr_r Z.mul_add_distr_r Z.mul_sub_distr_r : lithium_rewrite.
 #[export] Hint Rewrite @bool_decide_eq_x_x_true @if_bool_decide_eq_branches : lithium_rewrite.
 #[export] Hint Rewrite @bool_decide_eq_true_2 @bool_decide_eq_false_2 using fast_done : lithium_rewrite.
 #[export] Hint Rewrite bool_to_Z_neq_0_bool_decide bool_to_Z_eq_0_bool_decide : lithium_rewrite.
-#[export] Hint Rewrite keep_factor2_is_power_of_two keep_factor2_min_eq using can_solve_tac : lithium_rewrite.
+#[export] Hint Rewrite keep_factor2_is_power_of_two keep_factor2_min_eq using can_solve : lithium_rewrite.
 #[export] Hint Rewrite keep_factor2_min_1 keep_factor2_twice : lithium_rewrite.
 
 Local Definition lookup_insert_gmap A K `{Countable K} := lookup_insert (M := gmap K) (A := A).

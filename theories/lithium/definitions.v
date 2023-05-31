@@ -1,7 +1,8 @@
-(** Main typeclasses of Lithium *)
 From iris.base_logic.lib Require Export iprop.
 From iris.proofmode Require Export tactics.
-From lithium Require Export base infrastructure.
+From lithium Require Export base pure_definitions.
+
+(** Definitions that are used by the Lithium automation. *)
 
 (** * [iProp_to_Prop] *)
 #[projections(primitive)] Record iProp_to_Prop {Σ} (P : iProp Σ) : Type := i2p {
@@ -11,6 +12,10 @@ From lithium Require Export base infrastructure.
 Arguments i2p {_ _ _} _.
 Arguments i2p_P {_ _} _.
 Arguments i2p_proof {_ _} _.
+
+(** * Checking if a hyp in the context
+  The implementation can be found in interpreter.v *)
+Class CheckOwnInContext {Σ} (P : iProp Σ) : Prop := { check_own_in_context : True }.
 
 (** * [find_in_context] *)
 (** ** Definition  *)

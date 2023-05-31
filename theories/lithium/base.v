@@ -190,6 +190,19 @@ Global Existing Instance tc_one_is_some3_left.
 Global Existing Instance tc_one_is_some3_middle.
 Global Existing Instance tc_one_is_some3_right.
 
+Class IsVar {A} (x : A) : Prop := is_var: True.
+Global Hint Extern 0 (IsVar ?x) => (is_var x; exact: I) : typeclass_instances.
+
+Class TCDone (P : Prop) : Prop := done_proof : P.
+Global Hint Extern 1 (TCDone ?P) => (change P; done) : typeclass_instances.
+
+(** [AssumeInj] is a hint that automation should treat f as if it were
+injective, even though the injectivity might not be provable. *)
+Class AssumeInj {A B} (R : relation A) (S : relation B) (f : A → B) : Prop := assume_inj : True.
+Global Instance assume_inj_inj A B R S (f : A → B) `{!Inj R S f} : AssumeInj R S f.
+Proof. done. Qed.
+
+
 Definition exists_dec_unique {A} (x : A) (P : _ → Prop) : (∀ y, P y → P x) → Decision (P x) → Decision (∃ y, P y).
 Proof.
   intros Hx Hdec.
@@ -912,7 +925,7 @@ Qed.
 Lemma bitblast_lunot bits z n b:
   Bitblast z n b →
   Bitblast (Z_lunot bits z) n
-((bool_decide ((bits < 0 ≤ n)%Z) || (bool_decide ((0 ≤ bits)%Z) && bool_decide ((0 ≤ n < bits)%Z))) && negb b).
+    ((bool_decide ((bits < 0 ≤ n)%Z) || (bool_decide ((0 ≤ bits)%Z) && bool_decide ((0 ≤ n < bits)%Z))) && negb b).
 Proof.
   move => [<-]. constructor.
   case_bool_decide.

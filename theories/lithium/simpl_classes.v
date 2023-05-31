@@ -1,4 +1,7 @@
-From lithium Require Import base.
+From lithium Require Export base.
+
+(** This file provides the classes for the simplification
+infrastructure for pure sideconditions. *)
 
 Class SimplExist (T : Type) (e : T → Prop) (Q: Prop) := simpl_exist_proof : Q → ∃ x, e x.
 Class SimplForall (T : Type) (n : nat) (e : T → Prop) (Q: Prop) := simpl_forall_proof : Q → ∀ x, e x.
