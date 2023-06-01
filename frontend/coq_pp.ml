@@ -1383,7 +1383,7 @@ let pp_proof : Coq_path.t -> func_def -> import list -> string list
     pp "@;  all: print_typesystem_goal \"%s\" \"%s\"." def.func_name id
   in
   List.iter pp_do_step (List.cons "#0" (List.map fst invs_fb));
-  pp "@;Unshelve. all: li_unshelve_sidecond; sidecond_hook; prepare_sideconditions; ";
+  pp "@;Unshelve. all: unshelve_sidecond; sidecond_hook; prepare_sideconditions; ";
   pp "normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.";
   let tactics_items =
     let is_all t =

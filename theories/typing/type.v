@@ -408,7 +408,7 @@ Section alloc_alive.
   Proof. constructor. by iIntros "#H !>". Qed.
 
   Global Instance AllocAlive_simpl_and ty β P P' `{!AllocAlive ty β P'} `{!IsProtected P} :
-    SimplAndUnsafe true (AllocAlive ty β P) (λ T, P = P' ∧ T).
+    SimplAndUnsafe (AllocAlive ty β P) (λ T, P = P' ∧ T).
   Proof. by move => T [-> ?]. Qed.
 End alloc_alive.
 

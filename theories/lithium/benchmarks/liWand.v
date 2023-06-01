@@ -10,7 +10,7 @@ Goal ∀ Σ (P : nat → iProp Σ),
   intros Σ P. iStartProof.
   (* Set Ltac Profiling. *)
   (* Reset Ltac Profile. *)
-  time "liWand" repeat (liEnforceInvariant; liWand).
+  time "liWand" repeat (liEnsureInvariant; liWand).
   (* Show Ltac Profile. *)
   destruct falso.
 Time Qed.

@@ -20,7 +20,7 @@ Ltac select_smaller_option o1 o2 H1 H2 cont :=
     end
   end.
 
-Ltac extensible_judgment_hook ::=
+Ltac liExtensible_hook ::=
   let unfold_instance G :=
       eval unfold typed_un_op_val, subsume_place, simplify_goal_place, simplify_hyp_place, simplify_goal_val, simplify_hyp_val, subsume_val, subsume_place, typed_bin_op_val in G in
   let rec get_head e :=

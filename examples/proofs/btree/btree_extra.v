@@ -1,4 +1,4 @@
-From refinedc.typing Require Import typing naive_simpl.
+From refinedc.typing Require Import typing.
 Set Default Proof Using "Type".
 
 Lemma same_length_lookup {A B} (l1 : list A) (l2 : list B) (i : nat):

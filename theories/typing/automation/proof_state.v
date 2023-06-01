@@ -90,17 +90,17 @@ Ltac clear_unused_vars :=
          end.
 
 Ltac prepare_sideconditions :=
-  liUnfoldLetsInContext;
-  liUnfoldAllEvars;
+  li_unfold_lets_in_context;
+  unfold_all_protected_evars;
   repeat match goal with | H : BLOCK_PRECOND _ _ |- _ => clear H end;
   (* get rid of Q *)
   repeat match goal with | H := CODE_MARKER _ |- _ => clear H end;
   repeat match goal with | H := RETURN_MARKER _ |- _ => clear H end;
   clear_unused_vars.
 
-Ltac solve_goal_prepare_tac ::=
+Ltac solve_goal_prepare_hook ::=
   prepare_sideconditions;
-  repeat match goal with | H : CASE_DISTINCTION_INFO _ _ _ |- _ =>  clear H end.
+  repeat match goal with | H : CASE_DISTINCTION_INFO _ _ _ |- _ => clear H end.
 
 (** * Tactics for showing failures to the user *)
 

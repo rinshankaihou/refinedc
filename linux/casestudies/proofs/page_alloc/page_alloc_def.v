@@ -50,7 +50,7 @@ Section type.
     λ T, i2p (simplify_goal_place_find_buddy_gt vmemmap p order β ty T).
 
   Global Instance simpl_page_layout_size_le n1 n2:
-    SimplAndUnsafe true (ly_size (PAGE_LAYOUT n1) ≤ ly_size (PAGE_LAYOUT n2))%nat (λ T, n1 ≤ n2 ∧ T).
+    SimplAndUnsafe (ly_size (PAGE_LAYOUT n1) ≤ ly_size (PAGE_LAYOUT n2))%nat (λ T, n1 ≤ n2 ∧ T).
   Proof. rewrite /PAGE_LAYOUT/ly_size/= => ? [??]. split => //. rewrite /PAGE_SIZE. lia. Qed.
   Global Instance simpl_shiftl_monol_le n m1 m2 `{!CanSolve (0 < n ∧ 0 ≤ m1 ∧ 0 ≤ m2)}:
     SimplBoth (n ≪ m1 ≤ n ≪ m2) (m1 ≤ m2).
@@ -71,8 +71,7 @@ End type.
 Global Typeclasses Opaque PAGE_LAYOUT.
 Global Opaque PAGE_LAYOUT.
 
-Ltac enrich_context_tac ::=
-  enrich_context_base;
+Ltac enrich_context_hook ::=
   repeat match goal with
          | |- context C [ find_buddy ?vmemmap ?order ?page ] =>
            let G := context C[enrich_marker find_buddy vmemmap order page] in

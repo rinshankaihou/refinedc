@@ -14,7 +14,7 @@ Ltac normalize_hook ::= normalize_autorewrite.
 (* Abort. *)
 
 Global Hint Transparent ly_size : solve_protected_eq_db.
-Ltac solve_protected_eq_unfold_tac ::=
+Ltac solve_protected_eq_hook ::=
   lazymatch goal with
   (* unfold constants for function types *)
   | |- @eq (_ → fn_params) ?a (λ x, _) =>
@@ -31,14 +31,14 @@ Ltac solve_protected_eq_unfold_tac ::=
   | |- _ => idtac
   end.
 
-Ltac unfold_let_goal_tac H ::=
+Ltac liUnfoldLetGoal_hook H ::=
   unfold RETURN_MARKER in H.
 
 Ltac can_solve_hook ::= solve_goal.
 
-Ltac record_destruct_hint hint info ::= add_case_distinction_info hint info.
+Ltac liDestructHint_record_hook hint info ::= add_case_distinction_info hint info.
 
-Ltac convert_to_i2p_tac P bind cont ::=
+Ltac liExtensible_to_i2p_hook P bind cont ::=
   lazymatch P with
   | typed_value ?v ?T =>
       (* One could introduce more let-bindings as follows, but too
@@ -121,17 +121,20 @@ Ltac liRInstantiateEvars :=
     (* We would like to use [liInst H (S (protected (EVAR_ID _)))],
       but this causes a Error: No such section variable or assumption
       at Qed. time. Maybe this is related to https://github.com/coq/coq/issues/9937 *)
-    instantiate_protected (protected H) ltac:(fun H => instantiate (1:=((S (protected (EVAR_ID _))))) in (value of H))
+    (* TODO: Check if this is still the case. *)
+    do_instantiate_protected (protected H) ltac:(fun H => instantiate (1:=((S (protected (EVAR_ID _))))) in (value of H))
   (* This is very hard to figure out for unification because of the
   dependent types in with refinement. Unificaiton likes to unfold the
   definition of ty without this. This is the reason why do_instantiate
   evars must come before do_side_cond *)
   | |- protected ?H = ( _ @ ?ty)%I ∧ _ =>
-    instantiate_protected (protected H) ltac:(fun H => instantiate (1:=((protected (EVAR_ID _)) @ ty)%I) in (value of H))
+    do_instantiate_protected (protected H) ltac:(fun H => instantiate (1:=((protected (EVAR_ID _)) @ ty)%I) in (value of H))
   | |- protected ?H = ty_of_rty (frac_ptr ?β _)%I ∧ _ =>
-    instantiate_protected (protected H) ltac:(fun H => instantiate (1:=((frac_ptr β (protected (EVAR_ID _)))%I)) in (value of H))
-  | |- envs_entails _ (subsume (?x ◁ₗ{?β} ?ty) (_ ◁ₗ{_} (protected ?H)) _) => liInst H ty
-  | |- envs_entails _ (subsume (?x ◁ₗ{?β} ?ty) (_ ◁ₗ{protected ?H} _) _) => liInst H β
+    do_instantiate_protected (protected H) ltac:(fun H => instantiate (1:=((frac_ptr β (protected (EVAR_ID _)))%I)) in (value of H))
+  | |- envs_entails _ (subsume (?x ◁ₗ{?β} ?ty) (_ ◁ₗ{_} (protected ?H)) _) =>
+    instantiate_protected H ty
+  | |- envs_entails _ (subsume (?x ◁ₗ{?β} ?ty) (_ ◁ₗ{protected ?H} _) _) =>
+    instantiate_protected H β
   end.
 
 Ltac liRStmt :=
@@ -242,7 +245,7 @@ Ltac liRJudgement :=
 
 (* This does everything *)
 Ltac liRStep :=
- liEnforceInvariantAndUnfoldInstantiatedEvars;
+ liEnsureInvariant;
  try liRIntroduceLetInGoal;
  first [
    liRInstantiateEvars (* must be before do_side_cond and do_extensible_judgement *)
@@ -281,6 +284,19 @@ Tactic Notation "liRStepUntil" open_constr(id) :=
 
 
 (** * Tactics for starting a function *)
+Section coq_tactics.
+  Context {Σ : gFunctors}.
+
+  Lemma tac_split_big_sepM {K A} `{!EqDecision K} `{!Countable K} (m : gmap K A) i x Φ (P : iProp Σ):
+    m !! i = None →
+    (Φ i x -∗ ([∗ map] k↦x∈m, Φ k x) -∗ P) ⊢
+    ([∗ map] k↦x∈<[i := x]>m, Φ k x) -∗ P.
+  Proof.
+    move => Hin. rewrite big_sepM_insert //.
+    iIntros "HP [? Hm]". by iApply ("HP" with "[$]").
+  Qed.
+End coq_tactics.
+
 (* IMPORTANT: We need to make sure to never call simpl while the code
 (Q) is part of the goal, because simpl seems to take exponential time
 in the number of blocks! *)
@@ -299,13 +315,13 @@ Tactic Notation "prepare_parameters" "(" ident_list(i) ")" :=
 
 Ltac liRSplitBlocksIntro :=
   repeat (
-      liEnforceInvariantAndUnfoldInstantiatedEvars;
+      liEnsureInvariant;
       first [
           liSep
         | liWand
         | liImpl
         | liForall
-        | liExist true
+        | liExist
         | liUnfoldLetGoal]; liSimpl);
   liShow.
 

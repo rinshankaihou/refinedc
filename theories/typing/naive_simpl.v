@@ -1,6 +1,10 @@
-From refinedc.typing Require Import typing.
+From lithium Require Export base.
+From lithium Require Import hooks simpl_classes pure_definitions normalize solvers proof_state.
 Set Default Proof Using "Type".
 
+Local Open Scope Z_scope.
+
+(* TODO: clean up this file *)
 
 Lemma tac_eq_replace (P1 P2 : Prop):
   P2 = P1 → P1 → P2.
@@ -292,23 +296,7 @@ Ltac naive_simpl_go :=
     (* relying on the fact that unification variables cannot contain
        dependent variables to distinguish between dependent and non dependent forall *)
     | |- ?P -> ?Q =>
-      lazymatch type of P with
-      | Prop => first [
-        progress normalize_goal_impl |
-        notypeclasses refine (apply_simpl_impl _ _ _ _ _); [ solve [refine _] |]; simpl;
-        match goal with
-        | |- true = true -> _ => move => _
-        | |- false = false -> ?P → _ => move => _;
-          match P with
-          | ∃ _, _ => case
-          | _ = _ => let Hi := fresh "Hi" in move => Hi; injection Hi; clear Hi
-          | _ => assert_is_not_trivial P; intros ?; subst
-          | _ => move => _
-          end
-        end]
-      (* just some unused variable, forget it *)
-      | _ => move => _
-      end
+      normalize_and_simpl_impl true
     | |- forall _ : ?P, _ =>
       lazymatch P with
       | (prod _ _) => case
@@ -316,20 +304,16 @@ Ltac naive_simpl_go :=
       | _ => intro
       end
     end
-  | |- _ ∧ _ =>
-    first [ progress normalize_goal_and |
-    notypeclasses refine (apply_simpl_and _ _ _ _ _); [ solve [refine _] |]; simpl;
-    lazymatch goal with
-    | |- true = true -> _ => move => _
-    | |- false = false -> ?P ∧ _ => move => _;
-      match P with
+  | |- ?P ∧ ?Q => first [
+      progress normalize_goal_and
+    | notypeclasses refine (@simpl_and_unsafe P _ _ Q _); [solve [refine _] |]; simpl
+    | match P with
       (* TODO: Is this a good idea? *)
       | _ → _ => split
-      | protected ?H = ?x => liInst H x
-      | ?x = protected ?H => liInst H x
+      | protected ?H = ?x => instantiate_protected H x
+      | ?x = protected ?H => instantiate_protected H x
       | _ => split; [fast_done || change (shelve_marker P); shelve | ]
       end
-    end
     ]
   | |- @ex ?A ?P => first [
     lazymatch A with
@@ -355,4 +339,3 @@ Ltac naive_simpl :=
   end.
 
 Ltac naive_solve := naive_simpl; solve_goal.
-Ltac can_solve_hook ::= naive_solve.

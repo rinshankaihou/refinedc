@@ -1,4 +1,4 @@
-From lithium Require Export solvers.
+From lithium Require Export hooks.
 From refinedc.typing Require Import type.
 
 Lemma unfold_int_elem_of_it (z : Z) (it : int_type) :
@@ -22,9 +22,7 @@ Ltac unfold_common_defs :=
     bits_per_byte in *.
 
 (** * [solve_goal] without cleaning of the context  *)
-Ltac solve_goal_normalized_prepare_tac ::=
+Ltac solve_goal_normalized_prepare_hook ::=
   try rewrite -> unfold_int_elem_of_it in *;
   unfold_common_defs; simpl in *;
   rewrite /ly_size/ly_align_log //=.
-
-(** * Tactics for solving sideconditions in ..._spec.v files  *)

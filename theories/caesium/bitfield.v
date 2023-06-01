@@ -360,7 +360,7 @@ Qed.
 (* Simplify data list eq *)
 
 Global Instance bf_cons_eq a k x1 l1 x2 l2 :
-  SimplAndUnsafe true (bf_cons a k x1 l1 = bf_cons a k x2 l2) (λ T, x1 = x2 ∧ l1 = l2 ∧ T).
+  SimplAndUnsafe (bf_cons a k x1 l1 = bf_cons a k x2 l2) (λ T, x1 = x2 ∧ l1 = l2 ∧ T).
 Proof.
   unfold CanSolve, SimplAndUnsafe in *.
   naive_solver.

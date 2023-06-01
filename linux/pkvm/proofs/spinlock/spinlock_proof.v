@@ -25,7 +25,7 @@ Section proofs.
     (* Establish the invariant *)
     liInst Hevar id. iExists 0, 0.
     iFrame. iSplit; [ done | by iApply ticket_range_empty ].
-    Unshelve. all: li_unshelve_sidecond; sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
+    Unshelve. all: unshelve_sidecond; sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
   Qed.
 
   (* Typing proof for [hyp_spin_lock]. *)
@@ -275,7 +275,7 @@ Section proofs.
           }
           iIntros "_". repeat liRStep; liShow.
     (* Solving side-conditions. *)
-    Unshelve. all: li_unshelve_sidecond; sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
+    Unshelve. all: unshelve_sidecond; sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
   Qed.
 
   (* Typing proof for [hyp_spin_unlock]. *)
@@ -434,6 +434,6 @@ Section proofs.
         (* Run the automation to finish the branch. *)
         repeat liRStep; liShow.
     (* Solving side-conditions. *)
-    Unshelve. all: li_unshelve_sidecond; sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
+    Unshelve. all: unshelve_sidecond; sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
   Qed.
 End proofs.

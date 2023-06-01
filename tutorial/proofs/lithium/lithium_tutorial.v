@@ -29,7 +29,7 @@ Section lithium.
     (* Run Lithium. *)
     repeat liStep.
     (* Lithium finished and left some sideconditions. *)
-    Unshelve. all: li_unshelve_sidecond.
+    Unshelve. all: unshelve_sidecond.
     (* Discharge the sidecondition. *)
     lia.
     (* Done! *)
@@ -59,7 +59,7 @@ Section lithium.
     (* Solve True. *)
     liStep.
     (* Unshelve sideconditions. *)
-    Unshelve. all: li_unshelve_sidecond.
+    Unshelve. all: unshelve_sidecond.
     (* Discharge the sidecondition. *)
     lia.
     (* Done! *)
@@ -93,7 +93,7 @@ Section lithium.
   (* Now we can define our own step tactic liEStep that combines
   liEExpr and liStep (and some boilerplate). *)
   Ltac liEStep :=
-    liEnforceInvariantAndUnfoldInstantiatedEvars;
+    liEnsureInvariant;
     first [
         liEExpr
       | liStep
@@ -107,7 +107,7 @@ Section lithium.
     iStartProof.
     (* Now the proof is automatic! *)
     repeat liEStep; liShow.
-    Unshelve. all: li_unshelve_sidecond.
+    Unshelve. all: unshelve_sidecond.
     lia.
   Qed.
 
@@ -132,7 +132,7 @@ Section lithium.
   Proof.
     iStartProof.
     repeat liEStep; liShow.
-    Unshelve. all: li_unshelve_sidecond.
+    Unshelve. all: unshelve_sidecond.
     all: try lia.
   Abort.
 
@@ -204,7 +204,7 @@ Section lithium.
     iStartProof.
     repeat liEStep; liShow.
     (* Success! *)
-    Unshelve. all: li_unshelve_sidecond.
+    Unshelve. all: unshelve_sidecond.
     lia.
     (* Also try changing the expression to include more or less
     additions. *)
@@ -234,7 +234,7 @@ Section lithium.
   Proof.
     iStartProof.
     repeat liEStep; liShow.
-    Unshelve. all: li_unshelve_sidecond.
+    Unshelve. all: unshelve_sidecond.
     all: try lia.
   Abort.
 
@@ -525,7 +525,7 @@ Section lithium.
 
     (** As a last step, we need to solve the pure sideconditions that were
     shelved during the separation logic proof. We first unshelve them all follows: *)
-    Unshelve. all: li_unshelve_sidecond.
+    Unshelve. all: unshelve_sidecond.
 
     (** Now we can solve this sidecondition with lia. *)
     lia.
@@ -848,7 +848,7 @@ Section proof_lithium_test.
       (** The rest of the proof is straightforward. *)
       repeat liRStep; liShow.
       all: print_typesystem_goal "lithium_test" "#0".
-    Unshelve. all: li_unshelve_sidecond; sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
+    Unshelve. all: unshelve_sidecond; sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
     all: print_sidecondition_goal "lithium_test".
     Unshelve. all: try done; try apply: inhabitant; print_remaining_shelved_goal "lithium_test".
   Qed.

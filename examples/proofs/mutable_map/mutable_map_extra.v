@@ -1,5 +1,7 @@
-From refinedc.typing Require Import typing naive_simpl.
+From refinedc.typing Require Import naive_simpl typing.
 Set Default Proof Using "Type".
+
+Ltac can_solve_hook ::= naive_solve.
 
 Section defs.
   Context `{typeG Σ}.
@@ -235,10 +237,10 @@ Section defs.
   Proof. unfold TCFastDone in *. by rewrite (fsm_invariant_lookup _ items _ n ir (item_ref_to_ty ir)). Qed.
 
   Global Instance simpl_fsm_invariant_and mp1 mp2 items `{!IsProtected mp1} `{!TCFastDone (fsm_invariant mp2 items)}:
-    SimplAndUnsafe true (fsm_invariant mp1 items) (λ T, mp1 = mp2 ∧ T) | 50.
+    SimplAndUnsafe (fsm_invariant mp1 items) (λ T, mp1 = mp2 ∧ T) | 50.
   Proof. unfold TCFastDone in *. by move => ? [->]. Qed.
   Global Instance simpl_fsm_invariant_shelve_and mp items `{!ContainsProtected mp}:
-    SimplAndUnsafe true (fsm_invariant mp items) (λ T, shelve_hint (fsm_invariant mp items) ∧ T) | 100.
+    SimplAndUnsafe (fsm_invariant mp items) (λ T, shelve_hint (fsm_invariant mp items) ∧ T) | 100.
   Proof. move => ?; unfold shelve_hint; eauto. Qed.
 
 
@@ -286,8 +288,7 @@ End defs.
 Global Typeclasses Opaque probe_ref_go fsm_invariant probe_ref fsm_copy_entries.
 Global Opaque fsm_copy_entries slot_for_key_ref.
 
-Ltac enrich_context_tac ::=
-  enrich_context_base;
+Ltac enrich_context_hook ::=
   repeat match goal with
          | |- context C [ rotate_nat_add ?s ?o ?e ] =>
            let G := context C[enrich_marker rotate_nat_add s o e] in

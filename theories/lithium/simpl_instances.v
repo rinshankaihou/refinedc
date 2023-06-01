@@ -325,13 +325,13 @@ it if f goes into type. Thus we use the AssumeInj typeclass such that
 the user can mark functions which are morally injective, but one
 cannot prove it. *)
 Global Instance simpl_fmap_fmap_subequiv_Unsafe {A B} (l1 l2 : list A) ig (f : A → B) `{!AssumeInj (=) (=) f}:
-  SimplAndUnsafe true (list_subequiv ig (f <$> l1) (f <$> l2)) (λ T, list_subequiv ig l1 l2 ∧ T).
+  SimplAndUnsafe (list_subequiv ig (f <$> l1) (f <$> l2)) (λ T, list_subequiv ig l1 l2 ∧ T).
 Proof. move => ? [Hs ?]. split => //. by apply: list_subequiv_fmap. Qed.
 
 (* The other direction might not hold if ig contains indices which are
 out of bounds, but we don't care about that. *)
 Global Instance simpl_subequiv_protected {A} (l1 l2 : list A) ig `{!IsProtected l2}:
-  SimplAndUnsafe true (list_subequiv ig l1 l2) (λ T,
+  SimplAndUnsafe (list_subequiv ig l1 l2) (λ T,
     foldr (λ i f, (λ l', ∃ x, f (<[i:=x]> l'))) (λ l', l2 = l' ∧ T) ig l1).
 Proof.
   (* TODO: add a lemma for list_subequiv such that this unfolding is not necessary anymore. *)
@@ -362,7 +362,7 @@ Proof.
     by rewrite fmap_length take_app drop_app.
 Qed.
 Global Instance simpl_fmap_assume_inj_Unsafe {A B} (l1 l2 : list A) (f : A → B) `{!AssumeInj (=) (=) f}:
-  SimplAndUnsafe true (f <$> l1 = f <$> l2) (λ T, l1 = l2 ∧ T).
+  SimplAndUnsafe (f <$> l1 = f <$> l2) (λ T, l1 = l2 ∧ T).
 Proof. move => T [-> ?]. naive_solver. Qed.
 
 Global Instance simpl_replicate_app_and {A} (l1 l2 : list A) x n:
@@ -525,11 +525,11 @@ Proof. unfold SimplBothRel. by rewrite lookup_rotate_r_Some. Qed.
   But one should not use rotate nat in this case.
    TODO: use CanSolve when it is able to prove base < len for slot_for_key_ref key len *)
 Global Instance simpl_rotate_nat_add_0_Unsafe base offset len:
-  SimplAndUnsafe true (base = rotate_nat_add base offset len) (λ T, (base < len)%nat ∧ offset = 0%nat ∧ T).
+  SimplAndUnsafe (base = rotate_nat_add base offset len) (λ T, (base < len)%nat ∧ offset = 0%nat ∧ T).
 Proof. move => T [? [-> ?]]. rewrite rotate_nat_add_0 //. Qed.
 
 Global Instance simpl_rotate_nat_add_next_Unsafe (base offset1 offset2 len : nat) `{!CanSolve (0 < len)%nat}:
-  SimplAndUnsafe true ((rotate_nat_add base offset1 len + 1) `rem` len = rotate_nat_add base offset2 len) (λ T, offset2 = S offset1 ∧ T).
+  SimplAndUnsafe ((rotate_nat_add base offset1 len + 1) `rem` len = rotate_nat_add base offset2 len) (λ T, offset2 = S offset1 ∧ T).
 Proof.
   unfold CanSolve in * => ? -[-> ?]. split => //. rewrite rotate_nat_add_S // Nat2Z.inj_mod.
   rewrite Z.rem_mod_nonneg //=; lia.

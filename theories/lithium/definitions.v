@@ -5,7 +5,8 @@ From lithium Require Export base pure_definitions.
 (** Definitions that are used by the Lithium automation. *)
 
 (** * [iProp_to_Prop] *)
-#[projections(primitive)] Record iProp_to_Prop {Σ} (P : iProp Σ) : Type := i2p {
+#[projections(primitive)]
+Record iProp_to_Prop {Σ} (P : iProp Σ) : Type := i2p {
   i2p_P :> iProp Σ;
   i2p_proof : i2p_P ⊢ P;
 }.
@@ -45,45 +46,12 @@ Global Instance find_in_context_direct_inst {Σ B} (P : _ → iProp Σ) :
   λ T : B → _, i2p (find_in_context_direct P T).
 
 (** ** [FindHypEqual]  *)
+(** [FindHypEqual] is called with find_in_context key [key], an
+hypothesis [Q] and a desired pattern [P], and then the instance
+(usually a tactic) should try to generate a new pattern [P'] equal to
+[P] that can be later unified with [Q]. *)
 Class FindHypEqual {Σ} (key : Type) (Q P P' : iProp Σ) := find_hyp_equal_equal: P = P'.
 Global Hint Mode FindHypEqual + + + ! - : typeclass_instances.
-
-(** * [destruct_hint] *)
-Inductive destruct_hint_info :=
-| DHintInfo
-| DHintDestruct (A : Type) (x : A)
-| DHintDecide (P : Prop) `{!Decision P}.
-Definition destruct_hint {Σ B} (hint : destruct_hint_info) (info : B) (T : iProp Σ) : iProp Σ := T.
-Global Typeclasses Opaque destruct_hint.
-Arguments destruct_hint : simpl never.
-
-(** * [tactic_hint] *)
-Class TacticHint {Σ A} (t : (A → iProp Σ) → iProp Σ) := {
-  tactic_hint_P : (A → iProp Σ) → iProp Σ;
-  tactic_hint_proof T : tactic_hint_P T ⊢ t T;
-}.
-Arguments tactic_hint_proof {_ _ _} _ _.
-Arguments tactic_hint_P {_ _ _} _ _.
-
-Definition tactic_hint {Σ A} (t : (A → iProp Σ) → iProp Σ) (T : A → iProp Σ) : iProp Σ :=
-  t T.
-Arguments tactic_hint : simpl never.
-
-(** ** [vm_compute_hint] *)
-Definition vm_compute_hint {Σ A B} (f : A → option B) (x : A) (T : B → iProp Σ) : iProp Σ :=
-  ∃ y, ⌜f x = Some y⌝ ∗ T y.
-Arguments vm_compute_hint : simpl never.
-Global Typeclasses Opaque vm_compute_hint.
-
-Program Definition vm_compute_hint_hint {Σ A B} (f : A → option B) x a :
-  f a = Some x →
-  TacticHint (vm_compute_hint (Σ:=Σ) f a) := λ H, {|
-    tactic_hint_P T := T x;
-|}.
-Next Obligation. move => ????????. iIntros "HT". iExists _. iFrame. iPureIntro. naive_solver. Qed.
-
-Global Hint Extern 10 (TacticHint (vm_compute_hint _ _)) =>
-  eapply vm_compute_hint_hint; evar_safe_vm_compute : typeclass_instances.
 
 (** * [RelatedTo] *)
 Class RelatedTo {Σ} (pat : iProp Σ) : Type := {
@@ -101,13 +69,6 @@ Global Hint Mode IntroPersistent + + - : typeclass_instances.
 (** ** Instances *)
 Global Instance intro_persistent_intuit Σ (P : iProp Σ) : IntroPersistent (□ P) P.
 Proof. constructor. iIntros "$". Qed.
-
-(** * [accu] *)
-Definition accu {Σ} (f : iProp Σ → iProp Σ) : iProp Σ :=
-  ∃ P, P ∗ □ f P.
-Arguments accu : simpl never.
-Global Typeclasses Opaque accu.
-
 
 (** * Simplification *)
 (** ** Definition *)
@@ -142,28 +103,6 @@ Proof. iIntros "HT". iExists _. iFrame. by iIntros "?". Qed.
 Global Instance simplify_goal_id_inst {Σ} (P : iProp Σ):
   SimplifyGoal P None | 100 :=
   λ T, i2p (simplify_goal_id P T).
-
-(* TODO: Is the following useful? *)
-(* Lemma simplify_persistent_pure_goal {Σ} (Φ : Prop) T: *)
-(*   T ⌜Φ⌝ -∗ simplify_goal (Σ := Σ) (□ ⌜Φ⌝) T. *)
-(* Proof. iIntros "HT". iExists _. iFrame. by iIntros (?). Qed. *)
-(* Global Instance simplify_persistent_pure_goal_id {Σ} (Φ : Prop): *)
-(*   SimplifyGoal (Σ:=Σ) (□ ⌜Φ⌝) (Some 0%N) := *)
-(*   λ T, i2p (simplify_persistent_pure_goal Φ T). *)
-
-(* Lemma simplify_persistent_pure_hyp {Σ} (Φ : Prop) T: *)
-(*   (⌜Φ⌝ -∗ T) -∗ simplify_hyp (Σ := Σ) (□ ⌜Φ⌝) T. *)
-(* Proof. iIntros "HT" (?). by iApply "HT". Qed. *)
-(* Global Instance simplify_persistent_pure_hyp_inst {Σ} (Φ : Prop): *)
-(*   SimplifyHyp (Σ:=Σ) (□ ⌜Φ⌝) (Some 0%N) := *)
-(*   λ T, i2p (simplify_persistent_pure_hyp Φ T). *)
-
-(* Lemma simplify_persistent_sep_hyp {Σ} (P Q : iProp Σ) T: *)
-(*   (□ P -∗ □ Q -∗ T) -∗ simplify_hyp (Σ := Σ) (□ (P ∗ Q)) T. *)
-(* Proof. iIntros "HT [HP HQ]". iApply ("HT" with "HP HQ"). Qed. *)
-(* Global Instance simplify_persistent_sep_hyp_inst {Σ} (P Q : iProp Σ): *)
-(*   SimplifyHyp (Σ:=Σ) (□ (P ∗ Q)) (Some 0%N) := *)
-(*   λ T, i2p (simplify_persistent_sep_hyp P Q T). *)
 
 (** * Subsumption *)
 (** ** Definition *)
@@ -299,3 +238,46 @@ Qed.
 Global Instance subsume_list_cons_inst {Σ} A ig x1 l1 l2 f:
   SubsumeList A ig (x1 :: l1) l2 f | 40 :=
   λ T : iProp Σ, i2p (subsume_list_cons_l A ig x1 l1 l2 f T).
+
+(** * [tactic_hint] *)
+Class TacticHint {Σ A} (t : (A → iProp Σ) → iProp Σ) := {
+  tactic_hint_P : (A → iProp Σ) → iProp Σ;
+  tactic_hint_proof T : tactic_hint_P T ⊢ t T;
+}.
+Arguments tactic_hint_proof {_ _ _} _ _.
+Arguments tactic_hint_P {_ _ _} _ _.
+
+Definition tactic_hint {Σ A} (t : (A → iProp Σ) → iProp Σ) (T : A → iProp Σ) : iProp Σ :=
+  t T.
+Arguments tactic_hint : simpl never.
+
+(** ** [vm_compute_hint] *)
+Definition vm_compute_hint {Σ A B} (f : A → option B) (x : A) (T : B → iProp Σ) : iProp Σ :=
+  ∃ y, ⌜f x = Some y⌝ ∗ T y.
+Arguments vm_compute_hint : simpl never.
+Global Typeclasses Opaque vm_compute_hint.
+
+Program Definition vm_compute_hint_hint {Σ A B} (f : A → option B) x a :
+  f a = Some x →
+  TacticHint (vm_compute_hint (Σ:=Σ) f a) := λ H, {|
+    tactic_hint_P T := T x;
+|}.
+Next Obligation. move => ????????. iIntros "HT". iExists _. iFrame. iPureIntro. naive_solver. Qed.
+
+Global Hint Extern 10 (TacticHint (vm_compute_hint _ _)) =>
+  eapply vm_compute_hint_hint; evar_safe_vm_compute : typeclass_instances.
+
+(** * [accu] *)
+Definition accu {Σ} (f : iProp Σ → iProp Σ) : iProp Σ :=
+  ∃ P, P ∗ □ f P.
+Arguments accu : simpl never.
+Global Typeclasses Opaque accu.
+
+(** * [destruct_hint] *)
+Inductive destruct_hint_info :=
+| DHintInfo
+| DHintDestruct (A : Type) (x : A)
+| DHintDecide (P : Prop) `{!Decision P}.
+Definition destruct_hint {Σ B} (hint : destruct_hint_info) (info : B) (T : iProp Σ) : iProp Σ := T.
+Global Typeclasses Opaque destruct_hint.
+Arguments destruct_hint : simpl never.
