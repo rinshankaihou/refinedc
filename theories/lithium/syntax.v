@@ -1,5 +1,5 @@
-From lithium Require Export base definitions.
-From lithium Require Import hooks.
+From lithium Require Export base.
+From lithium Require Import definitions hooks.
 
 Import environments.
 
@@ -40,9 +40,9 @@ Global Open Scope lithium_scope.
 
 Declare Custom Entry lithium.
 
-Notation "[{ e }]" := e
+Notation "'[{' e } ]" := e
   (e custom lithium at level 200,
-    format "'[hv' [{  '[hv' e ']'  '/' }] ']'") : lithium_scope.
+    format "'[hv' [{  '[hv' e ']'  '/' } ] ']'") : lithium_scope.
 Notation "{ x }" := x (in custom lithium, x constr).
 
 Notation "'inhale' x" := (li.inhale x) (in custom lithium at level 0, x constr,
