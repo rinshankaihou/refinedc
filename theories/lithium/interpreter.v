@@ -1,6 +1,6 @@
 From iris.proofmode Require Import coq_tactics reduction.
 From lithium Require Export base.
-From lithium Require Import hooks definitions simpl_classes normalize proof_state solvers.
+From lithium Require Import hooks definitions simpl_classes normalize proof_state solvers syntax.
 Set Default Proof Using "Type".
 
 (** This file contains the main Lithium interpreter. *)
@@ -9,7 +9,7 @@ Set Default Proof Using "Type".
 Ltac liEnsureInvariant :=
   unfold_instantiated_evars; try let_bind_envs.
 
-Ltac liShow := li_unfold_lets_in_context.
+Ltac liShow := li_unfold_lets_in_context; try liToSyntax.
 
 Ltac liSimpl :=
   (* simpl inserts a cast even if it does not do anything

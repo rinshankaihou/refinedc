@@ -77,6 +77,27 @@ Ltac liExtensible_to_i2p_hook P bind cont ::=
       cont uconstr:(((_ : TypedMacroExpr _ _) _))
   end.
 
+Ltac liToSyntax_hook ::=
+  unfold pop_location_info, LocInfoE;
+  change (typed_value ?x1 ?x2) with (li.bind1 (typed_value x1 x2));
+  change (typed_bin_op ?x1 ?x2 ?x3 ?x4 ?x5 ?x6 ?x7) with (li.bind2 (typed_bin_op x1 x2 x3 x4 x5 x6 x7));
+  change (typed_un_op ?x1 ?x2 ?x3 ?x4) with (li.bind2 (typed_un_op x1 x2 x3 x4));
+  change (typed_call ?x1 ?x2 ?x3 ?x4) with (li.bind2 (typed_call x1 x2 x3 x4));
+  change (typed_copy_alloc_id ?x1 ?x2 ?x3 ?x4 ?x5) with (li.bind2 (typed_copy_alloc_id x1 x2 x3 x4 x5));
+  change (typed_place ?x1 ?x2 ?x3 ?x4) with (li.bind5 (typed_place x1 x2 x3 x4));
+  change (typed_read ?x1 ?x2 ?x3 ?x4) with (li.bind2 (typed_read x1 x2 x3 x4));
+  change (typed_read_end ?x1 ?x2 ?x3 ?x4 ?x5 ?x6 ?x7) with (li.bind3 (typed_read_end x1 x2 x3 x4 x5 x6 x7));
+  change (typed_write ?x1 ?x2 ?x3 ?x4 ?x5) with (li.bind0 (typed_write x1 x2 x3 x4 x5));
+  change (typed_write_end ?x1 ?x2 ?x3 ?x4 ?x5 ?x6 ?x7 ?x8) with (li.bind1 (typed_write_end x1 x2 x3 x4 x5 x6 x7 x8));
+  change (typed_addr_of ?x1) with (li.bind3 (typed_addr_of x1));
+  change (typed_addr_of_end ?x1 ?x2 ?x3) with (li.bind3 (typed_addr_of_end x1 x2 x3));
+  change (typed_cas ?x1 ?x2 ?x3 ?x4 ?x5 ?x6 ?x7) with (li.bind2 (typed_cas x1 x2 x3 x4 x5 x6 x7));
+  change (typed_annot_expr ?x1 ?x2 ?x3 ?x4) with (li.bind0 (typed_cas x1 x2 x3 x4));
+  change (typed_macro_expr ?x1 ?x2) with (li.bind2 (typed_macro_expr x1 x2));
+  change (typed_val_expr ?x1) with (li.bind2 (typed_val_expr x1))
+  (* no typed_if, typed_switch, typed_assert, typed_stmt, typed_annot_stmt *)
+.
+
 (** * Main automation tactics *)
 Section automation.
   Context `{!typeG Σ}.
@@ -323,7 +344,7 @@ Ltac liRSplitBlocksIntro :=
         | liForall
         | liExist
         | liUnfoldLetGoal]; liSimpl);
-  liShow.
+  li_unfold_lets_in_context.
 
 (* TODO: don't use i... tactics here *)
 Ltac split_blocks Pfull Ps :=

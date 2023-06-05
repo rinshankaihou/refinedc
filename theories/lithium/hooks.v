@@ -65,3 +65,9 @@ Ltac liExist_hook A protect := fail "No liExist_hook provided!".
 (** [liDestructHint_record_hook] is called on each liDestruct to
 record which branch was taken. *)
 Ltac liDestructHint_record_hook hint info := idtac.
+
+(** [liToSyntax_hook] is called by [liToSyntax] to (heurisitically)
+convert the goal to the Lithium syntax. If one overrides
+[liToSyntax_hook] with [fail], conversion to the syntax is disabled. *)
+Ltac liToSyntax_hook :=
+  idtac.
