@@ -5,6 +5,9 @@ From refinedc.tutorial.lithium Require Import generated_code.
 From refinedc.tutorial.lithium Require Import generated_spec.
 Set Default Proof Using "Type".
 
+(* Disable conversion to Lithium syntax in this file. *)
+Local Ltac liToSyntax_hook ::= fail.
+
 Axiom AddE : expr → expr → expr.
 Notation "e1 + e2" := (AddE e1 e2) : expr_scope.
 Axiom ValInt : Z → val.
