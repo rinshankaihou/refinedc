@@ -24,7 +24,7 @@ Section value.
     ⊢ simplify_hyp (v ◁ᵥ value ot p) T.
   Proof. iIntros "HT [% [% ->]]". by iApply "HT". Qed.
   Global Instance value_simplify_inst v ot p :
-    SimplifyHypVal v (value ot p) (Some 0%N) :=
+    SimplifyHyp _ (Some 0%N) :=
     λ T, i2p (value_simplify v T ot p).
 
   Lemma value_subsume_goal v v' ly ty T:
@@ -36,7 +36,7 @@ Section value.
     by iDestruct ("HT" with "Hty") as (->) "$".
   Qed.
   Global Instance value_subsume_goal_inst v v' ot ty:
-    SubsumeVal v ty (value ot v') :=
+    Subsume _ _ :=
     λ T, i2p (value_subsume_goal v v' ot ty T).
 
   Lemma value_subsume_goal_loc l v' ot ty T:
@@ -52,7 +52,7 @@ Section value.
     by iFrame.
   Qed.
   Global Instance value_subsume_goal_loc_inst l v' ot ty:
-    SubsumePlace l Own ty (value ot v') :=
+    Subsume _ _ :=
     λ T, i2p (value_subsume_goal_loc l v' ot ty T).
 
   Lemma value_subsume_own_ptrop l β (v' : val) ty T:
@@ -74,7 +74,7 @@ Section value.
     iIntros "[% [% [% Hl]]]". iApply "HT". by iApply (ty_ref with "[] Hl Hv").
   Qed.
   Global Instance value_merge_inst v l ot:
-    SimplifyHypPlace l Own (value ot v)%I (Some 50%N) | 20 :=
+    SimplifyHyp _ (Some 50%N) | 20 :=
     λ T, i2p (value_merge v l ot T).
 
   Lemma type_read_move T l ty ot a E mc `{!TCDone (ty.(ty_has_op_type) ot MCId)}:
@@ -147,7 +147,7 @@ Section at_value.
     ⊢ simplify_hyp (v ◁ᵥ at_value v' ty) T.
   Proof. iIntros "HT [??]". by iApply ("HT" with "[$] [$]"). Qed.
   Global Instance at_value_simplify_hyp_val_inst v v' ty :
-    SimplifyHypVal v (at_value v' ty) (Some 0%N) :=
+    SimplifyHyp _ (Some 0%N) :=
     λ T, i2p (at_value_simplify_hyp_val v v' ty T).
 
   Lemma at_value_simplify_goal_val v v' ty T:
@@ -155,7 +155,7 @@ Section at_value.
     ⊢ simplify_goal (v ◁ᵥ at_value v' ty) T.
   Proof. iIntros "HT". iExists _. iFrame. by iIntros "$". Qed.
   Global Instance at_value_simplify_goal_val_inst v v' ty :
-    SimplifyGoalVal v (at_value v' ty) (Some 0%N) :=
+    SimplifyGoal _ (Some 0%N) :=
     λ T, i2p (at_value_simplify_goal_val v v' ty T).
 
   Lemma at_value_simplify_hyp_loc l v' ty T:
@@ -163,7 +163,7 @@ Section at_value.
     ⊢ simplify_hyp (l ◁ₗ at_value v' ty) T.
   Proof. iIntros "HT [??]". by iApply ("HT" with "[$] [$]"). Qed.
   Global Instance at_value_simplify_hyp_loc_inst l v' ty :
-    SimplifyHypPlace l Own (at_value v' ty) (Some 0%N) :=
+    SimplifyHyp _ (Some 0%N) :=
     λ T, i2p (at_value_simplify_hyp_loc l v' ty T).
 
   Lemma at_value_simplify_goal_loc l v' ty T:
@@ -171,7 +171,7 @@ Section at_value.
     ⊢ simplify_goal (l ◁ₗ at_value v' ty) T.
   Proof. iIntros "HT". iExists _. iFrame. by iIntros "$". Qed.
   Global Instance at_value_simplify_goal_loc_inst l v' ty :
-    SimplifyGoalPlace l Own (at_value v' ty) (Some 0%N) :=
+    SimplifyGoal _ (Some 0%N) :=
     λ T, i2p (at_value_simplify_goal_loc l v' ty T).
 
 End at_value.
@@ -194,7 +194,7 @@ Section place.
     ⊢ simplify_hyp (l◁ₗ{β} place p) T.
   Proof. iIntros "HT ->". by iApply "HT". Qed.
   Global Instance place_simplify_inst l β p :
-    SimplifyHypPlace l β (place p)%I (Some 0%N) :=
+    SimplifyHyp _ (Some 0%N) :=
     λ T, i2p (place_simplify l β T p).
 
   Lemma place_simplify_goal l β T p:
@@ -202,7 +202,7 @@ Section place.
     ⊢ simplify_goal (l◁ₗ{β} place p) T.
   Proof. iIntros "HT". iExists _. iFrame. by iIntros "->". Qed.
   Global Instance place_simplify_goal_inst l β p :
-    SimplifyGoalPlace l β (place p)%I (Some 0%N) :=
+    SimplifyGoal _ (Some 0%N) :=
     λ T, i2p (place_simplify_goal l β T p).
 
 

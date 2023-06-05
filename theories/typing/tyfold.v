@@ -41,14 +41,14 @@ Section tyfold.
     iStopProof. f_equiv. destruct ls =>//=. by apply default_last_cons.
   Qed.
   Global Instance simplify_hyp_place_tyfold_optional_inst l β ls tys b:
-    SimplifyHypPlace l β (ls @ tyfold tys b) (Some 50%N) :=
+    SimplifyHyp _ (Some 50%N) :=
     λ T, i2p (simplify_hyp_place_tyfold_optional l β ls tys b T).
 
   Lemma simplify_goal_place_tyfold_nil l β ls b T:
     T (⌜ls = []⌝ ∗ l ◁ₗ{β} b) ⊢ simplify_goal (l◁ₗ{β} ls @ tyfold [] b) T.
   Proof. iIntros "HT". iExists _. iFrame. iIntros "[-> Hl]". repeat iSplit => //. Qed.
   Global Instance simplify_goal_place_tyfold_nil_inst l β ls b:
-    SimplifyGoalPlace l β (ls @ tyfold [] b) (Some 0%N) :=
+    SimplifyGoal _ (Some 0%N) :=
     λ T, i2p (simplify_goal_place_tyfold_nil l β ls b T).
 
   Lemma simplify_goal_place_tyfold_cons l β ls ty tys b T:
@@ -61,7 +61,7 @@ Section tyfold.
     iStopProof. f_equiv. destruct ls2 =>//=. by apply default_last_cons.
   Qed.
   Global Instance simplify_goal_place_tyfold_cons_inst l β ls ty tys b:
-    SimplifyGoalPlace l β (ls @ tyfold (ty :: tys) b) (Some 0%N) :=
+    SimplifyGoal _ (Some 0%N) :=
     λ T, i2p (simplify_goal_place_tyfold_cons l β ls ty tys b T).
 
   Lemma subsume_tyfold_eq l β ls1 ls2 tys b1 b2 T :
@@ -88,7 +88,7 @@ Section tyfold.
       by apply list_lookup_length_default_last.
   Qed.
   Global Instance subsume_tyfold_snoc_inst A l β f ls1 ls2 tys (ty : A) b1 b2:
-    SubsumePlace l β (ls1 @ tyfold (f <$> tys) b1) (ls2 @ tyfold (f <$> (tys ++ [ty])) b2) :=
+    Subsume _ _ :=
     λ T, i2p (subsume_tyfold_snoc A l β f ls1 ls2 tys ty b1 b2 T ).
 End tyfold.
 Global Typeclasses Opaque tyfold_type tyfold.

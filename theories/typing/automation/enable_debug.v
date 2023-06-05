@@ -21,8 +21,8 @@ Ltac select_smaller_option o1 o2 H1 H2 cont :=
   end.
 
 Ltac liExtensible_hook ::=
-  let unfold_instance G :=
-      eval unfold typed_un_op_val, subsume_place, simplify_goal_place, simplify_hyp_place, simplify_goal_val, simplify_hyp_val, subsume_val, subsume_place, typed_bin_op_val in G in
+  let unfold_instance G := G in
+      (* eval unfold typed_un_op_val, subsume_place, simplify_goal_place, simplify_hyp_place, simplify_goal_val, simplify_hyp_val, subsume_val, subsume_place, typed_bin_op_val in G in *)
   let rec get_head e :=
   match e with
   | ?h _ => get_head constr:(h)

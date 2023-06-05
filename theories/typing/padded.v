@@ -66,7 +66,7 @@ Section padded.
     ⊢ simplify_hyp (l ◁ₗ{β} padded ty ly ly) T.
   Proof. iIntros "HT (?&?&?&?&?)". by iApply "HT". Qed.
   Global Instance simpl_padded_hyp_eq_layout_inst l β ty ly:
-    SimplifyHypPlace l β (padded ty ly ly) (Some 0%N) :=
+    SimplifyHyp _ (Some 0%N) :=
     λ T, i2p (simpl_padded_hyp_eq_layout l β ty ly T).
   (* TODO: should this also work for Shr? *)
   Lemma simpl_padded_goal_eq_layout l ty ly T:
@@ -82,7 +82,7 @@ Section padded.
     by iDestruct "Hb" as "[_$]".
   Qed.
   Global Instance simpl_padded_goal_eq_layout_inst l ty ly:
-    SimplifyGoalPlace l Own (padded ty ly ly) (Some 0%N) :=
+    SimplifyGoal _ (Some 0%N) :=
     λ T, i2p (simpl_padded_goal_eq_layout l ty ly T).
 
   (* we deliberately introduce a fresh location l because otherwise l
@@ -120,7 +120,7 @@ Section padded.
     rewrite /= /ly_offset {2}/ly_size. lia.
   Qed.
   Global Instance subsume_padded_uninit_inst l ly1 ly2 lyty ty:
-    SubsumePlace l Own (padded ty lyty ly1) (uninit ly2) | 4 :=
+    Subsume _ _ :=
     λ T, i2p (subsume_padded_uninit l ly1 ly2 lyty ty T).
 
   Lemma subsume_uninit_padded l β ly lyty T:
@@ -136,7 +136,7 @@ Section padded.
     iPureIntro. by apply: has_layout_loc_trans.
   Qed.
   Global Instance subsume_uninit_padded_inst l ly β lyty:
-    SubsumePlace l β (uninit ly) (padded (uninit lyty) lyty ly) :=
+    Subsume _ _ :=
     λ T, i2p (subsume_uninit_padded l β ly lyty T).
 
   Lemma type_place_padded_uninit_struct K l β sl n T ly:
@@ -161,7 +161,7 @@ Section padded.
     ⊢ subsume (l ◁ₗ{β} padded ty1 lyty ly1) (l ◁ₗ{β} padded ty2 lyty ly2) T.
   Proof. iIntros "[-> Hsub] ($&$&$&Hl&$)". by iApply "Hsub". Qed.
   Global Instance padded_mono_inst l β ty1 ty2 ly1 ly2 lyty:
-    SubsumePlace l β (padded ty1 lyty ly1) (padded ty2 lyty ly2) :=
+    Subsume _ _ :=
     λ T, i2p (padded_mono l β ty1 ty2 T ly1 ly2 lyty).
 
   Lemma split_padded n l β ly1 lyty ty:

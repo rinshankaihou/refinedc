@@ -62,7 +62,7 @@ Section tagged_ptr.
     iIntros "(->&->&->&HT) ($&$&$&$&?)". by iApply "HT".
   Qed.
   Global Instance subsume_tagged_ptr_inst v r1 r2 n1 n2 β1 β2 ty1 ty2:
-    SubsumeVal v (r1 @ tagged_ptr β1 n1 ty1) (r2 @ tagged_ptr β2 n2 ty2) :=
+    Subsume _ _ :=
     λ T, i2p (subsume_tagged_ptr v r1 r2 n1 n2 β1 β2 ty1 ty2 T).
 
   Lemma subsume_frac_ptr_tagged_ptr l β (v : val) r n ty1 ty2 m T `{!LearnAlignment β ty1 m}:
@@ -90,7 +90,7 @@ Section tagged_ptr.
     iIntros "HT (->&%&%&?&?)". iApply "HT". rewrite /= shift_loc_0. unfold frac_ptr; simpl_type. by iFrame.
   Qed.
   Global Instance simplify_hyp_tagged_ptr_0_inst v r β n ty `{!CanSolve (r.2 = 0)}:
-    SimplifyHypVal v (r @ tagged_ptr β n ty) (Some 0%N) :=
+    SimplifyHyp _ (Some 0%N) :=
     λ T, i2p (simplify_hyp_tagged_ptr_0 v r β n ty T).
 
   Lemma type_cast_tagged_ptr_intptr_val (v : val) (r : loc * Z) β (align : nat) it ty T:

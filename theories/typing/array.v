@@ -203,7 +203,7 @@ Section array.
     ⊢ simplify_hyp (l ◁ₗ{β} uninit (mk_array_layout ly n)) T.
   Proof. iIntros "[% HT] Hl". iApply "HT". rewrite array_replicate_uninit_equiv // {1}/ly_size/=. Qed.
   Global Instance simplify_hyp_uninit_array_inst ly l β n:
-    SimplifyHypPlace l β (uninit (mk_array_layout ly n)) (Some 50%N) :=
+    SimplifyHyp _ (Some 50%N) :=
     λ T, i2p (simplify_hyp_uninit_array ly l β T n).
 
   Lemma simplify_goal_uninit_array ly l β T n:
@@ -211,7 +211,7 @@ Section array.
     ⊢ simplify_goal (l ◁ₗ{β} uninit (mk_array_layout ly n)) T.
   Proof. iIntros "[% HT]". iExists _. iFrame. iIntros "?". rewrite array_replicate_uninit_equiv //. Qed.
   Global Instance simplify_goal_uninit_array_inst ly l β n:
-    SimplifyGoalPlace l β (uninit (mk_array_layout ly n)) (Some 50%N) :=
+    SimplifyGoal _ (Some 50%N) :=
     λ T, i2p (simplify_goal_uninit_array ly l β T n).
 
   Lemma subsume_uninit_array_replicate l β T n (ly1 : layout) ly2:
@@ -219,7 +219,7 @@ Section array.
     ⊢ subsume (l ◁ₗ{β} uninit ly1) (l ◁ₗ{β} array ly2 (replicate n (uninit ly2))) T.
   Proof. iIntros "(%&->&$) ?". by rewrite array_replicate_uninit_equiv. Qed.
   Global Instance subsume_uninit_array_replicate_inst l β n ly1 ly2:
-    SubsumePlace l β (uninit ly1) (array ly2 (replicate n (uninit ly2))) :=
+    Subsume _ _ :=
     λ T, i2p (subsume_uninit_array_replicate l β T n ly1 ly2).
 
   Lemma subsume_array_replicate_uninit l β T n (ly1 : layout) ly2:
@@ -227,7 +227,7 @@ Section array.
     ⊢ subsume (l ◁ₗ{β} array ly2 (replicate n (uninit ly2))) (l ◁ₗ{β} uninit ly1)  T.
   Proof. iIntros "(%&->&$) ?". by rewrite array_replicate_uninit_equiv. Qed.
   Global Instance subsume_array_replicate_uninit_inst l β n ly1 ly2:
-    SubsumePlace l β (array ly2 (replicate n (uninit ly2))) (uninit ly1) :=
+    Subsume _ _ :=
     λ T, i2p (subsume_array_replicate_uninit l β T n ly1 ly2).
 
   Lemma subsume_array ly1 ly2 tys1 tys2 l β T:
@@ -235,7 +235,7 @@ Section array.
     ⊢ subsume (l ◁ₗ{β} array ly1 tys1) (l ◁ₗ{β} array ly2 tys2) T.
   Proof. iIntros "[-> H] ($&Hb&H1)". by iDestruct ("H" with "H1") as (->) "[$ $]". Qed.
   Global Instance subsume_array_inst ly1 ly2 tys1 tys2 l β:
-    SubsumePlace l β (array ly1 tys1) (array ly2 tys2) | 100 :=
+    Subsume _ _ :=
     λ T, i2p (subsume_array ly1 ly2 tys1 tys2 l β T).
 
   Lemma type_place_array l β T ly1 it v tyv tys ly2 K:
@@ -366,7 +366,7 @@ Section array.
     ⊢ simplify_goal ((base offset{ly}ₗ idx1) ◁ₗ{β} array_ptr ly base idx2 len)  T.
   Proof. iIntros "HT". iExists _. iFrame. by iIntros "(->&%&%&$)". Qed.
   Global Instance simpl_goal_array_ptr_inst ly base idx1 idx2 len β:
-    SimplifyGoalPlace (base offset{ly}ₗ idx1) β (array_ptr ly base idx2 len) (Some 50%N) :=
+    SimplifyGoal _ (Some 50%N) :=
     λ T, i2p (simpl_goal_array_ptr ly base idx1 idx2 len β T).
 
   Lemma subsume_array_ptr ly1 ly2 base1 base2 idx1 idx2 len1 len2 l β T:
@@ -374,7 +374,7 @@ Section array.
     ⊢ subsume (l ◁ₗ{β} array_ptr ly1 base1 idx1 len1) (l ◁ₗ{β} array_ptr ly2 base2 idx2 len2) T.
   Proof. by iIntros "(->&->&->&->&$) $". Qed.
   Global Instance subsume_array_ptr_inst ly1 ly2 base1 base2 idx1 idx2 len1 len2 l β:
-    SubsumePlace l β (array_ptr ly1 base1 idx1 len1) (array_ptr ly2 base2 idx2 len2) :=
+    Subsume _ _ :=
     λ T, i2p (subsume_array_ptr ly1 ly2 base1 base2 idx1 idx2 len1 len2 l β T).
 
   (*
@@ -384,7 +384,7 @@ Section array.
     ⊢ simplify_hyp (l ◁ₗ{β} array_ptr ly base idx len) T.
   Proof. iIntros "HT [% #Hlib]". iApply "HT" => //. by iSplit. Qed.
   Global Instance simplify_array_ptr_hyp_learn_loc_inst l β ly base idx len `{!TCUnless (TCFastDone (l = base offset{ly}ₗ idx))}:
-    SimplifyHypPlace l β (array_ptr ly base idx len) (Some 0%N) | 10 :=
+    SimplifyHyp _ (Some 0%N) | 10 :=
     λ T, i2p (simplify_array_ptr_hyp_learn_loc l β ly base idx len T).
 *)
 
@@ -405,7 +405,7 @@ Section array.
     by iApply ("HT" with "[//] Harray Hty").
   Qed.
   Global Instance simplify_hyp_array_ptr_inst ly l β base idx len:
-    SimplifyHypPlace l β (array_ptr ly base idx len) (Some 50%N) | 50 :=
+    SimplifyHyp _ (Some 50%N) | 50 :=
     λ T, i2p (simplify_hyp_array_ptr ly l β base idx len T).
 End array.
 

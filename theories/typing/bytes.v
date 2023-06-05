@@ -97,7 +97,7 @@ Section bytewise.
   Qed.
   Global Instance subsume_bytewise_eq_inst l β P1 P2 ly1 ly2
         `{!CanSolve (ly1.(ly_size) = ly2.(ly_size))}:
-    SubsumePlace l β (bytewise P1 ly1) (bytewise P2 ly2) | 10 :=
+    Subsume _ _ | 5 :=
     λ T, i2p (subsume_bytewise_eq l β P1 P2 ly1 ly2 T).
 
   Lemma subsume_bytewise_merge l β P1 P2 ly1 ly2
@@ -114,7 +114,7 @@ Section bytewise.
   Qed.
   Global Instance subsume_bytewise_merge_inst l β P1 P2 ly1 ly2
         `{!CanSolve (ly1.(ly_size) ≤ ly2.(ly_size))%nat}:
-    SubsumePlace l β (bytewise P1 ly1) (bytewise P2 ly2) | 20 :=
+    Subsume _ _ | 10 :=
     λ T, i2p (subsume_bytewise_merge l β P1 P2 ly1 ly2 T).
 
   Lemma subsume_bytewise_split l β P1 P2 ly1 ly2
@@ -135,7 +135,7 @@ Section bytewise.
   Qed.
   Global Instance subsume_bytewise_split_inst l β P1 P2 ly1 ly2
         `{!CanSolve (ly2.(ly_size) ≤ ly1.(ly_size))%nat}:
-    SubsumePlace l β (bytewise P1 ly1) (bytewise P2 ly2) | 15 :=
+    Subsume _ _ | 10 :=
     λ T, i2p (subsume_bytewise_split l β P1 P2 ly1 ly2 T).
 
   Lemma type_add_bytewise v2 β P ly (p : loc) n it T:
@@ -200,7 +200,7 @@ Section uninit.
   as this case is covered by the rules for bytes and the CanSolve can
   be quite expensive. *)
   Definition uninit_mono_inst l ty ly `{!TCDone (ty.(ty_has_op_type) (UntypedOp ly) MCNone)}:
-    SubsumePlace l Own ty (uninit ly) :=
+    Subsume _ _ :=
     λ T, i2p (uninit_mono l ty ly T).
 
   (* Typing rule for [Return] (used in [theories/typing/automation.v]). *)
@@ -246,7 +246,7 @@ Notation "uninit< ly >" := (uninit ly) (only printing, format "'uninit<' ly '>'"
 
 (* See the definition of [uninit_mono_inst].
    This hint should only apply ty is not uninit as this case is covered by the rules for bytes. *)
-Global Hint Extern 5 (SubsumePlace _ Own ?ty (uninit _)) =>
+Global Hint Extern 5 (Subsume (_ ◁ₗ ?ty) (_ ◁ₗ (uninit _))) =>
   lazymatch ty with
   | uninit _ => fail
   | _ => unshelve notypeclasses refine (uninit_mono_inst _ _ _)
@@ -283,7 +283,7 @@ Section zeroed.
     iSplit => //. iApply (loc_in_bounds_shorten with "Hlib"). lia.
   Qed.
   Global Instance subsume_uninit_zeroed_0_inst p ly1 ly2:
-    Subsume (p ◁ₗ uninit ly1)%I (p ◁ₗ zeroed ly2)%I :=
+    Subsume (p ◁ₗ uninit ly1)%I (p ◁ₗ zeroed ly2)%I | 3 :=
     λ T, i2p (subsume_uninit_zeroed p ly1 ly2 T).
 End zeroed.
 Notation "zeroed< ly >" := (zeroed ly)

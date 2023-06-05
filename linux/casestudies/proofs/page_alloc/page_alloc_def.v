@@ -19,7 +19,7 @@ Section type.
     ⊢ subsume (l ◁ₗ{β} list_node n1) (l ◁ₗ{β} list_node n2) T.
   Proof. by iIntros "[-> $] $". Qed.
   Global Instance subsume_list_node_inst n1 n2 l β:
-    SubsumePlace l β (list_node n1) (list_node n2) :=
+    Subsume _ _ :=
     λ T, i2p (subsume_list_node n1 n2 l β T).
 
   Global Instance inj_hyp_page_map {A B C D E F} pool vmemmap npages : Inj (=) (=) (λ '(ref_count, order, next), (pool, vmemmap, npages, ref_count, order, next) : (A * B * C * D * E * F)).
@@ -39,14 +39,14 @@ Section type.
     ⊢ simplify_goal ((hyp_page_to_virt vmemmap (vmemmap offset{struct_hyp_page}ₗ p) +ₗ ly_size (PAGE_LAYOUT (1 ≪ order))) ◁ₗ{β} ty) T.
   Proof. Admitted.
   Global Instance simplify_goal_place_find_buddy_lt_inst vmemmap p order β ty `{!CanSolve (p < find_buddy vmemmap order p)}:
-    SimplifyGoalPlace ((hyp_page_to_virt vmemmap (vmemmap offset{struct_hyp_page}ₗ p) +ₗ ly_size (PAGE_LAYOUT (1 ≪ order)))) β ty (Some 0%N) :=
+    SimplifyGoal _ (Some 0%N) :=
     λ T, i2p (simplify_goal_place_find_buddy_lt vmemmap p order β ty T).
   Lemma simplify_goal_place_find_buddy_gt vmemmap p order β ty T:
     T (⌜find_buddy vmemmap order p < p⌝ ∗ hyp_page_to_virt vmemmap (vmemmap offset{struct_hyp_page}ₗ p) ◁ₗ{β} ty)
     ⊢ simplify_goal ((hyp_page_to_virt vmemmap (vmemmap offset{struct_hyp_page}ₗ find_buddy vmemmap order p) +ₗ ly_size (PAGE_LAYOUT (1 ≪ order))) ◁ₗ{β} ty) T.
   Proof. Admitted.
   Global Instance simplify_goal_place_find_buddy_gt_inst vmemmap p order β ty:
-    SimplifyGoalPlace ((hyp_page_to_virt vmemmap (vmemmap offset{struct_hyp_page}ₗ find_buddy vmemmap order p) +ₗ ly_size (PAGE_LAYOUT (1 ≪ order)))) β ty (Some 0%N) :=
+    SimplifyGoal _ (Some 0%N) :=
     λ T, i2p (simplify_goal_place_find_buddy_gt vmemmap p order β ty T).
 
   Global Instance simpl_page_layout_size_le n1 n2:

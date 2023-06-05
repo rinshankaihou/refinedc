@@ -45,7 +45,7 @@ Section own.
     ⊢ subsume (l ◁ₗ{β} p @ frac_ptr β' ty1) (l ◁ₗ{β} p' @ frac_ptr β' ty2) T.
   Proof. iIntros "[-> Hsub] [$ [$ Hl]]". by iApply "Hsub". Qed.
   Global Instance frac_ptr_mono_inst ty1 ty2 l β β' p p':
-    SubsumePlace l β (p @ frac_ptr β' ty1)%I (p' @ frac_ptr β' ty2)%I :=
+    Subsume _ _ :=
     λ T, i2p (frac_ptr_mono ty1 ty2 l β β' p p' T).
 
   Global Instance frac_ptr_simple_mono ty1 ty2 p β P `{!SimpleSubsumePlace ty1 ty2 P}:
@@ -84,7 +84,7 @@ Section own.
     ⊢ simplify_hyp (v◁ᵥ p @ frac_ptr β ty) T.
   Proof. iIntros "HT Hl". iDestruct "Hl" as (->) "Hl". by iApply "HT". Qed.
   Global Instance simplify_frac_ptr_inst (v : val) (p : loc) ty β:
-    SimplifyHypVal v (p @ frac_ptr β ty) (Some 0%N) :=
+    SimplifyHyp _ (Some 0%N) :=
     λ T, i2p (simplify_frac_ptr v p ty β T).
 
   Lemma simplify_goal_frac_ptr_val ty (v : val) β (p : loc) T:
@@ -95,7 +95,7 @@ Section own.
     iIntros "[-> Hl]". iSplit => //.
   Qed.
   Global Instance simplify_goal_frac_ptr_val_inst ty v β p:
-    SimplifyGoalVal v (p @ frac_ptr β ty) (Some 0%N) :=
+    SimplifyGoal _ (Some 0%N) :=
     λ T, i2p (simplify_goal_frac_ptr_val ty v β p T).
 
   Lemma simplify_goal_frac_ptr_val_unrefined ty (v : val) β T:
@@ -103,7 +103,7 @@ Section own.
     ⊢ simplify_goal (v ◁ᵥ frac_ptr β ty) T.
   Proof. iIntros "HT". iExists _. iFrame. iDestruct 1 as (p) "[-> Hp]". iExists _. by iSplit. Qed.
   Global Instance simplify_goal_frac_ptr_val_unrefined_inst ty (v : val) β:
-    SimplifyGoalVal v (frac_ptr β ty) (Some 0%N) :=
+    SimplifyGoal _ (Some 0%N) :=
     λ T, i2p (simplify_goal_frac_ptr_val_unrefined ty v β T).
 
   Lemma simplify_frac_ptr_place_shr_to_own l p1 p2 β T:
@@ -111,7 +111,7 @@ Section own.
     ⊢ simplify_hyp (l ◁ₗ{β} p1 @ frac_ptr Shr (place p2)) T.
   Proof. iIntros "HT (%&Hl&%)". subst. iApply "HT" => //. by iFrame. Qed.
   Global Instance simplify_frac_ptr_place_inst l p1 p2 β:
-    SimplifyHypPlace l β (p1 @ frac_ptr Shr (place p2)) (Some 50%N) :=
+    SimplifyHyp _ (Some 50%N) :=
     λ T, i2p (simplify_frac_ptr_place_shr_to_own l p1 p2 β T).
 
   (*
@@ -419,14 +419,14 @@ Section ptr.
     repeat iSplit => //. iPureIntro. by apply: mem_cast_id_loc.
   Qed.
   Global Instance simplify_ptr_hyp_place_inst p l n:
-    SimplifyHypPlace l Own (p @ ptr n)%I (Some 0%N) :=
+    SimplifyHyp _ (Some 0%N) :=
     λ T, i2p (simplify_ptr_hyp_place p l n T).
 
   Lemma simplify_ptr_goal_val (p:loc) l n T:
     T (⌜l = p⌝ ∗ loc_in_bounds l n) ⊢ simplify_goal (p ◁ᵥ l @ ptr n) T.
   Proof. iIntros "HT". iExists _. iFrame. iIntros "[-> ?]". by iFrame. Qed.
   Global Instance simplify_ptr_goal_val_inst (p : loc) l n:
-    SimplifyGoalVal p (l @ ptr n)%I (Some 10%N) :=
+    SimplifyGoal _ (Some 10%N) :=
     λ T, i2p (simplify_ptr_goal_val p l n T).
 
   Lemma subsume_own_ptr p l1 l2 ty n T:
@@ -584,7 +584,7 @@ Section null.
     unfold int; simpl_type. iPureIntro. apply: (i2v_bool_Some false).
   Qed.
   Global Instance type_cast_null_int_inst v it:
-    TypedUnOpVal v null (CastOp (IntOp it)) PtrOp :=
+    TypedUnOp v _ (CastOp (IntOp it)) PtrOp :=
     λ T, i2p (type_cast_null_int it v T).
 
   Lemma type_cast_zero_ptr v it T:
@@ -597,7 +597,7 @@ Section null.
     iModIntro. by iApply ("HΦ" with "[] HT").
   Qed.
   Global Instance type_cast_zero_ptr_inst v it:
-    TypedUnOpVal v (0 @ int it) (CastOp PtrOp) (IntOp it) | 10 :=
+    TypedUnOp v _ (CastOp PtrOp) (IntOp it) | 10 :=
     λ T, i2p (type_cast_zero_ptr v it T).
 
   Lemma type_cast_null_ptr v T:

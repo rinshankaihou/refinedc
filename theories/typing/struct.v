@@ -258,7 +258,7 @@ Section struct.
     iIntros "H". iApply "Hc". by iFrame.
   Qed.
   Global Instance struct_mono_inst sl tys1 tys2 l β:
-    SubsumePlace l β (struct sl tys1) (struct sl tys2) | 10 :=
+    Subsume _ _ :=
     λ T, i2p (struct_mono sl tys1 tys2 l β T).
 
   Lemma struct_mono_val sl tys1 tys2 v T:
@@ -281,7 +281,7 @@ Section struct.
     - iDestruct "Hm" as "[$ Hm2]". iApply ("IH" with "[//] [//] H Hm2").
   Qed.
   Global Instance struct_mono_val_inst sl tys1 tys2 v:
-    SubsumeVal v (struct sl tys1) (struct sl tys2) | 10 :=
+    Subsume _ _ :=
     λ T, i2p (struct_mono_val sl tys1 tys2 v T).
 
   Lemma type_place_struct K β1 T tys sl n l :
@@ -390,7 +390,7 @@ Section struct.
     ⊢ simplify_hyp (l ◁ₗ{β} uninit s) T.
   Proof. iIntros "HT Hl". rewrite uninit_struct_equiv. by iApply "HT". Qed.
   Global Instance uninit_struct_simpl_hyp_inst l β (s : struct_layout):
-    SimplifyHypPlace l β (uninit s) (Some 0%N) :=
+    SimplifyHyp _ (Some 0%N) :=
     λ T, i2p (uninit_struct_simpl_hyp l β s T).
 
   Lemma uninit_struct_simpl_goal l β (s : struct_layout) T:
@@ -398,7 +398,7 @@ Section struct.
     ⊢ simplify_goal (l ◁ₗ{β} uninit s) T.
   Proof. iIntros "HT". iExists _. iFrame. iIntros "?". by rewrite uninit_struct_equiv. Qed.
   Global Instance uninit_struct_simpl_goal_inst l β (s : struct_layout):
-    SimplifyGoalPlace l β (uninit s) (Some 50%N) :=
+    SimplifyGoal _ (Some 50%N) :=
     λ T, i2p (uninit_struct_simpl_goal l β s T).
 End struct.
 Global Typeclasses Opaque struct.

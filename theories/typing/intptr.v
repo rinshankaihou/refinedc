@@ -149,7 +149,7 @@ Section programs.
     iIntros "[-> $]". iApply intptr_wand_int.
   Qed.
   Global Instance subsume_intptr_int_val_inst v it n p:
-    SubsumeVal v (p @ intptr it) (n @ int it) :=
+    Subsume _ _ :=
     λ T, i2p (subsume_intptr_int_val v it n p T).
 
   Lemma subsume_intptr_int_place l β it n p T:
@@ -160,7 +160,7 @@ Section programs.
     iExists v. by iFrame.
   Qed.
   Global Instance subsume_intptr_int_place_inst l β it n p:
-    SubsumePlace l β (p @ intptr it) (n @ int it) :=
+    Subsume _ _ :=
     λ T, i2p (subsume_intptr_int_place l β it n p T).
 
   Lemma typed_un_op_intptr it v l op T:
@@ -170,7 +170,7 @@ Section programs.
     iIntros "HT". iApply (typed_un_op_wand with "HT"). iApply intptr_wand_int.
   Qed.
   Global Instance typed_un_op_intptr_inst it v l op:
-    TypedUnOpVal v (l @ intptr it)%I op (IntOp it) :=
+    TypedUnOp v _ op (IntOp it) | 50 :=
     λ T, i2p (typed_un_op_intptr it v l op T).
 
   Lemma typed_bin_op_intptr_l it v1 l v2 ty op ot T:
@@ -181,7 +181,7 @@ Section programs.
     iApply intptr_wand_int.
   Qed.
   Global Instance typed_bin_op_intptr_l_inst it v1 l v2 ty op ot:
-    TypedBinOpVal v1 (l @ intptr it)%I v2 ty op (IntOp it) ot :=
+    TypedBinOp v1 _ v2 _ op (IntOp it) ot | 50 :=
     λ T, i2p (typed_bin_op_intptr_l it v1 l v2 ty op ot T).
 
   Lemma typed_bin_op_intptr_r it v1 ty v2 l op ot T:
@@ -192,7 +192,7 @@ Section programs.
     iApply intptr_wand_int.
   Qed.
   Global Instance typed_bin_op_intptr_r_inst it v1 ty v2 l op ot:
-    TypedBinOpVal v1 ty v2 (l @ intptr it)%I op ot (IntOp it) :=
+    TypedBinOp v1 _ v2 _ op ot (IntOp it) | 50 :=
     λ T, i2p (typed_bin_op_intptr_r it v1 ty v2 l op ot T).
 
 End programs.

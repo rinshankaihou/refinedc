@@ -50,28 +50,28 @@ Section own_constrained.
     (P β -∗ l ◁ₗ{β} ty -∗ T) ⊢ simplify_hyp (l◁ₗ{β} own_constrained P ty) T.
   Proof. iIntros "HT [Hl HP]". by iApply ("HT" with "HP"). Qed.
   Global Instance simplify_hyp_place_own_constrained_inst P l β ty `{!OwnConstraint P}:
-    SimplifyHypPlace l β (own_constrained P ty)%I (Some 0%N) :=
+    SimplifyHyp _ (Some 0%N) :=
     λ T, i2p (simplify_hyp_place_own_constrained P l β ty T).
 
   Lemma simplify_goal_place_own_constrained P l β ty T `{!OwnConstraint P}:
     T (l ◁ₗ{β} ty ∗ P β) ⊢ simplify_goal (l◁ₗ{β} own_constrained P ty) T.
   Proof. iIntros "HT". iExists _. iFrame. iIntros "[$ $]". Qed.
   Global Instance simplify_goal_place_own_constrained_inst P l β ty `{!OwnConstraint P}:
-    SimplifyGoalPlace l β (own_constrained P ty)%I (Some 0%N) :=
+    SimplifyGoal _ (Some 0%N) :=
     λ T, i2p (simplify_goal_place_own_constrained P l β ty T).
 
   Lemma simplify_hyp_val_own_constrained P v ty T `{!OwnConstraint P}:
     (P Own -∗ v ◁ᵥ ty -∗ T) ⊢ simplify_hyp (v ◁ᵥ own_constrained P ty) T.
   Proof. iIntros "HT [Hl HP]". by iApply ("HT" with "HP"). Qed.
   Global Instance simplify_hyp_val_own_constrained_inst P v ty `{!OwnConstraint P}:
-    SimplifyHypVal v (own_constrained P ty)%I (Some 0%N) :=
+    SimplifyHyp _ (Some 0%N) :=
     λ T, i2p (simplify_hyp_val_own_constrained P v ty T).
 
   Lemma simplify_goal_val_own_constrained P v ty T `{!OwnConstraint P}:
     T (v ◁ᵥ ty ∗ P Own) ⊢ simplify_goal (v ◁ᵥ own_constrained P ty) T.
   Proof. iIntros "HT". iExists _. iFrame. iIntros "[$ $]". Qed.
   Global Instance simplify_goal_val_own_constrained_inst P v ty `{!OwnConstraint P}:
-    SimplifyGoalVal v (own_constrained P ty)%I (Some 0%N) :=
+    SimplifyGoal _ (Some 0%N) :=
     λ T, i2p (simplify_goal_val_own_constrained P v ty T).
 
   Global Program Instance own_constrained_optional ty P optty ot1 ot2 `{!OwnConstraint P} `{!Optionable ty optty ot1 ot2} : Optionable (own_constrained P ty) optty ot1 ot2 := {|

@@ -115,7 +115,7 @@ Section union.
     ⊢ subsume (l ◁ₗ{β} n @ int size_t) (l ◁ₗ{β} tunion_tag ti x) T.
   Proof. iIntros "[<- $] ?". by rewrite /tunion_tag/=. Qed.
   Global Instance subsume_int_tunion_tag_inst ti x (n : Z) l β:
-    SubsumePlace l β (n @ int size_t)%I (tunion_tag ti x) :=
+    Subsume _ _ :=
     λ T, i2p (subsume_int_tunion_tag ti x n l β T).
 
   Lemma subsume_tunion_tag ti x1 x2 l β T:
@@ -123,7 +123,7 @@ Section union.
     ⊢ subsume (l ◁ₗ{β} tunion_tag ti x1) (l ◁ₗ{β} tunion_tag ti x2) T.
   Proof. rewrite /ty_own/=. iIntros "[-> $] $". Qed.
   Global Instance subsume_tunion_tag_inst ti x1 x2 l β:
-    SubsumePlace l β (tunion_tag ti x1)%I (tunion_tag ti x2) :=
+    Subsume _ _ :=
     λ T, i2p (subsume_tunion_tag ti x1 x2 l β T).
 
   Inductive destruct_hint_union :=
@@ -134,22 +134,22 @@ Section union.
     ⊢ typed_bin_op v1 (v1 ◁ᵥ tunion_tag ti x) v2 (v2 ◁ᵥ n @ int it) op (IntOp size_t) (IntOp it) T.
   Proof. by rewrite /(ty_own_val (tunion_tag _ _))/=. Qed.
   Global Instance type_binop_tunion_tag_int_eq_inst it v1 n v2 ti x:
-    TypedBinOpVal v1 (tunion_tag ti x) v2 (n @ int it)%I (EqOp i32) (IntOp size_t) (IntOp it) :=
+    TypedBinOp v1 _ v2 _ (EqOp i32) (IntOp size_t) (IntOp it) :=
     λ T, i2p (type_binop_tunion_tag_int ti x it v1 n v2 T _).
   Global Instance type_binop_tunion_tag_int_ne_inst it v1 n v2 ti x:
-    TypedBinOpVal v1 (tunion_tag ti x) v2 (n @ int it)%I (NeOp i32) (IntOp size_t) (IntOp it) :=
+    TypedBinOp v1 _ v2 _ (NeOp i32) (IntOp size_t) (IntOp it) :=
     λ T, i2p (type_binop_tunion_tag_int ti x it v1 n v2 T _).
   Global Instance type_binop_tunion_tag_int_gt_inst it v1 n v2 ti x:
-    TypedBinOpVal v1 (tunion_tag ti x) v2 (n @ int it)%I (GtOp i32) (IntOp size_t) (IntOp it) :=
+    TypedBinOp v1 _ v2 _ (GtOp i32) (IntOp size_t) (IntOp it) :=
     λ T, i2p (type_binop_tunion_tag_int ti x it v1 n v2 T _).
   Global Instance type_binop_tunion_tag_int_lt_inst it v1 n v2 ti x:
-    TypedBinOpVal v1 (tunion_tag ti x) v2 (n @ int it)%I (LtOp i32) (IntOp size_t) (IntOp it) :=
+    TypedBinOp v1 _ v2 _ (LtOp i32) (IntOp size_t) (IntOp it) :=
     λ T, i2p (type_binop_tunion_tag_int ti x it v1 n v2 T _).
   Global Instance type_binop_tunion_tag_int_ge_inst it v1 n v2 ti x:
-    TypedBinOpVal v1 (tunion_tag ti x) v2 (n @ int it)%I (GeOp i32) (IntOp size_t) (IntOp it) :=
+    TypedBinOp v1 _ v2 _ (GeOp i32) (IntOp size_t) (IntOp it) :=
     λ T, i2p (type_binop_tunion_tag_int ti x it v1 n v2 T _).
   Global Instance type_binop_tunion_tag_int_le_inst it v1 n v2 ti x:
-    TypedBinOpVal v1 (tunion_tag ti x) v2 (n @ int it)%I (LeOp i32) (IntOp size_t) (IntOp it) :=
+    TypedBinOp v1 _ v2 _ (LeOp i32) (IntOp size_t) (IntOp it) :=
     λ T, i2p (type_binop_tunion_tag_int ti x it v1 n v2 T _).
 
 
@@ -175,7 +175,7 @@ Section union.
     by iApply (padded_mono with "[$HT]").
   Qed.
   Global Instance subsume_active_union_variant_inst ti ul x l β ty1 ty2 n:
-    SubsumePlace l β (active_union ul n ty1) (variant ti x ty2) :=
+    Subsume _ _ :=
     λ T, i2p (subsume_active_union_variant ti ul x l β ty1 ty2 T n).
 
   Lemma subsume_variant_variant ti x1 x2 l β ty1 ty2 T:
@@ -187,7 +187,7 @@ Section union.
       by iApply (padded_mono with "[$HT]").
   Qed.
   Global Instance subsume_variant_variant_inst ti x1 x2 l β ty1 ty2:
-    SubsumePlace l β (variant ti x1 ty1) (variant ti x2 ty2) :=
+    Subsume _ _ :=
     λ T, i2p (subsume_variant_variant ti x1 x2 l β ty1 ty2 T).
 
   Lemma type_place_variant K β T ul n l ty ti x {Heq: TCEq (ti_member ti x).1 n} :
@@ -253,7 +253,7 @@ Section tunion.
     ⊢ simplify_hyp (l◁ₗ{β} x @ tunion ti) T.
   Proof. iIntros "HT Hl". by iApply "HT". Qed.
   Global Instance simplify_hyp_tunion_inst ti x l β :
-    SimplifyHypPlace l β (x @ tunion ti)%I (Some 0%N) :=
+    SimplifyHyp _ (Some 0%N) :=
     λ T, i2p (simplify_hyp_tunion ti x l β T).
 
   Lemma simplify_goal_tunion ti x l β T:
@@ -263,7 +263,7 @@ Section tunion.
     ⊢ simplify_goal (l◁ₗ{β} x @ tunion ti) T.
   Proof. iIntros "HT". iExists _. iFrame. by iIntros "?". Qed.
   Global Instance simplify_goal_tunion_inst ti x l β :
-    SimplifyGoalPlace l β (x @ tunion ti)%I (Some 0%N) :=
+    SimplifyGoal _ (Some 0%N) :=
     λ T, i2p (simplify_goal_tunion ti x l β T).
 
 End tunion.

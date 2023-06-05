@@ -911,7 +911,7 @@ let pp_spec : Coq_path.t -> import list -> inlined_code ->
     let pp_instance_place inst_name type_name =
       pp "@;Global Instance %s_%s_inst_generated l_ β_ %apatt__:@;"
         id inst_name pp_params params;
-      pp "  %s l_ β_ (patt__ @@ %a)%%I (Some %i%%N) :=@;"
+      pp "  %s (l_ ◁ₗ{β_} patt__ @@ %a)%%I (Some %i%%N) :=@;"
         type_name (pp_id_args false id) par_names annot.st_unfold_prio;
       pp "  λ T, i2p (%s_eq l_ β_ _ _ T (%s_unfold" inst_name id;
       List.iter (fun _ -> pp " _") par_names; pp " _))."
@@ -919,18 +919,18 @@ let pp_spec : Coq_path.t -> import list -> inlined_code ->
     let pp_instance_val inst_name type_name =
       pp "@;Global Instance %s_%s_inst_generated v_ %apatt__:@;"
         id inst_name pp_params params;
-      pp "  %s v_ (patt__ @@ %a)%%I (Some %i%%N) :=@;"
+      pp "  %s (v_ ◁ᵥ patt__ @@ %a)%%I (Some %i%%N) :=@;"
         type_name (pp_id_args false id) par_names annot.st_unfold_prio;
       pp "  λ T, i2p (%s_eq v_ _ _ T (%s_unfold" inst_name id;
       List.iter (fun _ -> pp " _") par_names; pp " _)).";
     in
-    pp_instance_place "simplify_hyp_place" "SimplifyHypPlace";
-    pp_instance_place "simplify_goal_place" "SimplifyGoalPlace";
+    pp_instance_place "simplify_hyp_place" "SimplifyHyp";
+    pp_instance_place "simplify_goal_place" "SimplifyGoal";
     if not annot.st_immovable then
       begin
         pp "\n";
-        pp_instance_val "simplify_hyp_val" "SimplifyHypVal";
-        pp_instance_val "simplify_goal_val" "SimplifyGoalVal"
+        pp_instance_val "simplify_hyp_val" "SimplifyHyp";
+        pp_instance_val "simplify_goal_val" "SimplifyGoal"
       end
   in
   let pp_tagged_union id tag_type_e s =

@@ -22,14 +22,14 @@ Section immovable.
     (l ◁ₗ{β} ty l -∗ T) ⊢ simplify_hyp (l◁ₗ{β} immovable ty) T.
   Proof. iIntros "HT Hl". by iApply "HT". Qed.
   Global Instance simplify_hyp_place_immovable_inst l β ty :
-    SimplifyHypPlace l β (immovable ty) (Some 0%N) :=
+    SimplifyHyp _ (Some 0%N) :=
     λ T, i2p (simplify_hyp_place_immovable l β ty T).
 
   Lemma simplify_goal_place_immovable l β ty T:
     T (l ◁ₗ{β} ty l) ⊢ simplify_goal (l◁ₗ{β} immovable ty) T.
   Proof. iIntros "HT". iExists _. iFrame. iIntros "$". Qed.
   Global Instance simplify_goal_place_immovable_inst l β ty :
-    SimplifyGoalPlace l β (immovable ty) (Some 0%N) :=
+    SimplifyGoal _ (Some 0%N) :=
     λ T, i2p (simplify_goal_place_immovable l β ty T).
 End immovable.
 

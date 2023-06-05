@@ -69,7 +69,7 @@ Section type.
     ⊢ simplify_hyp (l ◁ₗ tylocked_ex γ n x ty) T.
   Proof. done. Qed.
   Global Instance tylocked_simplify_hyp_place_inst A γ n x (ty : A → type) l:
-    SimplifyHypPlace l Own (tylocked_ex γ n x ty) (Some 0%N) :=
+    SimplifyHyp _ (Some 0%N) :=
     λ T, i2p (tylocked_simplify_hyp_place A γ n x ty T l).
 
   Lemma tylocked_simplify_goal_place A γ n x (ty : A → type) T l:
@@ -78,7 +78,7 @@ Section type.
   Proof. iIntros "HT". iExists _. iFrame. iIntros "$". Qed.
 
   Global Instance tylocked_simplify_goal_place_inst A γ n x (ty : A → type) l:
-    SimplifyGoalPlace l Own (tylocked_ex γ n x ty) (Some 0%N) :=
+    SimplifyGoal _ (Some 0%N) :=
     λ T, i2p (tylocked_simplify_goal_place A γ n x ty T l).
 
   Lemma tylocked_subsume A γ n x1 x2 (ty : A → type) l β T:

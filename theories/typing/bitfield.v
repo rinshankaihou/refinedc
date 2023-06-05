@@ -101,7 +101,8 @@ Section programs.
   Proof.
     by iIntros "[-> $] ?".
   Qed.
-  Global Instance subsume_val_int_bitfield_raw_inst it v n bv : SubsumeVal v (n @ int it) (bv @ bitfield_raw it) :=
+  Global Instance subsume_val_int_bitfield_raw_inst it v n bv :
+    Subsume _ _ :=
     λ T, i2p (subsume_val_int_bitfield_raw T it v n bv).
 
   Lemma subsume_val_bitfield_raw_int T it v n bv :
@@ -109,7 +110,8 @@ Section programs.
   Proof.
     by iIntros "[-> $] ?".
   Qed.
-  Global Instance subsume_val_bitfield_raw_int_inst it v n bv : SubsumeVal v (bv @ bitfield_raw it) (n @ int it) :=
+  Global Instance subsume_val_bitfield_raw_int_inst it v n bv :
+    Subsume _ _ :=
     λ T, i2p (subsume_val_bitfield_raw_int T it v n bv).
 
   (* typing rules for bitfield_raw *)
@@ -128,19 +130,19 @@ Section programs.
     iSplitR => //. iExists _. iFrame. unfold bitfield_raw; simpl_type. iIntros "$".
   Qed.
   Global Program Instance type_and_bitfield_raw_inst it v1 bv1 v2 bv2:
-    TypedBinOpVal v1 (bv1 @ bitfield_raw it)%I v2 (bv2 @ bitfield_raw it)%I AndOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_bitfield_raw it v1 bv1 v2 bv2 T (Z.land bv1 bv2) _ _).
+    TypedBinOp v1 _ v2 _ AndOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_bitfield_raw it v1 bv1 v2 bv2 T (Z.land bv1 bv2) _ _).
   Next Obligation. done. Qed.
   Global Program Instance type_or_bitfield_raw_inst it v1 bv1 v2 bv2:
-    TypedBinOpVal v1 (bv1 @ bitfield_raw it)%I v2 (bv2 @ bitfield_raw it)%I OrOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_bitfield_raw it v1 bv1 v2 bv2 T (Z.lor bv1 bv2) _ _).
+    TypedBinOp v1 _ v2 _ OrOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_bitfield_raw it v1 bv1 v2 bv2 T (Z.lor bv1 bv2) _ _).
   Next Obligation. done. Qed.
   Global Program Instance type_xor_bitfield_raw_inst it v1 bv1 v2 bv2:
-    TypedBinOpVal v1 (bv1 @ bitfield_raw it)%I v2 (bv2 @ bitfield_raw it)%I XorOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_bitfield_raw it v1 bv1 v2 bv2 T (Z.lxor bv1 bv2) _ _).
+    TypedBinOp v1 _ v2 _ XorOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_bitfield_raw it v1 bv1 v2 bv2 T (Z.lxor bv1 bv2) _ _).
   Next Obligation. done. Qed.
   Global Program Instance type_shl_bitfield_raw_inst it v1 bv1 v2 bv2:
-    TypedBinOpVal v1 (bv1 @ bitfield_raw it)%I v2 (bv2 @ bitfield_raw it)%I ShlOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_bitfield_raw it v1 bv1 v2 bv2 T (bv1 ≪ bv2) _ _).
+    TypedBinOp v1 _ v2 _ ShlOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_bitfield_raw it v1 bv1 v2 bv2 T (bv1 ≪ bv2) _ _).
   Next Obligation. done. Qed.
   Global Program Instance type_shr_bitfield_raw_inst it v1 bv1 v2 bv2:
-    TypedBinOpVal v1 (bv1 @ bitfield_raw it)%I v2 (bv2 @ bitfield_raw it)%I ShrOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_bitfield_raw it v1 bv1 v2 bv2 T (bv1 ≫ bv2) _ _).
+    TypedBinOp v1 _ v2 _ ShrOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_bitfield_raw it v1 bv1 v2 bv2 T (bv1 ≫ bv2) _ _).
   Next Obligation. done. Qed.
 
   Lemma type_not_bitfield_raw bv it v T:
@@ -156,7 +158,7 @@ Section programs.
     iExists _. iFrame. unfold bitfield_raw; simpl_type. iIntros "$".
   Qed.
   Global Instance type_not_bitfield_raw_inst bv it v:
-    TypedUnOpVal v (bv @ bitfield_raw it)%I NotIntOp (IntOp it) :=
+    TypedUnOp v _ NotIntOp (IntOp it) :=
     λ T, i2p (type_not_bitfield_raw bv it v T).
 
   Lemma type_relop_bitfield_raw it v1 bv1 v2 bv2 T b op :
@@ -180,11 +182,11 @@ Section programs.
     iExists _. iFrame. unfold bitfield_raw; simpl_type. iIntros "$".
   Qed.
   Global Program Instance type_eq_bitfield_raw_inst it v1 bv1 v2 bv2:
-    TypedBinOpVal v1 (bv1 @ bitfield_raw it)%I v2 (bv2 @ bitfield_raw it)%I (EqOp i32) (IntOp it) (IntOp it) :=
+    TypedBinOp v1 _ v2 _ (EqOp i32) (IntOp it) (IntOp it) :=
       λ T, i2p (type_relop_bitfield_raw it v1 bv1 v2 bv2 T (bool_decide (bv1 = bv2)) _ _).
   Next Obligation. done. Qed.
   Global Program Instance type_ne_bitfield_raw_inst it v1 bv1 v2 bv2:
-    TypedBinOpVal v1 (bv1 @ bitfield_raw it)%I v2 (bv2 @ bitfield_raw it)%I (NeOp i32) (IntOp it) (IntOp it) :=
+    TypedBinOp v1 _ v2 _ (NeOp i32) (IntOp it) (IntOp it) :=
       λ T, i2p (type_relop_bitfield_raw it v1 bv1 v2 bv2 T (bool_decide (bv1 ≠ bv2)) _ _).
   Next Obligation. done. Qed.
 
@@ -205,10 +207,10 @@ Section programs.
     iExists _. iFrame. unfold bitfield_raw; simpl_type. iIntros "$".
   Qed.
   Global Program Instance type_shl_bitfield_raw_int_inst it v1 bv v2 n :
-    TypedBinOpVal v1 (bv @ bitfield_raw it)%I v2 (n @ int it)%I ShlOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_bitfield_raw_int it v1 bv v2 n T (bv ≪ n) _ _).
+    TypedBinOp v1 _ v2 _ ShlOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_bitfield_raw_int it v1 bv v2 n T (bv ≪ n) _ _).
   Next Obligation. done. Qed.
   Global Program Instance type_shr_bitfield_raw_int_inst it v1 bv v2 n :
-    TypedBinOpVal v1 (bv @ bitfield_raw it)%I v2 (n @ int it)%I ShrOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_bitfield_raw_int it v1 bv v2 n T (bv ≫ n) _ _).
+    TypedBinOp v1 _ v2 _ ShrOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_bitfield_raw_int it v1 bv v2 n T (bv ≫ n) _ _).
   Next Obligation. done. Qed.
 
   Lemma type_arithop_int_bitfield_raw it v1 n v2 bv T bv' op:
@@ -226,7 +228,7 @@ Section programs.
     iExists _. iFrame. unfold bitfield_raw; simpl_type. iIntros "$".
   Qed.
   Global Program Instance type_and_int_bitfield_raw_inst it v1 n v2 bv :
-    TypedBinOpVal v1 (n @ int it)%I v2 (bv @ bitfield_raw it)%I AndOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_int_bitfield_raw it v1 n v2 bv T (Z.land n bv) _ _).
+    TypedBinOp v1 _ v2 _ AndOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_int_bitfield_raw it v1 n v2 bv T (Z.land n bv) _ _).
   Next Obligation. done. Qed.
 
   Lemma type_bitfield_raw_is_false it v1 v2 bv T :
@@ -245,7 +247,7 @@ Section programs.
     iExists _. iFrame. unfold boolean, int; simpl_type. iIntros "(%n&%&%Heq)". move: Heq => /= ?. subst n. done.
   Qed.
   Global Instance type_bitfield_raw_is_false_inst it v1 v2 bv :
-    TypedBinOpVal v1 (0 @ int it)%I v2 (bv @ bitfield_raw it)%I (EqOp i32) (IntOp it) (IntOp it) :=
+    TypedBinOp v1 _ v2 _ (EqOp i32) (IntOp it) (IntOp it) :=
       λ T, i2p (type_bitfield_raw_is_false it v1 v2 bv T).
 
   Lemma type_bitfield_raw_is_true it v1 v2 bv T :
@@ -265,7 +267,7 @@ Section programs.
     iIntros "(%n&%&%Heq)". move: Heq => /= ?. subst n. done.
   Qed.
   Global Instance type_bitfield_raw_is_true_inst it v1 v2 bv :
-    TypedBinOpVal v1 (0 @ int it)%I v2 (bv @ bitfield_raw it)%I (NeOp i32) (IntOp it) (IntOp it) :=
+    TypedBinOp v1 _ v2 _ (NeOp i32) (IntOp it) (IntOp it) :=
       λ T, i2p (type_bitfield_raw_is_true it v1 v2 bv T).
 
   Lemma type_if_bitfield_raw it n v T1 T2:
@@ -302,7 +304,7 @@ Section programs.
     ⊢ simplify_hyp (v ◁ᵥ bv @ bitfield R) T.
   Proof. done. Qed.
   Global Instance simplify_hyp_val_bitfield_inst v R `{BitfieldDesc R} bv :
-    SimplifyHypVal v (bv @ bitfield R)%I (Some 0%N) :=
+    SimplifyHyp _ (Some 0%N) :=
     λ T, i2p (simplify_hyp_val_bitfield v R bv T).
 
   Lemma simplify_goal_val_bitfield v R `{BitfieldDesc R} bv T :
@@ -312,7 +314,7 @@ Section programs.
     iIntros "HT". iExists _. iFrame. by iIntros "?".
   Qed.
   Global Instance simplify_goal_val_bitfield_inst v R `{BitfieldDesc R} bv :
-    SimplifyGoalVal v (bv @ bitfield R)%I (Some 0%N) :=
+    SimplifyGoal _ (Some 0%N) :=
     λ T, i2p (simplify_goal_val_bitfield v R bv T).
 
 End programs.

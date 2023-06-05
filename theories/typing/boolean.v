@@ -170,15 +170,11 @@ Section boolean.
   Qed.
 
   Global Program Instance type_eq_boolean_inst it v1 b1 v2 b2:
-    TypedBinOpVal v1 (b1 @ (boolean it))%I
-                  v2 (b2 @ (boolean it))%I
-                  (EqOp i32) (IntOp it) (IntOp it) :=
+    TypedBinOp _ _ _ _ (EqOp i32) (IntOp it) (IntOp it) :=
     λ T, i2p (type_relop_boolean it v1 b1 v2 b2 T (eqb b1 b2) _ _).
   Next Obligation. done. Qed.
   Global Program Instance type_ne_boolean_inst it v1 b1 v2 b2:
-    TypedBinOpVal v1 (b1 @ (boolean it))%I
-                  v2 (b2 @ (boolean it))%I
-                  (NeOp i32) (IntOp it) (IntOp it) :=
+    TypedBinOp _ _ _ _ (NeOp i32) (IntOp it) (IntOp it) :=
     λ T, i2p (type_relop_boolean it v1 b1 v2 b2 T (negb (eqb b1 b2)) _ _).
   Next Obligation. done. Qed.
 
@@ -239,7 +235,7 @@ Section boolean.
     iExists _. iSplit; last done. iPureIntro. by eapply val_to_of_Z.
   Qed.
   Global Instance type_cast_bool_inst b it1 it2 v:
-    TypedUnOpVal v (b @ boolean it1)%I (CastOp (IntOp it2)) (IntOp it1) :=
+    TypedUnOp _ _ (CastOp (IntOp it2)) (IntOp it1) :=
     λ T, i2p (type_cast_boolean b it1 it2 v T).
 
 End boolean.
@@ -266,7 +262,7 @@ Section builtin_boolean.
     iPureIntro => /=. exists (bool_to_Z b). by destruct b.
   Qed.
   Global Instance type_cast_boolean_builtin_boolean_inst b it v:
-    TypedUnOpVal v (b @ boolean it)%I (CastOp BoolOp) (IntOp it) :=
+    TypedUnOp _ _ (CastOp BoolOp) (IntOp it) :=
     λ T, i2p (type_cast_boolean_builtin_boolean b it v T).
 
   Lemma type_cast_builtin_boolean_boolean b it v T:
@@ -280,7 +276,7 @@ Section builtin_boolean.
     iPureIntro => /=. eexists _. split;[|done]. by apply: val_to_of_Z.
   Qed.
   Global Instance type_cast_builtin_boolean_boolean_inst b it v:
-    TypedUnOpVal v (b @ builtin_boolean)%I (CastOp (IntOp it)) BoolOp :=
+    TypedUnOp _ _ (CastOp (IntOp it)) BoolOp :=
     λ T, i2p (type_cast_builtin_boolean_boolean b it v T).
 
 End builtin_boolean.

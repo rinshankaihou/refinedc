@@ -172,7 +172,7 @@ Section function.
       by iApply ("Hr" with "HR").
   Qed.
   Global Instance type_call_fnptr_inst l v vl fp tys :
-    TypedCallVal v (l @ function_ptr fp) vl tys :=
+    TypedCall v _ vl tys :=
     λ T, i2p (type_call_fnptr l v vl tys T fp).
 
   Lemma subsume_fnptr v l1 l2 (fnty1 fnty2 : A → fn_params) T:
@@ -294,7 +294,7 @@ Section inline_function.
       by iApply ("HΦ" with "Hv HPr").
   Qed.
   Global Instance type_call_inline_fnptr_inst l v vl tys fn :
-    TypedCallVal v (l @ inline_function_ptr fn) vl tys :=
+    TypedCall v _ vl tys :=
     λ T, i2p (type_call_inline_fnptr l v vl tys T fn).
 End inline_function.
 

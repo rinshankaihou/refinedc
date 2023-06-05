@@ -14,21 +14,6 @@ Section judgements.
     learnalign_learn l : l ◁ₗ{β} ty ⊢ ⌜if n is Some n' then l `aligned_to` n' else True⌝
   .
 
-  Class SimplifyHypPlace (l : loc) (β : own_state) (ty : type) (n : option N) : Type :=
-    simplify_hyp_place :: SimplifyHyp (l ◁ₗ{β} ty) n.
-  Class SimplifyHypVal (v : val) (ty : type) (n : option N) : Type :=
-    simplify_hyp_val :: SimplifyHyp (v ◁ᵥ ty) n.
-
-  Class SimplifyGoalPlace (l : loc) (β : own_state) (ty : type) (n : option N) : Type :=
-    simplify_goal_place :: SimplifyGoal (l ◁ₗ{β} ty) n.
-  Class SimplifyGoalVal (v : val) (ty : type) (n : option N) : Type :=
-    simplify_goal_val :: SimplifyGoal (v ◁ᵥ ty) n.
-
-  Class SubsumePlace (l : loc) (β : own_state) (ty1 ty2 : type) : Type :=
-    subsume_place :: Subsume (l ◁ₗ{β} ty1) (l ◁ₗ{β} ty2).
-  Class SubsumeVal (v : val) (ty1 ty2 : type) : Type :=
-    subsume_val :: Subsume (v ◁ᵥ ty1) (v ◁ᵥ ty2).
-
   (* Variants of Subsume which don't need the continuation. P is an
   additional sidecondition. Not via iProp_to_Prop since there is no
   continuation. *)
@@ -120,31 +105,23 @@ Section judgements.
 
   Class TypedBinOp (v1 : val) (P1 : iProp Σ) (v2 : val) (P2 : iProp Σ) (o : bin_op) (ot1 ot2 : op_type) : Type :=
     typed_bin_op_proof T : iProp_to_Prop (typed_bin_op v1 P1 v2 P2 o ot1 ot2 T).
-  Class TypedBinOpVal (v1 : val) (ty1 : type) (v2 : val) (ty2 : type) (o : bin_op) (ot1 ot2 : op_type) : Type :=
-    typed_bin_op_val :: TypedBinOp v1 (v1 ◁ᵥ ty1) v2 (v2 ◁ᵥ ty2) o ot1 ot2.
 
   Definition typed_un_op (v : val) (P : iProp Σ) (o : un_op) (ot : op_type) (T : val → type → iProp Σ) : iProp Σ :=
     (P -∗ typed_val_expr (UnOp o ot v) T).
 
   Class TypedUnOp (v : val) (P : iProp Σ) (o : un_op) (ot : op_type) : Type :=
     typed_un_op_proof T : iProp_to_Prop (typed_un_op v P o ot T).
-  Class TypedUnOpVal (v : val) (ty : type) (o : un_op) (ot : op_type) : Type :=
-    typed_un_op_val :: TypedUnOp v (v ◁ᵥ ty) o ot.
 
   Definition typed_call (v : val) (P : iProp Σ) (vl : list val) (tys : list type) (T : val → type → iProp Σ) : iProp Σ :=
     (P -∗ ([∗ list] v;ty∈vl;tys, v ◁ᵥ ty) -∗ typed_val_expr (Call v (Val <$> vl)) T)%I.
   Class TypedCall (v : val) (P : iProp Σ) (vl : list val) (tys : list type) : Type :=
     typed_call_proof T : iProp_to_Prop (typed_call v P vl tys T).
-  Class TypedCallVal (v : val) (ty : type) (vl : list val) (tys : list type) : Type :=
-    typed_call_val :: TypedCall v (v ◁ᵥ ty) vl tys.
 
   Definition typed_copy_alloc_id (v1 : val) (P1 : iProp Σ) (v2 : val) (P2 : iProp Σ) (ot : op_type) (T : val → type → iProp Σ) : iProp Σ :=
     (P1 -∗ P2 -∗ typed_val_expr (CopyAllocId ot v1 v2) T).
 
   Class TypedCopyAllocId (v1 : val) (P1 : iProp Σ) (v2 : val) (P2 : iProp Σ) (ot : op_type) : Type :=
     typed_copy_alloc_id_proof T : iProp_to_Prop (typed_copy_alloc_id v1 P1 v2 P2 ot T).
-  Class TypedCopyAllocIdVal (v1 : val) (ty1 : type) (v2 : val) (ty2 : type) (ot : op_type) : Type :=
-    typed_copy_alloc_id_val :: TypedCopyAllocId v1 (v1 ◁ᵥ ty1) v2 (v2 ◁ᵥ ty2) ot.
 
   Definition typed_cas (ot : op_type) (v1 : val) (P1 : iProp Σ) (v2 : val) (P2 : iProp Σ) (v3 : val) (P3 : iProp Σ)  (T : val → type → iProp Σ) : iProp Σ :=
     (P1 -∗ P2 -∗ P3 -∗ typed_val_expr (CAS ot v1 v2 v3) T).
@@ -335,26 +312,16 @@ Global Hint Extern 0 (IntoPlaceCtx _ _) => solve_into_place_ctx : typeclass_inst
 
 Global Hint Mode Learnable + + : typeclass_instances.
 Global Hint Mode LearnAlignment + + + + - : typeclass_instances.
-Global Hint Mode SimplifyHypPlace + + + + + - : typeclass_instances.
-Global Hint Mode SimplifyHypVal + + + + - : typeclass_instances.
-Global Hint Mode SimplifyGoalPlace + + + + ! - : typeclass_instances.
-Global Hint Mode SimplifyGoalVal + + + ! - : typeclass_instances.
 Global Hint Mode CopyAs + + + + + : typeclass_instances.
-Global Hint Mode SubsumePlace + + + + + ! : typeclass_instances.
-Global Hint Mode SubsumeVal + + + ! ! : typeclass_instances.
 Global Hint Mode SimpleSubsumePlace + + + ! - : typeclass_instances.
 Global Hint Mode SimpleSubsumeVal + + ! ! - : typeclass_instances.
 Global Hint Mode TypedIf + + + + + : typeclass_instances.
 Global Hint Mode TypedAssert + + + + + : typeclass_instances.
 Global Hint Mode TypedValue + + + : typeclass_instances.
 Global Hint Mode TypedBinOp + + + + + + + + + : typeclass_instances.
-Global Hint Mode TypedBinOpVal + + + + + + + + + : typeclass_instances.
 Global Hint Mode TypedUnOp + + + + + + : typeclass_instances.
-Global Hint Mode TypedUnOpVal + + + + + + : typeclass_instances.
 Global Hint Mode TypedCall + + + + + + : typeclass_instances.
-Global Hint Mode TypedCallVal + + + + + + : typeclass_instances.
 Global Hint Mode TypedCopyAllocId + + + + + + + : typeclass_instances.
-Global Hint Mode TypedCopyAllocIdVal + + + + + + + : typeclass_instances.
 Global Hint Mode TypedReadEnd + + + + + + + + + : typeclass_instances.
 Global Hint Mode TypedWriteEnd + + + + + + + + + + : typeclass_instances.
 Global Hint Mode TypedAddrOfEnd + + + + + : typeclass_instances.
@@ -818,7 +785,7 @@ Section typing.
     iIntros "HT Hl". unfold ty_of_rty; simpl_type. iDestruct "Hl" as (x) "Hv". by iApply "HT".
   Qed.
   Global Instance simplify_place_refine_l_inst A (ty : rtype A) l β:
-    SimplifyHypPlace l β ty (Some 0%N) :=
+    SimplifyHyp _ (Some 0%N) :=
     λ T, i2p (simplify_place_refine_l A ty l β T).
 
   Lemma simplify_val_refine_l A (ty : rtype A) v T `{!Inhabited A}:
@@ -827,7 +794,7 @@ Section typing.
     iIntros "HT Hl". unfold ty_of_rty; simpl_type.  iDestruct "Hl" as (x) "Hv". by iApply "HT".
   Qed.
   Global Instance simplify_val_refine_l_inst A (ty : rtype A) v `{!Inhabited A}:
-    SimplifyHypVal v ty (Some 0%N) :=
+    SimplifyHyp _ (Some 0%N) :=
     λ T, i2p (simplify_val_refine_l A ty v T).
 
   (* This is forced since it can create evars in places where we don't
@@ -836,14 +803,14 @@ Section typing.
     (∃ x, T (l ◁ₗ{β} (x @ ty))) ⊢ simplify_goal (l◁ₗ{β}ty) T.
   Proof. iDestruct 1 as (x) "HT". iExists _. iFrame. iIntros "?". by iExists _. Qed.
   Global Instance simplfy_goal_place_refine_r_inst A (ty : rtype A) l β :
-    SimplifyGoalPlace l β ty (Some 10%N) :=
+    SimplifyGoal _ (Some 10%N) :=
     λ T, i2p (simplify_goal_place_refine_r A ty l β T).
 
   Lemma simplify_goal_val_refine_r A (ty : rtype A) v T `{!Inhabited A} :
     (∃ x, T (v ◁ᵥ (x @ ty))) ⊢ simplify_goal (v ◁ᵥ ty) T.
   Proof. iDestruct 1 as (x) "HT". iExists _. iFrame. iIntros "?". by iExists _. Qed.
   Global Instance simplfy_goal_val_refine_r_inst A (ty : rtype A) v `{!Inhabited A} :
-    SimplifyGoalVal v ty (Some 10%N) :=
+    SimplifyGoal _ (Some 10%N) :=
     λ T, i2p (simplify_goal_val_refine_r A ty v T).
 
   (* The match can come from own_state_min *)
@@ -852,7 +819,7 @@ Section typing.
     ⊢ simplify_hyp (l ◁ₗ{match β with | Own => Own | Shr => Shr end} ty) T.
   Proof. by destruct β. Qed.
   Global Instance simplify_bad_own_state_hyp_inst l β ty :
-    SimplifyHypPlace l (match β with | Own => Own | Shr => Shr end) ty (Some 0%N) :=
+    SimplifyHyp _ (Some 0%N) :=
     λ T, i2p (simplify_bad_own_state_hyp l β ty T).
 
   Lemma simplify_bad_own_state_goal l β ty T:
@@ -860,7 +827,7 @@ Section typing.
     ⊢ simplify_goal (l ◁ₗ{match β with | Own => Own | Shr => Shr end} ty) T.
   Proof. iIntros "HT". iExists _. iFrame. iIntros "?". by destruct β. Qed.
   Global Instance simplify_bad_own_state_goal_inst l β ty :
-    SimplifyGoalPlace l (match β with | Own => Own | Shr => Shr end) ty (Some 0%N) :=
+    SimplifyGoal _ (Some 0%N) :=
     λ T, i2p (simplify_bad_own_state_goal l β ty T).
 
   (* This rule is complete as [LocInBounds] implies that the location cannot be NULL. *)
@@ -869,7 +836,7 @@ Section typing.
     ⊢ simplify_goal (NULL_loc ◁ₗ{β} ty) T.
   Proof. by iIntros (?). Qed.
   Global Instance simplify_goal_NULL_loc_in_bounds_inst β ty n `{!LocInBounds ty β n} :
-    SimplifyGoalPlace NULL_loc β ty (Some 0%N) :=
+    SimplifyGoal _ (Some 0%N) :=
     λ T, i2p (simplify_goal_NULL_loc_in_bounds β ty n T).
 
   Global Instance simple_subsume_place_id ty : SimpleSubsumePlace ty ty True | 1.
@@ -897,20 +864,20 @@ Section typing.
     P ∗ T ⊢ subsume (l ◁ₗ{β} ty1) (l ◁ₗ{β} ty2) T.
   Proof. iIntros "[HP $] Hl". iApply (@simple_subsume_place with "HP Hl"). Qed.
   Global Instance simple_subsume_place_to_subsume_inst l β ty1 ty2 P `{!SimpleSubsumePlace ty1 ty2 P}:
-    SubsumePlace l β ty1 ty2 := λ T, i2p (simple_subsume_place_to_subsume l β ty1 ty2 P T).
+    Subsume _ _ := λ T, i2p (simple_subsume_place_to_subsume l β ty1 ty2 P T).
 
   Lemma simple_subsume_val_to_subsume v ty1 ty2 P `{!SimpleSubsumeVal ty1 ty2 P} T:
     P ∗ T ⊢ subsume (v ◁ᵥ ty1) (v ◁ᵥ ty2) T.
   Proof. iIntros "[HP $] Hv". iApply (@simple_subsume_val with "HP Hv"). Qed.
   Global Instance simple_subsume_val_to_subsume_inst v ty1 ty2 P `{!SimpleSubsumeVal ty1 ty2 P}:
-    SubsumeVal v ty1 ty2 := λ T, i2p (simple_subsume_val_to_subsume v ty1 ty2 P T).
+    Subsume _ _ := λ T, i2p (simple_subsume_val_to_subsume v ty1 ty2 P T).
 
   Lemma subtype_var {A} (ty : A → type) x y l β T:
     ⌜x = y⌝ ∗ T
     ⊢ subsume (l ◁ₗ{β} ty x) (l ◁ₗ{β} ty y) T.
   Proof. iIntros "[-> $] $". Qed.
   (* This must be an hint extern because an instance would be a big slowdown . *)
-  Definition subtype_var_inst {A} (ty : A → type) x y l β : SubsumePlace l β (ty x) (ty y) :=
+  Definition subtype_var_inst {A} (ty : A → type) x y l β : Subsume _ _ :=
     λ T, i2p (subtype_var ty x y l β T).
 
   Lemma typed_binop_simplify v1 P1 v2 P2 T o1 o2 ot1 ot2 {SH1 : SimplifyHyp P1 o1} {SH2 : SimplifyHyp P2 o2} op:
@@ -1588,7 +1555,7 @@ Section typing.
 End typing.
 
 (* This must be an hint extern because an instance would be a big slowdown . *)
-Global Hint Extern 1 (SubsumePlace _ _ (?ty _) (?ty2 _)) =>
+Global Hint Extern 1 (Subsume (_ ◁ₗ{_} ?ty _) (_ ◁ₗ{_} ?ty2 _)) =>
   match ty with | ty2 => is_var ty; class_apply subtype_var_inst end : typeclass_instances.
 
 Global Typeclasses Opaque typed_block.
