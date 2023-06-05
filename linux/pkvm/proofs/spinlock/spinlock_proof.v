@@ -21,7 +21,8 @@ Section proofs.
     (* Allocate the resources for the lock. *)
     iMod (alloc_lock_token_and_tickets) as (id) "(?&?&?)".
     (* Run the automation. *)
-    repeat liRStep; liShow. rewrite right_id.
+    repeat liRStep; liShow.
+    liFromSyntax. rewrite right_id.
     (* Establish the invariant *)
     liInst Hevar id. iExists 0, 0.
     iFrame. iSplit; [ done | by iApply ticket_range_empty ].
@@ -307,7 +308,7 @@ Section proofs.
       + (* We have the last ticket. The next owner will be 0, we update. *)
         iMod (owner_auth_update _ _ _ _ 0%nat with "H● H◯") as "[??]".
         (* Run the automation to the end of the function. *)
-        repeat (liRStep; liShow). rewrite right_id.
+        repeat liRStep; liShow. liFromSyntax. rewrite right_id.
         (* Establish the invariant again, placing the token back inside. *)
         rewrite /hyp_spinlock_t_invariant. iExists 0, 0. iFrame.
         iSplit; first done. iSplitR; first by iApply ticket_range_empty.
@@ -315,7 +316,7 @@ Section proofs.
       + (* We do not have the last ticket, we do not reset the queue. *)
         iMod (owner_auth_update _ _ _ _ (owner + 1) with "H● H◯") as "[??]".
         (* Run the automation to the end of the function. *)
-        repeat liRStep; liShow. rewrite right_id.
+        repeat liRStep; liShow. liFromSyntax. rewrite right_id.
         (* Establish the invariant again, placing the token back inside. *)
         rewrite /hyp_spinlock_t_invariant. iExists (owner + 1), next. iFrame.
          iSplit. { iPureIntro. lia. } iRight. iFrame "Htok". by iExists _.

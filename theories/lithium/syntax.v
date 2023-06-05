@@ -104,6 +104,7 @@ It is not perfect as it might convert occurences to Lithium syntax
 that should stay in Iris syntax, so it should only be used for
 debugging and pretty printing. *)
 Ltac liToSyntax :=
+  iEval (
     liToSyntax_hook;
     change (bi_sep ?a) with (li.bind0 (li.exhale (liToSyntax_UNFOLD_MARKER a)));
     change (bi_wand ?a) with (li.bind0 (li.inhale (liToSyntax_UNFOLD_MARKER a)));
@@ -122,7 +123,7 @@ Ltac liToSyntax :=
         with (a ∗ liToSyntax_UNFOLD_MARKER b)%I);
     change (liToSyntax_UNFOLD_MARKER (@li.done ?Σ)) with (@bi_pure (iPropI Σ) True);
     change (liToSyntax_UNFOLD_MARKER (@li.false ?Σ)) with (@bi_pure (iPropI Σ) False);
-    unfold liToSyntax_UNFOLD_MARKER.
+    unfold liToSyntax_UNFOLD_MARKER).
 
 (* The following looses the printing of patterns and is extremely slow
 when going under many binders (e.g. typed_place). *)
