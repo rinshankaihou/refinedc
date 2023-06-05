@@ -102,7 +102,10 @@ Definition liToSyntax_UNFOLD_MARKER {A} (x : A) : A := x.
 (* This tactic heurisitically converts the goal to the Lithium syntax.
 It is not perfect as it might convert occurences to Lithium syntax
 that should stay in Iris syntax, so it should only be used for
-debugging and pretty printing. *)
+debugging and pretty printing.
+TODO: Build a proper version using Ltac2, see
+https://coq.zulipchat.com/#narrow/stream/237977-Coq-users/topic/Controlling.20printing.20of.20patters.20in.20binders/near/363637321
+ *)
 Ltac liToSyntax :=
   iEval (
     liToSyntax_hook;

@@ -34,14 +34,16 @@ Ltac liUnfoldLetGoal :=
 
 Ltac liUnfoldSyntax :=
   lazymatch goal with
+  | |- envs_entails _ (li.all _) => liFromSyntax
+  | |- envs_entails _ (li.exist _) => liFromSyntax
+  | |- envs_entails _ (li.done) => liFromSyntax
+  | |- envs_entails _ (li.false) => liFromSyntax
   | |- envs_entails _ (li.bind0 _ _) => liFromSyntax
   | |- envs_entails _ (li.bind1 _ _) => liFromSyntax
   | |- envs_entails _ (li.bind2 _ _) => liFromSyntax
   | |- envs_entails _ (li.bind3 _ _) => liFromSyntax
   | |- envs_entails _ (li.bind4 _ _) => liFromSyntax
   | |- envs_entails _ (li.bind5 _ _) => liFromSyntax
-  | |- envs_entails _ (li.done) => liFromSyntax
-  | |- envs_entails _ (li.false) => liFromSyntax
   end.
 
 Tactic Notation "liInst" hyp(H) open_constr(c) :=
