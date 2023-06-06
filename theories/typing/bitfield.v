@@ -96,54 +96,52 @@ Section programs.
 
   (* int ↔ bitfield_raw *)
 
-  Lemma subsume_val_int_bitfield_raw T it v n bv :
+  Lemma subsume_val_int_bitfield_raw it v n bv T :
     (⌜n = bv⌝ ∗ T) ⊢ subsume (v ◁ᵥ n @ int it) (v ◁ᵥ bv @ bitfield_raw it) T.
   Proof.
     by iIntros "[-> $] ?".
   Qed.
-  Global Instance subsume_val_int_bitfield_raw_inst it v n bv :
-    Subsume _ _ :=
-    λ T, i2p (subsume_val_int_bitfield_raw T it v n bv).
+  Definition subsume_val_int_bitfield_raw_inst := [instance subsume_val_int_bitfield_raw].
+  Global Existing Instance subsume_val_int_bitfield_raw_inst.
 
-  Lemma subsume_val_bitfield_raw_int T it v n bv :
+  Lemma subsume_val_bitfield_raw_int it v n bv T :
     (⌜bv = n⌝ ∗ T) ⊢ subsume (v ◁ᵥ bv @ bitfield_raw it) (v ◁ᵥ n @ int it) T.
   Proof.
     by iIntros "[-> $] ?".
   Qed.
-  Global Instance subsume_val_bitfield_raw_int_inst it v n bv :
-    Subsume _ _ :=
-    λ T, i2p (subsume_val_bitfield_raw_int T it v n bv).
+  Definition subsume_val_bitfield_raw_int_inst := [instance subsume_val_bitfield_raw_int].
+  Global Existing Instance subsume_val_bitfield_raw_int_inst.
 
   (* typing rules for bitfield_raw *)
 
-  Lemma type_arithop_bitfield_raw it v1 bv1 v2 bv2 T bv op:
-    int_arithop_result it bv1 bv2 op = Some bv →
+  Lemma type_arithop_bitfield_raw bv1 bv2 op bv it v1 v2
+    (Hop : int_arithop_result it bv1 bv2 op = Some bv) T:
     (⌜bv1 ∈ it⌝ -∗ ⌜bv2 ∈ it⌝ -∗ ⌜int_arithop_sidecond it bv1 bv2 bv op⌝ ∗
       (tactic_hint (normalize_bitfield bv) (λ norm, T (i2v norm it) (norm @ bitfield_raw it))))
     ⊢ typed_bin_op v1 (v1 ◁ᵥ bv1 @ bitfield_raw it) v2 (v2 ◁ᵥ bv2 @ bitfield_raw it) op (IntOp it) (IntOp it) T.
   Proof.
-    iIntros "%Hop HT Hv1 Hv2". unfold tactic_hint, normalize_bitfield.
+    iIntros "HT Hv1 Hv2". unfold tactic_hint, normalize_bitfield.
     iApply type_val_expr_mono_strong.
     iApply (type_arithop_int_int with "[HT] Hv1 Hv2") => //.
     iIntros "Hbv1 Hbv2".
     iDestruct ("HT" with "Hbv1 Hbv2") as "[% ?]".
     iSplitR => //. iExists _. iFrame. unfold bitfield_raw; simpl_type. iIntros "$".
   Qed.
-  Global Program Instance type_and_bitfield_raw_inst it v1 bv1 v2 bv2:
-    TypedBinOp v1 _ v2 _ AndOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_bitfield_raw it v1 bv1 v2 bv2 T (Z.land bv1 bv2) _ _).
-  Next Obligation. done. Qed.
-  Global Program Instance type_or_bitfield_raw_inst it v1 bv1 v2 bv2:
-    TypedBinOp v1 _ v2 _ OrOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_bitfield_raw it v1 bv1 v2 bv2 T (Z.lor bv1 bv2) _ _).
-  Next Obligation. done. Qed.
-  Global Program Instance type_xor_bitfield_raw_inst it v1 bv1 v2 bv2:
-    TypedBinOp v1 _ v2 _ XorOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_bitfield_raw it v1 bv1 v2 bv2 T (Z.lxor bv1 bv2) _ _).
-  Next Obligation. done. Qed.
-  Global Program Instance type_shl_bitfield_raw_inst it v1 bv1 v2 bv2:
-    TypedBinOp v1 _ v2 _ ShlOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_bitfield_raw it v1 bv1 v2 bv2 T (bv1 ≪ bv2) _ _).
-  Next Obligation. done. Qed.
-  Global Program Instance type_shr_bitfield_raw_inst it v1 bv1 v2 bv2:
-    TypedBinOp v1 _ v2 _ ShrOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_bitfield_raw it v1 bv1 v2 bv2 T (bv1 ≫ bv2) _ _).
-  Next Obligation. done. Qed.
+  Definition type_and_bitfield_raw_inst bv1 bv2 :=
+    [instance type_arithop_bitfield_raw bv1 bv2 AndOp (Z.land bv1 bv2)].
+  Global Existing Instance type_and_bitfield_raw_inst.
+  Definition type_or_bitfield_raw_inst bv1 bv2 :=
+    [instance type_arithop_bitfield_raw bv1 bv2 OrOp (Z.lor bv1 bv2)].
+  Global Existing Instance type_or_bitfield_raw_inst.
+  Definition type_xor_bitfield_raw_inst bv1 bv2 :=
+    [instance type_arithop_bitfield_raw bv1 bv2 XorOp (Z.lxor bv1 bv2)].
+  Global Existing Instance type_xor_bitfield_raw_inst.
+  Definition type_shl_bitfield_raw_inst bv1 bv2 :=
+    [instance type_arithop_bitfield_raw bv1 bv2 ShlOp (bv1 ≪ bv2)].
+  Global Existing Instance type_shl_bitfield_raw_inst.
+  Definition type_shr_bitfield_raw_inst bv1 bv2 :=
+    [instance type_arithop_bitfield_raw bv1 bv2 ShrOp (bv1 ≫ bv2)].
+  Global Existing Instance type_shr_bitfield_raw_inst.
 
   Lemma type_not_bitfield_raw bv it v T:
     let bv' := if it_signed it then Z.lnot bv else Z_lunot (bits_per_int it) bv in
@@ -157,48 +155,45 @@ Section programs.
     iDestruct ("HT" with "Hbv") as "?".
     iExists _. iFrame. unfold bitfield_raw; simpl_type. iIntros "$".
   Qed.
-  Global Instance type_not_bitfield_raw_inst bv it v:
-    TypedUnOp v _ NotIntOp (IntOp it) :=
-    λ T, i2p (type_not_bitfield_raw bv it v T).
+  Definition type_not_bitfield_raw_inst := [instance type_not_bitfield_raw].
+  Global Existing Instance type_not_bitfield_raw_inst.
 
-  Lemma type_relop_bitfield_raw it v1 bv1 v2 bv2 T b op :
-    match op with
-    | EqOp rit => Some (bool_decide (bv1 = bv2), rit)
-    | NeOp rit => Some (bool_decide (bv1 ≠ bv2), rit)
-    | LtOp rit => Some (bool_decide (bv1 < bv2), rit)
-    | GtOp rit => Some (bool_decide (bv1 > bv2), rit)
-    | LeOp rit => Some (bool_decide (bv1 <= bv2), rit)
-    | GeOp rit => Some (bool_decide (bv1 >= bv2), rit)
-    | _ => None
-    end = Some (b, i32) →
+  Lemma type_relop_bitfield_raw bv1 bv2 op b it v1 v2
+    (Hop : match op with
+           | EqOp rit => Some (bool_decide (bv1 = bv2), rit)
+           | NeOp rit => Some (bool_decide (bv1 ≠ bv2), rit)
+           | LtOp rit => Some (bool_decide (bv1 < bv2), rit)
+           | GtOp rit => Some (bool_decide (bv1 > bv2), rit)
+           | LeOp rit => Some (bool_decide (bv1 <= bv2), rit)
+           | GeOp rit => Some (bool_decide (bv1 >= bv2), rit)
+           | _ => None
+           end = Some (b, i32)) T :
     (⌜bv1 ∈ it⌝ -∗ ⌜bv2 ∈ it⌝ -∗ T (i2v (bool_to_Z b) i32) (b @ boolean i32))
     ⊢ typed_bin_op v1 (v1 ◁ᵥ bv1 @ bitfield_raw it) v2 (v2 ◁ᵥ bv2 @ bitfield_raw it) op (IntOp it) (IntOp it) T.
   Proof.
-    iIntros "%Hop HT Hv1 Hv2".
+    iIntros "HT Hv1 Hv2".
     iApply type_val_expr_mono_strong.
     iApply (type_relop_int_int with "[HT] Hv1 Hv2") => //.
     iIntros "Hbv1 Hbv2".
     iDestruct ("HT" with "Hbv1 Hbv2") as "?".
     iExists _. iFrame. unfold bitfield_raw; simpl_type. iIntros "$".
   Qed.
-  Global Program Instance type_eq_bitfield_raw_inst it v1 bv1 v2 bv2:
-    TypedBinOp v1 _ v2 _ (EqOp i32) (IntOp it) (IntOp it) :=
-      λ T, i2p (type_relop_bitfield_raw it v1 bv1 v2 bv2 T (bool_decide (bv1 = bv2)) _ _).
-  Next Obligation. done. Qed.
-  Global Program Instance type_ne_bitfield_raw_inst it v1 bv1 v2 bv2:
-    TypedBinOp v1 _ v2 _ (NeOp i32) (IntOp it) (IntOp it) :=
-      λ T, i2p (type_relop_bitfield_raw it v1 bv1 v2 bv2 T (bool_decide (bv1 ≠ bv2)) _ _).
-  Next Obligation. done. Qed.
+  Definition type_eq_bitfield_raw_inst bv1 bv2 :=
+    [instance type_relop_bitfield_raw bv1 bv2 (EqOp i32) (bool_decide (bv1 = bv2))].
+  Global Existing Instance type_eq_bitfield_raw_inst.
+  Definition type_ne_bitfield_raw_inst bv1 bv2 :=
+    [instance type_relop_bitfield_raw bv1 bv2 (NeOp i32) (bool_decide (bv1 ≠ bv2))].
+  Global Existing Instance type_ne_bitfield_raw_inst.
 
   (* bitfield_raw with int *)
 
-  Lemma type_arithop_bitfield_raw_int it v1 bv v2 n T bv' op:
-    int_arithop_result it bv n op = Some bv' →
+  Lemma type_arithop_bitfield_raw_int bv n op bv' it v1 v2
+    (Hop : int_arithop_result it bv n op = Some bv') T:
     (⌜bv ∈ it⌝ -∗ ⌜n ∈ it⌝ -∗ ⌜int_arithop_sidecond it bv n bv' op⌝ ∗
       (tactic_hint (normalize_bitfield bv') (λ norm, T (i2v norm it) (norm @ bitfield_raw it))))
      ⊢ typed_bin_op v1 (v1 ◁ᵥ bv @ bitfield_raw it) v2 (v2 ◁ᵥ n @ int it) op (IntOp it) (IntOp it) T.
   Proof.
-    iIntros "%Hop HT Hv1 Hv2". unfold tactic_hint, normalize_bitfield.
+    iIntros "HT Hv1 Hv2". unfold tactic_hint, normalize_bitfield.
     iApply type_val_expr_mono_strong.
     iApply (type_arithop_int_int with "[HT] Hv1 Hv2") => //.
     iIntros "Hbv1 Hbv2".
@@ -206,20 +201,20 @@ Section programs.
     iSplitR => //.
     iExists _. iFrame. unfold bitfield_raw; simpl_type. iIntros "$".
   Qed.
-  Global Program Instance type_shl_bitfield_raw_int_inst it v1 bv v2 n :
-    TypedBinOp v1 _ v2 _ ShlOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_bitfield_raw_int it v1 bv v2 n T (bv ≪ n) _ _).
-  Next Obligation. done. Qed.
-  Global Program Instance type_shr_bitfield_raw_int_inst it v1 bv v2 n :
-    TypedBinOp v1 _ v2 _ ShrOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_bitfield_raw_int it v1 bv v2 n T (bv ≫ n) _ _).
-  Next Obligation. done. Qed.
+  Definition type_shl_bitfield_raw_int_inst bv n :=
+    [instance type_arithop_bitfield_raw_int bv n ShlOp (bv ≪ n)].
+  Global Existing Instance type_shl_bitfield_raw_int_inst.
+  Definition type_shr_bitfield_raw_int_inst bv n :=
+    [instance type_arithop_bitfield_raw_int bv n ShrOp (bv ≫ n)].
+  Global Existing Instance type_shr_bitfield_raw_int_inst.
 
-  Lemma type_arithop_int_bitfield_raw it v1 n v2 bv T bv' op:
-    int_arithop_result it n bv op = Some bv' →
+  Lemma type_arithop_int_bitfield_raw n bv op bv' it v1 v2
+    (Hop : int_arithop_result it n bv op = Some bv') T:
     (⌜n ∈ it⌝ -∗ ⌜bv ∈ it⌝ -∗ ⌜int_arithop_sidecond it n bv bv' op⌝ ∗
       (tactic_hint (normalize_bitfield bv') (λ norm, T (i2v norm it) (norm @ bitfield_raw it))))
     ⊢ typed_bin_op v1 (v1 ◁ᵥ n @ int it) v2 (v2 ◁ᵥ bv @ bitfield_raw it) op (IntOp it) (IntOp it) T.
   Proof.
-    iIntros "%Hop HT Hv1 Hv2". unfold tactic_hint, normalize_bitfield.
+    iIntros "HT Hv1 Hv2". unfold tactic_hint, normalize_bitfield.
     iApply type_val_expr_mono_strong.
     iApply (type_arithop_int_int with "[HT] Hv1 Hv2") => //.
     iIntros "Hbv1 Hbv2".
@@ -227,9 +222,9 @@ Section programs.
     iSplitR => //.
     iExists _. iFrame. unfold bitfield_raw; simpl_type. iIntros "$".
   Qed.
-  Global Program Instance type_and_int_bitfield_raw_inst it v1 n v2 bv :
-    TypedBinOp v1 _ v2 _ AndOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_int_bitfield_raw it v1 n v2 bv T (Z.land n bv) _ _).
-  Next Obligation. done. Qed.
+  Definition type_and_int_bitfield_raw_inst n bv :=
+    [instance type_arithop_int_bitfield_raw n bv AndOp (Z.land n bv)].
+  Global Existing Instance type_and_int_bitfield_raw_inst.
 
   Lemma type_bitfield_raw_is_false it v1 v2 bv T :
     (∃ a b, ⌜bv = bf_cons a 1 (bool_to_Z b) bf_nil⌝ ∗ ⌜0 ≤ a⌝ ∗ T (i2v (bool_to_Z (negb b)) i32) ((bool_to_Z (negb b) @ int i32)))
@@ -246,9 +241,8 @@ Section programs.
       by destruct b. }
     iExists _. iFrame. unfold boolean, int; simpl_type. iIntros "(%n&%&%Heq)". move: Heq => /= ?. subst n. done.
   Qed.
-  Global Instance type_bitfield_raw_is_false_inst it v1 v2 bv :
-    TypedBinOp v1 _ v2 _ (EqOp i32) (IntOp it) (IntOp it) :=
-      λ T, i2p (type_bitfield_raw_is_false it v1 v2 bv T).
+  Definition type_bitfield_raw_is_false_inst := [instance type_bitfield_raw_is_false].
+  Global Existing Instance type_bitfield_raw_is_false_inst.
 
   Lemma type_bitfield_raw_is_true it v1 v2 bv T :
     (∃ a b, ⌜bv = bf_cons a 1 (bool_to_Z b) bf_nil⌝ ∗ ⌜0 ≤ a⌝ ∗ T (i2v (bool_to_Z b) i32) ((bool_to_Z b) @ int i32))
@@ -266,18 +260,16 @@ Section programs.
     iExists _. iFrame. unfold boolean, int; simpl_type.
     iIntros "(%n&%&%Heq)". move: Heq => /= ?. subst n. done.
   Qed.
-  Global Instance type_bitfield_raw_is_true_inst it v1 v2 bv :
-    TypedBinOp v1 _ v2 _ (NeOp i32) (IntOp it) (IntOp it) :=
-      λ T, i2p (type_bitfield_raw_is_true it v1 v2 bv T).
+  Definition type_bitfield_raw_is_true_inst := [instance type_bitfield_raw_is_true].
+  Global Existing Instance type_bitfield_raw_is_true_inst.
 
   Lemma type_if_bitfield_raw it n v T1 T2:
     destruct_hint (DHintDecide (n ≠ 0)) (DestructHintIfInt n)
       (if decide (n ≠ 0) then T1 else T2)
     ⊢ typed_if (IntOp it) v (v ◁ᵥ n @ bitfield_raw it) T1 T2.
   Proof. unfold bitfield_raw; simpl_type. apply type_if_int. Qed.
-  Global Instance type_if_bitfield_inst n v it :
-    TypedIf (IntOp it) v (v ◁ᵥ n @ bitfield_raw it)%I :=
-    λ T1 T2, i2p (type_if_bitfield_raw it n v T1 T2).
+  Definition type_if_bitfield_raw_inst := [instance type_if_bitfield_raw].
+  Global Existing Instance type_if_bitfield_raw_inst.
 
   (* typing rules for bitfield: unfold to bitfield_raw *)
 
@@ -285,9 +277,8 @@ Section programs.
     (l ◁ₗ{β} bitfield_repr bv @ bitfield_raw bitfield_it -∗ T)
     ⊢ simplify_hyp (l ◁ₗ{β} bv @ bitfield R) T.
   Proof. done. Qed.
-  Global Instance simplify_hyp_place_bitfield_inst l β R `{BitfieldDesc R} bv :
-    SimplifyHyp (l ◁ₗ{β} bv @ bitfield R)%I (Some 0%N) :=
-    λ T, i2p (simplify_hyp_place_bitfield l β R bv T).
+  Definition simplify_hyp_place_bitfield_inst := [instance simplify_hyp_place_bitfield with 0%N].
+  Global Existing Instance simplify_hyp_place_bitfield_inst.
 
   Lemma simplify_goal_place_bitfield l β R `{BitfieldDesc R} bv T :
     T (l ◁ₗ{β} bitfield_repr bv @ bitfield_raw bitfield_it)
@@ -295,17 +286,15 @@ Section programs.
   Proof.
     iIntros "HT". iExists _. iFrame. by iIntros "?".
   Qed.
-  Global Instance simplify_goal_place_bitfield_inst l β R `{BitfieldDesc R} bv :
-    SimplifyGoal (l ◁ₗ{β} bv @ bitfield R)%I (Some 0%N) :=
-    λ T, i2p (simplify_goal_place_bitfield l β R bv T).
+  Definition simplify_goal_place_bitfield_inst := [instance simplify_goal_place_bitfield with 0%N].
+  Global Existing Instance simplify_goal_place_bitfield_inst.
 
   Lemma simplify_hyp_val_bitfield v R `{BitfieldDesc R} bv T :
     (v ◁ᵥ bitfield_repr bv @ bitfield_raw bitfield_it -∗ T)
     ⊢ simplify_hyp (v ◁ᵥ bv @ bitfield R) T.
   Proof. done. Qed.
-  Global Instance simplify_hyp_val_bitfield_inst v R `{BitfieldDesc R} bv :
-    SimplifyHyp _ (Some 0%N) :=
-    λ T, i2p (simplify_hyp_val_bitfield v R bv T).
+  Definition simplify_hyp_val_bitfield_inst := [instance simplify_hyp_val_bitfield with 0%N].
+  Global Existing Instance simplify_hyp_val_bitfield_inst.
 
   Lemma simplify_goal_val_bitfield v R `{BitfieldDesc R} bv T :
     T (v ◁ᵥ bitfield_repr bv @ bitfield_raw bitfield_it)
@@ -313,8 +302,7 @@ Section programs.
   Proof.
     iIntros "HT". iExists _. iFrame. by iIntros "?".
   Qed.
-  Global Instance simplify_goal_val_bitfield_inst v R `{BitfieldDesc R} bv :
-    SimplifyGoal _ (Some 0%N) :=
-    λ T, i2p (simplify_goal_val_bitfield v R bv T).
+  Definition simplify_goal_val_bitfield_inst := [instance simplify_goal_val_bitfield with 0%N].
+  Global Existing Instance simplify_goal_val_bitfield_inst.
 
 End programs.

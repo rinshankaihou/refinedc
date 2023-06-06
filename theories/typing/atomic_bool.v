@@ -68,17 +68,15 @@ Section programs.
     iDestruct ("Hsub" with "Hl") as "[? [? $]]".
     iExists _. by iFrame.
   Qed.
-  Global Instance subsume_atomic_bool_own_int_inst l n it PT PF:
-    Subsume (l ◁ₗ n @ int it)%I (l ◁ₗ atomic_bool it PT PF) :=
-    λ T, i2p (subsume_atomic_bool_own_int l n it PT PF T).
+  Definition subsume_atomic_bool_own_int_inst := [instance subsume_atomic_bool_own_int].
+  Global Existing Instance subsume_atomic_bool_own_int_inst.
 
   Lemma subsume_atomic_bool_own_bool l (b : bool) it PT PF T:
     (if b then PT else PF) ∗ T
     ⊢ subsume (l ◁ₗ b @ boolean it) (l ◁ₗ atomic_bool it PT PF) T.
   Proof. iIntros "[? $] Hl". iExists _. by iFrame. Qed.
-  Global Instance subsume_atomic_bool_own_bool_inst l b it PT PF:
-    Subsume (l ◁ₗ b @ boolean it)%I (l ◁ₗ atomic_bool it PT PF) :=
-    λ T, i2p (subsume_atomic_bool_own_bool l b it PT PF T).
+  Definition subsume_atomic_bool_own_bool_inst := [instance subsume_atomic_bool_own_bool].
+  Global Existing Instance subsume_atomic_bool_own_bool_inst.
 
   Lemma type_read_atomic_bool l β it ot PT PF mc T:
     (⌜match ot with | BoolOp => it = u8 | IntOp it' => it = it' | _ => False end⌝ ∗
@@ -109,9 +107,8 @@ Section programs.
       iSplitL "Hl Hif". { iExists _. by iFrame. }
       iIntros "_ _ _ !>". iExists _, _. iFrame "∗Hv". by iSplit.
   Qed.
-  Global Instance type_read_atomic_bool_inst l β it ot mc PT PF:
-    TypedReadEnd true ⊤ l β (atomic_bool it PT PF) ot mc | 10 :=
-    λ T, i2p (type_read_atomic_bool l β it ot PT PF mc T).
+  Definition type_read_atomic_bool_inst := [instance type_read_atomic_bool].
+  Global Existing Instance type_read_atomic_bool_inst | 10.
 
   Lemma type_write_atomic_bool l β it ot PT PF v ty T:
     (⌜match ot with | BoolOp => it = u8 | IntOp it' => it = it' | _ => False end⌝ ∗ ∃ b,
@@ -141,9 +138,8 @@ Section programs.
       iSplitL "Hif_new Hl". { iExists _. by iFrame. }
       iIntros "_ _ !>". iExists _. iFrame "HT". by iSplit.
   Qed.
-  Global Instance type_write_atomic_bool_inst l β it ot PT PF v ty:
-    TypedWriteEnd true ⊤ ot v ty l β (atomic_bool it PT PF) | 10 :=
-    λ T, i2p (type_write_atomic_bool l β it ot PT PF v ty T).
+  Definition type_write_atomic_bool_inst := [instance type_write_atomic_bool].
+  Global Existing Instance type_write_atomic_bool_inst | 10.
 
   Lemma type_cas_atomic_bool (l : loc) β ot it PT PF lexp Pexp vnew Pnew T:
     (⌜match ot with | BoolOp => it = u8 | IntOp it' => it = it' | _ => False end⌝ ∗ ∃ bexp bnew,
@@ -199,9 +195,8 @@ Section programs.
         * iApply ("HT" with "[]"); first by iSplit. by destruct b, bexp.
         * by iExists _.
   Qed.
-  Global Instance type_cas_atomic_bool_inst (l : loc) β it ot PT PF (lexp : loc) Pexp vnew Pnew:
-    TypedCas ot l (l ◁ₗ{β} (atomic_bool it PT PF))%I lexp Pexp vnew Pnew :=
-    λ T, i2p (type_cas_atomic_bool l β ot it PT PF lexp Pexp vnew Pnew T).
+  Definition type_cas_atomic_bool_inst := [instance type_cas_atomic_bool].
+  Global Existing Instance type_cas_atomic_bool_inst.
 
 End programs.
 

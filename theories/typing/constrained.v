@@ -43,36 +43,36 @@ Section own_constrained.
   Proof.
     iIntros "HT [Hty HP]". iDestruct (i2p_proof with "(HT HP)") as "HT". by iApply "HT".
   Qed.
-  Global Instance copy_as_own_constrained_inst l β P `{!OwnConstraint P} ty {HC: CopyAs l β ty}:
-    CopyAs l β (own_constrained P ty) := λ T, i2p (copy_as_own_constrained l β P ty T).
+  Definition copy_as_own_constrained_inst := [instance copy_as_own_constrained].
+  Global Existing Instance copy_as_own_constrained_inst.
 
-  Lemma simplify_hyp_place_own_constrained P l β ty T `{!OwnConstraint P}:
+  Lemma simplify_hyp_place_own_constrained P l β ty `{!OwnConstraint P} T:
     (P β -∗ l ◁ₗ{β} ty -∗ T) ⊢ simplify_hyp (l◁ₗ{β} own_constrained P ty) T.
   Proof. iIntros "HT [Hl HP]". by iApply ("HT" with "HP"). Qed.
-  Global Instance simplify_hyp_place_own_constrained_inst P l β ty `{!OwnConstraint P}:
-    SimplifyHyp _ (Some 0%N) :=
-    λ T, i2p (simplify_hyp_place_own_constrained P l β ty T).
+  Definition simplify_hyp_place_own_constrained_inst :=
+    [instance simplify_hyp_place_own_constrained with 0%N].
+  Global Existing Instance simplify_hyp_place_own_constrained_inst.
 
-  Lemma simplify_goal_place_own_constrained P l β ty T `{!OwnConstraint P}:
+  Lemma simplify_goal_place_own_constrained P l β ty `{!OwnConstraint P} T:
     T (l ◁ₗ{β} ty ∗ P β) ⊢ simplify_goal (l◁ₗ{β} own_constrained P ty) T.
   Proof. iIntros "HT". iExists _. iFrame. iIntros "[$ $]". Qed.
-  Global Instance simplify_goal_place_own_constrained_inst P l β ty `{!OwnConstraint P}:
-    SimplifyGoal _ (Some 0%N) :=
-    λ T, i2p (simplify_goal_place_own_constrained P l β ty T).
+  Definition simplify_goal_place_own_constrained_inst :=
+    [instance simplify_goal_place_own_constrained with 0%N].
+  Global Existing Instance simplify_goal_place_own_constrained_inst.
 
-  Lemma simplify_hyp_val_own_constrained P v ty T `{!OwnConstraint P}:
+  Lemma simplify_hyp_val_own_constrained P v ty `{!OwnConstraint P} T:
     (P Own -∗ v ◁ᵥ ty -∗ T) ⊢ simplify_hyp (v ◁ᵥ own_constrained P ty) T.
   Proof. iIntros "HT [Hl HP]". by iApply ("HT" with "HP"). Qed.
-  Global Instance simplify_hyp_val_own_constrained_inst P v ty `{!OwnConstraint P}:
-    SimplifyHyp _ (Some 0%N) :=
-    λ T, i2p (simplify_hyp_val_own_constrained P v ty T).
+  Definition simplify_hyp_val_own_constrained_inst :=
+    [instance simplify_hyp_val_own_constrained with 0%N].
+  Global Existing Instance simplify_hyp_val_own_constrained_inst.
 
-  Lemma simplify_goal_val_own_constrained P v ty T `{!OwnConstraint P}:
+  Lemma simplify_goal_val_own_constrained P v ty `{!OwnConstraint P} T:
     T (v ◁ᵥ ty ∗ P Own) ⊢ simplify_goal (v ◁ᵥ own_constrained P ty) T.
   Proof. iIntros "HT". iExists _. iFrame. iIntros "[$ $]". Qed.
-  Global Instance simplify_goal_val_own_constrained_inst P v ty `{!OwnConstraint P}:
-    SimplifyGoal _ (Some 0%N) :=
-    λ T, i2p (simplify_goal_val_own_constrained P v ty T).
+  Definition simplify_goal_val_own_constrained_inst :=
+    [instance simplify_goal_val_own_constrained with 0%N].
+  Global Existing Instance simplify_goal_val_own_constrained_inst.
 
   Global Program Instance own_constrained_optional ty P optty ot1 ot2 `{!OwnConstraint P} `{!Optionable ty optty ot1 ot2} : Optionable (own_constrained P ty) optty ot1 ot2 := {|
     opt_pre v1 v2 := opt_pre ty v1 v2
@@ -95,16 +95,16 @@ Section own_constrained.
   Lemma simplify_hyp_place_tyown_constrained l β ty T:
     (l ◁ₗ{β} ty -∗ T) ⊢ simplify_hyp (tyown_constraint l ty β) T.
   Proof. iIntros "HT Hl". by iApply "HT". Qed.
-  Global Instance simplify_hyp_place_tyown_constrained_inst l β ty:
-    SimplifyHyp (tyown_constraint l ty β) (Some 0%N) :=
-    λ T, i2p (simplify_hyp_place_tyown_constrained l β ty T).
+  Definition simplify_hyp_place_tyown_constrained_inst :=
+    [instance simplify_hyp_place_tyown_constrained with 0%N].
+  Global Existing Instance simplify_hyp_place_tyown_constrained_inst.
 
   Lemma simplify_goal_place_tyown_constrained l β ty T:
     T (l ◁ₗ{β} ty) ⊢ simplify_goal (tyown_constraint l ty β) T.
   Proof. iIntros "HT". iExists _. iFrame. iIntros "$". Qed.
-  Global Instance simplify_goal_place_tyown_constrained_inst l β ty:
-    SimplifyGoal (tyown_constraint l ty β) (Some 0%N) :=
-    λ T, i2p (simplify_goal_place_tyown_constrained l β ty T).
+  Definition simplify_goal_place_tyown_constrained_inst :=
+    [instance simplify_goal_place_tyown_constrained with 0%N].
+  Global Existing Instance simplify_goal_place_tyown_constrained_inst.
 End own_constrained.
 Notation "own_constrained< P , ty >" := (own_constrained P ty)
   (only printing, format "'own_constrained<' P ,  ty '>'") : printing_sugar.
@@ -123,16 +123,16 @@ Section constrained.
   Lemma simplify_hyp_place_persistent_constrained P β T:
     (P -∗ T) ⊢ simplify_hyp (persistent_own_constraint P β) T.
   Proof. iIntros "HT #Hl". by iApply "HT". Qed.
-  Global Instance simplify_hyp_place_persistent_constrained_inst P β:
-    SimplifyHyp (persistent_own_constraint P β) (Some 0%N) :=
-    λ T, i2p (simplify_hyp_place_persistent_constrained P β T).
+  Definition simplify_hyp_place_persistent_constrained_inst :=
+    [instance simplify_hyp_place_persistent_constrained with 0%N].
+  Global Existing Instance simplify_hyp_place_persistent_constrained_inst.
 
   Lemma simplify_goal_place_persistent_constrained P `{!Persistent P} β T:
     T P ⊢ simplify_goal (persistent_own_constraint P β) T.
   Proof. iIntros "HT". iExists _. iFrame. iIntros "#$". Qed.
-  Global Instance simplify_goal_place_persistent_constrained_inst P `{!Persistent P} β:
-    SimplifyGoal (persistent_own_constraint P β) (Some 0%N) :=
-    λ T, i2p (simplify_goal_place_persistent_constrained P β T).
+  Definition simplify_goal_place_persistent_constrained_inst :=
+    [instance simplify_goal_place_persistent_constrained with 0%N].
+  Global Existing Instance simplify_goal_place_persistent_constrained_inst.
 End constrained.
 
 Global Typeclasses Opaque persistent_own_constraint.
@@ -155,16 +155,16 @@ Section nonshr_constrained.
   Lemma simplify_hyp_place_nonshr_constrained P T:
     (P -∗ T) ⊢ simplify_hyp (nonshr_constraint P Own) T.
   Proof. iIntros "HT Hl". by iApply "HT". Qed.
-  Global Instance simplify_hyp_place_nonshr_constrained_inst P:
-    SimplifyHyp (nonshr_constraint P Own) (Some 0%N) :=
-    λ T, i2p (simplify_hyp_place_nonshr_constrained P T).
+  Definition simplify_hyp_place_nonshr_constrained_inst :=
+    [instance simplify_hyp_place_nonshr_constrained with 0%N].
+  Global Existing Instance simplify_hyp_place_nonshr_constrained_inst.
 
   Lemma simplify_goal_place_nonshr_constrained P T:
     T P ⊢ simplify_goal (nonshr_constraint P Own) T.
   Proof. iIntros "HT". iExists _. iFrame. iIntros "$". Qed.
-  Global Instance simplify_goal_place_nonshr_constrained_inst P:
-    SimplifyGoal (nonshr_constraint P Own) (Some 0%N) :=
-    λ T, i2p (simplify_goal_place_nonshr_constrained P T).
+  Definition simplify_goal_place_nonshr_constrained_inst :=
+    [instance simplify_goal_place_nonshr_constrained with 0%N].
+  Global Existing Instance simplify_goal_place_nonshr_constrained_inst.
 
 End nonshr_constrained.
 Notation "nonshr_constraint< P , β >" := (nonshr_constraint P β)

@@ -11,12 +11,6 @@ used for rewriting based normalization of goals. See also
 [normalize.v]. *)
 Ltac normalize_hook := fail "No normalize_hook provided!".
 
-(** The [sidecond_hook] and [unsolved_sidecond_hook] hooks that get
-called for all sideconditions resp. all sideconditions that are not
-automatically solved using the default solver. *)
-Ltac sidecond_hook := idtac.
-Ltac unsolved_sidecond_hook := idtac.
-
 (** There can be some goals where one should not call injection on an
 hypothesis that is introduced. The [check_injection_hook] hook is called
 before injection and allows the client to customize this. *)
@@ -45,6 +39,12 @@ Ltac unfold_instantiated_evar_hook H := idtac.
 (** [solve_protected_eq_hook] can be used to unfold definitions before
 solving equalities for instantiating evars. *)
 Ltac solve_protected_eq_hook := idtac.
+
+(** [generate_i2p_instance_to_tc_hook] is used to infer the
+typeclasses from the lemmas for the [instance] notation for declaring
+typeclass instances. *)
+Ltac generate_i2p_instance_to_tc_hook arg c :=
+  fail "No generate_i2p_instance_to_tc_hook provided.".
 
 (** [liUnfoldLetGoal_hook] allows unfolding custom definitions when
 unfolding let-bindings in the goal. *)

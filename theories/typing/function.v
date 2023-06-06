@@ -115,7 +115,7 @@ Section function.
     - by iIntros "_".
   Qed.
 
-  Lemma type_call_fnptr l v vl tys T fp:
+  Lemma type_call_fnptr l v vl tys fp T:
     (([∗ list] v;ty∈vl; tys, v ◁ᵥ ty) -∗ ∃ x,
       ([∗ list] v;ty∈vl; (fp x).(fp_atys), v ◁ᵥ ty) ∗
       (fp x).(fp_Pa) ∗ ∀ v x',
@@ -171,17 +171,15 @@ Section function.
       iApply ("HΦ" with "Hty").
       by iApply ("Hr" with "HR").
   Qed.
-  Global Instance type_call_fnptr_inst l v vl fp tys :
-    TypedCall v _ vl tys :=
-    λ T, i2p (type_call_fnptr l v vl tys T fp).
+  Definition type_call_fnptr_inst := [instance type_call_fnptr].
+  Global Existing Instance type_call_fnptr_inst.
 
   Lemma subsume_fnptr v l1 l2 (fnty1 fnty2 : A → fn_params) T:
     ⌜l1 = l2⌝ ∗ ⌜fnty1 = fnty2⌝ ∗ T
     ⊢ subsume (v ◁ᵥ l1 @ function_ptr fnty1) (v ◁ᵥ l2 @ function_ptr fnty2) T.
   Proof. iIntros "(->&->&$) $". Qed.
-  Global Instance subsume_fnptr_inst v l1 l2 (fnty1 fnty2 : A → fn_params):
-    Subsume (v ◁ᵥ l1 @ function_ptr fnty1)%I (v ◁ᵥ l2 @ function_ptr fnty2)%I :=
-    λ T, i2p (subsume_fnptr v l1 l2 fnty1 fnty2 T).
+  Definition subsume_fnptr_inst := [instance subsume_fnptr].
+  Global Existing Instance subsume_fnptr_inst.
 End function.
 Arguments fn_ret_prop _ _ _ /.
 
@@ -228,7 +226,7 @@ Section inline_function.
     by iIntros "_".
   Qed.
 
-  Lemma type_call_inline_fnptr l v vl tys T fn:
+  Lemma type_call_inline_fnptr l v vl tys fn T:
     (⌜Forall2 (λ ty '(_, p), ty.(ty_has_op_type) (UntypedOp p) MCNone) tys (f_args fn)⌝ ∗
       foldr (λ '(v, ty) T lsa, ∀ l, l ◁ₗ ty -∗ T (lsa ++ [l]))
       (λ lsa, foldr (λ ly T lsv, ∀ l, l ◁ₗ uninit ly -∗ T (lsv ++ [l]))
@@ -293,9 +291,8 @@ Section inline_function.
       { left. by rewrite -Hlen1 right_id_L.  }
       by iApply ("HΦ" with "Hv HPr").
   Qed.
-  Global Instance type_call_inline_fnptr_inst l v vl tys fn :
-    TypedCall v _ vl tys :=
-    λ T, i2p (type_call_inline_fnptr l v vl tys T fn).
+  Definition type_call_inline_fnptr_inst := [instance type_call_inline_fnptr].
+  Global Existing Instance type_call_inline_fnptr_inst.
 End inline_function.
 
 Global Typeclasses Opaque inline_function_ptr_type inline_function_ptr.

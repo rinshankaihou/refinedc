@@ -1,6 +1,6 @@
 From iris.proofmode Require Import coq_tactics reduction.
 From lithium Require Export base.
-From lithium Require Import hooks definitions.
+From lithium Require Import hooks definitions syntax.
 Set Default Proof Using "Type".
 
 (** This file contains some tactics for proof state management. *)
@@ -22,6 +22,89 @@ Ltac unshelve_sidecond :=
   | |- SHELVED_SIDECOND ?G => change_no_check G
   | |- _ => shelve
   end.
+
+(** * Generating typeclass instances *)
+(** [generate_i2p_instance print to_tc c] generates an instance for an
+[iProp_to_Prop]-based typeclass from the lemma c. The parameters not
+part of the type class must come last. This tactic tries to solve pure
+[Prop] assumptions via [eq_refl]. [to_tc] is a tactic that converts
+the conclusion of the lemma to the corresponding typeclass and is
+called with [arg]. [print] controls whether to output debug printing.
+*)
+(* TODO: Also use this for the instances in definitions.v *)
+Ltac generate_i2p_instance print to_tc arg c :=
+  let do_print t := tryif print then t else idtac in
+  let do_to_tc c :=
+    match c with
+    (* to_tc must be first to allow overriding of the cases below *)
+    | _ => to_tc arg c
+    | subsume ?x1 ?x2 => constr:(Subsume x1 x2)
+    | subsume_list ?x1 ?x2 ?x3 ?x4 ?x5 => constr:(SubsumeList x1 x2 x3 x4 x5)
+    | find_in_context ?x1 => constr:(FindInContext x1 arg)
+    | simplify_hyp ?x1 => constr:(SimplifyHyp x1 (Some arg))
+    | simplify_goal ?x1 => constr:(SimplifyGoal x1 (Some arg))
+    end in
+  let type_c := type of c in
+  let type_c := eval lazy zeta in type_c in
+  do_print ltac:(idtac "current:" c);
+  do_print ltac:(idtac "type:" type_c);
+  (* Try to find the typeclass *)
+  try (
+    let tc := lazymatch type_c with
+    | (∀ _ _ _ _ _ _ _ _ _ _, _ ⊢ ?Q _ _ _ _ _ _ _ _ _ _) => do_to_tc Q
+    | (∀ _ _ _ _ _ _ _ _ _, _ ⊢ ?Q _ _ _ _ _ _ _ _ _) => do_to_tc Q
+    | (∀ _ _ _ _ _ _ _ _, _ ⊢ ?Q _ _ _ _ _ _ _ _) => do_to_tc Q
+    | (∀ _ _ _ _ _ _ _, _ ⊢ ?Q _ _ _ _ _ _ _) => do_to_tc Q
+    | (∀ _ _ _ _ _ _, _ ⊢ ?Q _ _ _ _ _ _) => do_to_tc Q
+    | (∀ _ _ _ _ _, _ ⊢ ?Q _ _ _ _ _) => do_to_tc Q
+    | (∀ _ _ _ _, _ ⊢ ?Q _ _ _ _) => do_to_tc Q
+    | (∀ _ _ _, _ ⊢ ?Q _ _ _) => do_to_tc Q
+    | (∀ _ _, _ ⊢ ?Q _ _) => do_to_tc Q
+    | (∀ _, _ ⊢ ?Q _) => do_to_tc Q
+    end in
+    do_print ltac:(idtac "found typeclass:" tc);
+    notypeclasses refine (_ : tc));
+  lazymatch type_c with
+  | ∀ (a : ?T), @?P a =>
+      (* Check if there is a sidecondition after the continuation, that we
+         can solve with eq_refl. *)
+      tryif (lazymatch type of T with | Prop => let x := constr:(eq_refl : T) in idtac end) then
+          do_print ltac:(idtac "solve with eq_refl:" T);
+          let x := constr:(eq_refl : T) in
+          let y := eval lazy beta zeta in (c x) in
+          generate_i2p_instance print to_tc arg y
+      else
+          lazymatch type of c with
+          | ∀ a, @?P a =>
+              notypeclasses refine (λ a, _);
+              let y := eval lazy beta zeta in (c a) in
+              generate_i2p_instance print to_tc arg y
+          end
+  | ?P ⊢ ?G =>
+      (* Finish the instance. *)
+      let P := liFromSyntaxTerm P in
+      do_print ltac:(idtac "rule:" P "⊢" G "term:" c);
+      notypeclasses refine (@i2p _ G P c)
+  end.
+
+Notation "'[instance' x ]" :=
+  ltac:(generate_i2p_instance ltac:(fail) ltac:(generate_i2p_instance_to_tc_hook)
+          constr:(tt) constr:(x)) (only parsing).
+Notation "'[instance?' x ]" :=
+  ltac:(generate_i2p_instance ltac:(idtac) ltac:(generate_i2p_instance_to_tc_hook)
+          constr:(tt) constr:(x)) (only parsing).
+Notation "'[instance' x 'with' y ]" :=
+  ltac:(generate_i2p_instance ltac:(fail) ltac:(generate_i2p_instance_to_tc_hook)
+          constr:(y) constr:(x)) (only parsing).
+Notation "'[instance?' x 'with' y ]" :=
+  ltac:(generate_i2p_instance ltac:(idtac) ltac:(generate_i2p_instance_to_tc_hook)
+          constr:(y) constr:(x)) (only parsing).
+Notation "'[instance' x 'as' y ]" :=
+  ltac:(generate_i2p_instance ltac:(fail) ltac:(fun _ _ => y)
+          constr:(tt) constr:(x)) (only parsing).
+Notation "'[instance?' x 'as' y ]" :=
+  ltac:(generate_i2p_instance ltac:(idtac) ltac:(fun _ _ => y)
+          constr:(tt) constr:(x)) (only parsing).
 
 (** * Optimization: Introduce let-bindings for environment *)
 Notation "'HIDDEN'" := (Envs _ _ _) (only printing).

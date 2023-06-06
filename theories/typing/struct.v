@@ -257,9 +257,8 @@ Section struct.
     iApply ("IH" with "[] H Hs"). 1: naive_solver.
     iIntros "H". iApply "Hc". by iFrame.
   Qed.
-  Global Instance struct_mono_inst sl tys1 tys2 l β:
-    Subsume _ _ :=
-    λ T, i2p (struct_mono sl tys1 tys2 l β T).
+  Definition struct_mono_inst := [instance struct_mono].
+  Global Existing Instance struct_mono_inst.
 
   Lemma struct_mono_val sl tys1 tys2 v T:
     ⌜length tys1 = length tys2⌝ ∗ foldr (λ e T, ∀ v,
@@ -280,11 +279,10 @@ Section struct.
       iApply ("IH" with "[//] [//] HT Hm2").
     - iDestruct "Hm" as "[$ Hm2]". iApply ("IH" with "[//] [//] H Hm2").
   Qed.
-  Global Instance struct_mono_val_inst sl tys1 tys2 v:
-    Subsume _ _ :=
-    λ T, i2p (struct_mono_val sl tys1 tys2 v T).
+  Definition struct_mono_val_inst := [instance struct_mono_val].
+  Global Existing Instance struct_mono_val_inst.
 
-  Lemma type_place_struct K β1 T tys sl n l :
+  Lemma type_place_struct K β1 tys sl n l T :
     (∃ i ty1, ⌜field_index_of sl.(sl_members) n = Some i⌝ ∗
     ⌜tys !! i = Some ty1⌝ ∗
     typed_place K (l at{sl}ₗ n) β1 ty1 (λ l2 β ty2 typ, T l2 β ty2 (λ t, struct sl (<[i := (typ t)]> tys))))
@@ -304,9 +302,8 @@ Section struct.
     iDestruct ("Hs" with "Hty") as "Hs". iSplitR => //. iSplitR; first by rewrite insert_length.
     iFrame "Hb". erewrite pad_struct_insert_field => //. have := field_index_of_leq _ _ _ Hi. lia.
   Qed.
-  Global Instance type_place_struct_inst K β1 tys sl n l :
-    TypedPlace (GetMemberPCtx sl n :: K) l β1 (struct sl tys) | 10 :=
-    λ T, i2p (type_place_struct K β1 T tys sl n l).
+  Definition type_place_struct_inst := [instance type_place_struct].
+  Global Existing Instance type_place_struct_inst | 10.
 
   (* Ail fills in the missing elements in fs, so we can assume that
   the lookup will always succeed. This is nice, because otherwise we
@@ -389,16 +386,14 @@ Section struct.
     (l ◁ₗ{β} (struct s (uninit <$> omap (λ '(n, ly), const ly <$> n) s.(sl_members))) -∗ T)
     ⊢ simplify_hyp (l ◁ₗ{β} uninit s) T.
   Proof. iIntros "HT Hl". rewrite uninit_struct_equiv. by iApply "HT". Qed.
-  Global Instance uninit_struct_simpl_hyp_inst l β (s : struct_layout):
-    SimplifyHyp _ (Some 0%N) :=
-    λ T, i2p (uninit_struct_simpl_hyp l β s T).
+  Definition uninit_struct_simpl_hyp_inst := [instance uninit_struct_simpl_hyp with 0%N].
+  Global Existing Instance uninit_struct_simpl_hyp_inst.
 
   Lemma uninit_struct_simpl_goal l β (s : struct_layout) T:
     T (l ◁ₗ{β} (struct s (uninit <$> omap (λ '(n, ly), const ly <$> n) s.(sl_members))))
     ⊢ simplify_goal (l ◁ₗ{β} uninit s) T.
   Proof. iIntros "HT". iExists _. iFrame. iIntros "?". by rewrite uninit_struct_equiv. Qed.
-  Global Instance uninit_struct_simpl_goal_inst l β (s : struct_layout):
-    SimplifyGoal _ (Some 50%N) :=
-    λ T, i2p (uninit_struct_simpl_goal l β s T).
+  Definition uninit_struct_simpl_goal_inst := [instance uninit_struct_simpl_goal with 50%N].
+  Global Existing Instance uninit_struct_simpl_goal_inst.
 End struct.
 Global Typeclasses Opaque struct.

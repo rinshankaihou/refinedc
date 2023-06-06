@@ -78,8 +78,8 @@ Section programs.
   Context `{!typeG Σ}.
 
   (*** int *)
-  Lemma type_val_int n it T:
-    ⌜n ∈ it⌝ ∗ T (n @ (int it)) ⊢ typed_value (i2v n it) T.
+  Lemma type_val_int n it T :
+    [{ exhale ⌜n ∈ it⌝; {T (n @ (int it))} }] ⊢ typed_value (i2v n it) T.
   Proof.
     iIntros "[%Hn HT]".
     move: Hn => /(val_of_Z_is_Some None) [v Hv].
@@ -87,14 +87,14 @@ Section programs.
     iExists _. iFrame. iPureIntro.
     by rewrite /i2v Hv /=.
   Qed.
-  Global Instance type_val_int_inst n it : TypedValue (i2v n it) :=
-    λ T, i2p (type_val_int n it T).
+  Definition type_val_int_inst := [instance type_val_int].
+  Global Existing Instance type_val_int_inst.
 
   (* TODO: instead of adding it_in_range to the context here, have a
   SimplifyPlace/Val instance for int which adds it to the context if
   it does not yet exist (using check_hyp_not_exists)?! *)
-  Lemma type_relop_int_int it v1 n1 v2 n2 T b op :
-    match op with
+  Lemma type_relop_int_int n1 n2 op b it v1 v2
+    (Hop : match op with
     | EqOp rit => Some (bool_decide (n1 = n2), rit)
     | NeOp rit => Some (bool_decide (n1 ≠ n2), rit)
     | LtOp rit => Some (bool_decide (n1 < n2), rit)
@@ -102,11 +102,11 @@ Section programs.
     | LeOp rit => Some (bool_decide (n1 <= n2), rit)
     | GeOp rit => Some (bool_decide (n1 >= n2), rit)
     | _ => None
-    end = Some (b, i32) →
+    end = Some (b, i32)) T:
     (⌜n1 ∈ it⌝ -∗ ⌜n2 ∈ it⌝ -∗ T (i2v (bool_to_Z b) i32) (b @ boolean i32))
     ⊢ typed_bin_op v1 (v1 ◁ᵥ n1 @ int it) v2 (v2 ◁ᵥ n2 @ int it) op (IntOp it) (IntOp it) T.
   Proof.
-    iIntros "%Hop HT %Hv1 %Hv2 %Φ HΦ".
+    iIntros "HT %Hv1 %Hv2 %Φ HΦ".
     iDestruct ("HT" with "[] []" ) as "HT".
     1-2: iPureIntro; by apply: val_to_Z_in_range.
     have [v Hv]:= val_of_Z_bool_is_Some None i32 b.
@@ -117,67 +117,57 @@ Section programs.
     iExists (bool_to_Z b). destruct b; eauto.
   Qed.
 
-  Global Program Instance type_eq_int_int_inst it v1 n1 v2 n2:
-    TypedBinOp _ _ _ _ (EqOp i32) (IntOp it) (IntOp it) := λ T, i2p (type_relop_int_int it v1 n1 v2 n2 T (bool_decide (n1 = n2)) _ _).
-  Next Obligation. done. Qed.
-  Global Program Instance type_ne_int_int_inst it v1 n1 v2 n2:
-    TypedBinOp _ _ _ _ (NeOp i32) (IntOp it) (IntOp it) := λ T, i2p (type_relop_int_int it v1 n1 v2 n2 T (bool_decide (n1 ≠ n2)) _ _).
-  Next Obligation. done. Qed.
-  Global Program Instance type_lt_int_int_inst it v1 n1 v2 n2:
-    TypedBinOp _ _ _ _ (LtOp i32) (IntOp it) (IntOp it) := λ T, i2p (type_relop_int_int it v1 n1 v2 n2 T (bool_decide (n1 < n2)) _ _).
-  Next Obligation. done. Qed.
-  Global Program Instance type_gt_int_int_inst it v1 n1 v2 n2:
-    TypedBinOp _ _ _ _ (GtOp i32) (IntOp it) (IntOp it) := λ T, i2p (type_relop_int_int it v1 n1 v2 n2 T (bool_decide (n1 > n2)) _ _).
-  Next Obligation. done. Qed.
-  Global Program Instance type_le_int_int_inst it v1 n1 v2 n2:
-    TypedBinOp _ _ _ _ (LeOp i32) (IntOp it) (IntOp it) := λ T, i2p (type_relop_int_int it v1 n1 v2 n2 T (bool_decide (n1 <= n2)) _ _).
-  Next Obligation. done. Qed.
-  Global Program Instance type_ge_int_int_inst it v1 n1 v2 n2:
-    TypedBinOp _ _ _ _ (GeOp i32) (IntOp it) (IntOp it) := λ T, i2p (type_relop_int_int it v1 n1 v2 n2 T (bool_decide (n1 >= n2)) _ _).
-  Next Obligation. done. Qed.
+  Definition type_eq_int_int_inst n1 n2 :=
+    [instance type_relop_int_int n1 n2 (EqOp i32) (bool_decide (n1 = n2))].
+  Global Existing Instance type_eq_int_int_inst.
+  Definition type_ne_int_int_inst n1 n2 :=
+    [instance type_relop_int_int n1 n2 (NeOp i32) (bool_decide (n1 ≠ n2))].
+  Global Existing Instance type_ne_int_int_inst.
+  Definition type_lt_int_int_inst n1 n2 :=
+    [instance type_relop_int_int n1 n2 (LtOp i32) (bool_decide (n1 < n2))].
+  Global Existing Instance type_lt_int_int_inst.
+  Definition type_gt_int_int_inst n1 n2 :=
+    [instance type_relop_int_int n1 n2 (GtOp i32) (bool_decide (n1 > n2))].
+  Global Existing Instance type_gt_int_int_inst.
+  Definition type_le_int_int_inst n1 n2 :=
+    [instance type_relop_int_int n1 n2 (LeOp i32) (bool_decide (n1 ≤ n2))].
+  Global Existing Instance type_le_int_int_inst.
+  Definition type_ge_int_int_inst n1 n2 :=
+    [instance type_relop_int_int n1 n2 (GeOp i32) (bool_decide (n1 >= n2))].
+  Global Existing Instance type_ge_int_int_inst.
 
-  Lemma type_arithop_int_int it v1 n1 v2 n2 T n op:
-    int_arithop_result it n1 n2 op = Some n →
+  Lemma type_arithop_int_int n1 n2 n op it v1 v2
+    (Hop : int_arithop_result it n1 n2 op = Some n) T :
     (⌜n1 ∈ it⌝ -∗ ⌜n2 ∈ it⌝ -∗ ⌜int_arithop_sidecond it n1 n2 n op⌝ ∗ T (i2v n it) (n @ int it))
     ⊢ typed_bin_op v1 (v1 ◁ᵥ n1 @ int it) v2 (v2 ◁ᵥ n2 @ int it) op (IntOp it) (IntOp it) T.
   Proof.
-    iIntros "%Hop HT %Hv1 %Hv2 %Φ HΦ".
+    iIntros "HT %Hv1 %Hv2 %Φ HΦ".
     iDestruct ("HT" with "[] []" ) as (Hsc) "HT".
     1-2: iPureIntro; by apply: val_to_Z_in_range.
     iApply wp_int_arithop; [done..|].
     iIntros (v Hv) "!>". rewrite /i2v Hv/=. iApply ("HΦ" with "[] HT").
     iPureIntro. by apply: val_to_of_Z.
   Qed.
-  Global Program Instance type_add_int_int_inst it v1 n1 v2 n2:
-    TypedBinOp _ _ _ _ AddOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_int_int it v1 n1 v2 n2 T (n1 + n2) _ _).
-  Next Obligation. done. Qed.
-  Global Program Instance type_sub_int_int_inst it v1 n1 v2 n2:
-    TypedBinOp _ _ _ _ SubOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_int_int it v1 n1 v2 n2 T (n1 - n2) _ _).
-  Next Obligation. done. Qed.
-  Global Program Instance type_mul_int_int_inst it v1 n1 v2 n2:
-    TypedBinOp _ _ _ _ MulOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_int_int it v1 n1 v2 n2 T (n1 * n2) _ _).
-  Next Obligation. done. Qed.
-  Global Program Instance type_div_int_int_inst it v1 n1 v2 n2:
-    TypedBinOp _ _ _ _ DivOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_int_int it v1 n1 v2 n2 T (n1 `quot` n2) _ _).
-  Next Obligation. done. Qed.
-  Global Program Instance type_mod_int_int_inst it v1 n1 v2 n2:
-    TypedBinOp _ _ _ _ ModOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_int_int it v1 n1 v2 n2 T (n1 `rem` n2) _ _).
-  Next Obligation. done. Qed.
-  Global Program Instance type_and_int_int_inst it v1 n1 v2 n2:
-    TypedBinOp _ _ _ _ AndOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_int_int it v1 n1 v2 n2 T (Z.land n1 n2) _ _).
-  Next Obligation. done. Qed.
-  Global Program Instance type_or_int_int_inst it v1 n1 v2 n2:
-    TypedBinOp _ _ _ _ OrOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_int_int it v1 n1 v2 n2 T (Z.lor n1 n2) _ _).
-  Next Obligation. done. Qed.
-  Global Program Instance type_xor_int_int_inst it v1 n1 v2 n2:
-    TypedBinOp _ _ _ _ XorOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_int_int it v1 n1 v2 n2 T (Z.lxor n1 n2) _ _).
-  Next Obligation. done. Qed.
-  Global Program Instance type_shl_int_int_inst it v1 n1 v2 n2:
-    TypedBinOp _ _ _ _ ShlOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_int_int it v1 n1 v2 n2 T (n1 ≪ n2) _ _).
-  Next Obligation. done. Qed.
-  Global Program Instance type_shr_int_int_inst it v1 n1 v2 n2:
-    TypedBinOp _ _ _ _ ShrOp (IntOp it) (IntOp it) := λ T, i2p (type_arithop_int_int it v1 n1 v2 n2 T (n1 ≫ n2) _ _).
-  Next Obligation. done. Qed.
+  Definition type_add_int_int_inst n1 n2 := [instance type_arithop_int_int n1 n2 (n1 + n2) AddOp].
+  Global Existing Instance type_add_int_int_inst.
+  Definition type_sub_int_int_inst n1 n2 := [instance type_arithop_int_int n1 n2 (n1 - n2) SubOp].
+  Global Existing Instance type_sub_int_int_inst.
+  Definition type_mul_int_int_inst n1 n2 := [instance type_arithop_int_int n1 n2 (n1 * n2) MulOp].
+  Global Existing Instance type_mul_int_int_inst.
+  Definition type_div_int_int_inst n1 n2 := [instance type_arithop_int_int n1 n2 (n1 `quot` n2) DivOp].
+  Global Existing Instance type_div_int_int_inst.
+  Definition type_mod_int_int_inst n1 n2 := [instance type_arithop_int_int n1 n2 (n1 `rem` n2) ModOp].
+  Global Existing Instance type_mod_int_int_inst.
+  Definition type_and_int_int_inst n1 n2 := [instance type_arithop_int_int n1 n2 (Z.land n1 n2) AndOp].
+  Global Existing Instance type_and_int_int_inst.
+  Definition type_or_int_int_inst n1 n2 := [instance type_arithop_int_int n1 n2 (Z.lor n1 n2) OrOp].
+  Global Existing Instance type_or_int_int_inst.
+  Definition type_xor_int_int_inst n1 n2 := [instance type_arithop_int_int n1 n2 (Z.lxor n1 n2) XorOp].
+  Global Existing Instance type_xor_int_int_inst.
+  Definition type_shl_int_int_inst n1 n2 := [instance type_arithop_int_int n1 n2 (n1 ≪ n2) ShlOp].
+  Global Existing Instance type_shl_int_int_inst.
+  Definition type_shr_int_int_inst n1 n2 := [instance type_arithop_int_int n1 n2 (n1 ≫ n2) ShrOp].
+  Global Existing Instance type_shr_int_int_inst.
 
   Inductive destruct_hint_if_int :=
   | DestructHintIfInt (n : Z).
@@ -190,21 +180,21 @@ Section programs.
     unfold destruct_hint. iIntros "Hs %Hb" => /=.
     iExists n. iSplit; first done. by do !case_decide.
   Qed.
-  Global Instance type_if_int_inst n v it : TypedIf (IntOp it) v (v ◁ᵥ n @ int it)%I :=
-    λ T1 T2, i2p (type_if_int it n v T1 T2).
+  Definition type_if_int_inst := [instance type_if_int].
+  Global Existing Instance type_if_int_inst.
 
-  Lemma type_assert_int it n s Q fn ls R v :
+  Lemma type_assert_int it n v s fn ls R Q :
     (⌜n ≠ 0⌝ ∗ typed_stmt s fn ls R Q)
     ⊢ typed_assert (IntOp it) v (v ◁ᵥ n @ int it) s fn ls R Q.
   Proof. iIntros "[% Hs] %Hb". iExists _. by iFrame. Qed.
-  Global Instance type_assert_int_inst it n v : TypedAssert (IntOp it) v (v ◁ᵥ n @ int it)%I :=
-    λ s fn ls R Q, i2p (type_assert_int _ _ _ _ _ _ _ _).
+  Definition type_assert_int_inst := [instance type_assert_int].
+  Global Existing Instance type_assert_int_inst.
 
   Inductive destruct_hint_switch_int :=
   | DestructHintSwitchIntCase (n : Z)
   | DestructHintSwitchIntDefault.
 
-  Lemma type_switch_int n it m ss def Q fn ls R v:
+  Lemma type_switch_int v n it m ss def fn ls R Q:
     ([∧ map] i↦mi ∈ m, destruct_hint DHintInfo (DestructHintSwitchIntCase i) (
              ⌜n = i⌝ -∗ ∃ s, ⌜ss !! mi = Some s⌝ ∗ typed_stmt s fn ls R Q)) ∧
     (destruct_hint DHintInfo (DestructHintSwitchIntDefault) (
@@ -221,8 +211,8 @@ Section programs.
       iIntros (Hn). iDestruct "HT" as "[_ HT]". iApply "HT". iPureIntro.
       rewrite map_to_list_insert //. set_solver.
   Qed.
-  Global Instance type_switch_int_inst n v it : TypedSwitch v (n @ int it) it :=
-    λ m ss def fn ls R Q, i2p (type_switch_int n it m ss def Q fn ls R v).
+  Definition type_switch_int_inst := [instance type_switch_int].
+  Global Existing Instance type_switch_int_inst.
 
   Lemma type_neg_int n it v T:
     (⌜n ∈ it⌝ -∗ ⌜it.(it_signed)⌝ ∗ ⌜n ≠ min_int it⌝ ∗ T (i2v (-n) it) ((-n) @ int it))
@@ -238,9 +228,8 @@ Section programs.
     iApply wp_neg_int => //. iApply ("HΦ" with "[] HT").
     iPureIntro. by apply: val_to_of_Z.
   Qed.
-  Global Instance type_neg_int_inst n it v:
-    TypedUnOp v _ NegOp (IntOp it) :=
-    λ T, i2p (type_neg_int n it v T).
+  Definition type_neg_int_inst := [instance type_neg_int].
+  Global Existing Instance type_neg_int_inst.
 
   Lemma type_cast_int n it1 it2 v T:
     (⌜n ∈ it1⌝ -∗ ⌜n ∈ it2⌝ ∗ ∀ v, T v (n @ int it2))
@@ -252,9 +241,8 @@ Section programs.
     iApply wp_cast_int => //. iApply ("HΦ" with "[] HT") => //.
     iPureIntro. by apply: val_to_of_Z.
   Qed.
-  Global Instance type_cast_int_inst n it1 it2 v:
-    TypedUnOp v _ (CastOp (IntOp it2)) (IntOp it1) :=
-    λ T, i2p (type_cast_int n it1 it2 v T).
+  Definition type_cast_int_inst := [instance type_cast_int].
+  Global Existing Instance type_cast_int_inst.
 
   Lemma type_not_int n1 it v1 T:
     let n := if it_signed it then Z.lnot n1 else Z_lunot (bits_per_int it) n1 in
@@ -281,9 +269,8 @@ Section programs.
     iIntros "!>". iApply ("HΦ" with "[] (HT [//])").
     iPureIntro. by apply: val_to_of_Z.
   Qed.
-  Global Instance type_not_int_inst n it v:
-    TypedUnOp v _ NotIntOp (IntOp it) :=
-    λ T, i2p (type_not_int n it v T).
+  Definition type_not_int_inst := [instance type_not_int].
+  Global Existing Instance type_not_int_inst.
 
   (* TODO: replace this with a typed_cas once it is refactored to take E as an argument. *)
   Lemma wp_cas_suc_int it z1 z2 zd l1 l2 vd Φ E:
@@ -324,19 +311,17 @@ Section programs.
     iIntros "[-> $] Hint". iDestruct "Hint" as (???) "?".
     iExists _, _. iFrame. iSplit; first done. iSplit; last done. by destruct b.
   Qed.
-  Global Instance subsume_int_boolean_place_inst l β n b it:
-    Subsume _ _ :=
-    λ T, i2p (subsume_int_boolean_place l β n b it T).
+  Definition subsume_int_boolean_place_inst := [instance subsume_int_boolean_place].
+  Global Existing Instance subsume_int_boolean_place_inst.
 
   Lemma subsume_int_boolean_val v n b it T:
     ⌜n = bool_to_Z b⌝ ∗ T
     ⊢ subsume (v ◁ᵥ n @ int it) (v ◁ᵥ b @ boolean it) T.
   Proof. iIntros "[-> $] %". iExists (bool_to_Z b). iSplit; first done. by destruct b. Qed.
-  Global Instance subsume_int_boolean_val_inst v n b it:
-    Subsume _ _ :=
-    λ T, i2p (subsume_int_boolean_val v n b it T).
+  Definition subsume_int_boolean_val_inst := [instance subsume_int_boolean_val].
+  Global Existing Instance subsume_int_boolean_val_inst.
 
-  Lemma type_binop_boolean_int it1 it2 it3 it4 v1 b1 v2 n2 T op:
+  Lemma type_binop_boolean_int it1 it2 it3 it4 v1 b1 v2 n2 op T:
     typed_bin_op v1 (v1 ◁ᵥ (bool_to_Z b1) @ int it1) v2 (v2 ◁ᵥ n2 @ int it2) op (IntOp it3) (IntOp it4) T
     ⊢ typed_bin_op v1 (v1 ◁ᵥ b1 @ boolean it1) v2 (v2 ◁ᵥ n2 @ int it2) op (IntOp it3) (IntOp it4) T.
   Proof.
@@ -344,11 +329,10 @@ Section programs.
     iDestruct "H1" as "(%&%H1&%H2)". iPureIntro.
     move: H1 H2 => /= -> ->. done.
   Qed.
-  Global Instance type_binop_boolean_int_inst it1 it2 it3 it4 v1 b1 v2 n2 op:
-    TypedBinOp v1 _ v2 _ op (IntOp it3) (IntOp it4) :=
-    λ T, i2p (type_binop_boolean_int it1 it2 it3 it4 v1 b1 v2 n2 T op).
+  Definition type_binop_boolean_int_inst := [instance type_binop_boolean_int].
+  Global Existing Instance type_binop_boolean_int_inst.
 
-  Lemma type_binop_int_boolean it1 it2 it3 it4 v1 b1 v2 n2 T op:
+  Lemma type_binop_int_boolean it1 it2 it3 it4 v1 b1 v2 n2 op T:
     typed_bin_op v1 (v1 ◁ᵥ n2 @ int it2) v2 (v2 ◁ᵥ (bool_to_Z b1) @ int it1) op (IntOp it3) (IntOp it4) T
     ⊢ typed_bin_op v1 (v1 ◁ᵥ n2 @ int it2) v2 (v2 ◁ᵥ b1 @ boolean it1) op (IntOp it3) (IntOp it4) T.
   Proof.
@@ -356,9 +340,8 @@ Section programs.
     iDestruct "H2" as "(%&%H1&%H2)". iPureIntro.
     move: H1 H2 => /= -> ->. done.
   Qed.
-  Global Instance type_binop_int_boolean_inst it1 it2 it3 it4 v1 b1 v2 n2 op:
-    TypedBinOp v1 _ v2 _ op (IntOp it3) (IntOp it4) :=
-    λ T, i2p (type_binop_int_boolean it1 it2 it3 it4 v1 b1 v2 n2 T op).
+  Definition type_binop_int_boolean_inst := [instance type_binop_int_boolean].
+  Global Existing Instance type_binop_int_boolean_inst.
 
   Lemma type_cast_int_builtin_boolean n it v T:
     (∀ v, T v ((bool_decide (n ≠ 0)) @ builtin_boolean))
@@ -367,9 +350,8 @@ Section programs.
     iIntros "HT %Hn %Φ HΦ". iApply wp_cast_int_bool => //.
     iApply ("HΦ" with "[] HT") => //=. unfold boolean; simpl_type. iPureIntro. naive_solver.
   Qed.
-  Global Instance type_cast_int_builtin_boolean_inst n it v:
-    TypedUnOp v _ (CastOp BoolOp) (IntOp it) :=
-    λ T, i2p (type_cast_int_builtin_boolean n it v T).
+  Definition type_cast_int_builtin_boolean_inst := [instance type_cast_int_builtin_boolean].
+  Global Existing Instance type_cast_int_builtin_boolean_inst.
 
   Lemma annot_reduce_int v n it T:
     (tactic_hint (vm_compute_hint Some n) (λ n', v ◁ᵥ n' @ int it -∗ T))
@@ -379,9 +361,8 @@ Section programs.
     iIntros "[%y [% HT]] Hv"; simplify_eq. iApply step_fupd_intro => //. iModIntro.
     by iApply "HT".
   Qed.
-  Global Instance annot_reduce_int_inst v n it:
-    TypedAnnotExpr 1 (ReduceAnnot) v (v ◁ᵥ n @ int it)%I :=
-    λ T, i2p (annot_reduce_int v n it T).
+  Definition annot_reduce_int_inst := [instance annot_reduce_int].
+  Global Existing Instance annot_reduce_int_inst.
 
 End programs.
 Global Typeclasses Opaque int_inner_type int.

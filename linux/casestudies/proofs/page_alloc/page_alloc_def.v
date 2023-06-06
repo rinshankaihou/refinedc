@@ -1,3 +1,4 @@
+From lithium Require Import hooks.
 From refinedc.typing Require Import typing.
 From refinedc.linux.casestudies.page_alloc Require Import generated_code.
 Set Default Proof Using "Type".
@@ -18,9 +19,8 @@ Section type.
     ⌜n1 = n2⌝ ∗ T
     ⊢ subsume (l ◁ₗ{β} list_node n1) (l ◁ₗ{β} list_node n2) T.
   Proof. by iIntros "[-> $] $". Qed.
-  Global Instance subsume_list_node_inst n1 n2 l β:
-    Subsume _ _ :=
-    λ T, i2p (subsume_list_node n1 n2 l β T).
+  Definition subsume_list_node_inst := [instance subsume_list_node].
+  Global Existing Instance subsume_list_node_inst.
 
   Global Instance inj_hyp_page_map {A B C D E F} pool vmemmap npages : Inj (=) (=) (λ '(ref_count, order, next), (pool, vmemmap, npages, ref_count, order, next) : (A * B * C * D * E * F)).
   Proof. move => [[??]?] [[??]?]. naive_solver. Qed.
@@ -34,20 +34,18 @@ Section type.
     find_buddy vmemmap order page ≠ page.
   Proof. Admitted.
 
-  Lemma simplify_goal_place_find_buddy_lt vmemmap p order β ty T `{!CanSolve (p < find_buddy vmemmap order p)}:
+  Lemma simplify_goal_place_find_buddy_lt vmemmap p order β ty `{!CanSolve (p < find_buddy vmemmap order p)} T:
     T (hyp_page_to_virt vmemmap (vmemmap offset{struct_hyp_page}ₗ find_buddy vmemmap order p) ◁ₗ{β} ty)
     ⊢ simplify_goal ((hyp_page_to_virt vmemmap (vmemmap offset{struct_hyp_page}ₗ p) +ₗ ly_size (PAGE_LAYOUT (1 ≪ order))) ◁ₗ{β} ty) T.
   Proof. Admitted.
-  Global Instance simplify_goal_place_find_buddy_lt_inst vmemmap p order β ty `{!CanSolve (p < find_buddy vmemmap order p)}:
-    SimplifyGoal _ (Some 0%N) :=
-    λ T, i2p (simplify_goal_place_find_buddy_lt vmemmap p order β ty T).
+  Definition simplify_goal_place_find_buddy_lt_inst := [instance simplify_goal_place_find_buddy_lt with 0%N].
+  Global Existing Instance simplify_goal_place_find_buddy_lt_inst.
   Lemma simplify_goal_place_find_buddy_gt vmemmap p order β ty T:
     T (⌜find_buddy vmemmap order p < p⌝ ∗ hyp_page_to_virt vmemmap (vmemmap offset{struct_hyp_page}ₗ p) ◁ₗ{β} ty)
     ⊢ simplify_goal ((hyp_page_to_virt vmemmap (vmemmap offset{struct_hyp_page}ₗ find_buddy vmemmap order p) +ₗ ly_size (PAGE_LAYOUT (1 ≪ order))) ◁ₗ{β} ty) T.
   Proof. Admitted.
-  Global Instance simplify_goal_place_find_buddy_gt_inst vmemmap p order β ty:
-    SimplifyGoal _ (Some 0%N) :=
-    λ T, i2p (simplify_goal_place_find_buddy_gt vmemmap p order β ty T).
+  Definition simplify_goal_place_find_buddy_gt_inst := [instance simplify_goal_place_find_buddy_gt with 0%N].
+  Global Existing Instance simplify_goal_place_find_buddy_gt_inst.
 
   Global Instance simpl_page_layout_size_le n1 n2:
     SimplAndUnsafe (ly_size (PAGE_LAYOUT n1) ≤ ly_size (PAGE_LAYOUT n2))%nat (λ T, n1 ≤ n2 ∧ T).

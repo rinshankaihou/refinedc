@@ -65,9 +65,8 @@ Section padded.
     (l ◁ₗ{β} ty -∗ T)
     ⊢ simplify_hyp (l ◁ₗ{β} padded ty ly ly) T.
   Proof. iIntros "HT (?&?&?&?&?)". by iApply "HT". Qed.
-  Global Instance simpl_padded_hyp_eq_layout_inst l β ty ly:
-    SimplifyHyp _ (Some 0%N) :=
-    λ T, i2p (simpl_padded_hyp_eq_layout l β ty ly T).
+  Definition simpl_padded_hyp_eq_layout_inst := [instance simpl_padded_hyp_eq_layout with 0%N].
+  Global Existing Instance simpl_padded_hyp_eq_layout_inst.
   (* TODO: should this also work for Shr? *)
   Lemma simpl_padded_goal_eq_layout l ty ly T:
     T (⌜ty.(ty_has_op_type) (UntypedOp ly) MCNone⌝ ∗ l ◁ₗ ty)
@@ -81,15 +80,14 @@ Section padded.
     rewrite -{1}(Nat.add_0_r (ly_size _)) -loc_in_bounds_split.
     by iDestruct "Hb" as "[_$]".
   Qed.
-  Global Instance simpl_padded_goal_eq_layout_inst l ty ly:
-    SimplifyGoal _ (Some 0%N) :=
-    λ T, i2p (simpl_padded_goal_eq_layout l ty ly T).
+  Definition simpl_padded_goal_eq_layout_inst := [instance simpl_padded_goal_eq_layout with 0%N].
+  Global Existing Instance simpl_padded_goal_eq_layout_inst.
 
   (* we deliberately introduce a fresh location l because otherwise l
   and l' could get confused and we might have two l ◁ₗ ... for the
   same l in the context. (one with padded (l @ place) ...
   and one with the type in the padded *)
-  Lemma type_place_padded K l β1 ty T lyty ly:
+  Lemma type_place_padded K l β1 ty lyty ly T:
     (∀ l', typed_place K l' β1 ty (λ l2 ty2 β typ, T l2 ty2 β (λ t, padded (typ t) lyty ly)))
     ⊢ typed_place K l β1 (padded ty lyty ly) T.
   Proof.
@@ -99,9 +97,8 @@ Section padded.
     iMod ("Hc" with "Hl2") as "[$ $]". by iFrame.
   Qed.
   (* This should have a lower priority than type_place_id *)
-  Global Instance type_place_padded_inst K l β1 ty lyty ly :
-    TypedPlace K l β1 (padded ty lyty ly) | 50 :=
-    λ T, i2p (type_place_padded K l β1 ty T lyty ly).
+  Definition type_place_padded_inst := [instance type_place_padded].
+  Global Existing Instance type_place_padded_inst | 50.
 
   (* Only works for Own since ty might have interior mutability, but
   uninit ty assumes that the values are frozen *)
@@ -119,9 +116,8 @@ Section padded.
     iFrame. iPureIntro; split_and! => //.
     rewrite /= /ly_offset {2}/ly_size. lia.
   Qed.
-  Global Instance subsume_padded_uninit_inst l ly1 ly2 lyty ty:
-    Subsume _ _ :=
-    λ T, i2p (subsume_padded_uninit l ly1 ly2 lyty ty T).
+  Definition subsume_padded_uninit_inst := [instance subsume_padded_uninit].
+  Global Existing Instance subsume_padded_uninit_inst.
 
   Lemma subsume_uninit_padded l β ly lyty T:
     ⌜lyty ⊑ ly⌝ ∗ T
@@ -135,11 +131,10 @@ Section padded.
     iSplit; first done. iSplit; last by rewrite Forall_forall.
     iPureIntro. by apply: has_layout_loc_trans.
   Qed.
-  Global Instance subsume_uninit_padded_inst l ly β lyty:
-    Subsume _ _ :=
-    λ T, i2p (subsume_uninit_padded l β ly lyty T).
+  Definition subsume_uninit_padded_inst := [instance subsume_uninit_padded].
+  Global Existing Instance subsume_uninit_padded_inst.
 
-  Lemma type_place_padded_uninit_struct K l β sl n T ly:
+  Lemma type_place_padded_uninit_struct K l β sl n ly T:
     ⌜(layout_of sl) ⊑ ly⌝ ∗
       typed_place (GetMemberPCtx sl n :: K) l β (padded (struct sl (uninit <$> omap (λ '(n, ly), const ly <$> n) sl.(sl_members))) sl ly) T
     ⊢ typed_place (GetMemberPCtx sl n :: K) l β (uninit ly) T.
@@ -149,20 +144,17 @@ Section padded.
     { by iApply (subsume_uninit_padded _ _ _ sl). }
     iApply "HT". iDestruct "Hl" as "[$ [$ [$ [Hl $]]]]". by rewrite uninit_struct_equiv.
   Qed.
-  Global Instance type_place_padded_uninit_struct_inst K l β sl n ly :
-    TypedPlace (GetMemberPCtx sl n :: K) l β (uninit ly) :=
-    λ T, i2p (type_place_padded_uninit_struct K l β sl n T ly).
-
+  Definition type_place_padded_uninit_struct_inst := [instance type_place_padded_uninit_struct].
+  Global Existing Instance type_place_padded_uninit_struct_inst.
 
 
   (* If lyty is the same, then ly also must be the same. *)
-  Lemma padded_mono l β ty1 ty2 T ly1 ly2 lyty:
+  Lemma padded_mono l β ty1 ty2 ly1 ly2 lyty T:
     ⌜ly1 = ly2⌝ ∗ subsume (l ◁ₗ{β} ty1) (l ◁ₗ{β} ty2) T
     ⊢ subsume (l ◁ₗ{β} padded ty1 lyty ly1) (l ◁ₗ{β} padded ty2 lyty ly2) T.
   Proof. iIntros "[-> Hsub] ($&$&$&Hl&$)". by iApply "Hsub". Qed.
-  Global Instance padded_mono_inst l β ty1 ty2 ly1 ly2 lyty:
-    Subsume _ _ :=
-    λ T, i2p (padded_mono l β ty1 ty2 T ly1 ly2 lyty).
+  Definition padded_mono_inst := [instance padded_mono].
+  Global Existing Instance padded_mono_inst.
 
   Lemma split_padded n l β ly1 lyty ty:
     (n ≤ ly1.(ly_size))%nat →
@@ -205,9 +197,8 @@ Section padded.
     - unfold frac_ptr; simpl_type. by iFrame.
     - by iPureIntro.
   Qed.
-  Global Instance type_add_padded_inst v2 β ly lyty ty (p : loc) n it:
-    TypedBinOp v2 (v2 ◁ᵥ n @ int it)%I p (p ◁ₗ{β} padded ty lyty ly)%I (PtrOffsetOp u8) (IntOp it) PtrOp :=
-    λ T, i2p (type_add_padded v2 β ly lyty ty p n it T).
+  Definition type_add_padded_inst := [instance type_add_padded].
+  Global Existing Instance type_add_padded_inst.
 
 
   Lemma annot_to_uninit_padded l ty ly lyty T:
@@ -221,9 +212,8 @@ Section padded.
     iApply ("HT").
     iExists v. rewrite Forall_forall. by iFrame.
   Qed.
-  Global Instance annot_to_uninit_inst l ty ly lyty:
-    TypedAnnotStmt (ToUninit) l (l ◁ₗ padded ty lyty ly) :=
-    λ T, i2p (annot_to_uninit_padded l ty ly lyty T).
+  Definition annot_to_uninit_padded_inst := [instance annot_to_uninit_padded].
+  Global Existing Instance annot_to_uninit_padded_inst.
 
 End padded.
 Notation "padded< ty , lyty , ly >" := (padded ty lyty ly)

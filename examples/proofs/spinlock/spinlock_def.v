@@ -11,13 +11,12 @@ Section type.
   Global Instance alloc_alive_spinlock γ β : AllocAlive (spinlock γ) β True.
   Proof. apply: _. Qed.
 
-  Lemma spinlock_subsume γ1 γ2 l T β:
+  Lemma spinlock_subsume γ1 γ2 l β T:
     ⌜γ1 = γ2⌝ ∗ T
     ⊢ subsume (l ◁ₗ{β} spinlock γ1) (l ◁ₗ{β} spinlock γ2) T.
   Proof. iIntros "[-> $] $". Qed.
-  Global Instance spinlock_subsume_inst γ1 γ2 l β:
-    Subsume (l ◁ₗ{β} spinlock γ1) (l ◁ₗ{β} spinlock γ2) :=
-    λ T, i2p (spinlock_subsume γ1 γ2 l T β).
+  Definition spinlock_subsume_inst := [instance spinlock_subsume].
+  Global Existing Instance spinlock_subsume_inst.
 
   Global Instance spinlock_with_lock_id γ : WithLockId (spinlock γ) γ := I.
 End type.

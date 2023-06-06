@@ -95,10 +95,8 @@ Section bytewise.
     iDestruct ("HT" with "[//]") as (?) "$".
     iExists _. iFrame. by rewrite /has_layout_val -Hsz.
   Qed.
-  Global Instance subsume_bytewise_eq_inst l β P1 P2 ly1 ly2
-        `{!CanSolve (ly1.(ly_size) = ly2.(ly_size))}:
-    Subsume _ _ | 5 :=
-    λ T, i2p (subsume_bytewise_eq l β P1 P2 ly1 ly2 T).
+  Definition subsume_bytewise_eq_inst := [instance subsume_bytewise_eq].
+  Global Existing Instance subsume_bytewise_eq_inst | 5.
 
   Lemma subsume_bytewise_merge l β P1 P2 ly1 ly2
         `{!CanSolve (ly1.(ly_size) ≤ ly2.(ly_size))%nat} T:
@@ -112,10 +110,8 @@ Section bytewise.
     iDestruct (bytewise_weaken with "Hl") as "Hl" => //.
     iApply (merge_bytewise with "Hl") => //.
   Qed.
-  Global Instance subsume_bytewise_merge_inst l β P1 P2 ly1 ly2
-        `{!CanSolve (ly1.(ly_size) ≤ ly2.(ly_size))%nat}:
-    Subsume _ _ | 10 :=
-    λ T, i2p (subsume_bytewise_merge l β P1 P2 ly1 ly2 T).
+  Definition subsume_bytewise_merge_inst := [instance subsume_bytewise_merge].
+  Global Existing Instance subsume_bytewise_merge_inst | 10.
 
   Lemma subsume_bytewise_split l β P1 P2 ly1 ly2
         `{!CanSolve (ly2.(ly_size) ≤ ly1.(ly_size))%nat} T:
@@ -133,10 +129,8 @@ Section bytewise.
     iExists _; iFrame. iPureIntro; split_and! => //.
     by apply: has_layout_loc_trans'.
   Qed.
-  Global Instance subsume_bytewise_split_inst l β P1 P2 ly1 ly2
-        `{!CanSolve (ly2.(ly_size) ≤ ly1.(ly_size))%nat}:
-    Subsume _ _ | 10 :=
-    λ T, i2p (subsume_bytewise_split l β P1 P2 ly1 ly2 T).
+  Definition subsume_bytewise_split_inst := [instance subsume_bytewise_split].
+  Global Existing Instance subsume_bytewise_split_inst | 10.
 
   Lemma type_add_bytewise v2 β P ly (p : loc) n it T:
     (⌜n ∈ it⌝ -∗
@@ -159,9 +153,8 @@ Section bytewise.
     - unfold frac_ptr; simpl_type. by iFrame.
     - by iPureIntro.
   Qed.
-  Global Instance type_add_bytewise_inst v2 β P ly (p : loc) n it:
-    TypedBinOp v2 (v2 ◁ᵥ n @ int it)%I p (p ◁ₗ{β} bytewise P ly) (PtrOffsetOp u8) (IntOp it) PtrOp :=
-    λ T, i2p (type_add_bytewise v2 β P ly p n it T).
+  Definition type_add_bytewise_inst := [instance type_add_bytewise].
+  Global Existing Instance type_add_bytewise_inst.
 End bytewise.
 
 Notation "bytewise< P , ly >" := (bytewise P ly)
@@ -199,9 +192,7 @@ Section uninit.
   with an instance) since this rule should only apply ty is not uninit
   as this case is covered by the rules for bytes and the CanSolve can
   be quite expensive. *)
-  Definition uninit_mono_inst l ty ly `{!TCDone (ty.(ty_has_op_type) (UntypedOp ly) MCNone)}:
-    Subsume _ _ :=
-    λ T, i2p (uninit_mono l ty ly T).
+  Definition uninit_mono_inst := [instance uninit_mono].
 
   (* Typing rule for [Return] (used in [theories/typing/automation.v]). *)
   Lemma type_return Q e fn ls R:
@@ -223,7 +214,7 @@ Section uninit.
     iExists _. by iFrame.
   Qed.
 
-  Lemma type_read_move_copy T E l ty ot mc a `{!TCDone (ty.(ty_has_op_type) ot MCCopy)}:
+  Lemma type_read_move_copy E l ty ot mc a `{!TCDone (ty.(ty_has_op_type) ot MCCopy)} T:
     (∀ v, T v (uninit (ot_layout ot)) ty)
     ⊢ typed_read_end a E l Own ty ot mc T.
   Proof.
@@ -237,9 +228,8 @@ Section uninit.
     iExists _, ty. iSplitL "Hv". { destruct mc => //. by iApply ty_memcast_compat_copy. }
     iSplitR "HT"; [|done]. iExists _. iFrame. iPureIntro. split_and! => //. by apply: Forall_true.
   Qed.
-  Global Instance type_read_move_copy_inst l E ty ot mc a `{!TCDone (ty.(ty_has_op_type) ot MCCopy)}:
-    TypedReadEnd a E l Own ty ot mc | 70 :=
-    λ T, i2p (type_read_move_copy T E l ty ot mc a).
+  Definition type_read_move_copy_inst := [instance type_read_move_copy].
+  Global Existing Instance type_read_move_copy_inst | 70.
 End uninit.
 
 Notation "uninit< ly >" := (uninit ly) (only printing, format "'uninit<' ly '>'") : printing_sugar.
@@ -249,7 +239,7 @@ Notation "uninit< ly >" := (uninit ly) (only printing, format "'uninit<' ly '>'"
 Global Hint Extern 5 (Subsume (_ ◁ₗ ?ty) (_ ◁ₗ (uninit _))) =>
   lazymatch ty with
   | uninit _ => fail
-  | _ => unshelve notypeclasses refine (uninit_mono_inst _ _ _)
+  | _ => unshelve notypeclasses refine (uninit_mono_inst _ _ _ _)
   end
   : typeclass_instances.
 
@@ -261,8 +251,8 @@ Section void.
   Lemma type_void T:
     T void ⊢ typed_value VOID T.
   Proof. iIntros "HT". rewrite /VOID. iExists _. iFrame. by unfold void, bytewise; simpl_type. Qed.
-  Global Instance type_void_inst : TypedValue VOID :=
-    λ T, i2p (type_void T).
+  Definition type_void_inst := [instance type_void].
+  Global Existing Instance type_void_inst.
 End void.
 
 Notation zeroed := (bytewise (λ b, b = MByte byte0 None)).
@@ -282,9 +272,8 @@ Section zeroed.
     rewrite /heap_mapsto_own_state heap_mapsto_eq /heap_mapsto_def /=.
     iSplit => //. iApply (loc_in_bounds_shorten with "Hlib"). lia.
   Qed.
-  Global Instance subsume_uninit_zeroed_0_inst p ly1 ly2:
-    Subsume (p ◁ₗ uninit ly1)%I (p ◁ₗ zeroed ly2)%I | 3 :=
-    λ T, i2p (subsume_uninit_zeroed p ly1 ly2 T).
+  Definition subsume_uninit_zeroed_inst := [instance subsume_uninit_zeroed].
+  Global Existing Instance subsume_uninit_zeroed_inst | 3.
 End zeroed.
 Notation "zeroed< ly >" := (zeroed ly)
   (only printing, format "'zeroed<' ly '>'") : printing_sugar.

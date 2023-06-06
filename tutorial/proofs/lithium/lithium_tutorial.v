@@ -1,4 +1,5 @@
 From iris.proofmode Require Import coq_tactics reduction.
+From lithium Require Import hooks.
 From caesium Require Import builtins_specs.
 From refinedc.typing Require Import typing.
 From refinedc.tutorial.lithium Require Import generated_code.
@@ -309,9 +310,8 @@ Section lithium.
     ⌜v1 = v2⌝ ∗ G
     ⊢ subsume (l ↦ v1) (l ↦ v2) G.
   Proof. iIntros "[-> $] $". Qed.
-  Global Instance subsume_mapsto_inst l v1 v2 :
-    Subsume (l ↦ v1) (l ↦ v2) :=
-    λ G, i2p (subsume_mapsto l v1 v2 G).
+  Definition subsume_mapsto_inst := [instance subsume_mapsto].
+  Global Existing Instance subsume_mapsto_inst.
 
   Lemma ex8 :
     ⊢ ∀ l, l ↦ ValInt 5 -∗
@@ -566,9 +566,8 @@ Section lithium.
 
   (** The [subsume_myint] needs to be registered with the Lithium
   automation, which we do as follows: *)
-  Global Instance subsume_myint_inst l n n' :
-    Subsume (l ◁ₗ myint n) (l ◁ₗ myint n') :=
-    λ G, i2p (subsume_myint l n n' G).
+  Definition subsume_myint_inst := [instance subsume_myint].
+  Global Existing Instance subsume_myint_inst.
 
   (** Now we are ready to try again: *)
   Lemma myint_example l:
@@ -648,9 +647,8 @@ Section lithium.
     by rewrite list_insert_insert list_insert_id.
   Qed.
   (** Again we register this rule. *)
-  Global Instance subsume_myarray_inst l ty (i : nat) tys :
-    Subsume (l ◁ₗ myarray (<[i:=ty]> tys)) (l ◁ₗ myarray tys) :=
-    λ G, i2p (subsume_myarray l ty i tys G).
+  Definition subsume_myarray_inst := [instance subsume_myarray].
+  Global Existing Instance subsume_myarray_inst.
 
   Lemma my_array_example l i l' tys n:
     ⌜tys !! i = Some (n @ int i32)⌝ -∗

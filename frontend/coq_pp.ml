@@ -908,29 +908,20 @@ let pp_spec : Coq_path.t -> import list -> inlined_code ->
     pp "Proof. apply: (type_fixpoint_unfold2 %s_rec). Qed.\n" id;
 
     (* Generation of the global instances. *)
-    let pp_instance_place inst_name type_name =
-      pp "@;Global Instance %s_%s_inst_generated l_ β_ %apatt__:@;"
+    let pp_instance inst_name type_name =
+      pp "@;Definition %s_%s_inst_generated %apatt__ :=@;"
         id inst_name pp_params params;
-      pp "  %s (l_ ◁ₗ{β_} patt__ @@ %a)%%I (Some %i%%N) :=@;"
-        type_name (pp_id_args false id) par_names annot.st_unfold_prio;
-      pp "  λ T, i2p (%s_eq l_ β_ _ _ T (%s_unfold" inst_name id;
-      List.iter (fun _ -> pp " _") par_names; pp " _))."
+      pp "  [instance %s_eq _ _ (%s_unfold %apatt__) with %i%%N].@;"
+        inst_name id pp_params params annot.st_unfold_prio;
+      pp "Global Existing Instance %s_%s_inst_generated." id inst_name;
     in
-    let pp_instance_val inst_name type_name =
-      pp "@;Global Instance %s_%s_inst_generated v_ %apatt__:@;"
-        id inst_name pp_params params;
-      pp "  %s (v_ ◁ᵥ patt__ @@ %a)%%I (Some %i%%N) :=@;"
-        type_name (pp_id_args false id) par_names annot.st_unfold_prio;
-      pp "  λ T, i2p (%s_eq v_ _ _ T (%s_unfold" inst_name id;
-      List.iter (fun _ -> pp " _") par_names; pp " _)).";
-    in
-    pp_instance_place "simplify_hyp_place" "SimplifyHyp";
-    pp_instance_place "simplify_goal_place" "SimplifyGoal";
+    pp_instance "simplify_hyp_place" "SimplifyHyp";
+    pp_instance "simplify_goal_place" "SimplifyGoal";
     if not annot.st_immovable then
       begin
         pp "\n";
-        pp_instance_val "simplify_hyp_val" "SimplifyHyp";
-        pp_instance_val "simplify_goal_val" "SimplifyGoal"
+        pp_instance "simplify_hyp_val" "SimplifyHyp";
+        pp_instance "simplify_goal_val" "SimplifyGoal"
       end
   in
   let pp_tagged_union id tag_type_e s =

@@ -48,18 +48,18 @@ Ltac solve_loc_eq :=
   first [ reflexivity | prepare_loc_eq; lia ].
 
 Inductive FICLocSemantic : Set :=.
-Global Instance find_in_context_type_loc_semantic_inst `{!typeG Σ} l :
-  FindInContext (FindLoc l) FICLocSemantic | 20 :=
-  λ T, i2p (find_in_context_type_loc_id l T).
-Global Instance find_in_context_type_val_P_loc_semantic_inst `{!typeG Σ} (l : loc) :
-  FindInContext (FindValP l) FICLocSemantic | 20 :=
-  λ T, i2p (find_in_context_type_val_P_loc_id l T).
-Global Instance find_in_context_loc_in_bounds_semantic_inst `{!typeG Σ} l :
-  FindInContext (FindLocInBounds l) FICLocSemantic | 20 :=
-  λ T, i2p (find_in_context_loc_in_bounds l T).
-Global Instance find_in_context_loc_in_bounds_type_semantic_inst `{!typeG Σ} l :
-  FindInContext (FindLocInBounds l) FICLocSemantic | 30 :=
-  λ T, i2p (find_in_context_loc_in_bounds_loc l T).
+Definition find_in_context_type_loc_semantic_inst :=
+  [instance @find_in_context_type_loc_id with FICLocSemantic].
+Global Existing Instance find_in_context_type_loc_semantic_inst | 20.
+Definition find_in_context_type_val_P_loc_semantic_inst :=
+  [instance @find_in_context_type_val_P_loc_id with FICLocSemantic].
+Global Existing Instance find_in_context_type_val_P_loc_semantic_inst | 20.
+Definition find_in_context_loc_in_bounds_semantic_inst :=
+  [instance @find_in_context_loc_in_bounds with FICLocSemantic].
+Global Existing Instance find_in_context_loc_in_bounds_semantic_inst | 20.
+Definition find_in_context_loc_in_bounds_type_semantic_inst :=
+  [instance @find_in_context_loc_in_bounds_loc with FICLocSemantic].
+Global Existing Instance find_in_context_loc_in_bounds_type_semantic_inst | 30.
 
 Lemma tac_solve_loc_eq `{!typeG Σ} l1 β1 ty1 l2 β2 ty2:
   l1 = l2 →

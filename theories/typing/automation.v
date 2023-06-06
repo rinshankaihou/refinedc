@@ -1,9 +1,17 @@
 From iris.proofmode Require Import coq_tactics reduction.
+From lithium Require Import hooks.
 From lithium Require Export all.
 From refinedc.typing Require Export type.
 From refinedc.typing.automation Require Export normalize solvers simplification proof_state loc_eq.
 From refinedc.typing Require Import programs function singleton own struct bytes int.
 Set Default Proof Using "Type".
+
+(** * Defining extensions *)
+(** The [sidecond_hook] and [unsolved_sidecond_hook] hooks that get
+called for all sideconditions resp. all sideconditions that are not
+automatically solved using the default solver. *)
+Ltac sidecond_hook := idtac.
+Ltac unsolved_sidecond_hook := idtac.
 
 (** * Registering extensions *)
 (** We use autorewrite for the moment. *)

@@ -1,3 +1,4 @@
+From lithium Require Import hooks.
 From refinedc.typing Require Import naive_simpl typing.
 Set Default Proof Using "Type".
 

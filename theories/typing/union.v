@@ -16,7 +16,7 @@ Section union.
     iIntros (ul f ty l E ?). iDestruct 1 as (ly ?) "Hp". iExists _. iSplitR => //. by iApply ty_share.
   Qed.
 
-  Lemma type_place_uninit_union K β T ul n l:
+  Lemma type_place_uninit_union K β ul n l T:
     (∃ ly, ⌜layout_of_union_member n ul = Some ly⌝ ∗
     typed_place (GetMemberUnionPCtx ul n :: K) l β (active_union ul n (uninit ly)) T)
     ⊢ typed_place (GetMemberUnionPCtx ul n :: K) l β (uninit ul) T.
@@ -29,11 +29,10 @@ Section union.
     iSplit => //. iPureIntro.
     split; apply max_list_elem_of_le; apply elem_of_list_fmap_1; by apply: layout_of_union_member_in_ul.
   Qed.
-  Global Instance type_place_uninit_union_inst K β ul n l :
-    TypedPlace (GetMemberUnionPCtx ul n :: K) l β (uninit ul) :=
-    λ T, i2p (type_place_uninit_union K β T ul n l).
+  Definition type_place_uninit_union_inst := [instance type_place_uninit_union].
+  Global Existing Instance type_place_uninit_union_inst.
 
-  Lemma type_place_active_union K β T ul n l ty:
+  Lemma type_place_active_union K β ul n l ty T:
     typed_place K (l at_union{ul}ₗ n) β ty (λ l2 β ty2 typ, T l2 β ty2 (λ t, active_union ul n (typ t)))
     ⊢ typed_place (GetMemberUnionPCtx ul n :: K) l β (active_union ul n ty) T.
   Proof.
@@ -47,9 +46,8 @@ Section union.
     iIntros (ty') "Hty". iMod ("Hc" with "Hty") as "[Hty $]". iModIntro.
     iExists _. iSplitR => //. rewrite /padded/GetMemberUnionLoc. by iFrame.
   Qed.
-  Global Instance type_place_active_union_inst K β ul n l ty :
-    TypedPlace (GetMemberUnionPCtx ul n :: K) l β (active_union ul n ty) :=
-    λ T, i2p (type_place_active_union K β T ul n l ty).
+  Definition type_place_active_union_inst := [instance type_place_active_union].
+  Global Existing Instance type_place_active_union_inst.
 
 End union.
   (*** tagged union *)
@@ -114,43 +112,35 @@ Section union.
     ⌜ti.(ti_tag) x =@{Z} n⌝ ∗ T
     ⊢ subsume (l ◁ₗ{β} n @ int size_t) (l ◁ₗ{β} tunion_tag ti x) T.
   Proof. iIntros "[<- $] ?". by rewrite /tunion_tag/=. Qed.
-  Global Instance subsume_int_tunion_tag_inst ti x (n : Z) l β:
-    Subsume _ _ :=
-    λ T, i2p (subsume_int_tunion_tag ti x n l β T).
+  Definition subsume_int_tunion_tag_inst := [instance subsume_int_tunion_tag].
+  Global Existing Instance subsume_int_tunion_tag_inst.
 
   Lemma subsume_tunion_tag ti x1 x2 l β T:
     ⌜ti.(ti_tag) x1 = ti.(ti_tag) x2⌝ ∗ T
     ⊢ subsume (l ◁ₗ{β} tunion_tag ti x1) (l ◁ₗ{β} tunion_tag ti x2) T.
   Proof. rewrite /ty_own/=. iIntros "[-> $] $". Qed.
-  Global Instance subsume_tunion_tag_inst ti x1 x2 l β:
-    Subsume _ _ :=
-    λ T, i2p (subsume_tunion_tag ti x1 x2 l β T).
+  Definition subsume_tunion_tag_inst := [instance subsume_tunion_tag].
+  Global Existing Instance subsume_tunion_tag_inst.
 
   Inductive destruct_hint_union :=
   | DestructHintUnion (info : tunion_info A).
 
-  Lemma type_binop_tunion_tag_int ti x it v1 n v2 T op:
+  Lemma type_binop_tunion_tag_int op it ti x v1 n v2 T:
     destruct_hint (DHintDestruct _ x) (DestructHintUnion ti) (typed_bin_op v1 (v1 ◁ᵥ ti.(ti_tag) x @ int size_t) v2 (v2 ◁ᵥ n @ int it) op (IntOp size_t) (IntOp it) T)
     ⊢ typed_bin_op v1 (v1 ◁ᵥ tunion_tag ti x) v2 (v2 ◁ᵥ n @ int it) op (IntOp size_t) (IntOp it) T.
   Proof. by rewrite /(ty_own_val (tunion_tag _ _))/=. Qed.
-  Global Instance type_binop_tunion_tag_int_eq_inst it v1 n v2 ti x:
-    TypedBinOp v1 _ v2 _ (EqOp i32) (IntOp size_t) (IntOp it) :=
-    λ T, i2p (type_binop_tunion_tag_int ti x it v1 n v2 T _).
-  Global Instance type_binop_tunion_tag_int_ne_inst it v1 n v2 ti x:
-    TypedBinOp v1 _ v2 _ (NeOp i32) (IntOp size_t) (IntOp it) :=
-    λ T, i2p (type_binop_tunion_tag_int ti x it v1 n v2 T _).
-  Global Instance type_binop_tunion_tag_int_gt_inst it v1 n v2 ti x:
-    TypedBinOp v1 _ v2 _ (GtOp i32) (IntOp size_t) (IntOp it) :=
-    λ T, i2p (type_binop_tunion_tag_int ti x it v1 n v2 T _).
-  Global Instance type_binop_tunion_tag_int_lt_inst it v1 n v2 ti x:
-    TypedBinOp v1 _ v2 _ (LtOp i32) (IntOp size_t) (IntOp it) :=
-    λ T, i2p (type_binop_tunion_tag_int ti x it v1 n v2 T _).
-  Global Instance type_binop_tunion_tag_int_ge_inst it v1 n v2 ti x:
-    TypedBinOp v1 _ v2 _ (GeOp i32) (IntOp size_t) (IntOp it) :=
-    λ T, i2p (type_binop_tunion_tag_int ti x it v1 n v2 T _).
-  Global Instance type_binop_tunion_tag_int_le_inst it v1 n v2 ti x:
-    TypedBinOp v1 _ v2 _ (LeOp i32) (IntOp size_t) (IntOp it) :=
-    λ T, i2p (type_binop_tunion_tag_int ti x it v1 n v2 T _).
+  Definition type_binop_tunion_tag_int_eq_inst := [instance type_binop_tunion_tag_int (EqOp i32)].
+  Global Existing Instance type_binop_tunion_tag_int_eq_inst.
+  Definition type_binop_tunion_tag_int_ne_inst := [instance type_binop_tunion_tag_int (NeOp i32)].
+  Global Existing Instance type_binop_tunion_tag_int_ne_inst.
+  Definition type_binop_tunion_tag_int_gt_inst := [instance type_binop_tunion_tag_int (GtOp i32)].
+  Global Existing Instance type_binop_tunion_tag_int_gt_inst.
+  Definition type_binop_tunion_tag_int_lt_inst := [instance type_binop_tunion_tag_int (LtOp i32)].
+  Global Existing Instance type_binop_tunion_tag_int_lt_inst.
+  Definition type_binop_tunion_tag_int_ge_inst := [instance type_binop_tunion_tag_int (GeOp i32)].
+  Global Existing Instance type_binop_tunion_tag_int_ge_inst.
+  Definition type_binop_tunion_tag_int_le_inst := [instance type_binop_tunion_tag_int (LeOp i32)].
+  Global Existing Instance type_binop_tunion_tag_int_le_inst.
 
 
   (*** variant *)
@@ -166,7 +156,7 @@ Section union.
   Next Obligation. iIntros (?????????) "Hl Hv" => /=. by iApply (ty_ref with "[] Hl Hv"). Qed.
   Next Obligation. iIntros (????????) "Hv". by iApply (ty_memcast_compat with "Hv"). Qed.
 
-  Lemma subsume_active_union_variant ti ul x l β ty1 ty2 T n:
+  Lemma subsume_active_union_variant ti ul x l β ty1 ty2 n T:
     ⌜ti.(ti_union_layout) = ul⌝ ∗ ⌜(ti_member ti x).1 = n⌝ ∗
       subsume (l at_union{ul}ₗ n ◁ₗ{β} ty1) (l at_union{ul}ₗ n ◁ₗ{β} ty2) T
     ⊢ subsume (l ◁ₗ{β} active_union ul n ty1) (l ◁ₗ{β} variant ti x ty2) T.
@@ -174,9 +164,8 @@ Section union.
     iDestruct 1 as (<- <-) "HT". iDestruct 1 as (ly ->%layout_of_member_ti_member) "Hu". rewrite /variant/GetMemberUnionLoc/=.
     by iApply (padded_mono with "[$HT]").
   Qed.
-  Global Instance subsume_active_union_variant_inst ti ul x l β ty1 ty2 n:
-    Subsume _ _ :=
-    λ T, i2p (subsume_active_union_variant ti ul x l β ty1 ty2 T n).
+  Definition subsume_active_union_variant_inst := [instance subsume_active_union_variant].
+  Global Existing Instance subsume_active_union_variant_inst.
 
   Lemma subsume_variant_variant ti x1 x2 l β ty1 ty2 T:
     ⌜ti.(ti_tag) x1 = ti.(ti_tag) x2⌝ ∗ subsume (l at_union{ti.(ti_union_layout)}ₗ (ti_member ti x1).1 ◁ₗ{β} ty1)
@@ -186,11 +175,10 @@ Section union.
     iDestruct 1 as (Htag) "HT". rewrite !/(ty_own (variant _ _ _))/=/ti_member Htag.
       by iApply (padded_mono with "[$HT]").
   Qed.
-  Global Instance subsume_variant_variant_inst ti x1 x2 l β ty1 ty2:
-    Subsume _ _ :=
-    λ T, i2p (subsume_variant_variant ti x1 x2 l β ty1 ty2 T).
+  Definition subsume_variant_variant_inst := [instance subsume_variant_variant].
+  Global Existing Instance subsume_variant_variant_inst.
 
-  Lemma type_place_variant K β T ul n l ty ti x {Heq: TCEq (ti_member ti x).1 n} :
+  Lemma type_place_variant K β ul n l ty ti x {Heq: TCEq (ti_member ti x).1 n} T :
     ⌜ul = ti.(ti_union_layout)⌝ ∗
      typed_place K (l at_union{ul}ₗ n) β ty (λ l2 β ty2 typ, T l2 β ty2 (λ t, variant ti x (typ t)))
     ⊢ typed_place (GetMemberUnionPCtx ul n :: K) l β (variant ti x ty) T.
@@ -205,11 +193,10 @@ Section union.
     iIntros (ty') "Hty". iMod ("Hc" with "Hty") as "[Hty $]". iModIntro.
     rewrite /variant/padded/GetMemberUnionLoc/=. iSplit => //. by iFrame.
   Qed.
-  Global Instance type_place_variant_inst K β ul n l ty ti x `{!TCEq (ti_member ti x).1 n}:
-    TypedPlace (GetMemberUnionPCtx ul n :: K) l β (variant ti x ty) | 20 :=
-    λ T, i2p (type_place_variant K β T ul n l ty ti x).
+  Definition type_place_variant_inst := [instance type_place_variant].
+  Global Existing Instance type_place_variant_inst | 20.
 
-  Lemma type_place_variant_neq K T ul n l ty ti x :
+  Lemma type_place_variant_neq K ul n l ty ti x T :
     (⌜ul = ti.(ti_union_layout)⌝ ∗ ⌜ty.(ty_has_op_type) (UntypedOp (ti_member ti x).2) MCNone⌝ ∗ ∀ v, v ◁ᵥ ty -∗ typed_place (GetMemberUnionPCtx ul n :: K) l Own (uninit ul) T)
     ⊢ typed_place (GetMemberUnionPCtx ul n :: K) l Own (variant ti x ty) T.
   Proof.
@@ -217,9 +204,8 @@ Section union.
     iApply subsume_padded_uninit. iSplit; [done|]. iIntros (v) "Hv".
     iIntros "$". by iApply "HP".
   Qed.
-  Global Instance type_place_variant_neq_inst K ul n l ty ti x:
-    TypedPlace (GetMemberUnionPCtx ul n :: K) l Own (variant ti x ty) | 50:=
-    λ T, i2p (type_place_variant_neq K T ul n l ty ti x ).
+  Definition type_place_variant_neq_inst := [instance type_place_variant_neq].
+  Global Existing Instance type_place_variant_neq_inst | 50.
 End union.
 
 Section tunion.
@@ -252,9 +238,8 @@ Section tunion.
          variant ti x (ti.(ti_type) x) ] -∗ T)
     ⊢ simplify_hyp (l◁ₗ{β} x @ tunion ti) T.
   Proof. iIntros "HT Hl". by iApply "HT". Qed.
-  Global Instance simplify_hyp_tunion_inst ti x l β :
-    SimplifyHyp _ (Some 0%N) :=
-    λ T, i2p (simplify_hyp_tunion ti x l β T).
+  Definition simplify_hyp_tunion_inst := [instance simplify_hyp_tunion with 0%N].
+  Global Existing Instance simplify_hyp_tunion_inst.
 
   Lemma simplify_goal_tunion ti x l β T:
     T (l ◁ₗ{β} struct ti.(ti_base_layout) [
@@ -262,9 +247,8 @@ Section tunion.
          variant ti x (ti.(ti_type) x) ])
     ⊢ simplify_goal (l◁ₗ{β} x @ tunion ti) T.
   Proof. iIntros "HT". iExists _. iFrame. by iIntros "?". Qed.
-  Global Instance simplify_goal_tunion_inst ti x l β :
-    SimplifyGoal _ (Some 0%N) :=
-    λ T, i2p (simplify_goal_tunion ti x l β T).
+  Definition simplify_goal_tunion_inst := [instance simplify_goal_tunion with 0%N].
+  Global Existing Instance simplify_goal_tunion_inst.
 
 End tunion.
 

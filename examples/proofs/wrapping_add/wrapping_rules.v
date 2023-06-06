@@ -36,7 +36,6 @@ Section type.
     by eapply val_to_of_Z.
   Qed.
 
-  Global Instance macro_wrapping_add_inst it1 it2 e1 e2 :
-    TypedMacroExpr (WrappingAdd it1 it2) [e1 ; e2] :=
-    λ T, i2p (macro_wrapping_add it1 it2 e1 e2 T).
+  Definition macro_wrapping_add_inst := [instance macro_wrapping_add].
+  Global Existing Instance macro_wrapping_add_inst.
 End type.

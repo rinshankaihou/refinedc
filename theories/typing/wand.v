@@ -30,26 +30,23 @@ Section wand.
     iIntros "($&Hwand) Hwand2" (x) "HP2". iDestruct ("Hwand" with "HP2") as (y) "[HP1 Hty]".
     iDestruct ("Hwand2" with "HP1") as "Hty1". iDestruct ("Hty" with "Hty1") as "[$ _]".
   Qed.
-  Global Instance subsume_wand_inst l P1 P2 ty1 ty2:
-    Subsume _ _ :=
-    λ T, i2p (subsume_wand l P1 P2 ty1 ty2 T).
+  Definition subsume_wand_inst := [instance subsume_wand].
+  Global Existing Instance subsume_wand_inst.
 
   Lemma simplify_hyp_resolve_wand l (P : A → _) ty T:
     (∃ x, P x ∗ (l ◁ₗ ty x -∗ T))
     ⊢ simplify_hyp (l ◁ₗ wand_ex P ty) T.
   Proof. iDestruct 1 as (x) "[HP HT]". iIntros "Hwand". iApply "HT". by iApply "Hwand". Qed.
-   (* must be before [simplify_goal_place_refine_r] *)
-  Global Instance simplify_hyp_resolve_wand_inst l P ty :
-    SimplifyHyp _ (Some 9%N) :=
-    λ T, i2p (simplify_hyp_resolve_wand l P ty T).
+  (* must be before [simplify_goal_place_refine_r] *)
+  Definition simplify_hyp_resolve_wand_inst := [instance simplify_hyp_resolve_wand with 9%N].
+  Global Existing Instance simplify_hyp_resolve_wand_inst.
 
   Lemma simplify_goal_wand_eq l (ty : A → type) T:
     T True
     ⊢ simplify_goal (l ◁ₗ wand_ex (λ x, l ◁ₗ (ty x)) ty) T.
   Proof. iIntros "HT". iExists _. iFrame. iIntros "_" (x) "$". Qed.
-  Global Instance simplify_goal_wand_eq_inst l ty:
-    SimplifyGoal _ (Some 0%N) :=
-    λ T, i2p (simplify_goal_wand_eq l ty T).
+  Definition simplify_goal_wand_eq_inst := [instance simplify_goal_wand_eq with 0%N].
+  Global Existing Instance simplify_goal_wand_eq_inst.
 
   (* TODO: make this more general, maybe with a SimpleSubsume
   judgement, which does not have a continutation?*)
@@ -57,9 +54,8 @@ Section wand.
     T ⌜∀ x, x1 x = x2 x⌝
     ⊢ simplify_goal (l ◁ₗ wand_ex (λ x, l ◁ₗ (x1 x) @ ty) (λ x, (x2 x) @ ty)) T.
   Proof. iIntros "HT". iExists _. iFrame. iIntros (Heq x) "?". by rewrite Heq. Qed.
-  Global Instance simplify_goal_wand_eq_ref_inst B l ty x1 x2:
-    SimplifyGoal _ (Some 0%N) :=
-    λ T, i2p (simplify_goal_wand_eq_ref B l ty x1 x2 T).
+  Definition simplify_goal_wand_eq_ref_inst := [instance simplify_goal_wand_eq_ref with 0%N].
+  Global Existing Instance simplify_goal_wand_eq_ref_inst.
 
 End wand.
 Global Typeclasses Opaque wand_ex.
@@ -113,9 +109,8 @@ Section wand_val.
     iDestruct ("Hwand" with "HP2") as (y) "[HP1 Hwand]".
     iDestruct ("Hty1" with "HP1") as "Hty1". iDestruct ("Hwand" with "Hty1") as "[$_]".
   Qed.
-  Global Instance subsume_wand_val_inst v ly1 ly2 P1 P2 ty1 ty2:
-    Subsume _ _ :=
-    λ T, i2p (subsume_wand_val v ly1 ly2 P1 P2 ty1 ty2 T).
+  Definition subsume_wand_val_inst := [instance subsume_wand_val].
+  Global Existing Instance subsume_wand_val_inst.
 
   Lemma simplify_hyp_resolve_wand_val v ly P ty T:
     (∃ x, P x ∗ (v ◁ᵥ ty x -∗ T))
@@ -125,17 +120,15 @@ Section wand_val.
     iApply "HT". by iApply "Hwand".
   Qed.
   (* must be before [simplify_goal_place_refine_r] *)
-  Global Instance simplify_hyp_resolve_wand_val_inst v ly P ty:
-    SimplifyHyp _ (Some 9%N) :=
-    λ T, i2p (simplify_hyp_resolve_wand_val v ly P ty T).
+  Definition simplify_hyp_resolve_wand_val_inst := [instance simplify_hyp_resolve_wand_val with 9%N].
+  Global Existing Instance simplify_hyp_resolve_wand_val_inst.
 
   Lemma simplify_goal_wand_val_eq v ly (ty : A → type) T:
     ⌜v `has_layout_val` ly⌝ ∗ T True
     ⊢ simplify_goal (v ◁ᵥ wand_val_ex ly (λ x, v ◁ᵥ (ty x)) ty) T.
   Proof. iIntros "[??]". iExists _. iFrame. by eauto. Qed.
-  Global Instance simplify_goal_wand_val_eq_inst v ly ty:
-    SimplifyGoal _ (Some 0%N) :=
-    λ T, i2p (simplify_goal_wand_val_eq v ly ty T).
+  Definition simplify_goal_wand_val_eq_inst := [instance simplify_goal_wand_val_eq with 0%N].
+  Global Existing Instance simplify_goal_wand_val_eq_inst.
 
   (* TODO: make this more general, maybe with a SimpleSubsume
   judgement, which does not have a continutation?*)
@@ -143,9 +136,8 @@ Section wand_val.
     ⌜v `has_layout_val` ly⌝ ∗ T ⌜∀ x, x1 x = x2 x⌝
     ⊢ simplify_goal (v ◁ᵥ wand_val_ex ly (λ x, v ◁ᵥ (x1 x) @ ty) (λ x, (x2 x) @ ty)) T.
   Proof. iIntros "[??]". iExists _. iFrame. iIntros (Heq x) "?". by rewrite Heq. Qed.
-  Global Instance simplify_goal_wand_val_eq_ref_inst B v ly ty x1 x2:
-    SimplifyGoal _ (Some 0%N) :=
-    λ T, i2p (simplify_goal_wand_val_eq_ref B v ly ty x1 x2 T).
+  Definition simplify_goal_wand_val_eq_ref_inst := [instance simplify_goal_wand_val_eq_ref with 0%N].
+  Global Existing Instance simplify_goal_wand_val_eq_ref_inst.
 End wand_val.
 Global Typeclasses Opaque wand_val_ex.
 Notation wand_val ly P ty := (wand_val_ex (A:=unit) ly (λ _, P) (λ _, ty)).

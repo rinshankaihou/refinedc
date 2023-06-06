@@ -1,4 +1,4 @@
-From lithium Require Import all.
+From lithium Require Import all hooks.
 From refinedc.typing Require Import type globals.
 From refinedc.typing.automation Require Import solvers.
 

@@ -61,11 +61,10 @@ Section tagged_ptr.
   Proof.
     iIntros "(->&->&->&HT) ($&$&$&$&?)". by iApply "HT".
   Qed.
-  Global Instance subsume_tagged_ptr_inst v r1 r2 n1 n2 β1 β2 ty1 ty2:
-    Subsume _ _ :=
-    λ T, i2p (subsume_tagged_ptr v r1 r2 n1 n2 β1 β2 ty1 ty2 T).
+  Definition subsume_tagged_ptr_inst := [instance subsume_tagged_ptr].
+  Global Existing Instance subsume_tagged_ptr_inst.
 
-  Lemma subsume_frac_ptr_tagged_ptr l β (v : val) r n ty1 ty2 m T `{!LearnAlignment β ty1 m}:
+  Lemma subsume_frac_ptr_tagged_ptr l β (v : val) r n ty1 ty2 m `{!LearnAlignment β ty1 m} T:
     (⌜if m is Some m' then l `aligned_to` m' else True⌝ -∗
       ⌜l = r.1⌝ ∗ ⌜v = r.1 +ₗ r.2⌝ ∗ ⌜l `aligned_to` n⌝ ∗ ⌜0 ≤ r.2 < n⌝ ∗
      ((l ◁ₗ{β} ty1 -∗ loc_in_bounds l n ∗ True) ∧ subsume (l ◁ₗ{β} ty1) (l ◁ₗ{β} ty2) T))
@@ -78,9 +77,8 @@ Section tagged_ptr.
     { iDestruct "HT" as "[HT _]". iDestruct ("HT" with "Hl") as "[$ _]". }
     iDestruct "HT" as "[_ HT]". iDestruct ("HT" with "Hl") as "[$ $]". by iFrame "Hlib".
   Qed.
-  Global Instance subsume_frac_ptr_tagged_ptr_inst l β v r n ty1 ty2 m `{!LearnAlignment β ty1 m}:
-    Subsume (l ◁ₗ{β} ty1)%I (v ◁ᵥ r @ tagged_ptr β n ty2)%I :=
-    λ T, i2p (subsume_frac_ptr_tagged_ptr l β v r n ty1 ty2 m T).
+  Definition subsume_frac_ptr_tagged_ptr_inst := [instance subsume_frac_ptr_tagged_ptr].
+  Global Existing Instance subsume_frac_ptr_tagged_ptr_inst.
 
   Lemma simplify_hyp_tagged_ptr_0 v r β n ty `{!CanSolve (r.2 = 0)} T:
     (v ◁ᵥ r.1 @ frac_ptr β ty -∗ T)
@@ -89,9 +87,8 @@ Section tagged_ptr.
     unfold CanSolve in *. destruct r as [l ?]. simpl in *. simplify_eq.
     iIntros "HT (->&%&%&?&?)". iApply "HT". rewrite /= shift_loc_0. unfold frac_ptr; simpl_type. by iFrame.
   Qed.
-  Global Instance simplify_hyp_tagged_ptr_0_inst v r β n ty `{!CanSolve (r.2 = 0)}:
-    SimplifyHyp _ (Some 0%N) :=
-    λ T, i2p (simplify_hyp_tagged_ptr_0 v r β n ty T).
+  Definition simplify_hyp_tagged_ptr_0_inst := [instance simplify_hyp_tagged_ptr_0 with 0%N].
+  Global Existing Instance simplify_hyp_tagged_ptr_0_inst.
 
   Lemma type_cast_tagged_ptr_intptr_val (v : val) (r : loc * Z) β (align : nat) it ty T:
     (⌜v = r.1 +ₗ r.2⌝ -∗
@@ -121,9 +118,8 @@ Section tagged_ptr.
     - by apply: val_of_Z_to_prov.
     - iApply (loc_in_bounds_offset with "Hlib") => /=; [done | |]; unfold addr in *; lia.
   Qed.
-  Global Instance type_cast_tagged_ptr_intptr_val_inst (v : val) (r : loc * Z) β (align : nat) it ty:
-    TypedUnOp v (v ◁ᵥ r @ tagged_ptr β align ty)%I (CastOp (IntOp it)) PtrOp :=
-    λ T, i2p (type_cast_tagged_ptr_intptr_val v r β align it ty T).
+  Definition type_cast_tagged_ptr_intptr_val_inst := [instance type_cast_tagged_ptr_intptr_val].
+  Global Existing Instance type_cast_tagged_ptr_intptr_val_inst.
 
   Lemma type_copy_aid_tagged_ptr v1 a it v2 r β align ty T:
     (v1 ◁ᵥ a @ int it -∗
@@ -144,9 +140,8 @@ Section tagged_ptr.
     - iDestruct "HT" as "[_ HT]". iApply ("HΦ" with "[] HT").
       unfold value; simpl_type. iSplit => //. iPureIntro. apply: mem_cast_id_loc.
   Qed.
-  Global Instance type_copy_aid_tagged_ptr_inst v1 a it v2 r β align ty:
-    TypedCopyAllocId v1 (v1 ◁ᵥ a @ int it)%I v2 (v2 ◁ᵥ r @ tagged_ptr β align ty)%I (IntOp it) :=
-    λ T, i2p (type_copy_aid_tagged_ptr v1 a it v2 r β align ty T).
+  Definition type_copy_aid_tagged_ptr_inst := [instance type_copy_aid_tagged_ptr].
+  Global Existing Instance type_copy_aid_tagged_ptr_inst.
 End tagged_ptr.
 Global Typeclasses Opaque tagged_ptr_type tagged_ptr.
 

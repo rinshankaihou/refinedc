@@ -1,3 +1,4 @@
+From lithium Require Import hooks.
 From refinedc.typing Require Import typing.
 
 Ltac sidecond_hook ::= match goal with |- _ => idtac "SIDECOND" end.

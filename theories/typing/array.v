@@ -131,9 +131,8 @@ Section array.
     iIntros "[% HT]". destruct tys => //=. iIntros "(%&?&[Hty Htys])".
     rewrite offset_loc_0. iDestruct ("HT" with "[//] Hty") as "[$ $]".
   Qed.
-  Global Instance subsume_array_alloc_alive_inst l ly tys β:
-    Subsume (l ◁ₗ{β} array ly tys) (alloc_alive_loc l) | 10 :=
-    λ T, i2p (subsume_array_alloc_alive l ly tys β T).
+  Definition subsume_array_alloc_alive_inst := [instance subsume_array_alloc_alive].
+  Global Existing Instance subsume_array_alloc_alive_inst | 10.
   (*** array_ptr *)
   Program Definition array_ptr (ly : layout) (base : loc) (idx : Z) (len : nat) : type := {|
     ty_own β l := (
@@ -198,47 +197,42 @@ Section array.
         rewrite /has_layout_val take_length_le ?Hv; repeat unfold ly_size => /=; lia.
   Qed.
 
-  Lemma simplify_hyp_uninit_array ly l β T n:
+  Lemma simplify_hyp_uninit_array ly l β n T:
     ⌜layout_wf ly⌝ ∗ (l ◁ₗ{β} array ly (replicate n (uninit ly)) -∗ T)
     ⊢ simplify_hyp (l ◁ₗ{β} uninit (mk_array_layout ly n)) T.
   Proof. iIntros "[% HT] Hl". iApply "HT". rewrite array_replicate_uninit_equiv // {1}/ly_size/=. Qed.
-  Global Instance simplify_hyp_uninit_array_inst ly l β n:
-    SimplifyHyp _ (Some 50%N) :=
-    λ T, i2p (simplify_hyp_uninit_array ly l β T n).
+  Definition simplify_hyp_uninit_array_inst := [instance simplify_hyp_uninit_array with 50%N].
+  Global Existing Instance simplify_hyp_uninit_array_inst.
 
-  Lemma simplify_goal_uninit_array ly l β T n:
+  Lemma simplify_goal_uninit_array ly l β n T:
     ⌜layout_wf ly⌝ ∗ T (l ◁ₗ{β} array ly (replicate n (uninit ly)))
     ⊢ simplify_goal (l ◁ₗ{β} uninit (mk_array_layout ly n)) T.
   Proof. iIntros "[% HT]". iExists _. iFrame. iIntros "?". rewrite array_replicate_uninit_equiv //. Qed.
-  Global Instance simplify_goal_uninit_array_inst ly l β n:
-    SimplifyGoal _ (Some 50%N) :=
-    λ T, i2p (simplify_goal_uninit_array ly l β T n).
+  Definition simplify_goal_uninit_array_inst := [instance simplify_goal_uninit_array with 50%N].
+  Global Existing Instance simplify_goal_uninit_array_inst.
 
-  Lemma subsume_uninit_array_replicate l β T n (ly1 : layout) ly2:
+  Lemma subsume_uninit_array_replicate l β n (ly1 : layout) ly2 T:
     ⌜layout_wf ly2⌝ ∗ ⌜ly1 = mk_array_layout ly2 n⌝ ∗ T
     ⊢ subsume (l ◁ₗ{β} uninit ly1) (l ◁ₗ{β} array ly2 (replicate n (uninit ly2))) T.
   Proof. iIntros "(%&->&$) ?". by rewrite array_replicate_uninit_equiv. Qed.
-  Global Instance subsume_uninit_array_replicate_inst l β n ly1 ly2:
-    Subsume _ _ :=
-    λ T, i2p (subsume_uninit_array_replicate l β T n ly1 ly2).
+  Definition subsume_uninit_array_replicate_inst := [instance subsume_uninit_array_replicate].
+  Global Existing Instance subsume_uninit_array_replicate_inst.
 
-  Lemma subsume_array_replicate_uninit l β T n (ly1 : layout) ly2:
+  Lemma subsume_array_replicate_uninit l β n (ly1 : layout) ly2 T:
     ⌜layout_wf ly2⌝ ∗ ⌜ly1 = mk_array_layout ly2 n⌝ ∗ T
     ⊢ subsume (l ◁ₗ{β} array ly2 (replicate n (uninit ly2))) (l ◁ₗ{β} uninit ly1)  T.
   Proof. iIntros "(%&->&$) ?". by rewrite array_replicate_uninit_equiv. Qed.
-  Global Instance subsume_array_replicate_uninit_inst l β n ly1 ly2:
-    Subsume _ _ :=
-    λ T, i2p (subsume_array_replicate_uninit l β T n ly1 ly2).
+  Definition subsume_array_replicate_uninit_inst := [instance subsume_array_replicate_uninit].
+  Global Existing Instance subsume_array_replicate_uninit_inst.
 
   Lemma subsume_array ly1 ly2 tys1 tys2 l β T:
     ⌜ly1 = ly2⌝ ∗ subsume_list type [] tys1 tys2 (λ i ty, (l offset{ly1}ₗ i) ◁ₗ{β} ty) T
     ⊢ subsume (l ◁ₗ{β} array ly1 tys1) (l ◁ₗ{β} array ly2 tys2) T.
   Proof. iIntros "[-> H] ($&Hb&H1)". by iDestruct ("H" with "H1") as (->) "[$ $]". Qed.
-  Global Instance subsume_array_inst ly1 ly2 tys1 tys2 l β:
-    Subsume _ _ :=
-    λ T, i2p (subsume_array ly1 ly2 tys1 tys2 l β T).
+  Definition subsume_array_inst := [instance subsume_array].
+  Global Existing Instance subsume_array_inst.
 
-  Lemma type_place_array l β T ly1 it v tyv tys ly2 K:
+  Lemma type_place_array l β ly1 it v tyv tys ly2 K T:
     (∃ i, ⌜ly1 = ly2⌝ ∗ subsume (v ◁ᵥ tyv) (v ◁ᵥ i @ int it) (⌜0 ≤ i⌝ ∗ ⌜i < length tys⌝ ∗
      ∀ ty, ⌜tys !! Z.to_nat i = Some ty⌝ -∗
       typed_place K (l offset{ly2}ₗ i) β ty (λ l2 β2 ty2 typ,
@@ -259,11 +253,10 @@ Section array.
     iMod ("Htyp" with "Hl'") as "[? $]".
     iSplitR => //. iSplitR; first by rewrite insert_length. by iApply "Hc".
   Qed.
-  Global Instance type_place_array_inst l β ly1 it v tyv tys ly2 K:
-    TypedPlace (BinOpPCtx (PtrOffsetOp ly1) (IntOp it) v tyv :: K) l β (array ly2 tys):=
-    λ T, i2p (type_place_array l β T ly1 it v tyv tys ly2 K).
+  Definition type_place_array_inst := [instance type_place_array].
+  Global Existing Instance type_place_array_inst.
 
-  Lemma type_bin_op_offset_array l β T ly it v tys i:
+  Lemma type_bin_op_offset_array l β ly it v tys i T:
     (* TODO: Should we make layout_wf ly part of array such that we don't need to require it here? *)
     ⌜layout_wf ly⌝ ∗ ⌜0 ≤ i ≤ length tys⌝ ∗ (l ◁ₗ{β} array ly tys -∗ T (val_of_loc (l offset{ly}ₗ i)) ((l offset{ly}ₗ i) @ &own (array_ptr ly l i (length tys))))
     ⊢ typed_bin_op v (v ◁ᵥ i @ int it) l (l ◁ₗ{β} array ly tys) (PtrOffsetOp ly) (IntOp it) PtrOp T.
@@ -277,11 +270,10 @@ Section array.
     iSplit; [| by iSplit].
     iPureIntro. by apply: has_layout_loc_offset_loc.
   Qed.
-  Global Instance type_bin_op_offset_array_inst (l : loc) β ly it v tys i:
-    TypedBinOp v (v ◁ᵥ i @ int it)%I l (l ◁ₗ{β} array ly tys) (PtrOffsetOp ly) (IntOp it) PtrOp :=
-    λ T, i2p (type_bin_op_offset_array l β T ly it v tys i).
+  Definition type_bin_op_offset_array_inst := [instance type_bin_op_offset_array].
+  Global Existing Instance type_bin_op_offset_array_inst.
 
-  Lemma type_bin_op_offset_array_ptr l β T ly it v i idx (len : nat) base:
+  Lemma type_bin_op_offset_array_ptr l β ly it v i idx (len : nat) base T:
     ⌜layout_wf ly⌝ ∗ ⌜0 ≤ idx + i ≤ len⌝ ∗ (l ◁ₗ{β} array_ptr ly base idx len -∗ T (val_of_loc (base offset{ly}ₗ (idx + i))) ((base offset{ly}ₗ (idx + i)) @ &own (array_ptr ly base (idx + i) len)))
     ⊢ typed_bin_op v (v ◁ᵥ i @ int it) l (l ◁ₗ{β} array_ptr ly base idx len) (PtrOffsetOp ly) (IntOp it) PtrOp T.
   Proof.
@@ -295,11 +287,10 @@ Section array.
     split_and! => //; try lia. rewrite -offset_loc_offset_loc.
     by apply has_layout_loc_offset_loc.
   Qed.
-  Global Instance type_bin_op_offset_array_ptr_inst (l : loc) β ly it v i idx (len : nat) base:
-    TypedBinOp v (v ◁ᵥ i @ int it)%I l (l ◁ₗ{β} array_ptr ly base idx len) (PtrOffsetOp ly) (IntOp it) PtrOp :=
-    λ T, i2p (type_bin_op_offset_array_ptr l β T ly it v i idx len base).
+  Definition type_bin_op_offset_array_ptr_inst := [instance type_bin_op_offset_array_ptr].
+  Global Existing Instance type_bin_op_offset_array_ptr_inst.
 
-  Lemma type_bin_op_neg_offset_array_ptr l β T ly it v i idx (len : nat) base:
+  Lemma type_bin_op_neg_offset_array_ptr l β ly it v i idx (len : nat) base T:
     ⌜layout_wf ly⌝ ∗ ⌜0 ≤ idx - i ≤ len⌝ ∗ (l ◁ₗ{β} array_ptr ly base idx len -∗ T (val_of_loc (base offset{ly}ₗ (idx - i))) ((base offset{ly}ₗ (idx - i)) @ &own (array_ptr ly base (idx - i) len)))
     ⊢ typed_bin_op v (v ◁ᵥ i @ int it) l (l ◁ₗ{β} array_ptr ly base idx len) (PtrNegOffsetOp ly) (IntOp it) PtrOp T.
   Proof.
@@ -313,11 +304,10 @@ Section array.
     split_and! => //; try lia. rewrite -Z.add_opp_r -offset_loc_offset_loc.
     by apply has_layout_loc_offset_loc.
   Qed.
-  Global Instance type_bin_op_neg_offset_array_ptr_inst (l : loc) β ly it v i idx (len : nat) base:
-    TypedBinOp v (v ◁ᵥ i @ int it)%I l (l ◁ₗ{β} array_ptr ly base idx len) (PtrNegOffsetOp ly) (IntOp it) PtrOp :=
-    λ T, i2p (type_bin_op_neg_offset_array_ptr l β T ly it v i idx len base).
+  Definition type_bin_op_neg_offset_array_ptr_inst := [instance type_bin_op_neg_offset_array_ptr].
+  Global Existing Instance type_bin_op_neg_offset_array_ptr_inst.
 
-  Lemma type_bin_op_diff_array_ptr_array l1 β l2 T ly idx (len : nat) tys:
+  Lemma type_bin_op_diff_array_ptr_array l1 β l2 ly idx (len : nat) tys T:
     (l1 ◁ₗ{β} array_ptr ly l2 idx len -∗
     l2 ◁ₗ{β} array ly tys -∗
     ⌜0 < ly.(ly_size)⌝ ∗
@@ -347,35 +337,30 @@ Section array.
     iModIntro. iApply "HΦ"; [|iApply "HT"].
     unfold int; simpl_type. iPureIntro. by apply: val_to_of_Z.
   Qed.
-  Global Instance type_bin_op_diff_array_ptr_array_inst (l1 : loc) β l2 ly idx (len : nat) tys:
-    TypedBinOp l1 (l1 ◁ₗ{β} array_ptr ly l2 idx len)%I l2 (l2 ◁ₗ{β} array ly tys) (PtrDiffOp ly) PtrOp PtrOp :=
-    λ T, i2p (type_bin_op_diff_array_ptr_array l1 β l2 T ly idx len tys).
-
+  Definition type_bin_op_diff_array_ptr_array_inst := [instance type_bin_op_diff_array_ptr_array].
+  Global Existing Instance type_bin_op_diff_array_ptr_array_inst.
 
   Lemma subsume_array_ptr_alloc_alive β l ly base idx len T:
     alloc_alive_loc base ∗ T
     ⊢ subsume (l ◁ₗ{β} array_ptr ly base idx len) (alloc_alive_loc l) T.
   Proof. iIntros "[Halive $] (->&?)". by iApply (alloc_alive_loc_mono with "Halive"). Qed.
-  Global Instance subsume_array_ptr_alloc_alive_inst β l ly base idx len :
-    Subsume (l ◁ₗ{β} array_ptr ly base idx len) (alloc_alive_loc l) | 10 :=
-    λ T, i2p (subsume_array_ptr_alloc_alive β l ly base idx len T).
+  Definition subsume_array_ptr_alloc_alive_inst := [instance subsume_array_ptr_alloc_alive].
+  Global Existing Instance subsume_array_ptr_alloc_alive_inst | 10.
 
   Lemma simpl_goal_array_ptr ly base idx1 idx2 len β T:
     T (⌜idx1 = idx2⌝ ∗ ⌜(base offset{ly}ₗ idx1) `has_layout_loc` ly⌝ ∗ ⌜0 ≤ idx1 ≤ Z.of_nat len⌝ ∗
                    loc_in_bounds base (ly_size (mk_array_layout ly len)))
     ⊢ simplify_goal ((base offset{ly}ₗ idx1) ◁ₗ{β} array_ptr ly base idx2 len)  T.
   Proof. iIntros "HT". iExists _. iFrame. by iIntros "(->&%&%&$)". Qed.
-  Global Instance simpl_goal_array_ptr_inst ly base idx1 idx2 len β:
-    SimplifyGoal _ (Some 50%N) :=
-    λ T, i2p (simpl_goal_array_ptr ly base idx1 idx2 len β T).
+  Definition simpl_goal_array_ptr_inst := [instance simpl_goal_array_ptr with 50%N].
+  Global Existing Instance simpl_goal_array_ptr_inst.
 
   Lemma subsume_array_ptr ly1 ly2 base1 base2 idx1 idx2 len1 len2 l β T:
     ⌜ly1 = ly2⌝ ∗ ⌜base1 = base2⌝ ∗ ⌜idx1 = idx2⌝ ∗ ⌜len1 = len2⌝ ∗ T
     ⊢ subsume (l ◁ₗ{β} array_ptr ly1 base1 idx1 len1) (l ◁ₗ{β} array_ptr ly2 base2 idx2 len2) T.
   Proof. by iIntros "(->&->&->&->&$) $". Qed.
-  Global Instance subsume_array_ptr_inst ly1 ly2 base1 base2 idx1 idx2 len1 len2 l β:
-    Subsume _ _ :=
-    λ T, i2p (subsume_array_ptr ly1 ly2 base1 base2 idx1 idx2 len1 len2 l β T).
+  Definition subsume_array_ptr_inst := [instance subsume_array_ptr].
+  Global Existing Instance subsume_array_ptr_inst.
 
   (*
   TODO: The following rule easily leads to diverging if the hypothesis is simplified before it is introduced into the context.
@@ -404,9 +389,8 @@ Section array.
     rewrite Z2Nat.id; [|lia].
     by iApply ("HT" with "[//] Harray Hty").
   Qed.
-  Global Instance simplify_hyp_array_ptr_inst ly l β base idx len:
-    SimplifyHyp _ (Some 50%N) | 50 :=
-    λ T, i2p (simplify_hyp_array_ptr ly l β base idx len T).
+  Definition simplify_hyp_array_ptr_inst := [instance simplify_hyp_array_ptr with 50%N].
+  Global Existing Instance simplify_hyp_array_ptr_inst | 50.
 End array.
 
 Notation "array< ty , tys >" := (array ty tys)

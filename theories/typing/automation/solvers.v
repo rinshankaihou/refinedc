@@ -1,4 +1,4 @@
-From lithium Require Export hooks.
+From lithium Require Import hooks.
 From refinedc.typing Require Import type.
 
 Lemma unfold_int_elem_of_it (z : Z) (it : int_type) :

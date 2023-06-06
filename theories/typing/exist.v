@@ -63,47 +63,48 @@ Section tyexist.
   Lemma simplify_hyp_place_tyexists x l β (ty : A → _) T:
     (l ◁ₗ{β} ty x -∗ T) ⊢ simplify_hyp (l◁ₗ{β} x @ tyexists ty) T.
   Proof. iIntros "HT Hl". rewrite tyexists_eq. by iApply "HT". Qed.
-  Global Instance simplify_hyp_place_tyexists_inst x l β ty :
-    SimplifyHyp _ (Some 0%N) :=
-    λ T, i2p (simplify_hyp_place_tyexists x l β ty T).
+  Definition simplify_hyp_place_tyexists_inst :=
+    [instance simplify_hyp_place_tyexists with 0%N].
+  Global Existing Instance simplify_hyp_place_tyexists_inst.
 
   Lemma simplify_goal_place_tyexists x l β (ty : A → _) T:
     T (l ◁ₗ{β} ty x) ⊢ simplify_goal (l◁ₗ{β} x @ tyexists ty) T.
   Proof. iIntros "HT". iExists _. iFrame. rewrite tyexists_eq. by iIntros "?". Qed.
-  Global Instance simplify_goal_place_tyexists_inst x l β ty :
-    SimplifyGoal _ (Some 0%N) :=
-    λ T, i2p (simplify_goal_place_tyexists x l β ty T).
+  Definition simplify_goal_place_tyexists_inst := [instance simplify_goal_place_tyexists with 0%N].
+  Global Existing Instance simplify_goal_place_tyexists_inst.
 
   Lemma simplify_hyp_val_tyexists x v ty T :
     (v ◁ᵥ ty x -∗ T) ⊢ simplify_hyp (v◁ᵥ x @ tyexists (A:=A) ty) T.
   Proof. iIntros "HT Hl". rewrite tyexists_eq. by iApply "HT". Qed.
-  Global Instance simplify_hyp_val_tyexists_inst x v ty:
-    SimplifyHyp _ (Some 0%N) :=
-    λ T, i2p (simplify_hyp_val_tyexists x v ty T).
+  Definition simplify_hyp_val_tyexists_inst := [instance simplify_hyp_val_tyexists with 0%N].
+  Global Existing Instance simplify_hyp_val_tyexists_inst.
 
   Lemma simplify_goal_val_tyexists x v ty T:
     T (v ◁ᵥ ty x) ⊢ simplify_goal (v◁ᵥ x @ tyexists (A:=A) ty) T.
   Proof. iIntros "HT". iExists _. iFrame. rewrite tyexists_eq. by iIntros "?". Qed.
-  Global Instance simplify_goal_val_tyexists_inst x v ty:
-    SimplifyGoal _ (Some 0%N) :=
-    λ T, i2p (simplify_goal_val_tyexists x v ty T).
+  Definition simplify_goal_val_tyexists_inst := [instance simplify_goal_val_tyexists with 0%N].
+  Global Existing Instance simplify_goal_val_tyexists_inst.
 
-  Global Instance simple_subsume_place_tyexists_l (ty1 : A → _) x ty2 `{!SimpleSubsumePlace (ty1 x) ty2 P}:
+  Global Instance simple_subsume_place_tyexists_l (ty1 : A → _) x ty2
+    `{!SimpleSubsumePlace (ty1 x) ty2 P}:
     SimpleSubsumePlace (x @ tyexists ty1) ty2 P.
   Proof. iIntros (l β) "HP Hl". rewrite ! tyexists_eq. iApply (@simple_subsume_place with "HP Hl"). Qed.
 
-  Global Instance simple_subsume_place_tyexists_r (ty2 : A → _) x ty1 `{!SimpleSubsumePlace ty1 (ty2 x) P}:
+  Global Instance simple_subsume_place_tyexists_r (ty2 : A → _) x ty1
+    `{!SimpleSubsumePlace ty1 (ty2 x) P}:
     SimpleSubsumePlace ty1 (x @ tyexists ty2) P.
   Proof. iIntros (l β) "HP Hl". rewrite ! tyexists_eq. iApply (@simple_subsume_place with "HP Hl"). Qed.
 
-  Global Program Instance tyexist_optional x (ty : A → _) optty ot1 ot2 `{!∀ x, Optionable (ty x) optty ot1 ot2} : Optionable (x @ tyexists ty) optty ot1 ot2 := {|
+  Global Program Instance tyexist_optional x (ty : A → _) optty ot1 ot2
+    `{!∀ x, Optionable (ty x) optty ot1 ot2} : Optionable (x @ tyexists ty) optty ot1 ot2 := {|
     opt_pre v1 v2 := opt_pre (ty x) v1 v2
   |}.
   Next Obligation.
     move => ????????????. rewrite {1}/ty_own_val/= ty_exists_rty_eq /ty_has_op_type/ty_own_val. apply opt_bin_op.
   Qed.
 
-  Global Instance optionable_agree_tyexists (ty2 : A → type) ty1 `{!∀ x, OptionableAgree (ty2 x) ty1} : OptionableAgree (tyexists ty2) ty1.
+  Global Instance optionable_agree_tyexists (ty2 : A → type) ty1
+    `{!∀ x, OptionableAgree (ty2 x) ty1} : OptionableAgree (tyexists ty2) ty1.
   Proof. done. Qed.
 End tyexist.
 

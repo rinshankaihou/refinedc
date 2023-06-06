@@ -95,9 +95,8 @@ Section programs.
     - by apply: val_of_Z_to_prov.
     - iApply loc_in_bounds_shorten; [|done]. lia.
   Qed.
-  Global Instance type_cast_ptr_intptr_inst (p : loc) β it ty m `{!LearnAlignment β ty m}:
-    TypedUnOp p (p ◁ₗ{β} ty)%I (CastOp (IntOp it)) PtrOp :=
-    λ T, i2p (type_cast_ptr_intptr p β it ty m T).
+  Definition type_cast_ptr_intptr_inst := [instance type_cast_ptr_intptr].
+  Global Existing Instance type_cast_ptr_intptr_inst.
 
   Lemma type_cast_ptr_intptr_val (v : val) (p : loc) it (n : nat) T:
     (⌜min_alloc_start ≤ p.2 ∧ p.2 + n ≤ max_alloc_end⌝ -∗
@@ -120,9 +119,8 @@ Section programs.
     - by apply: val_of_Z_to_prov.
     - iApply loc_in_bounds_shorten; [|done]. lia.
   Qed.
-  Global Instance type_cast_ptr_intptr_val_inst (v : val) (p : loc) it (n : nat):
-    TypedUnOp v (v ◁ᵥ p @ ptr n)%I (CastOp (IntOp it)) PtrOp :=
-    λ T, i2p (type_cast_ptr_intptr_val v p it n T).
+  Definition type_cast_ptr_intptr_val_inst := [instance type_cast_ptr_intptr_val].
+  Global Existing Instance type_cast_ptr_intptr_val_inst.
 
   Lemma type_cast_intptr_ptr p v it T:
     ((alloc_alive_loc p ∗ True) ∧ T (val_of_loc p) (p @ frac_ptr Own (place p)))
@@ -134,9 +132,8 @@ Section programs.
     iSplit; [by iDestruct "HT" as "[[$ _] _]"| iDestruct "HT" as "[_ HT]"].
     iApply ("HΦ" with "[]"); last iApply "HT". unfold frac_ptr, place; simpl_type. done.
   Qed.
-  Global Instance type_cast_intptr_ptr_inst p v it:
-    TypedUnOp v (v ◁ᵥ p @ intptr it)%I (CastOp PtrOp) (IntOp it) :=
-    λ T, i2p (type_cast_intptr_ptr p v it T).
+  Definition type_cast_intptr_ptr_inst := [instance type_cast_intptr_ptr].
+  Global Existing Instance type_cast_intptr_ptr_inst.
 
   Lemma intptr_wand_int v p it:
     v ◁ᵥ p @ intptr it -∗ v ◁ᵥ p.2 @ int it.
@@ -148,9 +145,8 @@ Section programs.
   Proof.
     iIntros "[-> $]". iApply intptr_wand_int.
   Qed.
-  Global Instance subsume_intptr_int_val_inst v it n p:
-    Subsume _ _ :=
-    λ T, i2p (subsume_intptr_int_val v it n p T).
+  Definition subsume_intptr_int_val_inst := [instance subsume_intptr_int_val].
+  Global Existing Instance subsume_intptr_int_val_inst.
 
   Lemma subsume_intptr_int_place l β it n p T:
     ⌜n = p.2⌝ ∗ T
@@ -159,9 +155,8 @@ Section programs.
     iIntros "[-> $]". rewrite /ty_own /=. iIntros "(%v&%aid&%&%&%&%&?&?)".
     iExists v. by iFrame.
   Qed.
-  Global Instance subsume_intptr_int_place_inst l β it n p:
-    Subsume _ _ :=
-    λ T, i2p (subsume_intptr_int_place l β it n p T).
+  Definition subsume_intptr_int_place_inst := [instance subsume_intptr_int_place].
+  Global Existing Instance subsume_intptr_int_place_inst.
 
   Lemma typed_un_op_intptr it v l op T:
       typed_un_op v (v ◁ᵥ l.2 @ int    it) op (IntOp it) T
@@ -169,9 +164,8 @@ Section programs.
   Proof.
     iIntros "HT". iApply (typed_un_op_wand with "HT"). iApply intptr_wand_int.
   Qed.
-  Global Instance typed_un_op_intptr_inst it v l op:
-    TypedUnOp v _ op (IntOp it) | 50 :=
-    λ T, i2p (typed_un_op_intptr it v l op T).
+  Definition typed_un_op_intptr_inst := [instance typed_un_op_intptr].
+  Global Existing Instance typed_un_op_intptr_inst | 50.
 
   Lemma typed_bin_op_intptr_l it v1 l v2 ty op ot T:
       typed_bin_op v1 (v1 ◁ᵥ l.2 @ int    it) v2 (v2 ◁ᵥ ty) op (IntOp it) ot T
@@ -180,9 +174,8 @@ Section programs.
     iIntros "HT". iApply (typed_bin_op_wand with "HT"); last by iIntros "$".
     iApply intptr_wand_int.
   Qed.
-  Global Instance typed_bin_op_intptr_l_inst it v1 l v2 ty op ot:
-    TypedBinOp v1 _ v2 _ op (IntOp it) ot | 50 :=
-    λ T, i2p (typed_bin_op_intptr_l it v1 l v2 ty op ot T).
+  Definition typed_bin_op_intptr_l_inst := [instance typed_bin_op_intptr_l].
+  Global Existing Instance typed_bin_op_intptr_l_inst | 50.
 
   Lemma typed_bin_op_intptr_r it v1 ty v2 l op ot T:
       typed_bin_op v1 (v1 ◁ᵥ ty) v2 (v2 ◁ᵥ l.2 @ int    it) op ot (IntOp it) T
@@ -191,9 +184,8 @@ Section programs.
     iIntros "HT". iApply (typed_bin_op_wand with "HT"); first by iIntros "$".
     iApply intptr_wand_int.
   Qed.
-  Global Instance typed_bin_op_intptr_r_inst it v1 ty v2 l op ot:
-    TypedBinOp v1 _ v2 _ op ot (IntOp it) | 50 :=
-    λ T, i2p (typed_bin_op_intptr_r it v1 ty v2 l op ot T).
+  Definition typed_bin_op_intptr_r_inst := [instance typed_bin_op_intptr_r].
+  Global Existing Instance typed_bin_op_intptr_r_inst | 50.
 
 End programs.
 Global Typeclasses Opaque intptr_type intptr.

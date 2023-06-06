@@ -126,11 +126,10 @@ Section generic_boolean.
     - iExists _. iFrame. iPureIntro. by apply val_to_bool_iff_val_to_Z.
     - rewrite <-(represents_boolean_eq stn n b); last done. by eauto with iFrame.
   Qed.
-  Global Instance type_if_generic_boolean_inst stn it ot b v :
-    TypedIf ot v (v ◁ᵥ b @ generic_boolean stn it)%I :=
-    λ T1 T2, i2p (type_if_generic_boolean stn it ot b v T1 T2).
+  Definition type_if_generic_boolean_inst := [instance type_if_generic_boolean].
+  Global Existing Instance type_if_generic_boolean_inst.
 
-  Lemma type_assert_generic_boolean stn it ot (b : bool) s Q fn ls R v :
+  Lemma type_assert_generic_boolean v stn it ot (b : bool) s fn ls R Q :
     (⌜match ot with | BoolOp => it = u8 ∧ stn = StrictBool | IntOp it' => it = it' | _ => False end⌝ ∗
       ⌜b⌝ ∗ typed_stmt s fn ls R Q)
     ⊢ typed_assert ot v (v ◁ᵥ b @ generic_boolean stn it) s fn ls R Q.
@@ -141,25 +140,24 @@ Section generic_boolean.
     - iExists n. iFrame. iSplit; first done. iPureIntro.
       by apply represents_boolean_eq, bool_decide_eq_true in Hb.
   Qed.
-  Global Instance type_assert_generic_boolean_inst stn it ot b v :
-    TypedAssert ot v (v ◁ᵥ b @ generic_boolean stn it)%I :=
-    λ s fn ls R Q, i2p (type_assert_generic_boolean _ _ _ _ _ _ _ _ _ _).
+  Definition type_assert_generic_boolean_inst := [instance type_assert_generic_boolean].
+  Global Existing Instance type_assert_generic_boolean_inst.
 End generic_boolean.
 
 Section boolean.
   Context `{!typeG Σ}.
 
-  Lemma type_relop_boolean it v1 b1 v2 b2 T b op:
-    match op with
-    | EqOp rit => Some (eqb b1 b2       , rit)
-    | NeOp rit => Some (negb (eqb b1 b2), rit)
-    | _ => None
-    end = Some (b, i32) →
+  Lemma type_relop_boolean b1 b2 op b it v1 v2
+    (Hop : match op with
+           | EqOp rit => Some (eqb b1 b2       , rit)
+           | NeOp rit => Some (negb (eqb b1 b2), rit)
+           | _ => None
+           end = Some (b, i32)) T:
     T (i2v (bool_to_Z b) i32) (b @ boolean i32)
     ⊢ typed_bin_op v1 (v1 ◁ᵥ b1 @ boolean it)
                  v2 (v2 ◁ᵥ b2 @ boolean it) op (IntOp it) (IntOp it) T.
   Proof.
-    iIntros "%Hop HT (%n1&%Hv1&%Hb1) (%n2&%Hv2&%Hb2) %Φ HΦ".
+    iIntros "HT (%n1&%Hv1&%Hb1) (%n2&%Hv2&%Hb2) %Φ HΦ".
     have [v Hv]:= val_of_Z_bool_is_Some None i32 b.
     iApply (wp_binop_det_pure (i2v (bool_to_Z b) i32)).
     { rewrite /i2v Hv /=. destruct op, b1, b2; simplify_eq.
@@ -168,15 +166,12 @@ Section boolean.
     iApply "HΦ"; last done. iExists (bool_to_Z b).
     iSplit; [by destruct b | done].
   Qed.
-
-  Global Program Instance type_eq_boolean_inst it v1 b1 v2 b2:
-    TypedBinOp _ _ _ _ (EqOp i32) (IntOp it) (IntOp it) :=
-    λ T, i2p (type_relop_boolean it v1 b1 v2 b2 T (eqb b1 b2) _ _).
-  Next Obligation. done. Qed.
-  Global Program Instance type_ne_boolean_inst it v1 b1 v2 b2:
-    TypedBinOp _ _ _ _ (NeOp i32) (IntOp it) (IntOp it) :=
-    λ T, i2p (type_relop_boolean it v1 b1 v2 b2 T (negb (eqb b1 b2)) _ _).
-  Next Obligation. done. Qed.
+  Definition type_eq_boolean_inst b1 b2 :=
+    [instance type_relop_boolean b1 b2 (EqOp i32) (eqb b1 b2)].
+  Global Existing Instance type_eq_boolean_inst.
+  Definition type_ne_boolean_inst b1 b2 :=
+    [instance type_relop_boolean b1 b2 (NeOp i32) (negb (eqb b1 b2))].
+  Global Existing Instance type_ne_boolean_inst.
 
   (* TODO: replace this with a typed_cas once it is refactored to take E as an argument. *)
   Lemma wp_cas_suc_boolean it ot b1 b2 bd l1 l2 vd Φ E:
@@ -234,9 +229,8 @@ Section boolean.
     iApply wp_cast_int => //. iApply ("HΦ" with "[] HT") => //.
     iExists _. iSplit; last done. iPureIntro. by eapply val_to_of_Z.
   Qed.
-  Global Instance type_cast_bool_inst b it1 it2 v:
-    TypedUnOp _ _ (CastOp (IntOp it2)) (IntOp it1) :=
-    λ T, i2p (type_cast_boolean b it1 it2 v T).
+  Definition type_cast_boolean_inst := [instance type_cast_boolean].
+  Global Existing Instance type_cast_boolean_inst.
 
 End boolean.
 
@@ -250,8 +244,8 @@ Section builtin_boolean.
   Proof.
     iIntros "HT". iExists _. iFrame. iPureIntro. naive_solver.
   Qed.
-  Global Instance type_val_builtin_boolean_inst b : TypedValue (val_of_bool b) :=
-    λ T, i2p (type_val_builtin_boolean b T).
+  Definition type_val_builtin_boolean_inst := [instance type_val_builtin_boolean].
+  Global Existing Instance type_val_builtin_boolean_inst.
 
   Lemma type_cast_boolean_builtin_boolean b it v T:
     (∀ v, T v (b @ builtin_boolean))
@@ -261,9 +255,8 @@ Section builtin_boolean.
     iApply wp_cast_int_bool => //. iApply ("HΦ" with "[] HT") => //.
     iPureIntro => /=. exists (bool_to_Z b). by destruct b.
   Qed.
-  Global Instance type_cast_boolean_builtin_boolean_inst b it v:
-    TypedUnOp _ _ (CastOp BoolOp) (IntOp it) :=
-    λ T, i2p (type_cast_boolean_builtin_boolean b it v T).
+  Definition type_cast_boolean_builtin_boolean_inst := [instance type_cast_boolean_builtin_boolean].
+  Global Existing Instance type_cast_boolean_builtin_boolean_inst.
 
   Lemma type_cast_builtin_boolean_boolean b it v T:
     (∀ v, T v (b @ boolean it))
@@ -275,9 +268,8 @@ Section builtin_boolean.
     iApply ("HΦ" with "[] HT") => //.
     iPureIntro => /=. eexists _. split;[|done]. by apply: val_to_of_Z.
   Qed.
-  Global Instance type_cast_builtin_boolean_boolean_inst b it v:
-    TypedUnOp _ _ (CastOp (IntOp it)) BoolOp :=
-    λ T, i2p (type_cast_builtin_boolean_boolean b it v T).
+  Definition type_cast_builtin_boolean_boolean_inst := [instance type_cast_builtin_boolean_boolean].
+  Global Existing Instance type_cast_builtin_boolean_boolean_inst.
 
 End builtin_boolean.
 Global Typeclasses Opaque generic_boolean_type generic_boolean.
