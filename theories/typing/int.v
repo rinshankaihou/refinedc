@@ -79,7 +79,9 @@ Section programs.
 
   (*** int *)
   Lemma type_val_int n it T :
-    [{ exhale ⌜n ∈ it⌝; {T (n @ (int it))} }] ⊢ typed_value (i2v n it) T.
+    typed_value (i2v n it) T ::=
+      exhale ⌜n ∈ it⌝;
+      return T (n @ (int it)).
   Proof.
     iIntros "[%Hn HT]".
     move: Hn => /(val_of_Z_is_Some None) [v Hv].

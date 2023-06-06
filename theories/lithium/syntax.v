@@ -10,20 +10,19 @@ Section lithium.
   (* Alternative names: prove, assert, consume *)
   Definition exhale (P T : iProp Σ) : iProp Σ :=
     P ∗ T.
-
   (* Alternative names: intro, assume, produce *)
   Definition inhale (P T : iProp Σ) : iProp Σ :=
     P -∗ T.
 
   Definition all {A} : (A → iProp Σ) → iProp Σ :=
     bi_forall.
-
   Definition exist {A} : (A → iProp Σ) → iProp Σ :=
     bi_exist.
 
   Definition done : iProp Σ := True.
-
   Definition false : iProp Σ := False.
+
+  Definition ret (T : iProp Σ) : iProp Σ := T.
 
   Definition bind0 (P : iProp Σ → iProp Σ) (T : iProp Σ) : iProp Σ := P T.
   Definition bind1 {A1} (P : (A1 → iProp Σ) → iProp Σ) (T : A1 → iProp Σ) : iProp Σ := P T.
@@ -51,6 +50,8 @@ Notation "'exhale' x" := (li.exhale x) (in custom lithium at level 0, x constr,
                            format "'exhale'  '[' x ']'") : lithium_scope.
 Notation "'done'" := (li.done) (in custom lithium at level 0) : lithium_scope.
 Notation "'false'" := (li.false) (in custom lithium at level 0) : lithium_scope.
+Notation "'return' x" := (li.ret x) (in custom lithium at level 0, x constr,
+                           format "'return'  '[' x ']'") : lithium_scope.
 (* Notation "x !" := (exhale_opt x) (at level 100, format "x !") : lithium_scope. *)
 Notation "∀ x .. y , P" := (li.all (λ x, .. (li.all (λ y, P)) ..))
     (in custom lithium at level 200, x binder, y binder, right associativity,
@@ -58,9 +59,6 @@ Notation "∀ x .. y , P" := (li.all (λ x, .. (li.all (λ y, P)) ..))
 Notation "∃ x .. y , P" := (li.exist (λ x, .. (li.exist (λ y, P)) ..))
     (in custom lithium at level 200, x binder, y binder, right associativity,
         format "'[' ∃  x  ..  y , ']'  '/' P") : lithium_scope.
-
-(* Notation "∀ T" := (li.uni T) (in custom lithium at level 0, T constr) : lithium_scope. *)
-(* Notation "∃ T" := (li.exi T) (in custom lithium at level 0, T constr) : lithium_scope. *)
 
 Notation "y ; z" := (li.bind0 y z)
   (in custom lithium at level 100, z at level 200,
@@ -84,8 +82,11 @@ Notation "x1 , x2 , x3 , x4 , x5 ← y ; z" := (li.bind5 y (λ x1 x2 x3 x4 x5 : 
   (in custom lithium at level 0, y at level 99, z at level 200, x1 name, x2 name, x3 name, x4 name, x5 name,
       format "x1 ,  x2 ,  x3 ,  x4 ,  x5  ←  y ;  '/' z") : lithium_scope.
 
+Notation "P '::=' Q" := (Q ⊢ P)
+  (at level 99, Q custom lithium at level 200, only parsing) : stdpp_scope.
+
 Declare Reduction liFromSyntax_eval :=
-  cbv [ li.exhale li.inhale li.all li.exist li.done li.false
+  cbv [ li.exhale li.inhale li.all li.exist li.done li.false li.ret
         li.bind0 li.bind1 li.bind2 li.bind3 li.bind4 li.bind5 ].
 
 Ltac liFromSyntaxTerm c :=
@@ -107,6 +108,7 @@ TODO: Build a proper version using Ltac2, see
 https://coq.zulipchat.com/#narrow/stream/237977-Coq-users/topic/Controlling.20printing.20of.20patters.20in.20binders/near/363637321
  *)
 Ltac liToSyntax :=
+  liFromSyntax; (* make sure that we are not adding things twice, especially around user-defined functions *)
   iEval (
     liToSyntax_hook;
     change (bi_sep ?a) with (li.bind0 (li.exhale (liToSyntax_UNFOLD_MARKER a)));
