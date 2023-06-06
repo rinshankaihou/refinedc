@@ -6,8 +6,8 @@ Set Default Proof Using "Type".
 (** This file contains the main Lithium interpreter. *)
 
 (** * General proof state management tactics  *)
-Ltac liEnsureInvariant :=
-  unfold_instantiated_evars; try let_bind_envs.
+Tactic Notation "liInst" hyp(H) open_constr(c) :=
+  instantiate_protected H c.
 
 Ltac liShow := li_unfold_lets_in_context; try liToSyntax.
 
@@ -46,8 +46,8 @@ Ltac liUnfoldSyntax :=
   | |- envs_entails _ (li.bind5 _ _) => liFromSyntax
   end.
 
-Tactic Notation "liInst" hyp(H) open_constr(c) :=
-  instantiate_protected H c.
+Ltac liEnsureInvariant :=
+  unfold_instantiated_evars; try let_bind_envs; try liUnfoldSyntax.
 
 Section coq_tactics.
   Context {Σ : gFunctors}.
@@ -626,5 +626,4 @@ Ltac liStep :=
     | liFalse
     | liAccu
     | liUnfoldLetGoal
-    | liUnfoldSyntax
     ].
