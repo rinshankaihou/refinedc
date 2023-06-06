@@ -19,6 +19,9 @@ Section lithium.
   Definition exist {A} : (A → iProp Σ) → iProp Σ :=
     bi_exist.
 
+  Definition and (P1 P2 : iProp Σ) : iProp Σ :=
+    P1 ∧ P2.
+
   Definition done : iProp Σ := True.
   Definition false : iProp Σ := False.
 
@@ -48,6 +51,12 @@ Notation "'inhale' x" := (li.inhale x) (in custom lithium at level 0, x constr,
                            format "'inhale'  '[' x ']'") : lithium_scope.
 Notation "'exhale' x" := (li.exhale x) (in custom lithium at level 0, x constr,
                            format "'exhale'  '[' x ']'") : lithium_scope.
+Notation "'and:' | x | y | .. | z" := (li.and .. (li.and x y) .. z)
+    (in custom lithium at level 200,
+ format "'[hv' and:  '/' |  x  '/' |  y  '/' |  ..  '/' |  z ']'"
+ (* TODO: I would like to use the following but it does not work: *)
+ (* format "'[hv' and  '/' |  '[' x ']'  '/' |  '[' y ']'  '/' |  '[' .. ']'  '/' |  '[' z ']' ']'" *)
+) : lithium_scope.
 Notation "'done'" := (li.done) (in custom lithium at level 0) : lithium_scope.
 Notation "'false'" := (li.false) (in custom lithium at level 0) : lithium_scope.
 Notation "'return' x" := (li.ret x) (in custom lithium at level 0, x constr,
@@ -86,7 +95,7 @@ Notation "P '::=' Q" := (Q ⊢ P)
   (at level 99, Q custom lithium at level 200, only parsing) : stdpp_scope.
 
 Declare Reduction liFromSyntax_eval :=
-  cbv [ li.exhale li.inhale li.all li.exist li.done li.false li.ret
+  cbv [ li.exhale li.inhale li.all li.exist li.done li.false li.ret li.and
         li.bind0 li.bind1 li.bind2 li.bind3 li.bind4 li.bind5 ].
 
 Ltac liFromSyntaxTerm c :=
@@ -113,6 +122,7 @@ Ltac liToSyntax :=
     liToSyntax_hook;
     change (bi_sep ?a) with (li.bind0 (li.exhale (liToSyntax_UNFOLD_MARKER a)));
     change (bi_wand ?a) with (li.bind0 (li.inhale (liToSyntax_UNFOLD_MARKER a)));
+    change (bi_and ?a ?b) with (li.and a b);
     change (@bi_forall (iPropI ?Σ) ?A) with (@li.all Σ A);
     change (@bi_exist (iPropI ?Σ) ?A) with (@li.exist Σ A);
     change (@bi_pure (iPropI ?Σ) True) with (@li.done Σ);
@@ -209,7 +219,7 @@ Section test.
     ⊢ ∀ n1 n2, (⌜n1 + Z.to_nat n2 > 0⌝ ∗ ⌜n2 = 1⌝) -∗
      check_wp (n1 + 1) (λ v,
        ∃ n' : nat, (⌜v = n'⌝ ∗ ⌜n' > 0⌝) ∗
-       get_tuple (λ '(x1, x2, x3), ⌜x1 = 0⌝ ∗ True )).
+       get_tuple (λ '(x1, x2, x3), ⌜x1 = 0⌝ ∗ (True ∧ True) )).
   Proof.
     iStartProof.
     liToSyntax.

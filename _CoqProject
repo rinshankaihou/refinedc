@@ -35,6 +35,7 @@
 -Q _build/default/tutorial/proofs/t10_loops refinedc.tutorial.t10_loops
 -Q _build/default/tutorial/proofs/t11_tree_set refinedc.tutorial.t11_tree_set
 -Q _build/default/tutorial/adequacy refinedc.tutorial.adequacy
+-Q _build/default/tutorial/lithium lithium.tutorial
 -Q _build/default/tutorial/proofs/quicksort_solution refinedc.tutorial.quicksort_solution
 -Q _build/default/tutorial/proofs/quicksort_exercise refinedc.tutorial.quicksort_exercise
 -Q _build/default/examples/proofs/binary_search refinedc.examples.binary_search
