@@ -45,16 +45,16 @@ Section tyfold.
   Global Existing Instance simplify_hyp_place_tyfold_optional_inst.
 
   Lemma simplify_goal_place_tyfold_nil l β ls b T:
-    T (⌜ls = []⌝ ∗ l ◁ₗ{β} b) ⊢ simplify_goal (l◁ₗ{β} ls @ tyfold [] b) T.
-  Proof. iIntros "HT". iExists _. iFrame. iIntros "[-> Hl]". repeat iSplit => //. Qed.
+    ⌜ls = []⌝ ∗ l ◁ₗ{β} b ∗ T ⊢ simplify_goal (l◁ₗ{β} ls @ tyfold [] b) T.
+  Proof. iIntros "[-> [Hl $]]". repeat iSplit => //. Qed.
   Definition simplify_goal_place_tyfold_nil_inst := [instance simplify_goal_place_tyfold_nil with 0%N].
   Global Existing Instance simplify_goal_place_tyfold_nil_inst.
 
   Lemma simplify_goal_place_tyfold_cons l β ls ty tys b T:
-    T (∃ l2 ls2, ⌜ls = l2::ls2⌝ ∗ l ◁ₗ{β} (ty (place l2)) ∗ (l2 ◁ₗ{β} ls2 @ tyfold tys b))
+    (∃ l2 ls2, ⌜ls = l2::ls2⌝ ∗ l ◁ₗ{β} ty (place l2) ∗ l2 ◁ₗ{β} ls2 @ tyfold tys b ∗ T)
     ⊢ simplify_goal (l◁ₗ{β} ls @ tyfold (ty :: tys) b) T.
   Proof.
-    iIntros "HT". iExists _. iFrame. iDestruct 1 as (l2 ls2 ->) "[Hl [% [Htys Hb]]]".
+    iDestruct 1 as (l2 ls2 ->) "[Hl [[% [Htys Hb]] $]]".
     iSplit => /=. 1: by iPureIntro; f_equal. iFrame.
     iSplitR "Hb"; first by eauto with iFrame.
     iStopProof. f_equiv. destruct ls2 =>//=. by apply default_last_cons.

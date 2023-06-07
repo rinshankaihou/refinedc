@@ -69,10 +69,10 @@ Section padded.
   Global Existing Instance simpl_padded_hyp_eq_layout_inst.
   (* TODO: should this also work for Shr? *)
   Lemma simpl_padded_goal_eq_layout l ty ly T:
-    T (⌜ty.(ty_has_op_type) (UntypedOp ly) MCNone⌝ ∗ l ◁ₗ ty)
+    ⌜ty.(ty_has_op_type) (UntypedOp ly) MCNone⌝ ∗ l ◁ₗ ty ∗ T
     ⊢ simplify_goal (l ◁ₗ padded ty ly ly) T.
   Proof.
-    iIntros "HT". iExists _. iFrame. iIntros "[% Hl]". iDestruct (ty_aligned with "Hl") as %?; [done|].
+    iIntros "[% [Hl $]]". iDestruct (ty_aligned with "Hl") as %?; [done|].
     do 2 iSplit => //. iDestruct (movable_loc_in_bounds with "Hl") as "#Hb"; [done|]. iFrame "Hl Hb".
     iExists []. rewrite heap_mapsto_own_state_nil.
     iSplit. { iPureIntro. rewrite /has_layout_val/ly_offset/ly_size /=. lia. }

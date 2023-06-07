@@ -390,9 +390,9 @@ Section struct.
   Global Existing Instance uninit_struct_simpl_hyp_inst.
 
   Lemma uninit_struct_simpl_goal l β (s : struct_layout) T:
-    T (l ◁ₗ{β} (struct s (uninit <$> omap (λ '(n, ly), const ly <$> n) s.(sl_members))))
+    l ◁ₗ{β} (struct s (uninit <$> omap (λ '(n, ly), const ly <$> n) s.(sl_members))) ∗ T
     ⊢ simplify_goal (l ◁ₗ{β} uninit s) T.
-  Proof. iIntros "HT". iExists _. iFrame. iIntros "?". by rewrite uninit_struct_equiv. Qed.
+  Proof. iIntros "[? $]". by rewrite uninit_struct_equiv. Qed.
   Definition uninit_struct_simpl_goal_inst := [instance uninit_struct_simpl_goal with 50%N].
   Global Existing Instance uninit_struct_simpl_goal_inst.
 End struct.

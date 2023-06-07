@@ -71,8 +71,8 @@ Definition simplify_hyp {Σ} (P : iProp Σ) (T : iProp Σ) : iProp Σ :=
 Class SimplifyHyp {Σ} (P : iProp Σ) (n : option N) : Type :=
   simplify_hyp_proof T : iProp_to_Prop (simplify_hyp P T).
 
-Definition simplify_goal {Σ} (P : iProp Σ) (T : iProp Σ → iProp Σ) : iProp Σ :=
-  (∃ P2, (P2 -∗ P) ∗ T P2).
+Definition simplify_goal {Σ} (P : iProp Σ) (T : iProp Σ) : iProp Σ :=
+  (P ∗ T).
 Class SimplifyGoal {Σ} (P : iProp Σ) (n : option N) : Type :=
   simplify_goal_proof T : iProp_to_Prop (simplify_goal P T).
 

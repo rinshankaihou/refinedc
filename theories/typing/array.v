@@ -205,9 +205,9 @@ Section array.
   Global Existing Instance simplify_hyp_uninit_array_inst.
 
   Lemma simplify_goal_uninit_array ly l β n T:
-    ⌜layout_wf ly⌝ ∗ T (l ◁ₗ{β} array ly (replicate n (uninit ly)))
+    ⌜layout_wf ly⌝ ∗ l ◁ₗ{β} array ly (replicate n (uninit ly)) ∗ T
     ⊢ simplify_goal (l ◁ₗ{β} uninit (mk_array_layout ly n)) T.
-  Proof. iIntros "[% HT]". iExists _. iFrame. iIntros "?". rewrite array_replicate_uninit_equiv //. Qed.
+  Proof. iIntros "[% [? $]]". rewrite array_replicate_uninit_equiv //. Qed.
   Definition simplify_goal_uninit_array_inst := [instance simplify_goal_uninit_array with 50%N].
   Global Existing Instance simplify_goal_uninit_array_inst.
 
@@ -348,10 +348,10 @@ Section array.
   Global Existing Instance subsume_array_ptr_alloc_alive_inst | 10.
 
   Lemma simpl_goal_array_ptr ly base idx1 idx2 len β T:
-    T (⌜idx1 = idx2⌝ ∗ ⌜(base offset{ly}ₗ idx1) `has_layout_loc` ly⌝ ∗ ⌜0 ≤ idx1 ≤ Z.of_nat len⌝ ∗
-                   loc_in_bounds base (ly_size (mk_array_layout ly len)))
+    ⌜idx1 = idx2⌝ ∗ ⌜(base offset{ly}ₗ idx1) `has_layout_loc` ly⌝ ∗ ⌜0 ≤ idx1 ≤ Z.of_nat len⌝ ∗
+       loc_in_bounds base (ly_size (mk_array_layout ly len)) ∗ T
     ⊢ simplify_goal ((base offset{ly}ₗ idx1) ◁ₗ{β} array_ptr ly base idx2 len)  T.
-  Proof. iIntros "HT". iExists _. iFrame. by iIntros "(->&%&%&$)". Qed.
+  Proof. by iIntros "(->&%&%&$&$)". Qed.
   Definition simpl_goal_array_ptr_inst := [instance simpl_goal_array_ptr with 50%N].
   Global Existing Instance simpl_goal_array_ptr_inst.
 

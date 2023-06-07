@@ -23,8 +23,8 @@ Definition simplify_hyp_id_inst Σ (P : iProp Σ) :=
 Global Existing Instance simplify_hyp_id_inst | 100.
 
 Lemma simplify_goal_id {Σ} (P : iProp Σ) T :
-  T P ⊢ simplify_goal P T.
-Proof. iIntros "HT". iExists _. iFrame. by iIntros "?". Qed.
+  P ∗ T ⊢ simplify_goal P T.
+Proof. iIntros "$". Qed.
 Definition simplify_goal_id_inst Σ (P : iProp Σ) :=
   [instance simplify_goal_id P as SimplifyGoal P None].
 Global Existing Instance simplify_goal_id_inst | 100.
@@ -39,7 +39,7 @@ Global Existing Instance subsume_id_inst | 1.
 
 Lemma subsume_simplify {Σ} (P1 P2 : iProp Σ) o1 o2 {SH : SimplifyHyp P1 o1} {SG : SimplifyGoal P2 o2}`{!TCOneIsSome o1 o2} T:
     let GH := (SH (P2 ∗ T)%I).(i2p_P) in
-    let GG := (SG (λ P, P1 -∗ P ∗ T)%I).(i2p_P) in
+    let GG := (P1 -∗ (SG T).(i2p_P))%I in
     let G :=
        match o1, o2 with
      | Some n1, Some n2 => if (n2 ?= n1)%N is Lt then GG else GH
@@ -52,9 +52,8 @@ Proof.
   iIntros "/= Hs Hl".
   destruct o1 as [n1|], o2 as [n2|] => //. 1: case_match.
   1,3,4: by iDestruct (i2p_proof with "Hs Hl") as "Hsub".
-  all: iDestruct (i2p_proof with "Hs") as (P) "[HP HT]".
-  all: iDestruct ("HT" with "Hl") as "[HP' $]".
-  all: by iApply "HP".
+  all: iDestruct ("Hs" with "Hl") as "HSG".
+  all: iDestruct (i2p_proof with "HSG") as "$".
 Qed.
 Definition subsume_simplify_inst := [instance @subsume_simplify].
 Global Existing Instance subsume_simplify_inst | 1000.

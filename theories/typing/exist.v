@@ -68,8 +68,8 @@ Section tyexist.
   Global Existing Instance simplify_hyp_place_tyexists_inst.
 
   Lemma simplify_goal_place_tyexists x l β (ty : A → _) T:
-    T (l ◁ₗ{β} ty x) ⊢ simplify_goal (l◁ₗ{β} x @ tyexists ty) T.
-  Proof. iIntros "HT". iExists _. iFrame. rewrite tyexists_eq. by iIntros "?". Qed.
+    l ◁ₗ{β} ty x ∗ T ⊢ simplify_goal (l◁ₗ{β} x @ tyexists ty) T.
+  Proof. iIntros "[? $]". by rewrite tyexists_eq. Qed.
   Definition simplify_goal_place_tyexists_inst := [instance simplify_goal_place_tyexists with 0%N].
   Global Existing Instance simplify_goal_place_tyexists_inst.
 
@@ -80,8 +80,8 @@ Section tyexist.
   Global Existing Instance simplify_hyp_val_tyexists_inst.
 
   Lemma simplify_goal_val_tyexists x v ty T:
-    T (v ◁ᵥ ty x) ⊢ simplify_goal (v◁ᵥ x @ tyexists (A:=A) ty) T.
-  Proof. iIntros "HT". iExists _. iFrame. rewrite tyexists_eq. by iIntros "?". Qed.
+    v ◁ᵥ ty x ∗ T ⊢ simplify_goal (v◁ᵥ x @ tyexists (A:=A) ty) T.
+  Proof. iIntros "[? $]". by rewrite tyexists_eq. Qed.
   Definition simplify_goal_val_tyexists_inst := [instance simplify_goal_val_tyexists with 0%N].
   Global Existing Instance simplify_goal_val_tyexists_inst.
 

@@ -72,9 +72,9 @@ Section type.
   Global Existing Instance tylocked_simplify_hyp_place_inst.
 
   Lemma tylocked_simplify_goal_place A γ n x (ty : A → type) l T:
-    T (l ◁ₗ ty x)
+    l ◁ₗ ty x ∗ T
     ⊢ simplify_goal (l ◁ₗ tylocked_ex γ n x ty) T.
-  Proof. iIntros "HT". iExists _. iFrame. iIntros "$". Qed.
+  Proof. iIntros "[$ $]". Qed.
   Definition tylocked_simplify_goal_place_inst := [instance tylocked_simplify_goal_place with 0%N].
   Global Existing Instance tylocked_simplify_goal_place_inst.
 

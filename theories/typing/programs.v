@@ -345,16 +345,16 @@ Section proper.
   Proof. iIntros "HT ?". rewrite Heq. by iApply "HT". Qed.
 
   Lemma simplify_goal_place_eq ty1 ty2 (Heq : ty1 ≡@{type} ty2) l β T:
-    T (l ◁ₗ{β} ty2) ⊢ simplify_goal (l◁ₗ{β} ty1) T.
-  Proof. iIntros "HT". iExists _. iFrame. rewrite Heq. by iIntros "?". Qed.
+    l ◁ₗ{β} ty2 ∗ T ⊢ simplify_goal (l◁ₗ{β} ty1) T.
+  Proof. rewrite Heq. iIntros "$". Qed.
 
   Lemma simplify_hyp_val_eq ty1 ty2 (Heq : ty1 ≡@{type} ty2) v T:
     (v ◁ᵥ ty2 -∗ T) ⊢ simplify_hyp (v ◁ᵥ ty1) T.
   Proof. iIntros "HT ?". rewrite Heq. by iApply "HT". Qed.
 
   Lemma simplify_goal_val_eq ty1 ty2 (Heq : ty1 ≡@{type} ty2) v T:
-    T (v ◁ᵥ ty2) ⊢ simplify_goal (v ◁ᵥ ty1) T.
-  Proof. iIntros "HT". iExists _. iFrame. rewrite Heq. by iIntros "?". Qed.
+    v ◁ᵥ ty2 ∗ T ⊢ simplify_goal (v ◁ᵥ ty1) T.
+  Proof. rewrite Heq. iIntros "$". Qed.
 
   Lemma typed_place_subsume' P l ty1 β T :
     (l ◁ₗ{β} ty1 -∗ ∃ ty2, l ◁ₗ{β} ty2 ∗ typed_place P l β ty2 T) ⊢ typed_place P l β ty1 T.
@@ -757,10 +757,10 @@ Section typing.
   Global Existing Instance subsume_alloc_alive_type_alive_inst | 10.
 
   Lemma simplify_goal_type_alive ty β P `{!AllocAlive ty β P} T :
-    T (□ P)
+    □ P ∗ T
     ⊢ simplify_goal (type_alive ty β) T.
   Proof.
-    iIntros "HT". iExists _. iFrame. rewrite /type_alive. iIntros "#HP !>" (?) "Hl".
+    iIntros "[#HP HT]". iFrame. rewrite /type_alive. iIntros "!>" (?) "Hl".
       by iApply (alloc_alive_alive with "HP Hl").
   Qed.
   Definition simplify_goal_type_alive_inst := [instance simplify_goal_type_alive with 0%N].
@@ -811,14 +811,14 @@ Section typing.
   (* This is forced since it can create evars in places where we don't
   want them. We might first want to try subtyping without the evar (see e.g. optional ) *)
   Lemma simplify_goal_place_refine_r A (ty : rtype A) l β T:
-    (∃ x, T (l ◁ₗ{β} (x @ ty))) ⊢ simplify_goal (l◁ₗ{β}ty) T.
-  Proof. iDestruct 1 as (x) "HT". iExists _. iFrame. iIntros "?". by iExists _. Qed.
+    (∃ x, l ◁ₗ{β} x @ ty ∗ T) ⊢ simplify_goal (l◁ₗ{β}ty) T.
+  Proof. iDestruct 1 as (x) "[Hl $]". by iExists _. Qed.
   Definition simplify_goal_place_refine_r_inst := [instance simplify_goal_place_refine_r with 10%N].
   Global Existing Instance simplify_goal_place_refine_r_inst.
 
   Lemma simplify_goal_val_refine_r A (ty : rtype A) v T :
-    (∃ x, T (v ◁ᵥ (x @ ty))) ⊢ simplify_goal (v ◁ᵥ ty) T.
-  Proof. iDestruct 1 as (x) "HT". iExists _. iFrame. iIntros "?". by iExists _. Qed.
+    (∃ x, v ◁ᵥ (x @ ty) ∗ T) ⊢ simplify_goal (v ◁ᵥ ty) T.
+  Proof. iDestruct 1 as (x) "[? $]". by iExists _. Qed.
   Definition simplify_goal_val_refine_r_inst := [instance simplify_goal_val_refine_r with 10%N].
   Global Existing Instance simplify_goal_val_refine_r_inst.
 
@@ -831,9 +831,9 @@ Section typing.
   Global Existing Instance simplify_bad_own_state_hyp_inst.
 
   Lemma simplify_bad_own_state_goal l β ty T:
-    (T (l ◁ₗ{β} ty))
+    (l ◁ₗ{β} ty ∗ T )
     ⊢ simplify_goal (l ◁ₗ{match β with | Own => Own | Shr => Shr end} ty) T.
-  Proof. iIntros "HT". iExists _. iFrame. iIntros "?". by destruct β. Qed.
+  Proof. iIntros "[? $]". by destruct β. Qed.
   Definition simplify_bad_own_state_goal_inst := [instance simplify_bad_own_state_goal with 0%N].
   Global Existing Instance simplify_bad_own_state_goal_inst.
 

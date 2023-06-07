@@ -35,13 +35,13 @@ Section type.
   Proof. Admitted.
 
   Lemma simplify_goal_place_find_buddy_lt vmemmap p order β ty `{!CanSolve (p < find_buddy vmemmap order p)} T:
-    T (hyp_page_to_virt vmemmap (vmemmap offset{struct_hyp_page}ₗ find_buddy vmemmap order p) ◁ₗ{β} ty)
+    hyp_page_to_virt vmemmap (vmemmap offset{struct_hyp_page}ₗ find_buddy vmemmap order p) ◁ₗ{β} ty ∗ T
     ⊢ simplify_goal ((hyp_page_to_virt vmemmap (vmemmap offset{struct_hyp_page}ₗ p) +ₗ ly_size (PAGE_LAYOUT (1 ≪ order))) ◁ₗ{β} ty) T.
   Proof. Admitted.
   Definition simplify_goal_place_find_buddy_lt_inst := [instance simplify_goal_place_find_buddy_lt with 0%N].
   Global Existing Instance simplify_goal_place_find_buddy_lt_inst.
   Lemma simplify_goal_place_find_buddy_gt vmemmap p order β ty T:
-    T (⌜find_buddy vmemmap order p < p⌝ ∗ hyp_page_to_virt vmemmap (vmemmap offset{struct_hyp_page}ₗ p) ◁ₗ{β} ty)
+    ⌜find_buddy vmemmap order p < p⌝ ∗ hyp_page_to_virt vmemmap (vmemmap offset{struct_hyp_page}ₗ p) ◁ₗ{β} ty ∗ T
     ⊢ simplify_goal ((hyp_page_to_virt vmemmap (vmemmap offset{struct_hyp_page}ₗ find_buddy vmemmap order p) +ₗ ly_size (PAGE_LAYOUT (1 ≪ order))) ◁ₗ{β} ty) T.
   Proof. Admitted.
   Definition simplify_goal_place_find_buddy_gt_inst := [instance simplify_goal_place_find_buddy_gt with 0%N].

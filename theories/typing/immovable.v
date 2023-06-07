@@ -25,8 +25,8 @@ Section immovable.
   Global Existing Instance simplify_hyp_place_immovable_inst.
 
   Lemma simplify_goal_place_immovable l β ty T:
-    T (l ◁ₗ{β} ty l) ⊢ simplify_goal (l◁ₗ{β} immovable ty) T.
-  Proof. iIntros "HT". iExists _. iFrame. iIntros "$". Qed.
+    (l ◁ₗ{β} ty l) ∗ T ⊢ simplify_goal (l◁ₗ{β} immovable ty) T.
+  Proof. iIntros "[$ $]". Qed.
   Definition simplify_goal_place_immovable_inst := [instance simplify_goal_place_immovable with 0%N].
   Global Existing Instance simplify_goal_place_immovable_inst.
 End immovable.

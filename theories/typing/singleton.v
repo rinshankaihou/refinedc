@@ -142,9 +142,9 @@ Section at_value.
   Global Existing Instance at_value_simplify_hyp_val_inst.
 
   Lemma at_value_simplify_goal_val v v' ty T:
-    (T (v ◁ᵥ value PtrOp v' ∗ v' ◁ᵥ ty))
+    v ◁ᵥ value PtrOp v' ∗ v' ◁ᵥ ty ∗ T
     ⊢ simplify_goal (v ◁ᵥ at_value v' ty) T.
-  Proof. iIntros "HT". iExists _. iFrame. by iIntros "$". Qed.
+  Proof. iIntros "[$ [$ $]]". Qed.
   Definition at_value_simplify_goal_val_inst := [instance at_value_simplify_goal_val with 0%N].
   Global Existing Instance at_value_simplify_goal_val_inst.
 
@@ -156,9 +156,9 @@ Section at_value.
   Global Existing Instance at_value_simplify_hyp_loc_inst.
 
   Lemma at_value_simplify_goal_loc l v' ty T:
-    (T (l ◁ₗ value PtrOp v' ∗ v' ◁ᵥ ty))
+    l ◁ₗ value PtrOp v' ∗ v' ◁ᵥ ty ∗ T
     ⊢ simplify_goal (l ◁ₗ at_value v' ty) T.
-  Proof. iIntros "HT". iExists _. iFrame. by iIntros "$". Qed.
+  Proof. iIntros "[$ [$ $]]". Qed.
   Definition at_value_simplify_goal_loc_inst := [instance at_value_simplify_goal_loc with 0%N].
   Global Existing Instance at_value_simplify_goal_loc_inst.
 
@@ -185,9 +185,9 @@ Section place.
   Global Existing Instance place_simplify_inst.
 
   Lemma place_simplify_goal l β p T:
-    (T ⌜l = p⌝)
+    ⌜l = p⌝ ∗ T
     ⊢ simplify_goal (l◁ₗ{β} place p) T.
-  Proof. iIntros "HT". iExists _. iFrame. by iIntros "->". Qed.
+  Proof. by iIntros "[-> $]". Qed.
   Definition place_simplify_goal_inst := [instance place_simplify_goal with 0%N].
   Global Existing Instance place_simplify_goal_inst.
 

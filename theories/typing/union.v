@@ -242,11 +242,11 @@ Section tunion.
   Global Existing Instance simplify_hyp_tunion_inst.
 
   Lemma simplify_goal_tunion ti x l β T:
-    T (l ◁ₗ{β} struct ti.(ti_base_layout) [
+    l ◁ₗ{β} struct ti.(ti_base_layout) [
          tunion_tag ti x;
-         variant ti x (ti.(ti_type) x) ])
+         variant ti x (ti.(ti_type) x) ] ∗ T
     ⊢ simplify_goal (l◁ₗ{β} x @ tunion ti) T.
-  Proof. iIntros "HT". iExists _. iFrame. by iIntros "?". Qed.
+  Proof. iIntros "[$ $]". Qed.
   Definition simplify_goal_tunion_inst := [instance simplify_goal_tunion with 0%N].
   Global Existing Instance simplify_goal_tunion_inst.
 

@@ -85,19 +85,16 @@ Section own.
   Global Existing Instance simplify_frac_ptr_inst.
 
   Lemma simplify_goal_frac_ptr_val ty (v : val) β (p : loc) T:
-    T (⌜v = p⌝ ∗ p ◁ₗ{β} ty)
+    ⌜v = p⌝ ∗ p ◁ₗ{β} ty ∗ T
     ⊢ simplify_goal (v ◁ᵥ p @ frac_ptr β ty) T.
-  Proof.
-    iIntros "HT". iExists _. iFrame.
-    iIntros "[-> Hl]". iSplit => //.
-  Qed.
+  Proof. by iIntros "[-> [$ $]]". Qed.
   Definition simplify_goal_frac_ptr_val_inst := [instance simplify_goal_frac_ptr_val with 0%N].
   Global Existing Instance simplify_goal_frac_ptr_val_inst.
 
   Lemma simplify_goal_frac_ptr_val_unrefined ty (v : val) β T:
-    T (∃ p : loc, ⌜v = p⌝ ∗ p ◁ₗ{β} ty)
+    (∃ p : loc, ⌜v = p⌝ ∗ p ◁ₗ{β} ty ∗ T)
     ⊢ simplify_goal (v ◁ᵥ frac_ptr β ty) T.
-  Proof. iIntros "HT". iExists _. iFrame. iDestruct 1 as (p) "[-> Hp]". iExists _. by iSplit. Qed.
+  Proof. iIntros "[% [-> [? $]]]". iExists _. by iSplit. Qed.
   Definition simplify_goal_frac_ptr_val_unrefined_inst :=
     [instance simplify_goal_frac_ptr_val_unrefined with 0%N].
   Global Existing Instance simplify_goal_frac_ptr_val_unrefined_inst.
@@ -407,8 +404,8 @@ Section ptr.
   Global Existing Instance simplify_ptr_hyp_place_inst.
 
   Lemma simplify_ptr_goal_val (p:loc) l n T:
-    T (⌜l = p⌝ ∗ loc_in_bounds l n) ⊢ simplify_goal (p ◁ᵥ l @ ptr n) T.
-  Proof. iIntros "HT". iExists _. iFrame. iIntros "[-> ?]". by iFrame. Qed.
+    ⌜l = p⌝ ∗ loc_in_bounds l n ∗ T  ⊢ simplify_goal (p ◁ᵥ l @ ptr n) T.
+  Proof. by iIntros "[-> [$ $]]". Qed.
   Definition simplify_ptr_goal_val_inst := [instance simplify_ptr_goal_val with 10%N].
   Global Existing Instance simplify_ptr_goal_val_inst.
 

@@ -385,11 +385,8 @@ Section coq_tactics.
   Qed.
 
   Lemma tac_do_simplify_goal Δ (n : N) (P : iProp Σ) T {SG : SimplifyGoal P (Some n)} :
-    envs_entails Δ (SG (λ P, P ∗ T)%I).(i2p_P) → envs_entails Δ (P ∗ T).
-  Proof.
-    apply tac_fast_apply. iIntros "HP". iDestruct (i2p_proof with "HP") as (?) "(H&?&$)".
-    by iApply "H".
-  Qed.
+    envs_entails Δ (SG T).(i2p_P) → envs_entails Δ (P ∗ T).
+  Proof. apply tac_fast_apply. iIntros "HP". by iApply (i2p_proof with "HP"). Qed.
 
   Lemma tac_intro_subsume_related Δ P T {Hrel : RelatedTo P}:
     envs_entails Δ (find_in_context Hrel.(rt_fic) (λ x,

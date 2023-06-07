@@ -281,11 +281,9 @@ Section programs.
   Global Existing Instance simplify_hyp_place_bitfield_inst.
 
   Lemma simplify_goal_place_bitfield l β R `{BitfieldDesc R} bv T :
-    T (l ◁ₗ{β} bitfield_repr bv @ bitfield_raw bitfield_it)
+    l ◁ₗ{β} bitfield_repr bv @ bitfield_raw bitfield_it ∗ T
     ⊢ simplify_goal (l ◁ₗ{β} bv @ bitfield R) T.
-  Proof.
-    iIntros "HT". iExists _. iFrame. by iIntros "?".
-  Qed.
+  Proof. done. Qed.
   Definition simplify_goal_place_bitfield_inst := [instance simplify_goal_place_bitfield with 0%N].
   Global Existing Instance simplify_goal_place_bitfield_inst.
 
@@ -297,11 +295,9 @@ Section programs.
   Global Existing Instance simplify_hyp_val_bitfield_inst.
 
   Lemma simplify_goal_val_bitfield v R `{BitfieldDesc R} bv T :
-    T (v ◁ᵥ bitfield_repr bv @ bitfield_raw bitfield_it)
+    v ◁ᵥ bitfield_repr bv @ bitfield_raw bitfield_it ∗ T
     ⊢ simplify_goal (v ◁ᵥ bv @ bitfield R) T.
-  Proof.
-    iIntros "HT". iExists _. iFrame. by iIntros "?".
-  Qed.
+  Proof. done. Qed.
   Definition simplify_goal_val_bitfield_inst := [instance simplify_goal_val_bitfield with 0%N].
   Global Existing Instance simplify_goal_val_bitfield_inst.
 
