@@ -91,7 +91,7 @@ Notation "x1 , x2 , x3 , x4 , x5 ← y ; z" := (li.bind5 y (λ x1 x2 x3 x4 x5 : 
   (in custom lithium at level 0, y at level 99, z at level 200, x1 name, x2 name, x3 name, x4 name, x5 name,
       format "x1 ,  x2 ,  x3 ,  x4 ,  x5  ←  y ;  '/' z") : lithium_scope.
 
-Notation "P '::=' Q" := (Q ⊢ P)
+Notation "P ':-' Q" := (Q ⊢ P)
   (at level 99, Q custom lithium at level 200, only parsing) : stdpp_scope.
 
 Declare Reduction liFromSyntax_eval :=

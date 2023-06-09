@@ -79,7 +79,7 @@ Section programs.
 
   (*** int *)
   Lemma type_val_int n it T :
-    typed_value (i2v n it) T ::=
+    typed_value (i2v n it) T :-
       exhale ⌜n ∈ it⌝;
       return T (n @ (int it)).
   Proof.
