@@ -4,6 +4,7 @@ From lithium.tutorial Require Export lang.
 
 (** Coercions to make programs easier to type. *)
 Coercion LitInt : Z >-> base_lit.
+Coercion LitLoc : loc >-> base_lit.
 Coercion LitBool : bool >-> base_lit.
 
 Coercion App : expr >-> Funclass.
@@ -17,9 +18,18 @@ Notation Let x e1 e2 := (App (Lam x e2) e1) (only parsing).
 Notation Seq e1 e2 := (Let BAnon e1 e2) (only parsing).
 Notation LamV x e := (RecV BAnon x e) (only parsing).
 
+Notation Pair := (BinOp PairOp).
+Notation Fst := (UnOp FstOp).
+Notation Snd := (UnOp SndOp).
+
 (* No scope for the values, does not conflict and scope is often not inferred
 properly. *)
 Notation "# l" := (LitV l%Z%V%stdpp) (at level 8, format "# l").
+
+(** Syntax inspired by Coq/Ocaml. Constructions with higher precedence come
+    first. *)
+Notation "( e1 , e2 , .. , en )" := (Pair .. (Pair e1 e2) .. en) : expr_scope.
+Notation "( e1 , e2 , .. , en )" := (PairV .. (PairV e1 e2) .. en) : val_scope.
 
 Notation "! e" := (Load e%E) (at level 9, right associativity) : expr_scope.
 (* The unicode ← is already part of the notation "_ ← _; _" for bind. *)

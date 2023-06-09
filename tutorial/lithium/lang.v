@@ -7,22 +7,29 @@ Open Scope Z.
 
 (* This language is inspired by simp-lang: https://github.com/tchajed/iris-simp-lang *)
 
-Definition prov : Set := Z.
-Definition loc : Set := prov * Z.
+Record loc : Set := Loc { loc_val : Z }.
+Global Instance loc_inhabited : Inhabited loc := populate (Loc inhabitant).
+Global Instance loc_eq_dec : EqDecision loc.
+Proof. solve_decision. Defined.
+Global Instance loc_countable : Countable loc.
+Proof. refine (inj_countable' loc_val Loc _). intros []; eauto. Qed.
 
 Inductive base_lit :=
   | LitInt (n : Z)
   | LitLoc (l : loc).
 
 Definition NULL := LitInt 0.
+Global Typeclasses Opaque NULL.
 
 Inductive bin_op :=
   | PlusOp
   | MinusOp
-  | EqOp.
+  | EqOp
+  | PairOp.
 
 Inductive un_op :=
-  | NegOp.
+  | FstOp
+  | SndOp.
 
 Inductive expr :=
   (* Values *)
@@ -37,13 +44,14 @@ Inductive expr :=
   | If (e0 e1 e2 : expr)
   | Assert (e : expr)
   (* Heap *)
-  | Alloc (e1 : expr)
-  | Free (e1 e2 : expr)
+  | Alloc
+  | Free (e1 : expr)
   | Load (e1 : expr)
-  | Store (e1 : expr)
+  | Store (e1 e2 : expr)
 with val :=
   | LitV (l : base_lit)
-  | RecV (f x : binder) (e : expr).
+  | RecV (f x : binder) (e : expr)
+  | PairV (v1 v2 : val).
 
 Bind Scope expr_scope with expr.
 Bind Scope val_scope with val.
@@ -81,7 +89,7 @@ Proof.
         | Val v, Val v' => cast_if (decide (v = v'))
         | Var x, Var x' => cast_if (decide (x = x'))
         | Rec f x e, Rec f' x' e' => cast_if_and3 (decide (f = f')) (decide (x = x')) (decide (e = e'))
-        | App e1 e2, App e1' e2' | Free e1 e2, Free e1' e2' =>
+        | App e1 e2, App e1' e2' | Store e1 e2, Store e1' e2' =>
           cast_if_and (decide (e1 = e1')) (decide (e2 = e2'))
         | BinOp op e1 e2, BinOp op' e1' e2' =>
           cast_if_and3 (decide (op = op')) (decide (e1 = e1')) (decide (e2 = e2'))
@@ -89,15 +97,16 @@ Proof.
           cast_if_and3 (decide (e1 = e1')) (decide (e2 = e2')) (decide (e3 = e3'))
         | UnOp op e, UnOp op' e' =>
           cast_if_and (decide (op = op')) (decide (e = e'))
-        | Alloc e, Alloc e' | Load e, Load e' | Store e, Store e' | Assert e, Assert e' =>
+        | Free e, Free e' | Load e, Load e' | Assert e, Assert e' =>
           cast_if  (decide (e = e'))
+        | Alloc, Alloc => left _
         | _, _ => right _
         end); solve [ abstract intuition congruence ]. }
   { refine
       (match v1, v2 with
         | LitV l, LitV l' => cast_if (decide (l = l'))
         | RecV f x e, RecV f' x' e' => cast_if_and3 (decide (f = f')) (decide (x = x')) (decide (e = e'))
-        | _, _ => right _
+        | PairV e1 e2, PairV e1' e2' => cast_if_and (decide (e1 = e1')) (decide (e2 = e2'))        | _, _ => right _
         end); try solve [ abstract intuition congruence ]. }
 Defined.
 Global Instance expr_eq_dec' : EqDecision expr := expr_eq_dec.
@@ -114,8 +123,8 @@ Qed.
 Global Instance bin_op_countable : Countable bin_op.
 Proof.
   refine (inj_countable'
-            (λ op, match op with | PlusOp => 0 | MinusOp => 1 | EqOp => 2  end)
-            (λ n, match n with | 0 => _ | 1 => _ | 2 => _
+            (λ op, match op with | PlusOp => 0 | MinusOp => 1 | EqOp => 2 | PairOp => 3 end)
+            (λ n, match n with | 0 => _ | 1 => _ | 2 => _ | 3 => _
                           | _ => ltac:(constructor) end) _).
   intros []; eauto.
 Qed.
@@ -123,8 +132,8 @@ Qed.
 Global Instance un_op_countable : Countable un_op.
 Proof.
   refine (inj_countable'
-            (λ op, match op with | NegOp => 0 end)
-            (λ n, match n with | 0 => _ | _ => ltac:(constructor) end) _).
+            (λ op, match op with | FstOp => 0 | SndOp => 1 end)
+            (λ n, match n with | 0 => _ | 1 => _ | _ => ltac:(constructor) end) _).
   intros []; eauto.
 Qed.
 
@@ -137,11 +146,10 @@ Inductive ectx_item :=
   | UnOpCtx (op : un_op)
   | IfCtx (e1 e2 : expr)
   | AssertCtx
-  | AllocCtx
-  | FreeLCtx (e2 : expr)
-  | FreeRCtx (v1 : val)
+  | FreeCtx
   | LoadCtx
-  | StoreCtx.
+  | StoreLCtx (v2 : val)
+  | StoreRCtx (e1 : expr).
 
 Definition fill_item (Ki : ectx_item) (e : expr) : expr :=
   match Ki with
@@ -152,11 +160,10 @@ Definition fill_item (Ki : ectx_item) (e : expr) : expr :=
   | UnOpCtx op => UnOp op e
   | IfCtx e1 e2 => If e e1 e2
   | AssertCtx => Assert e
-  | AllocCtx => Alloc e
-  | FreeLCtx e2 => Free e e2
-  | FreeRCtx v1 => Free (Val v1) e
+  | FreeCtx => Free e
   | LoadCtx => Load e
-  | StoreCtx => Store e
+  | StoreLCtx v2 => Store e (Val v2)
+  | StoreRCtx e1 => Store e1 e
   end.
 
 (** Substitution *)
@@ -171,10 +178,10 @@ Fixpoint subst (x : string) (v : val) (e : expr)  : expr :=
   | UnOp op e => UnOp op (subst x v e)
   | If e0 e1 e2 => If (subst x v e0) (subst x v e1) (subst x v e2)
   | Assert e => Assert (subst x v e)
-  | Alloc e => Alloc (subst x v e)
-  | Free e1 e2 => Free (subst x v e1) (subst x v e2)
+  | Alloc => Alloc
+  | Free e => Free (subst x v e)
   | Load e => Load (subst x v e)
-  | Store e => Store (subst x v e)
+  | Store e1 e2 => Store (subst x v e1) (subst x v e2)
   end.
 
 Definition subst' (mx : binder) (v : val) : expr → expr :=
@@ -196,12 +203,18 @@ Definition bin_op_eval (op : bin_op) (v1 v2: val) : option val :=
                 Some (LitV (LitInt (n1 - n2)))
               | _, _ => None
               end
-  | EqOp => Some (LitV $ LitBool $ bool_decide (v1 = v2))
+  | EqOp => match v1, v2 with
+              | LitV (LitInt n1), LitV (LitInt n2) =>
+                  Some (LitV $ LitBool $ bool_decide (n1 = n2))
+              | _, _ => None
+              end
+  | PairOp => Some (PairV v1 v2)
   end.
 
 Definition un_op_eval (op: un_op) (v: val) : option val :=
   match op, v with
-  | NegOp, LitV (LitInt n) => Some (LitV (LitInt (-n)))
+  | FstOp, PairV v1 v2 => Some v1
+  | SndOp, PairV v1 v2 => Some v2
   | _, _ => None
   end.
 
@@ -214,6 +227,11 @@ Global Instance state_inhabited : Inhabited state :=
   populate {| heap := inhabitant; |}.
 Global Instance val_inhabited : Inhabited val := populate (LitV (LitInt 0)).
 Global Instance expr_inhabited : Inhabited expr := populate (Val inhabitant).
+
+
+Definition state_upd_heap (f: gmap loc val → gmap loc val) (σ: state) : state :=
+  {| heap := f σ.(heap) |}.
+Global Arguments state_upd_heap _ !_ /.
 
 (** step relation *)
 Inductive observation :=.
@@ -241,25 +259,30 @@ Inductive head_step : expr → state → list observation → expr → state →
   | AssertS n σ :
     0 ≠ n →
     head_step (Assert (Val $ LitV $ LitInt n)) σ [] (Val $ LitV $ LitInt 0) σ []
-(*  | AllocS v σ l :
+  | AllocS v σ l :
     σ.(heap) !! l = None →
-    head_step (HeapOp AllocOp (Val v) (Val $ LitV LitUnit)) σ
+    head_step (Alloc) σ
               []
-              (Val $ LitV $ LitInt l) (state_upd_heap <[l := v]> σ)
+              (Val $ LitV $ LitLoc l) (state_upd_heap <[l := v]> σ)
+              []
+  | FreeS σ l :
+    is_Some (σ.(heap) !! l) →
+    head_step (Free (Val $ LitV $ LitLoc l)) σ
+              []
+              (Val $ LitV $ LitInt 0) (state_upd_heap (delete l) σ)
               []
   | LoadS v σ l :
     σ.(heap) !! l = Some v →
-    head_step (HeapOp LoadOp (Val $ LitV $ LitInt l) (Val $ LitV LitUnit)) σ
+    head_step (Load (Val $ LitV $ LitLoc l)) σ
               []
               (Val $ v) σ
               []
   | StoreS v w σ l :
     σ.(heap) !! l = Some v →
-    head_step (HeapOp StoreOp (Val $ LitV $ LitInt l) (Val $ w)) σ
+    head_step (Store (Val $ LitV $ LitLoc l) (Val $ w)) σ
               []
-              (Val $ LitV $ LitUnit) (state_upd_heap <[l := w]> σ)
+              (Val $ w) (state_upd_heap <[l := w]> σ)
               []
-*)
 .
 
 (** Properties for language interface *)
