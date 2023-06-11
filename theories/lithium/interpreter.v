@@ -594,20 +594,20 @@ Ltac liDestructHint :=
     end
   end; repeat (liForall || liImpl); try by [exfalso; can_solve].
 
-(** ** [liTacticHint] *)
+(** ** [liTactic] *)
 Section coq_tactics.
   Context {Σ : gFunctors}.
 
-  Lemma tac_tactic_hint {A} Δ t (th : TacticHint t) (Q : A → iProp Σ):
-    envs_entails Δ (th.(tactic_hint_P) Q) →
-    envs_entails Δ (tactic_hint t Q).
-  Proof.  rewrite envs_entails_unseal => ?. etrans; [done|]. apply tactic_hint_proof. Qed.
+  Lemma tac_li_tactic {A} Δ t (th : LiTactic t) (Q : A → iProp Σ):
+    envs_entails Δ (th.(li_tactic_P) Q) →
+    envs_entails Δ (li_tactic t Q).
+  Proof.  rewrite envs_entails_unseal => ?. etrans; [done|]. apply li_tactic_proof. Qed.
 End coq_tactics.
 
-Ltac liTacticHint :=
+Ltac liTactic :=
   lazymatch goal with
-  | |- envs_entails _ (tactic_hint _ _) =>
-      simple notypeclasses refine (tac_tactic_hint _ _ _ _ _); [ solve [refine _] |]
+  | |- envs_entails _ (li_tactic _ _) =>
+      simple notypeclasses refine (tac_li_tactic _ _ _ _ _); [ solve [refine _] |]
   end.
 
 (** ** [liAccu] *)
@@ -644,7 +644,7 @@ Ltac liStep :=
     | liSideCond
     | liFindInContext
     | liDestructHint
-    | liTacticHint
+    | liTactic
     | liPersistent
     | liTrue
     | liFalse

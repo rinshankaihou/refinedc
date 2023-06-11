@@ -356,10 +356,10 @@ Section programs.
   Global Existing Instance type_cast_int_builtin_boolean_inst.
 
   Lemma annot_reduce_int v n it T:
-    (tactic_hint (vm_compute_hint Some n) (λ n', v ◁ᵥ n' @ int it -∗ T))
+    (li_tactic (li_vm_compute Some n) (λ n', v ◁ᵥ n' @ int it -∗ T))
     ⊢ typed_annot_expr 1 (ReduceAnnot) v (v ◁ᵥ n @ int it) T.
   Proof.
-    unfold tactic_hint, vm_compute_hint.
+    unfold li_tactic, li_vm_compute.
     iIntros "[%y [% HT]] Hv"; simplify_eq. iApply step_fupd_intro => //. iModIntro.
     by iApply "HT".
   Qed.

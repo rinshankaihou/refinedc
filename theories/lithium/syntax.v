@@ -22,6 +22,9 @@ Section lithium.
   Definition and (P1 P2 : iProp Σ) : iProp Σ :=
     P1 ∧ P2.
 
+  Definition tactic {A} : ((A → iProp Σ) → iProp Σ) → (A → iProp Σ) → iProp Σ :=
+    @li_tactic Σ A.
+
   Definition done : iProp Σ := True.
   Definition false : iProp Σ := False.
 
@@ -61,6 +64,8 @@ Notation "'and:' | x | y | .. | z" := (li.and .. (li.and x y) .. z)
  (* TODO: I would like to use the following but it does not work: *)
  (* format "'[hv' and  '/' |  '[' x ']'  '/' |  '[' y ']'  '/' |  '[' .. ']'  '/' |  '[' z ']' ']'" *)
 ) : lithium_scope.
+Notation "'tactic' x" := (li.tactic x) (in custom lithium at level 0, x constr,
+                           format "'tactic'  '[' x ']'") : lithium_scope.
 Notation "'done'" := (li.done) (in custom lithium at level 0) : lithium_scope.
 Notation "'false'" := (li.false) (in custom lithium at level 0) : lithium_scope.
 Notation "'return' x" := (li.ret x) (in custom lithium at level 0, x constr,
@@ -103,7 +108,7 @@ Notation "P ':-' Q" := (Q ⊢ P)
   (at level 99, Q custom lithium at level 200, only parsing) : stdpp_scope.
 
 Declare Reduction liFromSyntax_eval :=
-  cbv [ li.exhale li.inhale li.all li.exist li.done li.false li.ret li.and
+  cbv [ li.exhale li.inhale li.all li.exist li.done li.false li.ret li.and li.tactic
         li.bind0 li.bind1 li.bind2 li.bind3 li.bind4 li.bind5 ].
 
 Ltac liFromSyntaxTerm c :=

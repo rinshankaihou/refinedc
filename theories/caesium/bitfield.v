@@ -289,15 +289,15 @@ Ltac normalize_bitfield :=
 Definition normalize_bitfield {Σ} (bv : Z) (T : Z → iProp Σ) : iProp Σ := T bv.
 Global Typeclasses Opaque normalize_bitfield.
 
-Program Definition normalize_bitfield_hint {Σ} bv norm :
+Program Definition li_normalize_bitfield {Σ} bv norm :
   bv = norm →
-  TacticHint (normalize_bitfield (Σ:=Σ) bv) := λ H, {|
-    tactic_hint_P T := T norm;
+  LiTactic (normalize_bitfield (Σ:=Σ) bv) := λ H, {|
+    li_tactic_P T := T norm;
 |}.
 Next Obligation. move => ??? -> ?. unfold normalize_bitfield. iIntros "$". Qed.
 
-Global Hint Extern 10 (TacticHint (normalize_bitfield _)) =>
-  eapply normalize_bitfield_hint; normalize_bitfield : typeclass_instances.
+Global Hint Extern 10 (LiTactic (normalize_bitfield _)) =>
+  eapply li_normalize_bitfield; normalize_bitfield : typeclass_instances.
 
 (* enable using normalize_bitfield in function call specifications
 where one cannot use tactic_hint *)

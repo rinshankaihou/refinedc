@@ -93,33 +93,33 @@ Class SubsumeList {Σ} A (ig : list nat) (l1 l2 : list A) (f : nat → A → iPr
 Global Hint Mode Subsume + + ! : typeclass_instances.
 Global Hint Mode SubsumeList + + + + + ! : typeclass_instances.
 
-(** * [tactic_hint] *)
-Class TacticHint {Σ A} (t : (A → iProp Σ) → iProp Σ) := {
-  tactic_hint_P : (A → iProp Σ) → iProp Σ;
-  tactic_hint_proof T : tactic_hint_P T ⊢ t T;
+(** * [li_tactic] *)
+Class LiTactic {Σ A} (t : (A → iProp Σ) → iProp Σ) := {
+  li_tactic_P : (A → iProp Σ) → iProp Σ;
+  li_tactic_proof T : li_tactic_P T ⊢ t T;
 }.
-Arguments tactic_hint_proof {_ _ _} _ _.
-Arguments tactic_hint_P {_ _ _} _ _.
+Arguments li_tactic_proof {_ _ _} _ _.
+Arguments li_tactic_P {_ _ _} _ _.
 
-Definition tactic_hint {Σ A} (t : (A → iProp Σ) → iProp Σ) (T : A → iProp Σ) : iProp Σ :=
+Definition li_tactic {Σ A} (t : (A → iProp Σ) → iProp Σ) (T : A → iProp Σ) : iProp Σ :=
   t T.
-Arguments tactic_hint : simpl never.
+Arguments li_tactic : simpl never.
 
-(** ** [vm_compute_hint] *)
-Definition vm_compute_hint {Σ A B} (f : A → option B) (x : A) (T : B → iProp Σ) : iProp Σ :=
+(** ** [li_vm_compute] *)
+Definition li_vm_compute {Σ A B} (f : A → option B) (x : A) (T : B → iProp Σ) : iProp Σ :=
   ∃ y, ⌜f x = Some y⌝ ∗ T y.
-Arguments vm_compute_hint : simpl never.
-Global Typeclasses Opaque vm_compute_hint.
+Arguments li_vm_compute : simpl never.
+Global Typeclasses Opaque li_vm_compute.
 
-Program Definition vm_compute_hint_hint {Σ A B} (f : A → option B) x a :
+Program Definition li_vm_compute_hint {Σ A B} (f : A → option B) x a :
   f a = Some x →
-  TacticHint (vm_compute_hint (Σ:=Σ) f a) := λ H, {|
-    tactic_hint_P T := T x;
+  LiTactic (li_vm_compute (Σ:=Σ) f a) := λ H, {|
+    li_tactic_P T := T x;
 |}.
 Next Obligation. move => ????????. iIntros "HT". iExists _. iFrame. iPureIntro. naive_solver. Qed.
 
-Global Hint Extern 10 (TacticHint (vm_compute_hint _ _)) =>
-  eapply vm_compute_hint_hint; evar_safe_vm_compute : typeclass_instances.
+Global Hint Extern 10 (LiTactic (li_vm_compute _ _)) =>
+  eapply li_vm_compute_hint; evar_safe_vm_compute : typeclass_instances.
 
 (** * [accu] *)
 Definition accu {Σ} (f : iProp Σ → iProp Σ) : iProp Σ :=

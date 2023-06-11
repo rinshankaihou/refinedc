@@ -117,10 +117,10 @@ Section programs.
   Lemma type_arithop_bitfield_raw bv1 bv2 op bv it v1 v2
     (Hop : int_arithop_result it bv1 bv2 op = Some bv) T:
     (⌜bv1 ∈ it⌝ -∗ ⌜bv2 ∈ it⌝ -∗ ⌜int_arithop_sidecond it bv1 bv2 bv op⌝ ∗
-      (tactic_hint (normalize_bitfield bv) (λ norm, T (i2v norm it) (norm @ bitfield_raw it))))
+      (li_tactic (normalize_bitfield bv) (λ norm, T (i2v norm it) (norm @ bitfield_raw it))))
     ⊢ typed_bin_op v1 (v1 ◁ᵥ bv1 @ bitfield_raw it) v2 (v2 ◁ᵥ bv2 @ bitfield_raw it) op (IntOp it) (IntOp it) T.
   Proof.
-    iIntros "HT Hv1 Hv2". unfold tactic_hint, normalize_bitfield.
+    iIntros "HT Hv1 Hv2". unfold li_tactic, normalize_bitfield.
     iApply type_val_expr_mono_strong.
     iApply (type_arithop_int_int with "[HT] Hv1 Hv2") => //.
     iIntros "Hbv1 Hbv2".
@@ -190,10 +190,10 @@ Section programs.
   Lemma type_arithop_bitfield_raw_int bv n op bv' it v1 v2
     (Hop : int_arithop_result it bv n op = Some bv') T:
     (⌜bv ∈ it⌝ -∗ ⌜n ∈ it⌝ -∗ ⌜int_arithop_sidecond it bv n bv' op⌝ ∗
-      (tactic_hint (normalize_bitfield bv') (λ norm, T (i2v norm it) (norm @ bitfield_raw it))))
+      (li_tactic (normalize_bitfield bv') (λ norm, T (i2v norm it) (norm @ bitfield_raw it))))
      ⊢ typed_bin_op v1 (v1 ◁ᵥ bv @ bitfield_raw it) v2 (v2 ◁ᵥ n @ int it) op (IntOp it) (IntOp it) T.
   Proof.
-    iIntros "HT Hv1 Hv2". unfold tactic_hint, normalize_bitfield.
+    iIntros "HT Hv1 Hv2". unfold li_tactic, normalize_bitfield.
     iApply type_val_expr_mono_strong.
     iApply (type_arithop_int_int with "[HT] Hv1 Hv2") => //.
     iIntros "Hbv1 Hbv2".
@@ -211,10 +211,10 @@ Section programs.
   Lemma type_arithop_int_bitfield_raw n bv op bv' it v1 v2
     (Hop : int_arithop_result it n bv op = Some bv') T:
     (⌜n ∈ it⌝ -∗ ⌜bv ∈ it⌝ -∗ ⌜int_arithop_sidecond it n bv bv' op⌝ ∗
-      (tactic_hint (normalize_bitfield bv') (λ norm, T (i2v norm it) (norm @ bitfield_raw it))))
+      (li_tactic (normalize_bitfield bv') (λ norm, T (i2v norm it) (norm @ bitfield_raw it))))
     ⊢ typed_bin_op v1 (v1 ◁ᵥ n @ int it) v2 (v2 ◁ᵥ bv @ bitfield_raw it) op (IntOp it) (IntOp it) T.
   Proof.
-    iIntros "HT Hv1 Hv2". unfold tactic_hint, normalize_bitfield.
+    iIntros "HT Hv1 Hv2". unfold li_tactic, normalize_bitfield.
     iApply type_val_expr_mono_strong.
     iApply (type_arithop_int_int with "[HT] Hv1 Hv2") => //.
     iIntros "Hbv1 Hbv2".
