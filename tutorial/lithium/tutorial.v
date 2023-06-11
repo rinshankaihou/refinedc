@@ -264,8 +264,8 @@ Section proofs.
      (* TODO: can one have a better notation that does not duplicate
      the pattern? *)
       '(existT X (pre, post)) ←
-        {find_in_context (FindDirect
-             (λ '(existT X (pre, post)), fn_spec v1 X pre post))};
+        find_in_context (FindDirect
+             (λ '(existT X (pre, post)), fn_spec v1 X pre post));
       ∃ x,
       exhale (pre x v2);
       ∀ v',
@@ -479,7 +479,7 @@ Section proofs.
     expr_ok (Store e1 e2) G :-
       v2 ← {expr_ok e2};
       v1 ← {expr_ok e1};
-      '(l, _) ← {find_in_context (FindMapsTo v1)};
+      '(l, _) ← find_in_context (FindMapsTo v1);
       inhale (l ↦ v2);
       return G v2.
   Proof. Admitted.
@@ -489,7 +489,7 @@ Section proofs.
   Lemma expr_ok_load e G :
     expr_ok (Load e) G :-
       v ← {expr_ok e};
-      '(l, vl) ← {find_in_context (FindMapsTo v)};
+      '(l, vl) ← find_in_context (FindMapsTo v);
       inhale (l ↦ vl);
       return G vl.
   Proof. Admitted.
@@ -660,7 +660,7 @@ Section proofs.
 
   Lemma binop_ok_eq_val_NULL v G :
     binop_ok EqOp v #NULL G :-
-      o ← {find_in_context (FindLocOrNULL v)};
+      o ← find_in_context (FindLocOrNULL v);
       return G #(if o is Some _ then false else true).
   Proof. Admitted.
   Definition binop_ok_eq_val_NULL_inst := [instance binop_ok_eq_val_NULL].

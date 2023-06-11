@@ -122,14 +122,14 @@ Section union.
   Definition subsume_tunion_tag_inst := [instance subsume_tunion_tag].
   Global Existing Instance subsume_tunion_tag_inst.
 
-  Inductive destruct_hint_union :=
-  | DestructHintUnion (info : tunion_info A).
+  Inductive trace_union :=
+  | TraceUnion (info : tunion_info A).
 
   Lemma type_binop_tunion_tag_int op it ti x v1 n v2 T:
-    destruct_hint (DHintDestruct _ x) (DestructHintUnion ti) (
-        li_trace (DestructHintUnion ti, x) (typed_bin_op v1 (v1 ◁ᵥ ti.(ti_tag) x @ int size_t) v2 (v2 ◁ᵥ n @ int it) op (IntOp size_t) (IntOp it) T))
+    case_destruct x (λ x' _,
+        li_trace (TraceUnion ti, x') (typed_bin_op v1 (v1 ◁ᵥ ti.(ti_tag) x' @ int size_t) v2 (v2 ◁ᵥ n @ int it) op (IntOp size_t) (IntOp it) T))
     ⊢ typed_bin_op v1 (v1 ◁ᵥ tunion_tag ti x) v2 (v2 ◁ᵥ n @ int it) op (IntOp size_t) (IntOp it) T.
-  Proof. by rewrite /(ty_own_val (tunion_tag _ _))/=. Qed.
+  Proof. iDestruct 1 as (?) "?". by rewrite /(ty_own_val (tunion_tag _ _))/=. Qed.
   Definition type_binop_tunion_tag_int_eq_inst := [instance type_binop_tunion_tag_int (EqOp i32)].
   Global Existing Instance type_binop_tunion_tag_int_eq_inst.
   Definition type_binop_tunion_tag_int_ne_inst := [instance type_binop_tunion_tag_int (NeOp i32)].

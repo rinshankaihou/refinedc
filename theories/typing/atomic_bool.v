@@ -81,17 +81,19 @@ Section programs.
   Lemma type_read_atomic_bool l β it ot PT PF mc T:
     (⌜match ot with | BoolOp => it = u8 | IntOp it' => it = it' | _ => False end⌝ ∗
       ∀ b v,
-      destruct_hint (DHintDestruct bool b) tt (
+      case_destruct b (λ (b : bool) _,
+        (* TODO: Should this have a trace? *)
         (if b then PT else PF) -∗
         (if b then PT else PF) ∗
         T v (atomic_bool it PT PF) (b @ boolean it)))
     ⊢ typed_read_end true ⊤ l β (atomic_bool it PT PF) ot mc T.
   Proof.
-    unfold destruct_hint. iIntros "[%Hot HT]".
+    iIntros "[%Hot HT]".
     iApply typed_read_end_mono_strong; [done|]. destruct β.
     - iIntros "[%b [Hl Hif]] !>". iExists _, _, True%I. iFrame. iSplitR; [done|].
       unshelve iApply (type_read_copy with "[HT Hif]"). { apply _. } simpl.
       iSplit; [by destruct ot; simplify_eq/=|]. iSplit; [done|]. iIntros (v) "_ Hl Hv".
+      iDestruct ("HT" $! _ _) as (_) "HT".
       iDestruct ("HT" with "Hif") as "[Hif HT]". iExists _, _. iFrame "HT Hv".
       iExists _. by iFrame.
     - iIntros "[%Hly #Hinv] !>".
@@ -102,6 +104,7 @@ Section programs.
       unshelve iApply (type_read_copy with "[-]"). { apply _. } simpl.
       iSplit; [by destruct ot; simplify_eq/=|]. iSplit; [iPureIntro; solve_ndisj|].
       iIntros (v) "Hif Hl #Hv !>".
+      iDestruct ("HT" $! _ _) as (_) "HT".
       iDestruct ("HT" with "Hif") as "[Hif HT]". iExists tytrue, tytrue.
       iSplit; [done|]. iSplit; [ done |]. iModIntro.
       iSplitL "Hl Hif". { iExists _. by iFrame. }

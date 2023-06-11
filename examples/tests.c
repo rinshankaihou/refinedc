@@ -205,12 +205,12 @@ void test_case_printing(int n, int m, int *p1, int *p2) {
   // type_if_generic_boolean
   case 4:
     // TODO: Should this show up?
-    // Case distinction (if bool_decide (1 == 1)) -> true // TODO, currently (if true) -> true
+    // Case distinction (if bool_decide (1 = 1)) -> true // TODO, currently (if true) -> true
     if (1 == 1) {}
     rc_stop(n);
   case 5:
-    // Case distinction (if bool_decide (m == 1)) -> true // TODO, currently (if true) -> true
-    // Case distinction (if bool_decide (m == 1)) -> false // TODO, currently (if false) -> false
+    // Case distinction (if bool_decide (m = 1)) -> true // TODO, currently (if true) -> true
+    // Case distinction (if bool_decide (m = 1)) -> false
     if (m == 1) {}
     rc_stop(n);
 
@@ -233,16 +233,16 @@ void test_case_printing(int n, int m, int *p1, int *p2) {
   // type_eq_optionalO
   case 8:
     // TODO: Should also trivial if case distinctions show up here?
-    // Case distinction DestructHintOptionalO -> (Some z)
-    // Case distinction DestructHintOptionalO -> None
+    // Case distinction TraceOptionalO -> (Some z)
+    // Case distinction TraceOptionalO -> None
     if (p2 == NULL) {}
     rc_stop(n);
 
   // type_neq_optional
   case 9:
     // TODO: Should also trivial if case distinctions show up here?
-    // Case distinction DestructHintOptionalO -> (Some z)
-    // Case distinction DestructHintOptionalO -> None
+    // Case distinction TraceOptionalO -> (Some z)
+    // Case distinction TraceOptionalO -> None
     if (p2 != NULL) {}
     rc_stop(n);
 

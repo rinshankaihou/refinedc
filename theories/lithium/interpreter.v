@@ -555,7 +555,7 @@ Ltac liAnd :=
     notypeclasses refine (tac_big_andM_empty _ _)
   end.
 
-(** ** [liDestructHint] *)
+(** ** [liCase] *)
 Section coq_tactics.
   Context {Σ : gFunctors}.
 
@@ -569,6 +569,22 @@ Section coq_tactics.
     - by iApply HT1.
     - by iApply HT2.
   Qed.
+
+  Lemma tac_case_destruct_bool_decide Δ (P : Prop) `{!Decision P} T:
+    (P → envs_entails Δ (T true true)) →
+    (¬ P → envs_entails Δ (T false true)) →
+    envs_entails Δ (@case_destruct Σ bool (bool_decide P) T).
+  Proof.
+    rewrite envs_entails_unseal => HP HnotP.
+    iIntros "Henvs". iExists true. case_bool_decide.
+    - by iApply HP.
+    - by iApply HnotP.
+  Qed.
+
+  Lemma tac_case_destruct {A} (b : bool) Δ a T:
+    envs_entails Δ (T a b) →
+    envs_entails Δ (@case_destruct Σ A a T).
+  Proof. apply tac_fast_apply. iIntros "?". iExists _. iFrame. Qed.
 End coq_tactics.
 
 (* This tactic checks if destructing x would lead to multiple
@@ -581,25 +597,21 @@ Ltac non_trivial_destruct x :=
     | idtac
   ].
 
-Ltac liDestructHint :=
+Ltac liCase :=
   lazymatch goal with
-  | |- @envs_entails ?PROP ?Δ (destruct_hint ?hint ?info ?T) =>
-    change_no_check (@envs_entails PROP Δ T);
-    lazymatch hint with
-    (* | DHintInfo => idtac *)
-    | DHintDestruct _ (@bool_decide ?P ?b) =>
-      let H := fresh "H" in destruct_decide (@bool_decide_reflect P b) as H; revert H
-    | DHintDestruct _ ?x =>
-      tryif (non_trivial_destruct x) then
-        case_eq x; repeat liForall
-      else (
-          idtac
-        )
-    (* | @DHintDecide ?P ?b => *)
-       (* let H := fresh "H" in destruct_decide (@decide P b) as H; revert H *)
-    end
   | |- @envs_entails ?PROP ?Δ (case_if ?P ?T1 ?T2) =>
       notypeclasses refine (tac_case_if _ _ _ _ _ _)
+  | |- @envs_entails ?PROP ?Δ (case_destruct (@bool_decide ?P ?b) ?T) =>
+      notypeclasses refine (tac_case_destruct_bool_decide _ _ _ _ _)
+      (* notypeclasses refine (tac_case_destruct true _ _ _ _); *)
+      (* let H := fresh "H" in destruct_decide (@bool_decide_reflect P b) as H; revert H *)
+  | |- @envs_entails ?PROP ?Δ (case_destruct ?x ?T) =>
+      tryif (non_trivial_destruct x) then
+        notypeclasses refine (tac_case_destruct true _ _ _ _);
+        case_eq x
+      else (
+        notypeclasses refine (tac_case_destruct false _ _ _ _)
+      )
   end;
   (* It is important that we prune branches this way because this way
   we don't need to do normalization and simplification of hypothesis
@@ -663,7 +675,7 @@ Ltac liStep :=
     | liForall
     | liSideCond
     | liFindInContext
-    | liDestructHint
+    | liCase
     | liTrace
     | liTactic
     | liPersistent

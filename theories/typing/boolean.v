@@ -113,16 +113,16 @@ Notation builtin_boolean := (generic_boolean StrictBool u8).
 Section generic_boolean.
   Context `{!typeG Σ}.
 
-  Inductive destruct_hint_if_bool :=
-  | DestructHintIfBool (b : bool).
+  Inductive trace_if_bool :=
+  | TraceIfBool (b : bool).
 
   Lemma type_if_generic_boolean stn it ot (b : bool) v T1 T2 :
     ⌜match ot with | BoolOp => it = u8 ∧ stn = StrictBool | IntOp it' => it = it' | _ => False end⌝ ∗
-     destruct_hint (DHintDestruct _ b) (DestructHintIfBool b)
-     (li_trace (DestructHintIfBool b, b) (if b then T1 else T2))
+     case_destruct b (λ b' _,
+     li_trace (TraceIfBool b, b') (if b' then T1 else T2))
     ⊢ typed_if ot v (v ◁ᵥ b @ generic_boolean stn it) T1 T2.
   Proof.
-    unfold destruct_hint, li_trace. iIntros "[% Hs] (%n&%Hv&%Hb)".
+    unfold case_destruct, li_trace. iIntros "[% [% Hs]] (%n&%Hv&%Hb)".
     destruct ot; destruct_and? => //; simplify_eq/=.
     - iExists _. iFrame. iPureIntro. by apply val_to_bool_iff_val_to_Z.
     - rewrite <-(represents_boolean_eq stn n b); last done. by eauto with iFrame.
@@ -235,7 +235,7 @@ Section boolean.
 
 End boolean.
 
-Notation "'if' p " := (DestructHintIfBool p) (at level 100, only printing).
+Notation "'if' p " := (TraceIfBool p) (at level 100, only printing).
 
 Section builtin_boolean.
   Context `{!typeG Σ}.

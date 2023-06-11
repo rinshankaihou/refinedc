@@ -19,11 +19,21 @@ Section lithium.
   Definition exist {A} : (A → iProp Σ) → iProp Σ :=
     bi_exist.
 
-  Definition and (P1 P2 : iProp Σ) : iProp Σ :=
-    P1 ∧ P2.
+  Definition and : iProp Σ → iProp Σ → iProp Σ :=
+    bi_and.
+
+  Definition and_map {K A} `{!EqDecision K} `{!Countable K}
+    : (K → A → iProp Σ) → gmap K A → iProp Σ :=
+    big_opM bi_and.
+
+  Definition find_in_context : ∀ fic : find_in_context_info, (fic.(fic_A) → iProp Σ) → iProp Σ :=
+    find_in_context.
 
   Definition case_if : Prop → iProp Σ → iProp Σ → iProp Σ :=
     case_if.
+
+  Definition case_destruct {A} : A → (A → bool → iProp Σ) → iProp Σ :=
+    @case_destruct Σ A.
 
   Definition tactic {A} : ((A → iProp Σ) → iProp Σ) → (A → iProp Σ) → iProp Σ :=
     @li_tactic Σ A.
@@ -73,9 +83,16 @@ Notation "'and:' | x | y | .. | z" := (li.and .. (li.and x y) .. z)
  (* TODO: I would like to use the following but it does not work: *)
  (* format "'[hv' and  '/' |  '[' x ']'  '/' |  '[' y ']'  '/' |  '[' .. ']'  '/' |  '[' z ']' ']'" *)
 ) : lithium_scope.
+Notation "'and_map:' m | k v , P" := (li.and_map (λ k v, P) m)
+    (in custom lithium at level 200, k binder, v binder, m constr,
+        format "'[hv' 'and_map:'  m  '/' |  k  v ,  '[hv' P ']' ']'") : lithium_scope.
+Notation "'find_in_context' x" := (li.find_in_context x) (in custom lithium at level 0, x constr,
+                           format "'find_in_context'  '[' x ']'") : lithium_scope.
 Notation "'if:' P | G1 | G2" := (li.case_if P G1 G2)
     (in custom lithium at level 200, P constr, G1, G2 at level 200,
         format "'[hv' 'if:'  P  '/' |  '[hv' G1 ']'  '/' |  '[hv' G2 ']' ']'") : lithium_scope.
+Notation "'destruct' x" := (li.case_destruct x) (in custom lithium at level 0, x constr,
+                           format "'destruct'  '[' x ']'") : lithium_scope.
 Notation "'tactic' x" := (li.tactic x) (in custom lithium at level 0, x constr,
                            format "'tactic'  '[' x ']'") : lithium_scope.
 Notation "'accu'" := (li.accu) (in custom lithium at level 0) : lithium_scope.
@@ -123,8 +140,8 @@ Notation "P ':-' Q" := (Q ⊢ P)
   (at level 99, Q custom lithium at level 200, only parsing) : stdpp_scope.
 
 Declare Reduction liFromSyntax_eval :=
-  cbv [ li.exhale li.inhale li.all li.exist li.done li.false li.ret li.and
-        li.case_if li.tactic li.accu li.trace
+  cbv [ li.exhale li.inhale li.all li.exist li.done li.false li.ret li.and li.and_map
+        li.find_in_context li.case_if li.case_destruct li.tactic li.accu li.trace
         li.bind0 li.bind1 li.bind2 li.bind3 li.bind4 li.bind5 ].
 
 Ltac liFromSyntaxTerm c :=
@@ -158,18 +175,19 @@ Ltac liToSyntax :=
   change (bi_sep ?a) with (li.bind0 (li.exhale (liToSyntax_UNFOLD_MARKER a)));
   change (bi_wand ?a) with (li.bind0 (li.inhale (liToSyntax_UNFOLD_MARKER a)));
   change (bi_and ?a ?b) with (li.and a b);
+  change (big_opM bi_and ?f ?m) with (li.and_map f m);
   change (@bi_forall (iPropI ?Σ) ?A) with (@li.all Σ A);
   change (@bi_exist (iPropI ?Σ) ?A) with (@li.exist Σ A);
   change (@bi_pure (iPropI ?Σ) True) with (@li.done Σ);
   change (@bi_pure (iPropI ?Σ) False) with (@li.false Σ);
-  change (find_in_context ?a) with (li.bind1 (find_in_context a));
+  change (find_in_context ?a) with (li.bind1 (li.find_in_context a));
   change (subsume ?a ?b) with (li.bind0 (subsume (liToSyntax_UNFOLD_MARKER a) (liToSyntax_UNFOLD_MARKER b)));
   change (subsume_list ?A ?ig ?l1 ?l2 ?f) with (li.bind0 (subsume_list A ig l1 l2 f));
   change (@case_if ?Σ ?P) with (@li.case_if Σ P);
+  change (@case_destruct ?Σ ?A ?a) with (li.bind2 (@li.case_destruct Σ A a));
   change (li_tactic ?t) with (li.bind1 (li.tactic t));
   change (@accu ?Σ) with (li.bind1 (@li.accu Σ));
   change (@li_trace ?Σ ?A ?t) with (li.bind0 (@li.trace Σ A t));
-  change (destruct_hint ?hint ?info) with (li.bind0 (destruct_hint hint info));
   (* Try to at least unfold some spurious conversions. *)
   repeat (progress change (liToSyntax_UNFOLD_MARKER (li.bind0 (@li.exhale ?Σ ?a) ?b))
       with (a ∗ liToSyntax_UNFOLD_MARKER b)%I);
@@ -259,8 +277,11 @@ Section test.
     ⊢ ∀ n1 n2, (⌜n1 + Z.to_nat n2 > 0⌝ ∗ ⌜n2 = 1⌝) -∗
      check_wp (n1 + 1) (λ v,
        ∃ n' : nat, (⌜v = n'⌝ ∗ ⌜n' > 0⌝) ∗ li_trace 1 $ accu (λ P,
+       find_in_context (FindDirect (λ '(n, m), ⌜n =@{Z} m⌝)) (λ '(n, m), ⌜n = m⌝ ∗
        get_tuple (λ '(x1, x2, x3), ⌜x1 = 0⌝ ∗ (P ∧
-         case_if (n' = 1) (True ∗ True ∗ True ∗ True ∗ True ∗ True ∗ True ∗ True ∗ True) False)))).
+         [∧ map] a↦b∈{[1 := 1]}, ⌜a = b⌝ ∗
+         case_if (n' = 1) (case_destruct n' (λ n'' b,
+          ⌜b = b⌝ ∗ ⌜n'' = 0⌝ ∗ True ∗ True ∗ True ∗ True ∗ True ∗ True ∗ True)) False))))).
   Proof.
     iStartProof.
     liToSyntax.

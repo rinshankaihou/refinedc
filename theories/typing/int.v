@@ -171,13 +171,13 @@ Section programs.
   Definition type_shr_int_int_inst n1 n2 := [instance type_arithop_int_int n1 n2 (n1 ≫ n2) ShrOp].
   Global Existing Instance type_shr_int_int_inst.
 
-  Inductive destruct_hint_if_int :=
-  | DestructHintIfInt (n : Z).
+  Inductive trace_if_int :=
+  | TraceIfInt (n : Z).
 
   Lemma type_if_int it n v T1 T2:
     case_if (n ≠ 0)
-      (li_trace (DestructHintIfInt n, true) T1)
-      (li_trace (DestructHintIfInt n, false) T2)
+      (li_trace (TraceIfInt n, true) T1)
+      (li_trace (TraceIfInt n, false) T2)
     ⊢ typed_if (IntOp it) v (v ◁ᵥ n @ int it) T1 T2.
   Proof.
     iIntros "Hs %Hb" => /=.
@@ -196,14 +196,14 @@ Section programs.
   Definition type_assert_int_inst := [instance type_assert_int].
   Global Existing Instance type_assert_int_inst.
 
-  Inductive destruct_hint_switch_int :=
-  | DestructHintSwitchIntCase (n : Z)
-  | DestructHintSwitchIntDefault.
+  Inductive trace_switch_int :=
+  | TraceSwitchIntCase (n : Z)
+  | TraceSwitchIntDefault.
 
   Lemma type_switch_int v n it m ss def fn ls R Q:
-    ([∧ map] i↦mi ∈ m, li_trace (DestructHintSwitchIntCase i) (
+    ([∧ map] i↦mi ∈ m, li_trace (TraceSwitchIntCase i) (
              ⌜n = i⌝ -∗ ∃ s, ⌜ss !! mi = Some s⌝ ∗ typed_stmt s fn ls R Q)) ∧
-    (li_trace (DestructHintSwitchIntDefault) (
+    (li_trace (TraceSwitchIntDefault) (
                      ⌜n ∉ (map_to_list m).*1⌝ -∗ typed_stmt def fn ls R Q))
     ⊢ typed_switch v (n @ int it) it m ss def fn ls R Q.
   Proof.
@@ -373,9 +373,9 @@ Section programs.
 End programs.
 Global Typeclasses Opaque int_inner_type int.
 
-Notation "'if' p ≠ 0 " := (DestructHintIfInt p) (at level 100, only printing).
-Notation "'case' n " := (DestructHintSwitchIntCase n) (at level 100, only printing).
-Notation "'default'" := (DestructHintSwitchIntDefault) (at level 100, only printing).
+Notation "'if' p ≠ 0 " := (TraceIfInt p) (at level 100, only printing).
+Notation "'case' n " := (TraceSwitchIntCase n) (at level 100, only printing).
+Notation "'default'" := (TraceSwitchIntDefault) (at level 100, only printing).
 
 Section offsetof.
   Context `{!typeG Σ}.

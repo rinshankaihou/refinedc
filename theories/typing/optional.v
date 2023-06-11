@@ -140,17 +140,17 @@ Section optional.
   Definition subsume_optional_val_ty_ref_inst := [instance subsume_optional_val_ty_ref].
   Global Existing Instance subsume_optional_val_ty_ref_inst.
 
-  Inductive destruct_hint_optional :=
-  | DestructHintOptionalEq (P : Prop)
-  | DestructHintOptionalNe (P : Prop).
+  Inductive trace_optional :=
+  | TraceOptionalEq (P : Prop)
+  | TraceOptionalNe (P : Prop).
 
   Lemma type_eq_optional_refined v1 v2 ty optty ot1 ot2 `{!Optionable ty optty ot1 ot2} b T :
     opt_pre ty v1 v2 ∧
-    li_trace (DestructHintOptionalEq b) (⌜b⌝ -∗ v1 ◁ᵥ ty -∗ T (i2v (bool_to_Z false) i32) (false @ boolean i32)) ∧
-    li_trace (DestructHintOptionalEq (¬ b)) (⌜¬ b⌝ -∗ v1 ◁ᵥ optty -∗ T (i2v (bool_to_Z true) i32) (true @ boolean i32))
+    li_trace (TraceOptionalEq b) (⌜b⌝ -∗ v1 ◁ᵥ ty -∗ T (i2v (bool_to_Z false) i32) (false @ boolean i32)) ∧
+    li_trace (TraceOptionalEq (¬ b)) (⌜¬ b⌝ -∗ v1 ◁ᵥ optty -∗ T (i2v (bool_to_Z true) i32) (true @ boolean i32))
     ⊢ typed_bin_op v1 (v1 ◁ᵥ b @ (optional ty optty)) v2 (v2 ◁ᵥ optty) (EqOp i32) ot1 ot2 T.
   Proof.
-    unfold destruct_hint. iIntros "HT Hv1 Hv2" (Φ) "HΦ".
+    iIntros "HT Hv1 Hv2" (Φ) "HΦ".
     iDestruct "Hv1" as "[[% Hv1]|[% Hv1]]".
     - iApply (wp_binop_det (i2v (bool_to_Z false) i32)).
       iIntros (σ) "Hctx". iApply fupd_mask_intro; [set_solver|]. iIntros "HE".
@@ -201,8 +201,8 @@ Section optional.
 
   Lemma type_neq_optional v1 v2 ty optty ot1 ot2 `{!Optionable ty optty ot1 ot2} b T :
     opt_pre ty v1 v2 ∧
-    li_trace (DestructHintOptionalNe b) (⌜b⌝ -∗ v1 ◁ᵥ ty -∗ T (i2v (bool_to_Z true) i32) (true @ boolean i32)) ∧
-    li_trace (DestructHintOptionalNe (¬ b)) (⌜¬ b⌝ -∗ v1 ◁ᵥ optty -∗ T (i2v (bool_to_Z false) i32) (false @ boolean i32))
+    li_trace (TraceOptionalNe b) (⌜b⌝ -∗ v1 ◁ᵥ ty -∗ T (i2v (bool_to_Z true) i32) (true @ boolean i32)) ∧
+    li_trace (TraceOptionalNe (¬ b)) (⌜¬ b⌝ -∗ v1 ◁ᵥ optty -∗ T (i2v (bool_to_Z false) i32) (false @ boolean i32))
     ⊢ typed_bin_op v1 (v1 ◁ᵥ b @ (optional ty optty)) v2 (v2 ◁ᵥ optty) (NeOp i32) ot1 ot2 T.
   Proof.
     unfold li_trace. iIntros "HT Hv1 Hv2" (Φ) "HΦ".
@@ -249,8 +249,8 @@ Global Typeclasses Opaque optional_type optional.
 Notation "optional< ty , optty >" := (optional ty optty)
   (only printing, format "'optional<' ty ,  optty '>'") : printing_sugar.
 
-Notation "'optional' == ... : P" := (DestructHintOptionalEq P) (at level 100, only printing).
-Notation "'optional' != ... : P" := (DestructHintOptionalNe P) (at level 100, only printing).
+Notation "'optional' == ... : P" := (TraceOptionalEq P) (at level 100, only printing).
+Notation "'optional' != ... : P" := (TraceOptionalNe P) (at level 100, only printing).
 
 Section optionalO.
   Context `{!typeG Σ}.
@@ -358,17 +358,17 @@ Section optionalO.
   Definition subsume_optional_optionalO_val_inst := [instance subsume_optional_optionalO_val].
   Global Existing Instance subsume_optional_optionalO_val_inst.
 
-  Inductive destruct_hint_optionalO :=
-  | DestructHintOptionalO.
+  Inductive trace_optionalO :=
+  | TraceOptionalO.
 
   Lemma type_eq_optionalO A v1 v2 (ty : A → type) optty ot1 ot2 `{!∀ x, Optionable (ty x) optty ot1 ot2} b `{!Inhabited A} T :
     opt_pre (ty (default inhabitant b)) v1 v2 ∧
-    destruct_hint (DHintDestruct _ b) DestructHintOptionalO
-      (li_trace (DestructHintOptionalO, b) (∀ v, (if b is Some x then v1 ◁ᵥ ty x else v1 ◁ᵥ optty) -∗
+    case_destruct b (λ b _,
+      li_trace (TraceOptionalO, b) (∀ v, (if b is Some x then v1 ◁ᵥ ty x else v1 ◁ᵥ optty) -∗
          T v ((if b is Some x then false else true) @ boolean i32)))
     ⊢ typed_bin_op v1 (v1 ◁ᵥ b @ optionalO ty optty) v2 (v2 ◁ᵥ optty) (EqOp i32) ot1 ot2 T.
   Proof.
-    unfold destruct_hint, li_trace. iIntros "HT Hv1 Hv2". iIntros (Φ) "HΦ".
+    unfold li_trace. iIntros "HT Hv1 Hv2". iIntros (Φ) "HΦ".
     destruct b.
     - have [|v' Hv] := val_of_Z_is_Some None i32 (bool_to_Z false) => //.
       iApply (wp_binop_det v').
@@ -378,6 +378,7 @@ Section optionalO.
         iDestruct (opt_bin_op true true with "Hpre [$Hv1] [$Hv2] Hctx") as %->.
         iPureIntro. by split => ?; simpl in *; simplify_eq.
       }
+      iDestruct "HT" as "[_ [% HT]]".
       iDestruct ("HT" with "Hv1") as "HT". iModIntro. iMod "HE". iModIntro. iFrame.
       iApply "HΦ" => //. iExists _. iSplit; iPureIntro; first by apply: val_to_of_Z. done.
     - have [|v' Hv] := val_of_Z_is_Some None i32 (bool_to_Z true) => //.
@@ -388,6 +389,7 @@ Section optionalO.
         iDestruct (opt_bin_op false true with "Hpre [$Hv1] [$Hv2] Hctx") as %->.
         iPureIntro. by split => ?; simpl in *; simplify_eq.
       }
+      iDestruct "HT" as "[_ [% HT]]".
       iDestruct ("HT" with "Hv1") as "HT". iModIntro. iMod "HE". iModIntro. iFrame.
       iApply "HΦ" => //. iExists _. iSplit; iPureIntro; first by apply: val_to_of_Z. done.
   Qed.
@@ -396,11 +398,11 @@ Section optionalO.
 
   Lemma type_neq_optionalO A v1 v2 (ty : A → type) optty ot1 ot2 `{!∀ x, Optionable (ty x) optty ot1 ot2} b `{!Inhabited A} T :
     opt_pre (ty (default inhabitant b)) v1 v2 ∧
-    destruct_hint (DHintDestruct _ b) DestructHintOptionalO
-      (li_trace (DestructHintOptionalO, b) (∀ v, (if b is Some x then v1 ◁ᵥ ty x else v1 ◁ᵥ optty) -∗ T v ((if b is Some x then true else false) @ boolean i32)))
+    case_destruct b (λ b _,
+      li_trace (TraceOptionalO, b) (∀ v, (if b is Some x then v1 ◁ᵥ ty x else v1 ◁ᵥ optty) -∗ T v ((if b is Some x then true else false) @ boolean i32)))
     ⊢ typed_bin_op v1 (v1 ◁ᵥ b @ optionalO ty optty) v2 (v2 ◁ᵥ optty) (NeOp i32) ot1 ot2 T.
   Proof.
-    unfold destruct_hint, li_trace. iIntros "HT Hv1 Hv2". iIntros (Φ) "HΦ".
+    unfold li_trace. iIntros "HT Hv1 Hv2". iIntros (Φ) "HΦ".
     destruct b.
     - have [|v' Hv] := val_of_Z_is_Some None i32 (bool_to_Z true) => //.
       iApply (wp_binop_det v').
@@ -410,6 +412,7 @@ Section optionalO.
         iDestruct (opt_bin_op true false with "Hpre [$Hv1] [$Hv2] Hctx") as %->.
         iPureIntro. by split => ?; simpl in *; simplify_eq.
       }
+      iDestruct "HT" as "[_ [% HT]]".
       iDestruct ("HT" with "Hv1") as "HT". iModIntro. iMod "HE". iModIntro. iFrame.
       iApply "HΦ" => //. iExists _. iSplit; iPureIntro; first by apply: val_to_of_Z. done.
     - have [|v' Hv] := val_of_Z_is_Some None i32 (bool_to_Z false) => //.
@@ -420,6 +423,7 @@ Section optionalO.
         iDestruct (opt_bin_op false false with "Hpre [$Hv1] [$Hv2] Hctx") as %->.
         iPureIntro. by split => ?; simpl in *; simplify_eq.
       }
+      iDestruct "HT" as "[_ [% HT]]".
       iDestruct ("HT" with "Hv1") as "HT". iModIntro. iMod "HE". iModIntro. iFrame.
       iApply "HΦ" => //. iExists _. iSplit; iPureIntro; first by apply: val_to_of_Z. done.
   Qed.
@@ -427,9 +431,10 @@ Section optionalO.
   Global Existing Instance type_neq_optionalO_inst.
 
   Lemma read_optionalO_case A E l b (ty : A → type) optty ly mc a (T : val → type → _):
-    destruct_hint (DHintDestruct _ b) DestructHintOptionalO (typed_read_end a E l Own (if b is Some x then ty x else optty) ly mc T)
+    case_destruct b (λ b _, li_trace (TraceOptionalO, b)
+     (typed_read_end a E l Own (if b is Some x then ty x else optty) ly mc T))
     ⊢ typed_read_end a E l Own (b @ optionalO ty optty) ly mc T.
-  Proof. by destruct b. Qed.
+  Proof. iDestruct 1 as (_) "?". by destruct b. Qed.
   (* This should be tried very late *)
   Definition read_optionalO_case_inst := [instance read_optionalO_case].
   Global Existing Instance read_optionalO_case_inst | 1001.

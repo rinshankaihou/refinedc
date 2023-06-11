@@ -797,7 +797,7 @@ Section proof_lithium_test.
       2: { repeat liRStep; liShow. }
 
       (** We are now considering the case where the optional is not
-      NULL (i.e. the then branch). Our goal is destruct_hint, which is
+      NULL (i.e. the then branch). Our goal is li_trace, which is
       a special instruction to Lithium that records the current branch
       in the context such that it can be displayed when showing error
       messages. It does not have an effect on the goal. *)

@@ -127,17 +127,12 @@ Definition accu {Σ} (f : iProp Σ → iProp Σ) : iProp Σ :=
 Arguments accu : simpl never.
 Global Typeclasses Opaque accu.
 
-(** * [destruct_hint] *)
-Inductive destruct_hint_info :=
-| DHintInfo
-| DHintDestruct (A : Type) (x : A)
-| DHintDecide (P : Prop) `{!Decision P}.
-Definition destruct_hint {Σ B} (hint : destruct_hint_info) (info : B) (T : iProp Σ) : iProp Σ := T.
-Global Typeclasses Opaque destruct_hint.
-Arguments destruct_hint : simpl never.
-
+(** * case distinction *)
 Definition case_if {Σ} (P : Prop) (T1 T2 : iProp Σ) : iProp Σ :=
   (⌜P⌝ -∗ T1) ∧ (⌜¬ P⌝ -∗ T2).
+
+Definition case_destruct {Σ} {A} (a : A) (T : A → bool → iProp Σ) : iProp Σ :=
+  ∃ b, T a b.
 
 (** * trace *)
 Definition li_trace {Σ A} (t : A) (T : iProp Σ) : iProp Σ := T.
