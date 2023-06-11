@@ -116,6 +116,13 @@ Ltac liFromSyntaxTerm c :=
 
 Ltac liFromSyntax :=
   match goal with
+  | |- ?P =>
+      let Q := liFromSyntaxTerm P in
+      change (Q)
+  end.
+
+Ltac liFromSyntaxGoal :=
+  match goal with
   | |- @envs_entails ?PROP ?Δ ?P =>
       let Q := liFromSyntaxTerm P in
       change (envs_entails Δ Q)
@@ -131,27 +138,29 @@ https://coq.zulipchat.com/#narrow/stream/237977-Coq-users/topic/Controlling.20pr
  *)
 Ltac liToSyntax :=
   liFromSyntax; (* make sure that we are not adding things twice, especially around user-defined functions *)
-  iEval (
-    liToSyntax_hook;
-    change (bi_sep ?a) with (li.bind0 (li.exhale (liToSyntax_UNFOLD_MARKER a)));
-    change (bi_wand ?a) with (li.bind0 (li.inhale (liToSyntax_UNFOLD_MARKER a)));
-    change (bi_and ?a ?b) with (li.and a b);
-    change (@bi_forall (iPropI ?Σ) ?A) with (@li.all Σ A);
-    change (@bi_exist (iPropI ?Σ) ?A) with (@li.exist Σ A);
-    change (@bi_pure (iPropI ?Σ) True) with (@li.done Σ);
-    change (@bi_pure (iPropI ?Σ) False) with (@li.false Σ);
-    change (find_in_context ?a) with (li.bind1 (find_in_context a));
-    change (subsume ?a ?b) with (li.bind0 (subsume (liToSyntax_UNFOLD_MARKER a) (liToSyntax_UNFOLD_MARKER b)));
-    change (subsume_list ?A ?ig ?l1 ?l2 ?f) with (li.bind0 (subsume_list A ig l1 l2 f));
-    change (tactic_hint ?t) with (li.bind1 (tactic_hint t));
-    change (accu ?f) with (li.bind1 (accu f));
-    change (destruct_hint ?hint ?info) with (li.bind0 (destruct_hint hint info));
-    (* Try to at least unfold some spurious conversions. *)
-    repeat (progress change (liToSyntax_UNFOLD_MARKER (li.bind0 (@li.exhale ?Σ ?a) ?b))
-        with (a ∗ liToSyntax_UNFOLD_MARKER b)%I);
-    change (liToSyntax_UNFOLD_MARKER (@li.done ?Σ)) with (@bi_pure (iPropI Σ) True);
-    change (liToSyntax_UNFOLD_MARKER (@li.false ?Σ)) with (@bi_pure (iPropI Σ) False);
-    unfold liToSyntax_UNFOLD_MARKER).
+  liToSyntax_hook;
+  change (bi_sep ?a) with (li.bind0 (li.exhale (liToSyntax_UNFOLD_MARKER a)));
+  change (bi_wand ?a) with (li.bind0 (li.inhale (liToSyntax_UNFOLD_MARKER a)));
+  change (bi_and ?a ?b) with (li.and a b);
+  change (@bi_forall (iPropI ?Σ) ?A) with (@li.all Σ A);
+  change (@bi_exist (iPropI ?Σ) ?A) with (@li.exist Σ A);
+  change (@bi_pure (iPropI ?Σ) True) with (@li.done Σ);
+  change (@bi_pure (iPropI ?Σ) False) with (@li.false Σ);
+  change (find_in_context ?a) with (li.bind1 (find_in_context a));
+  change (subsume ?a ?b) with (li.bind0 (subsume (liToSyntax_UNFOLD_MARKER a) (liToSyntax_UNFOLD_MARKER b)));
+  change (subsume_list ?A ?ig ?l1 ?l2 ?f) with (li.bind0 (subsume_list A ig l1 l2 f));
+  change (li_tactic ?t) with (li.bind1 (li.tactic t));
+  change (accu ?f) with (li.bind1 (accu f));
+  change (destruct_hint ?hint ?info) with (li.bind0 (destruct_hint hint info));
+  (* Try to at least unfold some spurious conversions. *)
+  repeat (progress change (liToSyntax_UNFOLD_MARKER (li.bind0 (@li.exhale ?Σ ?a) ?b))
+      with (a ∗ liToSyntax_UNFOLD_MARKER b)%I);
+  change (liToSyntax_UNFOLD_MARKER (@li.done ?Σ)) with (@bi_pure (iPropI Σ) True);
+  change (liToSyntax_UNFOLD_MARKER (@li.false ?Σ)) with (@bi_pure (iPropI Σ) False);
+  unfold liToSyntax_UNFOLD_MARKER.
+
+Ltac liToSyntaxGoal :=
+  iEval ( liToSyntax ).
 
 (* The following looses the printing of patterns and is extremely slow
 when going under many binders (e.g. typed_place). *)

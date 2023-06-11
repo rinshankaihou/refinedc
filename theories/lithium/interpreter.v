@@ -9,7 +9,7 @@ Set Default Proof Using "Type".
 Tactic Notation "liInst" hyp(H) open_constr(c) :=
   instantiate_protected H c.
 
-Ltac liShow := li_unfold_lets_in_context; try liToSyntax.
+Ltac liShow := li_unfold_lets_in_context; try liToSyntaxGoal.
 
 Ltac liSimpl :=
   (* simpl inserts a cast even if it does not do anything
