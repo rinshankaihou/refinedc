@@ -31,7 +31,6 @@ part of the type class must come last. This tactic tries to solve pure
 the conclusion of the lemma to the corresponding typeclass and is
 called with [arg]. [print] controls whether to output debug printing.
 *)
-(* TODO: Also use this for the instances in definitions.v *)
 Ltac generate_i2p_instance print to_tc arg c :=
   let do_print t := tryif print then t else idtac in
   let do_to_tc c :=
@@ -82,9 +81,20 @@ Ltac generate_i2p_instance print to_tc arg c :=
           end
   | ?P ⊢ ?G =>
       (* Finish the instance. *)
-      let P := liFromSyntaxTerm P in
-      do_print ltac:(idtac "rule:" P "⊢" G "term:" c);
-      notypeclasses refine (@i2p _ G P c)
+      let Q := liFromSyntaxTerm P in
+      (* Print rule in lithium syntax *)
+(*    assert_fails (
+          assert (⊢ Q); [
+            liToSyntax;
+            lazymatch goal with | |- ⊢ ?conv =>
+            let P' := eval unfold li.ret in P in
+            lazymatch conv with
+            | P' => idtac
+            | _ => idtac G ":-" conv
+            end end;
+            fail |] ); *)
+      do_print ltac:(idtac "rule:" Q "⊢" G "term:" c);
+      notypeclasses refine (@i2p _ G Q c)
   end.
 
 Notation "'[instance' x ]" :=

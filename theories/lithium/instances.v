@@ -1,5 +1,5 @@
 From lithium Require Export base.
-From lithium Require Import definitions proof_state.
+From lithium Require Import syntax definitions proof_state.
 
 (** This file collects the default instances for the definitions in
 [definitions.v]. Note that these instances must be in a separate file

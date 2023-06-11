@@ -174,8 +174,8 @@ Ltac liToSyntax :=
   liToSyntax_hook;
   change (bi_sep ?a) with (li.bind0 (li.exhale (liToSyntax_UNFOLD_MARKER a)));
   change (bi_wand ?a) with (li.bind0 (li.inhale (liToSyntax_UNFOLD_MARKER a)));
-  change (bi_and ?a ?b) with (li.and a b);
   change (big_opM bi_and ?f ?m) with (li.and_map f m);
+  change (@bi_and (iPropI ?Σ)) with (@li.and Σ);
   change (@bi_forall (iPropI ?Σ) ?A) with (@li.all Σ A);
   change (@bi_exist (iPropI ?Σ) ?A) with (@li.exist Σ A);
   change (@bi_pure (iPropI ?Σ) True) with (@li.done Σ);
