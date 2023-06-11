@@ -375,6 +375,11 @@ Section coq_tactics.
   Qed.
 
   Lemma tac_do_intro_intuit_sep Δ (P Q : iProp Σ) :
+    envs_entails Δ (□ (P ∗ True) ∧ Q) → envs_entails Δ (□ P ∗ Q).
+  Proof. apply tac_fast_apply. iIntros "[#[$ _] $]". Qed.
+
+(*
+  Lemma tac_do_intro_intuit_sep Δ (P Q : iProp Σ) :
     envs_entails (envs_clear_spatial Δ) (P ∗ True) → envs_entails Δ Q → envs_entails Δ (□ P ∗ Q).
   Proof.
     rewrite envs_entails_unseal => HP HQ. iIntros "Henv".
@@ -383,6 +388,7 @@ Section coq_tactics.
       iModIntro. iDestruct (HP with "Henv") as "[$ _]".
     - by iApply HQ.
   Qed.
+*)
 
   Lemma tac_do_simplify_goal Δ (n : N) (P : iProp Σ) T {SG : SimplifyGoal P (Some n)} :
     envs_entails Δ (SG T).(i2p_P) → envs_entails Δ (P ∗ T).
@@ -404,8 +410,8 @@ Ltac liSep :=
     | bi_exist _ => notypeclasses refine (tac_sep_exist_assoc _ _ _ _)
     | bi_emp => notypeclasses refine (tac_sep_emp _ _ _)
     | (⌜_⌝)%I => notypeclasses refine (tac_do_intro_pure_and _ _ _ _)
-    (* TODO: Is this really the right thing to do? *)
-    | (□ ?P)%I => notypeclasses refine (tac_do_intro_intuit_sep _ _ _ _ _); [li_pm_reduce|]
+    | (□ ?P)%I => notypeclasses refine (tac_do_intro_intuit_sep _ _ _ _)
+    (* | (□ ?P)%I => notypeclasses refine (tac_do_intro_intuit_sep _ _ _ _ _); [li_pm_reduce|] *)
     | match ?x with _ => _ end => fail "should not have match in sep"
     | ?P => first [
                progress liFindHyp FICSyntactic
@@ -416,6 +422,25 @@ Ltac liSep :=
              | fail "do_sep: unknown sidecondition" P
       ]
     end
+  end.
+
+(** ** [liPersistent] *)
+Section coq_tactics.
+  Context {Σ : gFunctors}.
+
+  Lemma tac_persistent Δ (P : iProp Σ) :
+    envs_entails (envs_clear_spatial Δ) P → envs_entails Δ (□ P).
+  Proof.
+    rewrite envs_entails_unseal => HP. iIntros "Henv".
+    iDestruct (envs_clear_spatial_sound with "Henv") as "[#Henv _]".
+    iModIntro. iApply (HP with "Henv").
+  Qed.
+End coq_tactics.
+
+Ltac liPersistent :=
+  lazymatch goal with
+  | |- envs_entails ?Δ (bi_intuitionistically ?P) =>
+      notypeclasses refine (tac_persistent _ _ _); li_pm_reduce
   end.
 
 (** ** [liWand] *)
@@ -620,6 +645,7 @@ Ltac liStep :=
     | liFindInContext
     | liDestructHint
     | liTacticHint
+    | liPersistent
     | liTrue
     | liFalse
     | liAccu
