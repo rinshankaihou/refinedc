@@ -176,7 +176,7 @@ Section programs.
 
   Lemma type_if_int it n v T1 T2:
     destruct_hint (DHintDecide (n ≠ 0)) (DestructHintIfInt n)
-      (if decide (n ≠ 0) then T1 else T2)
+      (li_trace (DestructHintIfInt n, if decide (n ≠ 0) then true else false) ((if decide (n ≠ 0) then T1 else T2)))
     ⊢ typed_if (IntOp it) v (v ◁ᵥ n @ int it) T1 T2.
   Proof.
     unfold destruct_hint. iIntros "Hs %Hb" => /=.
@@ -197,13 +197,13 @@ Section programs.
   | DestructHintSwitchIntDefault.
 
   Lemma type_switch_int v n it m ss def fn ls R Q:
-    ([∧ map] i↦mi ∈ m, destruct_hint DHintInfo (DestructHintSwitchIntCase i) (
+    ([∧ map] i↦mi ∈ m, li_trace (DestructHintSwitchIntCase i) (
              ⌜n = i⌝ -∗ ∃ s, ⌜ss !! mi = Some s⌝ ∗ typed_stmt s fn ls R Q)) ∧
-    (destruct_hint DHintInfo (DestructHintSwitchIntDefault) (
+    (li_trace (DestructHintSwitchIntDefault) (
                      ⌜n ∉ (map_to_list m).*1⌝ -∗ typed_stmt def fn ls R Q))
     ⊢ typed_switch v (n @ int it) it m ss def fn ls R Q.
   Proof.
-    unfold destruct_hint. iIntros "HT %Hv". iExists n. iSplit; first done.
+    unfold li_trace. iIntros "HT %Hv". iExists n. iSplit; first done.
     iInduction m as [] "IH" using map_ind; simplify_map_eq => //.
     { iDestruct "HT" as "[_ HT]". iApply "HT". iPureIntro.
       rewrite map_to_list_empty. set_solver. }

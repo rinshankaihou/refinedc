@@ -118,10 +118,11 @@ Section generic_boolean.
 
   Lemma type_if_generic_boolean stn it ot (b : bool) v T1 T2 :
     ⌜match ot with | BoolOp => it = u8 ∧ stn = StrictBool | IntOp it' => it = it' | _ => False end⌝ ∗
-     destruct_hint (DHintDestruct _ b) (DestructHintIfBool b) (if b then T1 else T2)
+     destruct_hint (DHintDestruct _ b) (DestructHintIfBool b)
+     (li_trace (DestructHintIfBool b, b) (if b then T1 else T2))
     ⊢ typed_if ot v (v ◁ᵥ b @ generic_boolean stn it) T1 T2.
   Proof.
-    unfold destruct_hint. iIntros "[% Hs] (%n&%Hv&%Hb)".
+    unfold destruct_hint, li_trace. iIntros "[% Hs] (%n&%Hv&%Hb)".
     destruct ot; destruct_and? => //; simplify_eq/=.
     - iExists _. iFrame. iPureIntro. by apply val_to_bool_iff_val_to_Z.
     - rewrite <-(represents_boolean_eq stn n b); last done. by eauto with iFrame.

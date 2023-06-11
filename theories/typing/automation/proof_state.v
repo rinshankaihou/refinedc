@@ -5,7 +5,7 @@ From refinedc.typing.automation Require Import solvers.
 (** * Markers for keeping track of the proof state *)
 Definition CURRENT_LOCATION (i : list location_info) (up_to_date : bool) : Set := unit.
 Arguments CURRENT_LOCATION : simpl never.
-Definition CASE_DISTINCTION_INFO {B} (hint : destruct_hint_info) (info : B) (i : list location_info) : Set := unit.
+Definition CASE_DISTINCTION_INFO {B} (info : B) (i : list location_info) : Set := unit.
 Arguments CASE_DISTINCTION_INFO : simpl never.
 
 Definition pop_location_info {A} (i : location_info) (a : A) : A := a.
@@ -70,10 +70,10 @@ Ltac update_loc_info i :=
     end
     ].
 
-Ltac add_case_distinction_info hint info :=
+Ltac add_case_distinction_info info :=
     get_loc_info ltac:(fun icur =>
     let Hcase := fresh "HCASE" in
-    have Hcase := (() : (CASE_DISTINCTION_INFO hint info icur))).
+    have Hcase := (() : (CASE_DISTINCTION_INFO info icur))).
 
 (** * Tactics cleaning the proof state *)
 Ltac clear_unused_vars :=
@@ -82,7 +82,7 @@ Ltac clear_unused_vars :=
            (* Keep current location and case distinction info. *)
            lazymatch T with
            | CURRENT_LOCATION _ _ => fail
-           | CASE_DISTINCTION_INFO _ _ _ => fail
+           | CASE_DISTINCTION_INFO _ _ => fail
            | _ => idtac
            end;
            let ty := (type of T) in
@@ -100,7 +100,7 @@ Ltac prepare_sideconditions :=
 
 Ltac solve_goal_prepare_hook ::=
   prepare_sideconditions;
-  repeat match goal with | H : CASE_DISTINCTION_INFO _ _ _ |- _ => clear H end.
+  repeat match goal with | H : CASE_DISTINCTION_INFO _ _ |- _ => clear H end.
 
 (** * Tactics for showing failures to the user *)
 
@@ -124,7 +124,7 @@ Ltac print_current_location :=
 
 Ltac print_case_distinction_info :=
    repeat lazymatch reverse goal with
-          | H : CASE_DISTINCTION_INFO ?hint ?i ?l |- _ =>
+          | H : CASE_DISTINCTION_INFO ?i ?l |- _ =>
             lazymatch i with
             | (?a, ?b) => idtac "Case distinction" a "->" b
             | ?a => idtac "Case distinction" a

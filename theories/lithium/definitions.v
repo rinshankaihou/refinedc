@@ -135,3 +135,6 @@ Inductive destruct_hint_info :=
 Definition destruct_hint {Σ B} (hint : destruct_hint_info) (info : B) (T : iProp Σ) : iProp Σ := T.
 Global Typeclasses Opaque destruct_hint.
 Arguments destruct_hint : simpl never.
+
+(** * trace *)
+Definition li_trace {Σ A} (t : A) (T : iProp Σ) : iProp Σ := T.

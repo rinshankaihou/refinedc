@@ -44,7 +44,7 @@ Ltac liUnfoldLetGoal_hook H ::=
 
 Ltac can_solve_hook ::= solve_goal.
 
-Ltac liDestructHint_record_hook hint info ::= add_case_distinction_info hint info.
+Ltac liTrace_hook info ::= add_case_distinction_info info.
 
 Ltac liExtensible_to_i2p_hook P bind cont ::=
   lazymatch P with

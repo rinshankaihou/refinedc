@@ -146,8 +146,8 @@ Section optional.
 
   Lemma type_eq_optional_refined v1 v2 ty optty ot1 ot2 `{!Optionable ty optty ot1 ot2} b T :
     opt_pre ty v1 v2 ∧
-    destruct_hint DHintInfo (DestructHintOptionalEq b) (⌜b⌝ -∗ v1 ◁ᵥ ty -∗ T (i2v (bool_to_Z false) i32) (false @ boolean i32)) ∧
-    destruct_hint DHintInfo (DestructHintOptionalEq (¬ b)) (⌜¬ b⌝ -∗ v1 ◁ᵥ optty -∗ T (i2v (bool_to_Z true) i32) (true @ boolean i32))
+    li_trace (DestructHintOptionalEq b) (⌜b⌝ -∗ v1 ◁ᵥ ty -∗ T (i2v (bool_to_Z false) i32) (false @ boolean i32)) ∧
+    li_trace (DestructHintOptionalEq (¬ b)) (⌜¬ b⌝ -∗ v1 ◁ᵥ optty -∗ T (i2v (bool_to_Z true) i32) (true @ boolean i32))
     ⊢ typed_bin_op v1 (v1 ◁ᵥ b @ (optional ty optty)) v2 (v2 ◁ᵥ optty) (EqOp i32) ot1 ot2 T.
   Proof.
     unfold destruct_hint. iIntros "HT Hv1 Hv2" (Φ) "HΦ".
@@ -201,11 +201,11 @@ Section optional.
 
   Lemma type_neq_optional v1 v2 ty optty ot1 ot2 `{!Optionable ty optty ot1 ot2} b T :
     opt_pre ty v1 v2 ∧
-    destruct_hint DHintInfo (DestructHintOptionalNe b) (⌜b⌝ -∗ v1 ◁ᵥ ty -∗ T (i2v (bool_to_Z true) i32) (true @ boolean i32)) ∧
-    destruct_hint DHintInfo (DestructHintOptionalNe (¬ b)) (⌜¬ b⌝ -∗ v1 ◁ᵥ optty -∗ T (i2v (bool_to_Z false) i32) (false @ boolean i32))
+    li_trace (DestructHintOptionalNe b) (⌜b⌝ -∗ v1 ◁ᵥ ty -∗ T (i2v (bool_to_Z true) i32) (true @ boolean i32)) ∧
+    li_trace (DestructHintOptionalNe (¬ b)) (⌜¬ b⌝ -∗ v1 ◁ᵥ optty -∗ T (i2v (bool_to_Z false) i32) (false @ boolean i32))
     ⊢ typed_bin_op v1 (v1 ◁ᵥ b @ (optional ty optty)) v2 (v2 ◁ᵥ optty) (NeOp i32) ot1 ot2 T.
   Proof.
-    unfold destruct_hint. iIntros "HT Hv1 Hv2" (Φ) "HΦ".
+    unfold li_trace. iIntros "HT Hv1 Hv2" (Φ) "HΦ".
     iDestruct "Hv1" as "[[% Hv1]|[% Hv1]]".
     - iApply (wp_binop_det (i2v (bool_to_Z true) i32)).
       iIntros (σ) "Hctx". iApply fupd_mask_intro; [set_solver|]. iIntros "HE".
@@ -298,7 +298,7 @@ Section optionalO.
   Global Instance simple_subsume_place_optionalO A (ty1 : A → _) ty2 optty b
     `{!∀ x, SimpleSubsumePlace (ty1 x) (ty2 x) P}:
     SimpleSubsumePlace (b @ optionalO ty1 optty) (b @ optionalO ty2 optty) P.
-  Proof. 
+  Proof.
     iIntros (l β) "HP Hl". destruct b. 2: by iFrame.
     unfold optionalO; simpl_type. iApply (@simple_subsume_place with "HP Hl").
   Qed.
@@ -364,10 +364,11 @@ Section optionalO.
   Lemma type_eq_optionalO A v1 v2 (ty : A → type) optty ot1 ot2 `{!∀ x, Optionable (ty x) optty ot1 ot2} b `{!Inhabited A} T :
     opt_pre (ty (default inhabitant b)) v1 v2 ∧
     destruct_hint (DHintDestruct _ b) DestructHintOptionalO
-      (∀ v, (if b  is Some x then v1 ◁ᵥ ty x else v1 ◁ᵥ optty) -∗ T v ((if b is Some x then false else true) @ boolean i32))
+      (li_trace (DestructHintOptionalO, b) (∀ v, (if b is Some x then v1 ◁ᵥ ty x else v1 ◁ᵥ optty) -∗
+         T v ((if b is Some x then false else true) @ boolean i32)))
     ⊢ typed_bin_op v1 (v1 ◁ᵥ b @ optionalO ty optty) v2 (v2 ◁ᵥ optty) (EqOp i32) ot1 ot2 T.
   Proof.
-    unfold destruct_hint. iIntros "HT Hv1 Hv2". iIntros (Φ) "HΦ".
+    unfold destruct_hint, li_trace. iIntros "HT Hv1 Hv2". iIntros (Φ) "HΦ".
     destruct b.
     - have [|v' Hv] := val_of_Z_is_Some None i32 (bool_to_Z false) => //.
       iApply (wp_binop_det v').
@@ -396,10 +397,10 @@ Section optionalO.
   Lemma type_neq_optionalO A v1 v2 (ty : A → type) optty ot1 ot2 `{!∀ x, Optionable (ty x) optty ot1 ot2} b `{!Inhabited A} T :
     opt_pre (ty (default inhabitant b)) v1 v2 ∧
     destruct_hint (DHintDestruct _ b) DestructHintOptionalO
-      (∀ v, (if b is Some x then v1 ◁ᵥ ty x else v1 ◁ᵥ optty) -∗ T v ((if b is Some x then true else false) @ boolean i32))
+      (li_trace (DestructHintOptionalO, b) (∀ v, (if b is Some x then v1 ◁ᵥ ty x else v1 ◁ᵥ optty) -∗ T v ((if b is Some x then true else false) @ boolean i32)))
     ⊢ typed_bin_op v1 (v1 ◁ᵥ b @ optionalO ty optty) v2 (v2 ◁ᵥ optty) (NeOp i32) ot1 ot2 T.
   Proof.
-    unfold destruct_hint. iIntros "HT Hv1 Hv2". iIntros (Φ) "HΦ".
+    unfold destruct_hint, li_trace. iIntros "HT Hv1 Hv2". iIntros (Φ) "HΦ".
     destruct b.
     - have [|v' Hv] := val_of_Z_is_Some None i32 (bool_to_Z true) => //.
       iApply (wp_binop_det v').

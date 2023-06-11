@@ -28,6 +28,9 @@ Section lithium.
   Definition accu : (iProp Σ → iProp Σ) → iProp Σ :=
     accu.
 
+  Definition trace {A} : A → iProp Σ → iProp Σ :=
+    @li_trace Σ A.
+
   Definition done : iProp Σ := True.
   Definition false : iProp Σ := False.
 
@@ -70,6 +73,8 @@ Notation "'and:' | x | y | .. | z" := (li.and .. (li.and x y) .. z)
 Notation "'tactic' x" := (li.tactic x) (in custom lithium at level 0, x constr,
                            format "'tactic'  '[' x ']'") : lithium_scope.
 Notation "'accu'" := (li.accu) (in custom lithium at level 0) : lithium_scope.
+Notation "'trace' x" := (li.trace x) (in custom lithium at level 0, x constr,
+                           format "'trace'  '[' x ']'") : lithium_scope.
 Notation "'done'" := (li.done) (in custom lithium at level 0) : lithium_scope.
 Notation "'false'" := (li.false) (in custom lithium at level 0) : lithium_scope.
 Notation "'return' x" := (li.ret x) (in custom lithium at level 0, x constr,
@@ -112,7 +117,7 @@ Notation "P ':-' Q" := (Q ⊢ P)
   (at level 99, Q custom lithium at level 200, only parsing) : stdpp_scope.
 
 Declare Reduction liFromSyntax_eval :=
-  cbv [ li.exhale li.inhale li.all li.exist li.done li.false li.ret li.and li.tactic
+  cbv [ li.exhale li.inhale li.all li.exist li.done li.false li.ret li.and li.tactic li.accu li.trace
         li.bind0 li.bind1 li.bind2 li.bind3 li.bind4 li.bind5 ].
 
 Ltac liFromSyntaxTerm c :=
@@ -155,6 +160,7 @@ Ltac liToSyntax :=
   change (subsume_list ?A ?ig ?l1 ?l2 ?f) with (li.bind0 (subsume_list A ig l1 l2 f));
   change (li_tactic ?t) with (li.bind1 (li.tactic t));
   change (@accu ?Σ) with (li.bind1 (@li.accu Σ));
+  change (@li_trace ?Σ ?A ?t) with (li.bind0 (@li.trace Σ A t));
   change (destruct_hint ?hint ?info) with (li.bind0 (destruct_hint hint info));
   (* Try to at least unfold some spurious conversions. *)
   repeat (progress change (liToSyntax_UNFOLD_MARKER (li.bind0 (@li.exhale ?Σ ?a) ?b))
@@ -244,7 +250,7 @@ Section test.
   Lemma ex1_3 :
     ⊢ ∀ n1 n2, (⌜n1 + Z.to_nat n2 > 0⌝ ∗ ⌜n2 = 1⌝) -∗
      check_wp (n1 + 1) (λ v,
-       ∃ n' : nat, (⌜v = n'⌝ ∗ ⌜n' > 0⌝) ∗ accu (λ P,
+       ∃ n' : nat, (⌜v = n'⌝ ∗ ⌜n' > 0⌝) ∗ li_trace 1 $ accu (λ P,
        get_tuple (λ '(x1, x2, x3), ⌜x1 = 0⌝ ∗ (P ∧ True) ))).
   Proof.
     iStartProof.

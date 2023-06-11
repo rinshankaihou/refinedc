@@ -571,28 +571,31 @@ Ltac liDestructHint :=
   | |- @envs_entails ?PROP ?Δ (destruct_hint ?hint ?info ?T) =>
     change_no_check (@envs_entails PROP Δ T);
     lazymatch hint with
-    | DHintInfo =>
-       liDestructHint_record_hook hint info
+    | DHintInfo => idtac
     | DHintDestruct _ (@bool_decide ?P ?b) =>
-      let H := fresh "H" in destruct_decide (@bool_decide_reflect P b) as H; revert H; [
-      liDestructHint_record_hook hint (info, true) |
-      liDestructHint_record_hook hint (info, false) ]
+      let H := fresh "H" in destruct_decide (@bool_decide_reflect P b) as H; revert H
     | DHintDestruct _ ?x =>
       tryif (non_trivial_destruct x) then
-        case_eq x; repeat liForall;
-        lazymatch goal with
-        | |- _ = ?res → _ =>
-          liDestructHint_record_hook hint (info, res)
-        end
+        case_eq x; repeat liForall
       else (
           idtac
         )
     | @DHintDecide ?P ?b =>
-       let H := fresh "H" in destruct_decide (@decide P b) as H; revert H; [
-      liDestructHint_record_hook hint (info, true) |
-      liDestructHint_record_hook hint (info, false) ]
+       let H := fresh "H" in destruct_decide (@decide P b) as H; revert H
     end
-  end; repeat (liForall || liImpl); try by [exfalso; can_solve].
+  end;
+  (* It is important that we prune branches this way because this way
+  we don't need to do normalization and simplification of hypothesis
+  that we introduce twice, which has a big impact on performance. *)
+  repeat (liForall || liImpl); try by [exfalso; can_solve].
+
+(** ** [liTrace] *)
+Ltac liTrace :=
+  lazymatch goal with
+  | |- @envs_entails ?PROP ?Δ (li_trace ?info ?T) =>
+    change_no_check (@envs_entails PROP Δ T);
+    liTrace_hook info
+  end.
 
 (** ** [liTactic] *)
 Section coq_tactics.
@@ -644,6 +647,7 @@ Ltac liStep :=
     | liSideCond
     | liFindInContext
     | liDestructHint
+    | liTrace
     | liTactic
     | liPersistent
     | liTrue

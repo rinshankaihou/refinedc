@@ -175,3 +175,80 @@ int test_conditional_annot() {
   unsigned short i2 = 0 ? (unsigned short) 0 : (unsigned short) 0;
   return i2;
 }
+
+[[rc::parameters("n : Z", "m : Z", "o : {option Z}")]]
+[[rc::args("n @ int<i32>", "m @ int<i32>",
+           "{m = 1} @ optional<&own<int<i32>>, null>",
+           "o @ optionalO<λ x. &own<x @ int<i32>>, null>")]]
+// comment to test printing of case distinctions
+[[rc::trust_me]]
+void test_case_printing(int n, int m, int *p1, int *p2) {
+  // the comments in each case show the expected printing
+  // this is missing the union case distinction, can be tested in simple_union.c
+  switch (n) {
+  // type_switch_int
+  case 1:
+    // Case distinction (case 1)
+    rc_stop(n);
+
+  // type_if_int
+  case 2:
+    // Case distinction (if 1 ≠ 0) -> true
+    if (1) {}
+    rc_stop(n);
+  case 3:
+    // Case distinction (if m ≠ 0) -> true
+    // Case distinction (if m ≠ 0) -> false // TODO, currently (if 0 ≠ 0) -> false
+    if (m) {}
+    rc_stop(n);
+
+  // type_if_generic_boolean
+  case 4:
+    // TODO: Should this show up?
+    // Case distinction (if bool_decide (1 == 1)) -> true // TODO, currently (if true) -> true
+    if (1 == 1) {}
+    rc_stop(n);
+  case 5:
+    // Case distinction (if bool_decide (m == 1)) -> true // TODO, currently (if true) -> true
+    // Case distinction (if bool_decide (m == 1)) -> false // TODO, currently (if false) -> false
+    if (m == 1) {}
+    rc_stop(n);
+
+  // type_eq_optional_refined
+  case 6:
+    // TODO: Should also trivial if case distinctions show up here?
+    // Case distinction (optional == ... : m = 1) // TODO, currently (optional == ... : 1 = 1)
+    // Case distinction (optional == ... : m ≠ 1)
+    if (p1 == NULL) {}
+    rc_stop(n);
+
+  // type_neq_optional
+  case 7:
+    // TODO: Should also trivial if case distinctions show up here?
+    // Case distinction (optional != ... : m = 1) // TODO, currently (optional != ... : 1 = 1)
+    // Case distinction (optional != ... : m ≠ 1)
+    if (p1 != NULL) {}
+    rc_stop(n);
+
+  // type_eq_optionalO
+  case 8:
+    // TODO: Should also trivial if case distinctions show up here?
+    // Case distinction DestructHintOptionalO -> (Some z)
+    // Case distinction DestructHintOptionalO -> None
+    if (p2 == NULL) {}
+    rc_stop(n);
+
+  // type_neq_optional
+  case 9:
+    // TODO: Should also trivial if case distinctions show up here?
+    // Case distinction DestructHintOptionalO -> (Some z)
+    // Case distinction DestructHintOptionalO -> None
+    if (p2 != NULL) {}
+    rc_stop(n);
+
+  // type_switch_int
+  default:
+    // Case distinction (default)
+    rc_stop(n);
+  }
+}

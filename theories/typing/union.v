@@ -126,7 +126,8 @@ Section union.
   | DestructHintUnion (info : tunion_info A).
 
   Lemma type_binop_tunion_tag_int op it ti x v1 n v2 T:
-    destruct_hint (DHintDestruct _ x) (DestructHintUnion ti) (typed_bin_op v1 (v1 ◁ᵥ ti.(ti_tag) x @ int size_t) v2 (v2 ◁ᵥ n @ int it) op (IntOp size_t) (IntOp it) T)
+    destruct_hint (DHintDestruct _ x) (DestructHintUnion ti) (
+        li_trace (DestructHintUnion ti, x) (typed_bin_op v1 (v1 ◁ᵥ ti.(ti_tag) x @ int size_t) v2 (v2 ◁ᵥ n @ int it) op (IntOp size_t) (IntOp it) T))
     ⊢ typed_bin_op v1 (v1 ◁ᵥ tunion_tag ti x) v2 (v2 ◁ᵥ n @ int it) op (IntOp size_t) (IntOp it) T.
   Proof. by rewrite /(ty_own_val (tunion_tag _ _))/=. Qed.
   Definition type_binop_tunion_tag_int_eq_inst := [instance type_binop_tunion_tag_int (EqOp i32)].
