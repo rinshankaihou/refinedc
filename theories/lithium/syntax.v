@@ -25,6 +25,9 @@ Section lithium.
   Definition tactic {A} : ((A → iProp Σ) → iProp Σ) → (A → iProp Σ) → iProp Σ :=
     @li_tactic Σ A.
 
+  Definition accu : (iProp Σ → iProp Σ) → iProp Σ :=
+    accu.
+
   Definition done : iProp Σ := True.
   Definition false : iProp Σ := False.
 
@@ -66,6 +69,7 @@ Notation "'and:' | x | y | .. | z" := (li.and .. (li.and x y) .. z)
 ) : lithium_scope.
 Notation "'tactic' x" := (li.tactic x) (in custom lithium at level 0, x constr,
                            format "'tactic'  '[' x ']'") : lithium_scope.
+Notation "'accu'" := (li.accu) (in custom lithium at level 0) : lithium_scope.
 Notation "'done'" := (li.done) (in custom lithium at level 0) : lithium_scope.
 Notation "'false'" := (li.false) (in custom lithium at level 0) : lithium_scope.
 Notation "'return' x" := (li.ret x) (in custom lithium at level 0, x constr,
@@ -150,7 +154,7 @@ Ltac liToSyntax :=
   change (subsume ?a ?b) with (li.bind0 (subsume (liToSyntax_UNFOLD_MARKER a) (liToSyntax_UNFOLD_MARKER b)));
   change (subsume_list ?A ?ig ?l1 ?l2 ?f) with (li.bind0 (subsume_list A ig l1 l2 f));
   change (li_tactic ?t) with (li.bind1 (li.tactic t));
-  change (accu ?f) with (li.bind1 (accu f));
+  change (@accu ?Σ) with (li.bind1 (@li.accu Σ));
   change (destruct_hint ?hint ?info) with (li.bind0 (destruct_hint hint info));
   (* Try to at least unfold some spurious conversions. *)
   repeat (progress change (liToSyntax_UNFOLD_MARKER (li.bind0 (@li.exhale ?Σ ?a) ?b))
@@ -240,8 +244,8 @@ Section test.
   Lemma ex1_3 :
     ⊢ ∀ n1 n2, (⌜n1 + Z.to_nat n2 > 0⌝ ∗ ⌜n2 = 1⌝) -∗
      check_wp (n1 + 1) (λ v,
-       ∃ n' : nat, (⌜v = n'⌝ ∗ ⌜n' > 0⌝) ∗
-       get_tuple (λ '(x1, x2, x3), ⌜x1 = 0⌝ ∗ (True ∧ True) )).
+       ∃ n' : nat, (⌜v = n'⌝ ∗ ⌜n' > 0⌝) ∗ accu (λ P,
+       get_tuple (λ '(x1, x2, x3), ⌜x1 = 0⌝ ∗ (P ∧ True) ))).
   Proof.
     iStartProof.
     liToSyntax.
