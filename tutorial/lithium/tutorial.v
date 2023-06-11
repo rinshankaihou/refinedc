@@ -92,6 +92,7 @@ Section proofs.
      - TODO: find out what logic programming is and how their judgements look like and what terminology they use
      - maybe call it a logic programming language such that people are not surprised by the extensible function definitions?
      - functions seems like a better name than judgements (or predicates from logic programming) since they have inputs and outputs
+     - explain evars somehow
     *)
 
   (** Framing: Lithium is a logic programming language for building
@@ -504,19 +505,10 @@ Section proofs.
     repeat liTStep; liShow.
   Abort.
 
-  (* TODO : find in context should probably use a different syntax
-     such that it is clear that this is not a usual existential
-     quantifier and exhale. Maybe something like the following? *)
-  (*
-    find_in_context (FindMapsTo #l) G :-
-      pattern: 'v, l ↦ v;
-      return G (l, v).
-  *)
+
   Lemma find_in_context_find_mapsto_loc (l : loc) G:
     find_in_context (FindMapsTo #l) G :-
-      ∃ v,
-      exhale (l ↦ v);
-      return G (l, v).
+      pattern: v, l ↦ v; return G (l, v).
   Proof. iDestruct 1 as (v) "[Hl HT]". iExists (_, _) => /=. by iFrame. Qed.
   Definition find_in_context_find_mapsto_loc_inst :=
     [instance find_in_context_find_mapsto_loc with FICSyntactic].
@@ -536,7 +528,7 @@ Section proofs.
   Global Typeclasses Opaque FindList.
   Lemma find_in_context_find_list_loc (l : loc) G:
     find_in_context (FindList #l) G :-
-      ∃ v, exhale l ↦ v; return G (l ↦ v).
+      pattern: v, l ↦ v; return G (l ↦ v).
   Proof. iDestruct 1 as (v) "[Hl HT]". iExists _. by iFrame. Qed.
   Definition find_in_context_find_list_loc_inst :=
     [instance find_in_context_find_list_loc with FICSyntactic].
@@ -582,7 +574,7 @@ Section proofs.
 
   Lemma find_in_context_find_list_list v G:
     find_in_context (FindList v) G :-
-      ∃ xs, exhale is_list v xs; return G (is_list v xs).
+      pattern: xs, is_list v xs; return G (is_list v xs).
   Proof. iDestruct 1 as (xs) "[Hl HT]". iExists _. by iFrame. Qed.
   Definition find_in_context_find_list_list_inst :=
     [instance find_in_context_find_list_list with FICSyntactic].
@@ -620,8 +612,7 @@ Section proofs.
 
   Lemma find_in_context_find_mapsto_list v G:
     find_in_context (FindMapsTo v) G :-
-      ∃ xs, exhale is_list v xs;
-
+      pattern: xs, is_list v xs;
       exhale ⌜0 < length xs⌝;
       ∀ (l : loc) v' x xs',
       inhale ⌜v = #l⌝ ∗ ⌜xs = x::xs'⌝ ∗ is_list v' xs';
@@ -686,7 +677,7 @@ Section proofs.
 
   Lemma find_in_context_find_locornull_list v G:
     find_in_context (FindLocOrNULL v) G :-
-      ∃ xs, exhale is_list v xs;
+      pattern: xs, is_list v xs;
       and:
       | inhale ⌜xs = []⌝ ∗ ⌜v = #NULL⌝; return G None
       | ∀ (l : loc) v' x xs',
@@ -707,9 +698,5 @@ Section proofs.
     Unshelve. all: unshelve_sidecond.
     - do 2 f_equal. lia.
   Qed.
-
-  (* TODOs:
-     - explain evars somehow
- *)
 
 End proofs.

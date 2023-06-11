@@ -42,6 +42,10 @@ Global Open Scope lithium_scope.
 
 Declare Custom Entry lithium.
 
+(* notation principle: notations that look like an application (e.g.
+return or inhale) don't have a colon after the name. More fancy
+notations have a colon after the first identifiers (e.g. pattern:).
+This might also be necessary to avoid registering keywords.*)
 Notation "'[{' e } ]" := e
   (e custom lithium at level 200,
     format "'[hv' [{  '[hv' e ']'  '/' } ] ']'") : lithium_scope.
@@ -68,6 +72,10 @@ Notation "∀ x .. y , P" := (li.all (λ x, .. (li.all (λ y, P)) ..))
 Notation "∃ x .. y , P" := (li.exist (λ x, .. (li.exist (λ y, P)) ..))
     (in custom lithium at level 200, x binder, y binder, right associativity,
         format "'[' ∃  x  ..  y , ']'  '/' P") : lithium_scope.
+(* for find_in_context: *)
+Notation "'pattern:' x .. y , P ; G" :=
+  (li.exist (λ x, .. (li.exist (λ y, li.bind0 (li.exhale P) G)) .. ))
+    (in custom lithium at level 200, x binder, y binder, P constr, only parsing) : lithium_scope.
 
 Notation "y ; z" := (li.bind0 y z)
   (in custom lithium at level 100, z at level 200,
