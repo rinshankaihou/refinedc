@@ -122,9 +122,9 @@ Definition mtE : coPset := ↑mtN.
 Inductive own_state : Type :=
 | Own | Shr.
 Definition own_state_min (β1 β2 : own_state) : own_state :=
-  match β1, β2 with
-  | Own, Own => Own
-  | _, _ => Shr
+  match β1 with
+  | Own => β2
+  | _ => Shr
   end.
 Definition heap_mapsto_own_state `{!typeG Σ} (l : loc) (β : own_state) (v : val) : iProp Σ :=
   match β with

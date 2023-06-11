@@ -21,7 +21,7 @@ Section own.
   Next Obligation. iIntros (β ty l ot mt l' ->%is_ptr_ot_layout). by iDestruct 1 as (?) "_". Qed.
   Next Obligation. iIntros (β ty l ot mt v ->%is_ptr_ot_layout). by iDestruct 1 as (->) "_". Qed.
   Next Obligation. iIntros (β ty l ot mt l' ?) "(%&Hl&Hl')". rewrite left_id. eauto with iFrame. Qed.
-  Next Obligation. iIntros (β ty l ot mt l' v ->%is_ptr_ot_layout ?) "Hl [-> Hl']". iFrame. iSplit => //. by rewrite left_id. Qed.
+  Next Obligation. iIntros (β ty l ot mt l' v ->%is_ptr_ot_layout ?) "Hl [-> Hl']". by iFrame. Qed.
   Next Obligation.
     iIntros (β ty l v ot mt st ?). apply: mem_cast_compat_loc; [done|].
     iIntros "[-> ?]". iPureIntro. naive_solver.

@@ -822,21 +822,6 @@ Section typing.
   Definition simplify_goal_val_refine_r_inst := [instance simplify_goal_val_refine_r with 10%N].
   Global Existing Instance simplify_goal_val_refine_r_inst.
 
-  (* The match can come from own_state_min *)
-  Lemma simplify_bad_own_state_hyp l β ty T:
-    (l ◁ₗ{β} ty -∗ T)
-    ⊢ simplify_hyp (l ◁ₗ{match β with | Own => Own | Shr => Shr end} ty) T.
-  Proof. by destruct β. Qed.
-  Definition simplify_bad_own_state_hyp_inst := [instance simplify_bad_own_state_hyp with 0%N].
-  Global Existing Instance simplify_bad_own_state_hyp_inst.
-
-  Lemma simplify_bad_own_state_goal l β ty T:
-    (l ◁ₗ{β} ty ∗ T )
-    ⊢ simplify_goal (l ◁ₗ{match β with | Own => Own | Shr => Shr end} ty) T.
-  Proof. iIntros "[? $]". by destruct β. Qed.
-  Definition simplify_bad_own_state_goal_inst := [instance simplify_bad_own_state_goal with 0%N].
-  Global Existing Instance simplify_bad_own_state_goal_inst.
-
   (* This rule is complete as [LocInBounds] implies that the location cannot be NULL. *)
   Lemma simplify_goal_NULL_loc_in_bounds β ty n `{!LocInBounds ty β n} T:
     False

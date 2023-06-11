@@ -29,7 +29,7 @@ Section tagged_ptr.
   Next Obligation. iIntros (???????->%is_ptr_ot_layout) "($&_)". Qed.
   Next Obligation. iIntros (???????->%is_ptr_ot_layout) "(->&_)". done. Qed.
   Next Obligation. iIntros (????????) "(%&%&%&?&?)". rewrite left_id. eauto with iFrame. Qed.
-  Next Obligation. iIntros (????????->%is_ptr_ot_layout?) "? (->&%&%&?)". iFrame. rewrite left_id. eauto with iFrame. Qed.
+  Next Obligation. iIntros (????????->%is_ptr_ot_layout?) "? (->&%&%&?)". by iFrame. Qed.
   Next Obligation.
     iIntros (β align ty l v ot mt st ?). apply mem_cast_compat_loc; [done|].
     iIntros "[-> ?]". iPureIntro. naive_solver.
