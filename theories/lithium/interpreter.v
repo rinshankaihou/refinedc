@@ -556,6 +556,21 @@ Ltac liAnd :=
   end.
 
 (** ** [liDestructHint] *)
+Section coq_tactics.
+  Context {Σ : gFunctors}.
+
+  Lemma tac_case_if Δ (P : Prop) T1 T2 :
+    (P → envs_entails Δ T1) →
+    (¬ P → envs_entails Δ T2) →
+    envs_entails Δ (@case_if Σ P T1 T2).
+  Proof.
+    rewrite envs_entails_unseal => HT1 HT2.
+    iIntros "Henvs". iSplit; iIntros (?).
+    - by iApply HT1.
+    - by iApply HT2.
+  Qed.
+End coq_tactics.
+
 (* This tactic checks if destructing x would lead to multiple
 non-trivial subgoals. The main reason for it is that we don't want to
 destruct constructors like true as this would not be useful. *)
@@ -571,7 +586,7 @@ Ltac liDestructHint :=
   | |- @envs_entails ?PROP ?Δ (destruct_hint ?hint ?info ?T) =>
     change_no_check (@envs_entails PROP Δ T);
     lazymatch hint with
-    | DHintInfo => idtac
+    (* | DHintInfo => idtac *)
     | DHintDestruct _ (@bool_decide ?P ?b) =>
       let H := fresh "H" in destruct_decide (@bool_decide_reflect P b) as H; revert H
     | DHintDestruct _ ?x =>
@@ -580,9 +595,11 @@ Ltac liDestructHint :=
       else (
           idtac
         )
-    | @DHintDecide ?P ?b =>
-       let H := fresh "H" in destruct_decide (@decide P b) as H; revert H
+    (* | @DHintDecide ?P ?b => *)
+       (* let H := fresh "H" in destruct_decide (@decide P b) as H; revert H *)
     end
+  | |- @envs_entails ?PROP ?Δ (case_if ?P ?T1 ?T2) =>
+      notypeclasses refine (tac_case_if _ _ _ _ _ _)
   end;
   (* It is important that we prune branches this way because this way
   we don't need to do normalization and simplification of hypothesis

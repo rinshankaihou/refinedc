@@ -175,12 +175,16 @@ Section programs.
   | DestructHintIfInt (n : Z).
 
   Lemma type_if_int it n v T1 T2:
-    destruct_hint (DHintDecide (n ≠ 0)) (DestructHintIfInt n)
-      (li_trace (DestructHintIfInt n, if decide (n ≠ 0) then true else false) ((if decide (n ≠ 0) then T1 else T2)))
+    case_if (n ≠ 0)
+      (li_trace (DestructHintIfInt n, true) T1)
+      (li_trace (DestructHintIfInt n, false) T2)
     ⊢ typed_if (IntOp it) v (v ◁ᵥ n @ int it) T1 T2.
   Proof.
-    unfold destruct_hint. iIntros "Hs %Hb" => /=.
-    iExists n. iSplit; first done. by do !case_decide.
+    iIntros "Hs %Hb" => /=.
+    iExists n. iSplit; first done.
+    case_bool_decide.
+    - iDestruct "Hs" as "[Hs _]". by iApply "Hs".
+    - iDestruct "Hs" as "[_ Hs]". iApply "Hs". naive_solver.
   Qed.
   Definition type_if_int_inst := [instance type_if_int].
   Global Existing Instance type_if_int_inst.

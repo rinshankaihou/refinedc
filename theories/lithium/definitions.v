@@ -136,5 +136,8 @@ Definition destruct_hint {Σ B} (hint : destruct_hint_info) (info : B) (T : iPro
 Global Typeclasses Opaque destruct_hint.
 Arguments destruct_hint : simpl never.
 
+Definition case_if {Σ} (P : Prop) (T1 T2 : iProp Σ) : iProp Σ :=
+  (⌜P⌝ -∗ T1) ∧ (⌜¬ P⌝ -∗ T2).
+
 (** * trace *)
 Definition li_trace {Σ A} (t : A) (T : iProp Σ) : iProp Σ := T.

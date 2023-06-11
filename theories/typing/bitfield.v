@@ -264,9 +264,9 @@ Section programs.
   Global Existing Instance type_bitfield_raw_is_true_inst.
 
   Lemma type_if_bitfield_raw it n v T1 T2:
-    destruct_hint (DHintDecide (n ≠ 0)) (DestructHintIfInt n)
-      (li_trace (DestructHintIfInt n, if decide (n ≠ 0) then true else false)
-         (if decide (n ≠ 0) then T1 else T2))
+    case_if (n ≠ 0)
+      (li_trace (DestructHintIfInt n, true) T1)
+      (li_trace (DestructHintIfInt n, false) T2)
     ⊢ typed_if (IntOp it) v (v ◁ᵥ n @ bitfield_raw it) T1 T2.
   Proof. unfold bitfield_raw; simpl_type. apply type_if_int. Qed.
   Definition type_if_bitfield_raw_inst := [instance type_if_bitfield_raw].

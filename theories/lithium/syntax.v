@@ -22,6 +22,9 @@ Section lithium.
   Definition and (P1 P2 : iProp Σ) : iProp Σ :=
     P1 ∧ P2.
 
+  Definition case_if : Prop → iProp Σ → iProp Σ → iProp Σ :=
+    case_if.
+
   Definition tactic {A} : ((A → iProp Σ) → iProp Σ) → (A → iProp Σ) → iProp Σ :=
     @li_tactic Σ A.
 
@@ -70,6 +73,9 @@ Notation "'and:' | x | y | .. | z" := (li.and .. (li.and x y) .. z)
  (* TODO: I would like to use the following but it does not work: *)
  (* format "'[hv' and  '/' |  '[' x ']'  '/' |  '[' y ']'  '/' |  '[' .. ']'  '/' |  '[' z ']' ']'" *)
 ) : lithium_scope.
+Notation "'if:' P | G1 | G2" := (li.case_if P G1 G2)
+    (in custom lithium at level 200, P constr, G1, G2 at level 200,
+        format "'[hv' 'if:'  P  '/' |  '[hv' G1 ']'  '/' |  '[hv' G2 ']' ']'") : lithium_scope.
 Notation "'tactic' x" := (li.tactic x) (in custom lithium at level 0, x constr,
                            format "'tactic'  '[' x ']'") : lithium_scope.
 Notation "'accu'" := (li.accu) (in custom lithium at level 0) : lithium_scope.
@@ -117,7 +123,8 @@ Notation "P ':-' Q" := (Q ⊢ P)
   (at level 99, Q custom lithium at level 200, only parsing) : stdpp_scope.
 
 Declare Reduction liFromSyntax_eval :=
-  cbv [ li.exhale li.inhale li.all li.exist li.done li.false li.ret li.and li.tactic li.accu li.trace
+  cbv [ li.exhale li.inhale li.all li.exist li.done li.false li.ret li.and
+        li.case_if li.tactic li.accu li.trace
         li.bind0 li.bind1 li.bind2 li.bind3 li.bind4 li.bind5 ].
 
 Ltac liFromSyntaxTerm c :=
@@ -158,6 +165,7 @@ Ltac liToSyntax :=
   change (find_in_context ?a) with (li.bind1 (find_in_context a));
   change (subsume ?a ?b) with (li.bind0 (subsume (liToSyntax_UNFOLD_MARKER a) (liToSyntax_UNFOLD_MARKER b)));
   change (subsume_list ?A ?ig ?l1 ?l2 ?f) with (li.bind0 (subsume_list A ig l1 l2 f));
+  change (@case_if ?Σ ?P) with (@li.case_if Σ P);
   change (li_tactic ?t) with (li.bind1 (li.tactic t));
   change (@accu ?Σ) with (li.bind1 (@li.accu Σ));
   change (@li_trace ?Σ ?A ?t) with (li.bind0 (@li.trace Σ A t));
@@ -251,7 +259,8 @@ Section test.
     ⊢ ∀ n1 n2, (⌜n1 + Z.to_nat n2 > 0⌝ ∗ ⌜n2 = 1⌝) -∗
      check_wp (n1 + 1) (λ v,
        ∃ n' : nat, (⌜v = n'⌝ ∗ ⌜n' > 0⌝) ∗ li_trace 1 $ accu (λ P,
-       get_tuple (λ '(x1, x2, x3), ⌜x1 = 0⌝ ∗ (P ∧ True) ))).
+       get_tuple (λ '(x1, x2, x3), ⌜x1 = 0⌝ ∗ (P ∧
+         case_if (n' = 1) (True ∗ True ∗ True ∗ True ∗ True ∗ True ∗ True ∗ True ∗ True) False)))).
   Proof.
     iStartProof.
     liToSyntax.
