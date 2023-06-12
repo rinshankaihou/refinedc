@@ -26,6 +26,9 @@ Section lithium.
     : (K → A → iProp Σ) → gmap K A → iProp Σ :=
     big_opM bi_and.
 
+  Definition drop_spatial : iProp Σ → iProp Σ :=
+    bi_intuitionistically.
+
   Definition find_in_context : ∀ fic : find_in_context_info, (fic.(fic_A) → iProp Σ) → iProp Σ :=
     find_in_context.
 
@@ -46,6 +49,13 @@ Section lithium.
 
   Definition done : iProp Σ := True.
   Definition false : iProp Σ := False.
+
+  Definition iterate [A B] : (B → A → A) → A → list B → A :=
+    @foldr A B.
+
+  Definition subsume : iProp Σ → iProp Σ → iProp Σ → iProp Σ :=
+    subsume.
+  (* TODO: Should we also have a syntax for subsume list? *)
 
   Definition ret (T : iProp Σ) : iProp Σ := T.
 
@@ -86,6 +96,7 @@ Notation "'and:' | x | y | .. | z" := (li.and .. (li.and x y) .. z)
 Notation "'and_map:' m | k v , P" := (li.and_map (λ k v, P) m)
     (in custom lithium at level 200, k binder, v binder, m constr,
         format "'[hv' 'and_map:'  m  '/' |  k  v ,  '[hv' P ']' ']'") : lithium_scope.
+Notation "'drop_spatial'" := (li.drop_spatial) (in custom lithium at level 0) : lithium_scope.
 Notation "'find_in_context' x" := (li.find_in_context x) (in custom lithium at level 0, x constr,
                            format "'find_in_context'  '[' x ']'") : lithium_scope.
 Notation "'if:' P | G1 | G2" := (li.case_if P G1 G2)
@@ -100,6 +111,8 @@ Notation "'trace' x" := (li.trace x) (in custom lithium at level 0, x constr,
                            format "'trace'  '[' x ']'") : lithium_scope.
 Notation "'done'" := (li.done) (in custom lithium at level 0) : lithium_scope.
 Notation "'false'" := (li.false) (in custom lithium at level 0) : lithium_scope.
+Notation "x :> y" := (li.subsume x y) (in custom lithium at level 0, x constr, y constr,
+                           format "'[' x ']'  :>  '[' y ']'") : lithium_scope.
 Notation "'return' x" := (li.ret x) (in custom lithium at level 0, x constr,
                            format "'return'  '[' x ']'") : lithium_scope.
 (* Notation "x !" := (exhale_opt x) (at level 100, format "x !") : lithium_scope. *)
@@ -113,6 +126,28 @@ Notation "∃ x .. y , P" := (li.exist (λ x, .. (li.exist (λ y, P)) ..))
 Notation "'pattern:' x .. y , P ; G" :=
   (li.exist (λ x, .. (li.exist (λ y, li.bind0 (li.exhale P) G)) .. ))
     (in custom lithium at level 200, x binder, y binder, P constr, only parsing) : lithium_scope.
+
+(* TODO: figure out if it makes sense to handle this to liToSyntax *)
+Notation "'iterate:' l '{{' x T , P } }" :=
+  (λ T, li.iterate (λ x T, P) T l)
+    (in custom lithium at level 0, l constr, x binder, T binder, P at level 200,
+        format "'[hv  ' 'iterate:'  l  '{{' x  T ,  '/' P } } ']'") : lithium_scope.
+Notation "'iterate:' l 'with' a1 '{{' x T x1 , P } }" :=
+  (λ T, li.iterate (λ x T x1, P) T l a1)
+    (in custom lithium at level 0, l constr, a1 constr, x binder, T binder, x1 binder,
+        P at level 200,
+        format "'[hv  ' 'iterate:'  l  'with'  a1  '{{' x  T  x1 ,  '/' P } } ']'") : lithium_scope.
+Notation "'iterate:' l 'with' a1 , a2 '{{' x T x1 x2 , P } }" :=
+  (λ T, li.iterate (λ x T x1 x2, P) T l a1 a2)
+    (in custom lithium at level 0, l constr, a1 constr, a2 constr, x binder, T binder,
+        x1 binder, x2 binder, P at level 200,
+        format "'[hv  ' 'iterate:'  l  'with'  a1 ,  a2  '{{' x  T  x1  x2 ,  '/' P } } ']'") : lithium_scope.
+Notation "'iterate:' l 'with' a1 , a2 , a3 '{{' x T x1 x2 x3 , P } }" :=
+  (λ T, li.iterate (λ x T x1 x2 x3, P) T l a1 a2 a3)
+    (in custom lithium at level 0, l constr, a1 constr, a2 constr, a3 constr, x binder, T binder,
+        x1 binder, x2 binder, x3 binder, P at level 200,
+        format "'[hv  ' 'iterate:'  l  'with'  a1 ,  a2 ,  a3  '{{' x  T  x1  x2  x3 ,  '/' P } } ']'") : lithium_scope.
+
 
 Notation "y ; z" := (li.bind0 y z)
   (in custom lithium at level 100, z at level 200,
@@ -140,8 +175,9 @@ Notation "P ':-' Q" := (Q ⊢ P)
   (at level 99, Q custom lithium at level 200, only parsing) : stdpp_scope.
 
 Declare Reduction liFromSyntax_eval :=
-  cbv [ li.exhale li.inhale li.all li.exist li.done li.false li.ret li.and li.and_map
-        li.find_in_context li.case_if li.case_destruct li.tactic li.accu li.trace
+  cbv [ li.exhale li.inhale li.all li.exist li.done li.false li.ret li.and li.and_map li.subsume
+        li.drop_spatial li.find_in_context li.case_if li.case_destruct li.tactic li.accu li.trace
+        li.iterate
         li.bind0 li.bind1 li.bind2 li.bind3 li.bind4 li.bind5 ].
 
 Ltac liFromSyntaxTerm c :=
@@ -160,6 +196,9 @@ Ltac liFromSyntaxGoal :=
       let Q := liFromSyntaxTerm P in
       change (envs_entails Δ Q)
   end.
+
+Notation "'[type_from_syntax' x ]" :=
+    ltac:(let t := type of x in let t := liFromSyntaxTerm t in exact t) (only parsing).
 
 Definition liToSyntax_UNFOLD_MARKER {A} (x : A) : A := x.
 (* This tactic heurisitically converts the goal to the Lithium syntax.
@@ -181,7 +220,8 @@ Ltac liToSyntax :=
   change (@bi_pure (iPropI ?Σ) True) with (@li.done Σ);
   change (@bi_pure (iPropI ?Σ) False) with (@li.false Σ);
   change (find_in_context ?a) with (li.bind1 (li.find_in_context a));
-  change (subsume ?a ?b) with (li.bind0 (subsume (liToSyntax_UNFOLD_MARKER a) (liToSyntax_UNFOLD_MARKER b)));
+  change (@bi_intuitionistically (iPropI ?Σ)) with (li.bind0 (@li.drop_spatial Σ));
+  change (subsume ?a ?b) with (li.bind0 (li.subsume (liToSyntax_UNFOLD_MARKER a) (liToSyntax_UNFOLD_MARKER b)));
   change (subsume_list ?A ?ig ?l1 ?l2 ?f) with (li.bind0 (subsume_list A ig l1 l2 f));
   change (@case_if ?Σ ?P) with (@li.case_if Σ P);
   change (@case_destruct ?Σ ?A ?a) with (li.bind2 (@li.case_destruct Σ A a));
@@ -189,8 +229,11 @@ Ltac liToSyntax :=
   change (@accu ?Σ) with (li.bind1 (@li.accu Σ));
   change (@li_trace ?Σ ?A ?t) with (li.bind0 (@li.trace Σ A t));
   (* Try to at least unfold some spurious conversions. *)
-  repeat (progress change (liToSyntax_UNFOLD_MARKER (li.bind0 (@li.exhale ?Σ ?a) ?b))
-      with (a ∗ liToSyntax_UNFOLD_MARKER b)%I);
+  repeat (first [
+              progress change (liToSyntax_UNFOLD_MARKER (li.bind0 (@li.exhale ?Σ ?a) ?b))
+              with (a ∗ liToSyntax_UNFOLD_MARKER b)%I
+            | progress change (liToSyntax_UNFOLD_MARKER (li.bind0 (@li.drop_spatial ?Σ) ?b))
+              with (□ liToSyntax_UNFOLD_MARKER b)%I ]);
   change (liToSyntax_UNFOLD_MARKER (@li.done ?Σ)) with (@bi_pure (iPropI Σ) True);
   change (liToSyntax_UNFOLD_MARKER (@li.false ?Σ)) with (@bi_pure (iPropI Σ) False);
   unfold liToSyntax_UNFOLD_MARKER.
@@ -278,14 +321,54 @@ Section test.
      check_wp (n1 + 1) (λ v,
        ∃ n' : nat, (⌜v = n'⌝ ∗ ⌜n' > 0⌝) ∗ li_trace 1 $ accu (λ P,
        find_in_context (FindDirect (λ '(n, m), ⌜n =@{Z} m⌝)) (λ '(n, m), ⌜n = m⌝ ∗
-       get_tuple (λ '(x1, x2, x3), ⌜x1 = 0⌝ ∗ (P ∧
-         [∧ map] a↦b∈{[1 := 1]}, ⌜a = b⌝ ∗
+       get_tuple (λ '(x1, x2, x3), □ ⌜x1 = 0⌝ ∗ (P ∧
+         □ [∧ map] a↦b∈{[1 := 1]}, ⌜a = b⌝ ∗
          case_if (n' = 1) (case_destruct n' (λ n'' b,
-          ⌜b = b⌝ ∗ ⌜n'' = 0⌝ ∗ True ∗ True ∗ True ∗ True ∗ True ∗ True ∗ True)) False))))).
+          ⌜b = b⌝ ∗ ⌜n'' = 0⌝ ∗ subsume True True (True ∗ True ∗ True ∗ True ∗ True ∗ True))) False))))).
   Proof.
     iStartProof.
     liToSyntax.
     liFromSyntax.
   Abort.
+
+  Lemma iterate0 ls :
+    ⊢@{iProp Σ} [{ iterate: ls {{x T,
+                         exhale ⌜x = 1⌝;
+                         return T}};
+         exhale ⌜[] = ls⌝;
+         done}].
+  Proof. Abort.
+
+  Lemma iterate1 (ls : list Z) :
+    ⊢@{iProp Σ} [{ a ← iterate: ls with [] {{x T a,
+                         exhale ⌜a = []⌝;
+                         exhale ⌜a = []⌝;
+                         exhale ⌜a = []⌝;
+                         return T (a ++ [x])}};
+         exhale ⌜a = ls⌝;
+         done}].
+  Proof. Abort.
+
+  Lemma iterate2 (ls : list Z) :
+    ⊢@{iProp Σ} [{ a, b ← iterate: ls with [], [] {{x T a b,
+                         exhale ⌜a = b⌝;
+                         exhale ⌜a = []⌝;
+                         exhale ⌜a = []⌝;
+                         return T (a ++ [x]) (b ++ [x])}};
+         exhale ⌜a = ls⌝;
+         done}].
+  Proof. Abort.
+
+  Lemma iterate3 (ls : list Z) :
+    ⊢@{iProp Σ} [{ a, b, c ← iterate: ls with [], [], [] {{x T a b c,
+                         exhale ⌜a = b⌝;
+                         exhale ⌜a = c⌝;
+                         exhale ⌜a = []⌝;
+                         return T (a ++ [x]) (b ++ [x]) (c ++ [x])}};
+         exhale ⌜a = ls⌝;
+         exhale ⌜a = b⌝;
+         done}].
+  Proof. Abort.
+
 End test.
 End li_test.

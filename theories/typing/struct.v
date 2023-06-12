@@ -243,8 +243,11 @@ Section struct.
   Qed.
 
   Lemma struct_mono sl tys1 tys2 l β T:
-    ⌜length tys1 = length tys2⌝ ∗ foldr (λ e T, subsume (l at{sl}ₗ e.2.2 ◁ₗ{β} e.1) (l at{sl}ₗ e.2.2 ◁ₗ{β} e.2.1) T) T (zip tys1 (zip tys2 (field_names sl.(sl_members))))
-    ⊢ subsume (l ◁ₗ{β} struct sl tys1) (l ◁ₗ{β} struct sl tys2) T.
+    subsume (l ◁ₗ{β} struct sl tys1) (l ◁ₗ{β} struct sl tys2) T :-
+      exhale ⌜length tys1 = length tys2⌝;
+      iterate: zip tys1 (zip tys2 (field_names sl.(sl_members))) {{e T,
+        (l at{sl}ₗ e.2.2 ◁ₗ{β} e.1) :> (l at{sl}ₗ e.2.2 ◁ₗ{β} e.2.1); return T}};
+      return T.
   Proof.
     iDestruct 1 as (Hlen) "H". iIntros "Hl".
     iDestruct (struct_focus with "Hl") as "[Hs Hc]".
@@ -261,10 +264,10 @@ Section struct.
   Global Existing Instance struct_mono_inst.
 
   Lemma struct_mono_val sl tys1 tys2 v T:
-    ⌜length tys1 = length tys2⌝ ∗ foldr (λ e T, ∀ v,
-        subsume (v ◁ᵥ e.1) (v ◁ᵥ e.2) T) T
-         (zip tys1 tys2)
-    ⊢ subsume (v ◁ᵥ struct sl tys1) (v ◁ᵥ struct sl tys2) T.
+    subsume (v ◁ᵥ struct sl tys1) (v ◁ᵥ struct sl tys2) T :-
+      exhale ⌜length tys1 = length tys2⌝;
+      iterate: zip tys1 tys2 {{e T, ∀ v, (v ◁ᵥ e.1) :> (v ◁ᵥ e.2); return T}};
+      return T.
   Proof.
     iDestruct 1 as (Hlen) "H". iIntros "(%Hly&%Htys1&Hm)".
     rewrite /(ty_own_val (struct _ _))/= -!assoc.
@@ -308,13 +311,16 @@ Section struct.
   (* Ail fills in the missing elements in fs, so we can assume that
   the lookup will always succeed. This is nice, because otherwise we
   would get a quadractic blowup when simiplifying the foldr. *)
-  Lemma type_struct_init sl fs T:
-    foldr (λ '(n, ly) f, (λ tys, ∃ e : expr, ⌜(list_to_map fs : gmap _ _) !! n = Some e⌝ ∗
-      typed_val_expr e (λ _ ty, ⌜ty.(ty_has_op_type) (UntypedOp ly) MCNone⌝ ∗ f (tys ++ [ty]))))
-    (λ tys, ∀ v, T v (struct sl tys)) (field_members sl.(sl_members)) []
-    ⊢ typed_val_expr (StructInit sl fs) T.
+  Lemma type_struct_init_syn sl fs T:
+    typed_val_expr (StructInit sl fs) T :-
+      tys ← iterate: (field_members sl.(sl_members)) with [] {{ '(n, ly) f tys,
+        ∃ e, exhale ⌜(list_to_map fs : gmap _ _) !! n = Some e⌝;
+        _, ty ← {typed_val_expr e};
+        exhale ⌜ty.(ty_has_op_type) (UntypedOp ly) MCNone⌝;
+        return f (tys ++ [ty])}};
+      ∀ v, return T v (struct sl tys).
   Proof.
-    iIntros "He" (Φ) "HΦ". iApply wp_struct_init.
+    liFromSyntax. iIntros "He" (Φ) "HΦ". iApply wp_struct_init.
     iAssert ([∗ list] v';ty∈[];pad_struct ([@{option var_name * layout}]) [] (λ ly, uninit ly), (v' ◁ᵥ ty))%I as "-#Hvs". 1: done.
     have : [] ++ sl.(sl_members) = sl.(sl_members) by simplify_list_eq.
     have : [] = reshape (ly_size <$> (snd <$> ([] : field_list))) [@{mbyte}] by [].
@@ -348,6 +354,9 @@ Section struct.
           split; first by rewrite /has_layout_val replicate_length.
           by apply Forall_forall.
   Qed.
+  Lemma type_struct_init : [type_from_syntax type_struct_init_syn].
+  Proof. exact type_struct_init_syn. Qed.
+
 
   Lemma uninit_struct_equiv l β (s : struct_layout) :
     (l ◁ₗ{β} uninit s) ⊣⊢ (l ◁ₗ{β} struct s (uninit <$> omap (λ '(n, ly), const ly <$> n) s.(sl_members))).

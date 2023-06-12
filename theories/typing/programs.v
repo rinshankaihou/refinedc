@@ -1180,13 +1180,13 @@ Section typing.
     by iApply ("Hop" with "Hv").
   Qed.
 
-  Lemma type_call T ef es:
-    typed_val_expr ef (λ vf tyf,
-        foldr (λ e T vl tys, typed_val_expr e (λ v ty,
-             T (vl ++ [v]) (tys ++ [ty])))
-              (λ vl tys, typed_call vf (vf ◁ᵥ tyf) vl tys T)
-              es [] [])
-    ⊢ typed_val_expr (Call ef es) T.
+  Lemma type_call_syn T ef es:
+    typed_val_expr (Call ef es) T :-
+      vf, tyf ← {typed_val_expr ef};
+      vl, tys ← iterate: es with [], [] {{e T vl tys,
+                  v, ty ← {typed_val_expr e};
+                  return T (vl ++ [v]) (tys ++ [ty])}};
+      {typed_call vf (vf ◁ᵥ tyf) vl tys T}.
   Proof.
     iIntros "He". iIntros (Φ) "HΦ".
     iApply wp_call_bind. iApply "He". iIntros (vf tyf) "Hvf HT".
@@ -1197,6 +1197,8 @@ Section typing.
     }
     by iApply ("HT" with "Hvf Htys").
   Qed.
+  Lemma type_call : [type_from_syntax type_call_syn].
+  Proof. exact type_call_syn. Qed.
 
   Lemma type_copy_alloc_id e1 e2 ot T:
     typed_val_expr e1 (λ v1 ty1, typed_val_expr e2 (λ v2 ty2, typed_copy_alloc_id v1 (v1 ◁ᵥ ty1) v2 (v2 ◁ᵥ ty2) ot T))
