@@ -93,6 +93,13 @@ Class SubsumeList {Σ} A (ig : list nat) (l1 l2 : list A) (f : nat → A → iPr
 Global Hint Mode Subsume + + ! : typeclass_instances.
 Global Hint Mode SubsumeList + + + + + ! : typeclass_instances.
 
+(** * case distinction *)
+Definition case_if {Σ} (P : Prop) (T1 T2 : iProp Σ) : iProp Σ :=
+  (⌜P⌝ -∗ T1) ∧ (⌜¬ P⌝ -∗ T2).
+
+Definition case_destruct {Σ} {A} (a : A) (T : A → bool → iProp Σ) : iProp Σ :=
+  ∃ b, T a b.
+
 (** * [li_tactic] *)
 Class LiTactic {Σ A} (t : (A → iProp Σ) → iProp Σ) := {
   li_tactic_P : (A → iProp Σ) → iProp Σ;
@@ -126,13 +133,6 @@ Definition accu {Σ} (f : iProp Σ → iProp Σ) : iProp Σ :=
   ∃ P, P ∗ □ f P.
 Arguments accu : simpl never.
 Global Typeclasses Opaque accu.
-
-(** * case distinction *)
-Definition case_if {Σ} (P : Prop) (T1 T2 : iProp Σ) : iProp Σ :=
-  (⌜P⌝ -∗ T1) ∧ (⌜¬ P⌝ -∗ T2).
-
-Definition case_destruct {Σ} {A} (a : A) (T : A → bool → iProp Σ) : iProp Σ :=
-  ∃ b, T a b.
 
 (** * trace *)
 Definition li_trace {Σ A} (t : A) (T : iProp Σ) : iProp Σ := T.

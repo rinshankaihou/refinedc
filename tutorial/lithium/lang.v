@@ -190,6 +190,7 @@ Definition subst' (mx : binder) (v : val) : expr → expr :=
 (** Evaluation *)
 Definition LitBool (b:bool) : base_lit :=
   if b then LitInt 1 else LitInt 0.
+Arguments LitBool : simpl never.
 
 Definition bin_op_eval (op : bin_op) (v1 v2: val) : option val :=
   match op with

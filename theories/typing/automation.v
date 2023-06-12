@@ -161,9 +161,9 @@ Ltac liRInstantiateEvars :=
   | |- protected ?H = ty_of_rty (frac_ptr ?β _)%I ∧ _ =>
     do_instantiate_protected (protected H) ltac:(fun H => instantiate (1:=((frac_ptr β (protected (EVAR_ID _)))%I)) in (value of H))
   | |- envs_entails _ (subsume (?x ◁ₗ{?β} ?ty) (_ ◁ₗ{_} (protected ?H)) _) =>
-    instantiate_protected H ty
+    liInst H ty
   | |- envs_entails _ (subsume (?x ◁ₗ{?β} ?ty) (_ ◁ₗ{protected ?H} _) _) =>
-    instantiate_protected H β
+    liInst H β
   end.
 
 Ltac liRStmt :=

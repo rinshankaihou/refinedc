@@ -19,24 +19,25 @@ Section lithium.
   Definition exist {A} : (A → iProp Σ) → iProp Σ :=
     bi_exist.
 
+  Definition done : iProp Σ := True.
+  Definition false : iProp Σ := False.
+
   Definition and : iProp Σ → iProp Σ → iProp Σ :=
     bi_and.
-
   Definition and_map {K A} `{!EqDecision K} `{!Countable K}
     : (K → A → iProp Σ) → gmap K A → iProp Σ :=
     big_opM bi_and.
-
-  Definition drop_spatial : iProp Σ → iProp Σ :=
-    bi_intuitionistically.
 
   Definition find_in_context : ∀ fic : find_in_context_info, (fic.(fic_A) → iProp Σ) → iProp Σ :=
     find_in_context.
 
   Definition case_if : Prop → iProp Σ → iProp Σ → iProp Σ :=
     case_if.
-
   Definition case_destruct {A} : A → (A → bool → iProp Σ) → iProp Σ :=
     @case_destruct Σ A.
+
+  Definition drop_spatial : iProp Σ → iProp Σ :=
+    bi_intuitionistically.
 
   Definition tactic {A} : ((A → iProp Σ) → iProp Σ) → (A → iProp Σ) → iProp Σ :=
     @li_tactic Σ A.
@@ -47,17 +48,13 @@ Section lithium.
   Definition trace {A} : A → iProp Σ → iProp Σ :=
     @li_trace Σ A.
 
-  Definition done : iProp Σ := True.
-  Definition false : iProp Σ := False.
-
-  Definition iterate [A B] : (B → A → A) → A → list B → A :=
-    @foldr A B.
-
   Definition subsume : iProp Σ → iProp Σ → iProp Σ → iProp Σ :=
     subsume.
   (* TODO: Should we also have a syntax for subsume list? *)
 
   Definition ret (T : iProp Σ) : iProp Σ := T.
+  Definition iterate [A B] : (B → A → A) → A → list B → A :=
+    @foldr A B.
 
   Definition bind0 (P : iProp Σ → iProp Σ) (T : iProp Σ) : iProp Σ := P T.
   Definition bind1 {A1} (P : (A1 → iProp Σ) → iProp Σ) (T : A1 → iProp Σ) : iProp Σ := P T.
@@ -87,97 +84,112 @@ Notation "'inhale' x" := (li.inhale x) (in custom lithium at level 0, x constr,
                            format "'inhale'  '[' x ']'") : lithium_scope.
 Notation "'exhale' x" := (li.exhale x) (in custom lithium at level 0, x constr,
                            format "'exhale'  '[' x ']'") : lithium_scope.
-Notation "'and:' | x | y | .. | z" := (li.and .. (li.and x y) .. z)
-    (in custom lithium at level 200,
- format "'[hv' and:  '/' |  x  '/' |  y  '/' |  ..  '/' |  z ']'"
- (* TODO: I would like to use the following but it does not work: *)
- (* format "'[hv' and  '/' |  '[' x ']'  '/' |  '[' y ']'  '/' |  '[' .. ']'  '/' |  '[' z ']' ']'" *)
-) : lithium_scope.
+
+Notation "∀ x .. y , P" := (li.all (λ x, .. (li.all (λ y, P)) ..))
+    (in custom lithium at level 100, x binder, y binder, P at level 100, right associativity,
+        format "'[' ∀  x  ..  y , ']'  '/' P") : lithium_scope.
+Notation "∃ x .. y , P" := (li.exist (λ x, .. (li.exist (λ y, P)) ..))
+    (in custom lithium at level 100, x binder, y binder, P at level 100, right associativity,
+        format "'[' ∃  x  ..  y , ']'  '/' P") : lithium_scope.
+
+Notation "'done'" := (li.done) (in custom lithium at level 0) : lithium_scope.
+Notation "'false'" := (li.false) (in custom lithium at level 0) : lithium_scope.
+
+(* Making this a recursive notation is tricky because it is not clear,
+where the and: would end, see
+https://coq.zulipchat.com/#narrow/stream/237977-Coq-users/topic/Problem.20with.20right.20associative.20recursive.20notation/near/365455519 *)
+Notation "'and:' | x | y" := (li.and x y)
+   (in custom lithium at level 100, x at level 100, y at level 100,
+       format "'[hv' and:  '/' |  '[hv' x ']'  '/' |  '[hv' y  ']' ']'") : lithium_scope.
 Notation "'and_map:' m | k v , P" := (li.and_map (λ k v, P) m)
-    (in custom lithium at level 200, k binder, v binder, m constr,
+    (in custom lithium at level 100, k binder, v binder, m constr, P at level 100,
         format "'[hv' 'and_map:'  m  '/' |  k  v ,  '[hv' P ']' ']'") : lithium_scope.
-Notation "'drop_spatial'" := (li.drop_spatial) (in custom lithium at level 0) : lithium_scope.
+
 Notation "'find_in_context' x" := (li.find_in_context x) (in custom lithium at level 0, x constr,
                            format "'find_in_context'  '[' x ']'") : lithium_scope.
+
 Notation "'if:' P | G1 | G2" := (li.case_if P G1 G2)
-    (in custom lithium at level 200, P constr, G1, G2 at level 200,
+    (in custom lithium at level 100, P constr, G1, G2 at level 100,
         format "'[hv' 'if:'  P  '/' |  '[hv' G1 ']'  '/' |  '[hv' G2 ']' ']'") : lithium_scope.
 Notation "'destruct' x" := (li.case_destruct x) (in custom lithium at level 0, x constr,
                            format "'destruct'  '[' x ']'") : lithium_scope.
+
+Notation "'drop_spatial'" := (li.drop_spatial) (in custom lithium at level 0) : lithium_scope.
+
 Notation "'tactic' x" := (li.tactic x) (in custom lithium at level 0, x constr,
                            format "'tactic'  '[' x ']'") : lithium_scope.
+
 Notation "'accu'" := (li.accu) (in custom lithium at level 0) : lithium_scope.
+
 Notation "'trace' x" := (li.trace x) (in custom lithium at level 0, x constr,
                            format "'trace'  '[' x ']'") : lithium_scope.
-Notation "'done'" := (li.done) (in custom lithium at level 0) : lithium_scope.
-Notation "'false'" := (li.false) (in custom lithium at level 0) : lithium_scope.
+
 Notation "x :> y" := (li.subsume x y) (in custom lithium at level 0, x constr, y constr,
                            format "'[' x ']'  :>  '[' y ']'") : lithium_scope.
+
 Notation "'return' x" := (li.ret x) (in custom lithium at level 0, x constr,
                            format "'return'  '[' x ']'") : lithium_scope.
-(* Notation "x !" := (exhale_opt x) (at level 100, format "x !") : lithium_scope. *)
-Notation "∀ x .. y , P" := (li.all (λ x, .. (li.all (λ y, P)) ..))
-    (in custom lithium at level 200, x binder, y binder, right associativity,
-        format "'[' ∀  x  ..  y , ']'  '/' P") : lithium_scope.
-Notation "∃ x .. y , P" := (li.exist (λ x, .. (li.exist (λ y, P)) ..))
-    (in custom lithium at level 200, x binder, y binder, right associativity,
-        format "'[' ∃  x  ..  y , ']'  '/' P") : lithium_scope.
-(* for find_in_context: *)
-Notation "'pattern:' x .. y , P ; G" :=
-  (li.exist (λ x, .. (li.exist (λ y, li.bind0 (li.exhale P) G)) .. ))
-    (in custom lithium at level 200, x binder, y binder, P constr, only parsing) : lithium_scope.
-
 (* TODO: figure out if it makes sense to handle this to liToSyntax *)
 Notation "'iterate:' l '{{' x T , P } }" :=
   (λ T, li.iterate (λ x T, P) T l)
-    (in custom lithium at level 0, l constr, x binder, T binder, P at level 200,
+    (in custom lithium at level 0, l constr, x binder, T binder, P at level 100,
         format "'[hv  ' 'iterate:'  l  '{{' x  T ,  '/' P } } ']'") : lithium_scope.
 Notation "'iterate:' l 'with' a1 '{{' x T x1 , P } }" :=
   (λ T, li.iterate (λ x T x1, P) T l a1)
     (in custom lithium at level 0, l constr, a1 constr, x binder, T binder, x1 binder,
-        P at level 200,
+        P at level 100,
         format "'[hv  ' 'iterate:'  l  'with'  a1  '{{' x  T  x1 ,  '/' P } } ']'") : lithium_scope.
 Notation "'iterate:' l 'with' a1 , a2 '{{' x T x1 x2 , P } }" :=
   (λ T, li.iterate (λ x T x1 x2, P) T l a1 a2)
     (in custom lithium at level 0, l constr, a1 constr, a2 constr, x binder, T binder,
-        x1 binder, x2 binder, P at level 200,
+        x1 binder, x2 binder, P at level 100,
         format "'[hv  ' 'iterate:'  l  'with'  a1 ,  a2  '{{' x  T  x1  x2 ,  '/' P } } ']'") : lithium_scope.
 Notation "'iterate:' l 'with' a1 , a2 , a3 '{{' x T x1 x2 x3 , P } }" :=
   (λ T, li.iterate (λ x T x1 x2 x3, P) T l a1 a2 a3)
     (in custom lithium at level 0, l constr, a1 constr, a2 constr, a3 constr, x binder, T binder,
-        x1 binder, x2 binder, x3 binder, P at level 200,
+        x1 binder, x2 binder, x3 binder, P at level 100,
         format "'[hv  ' 'iterate:'  l  'with'  a1 ,  a2 ,  a3  '{{' x  T  x1  x2  x3 ,  '/' P } } ']'") : lithium_scope.
 
 
 Notation "y ; z" := (li.bind0 y z)
-  (in custom lithium at level 100, z at level 200,
+  (in custom lithium at level 100, z at level 100,
       format "y ;  '/' z") : lithium_scope.
 Notation "x ← y ; z" := (li.bind1 y (λ x : _, z))
-  (in custom lithium at level 0, x name, y at level 99, z at level 200,
+  (in custom lithium at level 0, x name, y at level 99, z at level 100,
       format "x  ←  y ;  '/' z") : lithium_scope.
 Notation "' x ← y ; z" := (li.bind1 y (λ x : _, z))
-  (in custom lithium at level 0, x strict pattern, y at level 99, z at level 200,
+  (in custom lithium at level 0, x strict pattern, y at level 99, z at level 100,
       format "' x  ←  y ;  '/' z") : lithium_scope.
 Notation "x1 , x2 ← y ; z" := (li.bind2 y (λ x1 x2 : _, z))
-  (in custom lithium at level 0, y at level 99, z at level 200, x1 name, x2 name,
+  (in custom lithium at level 0, y at level 99, z at level 100, x1 name, x2 name,
       format "x1 ,  x2  ←  y ;  '/' z") : lithium_scope.
 Notation "x1 , x2 , x3 ← y ; z" := (li.bind3 y (λ x1 x2 x3 : _, z))
-  (in custom lithium at level 0, y at level 99, z at level 200, x1 name, x2 name, x3 name,
+  (in custom lithium at level 0, y at level 99, z at level 100, x1 name, x2 name, x3 name,
       format "x1 ,  x2 ,  x3  ←  y ;  '/' z") : lithium_scope.
 Notation "x1 , x2 , x3 , x4 ← y ; z" := (li.bind4 y (λ x1 x2 x3 x4 : _, z))
-  (in custom lithium at level 0, y at level 99, z at level 200, x1 name, x2 name, x3 name, x4 name,
+  (in custom lithium at level 0, y at level 99, z at level 100, x1 name, x2 name, x3 name, x4 name,
       format "x1 ,  x2 ,  x3 ,  x4  ←  y ;  '/' z") : lithium_scope.
 Notation "x1 , x2 , x3 , x4 , x5 ← y ; z" := (li.bind5 y (λ x1 x2 x3 x4 x5 : _, z))
-  (in custom lithium at level 0, y at level 99, z at level 200, x1 name, x2 name, x3 name, x4 name, x5 name,
+  (in custom lithium at level 0, y at level 99, z at level 100, x1 name, x2 name, x3 name, x4 name, x5 name,
       format "x1 ,  x2 ,  x3 ,  x4 ,  x5  ←  y ;  '/' z") : lithium_scope.
 
+(* TODO: add where syntax for typeclass preconditions, but not sure
+how to make it work with [instance x].
+Notation "P 'where' x1 .. xn ':-' Q" := (∀ x1, .. (∀ xn, Q ⊢ P) ..)
+   (at level 99, Q custom lithium at level 100, x1 binder, xn binder, only parsing) : stdpp_scope.
+*)
 Notation "P ':-' Q" := (Q ⊢ P)
-  (at level 99, Q custom lithium at level 200, only parsing) : stdpp_scope.
+  (at level 99, Q custom lithium at level 100, only parsing) : stdpp_scope.
+
+(* for find_in_context: *)
+Notation "'pattern:' x .. y , P ; G" :=
+  (li.exist (λ x, .. (li.exist (λ y, li.bind0 (li.exhale P) G)) .. ))
+    (in custom lithium at level 100, x binder, y binder, P constr, G at level 100, only parsing) : lithium_scope.
 
 Declare Reduction liFromSyntax_eval :=
-  cbv [ li.exhale li.inhale li.all li.exist li.done li.false li.ret li.and li.and_map li.subsume
-        li.drop_spatial li.find_in_context li.case_if li.case_destruct li.tactic li.accu li.trace
-        li.iterate
+  cbv [ li.exhale li.inhale li.all li.exist li.done li.false li.and li.and_map
+        li.find_in_context li.case_if li.case_destruct li.drop_spatial li.tactic
+        li.accu li.trace li.subsume li.ret li.iterate
         li.bind0 li.bind1 li.bind2 li.bind3 li.bind4 li.bind5 ].
 
 Ltac liFromSyntaxTerm c :=
@@ -213,21 +225,21 @@ Ltac liToSyntax :=
   liToSyntax_hook;
   change (bi_sep ?a) with (li.bind0 (li.exhale (liToSyntax_UNFOLD_MARKER a)));
   change (bi_wand ?a) with (li.bind0 (li.inhale (liToSyntax_UNFOLD_MARKER a)));
-  change (big_opM bi_and ?f ?m) with (li.and_map f m);
-  change (@bi_and (iPropI ?Σ)) with (@li.and Σ);
   change (@bi_forall (iPropI ?Σ) ?A) with (@li.all Σ A);
   change (@bi_exist (iPropI ?Σ) ?A) with (@li.exist Σ A);
   change (@bi_pure (iPropI ?Σ) True) with (@li.done Σ);
   change (@bi_pure (iPropI ?Σ) False) with (@li.false Σ);
+  change (big_opM bi_and ?f ?m) with (li.and_map f m);
+  change (@bi_and (iPropI ?Σ)) with (@li.and Σ);
   change (find_in_context ?a) with (li.bind1 (li.find_in_context a));
-  change (@bi_intuitionistically (iPropI ?Σ)) with (li.bind0 (@li.drop_spatial Σ));
-  change (subsume ?a ?b) with (li.bind0 (li.subsume (liToSyntax_UNFOLD_MARKER a) (liToSyntax_UNFOLD_MARKER b)));
-  change (subsume_list ?A ?ig ?l1 ?l2 ?f) with (li.bind0 (subsume_list A ig l1 l2 f));
   change (@case_if ?Σ ?P) with (@li.case_if Σ P);
   change (@case_destruct ?Σ ?A ?a) with (li.bind2 (@li.case_destruct Σ A a));
+  change (@bi_intuitionistically (iPropI ?Σ)) with (li.bind0 (@li.drop_spatial Σ));
   change (li_tactic ?t) with (li.bind1 (li.tactic t));
   change (@accu ?Σ) with (li.bind1 (@li.accu Σ));
   change (@li_trace ?Σ ?A ?t) with (li.bind0 (@li.trace Σ A t));
+  change (subsume ?a ?b) with (li.bind0 (li.subsume (liToSyntax_UNFOLD_MARKER a) (liToSyntax_UNFOLD_MARKER b)));
+  change (subsume_list ?A ?ig ?l1 ?l2 ?f) with (li.bind0 (subsume_list A ig l1 l2 f));
   (* Try to at least unfold some spurious conversions. *)
   repeat (first [
               progress change (liToSyntax_UNFOLD_MARKER (li.bind0 (@li.exhale ?Σ ?a) ?b))

@@ -62,6 +62,8 @@ Ltac liToSyntax_hook ::=
   change (binop_ok ?x1 ?x2 ?x3) with (li.bind1 (binop_ok x1 x2 x3));
   change (unop_ok ?x1 ?x2) with (li.bind1 (unop_ok x1 x2)).
 
+Ltac can_solve_hook ::= done.
+
 Ltac liTStep :=
  liEnsureInvariant;
  first [
@@ -322,25 +324,15 @@ Section proofs.
   Definition expr_ok_if_inst := [instance expr_ok_if].
   Global Existing Instance expr_ok_if_inst.
 
-  Lemma if_ok_0 G1 G2 :
-    (* TODO: This is a good usecase for using Typeclass preconditions
-    (i.e. showing whether the boolean is provable).*)
-    if_ok #0 G1 G2 :- return G2.
-  Proof. Admitted.
-  Definition if_ok_0_inst := [instance if_ok_0].
-  Global Existing Instance if_ok_0_inst | 2.
-
-  Lemma if_ok_1 G1 G2 :
-    if_ok #1 G1 G2 :- return G1.
-  Proof. Admitted.
-  Definition if_ok_1_inst := [instance if_ok_1].
-  Global Existing Instance if_ok_1_inst | 2.
-
   Lemma if_ok_bool (b : bool) G1 G2 :
     if_ok #b G1 G2 :-
-      and:
-      | inhale ⌜b⌝; return G1
-      | inhale ⌜¬ b⌝; return G2.
+      if: b
+      | return G1
+      | return G2.
+      (* almost equivalent to the following: *)
+      (* and: *)
+      (* | inhale ⌜b⌝; return G1 *)
+      (* | inhale ⌜¬ b⌝; return G2. *)
   Proof. Admitted.
   Definition if_ok_bool_inst := [instance if_ok_bool].
   Global Existing Instance if_ok_bool_inst | 10.

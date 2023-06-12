@@ -36,9 +36,12 @@ Ltac liUnfoldSyntax :=
   lazymatch goal with
   | |- envs_entails _ (li.all _) => liFromSyntax
   | |- envs_entails _ (li.exist _) => liFromSyntax
-  | |- envs_entails _ (li.and _ _) => liFromSyntax
   | |- envs_entails _ (li.done) => liFromSyntax
   | |- envs_entails _ (li.false) => liFromSyntax
+  | |- envs_entails _ (li.and _ _) => liFromSyntax
+  | |- envs_entails _ (li.and_map _ _) => liFromSyntax
+  | |- envs_entails _ (li.case_if _ _ _) => liFromSyntax
+  | |- envs_entails _ (li.ret) => liFromSyntax
   | |- envs_entails _ (li.bind0 _ _) => liFromSyntax
   | |- envs_entails _ (li.bind1 _ _) => liFromSyntax
   | |- envs_entails _ (li.bind2 _ _) => liFromSyntax
@@ -71,7 +74,7 @@ Section coq_tactics.
 *)
   Lemma tac_apply_i2p {Δ} {P : iProp Σ} (P' : iProp_to_Prop P) :
     envs_entails Δ P'.(i2p_P) → envs_entails Δ P.
-  Proof. rewrite envs_entails_unseal. etrans; [done|]. apply i2p_proof. Qed.
+  Proof. apply tac_fast_apply. apply i2p_proof. Qed.
 End coq_tactics.
 
 Ltac liExtensible_to_i2p P bind cont :=
@@ -114,57 +117,6 @@ Ltac liFalse :=
   | |- envs_entails _ False => exfalso; shelve_sidecond
   | |- False => shelve_sidecond
   end.
-
-(** ** [liExist] *)
-Section coq_tactics.
-  Context {Σ : gFunctors}.
-
-  Lemma tac_do_exist A Δ (P : A → iProp Σ) :
-    (∃ x, envs_entails Δ (P x)) → envs_entails Δ (∃ x : A, P x).
-  Proof.
-    rewrite envs_entails_unseal. intros [x HP]. by rewrite -(bi.exist_intro x).
-  Qed.
-
-  Lemma tac_exist_prod A B (P : _ → Prop):
-    (∃ x1 x2, P (x1, x2)) → @ex (A * B) P.
-  Proof. move => [?[??]]. eauto. Qed.
-
-  Lemma tac_exist_sigT A f (P : _ → Prop):
-    (∃ (a : A) (x : f a), P (existT a x)) → @ex (sigT f) P.
-  Proof. move => [?[??]]. eauto. Qed.
-End coq_tactics.
-
-Ltac liExist protect :=
-  lazymatch goal with
-  | |- envs_entails _ (bi_exist _) => notypeclasses refine (tac_do_exist _ _ _ _)
-  | _ => idtac
-  end;
-  lazymatch goal with
-  | |- @ex ?A ?P =>
-    first [
-        liExist_hook A protect
-      | lazymatch A with
-        | TCForall2 _ _ _ => eexists _
-        | @eq ?B ?x _ => exists (@eq_refl B x)
-        | prod _ _ => apply: tac_exist_prod
-        | sigT _ => apply: tac_exist_sigT
-        | unit => exists tt
-        | _ =>
-            first [
-                let p := constr:(_ : SimplExist A P _) in
-                refine (@simpl_exist_proof _ _ _ p _)
-              |
-                lazymatch protect with
-                | true => let Hevar := create_protected_evar A in exists (protected Hevar)
-                | false => eexists _
-                end
-              ]
-        end ]
-  | _ => fail "liExist: unknown goal"
-  end.
-
-Tactic Notation "liExist" constr(c) := liExist c.
-Tactic Notation "liExist" := liExist true.
 
 (** ** [liForall] *)
 Section coq_tactics.
@@ -232,6 +184,57 @@ Ltac liForall :=
       do_intro (S O) name
   | _ => fail "liForall: unknown goal"
   end.
+
+(** ** [liExist] *)
+Section coq_tactics.
+  Context {Σ : gFunctors}.
+
+  Lemma tac_do_exist A Δ (P : A → iProp Σ) :
+    (∃ x, envs_entails Δ (P x)) → envs_entails Δ (∃ x : A, P x).
+  Proof.
+    rewrite envs_entails_unseal. intros [x HP]. by rewrite -(bi.exist_intro x).
+  Qed.
+
+  Lemma tac_exist_prod A B (P : _ → Prop):
+    (∃ x1 x2, P (x1, x2)) → @ex (A * B) P.
+  Proof. move => [?[??]]. eauto. Qed.
+
+  Lemma tac_exist_sigT A f (P : _ → Prop):
+    (∃ (a : A) (x : f a), P (existT a x)) → @ex (sigT f) P.
+  Proof. move => [?[??]]. eauto. Qed.
+End coq_tactics.
+
+Ltac liExist protect :=
+  lazymatch goal with
+  | |- envs_entails _ (bi_exist _) => notypeclasses refine (tac_do_exist _ _ _ _)
+  | _ => idtac
+  end;
+  lazymatch goal with
+  | |- @ex ?A ?P =>
+    first [
+        liExist_hook A protect
+      | lazymatch A with
+        | TCForall2 _ _ _ => eexists _
+        | @eq ?B ?x _ => exists (@eq_refl B x)
+        | prod _ _ => apply: tac_exist_prod
+        | sigT _ => apply: tac_exist_sigT
+        | unit => exists tt
+        | _ =>
+            first [
+                let p := constr:(_ : SimplExist A P _) in
+                refine (@simpl_exist_proof _ _ _ p _)
+              |
+                lazymatch protect with
+                | true => let Hevar := create_protected_evar A in exists (protected Hevar)
+                | false => eexists _
+                end
+              ]
+        end ]
+  | _ => fail "liExist: unknown goal"
+  end.
+
+Tactic Notation "liExist" constr(c) := liExist c.
+Tactic Notation "liExist" := liExist true.
 
 (** ** [liImpl] *)
 Ltac liImpl :=
@@ -378,18 +381,6 @@ Section coq_tactics.
     envs_entails Δ (□ (P ∗ True) ∧ Q) → envs_entails Δ (□ P ∗ Q).
   Proof. apply tac_fast_apply. iIntros "[#[$ _] $]". Qed.
 
-(*
-  Lemma tac_do_intro_intuit_sep Δ (P Q : iProp Σ) :
-    envs_entails (envs_clear_spatial Δ) (P ∗ True) → envs_entails Δ Q → envs_entails Δ (□ P ∗ Q).
-  Proof.
-    rewrite envs_entails_unseal => HP HQ. iIntros "Henv".
-    iSplit.
-    - iDestruct (envs_clear_spatial_sound with "Henv") as "[#Henv _]".
-      iModIntro. iDestruct (HP with "Henv") as "[$ _]".
-    - by iApply HQ.
-  Qed.
-*)
-
   Lemma tac_do_simplify_goal Δ (n : N) (P : iProp Σ) T {SG : SimplifyGoal P (Some n)} :
     envs_entails Δ (SG T).(i2p_P) → envs_entails Δ (P ∗ T).
   Proof. apply tac_fast_apply. iIntros "HP". by iApply (i2p_proof with "HP"). Qed.
@@ -411,7 +402,6 @@ Ltac liSep :=
     | bi_emp => notypeclasses refine (tac_sep_emp _ _ _)
     | (⌜_⌝)%I => notypeclasses refine (tac_do_intro_pure_and _ _ _ _)
     | (□ ?P)%I => notypeclasses refine (tac_do_intro_intuit_sep _ _ _ _)
-    (* | (□ ?P)%I => notypeclasses refine (tac_do_intro_intuit_sep _ _ _ _ _); [li_pm_reduce|] *)
     | match ?x with _ => _ end => fail "should not have match in sep"
     | ?P => first [
                progress liFindHyp FICSyntactic
@@ -422,25 +412,6 @@ Ltac liSep :=
              | fail "do_sep: unknown sidecondition" P
       ]
     end
-  end.
-
-(** ** [liPersistent] *)
-Section coq_tactics.
-  Context {Σ : gFunctors}.
-
-  Lemma tac_persistent Δ (P : iProp Σ) :
-    envs_entails (envs_clear_spatial Δ) P → envs_entails Δ (□ P).
-  Proof.
-    rewrite envs_entails_unseal => HP. iIntros "Henv".
-    iDestruct (envs_clear_spatial_sound with "Henv") as "[#Henv _]".
-    iModIntro. iApply (HP with "Henv").
-  Qed.
-End coq_tactics.
-
-Ltac liPersistent :=
-  lazymatch goal with
-  | |- envs_entails ?Δ (bi_intuitionistically ?P) =>
-      notypeclasses refine (tac_persistent _ _ _); li_pm_reduce
   end.
 
 (** ** [liWand] *)
@@ -555,6 +526,25 @@ Ltac liAnd :=
     notypeclasses refine (tac_big_andM_empty _ _)
   end.
 
+(** ** [liPersistent] *)
+Section coq_tactics.
+  Context {Σ : gFunctors}.
+
+  Lemma tac_persistent Δ (P : iProp Σ) :
+    envs_entails (envs_clear_spatial Δ) P → envs_entails Δ (□ P).
+  Proof.
+    rewrite envs_entails_unseal => HP. iIntros "Henv".
+    iDestruct (envs_clear_spatial_sound with "Henv") as "[#Henv _]".
+    iModIntro. iApply (HP with "Henv").
+  Qed.
+End coq_tactics.
+
+Ltac liPersistent :=
+  lazymatch goal with
+  | |- envs_entails ?Δ (bi_intuitionistically ?P) =>
+      notypeclasses refine (tac_persistent _ _ _); li_pm_reduce
+  end.
+
 (** ** [liCase] *)
 Section coq_tactics.
   Context {Σ : gFunctors}.
@@ -618,14 +608,6 @@ Ltac liCase :=
   that we introduce twice, which has a big impact on performance. *)
   repeat (liForall || liImpl); try by [exfalso; can_solve].
 
-(** ** [liTrace] *)
-Ltac liTrace :=
-  lazymatch goal with
-  | |- @envs_entails ?PROP ?Δ (li_trace ?info ?T) =>
-    change_no_check (@envs_entails PROP Δ T);
-    liTrace_hook info
-  end.
-
 (** ** [liTactic] *)
 Section coq_tactics.
   Context {Σ : gFunctors}.
@@ -633,7 +615,7 @@ Section coq_tactics.
   Lemma tac_li_tactic {A} Δ t (th : LiTactic t) (Q : A → iProp Σ):
     envs_entails Δ (th.(li_tactic_P) Q) →
     envs_entails Δ (li_tactic t Q).
-  Proof.  rewrite envs_entails_unseal => ?. etrans; [done|]. apply li_tactic_proof. Qed.
+  Proof. rewrite envs_entails_unseal => ?. etrans; [done|]. apply li_tactic_proof. Qed.
 End coq_tactics.
 
 Ltac liTactic :=
@@ -661,6 +643,14 @@ Ltac liAccu :=
   lazymatch goal with
   | |- envs_entails _ (accu _) =>
     notypeclasses refine (tac_do_accu _ _ _); li_pm_reduce
+  end.
+
+(** ** [liTrace] *)
+Ltac liTrace :=
+  lazymatch goal with
+  | |- @envs_entails ?PROP ?Δ (li_trace ?info ?T) =>
+    change_no_check (@envs_entails PROP Δ T);
+    liTrace_hook info
   end.
 
 (** ** [liStep] *)
