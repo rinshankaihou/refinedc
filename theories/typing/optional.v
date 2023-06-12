@@ -146,8 +146,9 @@ Section optional.
 
   Lemma type_eq_optional_refined v1 v2 ty optty ot1 ot2 `{!Optionable ty optty ot1 ot2} b T :
     opt_pre ty v1 v2 ∧
-    li_trace (TraceOptionalEq b) (⌜b⌝ -∗ v1 ◁ᵥ ty -∗ T (i2v (bool_to_Z false) i32) (false @ boolean i32)) ∧
-    li_trace (TraceOptionalEq (¬ b)) (⌜¬ b⌝ -∗ v1 ◁ᵥ optty -∗ T (i2v (bool_to_Z true) i32) (true @ boolean i32))
+    case_if b
+      (li_trace (TraceOptionalEq b) (v1 ◁ᵥ ty -∗ T (i2v (bool_to_Z false) i32) (false @ boolean i32)))
+      (li_trace (TraceOptionalEq (¬ b)) (v1 ◁ᵥ optty -∗ T (i2v (bool_to_Z true) i32) (true @ boolean i32)))
     ⊢ typed_bin_op v1 (v1 ◁ᵥ b @ (optional ty optty)) v2 (v2 ◁ᵥ optty) (EqOp i32) ot1 ot2 T.
   Proof.
     iIntros "HT Hv1 Hv2" (Φ) "HΦ".
@@ -201,8 +202,9 @@ Section optional.
 
   Lemma type_neq_optional v1 v2 ty optty ot1 ot2 `{!Optionable ty optty ot1 ot2} b T :
     opt_pre ty v1 v2 ∧
-    li_trace (TraceOptionalNe b) (⌜b⌝ -∗ v1 ◁ᵥ ty -∗ T (i2v (bool_to_Z true) i32) (true @ boolean i32)) ∧
-    li_trace (TraceOptionalNe (¬ b)) (⌜¬ b⌝ -∗ v1 ◁ᵥ optty -∗ T (i2v (bool_to_Z false) i32) (false @ boolean i32))
+    case_if b
+      (li_trace (TraceOptionalNe b) (v1 ◁ᵥ ty -∗ T (i2v (bool_to_Z true) i32) (true @ boolean i32)))
+      (li_trace (TraceOptionalNe (¬ b)) (v1 ◁ᵥ optty -∗ T (i2v (bool_to_Z false) i32) (false @ boolean i32)))
     ⊢ typed_bin_op v1 (v1 ◁ᵥ b @ (optional ty optty)) v2 (v2 ◁ᵥ optty) (NeOp i32) ot1 ot2 T.
   Proof.
     unfold li_trace. iIntros "HT Hv1 Hv2" (Φ) "HΦ".
