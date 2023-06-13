@@ -25,8 +25,8 @@ Section lithium.
   Definition and : iProp Σ → iProp Σ → iProp Σ :=
     bi_and.
   Definition and_map {K A} `{!EqDecision K} `{!Countable K}
-    : (K → A → iProp Σ) → gmap K A → iProp Σ :=
-    big_opM bi_and.
+    (m : gmap K A) (Φ : K → A → iProp Σ) : iProp Σ :=
+    big_opM bi_and Φ m.
 
   Definition find_in_context : ∀ fic : find_in_context_info, (fic.(fic_A) → iProp Σ) → iProp Σ :=
     find_in_context.
@@ -101,9 +101,11 @@ https://coq.zulipchat.com/#narrow/stream/237977-Coq-users/topic/Problem.20with.2
 Notation "'and:' | x | y" := (li.and x y)
    (in custom lithium at level 100, x at level 100, y at level 100,
        format "'[hv' and:  '/' |  '[hv' x ']'  '/' |  '[hv' y  ']' ']'") : lithium_scope.
-Notation "'and_map:' m | k v , P" := (li.and_map (λ k v, P) m)
-    (in custom lithium at level 100, k binder, v binder, m constr, P at level 100,
-        format "'[hv' 'and_map:'  m  '/' |  k  v ,  '[hv' P ']' ']'") : lithium_scope.
+(* Notation "'and_map:' m | k v , P" := (li.and_map (λ k v, P) m) *)
+    (* (in custom lithium at level 100, k binder, v binder, m constr, P at level 100, *)
+        (* format "'[hv' 'and_map:'  m  '/' |  k  v ,  '[hv' P ']' ']'") : lithium_scope. *)
+Notation "'and_map' x" := (li.and_map x) (in custom lithium at level 0, x constr,
+                           format "'and_map'  '[' x ']'") : lithium_scope.
 
 Notation "'find_in_context' x" := (li.find_in_context x) (in custom lithium at level 0, x constr,
                            format "'find_in_context'  '[' x ']'") : lithium_scope.
@@ -163,6 +165,9 @@ Notation "' x ← y ; z" := (li.bind1 y (λ x : _, z))
 Notation "x1 , x2 ← y ; z" := (li.bind2 y (λ x1 x2 : _, z))
   (in custom lithium at level 0, y at level 99, z at level 100, x1 name, x2 name,
       format "x1 ,  x2  ←  y ;  '/' z") : lithium_scope.
+Notation "x1 , ' x2 ← y ; z" := (li.bind2 y (λ x1 x2 : _, z))
+  (in custom lithium at level 0, y at level 99, z at level 100, x1 name, x2 strict pattern,
+      format "x1 ,  ' x2  ←  y ;  '/' z") : lithium_scope.
 Notation "x1 , x2 , x3 ← y ; z" := (li.bind3 y (λ x1 x2 x3 : _, z))
   (in custom lithium at level 0, y at level 99, z at level 100, x1 name, x2 name, x3 name,
       format "x1 ,  x2 ,  x3  ←  y ;  '/' z") : lithium_scope.
@@ -229,7 +234,7 @@ Ltac liToSyntax :=
   change (@bi_exist (iPropI ?Σ) ?A) with (@li.exist Σ A);
   change (@bi_pure (iPropI ?Σ) True) with (@li.done Σ);
   change (@bi_pure (iPropI ?Σ) False) with (@li.false Σ);
-  change (big_opM bi_and ?f ?m) with (li.and_map f m);
+  repeat (progress change (big_opM bi_and ?f ?m) with (li.bind2 (li.and_map m) f));
   change (@bi_and (iPropI ?Σ)) with (@li.and Σ);
   change (find_in_context ?a) with (li.bind1 (li.find_in_context a));
   change (@case_if ?Σ ?P) with (@li.case_if Σ P);
@@ -334,7 +339,7 @@ Section test.
        ∃ n' : nat, (⌜v = n'⌝ ∗ ⌜n' > 0⌝) ∗ li_trace 1 $ accu (λ P,
        find_in_context (FindDirect (λ '(n, m), ⌜n =@{Z} m⌝)) (λ '(n, m), ⌜n = m⌝ ∗
        get_tuple (λ '(x1, x2, x3), □ ⌜x1 = 0⌝ ∗ (P ∧
-         □ [∧ map] a↦b∈{[1 := 1]}, ⌜a = b⌝ ∗
+         □ [∧ map] a↦'(b1, b2)∈{[1 := (1, 1)]}, ⌜a = b1⌝ ∗
          case_if (n' = 1) (case_destruct n' (λ n'' b,
           ⌜b = b⌝ ∗ ⌜n'' = 0⌝ ∗ subsume True True (True ∗ True ∗ True ∗ True ∗ True ∗ True))) False))))).
   Proof.
