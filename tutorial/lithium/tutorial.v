@@ -258,6 +258,18 @@ Section proofs.
     repeat liTStep; liShow.
   Abort.
 
+  Definition FindFnSpec (v : val) :=
+  {| fic_A := sigT (λ X, (X → val → iProp Σ) * (X → val → iProp Σ))%type;
+    fic_Prop '(existT X (pre, post)) := fn_spec v X pre post |}.
+  Global Typeclasses Opaque FindFnSpec.
+  Lemma find_in_context_find_fnspec v G:
+    find_in_context (FindFnSpec v) G :-
+      pattern: X pre post, fn_spec v X pre post; return G (existT X (pre, post)).
+  Proof. iDestruct 1 as (X pre post) "[Hv HT]". iExists _. by iFrame. Qed.
+  Definition find_in_context_find_fnspec_inst :=
+    [instance find_in_context_find_fnspec with FICSyntactic].
+  Global Existing Instance find_in_context_find_fnspec_inst | 1.
+
   Lemma expr_ok_App e1 e2 G :
     (* TODO: have where `{!TCIsNotVal e1} syntax to add typeclass preconditions *)
     expr_ok (App e1 e2) G  :-
@@ -266,8 +278,7 @@ Section proofs.
      (* TODO: can one have a better notation that does not duplicate
      the pattern? *)
       '(existT X (pre, post)) ←
-        find_in_context (FindDirect
-             (λ '(existT X (pre, post)), fn_spec v1 X pre post));
+        find_in_context (FindFnSpec v1);
       ∃ x,
       exhale (pre x v2);
       ∀ v',
@@ -463,15 +474,15 @@ Section proofs.
     repeat liTStep; liShow.
   Abort.
 
-  Definition FindMapsTo (v : val) :=
+  Definition FindPointsTo (v : val) :=
   {| fic_A := (loc * val); fic_Prop '(l, vr) := (⌜v = #l⌝ ∗ l ↦ vr)%I; |}.
-  Global Typeclasses Opaque FindMapsTo.
+  Global Typeclasses Opaque FindPointsTo.
 
   Lemma expr_ok_store e1 e2 G :
     expr_ok (Store e1 e2) G :-
       v2 ← {expr_ok e2};
       v1 ← {expr_ok e1};
-      '(l, _) ← find_in_context (FindMapsTo v1);
+      '(l, _) ← find_in_context (FindPointsTo v1);
       inhale (l ↦ v2);
       return G v2.
   Proof. Admitted.
@@ -481,7 +492,7 @@ Section proofs.
   Lemma expr_ok_load e G :
     expr_ok (Load e) G :-
       v ← {expr_ok e};
-      '(l, vl) ← find_in_context (FindMapsTo v);
+      '(l, vl) ← find_in_context (FindPointsTo v);
       inhale (l ↦ vl);
       return G vl.
   Proof. Admitted.
@@ -498,13 +509,13 @@ Section proofs.
   Abort.
 
 
-  Lemma find_in_context_find_mapsto_loc (l : loc) G:
-    find_in_context (FindMapsTo #l) G :-
+  Lemma find_in_context_find_pointsto_loc (l : loc) G:
+    find_in_context (FindPointsTo #l) G :-
       pattern: v, l ↦ v; return G (l, v).
   Proof. iDestruct 1 as (v) "[Hl HT]". iExists (_, _) => /=. by iFrame. Qed.
-  Definition find_in_context_find_mapsto_loc_inst :=
-    [instance find_in_context_find_mapsto_loc with FICSyntactic].
-  Global Existing Instance find_in_context_find_mapsto_loc_inst | 1.
+  Definition find_in_context_find_pointsto_loc_inst :=
+    [instance find_in_context_find_pointsto_loc with FICSyntactic].
+  Global Existing Instance find_in_context_find_pointsto_loc_inst | 1.
 
   Lemma cons_correct :
     ⊢ fn_spec cons_code (val * list val)
@@ -537,14 +548,14 @@ Section proofs.
     repeat liTStep; liShow.
   Abort.
 
-  Lemma subsume_mapsto_list (l : loc) v xs G :
+  Lemma subsume_pointsto_list (l : loc) v xs G :
     subsume (l ↦ v) (is_list #l xs) G :-
      ∃ v1 v2 xs',
      exhale ⌜v = (v1, v2)%V⌝ ∗ ⌜xs = v2 :: xs'⌝ ∗ is_list v1 xs';
      return G.
   Proof. Admitted.
-  Definition subsume_mapsto_list_inst := [instance subsume_mapsto_list].
-  Global Existing Instance subsume_mapsto_list_inst.
+  Definition subsume_pointsto_list_inst := [instance subsume_pointsto_list].
+  Global Existing Instance subsume_pointsto_list_inst.
 
   Lemma cons_correct :
     ⊢ fn_spec cons_code (val * list val)
@@ -602,17 +613,17 @@ Section proofs.
     repeat liTStep; liShow.
   Abort.
 
-  Lemma find_in_context_find_mapsto_list v G:
-    find_in_context (FindMapsTo v) G :-
+  Lemma find_in_context_find_pointsto_list v G:
+    find_in_context (FindPointsTo v) G :-
       pattern: xs, is_list v xs;
       exhale ⌜0 < length xs⌝;
       ∀ (l : loc) v' x xs',
       inhale ⌜v = #l⌝ ∗ ⌜xs = x::xs'⌝ ∗ is_list v' xs';
       return G (l, (v', x)%V).
   Proof. Admitted.
-  Definition find_in_context_find_mapsto_list_inst :=
-    [instance find_in_context_find_mapsto_list with FICSyntactic].
-  Global Existing Instance find_in_context_find_mapsto_list_inst | 10.
+  Definition find_in_context_find_pointsto_list_inst :=
+    [instance find_in_context_find_pointsto_list with FICSyntactic].
+  Global Existing Instance find_in_context_find_pointsto_list_inst | 10.
 
   Lemma head_correct :
     ⊢ fn_spec head_code (val * list val)
@@ -645,15 +656,14 @@ Section proofs.
 
   (* TODO: mention that there are also other approaches to handle this
   overloading, see RefinedC and Islaris *)
-  Definition FindLocOrNULL (v : val) :=
-  {| fic_A := option loc; fic_Prop o :=
-      match o with | Some l => ⌜v = #l⌝ | None => ⌜v = #NULL⌝ end%I : iProp Σ; |}.
-  Global Typeclasses Opaque FindLocOrNULL.
+  Definition FindIsNULL (v : val) :=
+  {| fic_A := bool; fic_Prop b := (⌜b ↔ v = #NULL⌝ : iProp Σ)%I |}.
+  Global Typeclasses Opaque FindIsNULL.
 
   Lemma binop_ok_eq_val_NULL v G :
     binop_ok EqOp v #NULL G :-
-      o ← find_in_context (FindLocOrNULL v);
-      return G #(if o is Some _ then false else true).
+      b ← find_in_context (FindIsNULL v);
+      return G #b.
   Proof. Admitted.
   Definition binop_ok_eq_val_NULL_inst := [instance binop_ok_eq_val_NULL].
   Global Existing Instance binop_ok_eq_val_NULL_inst.
@@ -667,18 +677,20 @@ Section proofs.
     repeat liTStep; liShow.
   Abort.
 
-  Lemma find_in_context_find_locornull_list v G:
-    find_in_context (FindLocOrNULL v) G :-
+  Lemma find_in_context_find_isnull_list v G:
+    find_in_context (FindIsNULL v) G :-
       pattern: xs, is_list v xs;
-      and:
-      | inhale ⌜xs = []⌝ ∗ ⌜v = #NULL⌝; return G None
-      | ∀ (l : loc) v' x xs',
-        inhale ⌜v = #l⌝ ∗ ⌜xs = x::xs'⌝ ∗ l ↦ (v', x)%V ∗ is_list v' xs';
-        return G (Some l).
+      inhale is_list v xs;
+      return G (bool_decide (xs = [])).
+      (* and: *)
+      (* | inhale ⌜xs = []⌝ ∗ ⌜v = #NULL⌝; return G true *)
+      (* | ∀ (l : loc) v' x xs', *)
+      (*   inhale ⌜v = #l⌝ ∗ ⌜xs = x::xs'⌝ ∗ l ↦ (v', x)%V ∗ is_list v' xs'; *)
+      (*   return G false. *)
   Proof. Admitted.
-  Definition find_in_context_find_locornull_list_inst :=
-    [instance find_in_context_find_locornull_list with FICSyntactic].
-  Global Existing Instance find_in_context_find_locornull_list_inst | 10.
+  Definition find_in_context_find_isnull_list_inst :=
+    [instance find_in_context_find_isnull_list with FICSyntactic].
+  Global Existing Instance find_in_context_find_isnull_list_inst | 10.
 
   Lemma length_correct :
     ⊢ fn_spec length_code (val * list val)
@@ -688,7 +700,84 @@ Section proofs.
     iStartProof. iApply prove_fn_spec_rec. simpl.
     repeat liTStep; liShow.
     Unshelve. all: unshelve_sidecond.
+    - by destruct x0.
     - do 2 f_equal. lia.
+  Qed.
+
+  Definition find_code : val := rec: "f" "x" :=
+      let: "l" := Fst "x" in
+      let: "cb" := Snd "x" in
+      if: "l" = #NULL then
+        #false
+      else if: "cb" (Snd (! "l")) then
+        #true
+      else
+        "f" (Fst (! "l"), "cb").
+
+  Global Instance related_to_fnspec v X pre post : RelatedTo (fn_spec v X pre post) | 100
+    := {| rt_fic := FindFnSpec v |}.
+
+  Lemma subsume_fnspec_fnspec v X pre1 pre2 post1 post2 G :
+    subsume (fn_spec v X pre1 post1) (fn_spec v X pre2 post2) G :-
+     and:
+     | drop_spatial;
+       ∀ x v, inhale pre2 x v; ∃ x', exhale pre1 x' v; ∀ v', inhale post1 x' v'; exhale post2 x v'; done
+     | return G.
+  Proof. Admitted.
+  Definition subsume_fnspec_fnspec_inst := [instance subsume_fnspec_fnspec].
+  Global Existing Instance subsume_fnspec_fnspec_inst.
+
+  Lemma find_correct (P : val → bool) :
+    ⊢ fn_spec find_code (val * list val)
+      (λ '(va, xs) v, ∃ cb, ⌜v = (va, cb)%V⌝ ∗ is_list va xs ∗ fn_spec cb val (λ va v, ⌜v = va⌝ ∗ ⌜v ∈ xs⌝) (λ va v, ⌜v = #(P va)⌝))
+      (λ '(va, xs) r, ⌜r = #(bool_decide (Exists P xs))⌝ ∗ is_list va xs).
+  Proof.
+    iStartProof. iApply prove_fn_spec_rec. simpl.
+    repeat liTStep; liShow.
+    Unshelve. all: unshelve_sidecond.
+    - by destruct x0.
+    - set_solver.
+    - do 2 f_equal. normalize_and_simpl_goal. constructor. naive_solver.
+    - set_solver.
+    - do 2 f_equal. apply bool_decide_ext. rewrite Exists_cons H0. naive_solver.
+  Qed.
+
+  Definition find_client_code (find : val) : val := λ: "x",
+      find ("x", (λ: "y", "y" = #1)%V).
+
+  Lemma simplify_goal_fn_spec_rec X f a e pre post G :
+    simplify_goal (fn_spec (RecV f a e) X pre post) G :-
+      and:
+      | drop_spatial;
+        ∀ (x : X) v vr,
+        inhale pre x v;
+        inhale fn_spec vr X pre post;
+        v' ← {expr_ok (subst' a v (subst' f vr e))};
+        exhale post x v';
+        done
+      | return G.
+  Proof. Admitted.
+  Definition simplify_goal_fn_spec_rec_inst := [instance simplify_goal_fn_spec_rec with 50%N].
+  Global Existing Instance simplify_goal_fn_spec_rec_inst.
+
+Global Instance simpl_fmap_elem_of {A B} x (xs : list A) (f : A → B) :
+  SimplBoth (x ∈ f <$> xs) (∃ y, x = f y ∧ y ∈ xs).
+Proof. unfold SimplBoth. by set_unfold. Qed.
+
+  Lemma find_client_correct find :
+    fn_spec find (val * list val)
+      (λ '(va, xs) v, ∃ cb, ⌜v = (va, cb)%V⌝ ∗ is_list va xs ∗ fn_spec cb val (λ va v, ⌜v = va⌝ ∗ ⌜v ∈ xs⌝) (λ va v, ⌜v = #(bool_decide (va = #1))⌝))
+      (λ '(va, xs) r, ⌜r = #(bool_decide (Exists (λ x, (bool_decide (x = #1))) xs))⌝ ∗ is_list va xs)
+    -∗
+       fn_spec (find_client_code find) (val * list Z)
+      (λ '(va, xs) v, ⌜v = va⌝ ∗ is_list va (LitV <$> (LitInt <$> xs)))
+      (λ '(va, xs) r, ⌜r = #(bool_decide (Exists (λ x, x = 1) xs))⌝ ∗ is_list va (LitV <$> (LitInt <$> xs))).
+  Proof.
+    iStartProof. iIntros "#?". iApply prove_fn_spec_rec. simpl.
+    repeat liTStep; liShow.
+    Unshelve. all: unshelve_sidecond.
+    - repeat case_bool_decide; naive_solver.
+    - do 2 f_equal. apply bool_decide_ext. rewrite !Exists_fmap. f_equiv. move => ?. naive_solver.
   Qed.
 
 End proofs.
