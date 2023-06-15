@@ -26,7 +26,8 @@ Ltac unshelve_sidecond :=
 (** * Generating typeclass instances *)
 (** [generate_i2p_instance print to_tc c] generates an instance for an
 [iProp_to_Prop]-based typeclass from the lemma c. The parameters not
-part of the type class must come last. This tactic tries to solve pure
+part of the arguments of the typeclass must come last in the same
+order as expected by the typeclass. This tactic tries to solve pure
 [Prop] assumptions via [eq_refl]. [to_tc] is a tactic that converts
 the conclusion of the lemma to the corresponding typeclass and is
 called with [arg]. [print] controls whether to output debug printing.
@@ -63,6 +64,26 @@ Ltac generate_i2p_instance print to_tc arg c :=
     end in
     do_print ltac:(idtac "found typeclass:" tc);
     notypeclasses refine (_ : tc));
+  (* Try to reorder hypothesis that don't occur in the goal to the
+  front (e.g. TCDone assumptions or similar). Note that this code
+  reverse the order if there are multiple such assumptions. *)
+  let c := match type_c with
+           | (∀ a1 a2 a3 a4 a5 _, _ ⊢ ?G) =>
+               eval lazy beta zeta in (λ b a1 a2 a3 a4 a5, c a1 a2 a3 a4 a5 b)
+           | (∀ a1 a2 a3 a4 _, _ ⊢ ?G) =>
+               eval lazy beta zeta in (λ b a1 a2 a3 a4, c a1 a2 a3 a4 b)
+           | (∀ a1 a2 a3 _, _ ⊢ ?G) =>
+               eval lazy beta zeta in (λ b a1 a2 a3, c a1 a2 a3 b)
+           | (∀ a1 a2 _, _ ⊢ ?G) =>
+               eval lazy beta zeta in (λ b a1 a2, c a1 a2 b)
+           | (∀ a1 _, _ ⊢ ?G) =>
+               eval lazy beta zeta in (λ b a1, c a1 b)
+           | _ => c
+           end in
+  let type_c := type of c in
+  let type_c := eval lazy zeta in type_c in
+  do_print ltac:(idtac "current after reorder:" c);
+  do_print ltac:(idtac "type after reorder:" type_c);
   lazymatch type_c with
   | ∀ (a : ?T), @?P a =>
       (* Check if there is a sidecondition after the continuation, that we
@@ -75,6 +96,7 @@ Ltac generate_i2p_instance print to_tc arg c :=
       else
           lazymatch type of c with
           | ∀ a, @?P a =>
+              let a := fresh a in
               notypeclasses refine (λ a, _);
               let y := eval lazy beta zeta in (c a) in
               generate_i2p_instance print to_tc arg y

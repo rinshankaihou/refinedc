@@ -380,22 +380,22 @@ Section proofs.
   (** ** constructing linked lists *)
   Definition empty_code : val := λ: <>, #NULL.
   Definition cons_code : val := λ: "a",
-      let: "l" := Fst "a" in
-      let: "v" := Snd "a" in
+      let: "v" := Fst "a" in
+      let: "l" := Snd "a" in
       let: "new_l" := Alloc in
-      "new_l" <- ("l", "v");;
+      "new_l" <- ("v", "l");;
       "new_l".
 
   Definition build_list_code (empty cons : val) : val := λ: <>,
     let: "l" := empty #0 in
-    let: "l" := cons ("l", #1) in
-    let: "l" := cons ("l", #2) in
+    let: "l" := cons (#1, "l") in
+    let: "l" := cons (#2, "l") in
     "l".
 
   Fixpoint is_list (v : val) (xs : list val) : iProp Σ :=
     match xs with
     | [] => ⌜v = #NULL⌝
-    | x :: xs => ∃ (l : loc) vnext, ⌜v = #l⌝ ∗ l ↦ (vnext, x)%V ∗ is_list vnext xs
+    | x :: xs => ∃ (l : loc) vnext, ⌜v = #l⌝ ∗ l ↦ (x, vnext)%V ∗ is_list vnext xs
   end.
   Global Typeclasses Opaque is_list.
   Global Opaque is_list.
@@ -423,7 +423,7 @@ Section proofs.
 
   Lemma cons_correct :
     ⊢ fn_spec cons_code (val * list val)
-      (λ '(x, xs) a, ∃ v, ⌜a = (v, x)%V⌝ ∗ is_list v xs)
+      (λ '(x, xs) a, ∃ v, ⌜a = (x, v)%V⌝ ∗ is_list v xs)
       (λ '(x, xs) r, is_list r (x :: xs)).
   Proof.
     iStartProof. iApply prove_fn_spec_rec. simpl.
@@ -467,7 +467,7 @@ Section proofs.
 
   Lemma cons_correct :
     ⊢ fn_spec cons_code (val * list val)
-      (λ '(x, xs) a, ∃ v, ⌜a = (v, x)%V⌝ ∗ is_list v xs)
+      (λ '(x, xs) a, ∃ v, ⌜a = (x, v)%V⌝ ∗ is_list v xs)
       (λ '(x, xs) r, is_list r (x :: xs)).
   Proof.
     iStartProof. iApply prove_fn_spec_rec. simpl.
@@ -501,7 +501,7 @@ Section proofs.
 
   Lemma cons_correct :
     ⊢ fn_spec cons_code (val * list val)
-      (λ '(x, xs) a, ∃ v, ⌜a = (v, x)%V⌝ ∗ is_list v xs)
+      (λ '(x, xs) a, ∃ v, ⌜a = (x, v)%V⌝ ∗ is_list v xs)
       (λ '(x, xs) r, is_list r (x :: xs)).
   Proof.
     iStartProof. iApply prove_fn_spec_rec. simpl.
@@ -519,7 +519,7 @@ Section proofs.
 
   Lemma cons_correct :
     ⊢ fn_spec cons_code (val * list val)
-      (λ '(x, xs) a, ∃ v, ⌜a = (v, x)%V⌝ ∗ is_list v xs)
+      (λ '(x, xs) a, ∃ v, ⌜a = (x, v)%V⌝ ∗ is_list v xs)
       (λ '(x, xs) r, is_list r (x :: xs)).
   Proof.
     iStartProof. iApply prove_fn_spec_rec. simpl.
@@ -541,7 +541,7 @@ Section proofs.
 
   Lemma cons_correct :
     ⊢ fn_spec cons_code (val * list val)
-      (λ '(x, xs) a, ∃ v, ⌜a = (v, x)%V⌝ ∗ is_list v xs)
+      (λ '(x, xs) a, ∃ v, ⌜a = (x, v)%V⌝ ∗ is_list v xs)
       (λ '(x, xs) r, is_list r (x :: xs)).
   Proof.
     iStartProof. iApply prove_fn_spec_rec. simpl.
@@ -551,7 +551,7 @@ Section proofs.
   Lemma subsume_pointsto_list (l : loc) v xs G :
     subsume (l ↦ v) (is_list #l xs) G :-
      ∃ v1 v2 xs',
-     exhale ⌜v = (v1, v2)%V⌝ ∗ ⌜xs = v2 :: xs'⌝ ∗ is_list v1 xs';
+     exhale ⌜v = (v1, v2)%V⌝ ∗ ⌜xs = v1 :: xs'⌝ ∗ is_list v2 xs';
      return G.
   Proof. Admitted.
   Definition subsume_pointsto_list_inst := [instance subsume_pointsto_list].
@@ -559,7 +559,7 @@ Section proofs.
 
   Lemma cons_correct :
     ⊢ fn_spec cons_code (val * list val)
-      (λ '(x, xs) a, ∃ v, ⌜a = (v, x)%V⌝ ∗ is_list v xs)
+      (λ '(x, xs) a, ∃ v, ⌜a = (x, v)%V⌝ ∗ is_list v xs)
       (λ '(x, xs) r, is_list r (x :: xs)).
   Proof.
     iStartProof. iApply prove_fn_spec_rec. simpl.
@@ -568,7 +568,7 @@ Section proofs.
 
   Lemma build_list_correct empty cons :
     fn_spec empty unit (λ _ _, True) (λ _ v, is_list v []) -∗
-    fn_spec cons (val * list val) (λ '(x, xs) a, ∃ v, ⌜a = (v, x)%V⌝ ∗ is_list v xs) (λ '(x, xs) r, is_list r (x :: xs)) -∗
+    fn_spec cons (val * list val) (λ '(x, xs) a, ∃ v, ⌜a = (x, v)%V⌝ ∗ is_list v xs) (λ '(x, xs) r, is_list r (x :: xs)) -∗
     fn_spec (build_list_code empty cons) unit (λ _ _, True) (λ _ v, is_list v [ #1; #2 ]).
   Proof.
     iStartProof. iIntros "#? #?". iApply prove_fn_spec_rec. simpl.
@@ -591,10 +591,9 @@ Section proofs.
   Definition subsume_list_list_inst := [instance subsume_list_list].
   Global Existing Instance subsume_list_list_inst.
 
-
   Lemma build_list_correct empty cons :
     fn_spec empty unit (λ _ _, True) (λ _ v, is_list v []) -∗
-    fn_spec cons (val * list val) (λ '(x, xs) a, ∃ v, ⌜a = (v, x)%V⌝ ∗ is_list v xs) (λ '(x, xs) r, is_list r (x :: xs)) -∗
+    fn_spec cons (val * list val) (λ '(x, xs) a, ∃ v, ⌜a = (x, v)%V⌝ ∗ is_list v xs) (λ '(x, xs) r, is_list r (x :: xs)) -∗
     fn_spec (build_list_code empty cons) unit (λ _ _, True) (λ _ v, is_list v [ #2; #1 ]).
   Proof.
     iStartProof. iIntros "#? #?". iApply prove_fn_spec_rec. simpl.
@@ -602,7 +601,7 @@ Section proofs.
   Qed.
 
   (** ** destructing linked lists *)
-  Definition head_code : val := λ: "l", Snd (! "l").
+  Definition head_code : val := λ: "l", Fst (! "l").
 
   Lemma head_correct :
     ⊢ fn_spec head_code (val * list val)
@@ -619,7 +618,7 @@ Section proofs.
       exhale ⌜0 < length xs⌝;
       ∀ (l : loc) v' x xs',
       inhale ⌜v = #l⌝ ∗ ⌜xs = x::xs'⌝ ∗ is_list v' xs';
-      return G (l, (v', x)%V).
+      return G (l, (x, v')%V).
   Proof. Admitted.
   Definition find_in_context_find_pointsto_list_inst :=
     [instance find_in_context_find_pointsto_list with FICSyntactic].
@@ -642,7 +641,7 @@ Section proofs.
       if: "l" = #NULL then
         #0
       else
-        let: "r" := "f" (Fst (! "l")) in
+        let: "r" := "f" (Snd (! "l")) in
         "r" + #1.
 
   Lemma length_correct :
@@ -704,15 +703,17 @@ Section proofs.
     - do 2 f_equal. lia.
   Qed.
 
+  (** ** find example *)
+
   Definition find_code : val := rec: "f" "x" :=
       let: "l" := Fst "x" in
       let: "cb" := Snd "x" in
       if: "l" = #NULL then
         #false
-      else if: "cb" (Snd (! "l")) then
+      else if: "cb" (Fst (! "l")) then
         #true
       else
-        "f" (Fst (! "l"), "cb").
+        "f" (Snd (! "l"), "cb").
 
   Global Instance related_to_fnspec v X pre post : RelatedTo (fn_spec v X pre post) | 100
     := {| rt_fic := FindFnSpec v |}.

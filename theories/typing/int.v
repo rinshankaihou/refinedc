@@ -95,8 +95,8 @@ Section programs.
   (* TODO: instead of adding it_in_range to the context here, have a
   SimplifyPlace/Val instance for int which adds it to the context if
   it does not yet exist (using check_hyp_not_exists)?! *)
-  Lemma type_relop_int_int n1 n2 op b it v1 v2
-    (Hop : match op with
+  Lemma type_relop_int_int n1 n2 op b it v1 v2 T :
+    match op with
     | EqOp rit => Some (bool_decide (n1 = n2), rit)
     | NeOp rit => Some (bool_decide (n1 ≠ n2), rit)
     | LtOp rit => Some (bool_decide (n1 < n2), rit)
@@ -104,11 +104,11 @@ Section programs.
     | LeOp rit => Some (bool_decide (n1 <= n2), rit)
     | GeOp rit => Some (bool_decide (n1 >= n2), rit)
     | _ => None
-    end = Some (b, i32)) T:
+    end = Some (b, i32) →
     (⌜n1 ∈ it⌝ -∗ ⌜n2 ∈ it⌝ -∗ T (i2v (bool_to_Z b) i32) (b @ boolean i32))
     ⊢ typed_bin_op v1 (v1 ◁ᵥ n1 @ int it) v2 (v2 ◁ᵥ n2 @ int it) op (IntOp it) (IntOp it) T.
   Proof.
-    iIntros "HT %Hv1 %Hv2 %Φ HΦ".
+    iIntros "%Hop HT %Hv1 %Hv2 %Φ HΦ".
     iDestruct ("HT" with "[] []" ) as "HT".
     1-2: iPureIntro; by apply: val_to_Z_in_range.
     have [v Hv]:= val_of_Z_bool_is_Some None i32 b.

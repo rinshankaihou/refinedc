@@ -178,11 +178,8 @@ Notation "x1 , x2 , x3 , x4 , x5 ← y ; z" := (li.bind5 y (λ x1 x2 x3 x4 x5 : 
   (in custom lithium at level 0, y at level 99, z at level 100, x1 name, x2 name, x3 name, x4 name, x5 name,
       format "x1 ,  x2 ,  x3 ,  x4 ,  x5  ←  y ;  '/' z") : lithium_scope.
 
-(* TODO: add where syntax for typeclass preconditions, but not sure
-how to make it work with [instance x].
 Notation "P 'where' x1 .. xn ':-' Q" := (∀ x1, .. (∀ xn, Q ⊢ P) ..)
    (at level 99, Q custom lithium at level 100, x1 binder, xn binder, only parsing) : stdpp_scope.
-*)
 Notation "P ':-' Q" := (Q ⊢ P)
   (at level 99, Q custom lithium at level 100, only parsing) : stdpp_scope.
 
