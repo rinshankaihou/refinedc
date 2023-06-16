@@ -1,8 +1,7 @@
 #pragma once
 
 #include "fdsched/message.h"
-//#include "fdsched/priority.h"
-#include "fdsched/priority_modified.h"
+#include "fdsched/priority.h"
 
 typedef int (*callback_fn_t)(struct message *);
 

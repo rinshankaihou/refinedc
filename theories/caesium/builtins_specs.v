@@ -98,3 +98,22 @@ Proof.
     + move => i ?. bitblast. apply IH2. lia.
   - rewrite Z_least_significant_one_xH. split; [done|lia].
 Qed.
+
+Lemma Z_least_significant_one_upper_bound n m :
+  0 ≤ n < 2 ^ m →
+  Z_least_significant_one n < m.
+Proof.
+  move => [Hn Hnm].
+  have ? : 0 ≤ m. { have := Z.pow_neg_r 2 m. lia. }
+  destruct (decide (n = 0)).
+  { subst. rewrite /Z_least_significant_one => //=. lia. }
+  set (x := Z_least_significant_one n).
+  assert (Hx : is_least_significant_one x n).
+  { unfold x. apply Z_least_significant_one_is_least_significant_one; lia. }
+  destruct (decide (m ≤ x)) as [Hxm|]; [|lia].
+  apply (Z.pow_le_mono_r 2) in Hxm; try lia.
+  apply (Z.lt_le_trans _ _ _ Hnm) in Hxm.
+  destruct Hx as [Htestbit _].
+  rewrite Z.testbit_true in Htestbit; last by apply Z_least_significant_one_lower_bound_pos; lia.
+  rewrite Z.div_small in Htestbit; [done| lia].
+Qed.

@@ -5,7 +5,7 @@ headers := $(wildcard include/*.h)
 CPPFLAGS += -Iinclude/
 vpath %.c src/
 
-exceptions := -Wno-unused-parameter -Wno-gnu-designator
+exceptions := -Wno-unused-parameter -Wno-gnu-designator -fdouble-square-bracket-attributes -Wno-unknown-attributes
 
 CFLAGS += -std=gnu11 -Wall -Wextra -pedantic ${exceptions}
 
