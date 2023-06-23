@@ -7,6 +7,8 @@ Coercion LitInt : Z >-> base_lit.
 Coercion LitLoc : loc >-> base_lit.
 Coercion LitBool : bool >-> base_lit.
 
+Notation NULL := (LitNULL).
+
 Coercion App : expr >-> Funclass.
 
 Coercion Val : val >-> expr.

@@ -15,11 +15,10 @@ Global Instance loc_countable : Countable loc.
 Proof. refine (inj_countable' loc_val Loc _). intros []; eauto. Qed.
 
 Inductive base_lit :=
+  | LitNULL
   | LitInt (n : Z)
+  | LitBool (b : bool)
   | LitLoc (l : loc).
-
-Definition NULL := LitInt 0.
-Global Typeclasses Opaque NULL.
 
 Inductive bin_op :=
   | PlusOp
@@ -45,7 +44,6 @@ Inductive expr :=
   | Assert (e : expr)
   (* Heap *)
   | Alloc
-  | Free (e1 : expr)
   | Load (e1 : expr)
   | Store (e1 e2 : expr)
 with val :=
@@ -55,7 +53,6 @@ with val :=
 
 Bind Scope expr_scope with expr.
 Bind Scope val_scope with val.
-
 
 Notation of_val := Val (only parsing).
 
@@ -97,7 +94,7 @@ Proof.
           cast_if_and3 (decide (e1 = e1')) (decide (e2 = e2')) (decide (e3 = e3'))
         | UnOp op e, UnOp op' e' =>
           cast_if_and (decide (op = op')) (decide (e = e'))
-        | Free e, Free e' | Load e, Load e' | Assert e, Assert e' =>
+        | Load e, Load e' | Assert e, Assert e' =>
           cast_if  (decide (e = e'))
         | Alloc, Alloc => left _
         | _, _ => right _
@@ -112,31 +109,6 @@ Defined.
 Global Instance expr_eq_dec' : EqDecision expr := expr_eq_dec.
 Global Instance val_eq_dec' : EqDecision val := val_eq_dec.
 
-Global Instance base_lit_countable : Countable base_lit.
-Proof.
-  refine (inj_countable'
-            (λ l, match l with | LitInt n => inl n | LitLoc l => inr l end)
-            (λ v, match v with | inl n => _ | inr l => _ end) _).
-  intros []; eauto.
-Qed.
-
-Global Instance bin_op_countable : Countable bin_op.
-Proof.
-  refine (inj_countable'
-            (λ op, match op with | PlusOp => 0 | MinusOp => 1 | EqOp => 2 | PairOp => 3 end)
-            (λ n, match n with | 0 => _ | 1 => _ | 2 => _ | 3 => _
-                          | _ => ltac:(constructor) end) _).
-  intros []; eauto.
-Qed.
-
-Global Instance un_op_countable : Countable un_op.
-Proof.
-  refine (inj_countable'
-            (λ op, match op with | FstOp => 0 | SndOp => 1 end)
-            (λ n, match n with | 0 => _ | 1 => _ | _ => ltac:(constructor) end) _).
-  intros []; eauto.
-Qed.
-
 (** Evaluation contexts *)
 Inductive ectx_item :=
   | AppLCtx (v2 : val)
@@ -146,7 +118,6 @@ Inductive ectx_item :=
   | UnOpCtx (op : un_op)
   | IfCtx (e1 e2 : expr)
   | AssertCtx
-  | FreeCtx
   | LoadCtx
   | StoreLCtx (v2 : val)
   | StoreRCtx (e1 : expr).
@@ -160,7 +131,6 @@ Definition fill_item (Ki : ectx_item) (e : expr) : expr :=
   | UnOpCtx op => UnOp op e
   | IfCtx e1 e2 => If e e1 e2
   | AssertCtx => Assert e
-  | FreeCtx => Free e
   | LoadCtx => Load e
   | StoreLCtx v2 => Store e (Val v2)
   | StoreRCtx e1 => Store e1 e
@@ -179,7 +149,6 @@ Fixpoint subst (x : string) (v : val) (e : expr)  : expr :=
   | If e0 e1 e2 => If (subst x v e0) (subst x v e1) (subst x v e2)
   | Assert e => Assert (subst x v e)
   | Alloc => Alloc
-  | Free e => Free (subst x v e)
   | Load e => Load (subst x v e)
   | Store e1 e2 => Store (subst x v e1) (subst x v e2)
   end.
@@ -188,9 +157,6 @@ Definition subst' (mx : binder) (v : val) : expr → expr :=
   match mx with BNamed x => subst x v | BAnon => id end.
 
 (** Evaluation *)
-Definition LitBool (b:bool) : base_lit :=
-  if b then LitInt 1 else LitInt 0.
-Arguments LitBool : simpl never.
 
 Definition bin_op_eval (op : bin_op) (v1 v2: val) : option val :=
   match op with
@@ -252,25 +218,15 @@ Inductive head_step : expr → state → list observation → expr → state →
   | UnOpS op v v' σ :
     un_op_eval op v = Some v' →
     head_step (UnOp op (Val v)) σ [] (Val v') σ []
-  | IfFalseS e1 e2 σ :
-    head_step (If (Val $ LitV $ LitInt 0) e1 e2) σ [] e2 σ []
-  | IfTrueS n e1 e2 σ :
-    0 ≠ n →
-    head_step (If (Val $ LitV $ LitInt n) e1 e2) σ [] e1 σ []
-  | AssertS n σ :
-    0 ≠ n →
-    head_step (Assert (Val $ LitV $ LitInt n)) σ [] (Val $ LitV $ LitInt 0) σ []
-  | AllocS v σ l :
+  | IfS e1 e2 σ b :
+    head_step (If (Val $ LitV $ LitBool b) e1 e2) σ [] (if b then e1 else e2) σ []
+  | AssertS σ :
+    head_step (Assert (Val $ LitV $ LitBool true)) σ [] (Val $ LitV $ LitInt 0) σ []
+  | AllocS σ l :
     σ.(heap) !! l = None →
     head_step (Alloc) σ
               []
-              (Val $ LitV $ LitLoc l) (state_upd_heap <[l := v]> σ)
-              []
-  | FreeS σ l :
-    is_Some (σ.(heap) !! l) →
-    head_step (Free (Val $ LitV $ LitLoc l)) σ
-              []
-              (Val $ LitV $ LitInt 0) (state_upd_heap (delete l) σ)
+              (Val $ LitV $ LitLoc l) (state_upd_heap <[l := LitV $ LitInt 0]> σ)
               []
   | LoadS v σ l :
     σ.(heap) !! l = Some v →
@@ -317,3 +273,12 @@ Qed.
 Canonical Structure tutorial_ectxi_lang := EctxiLanguage tutorial_lang_mixin.
 Canonical Structure tutorial_ectx_lang := EctxLanguageOfEctxi tutorial_ectxi_lang.
 Canonical Structure tutorial_lang := LanguageOfEctx tutorial_ectx_lang.
+
+(** additional lemmas *)
+Global Program Instance loc_infinite: Infinite loc :=
+  inj_infinite (Loc) (λ x, Some (loc_val x)) (λ _, eq_refl).
+
+Lemma alloc_fresh σ :
+  let l := fresh (dom σ.(heap)) in
+  head_step (Alloc) σ [] (Val $ LitV $ LitLoc l) (state_upd_heap <[l := LitV (LitInt 0)]> σ) [].
+Proof. intros. apply AllocS. apply (not_elem_of_dom (D := gset loc)). apply is_fresh. Qed.
