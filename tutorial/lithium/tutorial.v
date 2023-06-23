@@ -9,17 +9,17 @@ Set Default Proof Using "Type".
 Section definitions.
   Context `{!tutorialGS Σ}.
 
-  Definition expr_ok (e : expr) (G : val → iProp Σ) : iProp Σ.
-  Admitted.
+  Definition expr_ok (e : expr) (G : val → iProp Σ) : iProp Σ :=
+    WP e {{ G }}.
 
-  Definition binop_ok (op : bin_op) (v1 v2 : val) (G : val → iProp Σ) : iProp Σ.
-  Admitted.
+  Definition binop_ok (op : bin_op) (v1 v2 : val) (G : val → iProp Σ) : iProp Σ :=
+    WP BinOp op v1 v2 {{ G }}.
 
-  Definition unop_ok (op : un_op) (v : val) (G : val → iProp Σ) : iProp Σ.
-  Admitted.
+  Definition unop_ok (op : un_op) (v : val) (G : val → iProp Σ) : iProp Σ :=
+    WP UnOp op v {{ G }}.
 
-  Definition if_ok (v : val) (G1 G2 : iProp Σ) : iProp Σ.
-  Admitted.
+  Definition if_ok (v : val) (G1 G2 : iProp Σ) : iProp Σ :=
+    ∃ b : bool, ⌜v = #b⌝ ∗ if b then G1 else G2.
 End definitions.
 
 (** * Boilerplate for setup *)
