@@ -18,7 +18,7 @@ Section definitions.
   Definition unop_ok (op : un_op) (v : val) (G : val → iProp Σ) : iProp Σ :=
     WP UnOp op v {{ G }}.
 
-  Definition if_ok (v : val) (G1 G2 : iProp Σ) : iProp Σ :=
+  Definition if_ok `{!tutorialGS Σ} (v : val) (G1 G2 : iProp Σ) : iProp Σ :=
     ∃ b : bool, ⌜v = #b⌝ ∗ if b then G1 else G2.
 End definitions.
 
