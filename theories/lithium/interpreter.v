@@ -90,6 +90,7 @@ Ltac liExtensible_to_i2p P bind cont :=
 Ltac liExtensible :=
   lazymatch goal with
   | |- envs_entails ?Δ ?P =>
+      (* assert_succeeds (repeat lazymatch goal with | H := EVAR_ID _ |- _ => clear H end); *)
       liExtensible_to_i2p P
         ltac:(fun T tac => li_let_bind T (fun H => let X := tac H in constr:(envs_entails Δ X)))
         ltac:(fun converted =>

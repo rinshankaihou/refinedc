@@ -376,6 +376,75 @@ Section proofs.
     - lia.
   Qed.
 
+  (** * points to *)
+  Definition alloc_code : val := λ: <>,
+      let: "l" := Alloc in
+      "l" <- !"l";;
+      "l".
+
+  Lemma expr_ok_alloc G :
+    expr_ok Alloc G :-
+      ∀ v,
+      inhale (v ↦ #0);
+      return G v.
+  Proof. Admitted.
+  Definition expr_ok_alloc_inst := [instance expr_ok_alloc].
+  Global Existing Instance expr_ok_alloc_inst.
+
+  Definition FindPointsTo (v : val) :=
+  {| fic_A := val; fic_Prop 'vr := (v ↦ vr)%I; |}.
+  Global Typeclasses Opaque FindPointsTo.
+
+  Lemma expr_ok_store e1 e2 G :
+    expr_ok (Store e1 e2) G :-
+      v2 ← {expr_ok e2};
+      v1 ← {expr_ok e1};
+      _ ← find_in_context (FindPointsTo v1);
+      inhale (v1 ↦ v2);
+      return G v2.
+  Proof. Admitted.
+  Definition expr_ok_store_inst := [instance expr_ok_store].
+  Global Existing Instance expr_ok_store_inst.
+
+  Lemma expr_ok_load e G :
+    expr_ok (Load e) G :-
+      v ← {expr_ok e};
+      vl ← find_in_context (FindPointsTo v);
+      inhale (v ↦ vl);
+      return G vl.
+  Proof. Admitted.
+  Definition expr_ok_load_inst := [instance expr_ok_load].
+  Global Existing Instance expr_ok_load_inst.
+
+
+  Lemma find_in_context_find_pointsto_loc v1 G:
+    find_in_context (FindPointsTo v1) G :-
+      pattern: v, v1 ↦ v; return G v.
+  Proof. iDestruct 1 as (v) "[Hl HT]". iExists _ => /=. by iFrame. Qed.
+  Definition find_in_context_find_pointsto_loc_inst :=
+    [instance find_in_context_find_pointsto_loc with FICSyntactic].
+  Global Existing Instance find_in_context_find_pointsto_loc_inst | 1.
+
+  Global Instance related_to_pointsto vl v : RelatedTo (vl ↦ v) | 100 :=
+    {| rt_fic := FindPointsTo vl |}.
+
+
+  Lemma subsume_pointsto_pointsto vl v1 v2 G :
+    subsume (vl ↦ v1) (vl ↦ v2) G :-
+     exhale ⌜v1 = v2⌝;
+     return G.
+  Proof. Admitted.
+  Definition subsume_pointsto_pointsto_inst := [instance subsume_pointsto_pointsto].
+  Global Existing Instance subsume_pointsto_pointsto_inst.
+
+  Lemma alloc_correct :
+    ⊢ fn_spec alloc_code unit (λ _ _, True) (λ _ v, ∃ z : Z, v ↦ #z ∗ ⌜0 ≤ z⌝).
+  Proof.
+    iStartProof. iApply prove_fn_spec_rec. simpl.
+    repeat liTStep; liShow.
+  Qed.
+
+
   (** * linked lists *)
   (** ** constructing linked lists *)
   Definition empty_code : val := λ: <>, #NULL.
@@ -395,7 +464,7 @@ Section proofs.
   Fixpoint is_list (v : val) (xs : list val) : iProp Σ :=
     match xs with
     | [] => ⌜v = #NULL⌝
-    | x :: xs => ∃ (l : loc) vnext, ⌜v = #l⌝ ∗ l ↦ (x, vnext)%V ∗ is_list vnext xs
+    | x :: xs => ∃ vnext, v ↦ (x, vnext)%V ∗ is_list vnext xs
   end.
   Global Typeclasses Opaque is_list.
   Global Opaque is_list.
@@ -456,15 +525,6 @@ Section proofs.
   Definition binop_ok_pair_inst := [instance binop_ok_pair].
   Global Existing Instance binop_ok_pair_inst.
 
-  Lemma expr_ok_alloc G :
-    expr_ok Alloc G :-
-      ∀ l : loc,
-      inhale (l ↦ #0);
-      return G #l.
-  Proof. Admitted.
-  Definition expr_ok_alloc_inst := [instance expr_ok_alloc].
-  Global Existing Instance expr_ok_alloc_inst.
-
   Lemma cons_correct :
     ⊢ fn_spec cons_code (val * list val)
       (λ '(x, xs) a, ∃ v, ⌜a = (x, v)%V⌝ ∗ is_list v xs)
@@ -474,31 +534,6 @@ Section proofs.
     repeat liTStep; liShow.
   Abort.
 
-  Definition FindPointsTo (v : val) :=
-  {| fic_A := (loc * val); fic_Prop '(l, vr) := (⌜v = #l⌝ ∗ l ↦ vr)%I; |}.
-  Global Typeclasses Opaque FindPointsTo.
-
-  Lemma expr_ok_store e1 e2 G :
-    expr_ok (Store e1 e2) G :-
-      v2 ← {expr_ok e2};
-      v1 ← {expr_ok e1};
-      '(l, _) ← find_in_context (FindPointsTo v1);
-      inhale (l ↦ v2);
-      return G v2.
-  Proof. Admitted.
-  Definition expr_ok_store_inst := [instance expr_ok_store].
-  Global Existing Instance expr_ok_store_inst.
-
-  Lemma expr_ok_load e G :
-    expr_ok (Load e) G :-
-      v ← {expr_ok e};
-      '(l, vl) ← find_in_context (FindPointsTo v);
-      inhale (l ↦ vl);
-      return G vl.
-  Proof. Admitted.
-  Definition expr_ok_load_inst := [instance expr_ok_load].
-  Global Existing Instance expr_ok_load_inst.
-
   Lemma cons_correct :
     ⊢ fn_spec cons_code (val * list val)
       (λ '(x, xs) a, ∃ v, ⌜a = (x, v)%V⌝ ∗ is_list v xs)
@@ -507,15 +542,6 @@ Section proofs.
     iStartProof. iApply prove_fn_spec_rec. simpl.
     repeat liTStep; liShow.
   Abort.
-
-
-  Lemma find_in_context_find_pointsto_loc (l : loc) G:
-    find_in_context (FindPointsTo #l) G :-
-      pattern: v, l ↦ v; return G (l, v).
-  Proof. iDestruct 1 as (v) "[Hl HT]". iExists (_, _) => /=. by iFrame. Qed.
-  Definition find_in_context_find_pointsto_loc_inst :=
-    [instance find_in_context_find_pointsto_loc with FICSyntactic].
-  Global Existing Instance find_in_context_find_pointsto_loc_inst | 1.
 
   Lemma cons_correct :
     ⊢ fn_spec cons_code (val * list val)
@@ -529,10 +555,10 @@ Section proofs.
   Definition FindList (v : val) :=
   {| fic_A := iProp Σ; fic_Prop P := P; |}.
   Global Typeclasses Opaque FindList.
-  Lemma find_in_context_find_list_loc (l : loc) G:
-    find_in_context (FindList #l) G :-
-      pattern: v, l ↦ v; return G (l ↦ v).
-  Proof. iDestruct 1 as (v) "[Hl HT]". iExists _. by iFrame. Qed.
+  Lemma find_in_context_find_list_loc v G:
+    find_in_context (FindList v) G :-
+      pattern: v2, v ↦ v2; return G (v ↦ v2).
+  Proof. iDestruct 1 as (?) "[Hl HT]". iExists _. by iFrame. Qed.
   Definition find_in_context_find_list_loc_inst :=
     [instance find_in_context_find_list_loc with FICSyntactic].
   Global Existing Instance find_in_context_find_list_loc_inst | 10.
@@ -548,8 +574,8 @@ Section proofs.
     repeat liTStep; liShow.
   Abort.
 
-  Lemma subsume_pointsto_list (l : loc) v xs G :
-    subsume (l ↦ v) (is_list #l xs) G :-
+  Lemma subsume_pointsto_list vl v xs G :
+    subsume (vl ↦ v) (is_list vl xs) G :-
      ∃ v1 v2 xs',
      exhale ⌜v = (v1, v2)%V⌝ ∗ ⌜xs = v1 :: xs'⌝ ∗ is_list v2 xs';
      return G.
@@ -616,9 +642,9 @@ Section proofs.
     find_in_context (FindPointsTo v) G :-
       pattern: xs, is_list v xs;
       exhale ⌜0 < length xs⌝;
-      ∀ (l : loc) v' x xs',
-      inhale ⌜v = #l⌝ ∗ ⌜xs = x::xs'⌝ ∗ is_list v' xs';
-      return G (l, (x, v')%V).
+      ∀ v' x xs',
+      inhale ⌜xs = x::xs'⌝ ∗ is_list v' xs';
+      return G (x, v')%V.
   Proof. Admitted.
   Definition find_in_context_find_pointsto_list_inst :=
     [instance find_in_context_find_pointsto_list with FICSyntactic].
