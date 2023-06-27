@@ -8,19 +8,11 @@
 typedef uint8_t message_type_t;
 #define NUM_MESSAGE_TYPES (UINT8_MAX + 1)
 
-//@rc::inlined
-//@Record message_data := Message {
-//@  m_type : Z;
-//@  m_length : Z;
-//@  m_data : list Z;
-//@}.
-//@Global Instance message_data_inhabited : Inhabited message_data := populate (Message inhabitant inhabitant inhabitant).
-//@rc::end
+//@rc::import message_extra from refinedc.examples.scheduler.src.fdsched
 
 /* a message that was received via some input channel */
 struct [[rc::parameters("cont : type")]]
-       [[rc::refined_by("data : message_data")]]
-     message {
+       [[rc::refined_by("data : message_data")]] message {
   [[rc::field("{m_type data} @ int<u8>")]]
   message_type_t type;
   [[rc::field("{m_length data} @ int<u64>")]]
@@ -31,12 +23,24 @@ struct [[rc::parameters("cont : type")]]
   struct message *next;
 
 #define MAX_MESSAGE_LEN (4096 - sizeof(message_type_t) - sizeof(size_t) - sizeof(struct message*))
-  [[rc::field("array<u8, {m_data data `at_type` int u8}>")]]
+  [[rc::field("array<u8, {get_packet_data (m_id data) `at_type` int u8}>")]]
   uint8_t data[MAX_MESSAGE_LEN];
 };
 
 /* interface: we expect the user to provide an implementation of this
    function */
+[[rc::parameters("msg : message_data", "q : loc")]]
+[[rc::args("q @ &own<struct<struct_message,"
+     "uninit<u8>,"
+	   "{m_length msg} @ int<u64>,"
+	   "uninit<void*>,"
+	   "array<u8, {get_packet_data (m_id msg) `at_type` int u8}>>>")]]
+[[rc::returns("{message_identify_type_coq (m_id msg)} @ int<u8>")]]
+[[rc::ensures("own q : struct<struct_message,"
+	   "uninit<u8>,"
+	   "{m_length msg} @ int<u64>,"
+	   "uninit<void*>,"
+	   "array<u8, {get_packet_data (m_id msg) `at_type` int u8}>>")]]
 message_type_t message_identify_type(struct message* msg);
 
 
@@ -74,10 +78,11 @@ int message_queue_empty(struct message_queue *q) {
 }
 
 /* dequeue from front */
-[[rc::parameters("data : {list message_data}", "msg : message_data", "q : loc")]]
-[[rc::args("q @ &own<{msg::data} @ message_queue>")]]
-[[rc::returns("&own<msg @ message<uninit<void*>>>")]]
-[[rc::ensures("own q : data @ message_queue")]]
+[[rc::parameters("data : {list message_data}", "msg : {message_data}", "q : loc")]]
+[[rc::args("q @ &own<data @ message_queue>")]]
+[[rc::requires("{data ≠ []}")]]
+[[rc::returns("{head data} @ optionalO<λ msg1. &own<msg1 @ message<uninit<void*>>>>")]]
+[[rc::ensures("own q : {tail data} @ message_queue")]]
 static inline
 struct message* message_queue_remove(struct message_queue *q) {
   assert(!message_queue_empty(q));
