@@ -247,23 +247,43 @@ Inductive memcast_compat_type : Set :=
 | MCNone | MCCopy | MCId.
 
 Record type `{!typeG Σ} := {
-  (** ty_has_op_type should be written such that it computes well and can be solved by solve_goal.
-   Also ty_has_op_type should be defined for UntypedOp. *)
+  (** [ty_has_op_type ot mt] describes in which cases [l ◁ₗ ty] can be
+      turned into [∃ v. l ↦ v ∗ v ◁ᵥ ty]. The op_type [ot] gives the
+      requested layout for the location and [mt] describes how the
+      value of [v ◁ᵥ ty] is changed by a memcast (i.e. when read from
+      memory). [ty_has_op_type] should be written such that it
+      computes well and can be solved by [done]. Also [ty_has_op_type]
+      should be defined for [UntypedOp]. *)
   (* TODO: add
    ty_has_op_type ot mt → ty_has_op_type (UntypedOp (ot_layout ot)) mt
    This property is never used explicitly, but relied on by some typing rules *)
   ty_has_op_type : op_type → memcast_compat_type → Prop;
+  (** [ty_own β l ty], also [l ◁ₗ{β} ty], states that the location [l]
+  has type [ty]. [β] determines whether the location is fully owned
+  [Own] or shared [Shr] (shared is mainly used for global variables). *)
   ty_own : own_state → loc → iProp Σ;
+  (** [ty_own v ty], also [v ◁ᵥ ty], states that the value [v] has type [ty]. *)
   ty_own_val : val → iProp Σ;
-  (* TODO: figure out the right mask here. We cannot give the full
-  mask because of sharing for guarded (for similar reasons as in
-  rustbelt) TODO: This comment is outdated as there is no guarded anymore. *)
+  (** [ty_share] states that full ownership can always be turned into shared ownership. *)
   ty_share l E : ↑shrN ⊆ E → ty_own Own l ={E}=∗ ty_own Shr l;
+  (** [ty_shr_pers] states that shared ownership is persistent. *)
   ty_shr_pers l : Persistent (ty_own Shr l);
+  (** [ty_aligned] states that from [l ◁ₗ{β} ty] follows that [l] is
+  aligned according to [ty_has_op_type]. *)
   ty_aligned ot mt l : ty_has_op_type ot mt → ty_own Own l -∗ ⌜l `has_layout_loc` ot_layout ot⌝;
+  (** [ty_size_eq] states that from [v ◁ᵥ ty] follows that [v] has a
+  size according to [ty_has_op_type]. *)
   ty_size_eq ot mt v : ty_has_op_type ot mt → ty_own_val v -∗ ⌜v `has_layout_val` ot_layout ot⌝;
+  (** [ty_deref] states that [l ◁ₗ ty] can be turned into [v ◁ᵥ ty] and a points-to
+  according to [ty_has_op_type]. *)
   ty_deref ot mt l : ty_has_op_type ot mt → ty_own Own l -∗ l↦: ty_own_val;
+  (** [ty_ref] states that [v ◁ₗ ty] and a points-to for a suitable location [l ◁ₗ ty]
+  according to [ty_has_op_type]. *)
   ty_ref ot mt l v : ty_has_op_type ot mt → ⌜l `has_layout_loc` ot_layout ot⌝ -∗ l↦v -∗ ty_own_val v -∗ ty_own Own l;
+  (** [ty_memcast_compat] describes how a value of type [ty] is
+  transformed by memcast. [MCNone] means there is no information about
+  the new value, [MCCopy] means the value can change, but it still has
+  type [ty], and [MCId] means the value does not change. *)
   ty_memcast_compat v ot mt st:
     ty_has_op_type ot mt →
     (* TODO: Should this be a -∗ for consistency with the other properties?

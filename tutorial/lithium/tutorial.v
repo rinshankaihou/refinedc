@@ -632,7 +632,7 @@ Section proofs.
   Lemma head_correct :
     ⊢ fn_spec head_code (val * list val)
       (λ '(va, xs) v, ⌜v = va⌝ ∗ is_list v xs ∗ ⌜0 < length xs⌝)
-      (λ '(va, xs) r, ⌜∃ xs', xs = r::xs'⌝ ∗ is_list va xs).
+      (λ '(va, xs) r, ⌜head xs = Some r⌝ ∗ is_list va xs).
   Proof.
     iStartProof. iApply prove_fn_spec_rec. simpl.
     repeat liTStep; liShow.
@@ -653,12 +653,11 @@ Section proofs.
   Lemma head_correct :
     ⊢ fn_spec head_code (val * list val)
       (λ '(va, xs) v, ⌜v = va⌝ ∗ is_list v xs ∗ ⌜0 < length xs⌝)
-      (λ '(va, xs) r, ⌜∃ xs', xs = r::xs'⌝ ∗ is_list va xs).
+      (λ '(va, xs) r, ⌜head xs = Some r⌝ ∗ is_list va xs).
   Proof.
     iStartProof. iApply prove_fn_spec_rec. simpl.
     repeat liTStep; liShow.
     Unshelve. all: unshelve_sidecond.
-    - naive_solver.
   Qed.
 
 

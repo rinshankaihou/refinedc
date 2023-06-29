@@ -139,23 +139,38 @@ Section judgements.
     typed_macro_expr_proof T : iProp_to_Prop (typed_macro_expr m es T).
 
   (*** places *)
+  (** [typed_write atomic e ot v ty] typechecks a write with op_type
+  ot of value [v] of type [ty] to the expression [e]. [atomic] says
+  whether the write is an atomic write. The typing rule for [typed_write]
+  typechecks [e] and then dispatches to [typed_write_end]. *)
   Definition typed_write (atomic : bool) (e : expr) (ot : op_type) (v : val) (ty : type) (T : iProp Σ) : iProp Σ :=
     let E := if atomic then ∅ else ⊤ in
     (∀ Φ,
         (∀ l, (v ◁ᵥ ty ={⊤, E}=∗ ⌜v `has_layout_val` ot_layout ot⌝ ∗ l↦|ot_layout ot| ∗ ▷ (l ↦ v ={E, ⊤}=∗ T)) -∗ Φ (val_of_loc l)) -∗
        WP e {{ Φ }}).
 
+  (** [typed_read atomic e ot memcast] typechecks a read with op_type
+  ot of the expression [e]. [atomic] says whether the read is an
+  atomic read and [memcast] says whether a memcast is performed during
+  the read. The typing rule for [typed_read] typechecks [e] and then
+  dispatches to [typed_read_end] *)
   Definition typed_read (atomic : bool) (e : expr) (ot : op_type) (memcast : bool) (T : val → type → iProp Σ) : iProp Σ :=
     let E := if atomic then ∅ else ⊤ in
     (∀ Φ,
        (∀ (l : loc), (|={⊤, E}=> ∃ v q (ty : type), ⌜l `has_layout_loc` ot_layout ot⌝ ∗ ⌜v `has_layout_val` ot_layout ot⌝ ∗ l↦{q}v ∗ ▷ v ◁ᵥ ty ∗ ▷ (∀ st, l↦{q}v -∗ v ◁ᵥ ty ={E, ⊤}=∗ ∃ ty' : type, (if memcast then mem_cast v ot st else v) ◁ᵥ ty' ∗ T (if memcast then mem_cast v ot st else v) ty')) -∗ Φ (val_of_loc l)) -∗
        WP e {{ Φ }}).
 
+  (** [typed_addr_of e] typechecks an address of operation on the expression [e].
+  The typing rule for [typed_addr_of] typechecks [e] and then dispatches to [typed_addr_of_end]*)
   Definition typed_addr_of (e : expr) (T : loc → own_state → type → iProp Σ) : iProp Σ :=
     (∀ Φ,
        (∀ (l : loc) β ty, l ◁ₗ{β} ty -∗ T l β ty -∗ Φ (val_of_loc l)) -∗
        WP e {{ Φ }}).
 
+  (** [typed_read_end atomic E l β ty ot memcast] typechecks a read with op_type
+  ot of the location [l] with type [l ◁ₗ{β} ty]. [atomic] says whether the read is an
+  atomic read, [E] gives the current mask, and [memcast] says whether a memcast is
+  performed during the read. *)
   Definition typed_read_end (atomic : bool) (E : coPset) (l : loc) (β : own_state) (ty : type) (ot : op_type) (memcast : bool) (T : val → type → type → iProp Σ) : iProp Σ :=
     let E' := if atomic then ∅ else E in
     l◁ₗ{β}ty ={E, E'}=∗ ∃ q v (ty2 : type),
@@ -165,12 +180,17 @@ Section judgements.
   Class TypedReadEnd (atomic : bool) (E : coPset) (l : loc) (β : own_state) (ty : type) (ot : op_type) (memcast : bool) : Type :=
     typed_read_end_proof T : iProp_to_Prop (typed_read_end atomic E l β ty ot memcast T).
 
+  (** [typed_write atomic E ot v1 ty1 l2 β2 ty2] typechecks a write with op_type
+  ot of value [v1] of type [ty1] to the location [l2] with type [l2 ◁ₗ{β2} ty].
+  [atomic] says whether the write is an atomic write and [E] gives the current mask. *)
   Definition typed_write_end (atomic : bool) (E : coPset) (ot : op_type) (v1 : val) (ty1 : type) (l2 : loc) (β2 : own_state) (ty2 : type) (T : type → iProp Σ) : iProp Σ :=
     let E' := if atomic then ∅ else E in
     l2 ◁ₗ{β2} ty2 -∗ (v1 ◁ᵥ ty1 ={E, E'}=∗ ⌜v1 `has_layout_val` ot_layout ot⌝ ∗ l2↦|ot_layout ot| ∗ ▷ (l2↦v1 ={E', E}=∗ ∃ ty3, l2 ◁ₗ{β2} ty3 ∗ T ty3)).
   Class TypedWriteEnd (atomic : bool) (E : coPset) (ot : op_type) (v1 : val) (ty1 : type) (l2 : loc) (β2 : own_state) (ty2 : type) : Type :=
     typed_write_end_proof T : iProp_to_Prop (typed_write_end atomic E ot v1 ty1 l2 β2 ty2 T).
 
+  (** [typed_addr_of_end l β ty] typechecks an address of operation on the location [l]
+  with type [l ◁ₗ{β} ty]. *)
   Definition typed_addr_of_end (l : loc) (β : own_state) (ty : type) (T : own_state → type → type → iProp Σ) : iProp Σ :=
     l◁ₗ{β}ty ={⊤}=∗ ∃ β2 ty2 ty', l◁ₗ{β2}ty2 ∗ l◁ₗ{β}ty' ∗ T β2 ty2 ty'.
   Class TypedAddrOfEnd (l : loc) (β : own_state) (ty : type) : Type :=
