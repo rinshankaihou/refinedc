@@ -92,12 +92,13 @@ Section value.
 
   (* TODO: this constraint on the layout is too strong, we only need
   that the length is the same and the alignment is lower. Adapt when necessary. *)
-  Lemma type_write_own a ty E l2 ty2 v ot
-        `{!TCDone (ty.(ty_has_op_type) ot MCId ∧ ty2.(ty_has_op_type) (UntypedOp (ot_layout ot)) MCNone)} T:
-    (∀ v', v ◁ᵥ ty -∗ v' ◁ᵥ ty2 -∗ T (value ot v))
-    ⊢ typed_write_end a E ot v ty l2 Own ty2 T.
+  Lemma type_write_own a ty E l2 ty2 v ot T:
+    typed_write_end a E ot v ty l2 Own ty2 T where
+    `{!TCDone (ty.(ty_has_op_type) ot MCId ∧
+               ty2.(ty_has_op_type) (UntypedOp (ot_layout ot)) MCNone)} :-
+      ∀ v', inhale v ◁ᵥ ty; inhale v' ◁ᵥ ty2; return T (value ot v).
   Proof.
-    unfold TCDone, typed_write_end in *. destruct_and?. iIntros "HT Hl Hv".
+    unfold TCDone, typed_write_end => -[??]. iIntros "HT Hl Hv".
     iDestruct (ty_aligned with "Hl") as %?; [done|].
     iDestruct (ty_deref with "Hl") as (v') "[Hl Hv']"; [done|].
     iDestruct (ty_size_eq with "Hv") as %?; [done|].
