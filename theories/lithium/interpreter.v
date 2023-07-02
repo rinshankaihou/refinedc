@@ -465,6 +465,18 @@ Section coq_tactics.
   Lemma tac_wand_emp Δ (P : iProp Σ) :
     envs_entails Δ P → envs_entails Δ (emp -∗ P).
   Proof. apply tac_fast_apply. by iIntros "$". Qed.
+
+  Lemma tac_wand_pers_sep Δ (P : iProp Σ) (Q1 Q2 : iProp Σ) :
+    envs_entails Δ ((□ Q1 ∗ □ Q2) -∗ P) → envs_entails Δ (□ (Q1 ∗ Q2) -∗ P).
+  Proof. apply tac_fast_apply. iIntros "Hx #[? ?]". iApply "Hx". iFrame "#". Qed.
+
+  Lemma tac_wand_pers_exist A Δ (P : iProp Σ) (Q : A → iProp Σ) :
+    envs_entails Δ ((∃ x, □ Q x) -∗ P) → envs_entails Δ (□ (∃ x, Q x) -∗ P).
+  Proof. apply tac_fast_apply. iIntros "Hx #[% ?]". iApply "Hx". iExists _. iFrame "#". Qed.
+
+  Lemma tac_wand_pers_pure Δ (P : iProp Σ) Φ :
+    envs_entails Δ (⌜Φ⌝ -∗ P) → envs_entails Δ (□ ⌜Φ⌝ -∗ P).
+  Proof. apply tac_fast_apply. iIntros "HP %". by iApply "HP". Qed.
 End coq_tactics.
 
 Ltac liWand :=
@@ -492,6 +504,9 @@ Ltac liWand :=
       | bi_exist _ => fail "handled by liForall"
       | bi_emp => notypeclasses refine (tac_wand_emp _ _ _)
       | bi_pure _ => notypeclasses refine (tac_do_intro_pure _ _ _ _)
+      | bi_intuitionistically (bi_sep _ _) => notypeclasses refine (tac_wand_pers_sep _ _ _ _ _)
+      | bi_intuitionistically (bi_exist _) => notypeclasses refine (tac_wand_pers_exist _ _ _ _ _)
+      | bi_intuitionistically (bi_pure _) => notypeclasses refine (tac_wand_pers_pure _ _ _ _)
       | match ?x with _ => _ end => fail "should not have match in wand"
       | _ => wand_intro P
       end
