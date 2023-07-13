@@ -747,7 +747,11 @@ Section proofs.
     subsume (fn_spec v X pre1 post1) (fn_spec v X pre2 post2) G :-
      and:
      | drop_spatial;
-       ∀ x v, inhale pre2 x v; ∃ x', exhale pre1 x' v; ∀ v', inhale post1 x' v'; exhale post2 x v'; done
+       ∀ x v, inhale pre2 x v;
+       ∃ x', exhale pre1 x' v;
+       ∀ v', inhale post1 x' v';
+       exhale post2 x v';
+       done
      | return G.
   Proof. Admitted.
   Definition subsume_fnspec_fnspec_inst := [instance subsume_fnspec_fnspec].
@@ -797,13 +801,13 @@ Proof. unfold SimplBoth. by set_unfold. Qed.
     -∗
        fn_spec (find_client_code find) (val * list Z)
       (λ '(va, xs) v, ⌜v = va⌝ ∗ is_list va (LitV <$> (LitInt <$> xs)))
-      (λ '(va, xs) r, ⌜r = #(bool_decide (Exists (λ x, x = 1) xs))⌝ ∗ is_list va (LitV <$> (LitInt <$> xs))).
+      (λ '(va, xs) r, ⌜r = #(bool_decide (1 ∈ xs))⌝ ∗ is_list va (LitV <$> (LitInt <$> xs))).
   Proof.
     iStartProof. iIntros "#?". iApply prove_fn_spec_rec. simpl.
     repeat liTStep; liShow.
     Unshelve. all: unshelve_sidecond.
     - repeat case_bool_decide; naive_solver.
-    - do 2 f_equal. apply bool_decide_ext. rewrite !Exists_fmap. f_equiv. move => ?. naive_solver.
+    - do 2 f_equal. apply bool_decide_ext. rewrite !Exists_fmap. rewrite Exists_exists. naive_solver.
   Qed.
 
 End proofs.
