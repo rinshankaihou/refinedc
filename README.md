@@ -106,7 +106,7 @@ are not quite sure what to do, simply create a new directory under which all
 of you RefinedC will be placed. And then create the new switch in that folder.
 ```bash
 mkdir refinedc-projects
-opam switch create refinedc-projects ocaml-base-compiler.4.11.1
+opam switch create refinedc-projects ocaml-variants.4.14.0+options ocaml-option-flambda
 ```
 You should then have an appropriate OCaml environment (with version 4.11.1) in
 the `refinedc-projects` directory (or whatever you named it). In the following

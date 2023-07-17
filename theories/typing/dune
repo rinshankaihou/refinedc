@@ -3,6 +3,4 @@
  (package refinedc)
  (flags :standard -w -notation-overridden -w -redundant-canonical-projection)
  (synopsis "Lithium")
- (theories caesium
-   lithium ; removed by make prepare-install-refinedc
- ))
+ (theories caesium lithium stdpp iris RecordUpdate Ltac2))

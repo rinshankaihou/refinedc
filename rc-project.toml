@@ -8,9 +8,4 @@ include = [ "include", "examples/include" , "linux/pkvm/include", "examples/sche
 use_rc_include = false
 
 [coq]
-extra_theories = [
-  "caesium",
-  "refinedc.typing",
-  "refinedc.typing.automation",
-  "lithium"
-]
+extra_theories = []

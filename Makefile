@@ -86,16 +86,10 @@ builddep: builddep/refinedc-builddep.opam builddep-pins
 
 DUNE_FILES = $(shell find theories/ -type f -name 'dune')
 
-# We need to remove lithium from the theories in dune files when
-# installing RefinedC via opam as otherwise dune does not use the
-# already installed version of Lithium, but recompiles it (if one
-# instructs it with dune build -p refinedc,coq-lithium).
+# Currently, we don't need to do anything special before building RefinedC in opam.
 prepare-install-refinedc:
-	@for f in $(DUNE_FILES) ; do \
-		sed 's/^.*; removed by make prepare-install-refinedc.*//g' "$$f" > "$$f-tmp"; \
-		mv "$$f-tmp" "$$f"; \
-	done
-.PHONY: prepare-install
+	@true
+.PHONY: prepare-install-refinedc
 
 # FIXME
 #TUTORIAL_SRC = \
