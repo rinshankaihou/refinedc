@@ -577,29 +577,11 @@ Section proofs.
   Lemma subsume_pointsto_list vl v xs G :
     subsume (vl ↦ v) (is_list vl xs) G :-
      ∃ v1 v2 xs',
-     exhale ⌜v = (v1, v2)%V⌝ ∗ ⌜xs = v1 :: xs'⌝ ∗ is_list v2 xs';
+     exhale ⌜v = (v1, v2)%V⌝ ∗ is_list v2 xs' ∗ ⌜xs = v1 :: xs'⌝;
      return G.
   Proof. Admitted.
   Definition subsume_pointsto_list_inst := [instance subsume_pointsto_list].
   Global Existing Instance subsume_pointsto_list_inst.
-
-  Lemma cons_correct :
-    ⊢ fn_spec cons_code (val * list val)
-      (λ '(x, xs) a, ∃ v, ⌜a = (x, v)%V⌝ ∗ is_list v xs)
-      (λ '(x, xs) r, is_list r (x :: xs)).
-  Proof.
-    iStartProof. iApply prove_fn_spec_rec. simpl.
-    repeat liTStep; liShow.
-  Qed.
-
-  Lemma build_list_correct empty cons :
-    fn_spec empty unit (λ _ _, True) (λ _ v, is_list v []) -∗
-    fn_spec cons (val * list val) (λ '(x, xs) a, ∃ v, ⌜a = (x, v)%V⌝ ∗ is_list v xs) (λ '(x, xs) r, is_list r (x :: xs)) -∗
-    fn_spec (build_list_code empty cons) unit (λ _ _, True) (λ _ v, is_list v [ #1; #2 ]).
-  Proof.
-    iStartProof. iIntros "#? #?". iApply prove_fn_spec_rec. simpl.
-    repeat liTStep; liShow.
-  Abort.
 
   Lemma find_in_context_find_list_list v G:
     find_in_context (FindList v) G :-
@@ -616,6 +598,15 @@ Section proofs.
   Proof. Admitted.
   Definition subsume_list_list_inst := [instance subsume_list_list].
   Global Existing Instance subsume_list_list_inst.
+
+  Lemma cons_correct :
+    ⊢ fn_spec cons_code (val * list val)
+      (λ '(x, xs) a, ∃ v, ⌜a = (x, v)%V⌝ ∗ is_list v xs)
+      (λ '(x, xs) r, is_list r (x :: xs)).
+  Proof.
+    iStartProof. iApply prove_fn_spec_rec. simpl.
+    repeat liTStep; liShow.
+  Qed.
 
   Lemma build_list_correct empty cons :
     fn_spec empty unit (λ _ _, True) (λ _ v, is_list v []) -∗
