@@ -20,6 +20,11 @@ Class IsProtected {A} (x : A) : Set := is_protected: ().
 Global Hint Extern 0 (ContainsProtected ?x) => (match x with | context [protected _] => exact: tt end) : typeclass_instances.
 Global Hint Extern 0 (IsProtected (protected _) ) => (exact: tt) : typeclass_instances.
 
+(** * [IsVar] *)
+Class IsVar {A} (x : A) : Set := is_var : ().
+Global Hint Extern 0 (IsVar ?x) => (is_var x; exact: tt) : typeclass_instances.
+Global Hint Mode IsVar + + : typeclass_instances.
+
 (** * [CanSolve] *)
 (** Exposes the general purpose solver in [can_solve_hook] (see
  hooks.v) as the [can_solve] tactic and via the [CanSolve] typeclass. *)
