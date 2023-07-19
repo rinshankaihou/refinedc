@@ -113,8 +113,8 @@ Global Instance val_eq_dec' : EqDecision val := val_eq_dec.
 Inductive ectx_item :=
   | AppLCtx (v2 : val)
   | AppRCtx (e1 : expr)
-  | BinOpLCtx (op : bin_op) (v2 : val)
-  | BinOpRCtx (op : bin_op) (e1 : expr)
+  | BinOpLCtx (op : bin_op) (e2 : expr)
+  | BinOpRCtx (op : bin_op) (v1 : val)
   | UnOpCtx (op : un_op)
   | IfCtx (e1 e2 : expr)
   | AssertCtx
@@ -126,8 +126,8 @@ Definition fill_item (Ki : ectx_item) (e : expr) : expr :=
   match Ki with
   | AppLCtx v2 => App e (Val v2)
   | AppRCtx e1 => App e1 e
-  | BinOpLCtx op v2 => BinOp op e (Val v2)
-  | BinOpRCtx op e1 => BinOp op e1 e
+  | BinOpLCtx op e2 => BinOp op e e2
+  | BinOpRCtx op v1 => BinOp op (Val v1) e
   | UnOpCtx op => UnOp op e
   | IfCtx e1 e2 => If e e1 e2
   | AssertCtx => Assert e
@@ -171,6 +171,10 @@ Definition bin_op_eval (op : bin_op) (v1 v2: val) : option val :=
               | _, _ => None
               end
   | EqOp => match v1, v2 with
+              | LitV (LitNULL), _ =>
+                  Some (LitV $ LitBool $ bool_decide (v2 = LitV LitNULL))
+              | _, LitV (LitNULL) =>
+                  Some (LitV $ LitBool $ bool_decide (v1 = LitV LitNULL))
               | LitV (LitInt n1), LitV (LitInt n2) =>
                   Some (LitV $ LitBool $ bool_decide (n1 = n2))
               | _, _ => None

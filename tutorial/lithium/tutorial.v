@@ -1,7 +1,7 @@
 From iris.program_logic Require Export weakestpre.
 From lithium Require Import hooks.
 From lithium Require Import all.
-From lithium.tutorial Require Import lang notation primitive_laws.
+From lithium.tutorial Require Import lang notation primitive_laws proofmode.
 Set Default Proof Using "Type".
 
 (** * Definitions of Lithium functions *)
@@ -70,6 +70,9 @@ Ltac liTStep :=
  liStep
 ]; liSimpl.
 
+Ltac liTUnfold :=
+  liFromSyntax; unfold expr_ok, binop_ok, unop_ok, if_ok.
+
 
 (** * Tutorial *)
 (** This is the start of the actual tutorial. *)
@@ -128,7 +131,11 @@ Section proofs.
       v1 ← {expr_ok e1};
       v2 ← {expr_ok (subst' x v1 e2)};
       return G v2.
-  Proof. Admitted.
+  Proof.
+    liTUnfold. iIntros "HWP". wp_bind (e1).
+    iApply (wp_wand with "HWP"). iIntros (?) "HWP".
+    by wp_pures.
+  Qed.
   Definition expr_ok_Let_inst := [instance expr_ok_Let].
   Global Existing Instance expr_ok_Let_inst | 2.
 
@@ -144,7 +151,7 @@ Section proofs.
 
   Lemma expr_ok_val v G :
     expr_ok (Val v) G :- return G v.
-  Proof. Admitted.
+  Proof. liTUnfold. iIntros "HG". by wp_pures. Qed.
   Definition expr_ok_val_inst := [instance expr_ok_val].
   Global Existing Instance expr_ok_val_inst.
 
@@ -164,20 +171,25 @@ Section proofs.
       v2 ← {expr_ok e2};
       v  ← {binop_ok op v1 v2};
       return G v.
-  Proof. Admitted.
+  Proof.
+    liTUnfold. iIntros "HWP". wp_bind (e1).
+    iApply (wp_wand with "HWP"). iIntros (?) "HWP".
+    wp_bind (e2).
+    iApply (wp_wand with "HWP"). by iIntros (?) "HWP".
+  Qed.
   Definition expr_ok_binop_inst := [instance expr_ok_binop].
   Global Existing Instance expr_ok_binop_inst.
 
   Lemma binop_ok_plus_int_int (n1 n2 : Z) G :
     binop_ok PlusOp #n1 #n2 G :-
       return G #(n1 + n2).
-  Proof. Admitted.
+  Proof. liTUnfold. iIntros "HG". by wp_pures. Qed.
   Definition binop_ok_plus_int_int_inst := [instance binop_ok_plus_int_int].
   Global Existing Instance binop_ok_plus_int_int_inst.
   Lemma binop_ok_minus_int_int (n1 n2 : Z) G :
     binop_ok MinusOp #n1 #n2 G :-
       return G #(n1 - n2).
-  Proof. Admitted.
+  Proof. liTUnfold. iIntros "HG". by wp_pures. Qed.
   Definition binop_ok_minus_int_int_inst := [instance binop_ok_minus_int_int].
   Global Existing Instance binop_ok_minus_int_int_inst.
 
@@ -196,14 +208,18 @@ Section proofs.
       v ← {expr_ok e};
       exhale ⌜v = #true⌝;
       return G #0.
-  Proof. Admitted.
+  Proof.
+    liTUnfold. iIntros "HWP". wp_bind (e).
+    iApply (wp_wand with "HWP"). iIntros (?) "[-> HWP]".
+    by wp_pures.
+  Qed.
   Definition expr_ok_assert_inst := [instance expr_ok_assert].
   Global Existing Instance expr_ok_assert_inst.
 
   Lemma binop_ok_eq_int_int (n1 n2 : Z) G :
     binop_ok EqOp #n1 #n2 G :-
       return G #(bool_decide (n1 = n2)).
-  Proof. Admitted.
+  Proof. liTUnfold. iIntros "HG". by wp_pures. Qed.
   Definition binop_ok_eq_int_int_inst := [instance binop_ok_eq_int_int].
   Global Existing Instance binop_ok_eq_int_int_inst.
 
@@ -221,18 +237,30 @@ Section proofs.
   Definition add_one_code : val := λ: "v", "v" + #1.
 
   Definition fn_spec (v : val) (X : Type)
-    (pre : X → val → iProp Σ) (post : X → val → iProp Σ) : iProp Σ.
-  Admitted.
+    (pre : X → val → iProp Σ) (post : X → val → iProp Σ) : iProp Σ :=
+    □ ∃ f b e, ⌜v = RecV f b e⌝ ∗
+    ∀ x va, pre x va -∗ ▷ WP subst' b va (subst' f v e) {{ vr, post x vr}}.
+  Global Typeclasses Opaque fn_spec.
+
+  Global Instance fn_spec_pers X v pre post :
+    Persistent (fn_spec v X pre post).
+  Proof. unfold fn_spec. apply _. Qed.
+
 
   Lemma prove_fn_spec X a e pre post :
     fn_spec (LamV a e) X pre post :-
+      drop_spatial;
       ∀ (x : X) v,
       inhale pre x v;
       v' ← {expr_ok (subst' a v e)};
       exhale post x v';
       done.
   Proof.
-  Admitted.
+    liTUnfold. unfold fn_spec. iIntros "#HWP !>".
+    iExists _, _, _. iSplit; [done|]. simpl.
+    iIntros (??) "?". iModIntro. iApply (wp_wand with "[-]"). { by iApply "HWP". }
+    iIntros (?) "[$ ?]".
+  Qed.
 
   Lemma add_one_correct :
     ⊢ fn_spec add_one_code Z (λ n v, ⌜v = #n⌝) (λ n v, ⌜v = #(n + 1)⌝).
@@ -275,16 +303,20 @@ Section proofs.
     expr_ok (App e1 e2) G  :-
       v2 ← {expr_ok e2};
       v1 ← {expr_ok e1};
-     (* TODO: can one have a better notation that does not duplicate
-     the pattern? *)
-      '(existT X (pre, post)) ←
-        find_in_context (FindFnSpec v1);
+      '(existT X (pre, post)) ← find_in_context (FindFnSpec v1);
       ∃ x,
       exhale (pre x v2);
       ∀ v',
       inhale (post x v');
       return G v'.
-  Proof. Admitted.
+  Proof.
+    liTUnfold. iIntros "HWP". wp_bind (e2). iApply (wp_wand with "HWP").
+    iIntros (?) "HWP". wp_bind (e1). iApply (wp_wand with "HWP").
+    iIntros (?) "[%a HWP]". destruct a as [?[??]] => /=. unfold fn_spec.
+    iDestruct "HWP" as "[#(%&%&%&->&Hf) [% [Hpre HG]]]".
+    iDestruct ("Hf" with "[$]") as "HWP".
+    wp_pures. by iApply (wp_wand with "HWP").
+  Qed.
   Definition expr_ok_App_inst := [instance expr_ok_App].
   Global Existing Instance expr_ok_App_inst | 50.
 
@@ -310,13 +342,24 @@ Section proofs.
 
   Lemma prove_fn_spec_rec X f a e pre post :
     fn_spec (RecV f a e) X pre post :-
+      drop_spatial;
       ∀ (x : X) v vr,
       inhale pre x v;
       inhale fn_spec vr X pre post;
       v' ← {expr_ok (subst' a v (subst' f vr e))};
       exhale post x v';
       done.
-  Proof. Admitted.
+  Proof.
+    liTUnfold. unfold fn_spec. iIntros "#HWP !>".
+    iExists _, _, _. iSplit; [done|].
+    iIntros (x va) "Hpre". iModIntro.
+    iLöb as "IH" forall (x va).
+    iApply (wp_wand with "[-]").
+    - iApply ("HWP" with "Hpre").
+      iModIntro. iExists _, _, _. iSplit; [done|].
+      iIntros (??) "?". iModIntro. by iApply "IH".
+    - iIntros (?) "[$ _]".
+  Qed.
 
   Lemma fib_correct :
     ⊢ fn_spec fib_code unit (λ _ v, ∃ n : Z, ⌜v = #n⌝ ∗ ⌜0 ≤ n⌝)
@@ -331,7 +374,11 @@ Section proofs.
     expr_ok (If e0 e1 e2) G :-
       v ← {expr_ok e0};
       {if_ok v (expr_ok e1 G) (expr_ok e2 G)}.
-  Proof. Admitted.
+  Proof.
+    liTUnfold. iIntros "HWP". wp_bind (e0).
+    iApply (wp_wand with "HWP"). iIntros (?) "[%b [-> HWP]]".
+    by destruct b; wp_pures.
+  Qed.
   Definition expr_ok_if_inst := [instance expr_ok_if].
   Global Existing Instance expr_ok_if_inst.
 
@@ -344,7 +391,13 @@ Section proofs.
       (* and: *)
       (* | inhale ⌜b⌝; return G1 *)
       (* | inhale ⌜¬ b⌝; return G2. *)
-  Proof. Admitted.
+  Proof.
+    liTUnfold. iIntros "Hif".
+    iExists _. iSplit; [done|].
+    destruct b.
+    - iDestruct "Hif" as "[HG _]". by iApply "HG".
+    - iDestruct "Hif" as "[_ HG]". iApply "HG". naive_solver.
+  Qed.
   Definition if_ok_bool_inst := [instance if_ok_bool].
   Global Existing Instance if_ok_bool_inst | 10.
 
@@ -355,10 +408,6 @@ Section proofs.
     iStartProof. iApply prove_fn_spec_rec. simpl.
     repeat liTStep; liShow.
   Abort.
-
-  Global Instance fn_spec_pers X v pre post :
-    Persistent (fn_spec v X pre post).
-  Proof. Admitted.
 
   Global Instance fn_spec_intro_pers X v pre post :
     IntroPersistent (fn_spec v X pre post) (fn_spec v X pre post).
@@ -387,7 +436,7 @@ Section proofs.
       ∀ v,
       inhale (v ↦ #0);
       return G v.
-  Proof. Admitted.
+  Proof. liTUnfold. iIntros "HG". by iApply wp_alloc. Qed.
   Definition expr_ok_alloc_inst := [instance expr_ok_alloc].
   Global Existing Instance expr_ok_alloc_inst.
 
@@ -402,7 +451,12 @@ Section proofs.
       _ ← find_in_context (FindPointsTo v1);
       inhale (v1 ↦ v2);
       return G v2.
-  Proof. Admitted.
+  Proof.
+    liTUnfold. iIntros "HWP". wp_bind (e2).
+    iApply (wp_wand with "HWP"). iIntros (?) "HWP".
+    wp_bind (e1). iApply (wp_wand with "HWP"). iIntros (?) "[% [? HWP]]/=".
+    by iApply (wp_store with "[$]").
+  Qed.
   Definition expr_ok_store_inst := [instance expr_ok_store].
   Global Existing Instance expr_ok_store_inst.
 
@@ -412,7 +466,11 @@ Section proofs.
       vl ← find_in_context (FindPointsTo v);
       inhale (v ↦ vl);
       return G vl.
-  Proof. Admitted.
+  Proof.
+    liTUnfold. iIntros "HWP". wp_bind (e).
+    iApply (wp_wand with "HWP"). iIntros (?) "[% [? HWP]]/=".
+    by iApply (wp_load with "[$]").
+  Qed.
   Definition expr_ok_load_inst := [instance expr_ok_load].
   Global Existing Instance expr_ok_load_inst.
 
@@ -433,7 +491,7 @@ Section proofs.
     subsume (vl ↦ v1) (vl ↦ v2) G :-
      exhale ⌜v1 = v2⌝;
      return G.
-  Proof. Admitted.
+  Proof. liTUnfold. iIntros "[-> $] $". Qed.
   Definition subsume_pointsto_pointsto_inst := [instance subsume_pointsto_pointsto].
   Global Existing Instance subsume_pointsto_pointsto_inst.
 
@@ -469,6 +527,17 @@ Section proofs.
   Global Typeclasses Opaque is_list.
   Global Opaque is_list.
 
+  Lemma is_list_cons v x xs :
+    is_list v (x::xs) = (∃ vnext, v ↦ (x, vnext)%V ∗ is_list vnext xs)%I.
+  Proof. done. Qed.
+  Lemma is_list_NULL v xs :
+    is_list v xs -∗ ⌜xs = [] ↔ v = #NULL⌝.
+  Proof.
+    destruct xs. { unfold_opaque is_list. naive_solver. }
+    rewrite is_list_cons. iDestruct 1 as (?) "[Hv _]".
+    unfold val_mapsto. iDestruct "Hv" as (? ->) "?". naive_solver.
+  Qed.
+
   Lemma empty_correct :
     ⊢ fn_spec empty_code unit (λ _ _, True) (λ _ v, is_list v []).
   Proof.
@@ -478,7 +547,7 @@ Section proofs.
 
   Lemma simplify_goal_is_list_null xs G :
     simplify_goal (is_list #NULL xs) G :- exhale ⌜xs = []⌝; return G.
-  Proof. Admitted.
+  Proof. liTUnfold. iIntros "[-> $]". by unfold_opaque is_list. Qed.
   Definition simplify_goal_is_list_null_inst := [instance simplify_goal_is_list_null with 50%N].
   Global Existing Instance simplify_goal_is_list_null_inst.
 
@@ -501,47 +570,32 @@ Section proofs.
 
   Lemma expr_ok_unop op e G :
     expr_ok (UnOp op e) G :-
-      v ← {expr_ok e};
-      vr  ← {unop_ok op v};
+      v  ← {expr_ok e};
+      vr ← {unop_ok op v};
       return G vr.
-  Proof. Admitted.
+  Proof.
+    liTUnfold. iIntros "HWP". wp_bind (e).
+    iApply (wp_wand with "HWP"). by iIntros (?) "HWP".
+  Qed.
   Definition expr_ok_unop_inst := [instance expr_ok_unop].
   Global Existing Instance expr_ok_unop_inst.
 
   Lemma unop_ok_fst v1 v2 G :
     unop_ok FstOp (v1, v2) G :- return G v1.
-  Proof. Admitted.
+  Proof. liTUnfold. iIntros "HG". by wp_pures. Qed.
   Definition unop_ok_fst_inst := [instance unop_ok_fst].
   Global Existing Instance unop_ok_fst_inst.
   Lemma unop_ok_snd v1 v2 G :
     unop_ok SndOp (v1, v2) G :- return G v2.
-  Proof. Admitted.
+  Proof. liTUnfold. iIntros "HG". by wp_pures. Qed.
   Definition unop_ok_snd_inst := [instance unop_ok_snd].
   Global Existing Instance unop_ok_snd_inst.
 
   Lemma binop_ok_pair v1 v2 G :
     binop_ok PairOp v1 v2 G :- return G (v1, v2)%V.
-  Proof. Admitted.
+  Proof. liTUnfold. iIntros "HG". by wp_pures. Qed.
   Definition binop_ok_pair_inst := [instance binop_ok_pair].
   Global Existing Instance binop_ok_pair_inst.
-
-  Lemma cons_correct :
-    ⊢ fn_spec cons_code (val * list val)
-      (λ '(x, xs) a, ∃ v, ⌜a = (x, v)%V⌝ ∗ is_list v xs)
-      (λ '(x, xs) r, is_list r (x :: xs)).
-  Proof.
-    iStartProof. iApply prove_fn_spec_rec. simpl.
-    repeat liTStep; liShow.
-  Abort.
-
-  Lemma cons_correct :
-    ⊢ fn_spec cons_code (val * list val)
-      (λ '(x, xs) a, ∃ v, ⌜a = (x, v)%V⌝ ∗ is_list v xs)
-      (λ '(x, xs) r, is_list r (x :: xs)).
-  Proof.
-    iStartProof. iApply prove_fn_spec_rec. simpl.
-    repeat liTStep; liShow.
-  Abort.
 
   Lemma cons_correct :
     ⊢ fn_spec cons_code (val * list val)
@@ -579,7 +633,10 @@ Section proofs.
      ∃ v1 v2 xs',
      exhale ⌜v = (v1, v2)%V⌝ ∗ is_list v2 xs' ∗ ⌜xs = v1 :: xs'⌝;
      return G.
-  Proof. Admitted.
+  Proof.
+    liTUnfold. iIntros "[% [% [% [[-> [Hl ->]] $]]]] ?".
+    rewrite is_list_cons. iExists _. iFrame.
+  Qed.
   Definition subsume_pointsto_list_inst := [instance subsume_pointsto_list].
   Global Existing Instance subsume_pointsto_list_inst.
 
@@ -595,7 +652,7 @@ Section proofs.
     subsume (is_list v xs1) (is_list v xs2) G :-
      exhale ⌜xs1 = xs2⌝;
      return G.
-  Proof. Admitted.
+  Proof. liTUnfold. iIntros "[-> $] $". Qed.
   Definition subsume_list_list_inst := [instance subsume_list_list].
   Global Existing Instance subsume_list_list_inst.
 
@@ -636,7 +693,12 @@ Section proofs.
       ∀ v' x xs',
       inhale ⌜xs = x::xs'⌝ ∗ is_list v' xs';
       return G (x, v')%V.
-  Proof. Admitted.
+  Proof.
+    liTUnfold. iIntros "[% [Hl [% HG]]]".
+    destruct xs => //=. rewrite is_list_cons.
+    iDestruct "Hl" as (?) "[??]". iExists _ => /=. iFrame.
+    iApply "HG". by iFrame.
+  Qed.
   Definition find_in_context_find_pointsto_list_inst :=
     [instance find_in_context_find_pointsto_list with FICSyntactic].
   Global Existing Instance find_in_context_find_pointsto_list_inst | 10.
@@ -679,7 +741,11 @@ Section proofs.
     binop_ok EqOp v #NULL G :-
       b ← find_in_context (FindIsNULL v);
       return G #b.
-  Proof. Admitted.
+  Proof.
+    liTUnfold. iIntros "[% [Hb HG]]". simpl. iDestruct "Hb" as %?.
+    wp_pure _. 2: by iFrame.
+    simpl. repeat case_match; destruct b; naive_solver.
+  Qed.
   Definition binop_ok_eq_val_NULL_inst := [instance binop_ok_eq_val_NULL].
   Global Existing Instance binop_ok_eq_val_NULL_inst.
 
@@ -702,7 +768,13 @@ Section proofs.
       (* | ∀ (l : loc) v' x xs', *)
       (*   inhale ⌜v = #l⌝ ∗ ⌜xs = x::xs'⌝ ∗ l ↦ (v', x)%V ∗ is_list v' xs'; *)
       (*   return G false. *)
-  Proof. Admitted.
+  Proof.
+    liTUnfold.
+    iDestruct 1 as (?) "[Hl HG]".
+    iDestruct (is_list_NULL with "Hl") as %?.
+    iExists _. iDestruct ("HG" with "Hl") as "$".
+    simpl. iPureIntro. naive_solver.
+  Qed.
   Definition find_in_context_find_isnull_list_inst :=
     [instance find_in_context_find_isnull_list with FICSyntactic].
   Global Existing Instance find_in_context_find_isnull_list_inst | 10.
@@ -744,7 +816,15 @@ Section proofs.
        exhale post2 x v';
        done
      | return G.
-  Proof. Admitted.
+  Proof.
+    liTUnfold. iIntros "[#Hsub $] Hfn". unfold fn_spec.
+    iDestruct "Hfn" as "#[%[%[%[-> Hwp]]]]".
+    iModIntro. iExists _, _, _. iSplit; [done|].
+    iIntros (??) "?". iDestruct ("Hsub" with "[$]") as (?) "[Hpre1 HWP]".
+    iSpecialize ("Hwp" with "Hpre1"). iModIntro.
+    iApply (wp_wand with "Hwp"). iIntros (?) "Hpost1".
+    iDestruct ("HWP" with "Hpost1") as "[$ _]".
+  Qed.
   Definition subsume_fnspec_fnspec_inst := [instance subsume_fnspec_fnspec].
   Global Existing Instance subsume_fnspec_fnspec_inst.
 
@@ -777,7 +857,7 @@ Section proofs.
         exhale post x v';
         done
       | return G.
-  Proof. Admitted.
+  Proof. liTUnfold. iIntros "[Hsub $]". by iApply prove_fn_spec_rec. Qed.
   Definition simplify_goal_fn_spec_rec_inst := [instance simplify_goal_fn_spec_rec with 50%N].
   Global Existing Instance simplify_goal_fn_spec_rec_inst.
 

@@ -1,5 +1,30 @@
 From lithium.tutorial Require Import lang.
 
+(** The tactic [reshape_expr e tac] decomposes the expression [e] into an
+evaluation context [K] and a subexpression [e']. It calls the tactic [tac K e']
+for each possible decomposition until [tac] succeeds. *)
+Ltac reshape_expr e tac :=
+  (* Note that the current context is spread into a list of fully-constructed
+     items [K] A fully-constructed item is inserted into [K] by calling
+     [add_item]. *)
+  let rec go K e :=
+    match e with
+    | _                               => tac K e
+    | App ?e (Val ?v)                 => add_item (AppLCtx v) K e
+    | App ?e1 ?e2                     => add_item (AppRCtx e1) K e2
+    | UnOp ?op ?e                     => add_item (UnOpCtx op) K e
+    | BinOp ?op (Val ?v) ?e           => add_item (BinOpRCtx op v) K e
+    | BinOp ?op ?e1 ?e2               => add_item (BinOpLCtx op e2) K e1
+    | If ?e0 ?e1 ?e2                  => add_item (IfCtx e1 e2) K e0
+    | Assert ?e                       => add_item (AssertCtx) K e
+    | Load ?e                         => add_item (LoadCtx) K e
+    | Store ?e (Val ?v)               => add_item (StoreLCtx v) K e
+    | Store ?e1 ?e2                   => add_item (StoreRCtx e1) K e2
+    end
+  with add_item Ki K e := go (Ki :: K) e
+  in go (@nil ectx_item) e.
+
+
 Ltac inv_head_step :=
   repeat match goal with
   | _ => progress simplify_map_eq/= (* simplify memory stuff *)
