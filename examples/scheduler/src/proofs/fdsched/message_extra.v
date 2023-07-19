@@ -17,7 +17,7 @@ Global Instance packet_ID_inhabited : Inhabited packet_ID :=
 Global Instance message_data_inhabited : Inhabited message_data :=
   populate (Message inhabitant inhabitant inhabitant).
 
-Definition num_msg_types := max_int u8 + 1.
+Notation num_msg_types := (max_int u8 + 1) (only parsing).
 
 (** function to set type of a message to a given value*)
 Definition set_msg_type (msg : message_data) (type : nat) := {|

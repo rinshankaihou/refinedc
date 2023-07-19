@@ -73,7 +73,6 @@ void npfp_enqueue(struct npfp_scheduler *sched, struct message* msg) {
 [[rc::tactics("rewrite -(Z2Nat.id num_priorities); try solve_goal."
 	            " by rewrite -(create_bitmap_length sched_state); apply find_highest_prio_length.")]]
 [[rc::tactics("by eapply npfp_dequeue_nonempty.")]]
-[[rc::tactics("by apply find_highest_prio_bounded.")]]
 [[rc::tactics("by apply get_highest_prio_msg_is_head.")]]
 [[rc::tactics("by eapply npfp_dequeue_no_highest_priority.")]]
 [[rc::tactics("by eapply npfp_dequeue_has_highest_pending_prio.")]]

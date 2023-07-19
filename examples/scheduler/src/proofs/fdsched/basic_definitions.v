@@ -1,7 +1,7 @@
 From refinedc.typing Require Export typing.
 
 (** Wrapper type for file descriptors *)
-Definition FD := Z.
+Notation FD := Z (only parsing).
 
 (** the ID for a packet is given by a tuple of fd, time and index in the arrivals at that time *)
 Record packet_ID := PACKET_ID {
@@ -11,7 +11,7 @@ Record packet_ID := PACKET_ID {
 }.
 
 (** We parameterize the whole proof by a ground truth of arrivals *)
-Definition pdata := list Z.
+Notation pdata := (list Z) (only parsing).
 Class PacketArrivals := {
   packet_arrivals : nat → FD → list pdata
 }.

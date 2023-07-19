@@ -16,13 +16,7 @@ Definition encode_prio_bitmap (bm : list bool) : list Z :=
    Z.land (Z.ones 64) (bigZ ≫ (64 * 2));
    Z.land (Z.ones 64) (bigZ ≫ (64 * 3))].
 
-
-Definition num_priorities := max_int u8 + 1.
-
-Lemma num_priorities_eq : num_priorities = max_int u8 + 1.
-Proof. done. Qed.
-Lemma num_priorities_eq1 : num_priorities = 256.
-Proof. solve_goal. Qed.
+Notation num_priorities := (max_int u8 + 1) (only parsing).
 
 Notation array_p ly elts n :=
   (array ly (elts ++ replicate n (uninit ly)))

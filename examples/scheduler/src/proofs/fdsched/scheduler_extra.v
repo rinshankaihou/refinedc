@@ -12,7 +12,19 @@ Record npfp_sched := {
   msg_qs : list (list message_data);
   callbacks_bounded : length callbacks = Z.to_nat num_msg_types;
   msg_qs_bounded : length msg_qs = Z.to_nat num_priorities;
-}.
+  }.
+
+Program Definition initialize_scheduler  :=
+  {|
+    callbacks := replicate (Z.to_nat num_msg_types) 0%nat;
+    msg_qs := replicate(Z.to_nat num_priorities) [];
+  |}.
+Next Obligation.
+  solve_goal.
+Qed.
+Next Obligation.
+  solve_goal.
+Qed.
 
 Lemma create_bitmap_length sched_state :
   length (create_bitmap (msg_qs sched_state)) = Z.to_nat num_priorities.

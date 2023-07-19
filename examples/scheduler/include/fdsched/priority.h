@@ -28,7 +28,7 @@ prio_bitmap
 typedef int priority_search_t;
 
 /* initialize the bitmap to all empty */
-[[rc::parameters("p : loc", "bmrefn : {list bool}")]]
+[[rc::parameters("p : loc")]]
 [[rc::args("p @ &own<uninit<struct_prio_bitmap>>")]]
 [[rc::ensures("own p : {replicate (Z.to_nat num_priorities) false} @ prio_bitmap_t")]]
 [[rc::tactics("by apply list_subequiv_split; solve_goal.")]]
