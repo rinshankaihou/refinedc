@@ -1276,10 +1276,9 @@ let pp_proof : Coq_path.t -> func_def -> import list -> string list
       let pp_var ff (x, _) = pp_print_string ff x in
       pp "prepare_parameters (%a).@;" (pp_sep " " pp_var) func_annot.fa_parameters;
     end;
-  pp "split_blocks ((";
-  let pp_inv (id, annot) =
-    (* Opening a box and printing the existentials. *)
-    pp "@;  @[<v 2><[ \"%s\" :=" id;
+
+  let pp_inv print_unused annot =
+    (* Printing the existentials. *)
     let pp_exists (id, e) =
       pp "@;∃ %s : %a," id (pp_simple_coq_expr false) e
     in
@@ -1344,33 +1343,46 @@ let pp_proof : Coq_path.t -> func_def -> import list -> string list
       unused_args @ unused_vars
     in
     let all_vars = unused @ used in
+    let first = ref true in
+    let pp_sep ff _ = if !first then first := false else fprintf ff " ∗" in
     let pp_var ff (id, (layout, ty_opt)) =
       match ty_opt with
-      | None     -> fprintf ff "%s ◁ₗ uninit %a" id (pp_layout true) layout
-      | Some(ty) -> fprintf ff "%s ◁ₗ %a" id pp_type_expr ty
+      | None     ->
+         if print_unused then
+           fprintf ff "%a@;%s ◁ₗ uninit %a" pp_sep () id (pp_layout true) layout
+      | Some(ty) -> fprintf ff "%a@;%s ◁ₗ %a" pp_sep () id pp_type_expr ty
     in
     begin
       match (all_vars, annot.la_constrs) with
-      | ([]     , []     ) ->
+      | ([], []) ->
           Panic.panic_no_pos "Ill-formed block annotation in function [%s]."
             def.func_name
-      | ([]     , c :: cs) ->
-          pp "@;%a" pp_constr c;
-          List.iter (pp " ∗@;%a" pp_constr) cs
-      | (v :: vs, cs     ) ->
-          pp "@;%a" pp_var v;
-          List.iter (pp " ∗@;%a" pp_var) vs;
-          List.iter (pp " ∗@;%a" pp_constr) cs
+      | (vs , cs) ->
+          List.iter (pp "%a" pp_var) vs;
+          List.iter (pp "%a@;%a" pp_sep () pp_constr) cs
     end;
+  in
+  let pp_inv_full (id, annot) =
+    (* Opening a box and printing the existentials. *)
+    pp "@;  @[<v 2><[ \"%s\" :=" id;
+    pp_inv true annot;
     (* Closing the box. *)
     pp "@]@;]> $"
   in
+  let pp_inv_not_full (id, annot) =
+    (* Opening a box and printing the existentials. *)
+    pp "@;  @[<v 2>ANNOT_IPROP (BLOCK_PRECOND \"%s\") (" id;
+    pp_inv false annot;
+    (* Closing the box. *)
+    pp "@;)%%I :: @]"
+  in
   let invs = collect_invs def in
   let (invs_fb, invs_b) = List.partition (fun (_,la) -> la.la_full) invs in
-  List.iter pp_inv invs_fb;
-  pp "@;  ∅@;)%%I : gmap label (iProp Σ)) ((";
-  List.iter pp_inv invs_b;
-  pp "@;  ∅@;)%%I : gmap label (iProp Σ)).";
+  pp "split_blocks ((";
+  List.iter pp_inv_full invs_fb;
+  pp "@;  ∅@;)%%I : gmap label (iProp Σ)) (";
+  List.iter pp_inv_not_full invs_b;
+  pp "@;  @nil Prop@;).";
   let pp_do_step id =
     pp "@;- repeat liRStep; liShow.";
     pp "@;  all: print_typesystem_goal \"%s\" \"%s\"." def.func_name id

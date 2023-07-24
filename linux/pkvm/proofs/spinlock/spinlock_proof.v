@@ -17,7 +17,7 @@ Section proofs.
     ⊢ typed_function impl_hyp_spin_lock_init type_of_hyp_spin_lock_init.
   Proof.
     start_function "hyp_spin_lock_init" (p) => lock.
-    split_blocks (∅ : gmap label (iProp Σ)) (∅ : gmap label (iProp Σ)).
+    split_blocks (∅ : gmap label (iProp Σ)) (@nil Prop).
     (* Allocate the resources for the lock. *)
     iMod (alloc_lock_token_and_tickets) as (id) "(?&?&?)".
     (* Run the automation. *)
@@ -59,7 +59,7 @@ Section proofs.
              local_ticket ◁ₗ i @ int u16 ∗
              local_next ◁ₗ uninit u16 ∗
              ticket id i ]> ∅)%I : gmap label (iProp Σ))
-      (∅ : gmap label (iProp Σ)).
+      (@nil Prop).
     - (* #0 Initial block, running the nested loop for the first time. *)
       destruct s.
       + repeat liRStep; liShow.
@@ -284,7 +284,7 @@ Section proofs.
     ⊢ typed_function impl_hyp_spin_unlock type_of_hyp_spin_unlock.
   Proof.
     start_function "hyp_spin_unlock" ([[p id] s]) => lock ticket.
-    split_blocks (∅ : gmap label (iProp Σ)) (∅ : gmap label (iProp Σ)).
+    split_blocks (∅ : gmap label (iProp Σ)) (@nil Prop).
     (* Extract the real token and our ticket number (owner) with a witness. *)
     iDestruct select (spinlock_token _ _) as (owner) "[Htok H●]".
     (* Run the automation, until we must look into the invariant. *)

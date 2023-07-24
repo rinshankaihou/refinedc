@@ -194,7 +194,7 @@ Ltac liRStmt :=
       | W.Goto ?bid => first [
          notypeclasses refine (tac_fast_apply (type_goto_precond _ _ _ _ _ _) _); progress liFindHyp FICSyntactic
        | lazymatch goal with
-         | H : BLOCK_PRECOND bid ?P |- _ =>
+         | H : ANNOT_IPROP (BLOCK_PRECOND bid) ?P |- _ =>
            notypeclasses refine (tac_fast_apply (tac_typed_single_block_rec P _ _ _ _ _ _ _) _);[unfold_code_marker_and_compute_map_lookup|]
          end
        | notypeclasses refine (tac_fast_apply (type_goto _ _ _ _ _ _ _) _); [unfold_code_marker_and_compute_map_lookup|]
@@ -361,11 +361,11 @@ Ltac split_blocks Pfull Ps :=
   cbn -[union] in * |-;
   let rec pose_Ps Ps :=
       lazymatch Ps with
-      | <[?bid:=?P]>?m =>
-        let Hblock := fresh "Hblock" in
-        have Hblock: (BLOCK_PRECOND bid P) by exact: tt;
+      | ?P::?m =>
+        let Hannot := fresh "Hannot" in
+        pose proof (I : P) as Hannot;
         pose_Ps m
-      | _ => idtac
+      | nil => idtac
       end
   in
   pose_Ps Ps;

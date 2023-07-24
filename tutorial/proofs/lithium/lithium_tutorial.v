@@ -746,9 +746,9 @@ Section proof_lithium_test.
     contain loops. *)
     split_blocks ((
       ∅
-    )%I : gmap label (iProp Σ)) ((
-      ∅
-    )%I : gmap label (iProp Σ)).
+    )%I : gmap label (iProp Σ)) (
+      @nil Prop
+    ).
     - (** We remove the location information for this proof to make
       the code more readable. *)
       unfold LocInfo in *.

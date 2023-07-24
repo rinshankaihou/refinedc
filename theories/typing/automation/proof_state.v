@@ -12,8 +12,13 @@ Definition pop_location_info {A} (i : location_info) (a : A) : A := a.
 Arguments pop_location_info : simpl never.
 Global Typeclasses Opaque pop_location_info.
 
-Definition BLOCK_PRECOND `{!typeG Σ} (bid : label) (P : iProp Σ) : Set := unit.
-Arguments BLOCK_PRECOND : simpl never.
+Inductive BLOCK_PRECOND_PROP := | BLOCK_PRECOND (bid : label).
+
+Definition ANNOT_IPROP {Σ} {A} (a : A) (P : iProp Σ) : Prop := True.
+Arguments ANNOT_IPROP : simpl never.
+
+Notation "'block' bid :  P" := (ANNOT_IPROP (BLOCK_PRECOND bid) P) (at level 200, only printing).
+
 
 Definition CODE_MARKER (bs : gmap label stmt) : gmap label stmt := bs.
 Notation "'HIDDEN'" := (CODE_MARKER _) (only printing).
@@ -92,7 +97,7 @@ Ltac clear_unused_vars :=
 Ltac prepare_sideconditions :=
   li_unfold_lets_in_context;
   unfold_all_protected_evars;
-  repeat match goal with | H : BLOCK_PRECOND _ _ |- _ => clear H end;
+  repeat match goal with | H : ANNOT_IPROP _ _ |- _ => clear H end;
   (* get rid of Q *)
   repeat match goal with | H := CODE_MARKER _ |- _ => clear H end;
   repeat match goal with | H := RETURN_MARKER _ |- _ => clear H end;
@@ -145,7 +150,7 @@ Ltac print_coq_hyps :=
   try match reverse goal with
   | H : ?X |- _ =>
     lazymatch X with
-    | BLOCK_PRECOND _ _ => fail
+    | ANNOT_IPROP _ _ => fail
     | gFunctors => fail
     | typeG _ => fail
     | globalG _ => fail

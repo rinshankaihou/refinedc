@@ -15,7 +15,7 @@ Section type.
     ⊢ typed_function impl_sl_init type_of_sl_init.
   Proof.
     start_function "sl_init" (p) => vl.
-    split_blocks (∅ : gmap label (iProp Σ)) (∅ : gmap label (iProp Σ)).
+    split_blocks (∅ : gmap label (iProp Σ)) (@nil Prop).
 
     iMod alloc_lock_token as (γ) "?".
 
