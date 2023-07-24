@@ -26,6 +26,12 @@
     [[rc::annot(__VA_ARGS__)]] &(e);                     \
     _Pragma("GCC diagnostic pop")
 
+#define rc_assert                                        \
+    _Pragma("GCC diagnostic push")                       \
+    _Pragma("GCC diagnostic ignored \"-Wunused-value\"") \
+    [[rc::asrt]] 0;                                  \
+    _Pragma("GCC diagnostic pop")
+
 #define rc_annot_expr(e, ...) (0 ? ("rc_annot", __VA_ARGS__, (e)) : (e))
 
 #define rc_unlock(e) rc_annot(e, "UnlockA")

@@ -1148,6 +1148,12 @@ Section typing.
       by iApply ("Ha" with "Hl").
   Qed.
 
+  (* TODO: strengthen this to not loose the information about the existential quantifiers inside P *)
+  Lemma type_annot_stmt_assert P id s fn ls R Q:
+    (P ∗ (P -∗ (typed_stmt s fn ls R Q)))
+    ⊢ typed_stmt (annot: (AssertAnnot id); s) fn ls R Q.
+  Proof. iIntros "[HP Hcont] ?". iApply wps_annot => /=. by iApply ("Hcont" with "HP"). Qed.
+
   Lemma typed_block_rec Ps Q fn ls R s:
     ([∗ map] b ↦ P ∈ Ps, ∃ s, ⌜Q !! b = Some s⌝ ∗ □(([∗ map] b ↦ P ∈ Ps, typed_block P b fn ls R Q) -∗ P -∗ typed_stmt s fn ls R Q)) -∗
     (([∗ map] b ↦ P ∈ Ps, typed_block P b fn ls R Q) -∗ typed_stmt s fn ls R Q) -∗

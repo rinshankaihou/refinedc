@@ -365,6 +365,7 @@ type annot =
   | Annot_returns      of type_expr
   | Annot_ensures      of constr list
   | Annot_annot        of string
+  | Annot_assert
   | Annot_inv_vars     of (ident * type_expr) list
   | Annot_annot_args   of annot_arg list
   | Annot_tactics      of string list
@@ -478,6 +479,7 @@ let parse_attr : rc_attr -> annot = fun attr ->
   | "returns"      -> single_arg annot_returns (fun e -> Annot_returns(e))
   | "ensures"      -> many_args annot_ensures (fun l -> Annot_ensures(l))
   | "annot"        -> raw_single_arg (fun e -> Annot_annot(e))
+  | "asrt"         -> no_args Annot_assert
   | "inv_vars"     -> many_args annot_inv_var (fun l -> Annot_inv_vars(l))
   | "annot_args"   -> many_args annot_args (fun l -> Annot_annot_args(l))
   | "tactics"      -> raw_many_args (fun l -> Annot_tactics(l))
@@ -604,20 +606,6 @@ let member_annot : rc_attr list -> member_annot = fun attrs ->
   in
   List.iter handle_attr attrs; !annot
 
-type expr_annot = string option
-
-let expr_annot : rc_attr list -> expr_annot = fun attrs ->
-  let error msg =
-    invalid_annot_no_pos (Printf.sprintf "Expression annotation %s." msg)
-  in
-  match attrs with
-  | []      -> None
-  | _::_::_ -> error "carries more than one attributes"
-  | [attr]  ->
-  match parse_attr attr with
-  | Annot_annot(s) -> Some(s)
-  | _              -> error "is invalid (wrong kind)"
-
 type basic_struct_annot =
   { st_parameters   : (ident * coq_expr) list
   ; st_refined_by   : (ident * coq_expr) list
@@ -720,19 +708,12 @@ let struct_annot : rc_attr list -> struct_annot = fun attrs ->
   in
   SA_basic(basic_annot)
 
-type loop_annot =
-  { la_exists   : (ident * coq_expr) list
-  ; la_constrs  : constr list
-  ; la_inv_vars : (ident * type_expr) list
-  ; la_full     : bool }
+type state_descr =
+  { sd_exists   : (ident * coq_expr) list
+  ; sd_constrs  : constr list
+  ; sd_inv_vars : (ident * type_expr) list }
 
-let no_loop_annot : loop_annot =
-  { la_exists   = []
-  ; la_constrs  = []
-  ; la_inv_vars = []
-  ; la_full     = true }
-
-let loop_annot : rc_attr list -> loop_annot = fun attrs ->
+let loop_annot : rc_attr list -> bool option * state_descr = fun attrs ->
   let exists = ref [] in
   let constrs = ref [] in
   let vars = ref [] in
@@ -757,13 +738,35 @@ let loop_annot : rc_attr list -> loop_annot = fun attrs ->
   in
   List.iter handle_attr attrs;
 
-  let la_full =
-    match !full_block with
-    | Some(b) -> b
-    | None    -> no_loop_annot.la_full
-  in
+  (!full_block, {sd_exists = !exists; sd_constrs = !constrs; sd_inv_vars = !vars})
 
-  {la_exists = !exists; la_constrs = !constrs; la_inv_vars = !vars; la_full}
+type raw_expr_annot =
+  | RawExprAnnot_annot  of string
+  | RawExprAnnot_assert of state_descr
+
+let raw_expr_annot : rc_attr list -> raw_expr_annot option = fun attrs ->
+  let error msg =
+    invalid_annot_no_pos (Printf.sprintf "Expression annotation %s." msg)
+  in
+  match attrs with
+  | []      -> None
+  | [attr]  -> begin
+     match parse_attr attr with
+     | Annot_annot(s) -> Some(RawExprAnnot_annot s)
+     | _              -> error "is invalid (wrong kind)"
+    end
+  | _       ->
+     let filtered_attrs = List.filter (fun attr -> parse_attr attr <> Annot_assert) attrs in
+     if List.length attrs = List.length filtered_attrs then
+       (* if this is not an assert_annotation, only one attribute is allowed *)
+       error "carries more than one attribute"
+     else
+       let (full, sd) = loop_annot filtered_attrs in
+       if full <> None then
+         error "has block annotation"
+       else
+         Some (RawExprAnnot_assert(sd))
+
 
 type global_annot =
   { ga_parameters : (ident * coq_expr) list

@@ -12,13 +12,14 @@ Definition pop_location_info {A} (i : location_info) (a : A) : A := a.
 Arguments pop_location_info : simpl never.
 Global Typeclasses Opaque pop_location_info.
 
-Inductive BLOCK_PRECOND_PROP := | BLOCK_PRECOND (bid : label).
+Inductive BLOCK_PRECOND_HINT := | BLOCK_PRECOND (bid : label).
+Inductive ASSERT_COND_HINT := | ASSERT_COND (id : string).
 
-Definition ANNOT_IPROP {Σ} {A} (a : A) (P : iProp Σ) : Prop := True.
-Arguments ANNOT_IPROP : simpl never.
+Definition IPROP_HINT {Σ} {A} (a : A) (P : iProp Σ) : Prop := True.
+Arguments IPROP_HINT : simpl never.
 
-Notation "'block' bid :  P" := (ANNOT_IPROP (BLOCK_PRECOND bid) P) (at level 200, only printing).
-
+Notation "'block' bid : P" := (IPROP_HINT (BLOCK_PRECOND bid) P) (at level 200, only printing).
+Notation "'assert' id : P" := (IPROP_HINT (ASSERT_COND id) P) (at level 200, only printing).
 
 Definition CODE_MARKER (bs : gmap label stmt) : gmap label stmt := bs.
 Notation "'HIDDEN'" := (CODE_MARKER _) (only printing).
@@ -97,7 +98,7 @@ Ltac clear_unused_vars :=
 Ltac prepare_sideconditions :=
   li_unfold_lets_in_context;
   unfold_all_protected_evars;
-  repeat match goal with | H : ANNOT_IPROP _ _ |- _ => clear H end;
+  repeat match goal with | H : IPROP_HINT _ _ |- _ => clear H end;
   (* get rid of Q *)
   repeat match goal with | H := CODE_MARKER _ |- _ => clear H end;
   repeat match goal with | H := RETURN_MARKER _ |- _ => clear H end;
@@ -150,7 +151,7 @@ Ltac print_coq_hyps :=
   try match reverse goal with
   | H : ?X |- _ =>
     lazymatch X with
-    | ANNOT_IPROP _ _ => fail
+    | IPROP_HINT _ _ => fail
     | gFunctors => fail
     | typeG _ => fail
     | globalG _ => fail

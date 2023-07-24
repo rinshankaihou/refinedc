@@ -323,7 +323,12 @@ let rec pp_stmt : Coq_ast.stmt pp = fun ff stmt ->
   | Assert(ot,e,stmt)             ->
       pp "assert{%a}: (%a) ;@;%a" pp_op_type ot pp_expr e pp_stmt stmt
   | ExprS(annot, e, stmt)         ->
-      Option.iter (Option.iter (pp "annot: (%s) ;@;")) annot;
+      let pp_expr_annot annot =
+        match annot with
+        | ExprAnnot_annot s    -> pp "annot: (%s) ;@;" s
+        | ExprAnnot_assert(id) -> pp "annot: (AssertAnnot \"%i\") ;@;" id
+      in
+      Option.iter pp_expr_annot annot;
       pp "expr: (%a) ;@;%a" pp_expr e pp_stmt stmt
 
 type import = string * string
@@ -799,13 +804,11 @@ let rec pp_struct_def_np structs r annot fields ff id =
   | None        -> pp_dots ff ()
   | Some(_, ty) -> pp_type_expr_rec (Some(pp_dots)) r ff ty
 
-let collect_invs : func_def -> (string * loop_annot) list = fun def ->
+let collect_invs : func_def -> (string * state_descr) list = fun def ->
   let fn id (annot, _) acc =
     match annot with
-    | BA_none              -> acc
-    | BA_loop(Some(annot)) -> (id, annot) :: acc
-    | BA_loop(None)        ->
-    Panic.panic_no_pos "Bad block annotation in function [%s]." def.func_name
+    | BA_none     -> acc
+    | BA_loop(sd) -> (id, sd) :: acc
   in
   SMap.fold fn def.func_blocks []
 
@@ -1277,12 +1280,12 @@ let pp_proof : Coq_path.t -> func_def -> import list -> string list
       pp "prepare_parameters (%a).@;" (pp_sep " " pp_var) func_annot.fa_parameters;
     end;
 
-  let pp_inv print_unused annot =
+  let pp_state_descr print_unused sd =
     (* Printing the existentials. *)
     let pp_exists (id, e) =
       pp "@;∃ %s : %a," id (pp_simple_coq_expr false) e
     in
-    List.iter pp_exists annot.la_exists;
+    List.iter pp_exists sd.sd_exists;
     (* Compute the used and unused arguments and variables. *)
     let used =
       let fn (id, ty) =
@@ -1312,7 +1315,7 @@ let pp_proof : Coq_path.t -> func_def -> import list -> string list
           Panic.panic_no_pos "[%s] is neither a local variable nor an \
             argument." id
       in
-      List.map fn annot.la_inv_vars
+      List.map fn sd.sd_inv_vars
     in
     let unused =
       let unused_args =
@@ -1353,7 +1356,7 @@ let pp_proof : Coq_path.t -> func_def -> import list -> string list
       | Some(ty) -> fprintf ff "%a@;%s ◁ₗ %a" pp_sep () id pp_type_expr ty
     in
     begin
-      match (all_vars, annot.la_constrs) with
+      match (all_vars, sd.sd_constrs) with
       | ([], []) ->
           Panic.panic_no_pos "Ill-formed block annotation in function [%s]."
             def.func_name
@@ -1362,32 +1365,36 @@ let pp_proof : Coq_path.t -> func_def -> import list -> string list
           List.iter (pp "%a@;%a" pp_sep () pp_constr) cs
     end;
   in
-  let pp_inv_full (id, annot) =
+  let pp_inv (id, annot) =
     (* Opening a box and printing the existentials. *)
     pp "@;  @[<v 2><[ \"%s\" :=" id;
-    pp_inv true annot;
+    pp_state_descr true annot;
     (* Closing the box. *)
     pp "@]@;]> $"
   in
-  let pp_inv_not_full (id, annot) =
-    (* Opening a box and printing the existentials. *)
-    pp "@;  @[<v 2>ANNOT_IPROP (BLOCK_PRECOND \"%s\") (" id;
-    pp_inv false annot;
+  let pp_hint hint =
+    (* Opening a box. *)
+    pp "@;  @[<v 2>IPROP_HINT ";
+    begin match hint.ht_kind with
+    | HK_block bid -> pp "(BLOCK_PRECOND \"%s\")" bid
+    | HK_assert id -> pp "(ASSERT_COND \"%i\")" id
+    end;
+    pp "(";
+    pp_state_descr false hint.ht_annot;
     (* Closing the box. *)
     pp "@;)%%I :: @]"
   in
   let invs = collect_invs def in
-  let (invs_fb, invs_b) = List.partition (fun (_,la) -> la.la_full) invs in
   pp "split_blocks ((";
-  List.iter pp_inv_full invs_fb;
+  List.iter pp_inv invs;
   pp "@;  ∅@;)%%I : gmap label (iProp Σ)) (";
-  List.iter pp_inv_not_full invs_b;
+  List.iter pp_hint def.func_hints;
   pp "@;  @nil Prop@;).";
   let pp_do_step id =
     pp "@;- repeat liRStep; liShow.";
     pp "@;  all: print_typesystem_goal \"%s\" \"%s\"." def.func_name id
   in
-  List.iter pp_do_step (List.cons "#0" (List.map fst invs_fb));
+  List.iter pp_do_step (List.cons "#0" (List.map fst invs));
   pp "@;Unshelve. all: unshelve_sidecond; sidecond_hook; prepare_sideconditions; ";
   pp "normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.";
   let tactics_items =

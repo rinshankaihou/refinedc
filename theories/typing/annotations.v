@@ -22,3 +22,6 @@ Inductive LockAnnot : Type := LockA | UnlockA.
 
 Inductive reduce_annot : Type :=
   ReduceAnnot.
+
+Inductive assert_annot : Type :=
+  AssertAnnot (s : string).

@@ -65,6 +65,10 @@ and expr_aux =
   | Macro     of string * string list * expr list * expr
   | CopyAID   of op_type * expr * expr
 
+type expr_annot =
+  | ExprAnnot_annot  of string
+  | ExprAnnot_assert of int
+
 type stmt = stmt_aux Location.located
 and stmt_aux =
   | Goto   of string (* Block index in the [IMap.t]. *)
@@ -88,7 +92,15 @@ type struct_decl =
 
 type block_annot =
   | BA_none
-  | BA_loop of loop_annot option
+  | BA_loop of state_descr
+
+type hint_kind =
+  | HK_block  of string
+  | HK_assert of int
+
+type hint =
+  { ht_kind  : hint_kind
+  ; ht_annot : state_descr }
 
 type func_def =
   { func_name   : string
@@ -97,7 +109,8 @@ type func_def =
   ; func_vars   : (string * layout) list
   ; func_init   : string
   ; func_deps   : string list * string list (* global vars/functions used. *)
-  ; func_blocks : (block_annot * stmt) SMap.t }
+  ; func_blocks : (block_annot * stmt) SMap.t
+  ; func_hints  : hint list }
 
 type func_def_or_decl =
   | FDef of func_def

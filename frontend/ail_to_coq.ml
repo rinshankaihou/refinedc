@@ -162,9 +162,18 @@ let used_globals = Hashtbl.create 5
 (* Hashtable of used function. *)
 let used_functions = Hashtbl.create 5
 
+(* List of hints for the function. *)
+let hints = ref []
+
 let (fresh_block_id, reset_block_id) =
   let counter = ref (-1) in
   let fresh () = incr counter; Printf.sprintf "#%i" !counter in
+  let reset () = counter := -1 in
+  (fresh, reset)
+
+let (fresh_assert_id, reset_assert_id) =
+  let counter = ref (-1) in
+  let fresh () = incr counter; !counter in
   let reset () = counter := -1 in
   (fresh, reset)
 
@@ -891,6 +900,10 @@ let collect_bindings () =
   in
   Hashtbl.fold fn local_vars []
 
+(* Insert hint. *)
+let insert_hint hint =
+  hints := (hint :: !hints)
+
 let warn_ignored_attrs so attrs =
   let pp_rc ff {rc_attr_id = id; rc_attr_args = args} =
     Format.fprintf ff "%s(" id.elt;
@@ -1030,6 +1043,22 @@ let translate_block stmts blocks ret_ty is_main =
     let locate e = mkloc e coq_loc in
     let attrs = List.rev (collect_rc_attrs attrs) in
     let attrs_used = ref false in
+    let add_loop_block loc id s attrs blocks =
+      let annots =
+        attrs_used := true;
+        let fn () =
+          let (full, sd) = loop_annot attrs in
+          match full with
+          | None
+          | Some true -> Some sd
+          | Some false ->
+             insert_hint ({ ht_kind = HK_block id; ht_annot = sd });
+             None
+        in
+        handle_invalid_annot ~loc None fn ()
+      in
+      add_block ?annots id s blocks
+    in
     let res =
       match s with
       (* Nested block. *)
@@ -1066,8 +1095,16 @@ let translate_block stmts blocks ret_ty is_main =
           let incr_or_decr op = op = PostfixIncr || op = PostfixDecr in
           let use_annots () =
             attrs_used := true;
-            let fn () = Some(expr_annot attrs) in
-            handle_invalid_annot ~loc None fn ()
+            let fn () = raw_expr_annot attrs in
+            let cook_annot raw_annot =
+              match raw_annot with
+              | RawExprAnnot_annot s -> ExprAnnot_annot s
+              | RawExprAnnot_assert la ->
+                 let id = fresh_assert_id () in
+                 insert_hint ({ ht_kind = HK_assert id; ht_annot = la });
+                 ExprAnnot_assert id
+            in
+            Option.map cook_annot (handle_invalid_annot ~loc None fn ())
           in
           let stmt =
             let loc_full = loc_of e in
@@ -1177,14 +1214,7 @@ let translate_block stmts blocks ret_ty is_main =
           in
           (* Translate the condition. *)
           let s = translate_bool_expr goto_body goto_cont e in
-          let blocks =
-            let annots =
-              attrs_used := true;
-              let fn () = Some(loop_annot attrs) in
-              handle_invalid_annot ~loc None fn ()
-            in
-            add_block ~annots id_cond s blocks
-          in
+          let blocks = add_loop_block loc id_cond s attrs blocks in
           (locate (Goto(id_cond)), blocks)
       | AilSdo(s,e,_)       ->
           let attrs = extra_attrs @ attrs in
@@ -1210,14 +1240,7 @@ let translate_block stmts blocks ret_ty is_main =
           in
           (* Translate the condition. *)
           let s = translate_bool_expr goto_body goto_cont e in
-          let blocks =
-            let annots =
-              attrs_used := true;
-              let fn () = Some(loop_annot attrs) in
-              handle_invalid_annot ~loc None fn ()
-            in
-            add_block ~annots id_cond s blocks
-          in
+          let blocks = add_loop_block loc id_cond s attrs blocks in
           (locate (Goto(id_body)), blocks)
       | AilSswitch(e,s)     ->
           warn_ignored_attrs None extra_attrs;
@@ -1458,6 +1481,7 @@ let translate : string -> typed_ail -> Coq_ast.t = fun source_file ail ->
       (* Initialise all state. *)
       Hashtbl.reset local_vars; reset_block_id ();
       Hashtbl.reset used_globals; Hashtbl.reset used_functions;
+      hints := []; reset_assert_id ();
       (* Fist parse that annotations. *)
       let func_annot =
         let fn () = Some(function_annot (collect_rc_attrs attrs)) in
@@ -1496,6 +1520,7 @@ let translate : string -> typed_ail -> Coq_ast.t = fun source_file ail ->
         in
         add_block func_init stmt blocks
       in
+      let func_hints = !hints in
       let func_vars = collect_bindings () in
       let func_deps =
         let globals_used =
@@ -1510,7 +1535,7 @@ let translate : string -> typed_ail -> Coq_ast.t = fun source_file ail ->
       in
       let func =
         { func_name ; func_annot ; func_args ; func_vars ; func_init
-        ; func_deps ; func_blocks }
+        ; func_deps ; func_blocks ; func_hints }
       in
       (func_name, FDef(func))
     in

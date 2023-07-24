@@ -194,13 +194,18 @@ Ltac liRStmt :=
       | W.Goto ?bid => first [
          notypeclasses refine (tac_fast_apply (type_goto_precond _ _ _ _ _ _) _); progress liFindHyp FICSyntactic
        | lazymatch goal with
-         | H : ANNOT_IPROP (BLOCK_PRECOND bid) ?P |- _ =>
+         | H : IPROP_HINT (BLOCK_PRECOND bid) ?P |- _ =>
            notypeclasses refine (tac_fast_apply (tac_typed_single_block_rec P _ _ _ _ _ _ _) _);[unfold_code_marker_and_compute_map_lookup|]
          end
        | notypeclasses refine (tac_fast_apply (type_goto _ _ _ _ _ _ _) _); [unfold_code_marker_and_compute_map_lookup|]
                      ]
       | W.ExprS _ _ => notypeclasses refine (tac_fast_apply (type_exprs _ _ _ _ _ _) _)
       | W.SkipS _ => notypeclasses refine (tac_fast_apply (type_skips' _ _ _ _ _) _)
+      | W.AnnotStmt _ (AssertAnnot ?id) _ =>
+          lazymatch goal with
+          | H : IPROP_HINT (ASSERT_COND id) ?P |- _ =>
+              notypeclasses refine (tac_fast_apply (type_annot_stmt_assert P _ _ _ _ _ _) _)
+          end
       | W.AnnotStmt _ ?a _ => notypeclasses refine (tac_fast_apply (type_annot_stmt _ _ _ _ _ _ _) _)
       | _ => fail "do_stmt: unknown stmt" s
       end
@@ -362,8 +367,8 @@ Ltac split_blocks Pfull Ps :=
   let rec pose_Ps Ps :=
       lazymatch Ps with
       | ?P::?m =>
-        let Hannot := fresh "Hannot" in
-        pose proof (I : P) as Hannot;
+        let Hhint := fresh "Hhint" in
+        pose proof (I : P) as Hhint;
         pose_Ps m
       | nil => idtac
       end
