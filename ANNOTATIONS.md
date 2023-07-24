@@ -51,6 +51,7 @@ attached to.
 | `tagged_union` | Exactly one | Structures            | `<coq_expr>`                               |
 | `trust_me`     | None        | Functions             | N/A                                        |
 | `union_tag`    | Exactly one | Union members         | `<ident> {"(" <ident> ":" <coq_expr> ")}*` |
+| `unfold_order` | Exactly one | Structures            | `<integer>`                                |
 
 Note that only the attributes requiring one or more arguments may be used more
 than once in the annotations for a particular C construct.
@@ -222,9 +223,11 @@ a single argument of the following form.
 ```
 It gives the refinement type corresponding to the global variable.
 
-## `rc::immovable` (does not work yet in `ail_to_coq` it seems)
+## `rc::immovable`
 
 This annotation appears only on structures, and it does not expect arguments.
+It makes the type as immovable, which prevents the generation of unfolding
+lemmas for value type assignments.
 
 ## `rc::inv_vars`
 
@@ -376,6 +379,12 @@ The identifier gives the name of the Coq variant that will refine the  current
 union member. Note that the annotation should also contain the type of all the
 arguments of the variant, together with a name. This name can be used to refer
 to the corresponding parameter in annotations on nested structures.
+
+## `rc::unfold_order`
+
+This annotation appears only on structures, and should carry exactly one integer
+argument. This integers specifies in which order this type should be unfolded
+relative to other types. Lower numbers are unfolded first and the default is 100.
 
 
 # Grammar for annotations
@@ -619,13 +628,14 @@ tag `rc::inlined_final` instead.
 
 ## Type definition
 
-A type definition can be made using the following syntax.
+A type definition without a struct can be made using the following syntax.
 ```c
-//rc::typedef <ident> ≔ <type_expr>
+//rc::typedef <ident> := <type_expr>
 ```
 
-Arguments can be given as well as follows.
+Refinements, parameters, and the `unfold_order` and `immovable` attributes
+can be given as well as follows. Note that the types `R`, `S`, `X`, and `Y` are
+parsed as `coq_expr`, so they might need to be wrapped in `{...}`.
 ```c
-//rc::typedef tree<x:A, y:B, z:C> ≔ ...
+//rc::typedef (r:R, s:S) @ tree<x:X, y:Y> [unfold_order(90)] [immovable] := ...
 ```
-Types can be omitted for the parameters.

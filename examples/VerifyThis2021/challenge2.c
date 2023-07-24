@@ -17,10 +17,7 @@ Node {
   [[rc::field("r @ tree_t")]]   struct Node *next; // right subtree
 } *Ref;
 
-// Since the RefinedC frontend at the moment does not allow defining two different types via annotations on the frontend, we use a hack to define a second type via a rc::ptr_type on a dummy struct.
-struct [[rc::refined_by("l: {list Z}")]]
-       [[rc::ptr_type("list_t : {maybe2 cons l} @ optionalO<λ (k, l). &own<struct<struct_Node, k @ int<i32>, uninit<void*>, l @ list_t>>>")]]
-dummy { [[rc::field("int<i32>")]] int a; };
+//@rc::typedef (l : {list Z}) @ list_t := {maybe2 cons l} @ optionalO<λ (k, l). &own<struct<struct_Node, k @ int<i32>, uninit<void*>, l @ list_t>>>
 
 
 [[rc::parameters("v: val", "l: {list Z}")]]

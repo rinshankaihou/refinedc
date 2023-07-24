@@ -252,7 +252,7 @@ let parser annot_constr : constr Earley.grammar =
 let parser annot_let : (ident * coq_expr option * coq_expr) Earley.grammar =
   | id:ident ty:{":" coq_expr}? "=" def:coq_expr
 
-let parser annot_unfold_prio : int Earley.grammar =
+let parser annot_unfold_order : int Earley.grammar =
   | i:integer
 
 (** {4 Annotations on tagged unions} *)
@@ -310,16 +310,40 @@ let parser annot_inv_var : (ident * type_expr) Earley.grammar =
 
 (** {4 Type definition (in comments)} *)
 
-type typedef = string * (string * coq_expr option) list * type_expr
+let default_unfold_order : int = 100
 
-let parser typedef_arg = ident {":" coq_expr}?
+type typedef =
+  { td_id           : string
+  ; td_refinements  : (ident * coq_expr) list
+  ; td_parameters   : (ident * coq_expr) list
+  ; td_body         : type_expr
+  ; td_immovable    : bool
+  ; td_unfold_order : int
+  }
+
+let parser typedef_ref = ident ":" coq_expr
+
+let parser typedef_refs =
+  | EMPTY                                 -> []
+  | r:typedef_ref refs:{"," typedef_ref}* -> r :: refs
+
+let parser typedef_arg = ident ":" coq_expr
 
 let parser typedef_args =
   | EMPTY                                   -> []
   | arg:typedef_arg args:{"," typedef_arg}* -> arg :: args
 
 let parser typedef : typedef Earley.grammar =
-  | id:ident args:{"<" typedef_args ">"}?[[]] "≔" ty:type_expr
+  | refs:{"(" typedef_refs ")" "@"}?[[]] id:ident args:{"<" typedef_args ">"}?[[]]
+      unfold_order:{"[" "unfold_order" "(" integer ")"  "]"}?
+      immovable:{"[" "immovable" "]"}?
+      ":=" ty:type_expr ->
+    { td_id = id
+    ; td_refinements = refs
+    ; td_parameters = args
+    ; td_body = ty
+    ; td_immovable = immovable <> None
+    ; td_unfold_order = Option.get default_unfold_order unfold_order }
 
 (** {3 Parsing of attributes} *)
 
@@ -350,7 +374,7 @@ type annot =
   | Annot_block
   | Annot_full_block
   | Annot_inlined
-  | Annot_unfold_prio  of int
+  | Annot_unfold_order of int
 
 let annot_lemmas : string list -> string list =
   List.map (Printf.sprintf "all: try by apply: %s; solve_goal.")
@@ -464,7 +488,7 @@ let parse_attr : rc_attr -> annot = fun attr ->
   | "block"        -> no_args Annot_block
   | "full_block"   -> no_args Annot_full_block
   | "inlined"      -> no_args Annot_inlined
-  | "unfold_prio"  -> single_arg annot_unfold_prio (fun i -> Annot_unfold_prio(i))
+  | "unfold_order" -> single_arg annot_unfold_order (fun i -> Annot_unfold_order(i))
   | _              -> error "undefined"
 
 (** {3 High level parsing of attributes} *)
@@ -595,26 +619,26 @@ let expr_annot : rc_attr list -> expr_annot = fun attrs ->
   | _              -> error "is invalid (wrong kind)"
 
 type basic_struct_annot =
-  { st_parameters  : (ident * coq_expr) list
-  ; st_refined_by  : (ident * coq_expr) list
-  ; st_exists      : (ident * coq_expr) list
-  ; st_lets        : (ident * coq_expr option * coq_expr) list
-  ; st_constrs     : constr list
-  ; st_size        : coq_expr option
-  ; st_ptr_type    : (ident * type_expr) option
-  ; st_immovable   : bool
-  ; st_unfold_prio : int }
+  { st_parameters   : (ident * coq_expr) list
+  ; st_refined_by   : (ident * coq_expr) list
+  ; st_exists       : (ident * coq_expr) list
+  ; st_lets         : (ident * coq_expr option * coq_expr) list
+  ; st_constrs      : constr list
+  ; st_size         : coq_expr option
+  ; st_ptr_type     : (ident * type_expr) option
+  ; st_immovable    : bool
+  ; st_unfold_order : int }
 
 let default_basic_struct_annot : basic_struct_annot =
-  { st_parameters  = []
-  ; st_refined_by  = []
-  ; st_exists      = []
-  ; st_lets        = []
-  ; st_constrs     = []
-  ; st_size        = None
-  ; st_ptr_type    = None
-  ; st_immovable   = false
-  ; st_unfold_prio = 100 }
+  { st_parameters   = []
+  ; st_refined_by   = []
+  ; st_exists       = []
+  ; st_lets         = []
+  ; st_constrs      = []
+  ; st_size         = None
+  ; st_ptr_type     = None
+  ; st_immovable    = false
+  ; st_unfold_order = default_unfold_order }
 
 (* Decides whether the annotation on the structure should lead to the
    definition of a RefinedC type. *)
@@ -636,7 +660,7 @@ let struct_annot : rc_attr list -> struct_annot = fun attrs ->
   let ptr = ref None in
   let immovable = ref false in
   let tagged_union = ref None in
-  let unfold_prio = ref None in
+  let unfold_order = ref None in
 
   let handle_attr ({rc_attr_id = id; _} as attr) =
     let error msg =
@@ -661,11 +685,11 @@ let struct_annot : rc_attr list -> struct_annot = fun attrs ->
     | (Annot_immovable      , None   ) ->
         if !immovable then error "already specified";
         immovable := true
-    | (Annot_unfold_prio(i) , None   ) ->
+    | (Annot_unfold_order(i), None   ) ->
          begin
-           match !unfold_prio with
+           match !unfold_order with
            | Some _ ->  error "already specified"
-           | None -> unfold_prio := Some(i)
+           | None -> unfold_order := Some(i)
          end
     | (Annot_parameters(_)  , _      )
     | (Annot_refined_by(_)  , _      )
@@ -684,15 +708,15 @@ let struct_annot : rc_attr list -> struct_annot = fun attrs ->
   | Some(e) -> SA_tagged_u(e)
   | None    ->
   let basic_annot =
-    { st_parameters  = !parameters
-    ; st_refined_by  = !refined_by
-    ; st_exists      = !exists
-    ; st_lets        = !lets
-    ; st_constrs     = !constrs
-    ; st_size        = !size
-    ; st_ptr_type    = !ptr
-    ; st_immovable   = !immovable
-    ; st_unfold_prio = Option.get 100 !unfold_prio }
+    { st_parameters   = !parameters
+    ; st_refined_by   = !refined_by
+    ; st_exists       = !exists
+    ; st_lets         = !lets
+    ; st_constrs      = !constrs
+    ; st_size         = !size
+    ; st_ptr_type     = !ptr
+    ; st_immovable    = !immovable
+    ; st_unfold_order = Option.get default_unfold_order !unfold_order }
   in
   SA_basic(basic_annot)
 

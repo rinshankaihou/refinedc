@@ -856,24 +856,15 @@ let pp_spec : Coq_path.t -> import list -> inlined_code ->
   let opaque = ref [] in
 
   (* Definition of types. *)
-  let pp_struct struct_id annot s =
-    (* Check if a type must be generated. *)
-    if not (basic_struct_annot_defines_type annot) then () else
-    (* Gather the field annotations. *)
-    let fields = gather_struct_fields struct_id s in
-    let (ref_names, ref_types) = List.split annot.st_refined_by in
-    let (par_names, par_types) = List.split annot.st_parameters in
-    let ref_and_par_types = ref_types @ par_types in
+  let pp_type id refs params movable unfold_order pp_body =
+    let refs = if refs = [] then [("x__", Coq_ident "unit")] else refs in
+    let (ref_names, ref_types) = List.split refs in
+    let (par_names, par_types) = List.split params in
     let ref_and_par_names = ref_names @ par_names in
+    let ref_and_par_types = ref_types @ par_types in
     let pp_params ff =
       let fn (x,e) = fprintf ff "(%s : %a) " x (pp_simple_coq_expr false) e in
       List.iter fn
-    in
-    let params = annot.st_parameters in
-    let id =
-      match annot.st_ptr_type with
-      | None       -> struct_id
-      | Some(id,_) -> id
     in
     pp "\n@;(* Definition of type [%s]. *)@;" id;
     let pp_prod = pp_as_prod (pp_simple_coq_expr true) in
@@ -882,7 +873,7 @@ let pp_spec : Coq_path.t -> import list -> inlined_code ->
     pp "(λ self %a,@;" (pp_encoded_patt_name false) ref_and_par_names;
     pp_encoded_patt_bindings ff ref_and_par_names;
     let r = Rec_in_def(id) in
-    pp_struct_def_np ast.structs r annot fields ff struct_id;
+    pp_body r;
     pp "@]@;)%%I.@;Global Typeclasses Opaque %s_rec.\n" id;
     if par_names <> [] then sugar := !sugar @ [(id, par_names)];
     opaque := !opaque @ [id ^ "_rec"; id];
@@ -903,7 +894,7 @@ let pp_spec : Coq_path.t -> import list -> inlined_code ->
       (pp_id_args false id) par_names;
     pp "%a" pp_encoded_patt_bindings ref_names;
     let r = Rec_in_lem(id) in
-    pp_struct_def_np ast.structs r annot fields ff struct_id;
+    pp_body r;
     pp "@]@;)%%I.@]@;";
     pp "Proof. apply: (type_fixpoint_unfold2 %s_rec). Qed.\n" id;
 
@@ -912,17 +903,33 @@ let pp_spec : Coq_path.t -> import list -> inlined_code ->
       pp "@;Definition %s_%s_inst_generated %apatt__ :=@;"
         id inst_name pp_params params;
       pp "  [instance %s_eq _ _ (%s_unfold %apatt__) with %i%%N].@;"
-        inst_name id pp_params params annot.st_unfold_prio;
+        inst_name id pp_params params unfold_order;
       pp "Global Existing Instance %s_%s_inst_generated." id inst_name;
     in
     pp_instance "simplify_hyp_place" "SimplifyHyp";
     pp_instance "simplify_goal_place" "SimplifyGoal";
-    if not annot.st_immovable then
+    if movable then
       begin
         pp "\n";
         pp_instance "simplify_hyp_val" "SimplifyHyp";
         pp_instance "simplify_goal_val" "SimplifyGoal"
       end
+  in
+  let pp_struct struct_id annot s =
+    (* Check if a type must be generated. *)
+    if not (basic_struct_annot_defines_type annot) then () else
+    (* Gather the field annotations. *)
+    let fields = gather_struct_fields struct_id s in
+    let id =
+      match annot.st_ptr_type with
+      | None       -> struct_id
+      | Some(id,_) -> id
+    in
+    let pp_body r =
+      pp_struct_def_np ast.structs r annot fields ff struct_id;
+    in
+    pp_type id annot.st_refined_by annot.st_parameters (not annot.st_immovable)
+      annot.st_unfold_order pp_body
   in
   let pp_tagged_union id tag_type_e s =
     if s.struct_is_union then
@@ -1061,17 +1068,12 @@ let pp_spec : Coq_path.t -> import list -> inlined_code ->
   List.iter pp_struct_or_tagged_union ast.structs;
 
   (* Type definitions (from comments). *)
-  pp "\n@;(* Type definitions. *)";
-  let pp_typedef (id, args, ty) =
-    pp "\n@;Definition %s" id;
-    let pp_arg (id, eo) =
-      let pp_coq_expr = pp_coq_expr false pp_type_expr in
-      match eo with
-      | None    -> pp " %s" id
-      | Some(e) -> pp " (%s : %a)" id pp_coq_expr e
+  let pp_typedef td =
+    let pp_body r =
+      pp_type_expr_rec None r ff td.td_body
     in
-    List.iter pp_arg args;
-    pp " := %a." pp_type_expr ty
+    pp_type td.td_id td.td_refinements td.td_parameters (not td.td_immovable)
+      td.td_unfold_order pp_body
   in
   List.iter pp_typedef typedefs;
 

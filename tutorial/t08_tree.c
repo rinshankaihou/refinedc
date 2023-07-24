@@ -179,10 +179,7 @@ void remove(tree_t* t, int k){
   }
 }
 
-struct [[rc::refined_by("s: {gset Z}")]]
-       [[rc::ptr_type("stree_t : ∃ t. t @ tree_t & {tree_rel s t}")]]
-       [[rc::unfold_prio("90")]]
-dummy { [[rc::field("int<i32>")]] int a; };
+//@rc::typedef (s : {gset Z}) @ stree_t [unfold_order(90)] := ∃ t. t @ tree_t & {tree_rel s t}
 
 [[rc::returns("{∅} @ stree_t")]]
  [[rc::lemmas("LeafRel")]]
@@ -204,6 +201,7 @@ tree_t sinit(int key){
 [[rc::requires("[alloc_initialized]")]]
 [[rc::ensures("own p : uninit<void*>")]]
 void sfree_tree(tree_t* t){
+  // TODO: this is necessary to destruct the existential quantifer inside stree early enough
   rc_unfold_once(*t);
   free_tree(t);
 }
