@@ -176,6 +176,25 @@ int test_conditional_annot() {
   return i2;
 }
 
+
+[[rc::parameters("i : Z")]]
+[[rc::args("i @ int<i32>")]]
+[[rc::returns("i @ int<i32>")]]
+int test_rc_assert(i) {
+  // test that we don't loose information through the rc::exists in rc_assert
+  [[rc::exists("j : Z")]]
+  [[rc::inv_vars("i : j @ int<i32>")]]
+  rc_assert;
+
+  // test two exists
+  [[rc::exists("j : Z", "k : Z")]]
+  [[rc::inv_vars("i : j @ int<i32>")]]
+  [[rc::constraints("{k = j}")]]
+  rc_assert;
+  return i;
+}
+
+
 [[rc::parameters("n : Z", "m : Z", "o : {option Z}")]]
 [[rc::args("n @ int<i32>", "m @ int<i32>",
            "{m = 1} @ optional<&own<int<i32>>, null>",

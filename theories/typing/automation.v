@@ -194,7 +194,7 @@ Ltac liRStmt :=
       | W.Goto ?bid => first [
          notypeclasses refine (tac_fast_apply (type_goto_precond _ _ _ _ _ _) _); progress liFindHyp FICSyntactic
        | lazymatch goal with
-         | H : IPROP_HINT (BLOCK_PRECOND bid) ?P |- _ =>
+         | H : IPROP_HINT (BLOCK_PRECOND bid) (λ _, ?P) |- _ =>
            notypeclasses refine (tac_fast_apply (tac_typed_single_block_rec P _ _ _ _ _ _ _) _);[unfold_code_marker_and_compute_map_lookup|]
          end
        | notypeclasses refine (tac_fast_apply (type_goto _ _ _ _ _ _ _) _); [unfold_code_marker_and_compute_map_lookup|]

@@ -15,10 +15,11 @@ Global Typeclasses Opaque pop_location_info.
 Inductive BLOCK_PRECOND_HINT := | BLOCK_PRECOND (bid : label).
 Inductive ASSERT_COND_HINT := | ASSERT_COND (id : string).
 
-Definition IPROP_HINT {Σ} {A} (a : A) (P : iProp Σ) : Prop := True.
+(* The `{!typeG Σ} is necessary to infer Σ if P is True. *)
+Definition IPROP_HINT `{!typeG Σ} {A B} (a : A) (P : B → iProp Σ) : Prop := True.
 Arguments IPROP_HINT : simpl never.
 
-Notation "'block' bid : P" := (IPROP_HINT (BLOCK_PRECOND bid) P) (at level 200, only printing).
+Notation "'block' bid : P" := (IPROP_HINT (BLOCK_PRECOND bid) (λ _ : unit, P)) (at level 200, only printing).
 Notation "'assert' id : P" := (IPROP_HINT (ASSERT_COND id) P) (at level 200, only printing).
 
 Definition CODE_MARKER (bs : gmap label stmt) : gmap label stmt := bs.

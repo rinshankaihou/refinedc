@@ -1280,12 +1280,16 @@ let pp_proof : Coq_path.t -> func_def -> import list -> string list
       pp "prepare_parameters (%a).@;" (pp_sep " " pp_var) func_annot.fa_parameters;
     end;
 
-  let pp_state_descr print_unused sd =
+  let pp_state_descr print_unused print_exist sd =
     (* Printing the existentials. *)
-    let pp_exists (id, e) =
-      pp "@;∃ %s : %a," id (pp_simple_coq_expr false) e
-    in
-    List.iter pp_exists sd.sd_exists;
+    begin
+      if print_exist then
+        let pp_exists (id, e) =
+          pp "@;∃ %s : %a," id (pp_simple_coq_expr false) e
+        in
+        List.iter pp_exists sd.sd_exists;
+      else ()
+    end;
     (* Compute the used and unused arguments and variables. *)
     let used =
       let fn (id, ty) =
@@ -1345,21 +1349,18 @@ let pp_proof : Coq_path.t -> func_def -> import list -> string list
       in
       unused_args @ unused_vars
     in
-    let all_vars = unused @ used in
+    let all_vars = if print_unused then unused @ used else used in
     let first = ref true in
     let pp_sep ff _ = if !first then first := false else fprintf ff " ∗" in
     let pp_var ff (id, (layout, ty_opt)) =
       match ty_opt with
       | None     ->
-         if print_unused then
-           fprintf ff "%a@;%s ◁ₗ uninit %a" pp_sep () id (pp_layout true) layout
+         fprintf ff "%a@;%s ◁ₗ uninit %a" pp_sep () id (pp_layout true) layout
       | Some(ty) -> fprintf ff "%a@;%s ◁ₗ %a" pp_sep () id pp_type_expr ty
     in
     begin
       match (all_vars, sd.sd_constrs) with
-      | ([], []) ->
-          Panic.panic_no_pos "Ill-formed block annotation in function [%s]."
-            def.func_name
+      | ([], []) -> pp "True"
       | (vs , cs) ->
           List.iter (pp "%a" pp_var) vs;
           List.iter (pp "%a@;%a" pp_sep () pp_constr) cs
@@ -1368,7 +1369,7 @@ let pp_proof : Coq_path.t -> func_def -> import list -> string list
   let pp_inv (id, annot) =
     (* Opening a box and printing the existentials. *)
     pp "@;  @[<v 2><[ \"%s\" :=" id;
-    pp_state_descr true annot;
+    pp_state_descr true true annot;
     (* Closing the box. *)
     pp "@]@;]> $"
   in
@@ -1376,13 +1377,19 @@ let pp_proof : Coq_path.t -> func_def -> import list -> string list
     (* Opening a box. *)
     pp "@;  @[<v 2>IPROP_HINT ";
     begin match hint.ht_kind with
-    | HK_block bid -> pp "(BLOCK_PRECOND \"%s\")" bid
-    | HK_assert id -> pp "(ASSERT_COND \"%i\")" id
+    | HK_block bid ->
+       pp "(BLOCK_PRECOND \"%s\") (λ _ : unit," bid;
+       pp_state_descr false true hint.ht_annot
+    | HK_assert id ->
+       let (exist_idents, exist_types) = List.split hint.ht_annot.sd_exists in
+       pp "(ASSERT_COND \"%i\") (λ %a : %a,@;%a" id
+         (pp_encoded_patt_name false) exist_idents
+         (pp_as_prod (pp_simple_coq_expr true)) exist_types
+         pp_encoded_patt_bindings exist_idents;
+       pp_state_descr false false hint.ht_annot;
     end;
-    pp "(";
-    pp_state_descr false hint.ht_annot;
     (* Closing the box. *)
-    pp "@;)%%I :: @]"
+    pp "@;)%%I ::@]"
   in
   let invs = collect_invs def in
   pp "split_blocks ((";
