@@ -137,7 +137,7 @@ let get_ctype (AnnotatedExpression(gtc,_,_,_)) : Ctype.ctype =
     | GenTypes.LValueType(_,c_ty,_) -> c_ty
     | GenTypes.RValueType(c_ty)     -> c_ty in
   let to_type_cat tc =
-    let loc = Location_ocaml.unknown in
+    let loc = Cerb_location.unknown in
     let impl = Ocaml_implementation.hafniumIntImpl in
     let m_tc = GenTypesAux.interpret_genTypeCategory loc impl tc in
     match ErrorMonad.runErrorMonad m_tc with
@@ -278,7 +278,9 @@ let points_to classify expr =
           []
       | AilEunion (_, _, e_opt) ->
           []
-      | AilEgcc_statement ->
+      | AilEatomic e ->
+          aux e
+      | AilEgcc_statement _ ->
           Panic.panic loc "Not implemented GCC statement expr." (* TODO *)
   in
   aux expr
@@ -339,7 +341,7 @@ type taint =
   [ `LOAD of pointsto | `STORE of pointsto | `CALL_WILD | `CALL of ail_identifier ]
 
 
-let potential_races : ((Location_ocaml.t * taint list * taint list) list) ref =
+let potential_races : ((Cerb_location.t * taint list * taint list) list) ref =
   ref []
 
 
@@ -375,7 +377,8 @@ let rec taint_expr points_to (AnnotatedExpression (_, _, loc, expr_)) =
     | AilEbmc_assume e
     | AilEarray_decay e
     | AilEfunction_decay e
-    | AilEunion (_, _, Some e) ->
+    | AilEunion (_, _, Some e)
+    | AilEatomic e ->
         self e
 
     | AilEbinary (e1, _, e2) ->
@@ -417,7 +420,7 @@ let rec taint_expr points_to (AnnotatedExpression (_, _, loc, expr_)) =
        merge_pointsto (List.map (function (_, Some e) -> self e | (_, None) -> []) xs)
     | AilEva_copy (e1, e2) ->
         merge_pointsto [self e1; self e2]
-    | AilEgcc_statement ->
+    | AilEgcc_statement _ ->
         Panic.panic loc "Not implemented GCC statement expr." (* TODO *)
 
 let taints_of_functions sigm =
@@ -471,14 +474,9 @@ let taints_of_functions sigm =
                     | AilSlabel (_, s, _) ->
                         fold_stmt env s
                     | AilSdeclaration xs ->
-                        merge_pointsto (List.map (fun (_, e) -> taint_expr e) xs)
+                        merge_pointsto (List.filter_map (fun (_, e_opt) -> Option.map taint_expr e_opt) xs)
                     | AilSpar ss ->
                         merge_pointsto (List.map (fold_stmt env) ss)
-                    | AilSpack(_,_) -> assert false (* FIXME *)
-                    | AilSunpack(_,_) -> assert false (* FIXME *)
-                    | AilShave(_,_) -> assert false (* FIXME *)
-                    | AilSshow(_,_) -> assert false (* FIXME *)
-                    | AilSinstantiate(_,_) -> assert false (* FIXME *)
                     | AilSmarker(_,_) -> assert false (* FIXME *)
                 in
                 (sym_decl, fold_stmt { counter= 1; block_depth= 0; scopes= fun_scopes } stmt) :: acc
@@ -559,7 +557,8 @@ let warn_unseq taints_map expr =
       | AilErvalue e
       | AilEarray_decay e
       | AilEfunction_decay e
-      | AilEunion (_, _, Some e) ->
+      | AilEunion (_, _, Some e)
+      | AilEatomic e ->
           aux e
 
       | AilEbinary (e1, bop, e2) when is_unseq bop ->
@@ -605,7 +604,7 @@ let warn_unseq taints_map expr =
           merge_status (List.map (function (_, Some e) -> aux e | (_, None) -> NO_CALL) xs)
       | AilEva_copy (e1, e2) ->
           merge_status [aux e1; aux e2]
-      | AilEgcc_statement ->
+      | AilEgcc_statement _ ->
           Panic.panic loc "Not implemented GCC statement expr." (* TODO *)
   in
   ignore (aux expr)
@@ -664,7 +663,7 @@ let warn_file (_, sigm) =
 (*          else *)
             Printf.printf "%sASSIGN[%s] ==> lvalue: %s -- e2: %s\x1b[0m\n"
               (if List.exists (fun (x, y) -> gt_pointsto x y) (Utils.product_list xs1 xs2) then "\x1b[31m" else "")
-              (Location_ocaml.location_to_string loc)
+              (Cerb_location.location_to_string loc)
               (foo xs1)
               (foo xs2);
 *)
@@ -685,7 +684,8 @@ let warn_file (_, sigm) =
       | AilEbmc_assume e
       | AilErvalue e
       | AilEarray_decay e
-      | AilEfunction_decay e ->
+      | AilEfunction_decay e
+      | AilEatomic e ->
           self e
       | AilEbinary (e1, _, e2)
       | AilEva_copy (e1, e2) ->
@@ -731,7 +731,7 @@ let warn_file (_, sigm) =
             | None ->
                 ()
           end
-      | AilEgcc_statement ->
+      | AilEgcc_statement _ ->
           Panic.panic loc "Not implemented GCC statement expr." (* TODO *)
   in
   let rec aux env (AnnotatedStatement (loc, _, stmt_)) =
@@ -784,28 +784,26 @@ let warn_file (_, sigm) =
       | AilSgoto _ ->
           ()
       | AilSdeclaration xs ->
-          List.iter (fun (sym, e) ->
-            (* We need to record the tainting if [[sym]] is a pointer *)
-            let pts = points_to (classify sigm env) e in
-            let old =
-              begin match List.assoc_opt sym !ptr_taints with
-                | None    -> []
-                | Some xs -> xs
-              end in
-             ptr_taints := (sym, (pts @ old)) :: List.remove_assoc sym !ptr_taints; (* TODO: use a map ... *)
-            aux_expr env e;
-            warn_unseq e;
+          List.iter (fun (sym, e_opt) ->
+            match e_opt with
+              | None -> ()
+              | Some e ->
+                  (* We need to record the tainting if [[sym]] is a pointer *)
+                  let pts = points_to (classify sigm env) e in
+                  let old =
+                    begin match List.assoc_opt sym !ptr_taints with
+                      | None    -> []
+                      | Some xs -> xs
+                    end in
+                  ptr_taints := (sym, (pts @ old)) :: List.remove_assoc sym !ptr_taints; (* TODO: use a map ... *)
+                  aux_expr env e;
+                  warn_unseq e;
           ) xs
       | AilSpar ss ->
           List.iter (aux { env with block_depth= 0 }) ss
       | AilSreg_store (_, e) ->
           aux_expr env e;
           warn_unseq e
-      | AilSpack(_,_) -> assert false (* FIXME *)
-      | AilSunpack(_,_) -> assert false (* FIXME *)
-      | AilShave(_,_) -> assert false (* FIXME *)
-      | AilSshow(_,_) -> assert false (* FIXME *)
-      | AilSinstantiate(_,_) -> assert false (* FIXME *)
       | AilSmarker(_,_) -> assert false (* FIXME *)
   in
   List.iter (fun (fsym, (_, _, _, params, stmt)) ->

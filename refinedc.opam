@@ -18,10 +18,10 @@ dev-repo: "git+https://gitlab.mpi-sws.org/iris/refinedc.git"
 depends: [
   "coq-lithium" {= version | = "~dev"}
   "cerberus" {= "~dev"}
-  "cmdliner" {= "1.0.4"}
-  "sexplib0" {= "v0.14.0"} # see https://github.com/rems-project/cerberus/issues/194
+  "cmdliner" {= "1.2.0"}
+  "sexplib0" {= "v0.16.0"}
   "earley" {= "3.0.0"}
-  "toml" {= "5.0.0"}
+  "toml" {= "7.1.0"}
   "ubase" {= "0.04"}
 ]
 

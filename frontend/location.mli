@@ -27,4 +27,4 @@ val pp_loc : t pp
 
 type 'a located = { elt : 'a ; loc : t }
 
-val to_cerb_loc : t -> Location_ocaml.t
+val to_cerb_loc : t -> Cerb_location.t

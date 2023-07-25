@@ -35,7 +35,7 @@ let read_project_file : string -> project_config = fun file ->
   let cpp_with_rc = ref None in
   let no_build = ref None in
   let handle_entry key value =
-    let open TomlTypes in
+    let open Toml.Types in
     let section = Table.Key.to_string key in
     match (section, value) with
     | ("coq_root", TString(s)) -> coq_root := Some(s)
@@ -78,7 +78,7 @@ let read_project_file : string -> project_config = fun file ->
     | (_         , _         ) ->
         panic "Invalid section [%s]." section
   in
-  TomlTypes.Table.iter handle_entry toml;
+  Toml.Types.Table.iter handle_entry toml;
   let project_coq_root =
     let root =
       match !coq_root with
@@ -103,7 +103,7 @@ let read_project_file : string -> project_config = fun file ->
     file [fname]. The function can raise [Sys_error] in case of a problem when
     opening the file for writing. *)
 let write_project_file : string -> project_config -> unit = fun file pc ->
-  let open TomlTypes in
+  let open Toml.Types in
   let coq_root = TString(Coq_path.to_string pc.project_coq_root) in
   let theories =
     TArray(NodeString(List.map Coq_path.to_string pc.project_theories))

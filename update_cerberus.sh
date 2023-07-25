@@ -4,7 +4,7 @@
 # the repository. Note that the script is self-modifying: it will change the
 # old hash into the new one, and erase the new hash again.
 
-OLD_HASH=db06a0a296a34b0ca1b280484c0c07790799b6a4
+OLD_HASH=57c0e80af140651aad72e3514133229425aeb102
 NEW_HASH=
 
 sed -i "s/${OLD_HASH}/${NEW_HASH}/g" README.md DEVELOPERS.md .gitlab-ci.yml update_cerberus.sh Makefile

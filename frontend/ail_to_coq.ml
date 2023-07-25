@@ -9,7 +9,7 @@ type ail_expr  = GenTypes.genTypeCategory AilSyntax.expression
 type c_type    = Ctype.ctype
 type i_type    = Ctype.integerType
 type type_cat  = GenTypes.typeCategory
-type loc       = Location_ocaml.t
+type loc       = Cerb_location.t
 
 let c_type_of_type_cat : type_cat -> c_type = fun tc ->
   match tc with
@@ -17,7 +17,7 @@ let c_type_of_type_cat : type_cat -> c_type = fun tc ->
   | GenTypes.RValueType(c_ty)     -> c_ty
 
 let to_type_cat : GenTypes.genTypeCategory -> type_cat = fun tc ->
-  let loc = Location_ocaml.unknown in
+  let loc = Cerb_location.unknown in
   let impl = Ocaml_implementation.hafniumIntImpl in
   let m_tc = GenTypesAux.interpret_genTypeCategory loc impl tc in
   match ErrorMonad.runErrorMonad m_tc with
@@ -25,7 +25,7 @@ let to_type_cat : GenTypes.genTypeCategory -> type_cat = fun tc ->
   | Either.Left(_,_) -> assert false (* FIXME possible here? *)
 
 let gen_type_to_c_type : GenTypes.genType -> c_type = fun gt ->
-  let loc = Location_ocaml.unknown in
+  let loc = Cerb_location.unknown in
   let impl = Ocaml_implementation.hafniumIntImpl in
   let m_c_ty = GenTypesAux.interpret_genType loc impl gt in
   match ErrorMonad.runErrorMonad m_c_ty with
@@ -54,13 +54,13 @@ let loc_of_id : Symbol.identifier -> loc =
 
 (* Register a location. *)
 let register_loc : Location.Pool.t -> loc -> Location.t = fun p loc ->
-  match Location_ocaml.(get_filename loc, to_cartesian loc) with
+  match Cerb_location.(get_filename loc, to_cartesian loc) with
   | (Some(f), Some((l1,c1),(0 ,0 ))) -> Location.make f l1 c1 l1 c1 p
   | (Some(f), Some((l1,c1),(l2,c2))) -> Location.make f l1 c1 l2 c2 p
   | (_      , _                    ) -> Location.none coq_locs
 
 let register_str_loc : Location.Pool.t -> loc -> Location.t = fun p loc ->
-  match Location_ocaml.(get_filename loc, to_cartesian loc) with
+  match Cerb_location.(get_filename loc, to_cartesian loc) with
   | (Some(f), Some((l1,c1),(l2,c2))) -> Location.make f l1 (c1+1) l2 (c2-1) p
   | (_      , _                    ) -> Location.none coq_locs
 
@@ -106,7 +106,7 @@ let rec translate_int_type : loc -> i_type -> Coq_ast.int_type option =
     (* Normal integer types *)
     | Ichar | Short | Int_ | Long | LongLong ->
     let ity = if signed then Signed(i) else Unsigned i in
-    match HafniumImpl.sizeof_ity ity with
+    match HafniumImpl.impl.sizeof_ity ity with
     | Some(1) -> ItI8(signed)
     | Some(2) -> ItI16(signed)
     | Some(4) -> ItI32(signed)
@@ -119,12 +119,13 @@ let rec translate_int_type : loc -> i_type -> Coq_ast.int_type option =
   | Bool        -> None
   | Signed(i)   -> Some(size_of_base_type true  i)
   | Unsigned(i) -> Some(size_of_base_type false i)
-  | Enum(s)     -> translate_int_type loc (HafniumImpl.typeof_enum s)
+  | Enum(s)     -> translate_int_type loc (HafniumImpl.impl.typeof_enum s)
   (* Things defined in the standard libraries *)
   | Wchar_t     -> not_impl loc "layout_of (Wchar_t)"
   | Wint_t      -> not_impl loc "layout_of (Win_t)"
   | Size_t      -> Some(ItSize_t(false))
   | Ptrdiff_t   -> Some(ItPtrdiff_t)
+  | Ptraddr_t   -> not_impl loc "layout_of (Ptraddr_t)" (* NOTE: this is a CHERIC type *)
 
 (** [layout_of fa c_ty] translates the C type [c_ty] into a layout.  Note that
     argument [fa] must be set to [true] when in function arguments, since this
@@ -338,12 +339,12 @@ let rec align_of : c_type -> int = fun c_ty ->
   in
   match c_ty with
   | Void                  -> 1
-  | Basic(Integer(i))     -> unwrap (alignof_ity i)
-  | Basic(Floating(f))    -> unwrap (alignof_fty f)
+  | Basic(Integer(i))     -> unwrap (impl.alignof_ity i)
+  | Basic(Floating(f))    -> unwrap (impl.alignof_fty f)
   | Array(c_ty,_)         -> align_of c_ty
   | FunctionNoParams(_,_)
-  | Function(_,_,_)       -> unwrap alignof_pointer
-  | Pointer(_,_)          -> unwrap alignof_pointer
+  | Function(_,_,_)       -> unwrap impl.alignof_pointer
+  | Pointer(_,_)          -> unwrap impl.alignof_pointer
   | Atomic(c_ty)          -> align_of c_ty (* FIXME may not be the same? *)
   | Struct(sym)           -> align_of_struct false sym
   | Union(sym)            -> align_of_struct true  sym
@@ -368,13 +369,13 @@ let rec size_of : c_type -> int = fun c_ty ->
   in
   match c_ty with
   | Void                  -> 1
-  | Basic(Integer(i))     -> unwrap (sizeof_ity i)
-  | Basic(Floating(f))    -> unwrap (sizeof_fty f)
-  | Array(c_ty,None)      -> unwrap sizeof_pointer
+  | Basic(Integer(i))     -> unwrap (impl.sizeof_ity i)
+  | Basic(Floating(f))    -> unwrap (impl.sizeof_fty f)
+  | Array(c_ty,None)      -> unwrap impl.sizeof_pointer
   | Array(c_ty,Some(n))   -> size_of c_ty * Nat_big_num.to_int n
   | Function(_,_,_)
-  | FunctionNoParams(_,_) -> unwrap sizeof_pointer
-  | Pointer(_,_)          -> unwrap sizeof_pointer
+  | FunctionNoParams(_,_) -> unwrap impl.sizeof_pointer
+  | Pointer(_,_)          -> unwrap impl.sizeof_pointer
   | Atomic(c_ty)          -> size_of c_ty (* FIXME may not be the same? *)
   | Struct(sym)           -> size_of_struct false sym
   | Union(sym)            -> size_of_struct true  sym
@@ -709,7 +710,12 @@ let rec translate_expr : bool -> op_type option -> ail_expr -> expr =
           | _                                            ->
               not_impl loc "expr function_decay (not an ident)"
         in res
-    | AilEgcc_statement            ->
+    | AilEatomic(e)                ->
+        (* conversion of a non-atomic value to an atomic value (e.g.
+           for a constant on the RHS of a store to an atomic
+           location). We don't do anything here at the moment. *)
+        translate e
+    | AilEgcc_statement _          ->
         Panic.panic loc "Not implemented GCC statement expr." (* TODO *)
   in
   match (goal_ty, !res_ty) with
@@ -744,7 +750,7 @@ and translate_call : type a. a call_place -> loc -> bool -> ail_expr
       let es =
         let fn i e =
           let (_, ty, _) = List.nth args i in
-          match op_type_opt Location_ocaml.unknown ty with
+          match op_type_opt Cerb_location.unknown ty with
           | Some(OpInt(_)) as goal_ty -> translate_expr false goal_ty e
           | Some(OpBool)   as goal_ty -> translate_expr false goal_ty e
           | _                         -> translate_expr false None e
@@ -857,6 +863,8 @@ and translate_call : type a. a call_place -> loc -> bool -> ail_expr
             let e = CopyAID(ot, e1, e2) in
             if lval then not_impl loc "copy_alloc_id as an lvalue";
             Call_atomic_expr(e) (* FIXME constructor name confusing here. *)
+        | AilBCHERI _                              ->
+            not_impl loc "call to CHERI builtin"
       end
   | _                     ->
       let (_, arg_tys) =
@@ -866,7 +874,7 @@ and translate_call : type a. a call_place -> loc -> bool -> ail_expr
       let es =
         let fn i e =
           let ty = List.nth arg_tys i in
-          match op_type_opt Location_ocaml.unknown ty with
+          match op_type_opt Cerb_location.unknown ty with
           | Some(OpInt(_)) as goal_ty -> translate_expr false goal_ty e
           | Some(OpBool)   as goal_ty -> translate_expr false goal_ty e
           | _                         -> translate_expr false None e
@@ -941,11 +949,6 @@ let warn_ignored_attrs so attrs =
       | AilSdeclaration(_)       -> "a declaration"
       | AilSpar(_)               -> "a par statement"
       | AilSreg_store(_,_)       -> "a register store statement"
-      | AilSpack(_,_)            -> assert false (* FIXME *)
-      | AilSunpack(_,_)          -> assert false (* FIXME *)
-      | AilShave(_,_)            -> assert false (* FIXME *)
-      | AilSshow(_,_)            -> assert false (* FIXME *)
-      | AilSinstantiate(_,_)     -> assert false (* FIXME *)
       | AilSmarker(_,_)          -> assert false (* FIXME *)
     in
     let desc =
@@ -1354,26 +1357,29 @@ let translate_block stmts blocks ret_ty is_main =
           (locate (Goto(sym_to_str l)), blocks)
       | AilSdeclaration(ls) ->
           let (stmt, blocks) = trans extra_attrs swstk ks stmts blocks in
-          let add_decl (id, e) stmt =
-            let id = sym_to_str id in
-            let ty =
-              try snd (Hashtbl.find local_vars id)
-              with Not_found -> assert false
-            in
-            let atomic = is_atomic ty in
-            let goal_ty = op_type_of Location_ocaml.unknown ty in
-            let e = translate_expr false (Some goal_ty) e in
-            let var = noloc (Var(Some(id), false)) in
-            noloc (Assign(atomic, goal_ty, var, e, stmt))
+          let add_decl (id, e_opt) stmt =
+            match e_opt with
+            | None ->
+               (* FIXME: Technically, reaching a variable declaration
+                  should assign Poison to the variable each time the
+                  declaration is reached. See
+                  https://github.com/rems-project/cerberus/blob/master/tests/ci/0328-indeterminate_block_declaration.c *)
+               stmt
+            | Some e ->
+                let id = sym_to_str id in
+                let ty =
+                  try snd (Hashtbl.find local_vars id)
+                  with Not_found -> assert false
+                in
+                let atomic = is_atomic ty in
+                let goal_ty = op_type_of Cerb_location.unknown ty in
+                let e = translate_expr false (Some goal_ty) e in
+                let var = noloc (Var(Some(id), false)) in
+                noloc (Assign(atomic, goal_ty, var, e, stmt))
           in
           (List.fold_right add_decl ls stmt, blocks)
       | AilSpar(_)          -> not_impl loc "statement par"
       | AilSreg_store(_,_)  -> not_impl loc "statement store"
-      | AilSpack(_,_)       -> assert false (* FIXME *)
-      | AilSunpack(_,_)     -> assert false (* FIXME *)
-      | AilShave(_,_)       -> assert false (* FIXME *)
-      | AilSshow(_,_)       -> assert false (* FIXME *)
-      | AilSinstantiate(_,_)-> assert false (* FIXME *)
       | AilSmarker(_,_)     -> assert false (* FIXME *)
     in
     if not !attrs_used then warn_ignored_attrs (Some(s)) attrs;
@@ -1513,7 +1519,7 @@ let translate : string -> typed_ail -> Coq_ast.t = fun source_file ail ->
       insert_bindings bindings;
       let func_init = fresh_block_id () in
       let func_blocks =
-        let ret_ty = op_type_opt Location_ocaml.unknown ret_ty in
+        let ret_ty = op_type_opt Cerb_location.unknown ret_ty in
         let (stmt, blocks) =
           let is_main = func_name = "main" in
           translate_block stmts SMap.empty ret_ty is_main

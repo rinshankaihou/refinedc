@@ -367,7 +367,7 @@ let cpp_config =
   let build cpp_I cpp_include cpp_nostdinc cpp_D =
     Cerb_wrapper.{cpp_I; cpp_include; cpp_nostdinc; cpp_D}
   in
-  Term.(pure build $ cpp_I $ cpp_include $ cpp_nostdinc $ cpp_D)
+  Term.(const build $ cpp_I $ cpp_include $ cpp_nostdinc $ cpp_D)
 
 let no_analysis =
   let doc =
@@ -407,7 +407,7 @@ let opts : config Term.t =
   let build cpp_config no_analysis no_locs no_build no_mem_cast =
     { cpp_config ; no_analysis ; no_locs ; no_build ; no_mem_cast }
   in
-  Term.(pure build $ cpp_config $ no_analysis $ no_locs $ no_build $ no_mem_cast)
+  Term.(const build $ cpp_config $ no_analysis $ no_locs $ no_build $ no_mem_cast)
 
 let c_file =
   let doc = "C language source file." in
@@ -415,9 +415,9 @@ let c_file =
 
 let check_cmd =
   let open Term in
-  let term = pure run $ opts $ c_file in
+  let term = const run $ opts $ c_file in
   let doc = "Run RefiendC on the given C file." in
-  (term, info "check" ~version ~doc)
+  Cmd.(v (info "check" ~version ~doc) term)
 
 (* Preprocessing command (useful for debugging). *)
 
@@ -427,8 +427,7 @@ let run_cpp config c_file =
 
 let cpp_cmd =
   let doc = "Print the result of the Cerberus preprocessor to stdout." in
-  Term.(pure run_cpp $ cpp_config $ c_file),
-  Term.info "cpp" ~version ~doc
+  Cmd.(v (info "cpp" ~version ~doc) Term.(const run_cpp $ cpp_config $ c_file))
 
 (* Ail printing command (useful for debugging). *)
 
@@ -438,8 +437,7 @@ let run_ail config c_file =
 
 let ail_cmd =
   let doc = "Print the Cerberus Ail AST of the given C file to stdout." in
-  Term.(pure run_ail $ cpp_config $ c_file),
-  Term.info "ail" ~version ~doc
+  Cmd.(v (info "ail" ~version ~doc) Term.(const run_ail $ cpp_config $ c_file))
 
 (* Cleaning command. *)
 
@@ -508,8 +506,7 @@ let soft =
 
 let clean_cmd =
   let doc = "Delete all the generated files for the given C source file." in
-  Term.(pure run_clean $ soft $ c_file),
-  Term.info "clean" ~version ~doc
+  Cmd.(v (info "clean" ~version ~doc) Term.(const run_clean $ soft $ c_file))
 
 (* Project initialization command. *)
 
@@ -642,8 +639,7 @@ let coq_path =
 
 let init_cmd =
   let doc = "Create a new RefinedC project in the current directory." in
-  Term.(pure init $ coq_path),
-  Term.info "init" ~version ~doc
+  Cmd.(v (info "init" ~version ~doc) Term.(const init $ coq_path))
 
 (* A few trivial commands. *)
 
@@ -653,18 +649,16 @@ let print_version () =
 
 let version_cmd =
   let doc = "Show detailed version information for RefinedC." in
-  Term.(const print_version $ const ()),
-  Term.info "version" ~version ~doc
+  Cmd.(v (info "version" ~version ~doc) Term.(const print_version $ const ()))
 
 let help_cmd =
   let doc = "Show the main help page for RefinedC." in
-  Term.(ret (const (`Help (`Pager, None)))),
-  Term.info "help" ~version ~doc
+  Cmd.(v (info "help" ~version ~doc) Term.(ret (const (`Help (`Pager, None)))))
 
-let default_cmd =
+let (default_cmd, default_info) =
   let doc = "RefinedC program verification framework." in
   Term.(ret (const (`Help(`Pager, None)))),
-  Term.info "refinedc" ~version ~doc
+  Cmd.info "refinedc" ~version ~doc
 
 (* Entry point. *)
 let _ =
@@ -672,4 +666,5 @@ let _ =
     [ init_cmd ; cpp_cmd ; ail_cmd ; check_cmd ; clean_cmd
     ; help_cmd ; version_cmd ]
   in
-  Term.(exit (eval_choice default_cmd cmds))
+  (* Term.(exit (eval_choice default_cmd cmds)) *)
+  Stdlib.exit (Cmd.eval (Cmd.group default_info ~default:default_cmd cmds))

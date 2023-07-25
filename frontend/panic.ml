@@ -2,10 +2,10 @@
 
 open Extra
 
-type loc = Location_ocaml.t
+type loc = Cerb_location.t
 
 let pp_loc : loc pp = fun oc loc ->
-  Format.pp_print_string oc (Location_ocaml.location_to_string loc)
+  Format.pp_print_string oc (Cerb_location.location_to_string loc)
 
 let pp_loc_opt : loc option pp = fun oc lopt ->
   Option.iter (Format.fprintf oc "[%a] " pp_loc) lopt

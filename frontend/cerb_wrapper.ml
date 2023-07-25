@@ -13,14 +13,14 @@ let return = Exception.except_return
 
 let io : Pipeline.io_helpers =
   let pass_message = let ref = ref 0 in fun str ->
-    Debug_ocaml.print_success (Printf.sprintf "%i. %s" !ref str);
+    Cerb_debug.print_success (Printf.sprintf "%i. %s" !ref str);
     incr ref; return ()
   in
   let set_progress _ = return () in
   let run_pp opts doc = run_pp opts doc; return () in
   let print_endline str = print_endline str; return () in
-  let print_debug n mk_str = Debug_ocaml.print_debug n [] mk_str; return () in
-  let warn mk_str = Debug_ocaml.warn [] mk_str; return () in
+  let print_debug n mk_str = Cerb_debug.print_debug n [] mk_str; return () in
+  let warn ?(always=false) mk_str = Cerb_debug.warn ~always [] mk_str; return () in
   {pass_message ; set_progress ; run_pp ; print_endline ; print_debug ; warn}
 
 let impl_name =
@@ -28,8 +28,8 @@ let impl_name =
     "gcc_4.9.0_x86_64-apple-darwin10.8.0"
 
 let set_cerb_conf () =
-  let open Global_ocaml in
-  set_cerb_conf "RefinedC" false Random false Basic false false false false
+  let open Cerb_global in
+  set_cerb_conf "RefinedC" false Random false Basic false false false false false
 
 let frontend cpp_cmd filename =
   let conf =
@@ -83,16 +83,14 @@ let c_file_to_ail config fname =
   let open Exception in
   source_file_check fname;
   match frontend (cpp_cmd config) fname with
-  | Result(_, Some(ast), _) -> ast
-  | Result(_, None     , _) ->
-      Panic.panic_no_pos "Unexpected frontend error."
+  | Result(_, (_, ast)) -> ast
   | Exception((loc,err))    ->
   match err with
   | CPP(_) -> Panic.panic_no_pos "Failed due to preprocessor error."
   | _      ->
   let err = Pp_errors.short_message err in
   let (_, pos) =
-    try Location_ocaml.head_pos_of_location loc with Invalid_argument(_) ->
+    try Cerb_location.head_pos_of_location loc with Invalid_argument(_) ->
       ("", "(Cerberus position bug)")
   in
   Panic.panic loc "Frontend error.\n%s\n\027[0m%s%!" err pos
@@ -115,7 +113,7 @@ let print_ail : Ail_to_coq.typed_ail -> unit = fun ast ->
   | _      ->
   let err = Pp_errors.short_message err in
   let (_, pos) =
-    try Location_ocaml.head_pos_of_location loc with Invalid_argument(_) ->
+    try Cerb_location.head_pos_of_location loc with Invalid_argument(_) ->
       ("", "(Cerberus position bug)")
   in
   Panic.panic loc "Frontend error.\n%s\n\027[0m%s%!" err pos
