@@ -33,7 +33,7 @@ https://gitlab.mpi-sws.org/msammler/refinedc-tutorial
 
 ## Installing RefinedC
 
-RefinedC is known to compile with Coq 8.14.0, on 64-bits Linux machines. It
+RefinedC is known to compile with Coq 8.17.0, on 64-bits Linux machines. It
 also possibly works on MacOS. In any case, we strongly advise you to rely on
 [opam](https://opam.ocaml.org/doc/Install.html) to install dependencies.
 
@@ -44,7 +44,7 @@ instructions in [DEVELOPERS.md](DEVELOPERS.md).
 ### tl;dr
 
 Assuming an appropriate [opam](https://opam.ocaml.org/doc/Install.html) switch
-(OCaml version 4.07.0 at least), run the following commands.
+(OCaml version 4.14.0 at least), run the following commands.
 ```bash
 sudo apt-get install libmpfr-dev # Implicit Cerberus dependency.
 opam repo add coq-released "https://coq.inria.fr/opam/released"
@@ -92,7 +92,7 @@ installed. There is a reasonable default but it needs root privileges.
 
 If you are an OCaml user and if you know what you are doing, it is perfectly
 fine to install RefinedC in any "opam switch" you like (provided the OCaml
-version is 4.07.0 or higher) and you can skip this section.
+version is 4.14.0 or higher) and you can skip this section.
 
 In the following instructions we are going to create an "opam switch" (i.e., a
 fresh OCaml environment) in which RefinedC can be installed and used. Creating
@@ -109,7 +109,7 @@ of you RefinedC will be placed. And then create the new switch in that folder.
 mkdir refinedc-projects
 opam switch create refinedc-projects ocaml-variants.4.14.0+options ocaml-option-flambda
 ```
-You should then have an appropriate OCaml environment (with version 4.11.1) in
+You should then have an appropriate OCaml environment (with version 4.14.0) in
 the `refinedc-projects` directory (or whatever you named it). In the following
 we will assume that everything you do will be under that directory, so do not
 forget to move into it.

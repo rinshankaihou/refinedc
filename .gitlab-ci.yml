@@ -30,7 +30,7 @@ variables:
   - api
 
 ## Build jobs
-# z3 is pinned because of this failure: https://gitlab.mpi-sws.org/iris/refinedc/-/jobs/167306
+# z3 is pinned to not cause accidential breakage from z3 updates
 build-coq.8.17.0-timing:
   <<: *template
   variables:
