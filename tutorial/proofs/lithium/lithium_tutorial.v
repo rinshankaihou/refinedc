@@ -57,9 +57,9 @@ Section lithium.
     (* Instantiate the existential quantifier with an evar. *)
     liStep.
     (* Solve the sidecondition to instantiate the evar. *)
-    liStep. liStep.
+    liStep.
     (* Shelve the sidecondition. *)
-    liStep. liStep.
+    liStep.
     (* Solve True. *)
     liStep.
     (* Unshelve sideconditions. *)
@@ -490,12 +490,10 @@ Section lithium.
     unification and instantiates the evar (see t02_evars.c for
     details). Similar to the wand, this happens in two steps. *)
     liRStep; liShow.
-    liRStep; liShow.
 
     (** Now we have a pure sidecondition without evars. Such
     sideconditions are shelved to be solved later. (6.c. in the
     RefinedC paper) *)
-    liRStep; liShow.
     liRStep; liShow.
 
     (** Next, we have an universal quantifier at the top-level.
@@ -776,7 +774,7 @@ Section proof_lithium_test.
       liRStep; liShow.
 
       (** Let's skip over the type-checking of arguments. *)
-      do 16 liRStep; liShow.
+      do 14 liRStep; liShow.
 
       (** Now we have inferred the types of the two sides of the !=
       and can apply a rule for type-checking comparison between
@@ -841,7 +839,7 @@ Section proof_lithium_test.
       liRStep; liShow.
 
       (** We skip over type-checking of the arguments to + *)
-      do 38 liRStep; liShow.
+      do 31 liRStep; liShow.
 
       (** Now Lithium applies the typing rule for + *)
       liRStep; liShow.

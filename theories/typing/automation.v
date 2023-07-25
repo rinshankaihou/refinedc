@@ -146,7 +146,7 @@ Ltac liRInstantiateEvars_hook := idtac.
 Ltac liRInstantiateEvars :=
   liRInstantiateEvars_hook;
   lazymatch goal with
-  | |- (_ < protected ?H)%nat ∧ _ =>
+  | |- envs_entails _ (⌜(_ < protected ?H)%nat⌝ ∗ _) =>
     (* We would like to use [liInst H (S (protected (EVAR_ID _)))],
       but this causes a Error: No such section variable or assumption
       at Qed. time. Maybe this is related to https://github.com/coq/coq/issues/9937 *)
@@ -156,9 +156,9 @@ Ltac liRInstantiateEvars :=
   dependent types in with refinement. Unificaiton likes to unfold the
   definition of ty without this. This is the reason why do_instantiate
   evars must come before do_side_cond *)
-  | |- protected ?H = ( _ @ ?ty)%I ∧ _ =>
+  | |- envs_entails _ (⌜protected ?H = ( _ @ ?ty)%I⌝ ∗ _) =>
     do_instantiate_protected (protected H) ltac:(fun H => instantiate (1:=((protected (EVAR_ID _)) @ ty)%I) in (value of H))
-  | |- protected ?H = ty_of_rty (frac_ptr ?β _)%I ∧ _ =>
+  | |- envs_entails _ (⌜protected ?H = ty_of_rty (frac_ptr ?β _)%I⌝ ∗ _) =>
     do_instantiate_protected (protected H) ltac:(fun H => instantiate (1:=((frac_ptr β (protected (EVAR_ID _)))%I)) in (value of H))
   | |- envs_entails _ (subsume (?x ◁ₗ{?β} ?ty) (_ ◁ₗ{_} (protected ?H)) _) =>
     liInst H ty

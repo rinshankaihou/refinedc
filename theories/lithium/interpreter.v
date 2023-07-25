@@ -243,35 +243,62 @@ Ltac liImpl :=
   normalize_and_simpl_impl false.
 
 (** ** [liSideCond] *)
+Section coq_tactics.
+  Context {Σ : gFunctors}.
+  Lemma tac_sep_pure Δ (P : Prop) (Q : iProp Σ) :
+    P → envs_entails Δ Q → envs_entails Δ (⌜P⌝ ∗ Q).
+  Proof.
+    rewrite envs_entails_unseal => [HP HΔ].
+    iIntros "HΔ". iSplit => //. by iApply HΔ.
+  Qed.
+
+  Lemma tac_sep_pure_and Δ (P1 P2 : Prop) (Q : iProp Σ) :
+    envs_entails Δ (⌜P1⌝ ∗ ⌜P2⌝ ∗ Q) → envs_entails Δ (⌜P1 ∧ P2⌝ ∗ Q).
+  Proof. apply tac_fast_apply. by iIntros "[% [% $]]". Qed.
+  Lemma tac_sep_pure_exist {A} Δ (P : A → Prop) (Q : iProp Σ) :
+    envs_entails Δ (∃ x, ⌜P x⌝ ∗ Q) → envs_entails Δ (⌜∃ x, P x⌝ ∗ Q).
+  Proof. apply tac_fast_apply. iIntros "[%a [% $]]". naive_solver. Qed.
+
+  Lemma tac_normalize_goal_and_envs Δ (P1 P2 : Prop) (Q : iProp Σ):
+    P1 = P2 → envs_entails Δ (⌜P2⌝ ∗ Q) → envs_entails Δ (⌜P1⌝ ∗ Q).
+  Proof. by move => ->. Qed.
+
+  Lemma tac_simpl_and_unsafe_envs Δ P1 P2 (Q : iProp Σ) `{!SimplAndUnsafe P1 P2}:
+    envs_entails Δ (⌜P2⌝ ∗ Q) → envs_entails Δ (⌜P1⌝ ∗ Q).
+  Proof. apply tac_fast_apply. unfold SimplAndUnsafe in *. iIntros "[% $]". naive_solver. Qed.
+
+End coq_tactics.
+
 Ltac liSideCond :=
   lazymatch goal with
-  | |- ?P ∧ ?Q =>
-    lazymatch P with
-    | shelve_hint _ => split; [ unfold shelve_hint; shelve_sidecond |]
-    | _ => first [
-        lazymatch P with
-        | context [protected _] => fail
-        | _ => split; [splitting_fast_done|]
-        end
-      | progress normalize_goal_and
-      | lazymatch P with
-        | context [protected _] => first [
-            split; [ solve_protected_eq |]; unfold_instantiated_evars
-          | lazymatch P with
-            | _ ∧ _ => notypeclasses refine (tac_and_assoc _ _ _ _)
-            | ∃ _, _ => notypeclasses refine (tac_exist_assoc _ _ _)
-            | _ => notypeclasses refine (simpl_and_unsafe_and P _ Q _); [solve [refine _] |]
-            end
-            (* no simpl here because there is liSimpl after each tactic *)
-          ]
-         (* We use done instead of fast_done here because solving more
-         sideconditions here is a bigger performance win than the overhead
-         of done. *)
-        | _ => split; [ first [ done | shelve_sidecond ] | ]
-        end
-      ]
-    end
-  | _ => fail "liSideCond: unknown goal"
+  | |- envs_entails ?Δ (bi_sep ⌜?P⌝ ?Q) =>
+      lazymatch P with
+      | shelve_hint _ =>
+          notypeclasses refine (tac_sep_pure _ _ _ _ _); [unfold shelve_hint; shelve_sidecond |]
+      | _ => first [
+          lazymatch P with
+          | context [protected _] => fail
+          | _ => notypeclasses refine (tac_sep_pure _ _ _ _ _); [splitting_fast_done|]
+          end
+        | progress (notypeclasses refine (tac_normalize_goal_and_envs _ _ _ _ _ _); [normalize_hook|])
+        | lazymatch P with
+          | context [protected _] => first [
+              notypeclasses refine (tac_sep_pure _ _ _ _ _); [ solve_protected_eq |];
+              unfold_instantiated_evars
+            | lazymatch P with
+              | _ ∧ _ => notypeclasses refine (tac_sep_pure_and _ _ _ _ _)
+              | ∃ _, _ => notypeclasses refine (tac_sep_pure_exist _ _ _ _)
+              | _ => notypeclasses refine (tac_simpl_and_unsafe_envs _ P _ _ _); [solve [refine _] |]
+              end
+              (* no simpl here because there is liSimpl after each tactic *)
+            ]
+          (* We use done instead of fast_done here because solving more
+          sideconditions here is a bigger performance win than the overhead
+          of done. *)
+          | _ => notypeclasses refine (tac_sep_pure _ _ _ _ _); [ first [ done | shelve_sidecond ] | ]
+          end
+        ]
+      end
   end.
 
 (** ** [liFindInContext] *)
@@ -375,13 +402,6 @@ Section coq_tactics.
     envs_entails Δ (∃ a : A, Φ a ∗ Q) → envs_entails Δ ((∃ a : A, Φ a) ∗ Q).
   Proof. by rewrite bi.sep_exist_r. Qed.
 
-  Lemma tac_do_intro_pure_and Δ (P : Prop) (Q : iProp Σ) :
-    (P ∧ (envs_entails Δ Q)) → envs_entails Δ (⌜P⌝ ∗ Q).
-  Proof.
-    rewrite envs_entails_unseal => [[HP HΔ]].
-    iIntros "HΔ".  iSplit => //. by iApply HΔ.
-  Qed.
-
   Lemma tac_do_intro_intuit_sep Δ (P Q : iProp Σ) :
     envs_entails Δ (□ (P ∗ True) ∧ Q) → envs_entails Δ (□ P ∗ Q).
   Proof. apply tac_fast_apply. iIntros "[#[$ _] $]". Qed.
@@ -405,7 +425,7 @@ Ltac liSep :=
     | bi_sep _ _ => notypeclasses refine (tac_sep_sep_assoc _ _ _ _ _)
     | bi_exist _ => notypeclasses refine (tac_sep_exist_assoc _ _ _ _)
     | bi_emp => notypeclasses refine (tac_sep_emp _ _ _)
-    | (⌜_⌝)%I => notypeclasses refine (tac_do_intro_pure_and _ _ _ _)
+    | (⌜_⌝)%I => fail "handled by liSideCond"
     | (□ ?P)%I => notypeclasses refine (tac_do_intro_intuit_sep _ _ _ _)
     | match ?x with _ => _ end => fail "should not have match in sep"
     | ?P => first [
