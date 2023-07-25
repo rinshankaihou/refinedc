@@ -84,11 +84,14 @@ int key_index(int* ar, int n, int k){
 [[rc::tactics("unfold btree_invariant in *; by solve_goal.")]]
 [[rc::tactics("rewrite H1; by apply: (btree_invariant_in_keys_not_None H2).")]]
 [[rc::tactics("by rewrite list_insert_id.")]]
-[[rc::tactics("apply: (btree_invariant_in_range_child H2); naive_solver lia.")]]
+[[rc::tactics("eapply (btree_invariant_in_range_child H2); naive_solver lia.")]]
+[[rc::tactics("eapply (btree_invariant_in_range_child H2); naive_solver lia.")]]
 [[rc::tactics("rewrite H1; apply: (btree_invariant_lookup_child H2); by naive_solver.")]]
 [[rc::tactics("do 2 rewrite list_insert_id //; by destruct y0.")]]
 [[rc::tactics("assert (k ∉ x0) as Hx1. { move => /H7 Hk. apply lookup_lt_Some in Hk. lia. } "
-              "apply: (btree_invariant_in_range_child H2); by naive_solver.")]]
+              "eapply (btree_invariant_in_range_child H2); by naive_solver.")]]
+[[rc::tactics("assert (k ∉ x0) as Hx1. { move => /H7 Hk. apply lookup_lt_Some in Hk. lia. } "
+              "eapply (btree_invariant_in_range_child H2); by naive_solver.")]]
 [[rc::tactics("assert (k ∉ x0) as Hx1. { move => /H7 Hk. apply lookup_lt_Some in Hk. lia. } "
               "rewrite H1. apply: (btree_invariant_lookup_child H2); by naive_solver.")]]
 [[rc::tactics("rewrite list_insert_id //; by destruct y.")]]

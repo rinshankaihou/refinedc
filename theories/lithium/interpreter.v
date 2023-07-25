@@ -257,7 +257,11 @@ Ltac liSideCond :=
       | lazymatch P with
         | context [protected _] => first [
             split; [ solve_protected_eq |]; unfold_instantiated_evars
-          | notypeclasses refine (@simpl_and_unsafe P _ _ Q _); [solve [refine _] |]
+          | lazymatch P with
+            | _ ∧ _ => notypeclasses refine (tac_and_assoc _ _ _ _)
+            | ∃ _, _ => notypeclasses refine (tac_exist_assoc _ _ _)
+            | _ => notypeclasses refine (simpl_and_unsafe_and P _ Q _); [solve [refine _] |]
+            end
             (* no simpl here because there is liSimpl after each tactic *)
           ]
          (* We use done instead of fast_done here because solving more

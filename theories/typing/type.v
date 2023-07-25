@@ -428,8 +428,8 @@ Section alloc_alive.
   Proof. constructor. by iIntros "#H !>". Qed.
 
   Global Instance AllocAlive_simpl_and ty β P P' `{!AllocAlive ty β P'} `{!IsProtected P} :
-    SimplAndUnsafe (AllocAlive ty β P) (λ T, P = P' ∧ T).
-  Proof. by move => T [-> ?]. Qed.
+    SimplAndUnsafe (AllocAlive ty β P) (P = P').
+  Proof. by move => ->. Qed.
 End alloc_alive.
 
 Global Typeclasses Opaque type_alive.

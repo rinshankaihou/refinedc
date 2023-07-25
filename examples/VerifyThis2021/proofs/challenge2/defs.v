@@ -187,11 +187,11 @@ Proof.
 Qed.
 
 Global Instance simpl_tree_list_eq_aux_0_and {A : Type} (l l_rest : list A) (t : tree A):
-  SimplAnd (list_tree_eq_aux 0 l t l_rest) (λ T, t = Leaf ∧ l_rest = l ∧ T).
+  SimplAnd (list_tree_eq_aux 0 l t l_rest) (t = Leaf ∧ l_rest = l).
 Proof.
   split.
-  - move => [->][->]?. split; [constructor | done].
-  - move => [H]?. by inversion H.
+  - move => [-> ->]. constructor.
+  - move => H. by inversion H.
 Qed.
 
 Lemma list_tree_eq_aux_Node {A : Type} (n : nat) (l l' l_rest : list A) (tr_l tr_r : tree A) (v : A):

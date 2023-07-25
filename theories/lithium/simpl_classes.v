@@ -14,17 +14,21 @@ Class SimplForall (T : Type) (n : nat) (e : T → Prop) (Q: Prop) := simpl_foral
 change and should be introduced (but potentially more information was
 added after it). *)
 Class SimplImplUnsafe (changed : bool) (P : Prop) (Ps : Prop → Prop) := simpl_impl_unsafe T: (Ps T) → (P → T).
-Class SimplAndUnsafe (P : Prop) (Ps : Prop → Prop) := simpl_and_unsafe T: (Ps T) → (P ∧ T).
+Class SimplAndUnsafe (P : Prop) (Ps : Prop) := simpl_and_unsafe: Ps → P.
+
+Lemma simpl_and_unsafe_and (P1 P2 T : Prop) `{!SimplAndUnsafe P1 P2} :
+  P2 ∧ T → P1 ∧ T.
+Proof. unfold SimplAndUnsafe in *. naive_solver. Qed.
 
 Global Instance simpland_unsafe_not_neq {A} (x y : A) :
-  SimplAndUnsafe (¬ (x ≠ y)) (λ T, x = y ∧ T) | 1000.
-Proof. move => T [? ?]. by eauto. Qed.
+  SimplAndUnsafe (¬ (x ≠ y)) (x = y) | 1000.
+Proof. move => ?. by eauto. Qed.
 
 (** ** [SimplImpl] and [SimplAnd] *)
 (** [SimplImpl] and [SimplAnd] are safe variants which ensure that no
 information is lost. *)
 Class SimplImpl (changed : bool) (P : Prop) (Ps : Prop → Prop) := simpl_impl T: (Ps T) ↔ (P → T).
-Class SimplAnd (P : Prop) (Ps : Prop → Prop) := simpl_and T: (Ps T) ↔ (P ∧ T).
+Class SimplAnd (P : Prop) (Ps : Prop) := simpl_and: (Ps) ↔ (P).
 Global Instance simplimpl_simplunsafe c P Ps {Hi: SimplImpl c P Ps} :
   SimplImplUnsafe c P Ps.
 Proof. unfold SimplImpl, SimplImplUnsafe in *. naive_solver. Qed.
@@ -35,8 +39,8 @@ Proof. unfold SimplAnd, SimplAndUnsafe in *. naive_solver. Qed.
 (** ** [SimplImplRel] and [SimplAndRel] *)
 Class SimplImplRel {A} (R : relation A) (changed : bool) (x1 x2 : A) (Ps : Prop → Prop)
   := simpl_impl_eq T: (Ps T) ↔ (R x1 x2 → T).
-Class SimplAndRel {A} (R : relation A) (x1 x2 : A) (Ps : Prop → Prop)
-  := simpl_and_eq T: (Ps T) ↔ (R x1 x2 ∧ T).
+Class SimplAndRel {A} (R : relation A) (x1 x2 : A) (Ps : Prop)
+  := simpl_and_eq: (Ps) ↔ (R x1 x2).
 Global Instance simpl_impl_rel_inst1 {A} c R (x1 x2 : A) Ps `{!SimplImplRel R c x1 x2 Ps} :
   SimplImpl c (R x1 x2) Ps.
 Proof. unfold SimplImplRel, SimplImpl in *. naive_solver. Qed.
@@ -56,7 +60,7 @@ Global Instance simpl_impl_both_inst P1 P2 {Hboth : SimplBoth P1 P2}:
   SimplImpl true P1 (λ T, P2 → T).
 Proof. unfold SimplBoth in Hboth. split; naive_solver. Qed.
 Global Instance simpl_and_both_inst P1 P2 {Hboth : SimplBoth P1 P2}:
-  SimplAnd P1 (λ T, P2 ∧ T).
+  SimplAnd P1 (P2).
 Proof. unfold SimplBoth in Hboth. split; naive_solver. Qed.
 
 (** ** [SimplBothRel] *)

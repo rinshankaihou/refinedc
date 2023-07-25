@@ -48,8 +48,8 @@ Section type.
   Global Existing Instance simplify_goal_place_find_buddy_gt_inst.
 
   Global Instance simpl_page_layout_size_le n1 n2:
-    SimplAndUnsafe (ly_size (PAGE_LAYOUT n1) ≤ ly_size (PAGE_LAYOUT n2))%nat (λ T, n1 ≤ n2 ∧ T).
-  Proof. rewrite /PAGE_LAYOUT/ly_size/= => ? [??]. split => //. rewrite /PAGE_SIZE. lia. Qed.
+    SimplAndUnsafe (ly_size (PAGE_LAYOUT n1) ≤ ly_size (PAGE_LAYOUT n2))%nat (n1 ≤ n2).
+  Proof. rewrite /PAGE_LAYOUT/ly_size/= => ?. rewrite /PAGE_SIZE. lia. Qed.
   Global Instance simpl_shiftl_monol_le n m1 m2 `{!CanSolve (0 < n ∧ 0 ≤ m1 ∧ 0 ≤ m2)}:
     SimplBoth (n ≪ m1 ≤ n ≪ m2) (m1 ≤ m2).
   Proof.
@@ -58,9 +58,9 @@ Section type.
   Qed.
   Global Instance simpl_page_layout_shift order `{!CanSolve (0 ≤ order)}:
     SimplAndRel (=) (ly_size (PAGE_LAYOUT (1 ≪ (order + 1))) - ly_size (PAGE_LAYOUT (1 ≪ order)))%nat
-                (ly_size (PAGE_LAYOUT (1 ≪ order))) (λ T, T).
+                (ly_size (PAGE_LAYOUT (1 ≪ order))) (True).
   Proof.
-    unfold CanSolve in *. split; [|naive_solver] => ?. split => //.
+    unfold CanSolve in *. split; [|naive_solver] => ?.
     have ?:= Z.pow_nonneg 2 order.
     rewrite/ly_size/=/PAGE_SIZE !Z.shiftl_mul_pow2  -?Z2Nat.inj_sub -?Z.mul_sub_distr_l ?Z.pow_add_r /=; nia.
   Qed.

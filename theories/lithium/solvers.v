@@ -110,27 +110,15 @@ Proof. naive_solver. Qed.
 
 Ltac normalize_and_simpl_goal_step :=
   first [
-      lazymatch goal with
-      | |- _ ∧ _ => split; [splitting_fast_done|]
-      | _ => splitting_fast_done
-      end
-    |
-      progress normalize_goal; simpl
-    |
-      lazymatch goal with
+      splitting_fast_done
+    | progress normalize_goal; simpl
+    | lazymatch goal with
       | |- ∃ _, _ => fail 1 "normalize_and_simpl_goal stop in exist"
       end
-    |
-      lazymatch goal with
-      | |- _ ∧ _ => idtac
-      | _ => refine (intro_and_True _ _)
-      end;
-      lazymatch goal with
-      | |- ?P ∧ ?Q =>
-        notypeclasses refine (@simpl_and_unsafe P _ _ Q _); [solve [refine _] |];
-        simpl;
-        split_and?
+    | lazymatch goal with
+      | |- _ ∧ _ => split
       end
+    | notypeclasses refine (simpl_and_unsafe _); [solve [refine _] |]; simpl
     | lazymatch goal with
     (* relying on the fact that unification variables cannot contain
        dependent variables to distinguish between dependent and non dependent forall *)

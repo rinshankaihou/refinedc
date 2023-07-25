@@ -306,8 +306,10 @@ Ltac naive_simpl_go :=
     end
   | |- ?P ∧ ?Q => first [
       progress normalize_goal_and
-    | notypeclasses refine (@simpl_and_unsafe P _ _ Q _); [solve [refine _] |]; simpl
+    | notypeclasses refine (simpl_and_unsafe_and P _ Q _); [solve [refine _] |]; simpl
     | match P with
+      | _ ∧ _ => notypeclasses refine (tac_and_assoc _ _ _ _)
+      | ∃ _, _ => notypeclasses refine (tac_exist_assoc _ _ _)
       (* TODO: Is this a good idea? *)
       | _ → _ => split
       | protected ?H = ?x => instantiate_protected H x

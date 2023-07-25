@@ -9,11 +9,7 @@ Local Open Scope Z_scope.
 (* The followin impl is bad because it looses the name. *)
 (* Global Instance simpl_exist_impl A P : SimplImpl true (@ex A P) (λ T, ∀ x, P x → T). *)
 (* Proof. split; try naive_solver. intros ?[??]. eauto. Qed. *)
-Global Instance simpl_exist_and A P : SimplAnd (@ex A P) (λ T, ∃ x, P x ∧ T).
-Proof. split; [naive_solver|]. intros [[??]?]. eauto. Qed.
-Global Instance simpl_and_and (P1 P2 : Prop):
-  SimplAnd (P1 ∧ P2) (λ T, P1 ∧ P2 ∧ T).
-Proof. split; naive_solver. Qed.
+
 Global Instance simpl_and_impl (P1 P2 : Prop):
   SimplImpl true (P1 ∧ P2) (λ T, P1 → P2 → T).
 Proof. split; naive_solver. Qed.
@@ -32,18 +28,18 @@ Global Instance simpl_double_neg_elim_dec P `{!Decision P} :
 Proof. split; destruct (decide P); naive_solver. Qed.
 
 Global Instance simpl_eq_pair_l A B (x : A) (y : B) (xy : A * B):
-  SimplAnd ((x, y) = xy) (λ T, x = xy.1 ∧ y = xy.2 ∧ T).
+  SimplAnd ((x, y) = xy) (x = xy.1 ∧ y = xy.2).
 Proof. destruct xy; split; naive_solver. Qed.
 
 Global Instance simpl_eq_pair_r A B (xy : A * B) (x : A) (y : B):
-  SimplAnd (xy = (x, y)) (λ T, xy.1 = x ∧ xy.2 = y ∧ T).
+  SimplAnd (xy = (x, y)) (xy.1 = x ∧ xy.2 = y).
 Proof. destruct xy; split; naive_solver. Qed.
 
 Global Instance simple_protected_neq_empty A `{!EqDecision A} `{!Countable A} (p : gset A) `{!IsProtected p} :
-  SimplAnd (p ≠ ∅) (λ T, shelve_hint (p ≠ ∅) ∧ T).
+  SimplAnd (p ≠ ∅) (shelve_hint (p ≠ ∅)).
 Proof. split; naive_solver. Qed.
 Global Instance simple_protected_multiset_neq_empty A `{!EqDecision A} `{!Countable A} (p : gmultiset A) `{!IsProtected p} :
-  SimplAnd (p ≠ ∅) (λ T, shelve_hint (p ≠ ∅) ∧ T).
+  SimplAnd (p ≠ ∅) (shelve_hint (p ≠ ∅)).
 Proof. split; naive_solver. Qed.
 
 Global Instance simpl_to_cons_None A (l : list A) : SimplBothRel (=) (maybe2 cons l) None (l = nil).
@@ -129,14 +125,14 @@ Global Instance simpl_divides_impl a b:
 Proof. rewrite /Z.divide. split; naive_solver. Qed.
 
 Global Instance simpl_divides_and a b `{!CanSolve (a ≠ 0 ∧ b `mod` a = 0)}:
-  SimplAnd (a | b) (λ T, T).
-Proof. revert select (CanSolve _) => -[?]. rewrite Z.mod_divide //. split; naive_solver. Qed.
+  SimplAnd (a | b) (True).
+Proof. revert select (CanSolve _) => -[?]. rewrite Z.mod_divide //. Qed.
 Global Instance simpl_divides_and_mul_r a b:
-  SimplAnd (a | b * a) (λ T, T).
+  SimplAnd (a | b * a) (True).
 Proof. rewrite /Z.divide. split; naive_solver. Qed.
 
 Global Instance simpl_nat_divides_and_mul_r a b:
-  SimplAnd (a | b * a)%nat (λ T, T).
+  SimplAnd (a | b * a)%nat (True).
 Proof. rewrite /divide. split; naive_solver. Qed.
 
 Global Instance simpl_is_power_of_two_mult n1 n2 :
@@ -234,10 +230,10 @@ Global Instance simpl_add_eq_0 n m:
 Proof. split; naive_solver lia. Qed.
 
 Global Instance simpl_and_S n m `{!ContainsProtected n}:
-  SimplAndRel (=) (S n) (m) (λ T, (m > 0)%nat ∧ n = pred m ∧ T).
+  SimplAndRel (=) (S n) (m) ((m > 0)%nat ∧ n = pred m).
 Proof. split; destruct n; naive_solver lia. Qed.
 Global Instance simpl_and_Z_of_nat n m `{!ContainsProtected n}:
-  SimplAndRel (=) (Z.of_nat n) (m) (λ T, 0 ≤ m ∧ n = Z.to_nat m ∧ T).
+  SimplAndRel (=) (Z.of_nat n) (m) (0 ≤ m ∧ n = Z.to_nat m).
 Proof. unfold CanSolve in *. split; naive_solver lia. Qed.
 
 Global Instance simpl_both_shiftl_nonneg z n:
@@ -277,20 +273,20 @@ Global Instance simpl_length_0 {A} (l : list A):
 Proof. split; by destruct l. Qed.
 
 Global Instance simpl_length_S {A} (l : list A) (n : nat):
-  SimplAndRel (=) (length l) (S n) (λ T, (∃ hd tl, l = hd :: tl ∧ length tl = n) ∧ T).
+  SimplAndRel (=) (length l) (S n) (∃ hd tl, l = hd :: tl ∧ length tl = n).
 Proof.
   split.
-  - move => [[hd [tl [-> <-]]] HT] //.
-  - move => [Hlen HT]. split => //. destruct l as [|hd tl] => //.
+  - move => [hd [tl [-> <-]]] //.
+  - move => Hlen. destruct l as [|hd tl] => //.
     eexists hd, tl. by inversion Hlen.
 Qed.
 
 Global Instance simpl_length_protected_add {A} (n m : nat) (p : list A) `{!ContainsProtected p} `{!CanSolve (m ≤ n)%nat} :
-  SimplAndRel (=) (n) (length p + m)%nat (λ T, (n - m)%nat = length p ∧ T).
+  SimplAndRel (=) (n) (length p + m)%nat ((n - m)%nat = length p).
 Proof.
   unfold CanSolve in *. split.
-  - move => [Heq ?]. split => //. lia.
-  - move => [-> P]. split => //. lia.
+  - move => Heq. lia.
+  - move => ->. lia.
 Qed.
 
 Global Instance simpl_insert_list_subequiv {A} (l1 l2 : list A) j x1 `{!CanSolve (j < length l1)%nat} :
@@ -325,20 +321,20 @@ it if f goes into type. Thus we use the AssumeInj typeclass such that
 the user can mark functions which are morally injective, but one
 cannot prove it. *)
 Global Instance simpl_fmap_fmap_subequiv_Unsafe {A B} (l1 l2 : list A) ig (f : A → B) `{!AssumeInj (=) (=) f}:
-  SimplAndUnsafe (list_subequiv ig (f <$> l1) (f <$> l2)) (λ T, list_subequiv ig l1 l2 ∧ T).
-Proof. move => ? [Hs ?]. split => //. by apply: list_subequiv_fmap. Qed.
+  SimplAndUnsafe (list_subequiv ig (f <$> l1) (f <$> l2)) (list_subequiv ig l1 l2).
+Proof. move => ? Hs. by apply: list_subequiv_fmap. Qed.
 
 (* The other direction might not hold if ig contains indices which are
 out of bounds, but we don't care about that. *)
 Global Instance simpl_subequiv_protected {A} (l1 l2 : list A) ig `{!IsProtected l2}:
-  SimplAndUnsafe (list_subequiv ig l1 l2) (λ T,
-    foldr (λ i f, (λ l', ∃ x, f (<[i:=x]> l'))) (λ l', l2 = l' ∧ T) ig l1).
+  SimplAndUnsafe (list_subequiv ig l1 l2) (
+    foldr (λ i f, (λ l', ∃ x, f (<[i:=x]> l'))) (λ l', l2 = l') ig l1).
 Proof.
   (* TODO: add a lemma for list_subequiv such that this unfolding is not necessary anymore. *)
   unfold_opaque @list_subequiv.
-  unfold IsProtected in * => T. elim: ig l1 l2.
-  - move => ??/=. move => [??]. naive_solver.
-  - move => i ig IH l1 l2/= [x /IH [Hi ?]]. split => // i'.
+  unfold IsProtected, SimplAndUnsafe in *. elim: ig l1 l2.
+  - move => ??/=. move => ?. naive_solver.
+  - move => i ig IH l1 l2/= [x /IH Hi ] i'.
     move: (Hi i') => [<- Hlookup]. rewrite insert_length. split => //.
     move => Hi'. rewrite -Hlookup ?list_lookup_insert_ne; set_solver.
 Qed.
@@ -346,32 +342,32 @@ Qed.
 Global Instance simpl_fmap_nil {A B} (l : list A) (f : A → B) : SimplBothRel (=) (f <$> l) [] (l = []).
 Proof. split; destruct l; naive_solver. Qed.
 Global Instance simpl_fmap_cons_and {A B} x (l : list A) l2 (f : A → B):
-  SimplAndRel (=) (f <$> l) (x :: l2) (λ T, ∃ x' l2', l = x' :: l2' ∧ f x' = x ∧ f <$> l2' = l2 ∧ T).
-Proof. split; first naive_solver. intros [?%fmap_cons_inv ?]. naive_solver. Qed.
+  SimplAndRel (=) (f <$> l) (x :: l2) (∃ x' l2', l = x' :: l2' ∧ f x' = x ∧ f <$> l2' = l2).
+Proof. split; first naive_solver. intros ?%fmap_cons_inv. naive_solver. Qed.
 Global Instance simpl_fmap_cons_impl {A B} x (l : list A) l2 (f : A → B):
   SimplImplRel (=) true (f <$> l) (x :: l2) (λ T, ∀ x' l2', l = x' :: l2' → f x' = x → f <$> l2' = l2 → T).
 Proof. split; last naive_solver. intros ? ?%fmap_cons_inv. naive_solver. Qed.
 Global Instance simpl_fmap_app_and {A B} (l : list A) l1 l2 (f : A → B):
-  SimplAndRel (=) (f <$> l) (l1 ++ l2) (λ T, f <$> take (length l1) l = l1 ∧ f <$> drop (length l1) l = l2 ∧ T).
+  SimplAndRel (=) (f <$> l) (l1 ++ l2) (f <$> take (length l1) l = l1 ∧ f <$> drop (length l1) l = l2).
 Proof.
   split.
-  - move => [Hl1 [Hl2 ?]]; subst. split => //.
+  - move => [Hl1 Hl2]; subst.
     rewrite -Hl1 -fmap_app fmap_length take_length_le ?take_drop //.
     rewrite -Hl1 fmap_length take_length. lia.
-  - move => [/fmap_app_inv [? [? [? [? Hfmap]]]] ?]; subst.
+  - move => /fmap_app_inv [? [? [? [? Hfmap]]]]; subst.
     by rewrite fmap_length take_app drop_app.
 Qed.
 Global Instance simpl_fmap_assume_inj_Unsafe {A B} (l1 l2 : list A) (f : A → B) `{!AssumeInj (=) (=) f}:
-  SimplAndUnsafe (f <$> l1 = f <$> l2) (λ T, l1 = l2 ∧ T).
-Proof. move => T [-> ?]. naive_solver. Qed.
+  SimplAndUnsafe (f <$> l1 = f <$> l2) (l1 = l2).
+Proof. move => ->. naive_solver. Qed.
 
 Global Instance simpl_replicate_app_and {A} (l1 l2 : list A) x n:
-  SimplAndRel (=) (replicate n x) (l1 ++ l2) (λ T, ∃ n', shelve_hint (n' ≤ n)%nat ∧ l1 = replicate n' x ∧ l2 = replicate (n - n') x ∧ T).
+  SimplAndRel (=) (replicate n x) (l1 ++ l2) (∃ n', shelve_hint (n' ≤ n)%nat ∧ l1 = replicate n' x ∧ l2 = replicate (n - n') x).
 Proof.
   unfold shelve_hint. split.
-  - move => [n'[?[?[??]]]]; subst. split => //.
+  - move => [n'[?[??]]]; subst.
     have ->: (n = n' + (n - n'))%nat by lia. rewrite replicate_add. do 2 f_equal. lia.
-  - move => [Hr ?].
+  - move => Hr.
     have Hn: (n = length l1 + length l2)%nat by rewrite -(replicate_length n x) -app_length Hr.
     move: Hr. rewrite Hn replicate_add => /app_inj_1[|<- <-]. 1: by rewrite replicate_length.
     exists (length l1). repeat split => //.
@@ -452,11 +448,11 @@ Global Instance simpl_lookup_drop {A} (l : list A) n i x :
 Proof. by rewrite lookup_drop. Qed.
 
 Global Instance simpl_fmap_lookup_and {A B} (l : list A) i (f : A → B) x:
-  SimplAndRel (=) ((f <$> l) !! i) (Some x) (λ T, ∃ y : A, x = f y ∧ l !! i = Some y ∧ T).
+  SimplAndRel (=) ((f <$> l) !! i) (Some x) (∃ y : A, x = f y ∧ l !! i = Some y).
 Proof.
   split.
-  - move => [y [-> [Hl ?]]]. rewrite list_lookup_fmap Hl. naive_solver.
-  - move => [Hf ?]. have := list_lookup_fmap_inv _ _ _ _ Hf. naive_solver.
+  - move => [y [-> Hl]]. rewrite list_lookup_fmap Hl. naive_solver.
+  - move => Hf. have := list_lookup_fmap_inv _ _ _ _ Hf. naive_solver.
 Qed.
 Global Instance simpl_fmap_lookup_impl {A B} (l : list A) i (f : A → B) x:
   SimplImplRel (=) true ((f <$> l) !! i) (Some x) (λ T, ∀ y : A, x = f y → l !! i = Some y → T).
@@ -479,11 +475,11 @@ Proof.
 Qed.
 
 Global Instance simpl_and_lookup_protected {A} (l : list A) (i : nat) v `{!IsProtected v} `{Inhabited A}:
-  SimplAndRel (=) (l !! i) (Some v) (λ T, i < length l ∧ v = l !!! i ∧ T).
+  SimplAndRel (=) (l !! i) (Some v) (i < length l ∧ v = l !!! i).
 Proof.
   split.
-  - move => -[? [-> ?]]. split; [|done]. apply: list_lookup_lookup_total_lt. lia.
-  - move => [/list_lookup_alt ?]. naive_solver lia.
+  - move => -[? ->]. apply: list_lookup_lookup_total_lt. lia.
+  - move => /list_lookup_alt ?. naive_solver lia.
 Qed.
 
 Global Instance simpl_and_lookup_lookup_total {A} (l : list A) (i : nat) `{Inhabited A}:
@@ -525,12 +521,12 @@ Proof. unfold SimplBothRel. by rewrite lookup_rotate_r_Some. Qed.
   But one should not use rotate nat in this case.
    TODO: use CanSolve when it is able to prove base < len for slot_for_key_ref key len *)
 Global Instance simpl_rotate_nat_add_0_Unsafe base offset len:
-  SimplAndUnsafe (base = rotate_nat_add base offset len) (λ T, (base < len)%nat ∧ offset = 0%nat ∧ T).
-Proof. move => T [? [-> ?]]. rewrite rotate_nat_add_0 //. Qed.
+  SimplAndUnsafe (base = rotate_nat_add base offset len) ((base < len)%nat ∧ offset = 0%nat).
+Proof. move => [? ->]. rewrite rotate_nat_add_0 //. Qed.
 
 Global Instance simpl_rotate_nat_add_next_Unsafe (base offset1 offset2 len : nat) `{!CanSolve (0 < len)%nat}:
-  SimplAndUnsafe ((rotate_nat_add base offset1 len + 1) `rem` len = rotate_nat_add base offset2 len) (λ T, offset2 = S offset1 ∧ T).
+  SimplAndUnsafe ((rotate_nat_add base offset1 len + 1) `rem` len = rotate_nat_add base offset2 len) (offset2 = S offset1).
 Proof.
-  unfold CanSolve in * => ? -[-> ?]. split => //. rewrite rotate_nat_add_S // Nat2Z.inj_mod.
+  unfold CanSolve in * => ->. rewrite rotate_nat_add_S // Nat2Z.inj_mod.
   rewrite Z.rem_mod_nonneg //=; lia.
 Qed.

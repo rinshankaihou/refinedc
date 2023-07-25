@@ -194,20 +194,20 @@ Section defs.
 
   Global Instance simpl_and_btree_rfmt r b h min_k max_k m :
     SimplAnd (r = {| br_root := b; br_height := h; br_min := min_k; br_max := max_k; br_map := m; |})
-             (λ T, b = r.(br_root) ∧ h = r.(br_height) ∧ min_k = r.(br_min) ∧
-                   max_k = r.(br_max) ∧ m = r.(br_map) ∧ T).
+             (b = r.(br_root) ∧ h = r.(br_height) ∧ min_k = r.(br_min) ∧
+                   max_k = r.(br_max) ∧ m = r.(br_map)).
   Proof. destruct r. split; naive_solver. Qed.
 
   Global Instance simple_protected_br_map_eq_empty (r : btree_rfmt) `{!IsProtected r} :
-    SimplAnd (br_map r = ∅) (λ T, (∃ b h min max, r = BR b h min max ∅) ∧ T).
+    SimplAnd (br_map r = ∅) ((∃ b h min max, r = BR b h min max ∅)).
   Proof. split; destruct r; by naive_solver. Qed.
 
   Global Instance simple_protected_br_map_neq_empty (r : btree_rfmt) `{!IsProtected r} :
-    SimplAnd (br_map r ≠ ∅) (λ T, shelve_hint (br_map r ≠ ∅) ∧ T).
+    SimplAnd (br_map r ≠ ∅) (shelve_hint (br_map r ≠ ∅)).
   Proof. split; naive_solver. Qed.
 
   Global Instance simpl_eq_cons_app {A} (x : A) (l1 l2 : list A) :
-    SimplAndRel (=) (x :: l1) (l2 ++ l1) (λ T, [x] = l2 ∧ T).
+    SimplAndRel (=) (x :: l1) (l2 ++ l1) ([x] = l2).
   Proof.
     assert (x :: l1 = l2 ++ l1 → [x] = l2); last (split; by naive_solver). move => Heq.
     assert (length (x :: l1) = length (l2 ++ l1)) as Hlen by by rewrite Heq.
@@ -258,7 +258,7 @@ Section defs.
   Global Instance simpl_and_btree_rfmt_shelve o r n ks vs cs
          `{!ContainsProtected (btree_invariant o r n ks vs cs)}:
     SimplAnd (btree_invariant o r n ks vs cs)
-             (λ T, shelve_hint (btree_invariant o r n ks vs cs) ∧ T).
+             (shelve_hint (btree_invariant o r n ks vs cs)).
   Proof. split; naive_solver. Qed.
 
   Lemma btree_invariant_height_empty {o r1 r2 n1 n2 ks1 ks2 vs1 vs2 cs1 cs2} :

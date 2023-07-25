@@ -1,10 +1,6 @@
 From lithium Require Import hooks.
 From refinedc.typing Require Import type.
 
-Lemma unfold_int_elem_of_it (z : Z) (it : int_type) :
-  z ∈ it = (min_int it ≤ z ∧ z ≤ max_int it).
-Proof. done. Qed.
-
 Ltac unfold_common_defs :=
   unfold
   (* Unfold [aligned_to] and [Z.divide] as lia can work with the underlying multiplication. *)
@@ -23,6 +19,5 @@ Ltac unfold_common_defs :=
 
 (** * [solve_goal] without cleaning of the context  *)
 Ltac solve_goal_normalized_prepare_hook ::=
-  try rewrite -> unfold_int_elem_of_it in *;
   unfold_common_defs; simpl in *;
   rewrite /ly_size/ly_align_log //=.

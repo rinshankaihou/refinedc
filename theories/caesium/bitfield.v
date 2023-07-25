@@ -309,7 +309,7 @@ Class NormalizeBitfield (bv norm : Z) : Prop :=
   normalize_bitfield_proof : bv = norm.
 
 Global Instance simpl_and_normalize_bitfield bv norm `{!NormalizeBitfield bv norm'} `{!IsProtected norm} :
-  SimplAnd (normalize_bitfield_eq bv norm) (λ T, norm' = norm ∧ T).
+  SimplAnd (normalize_bitfield_eq bv norm) (norm' = norm).
 Proof. erewrite normalize_bitfield_proof. done. Qed.
 
 Global Hint Extern 10 (NormalizeBitfield _ _) =>
@@ -318,7 +318,7 @@ Global Hint Extern 10 (NormalizeBitfield _ _) =>
 
 (* Side cond: ∀ i ∈ I, Z.testbit bv i = false. *)
 Global Instance bf_range_empty_nil_inst a k :
-  SimplAnd (bf_range_empty a k bf_nil) (λ T, T).
+  SimplAnd (bf_range_empty a k bf_nil) (True).
 Proof.
   have ? := bf_range_empty_nil.
   split; naive_solver.
@@ -328,7 +328,7 @@ Global Instance bf_range_empty_cons_inst a k x l a' k'
   `{!CanSolve (0 ≤ a ∧ 0 ≤ k ∧ 0 ≤ a' ∧ 0 ≤ k')}
   `{!CanSolve (0 ≤ x < 2^k)}
   `{!CanSolve (a + k ≤ a' ∨ a' + k' ≤ a)} :
-  SimplAnd (bf_range_empty a' k' (bf_cons a k x l)) (λ T, bf_range_empty a' k' l ∧ T).
+  SimplAnd (bf_range_empty a' k' (bf_cons a k x l)) (bf_range_empty a' k' l).
 Proof.
   unfold CanSolve in *.
   have ? := bf_range_empty_cons.
@@ -360,7 +360,7 @@ Qed.
 (* Simplify data list eq *)
 
 Global Instance bf_cons_eq a k x1 l1 x2 l2 :
-  SimplAndUnsafe (bf_cons a k x1 l1 = bf_cons a k x2 l2) (λ T, x1 = x2 ∧ l1 = l2 ∧ T).
+  SimplAndUnsafe (bf_cons a k x1 l1 = bf_cons a k x2 l2) (x1 = x2 ∧ l1 = l2).
 Proof.
   unfold CanSolve, SimplAndUnsafe in *.
   naive_solver.

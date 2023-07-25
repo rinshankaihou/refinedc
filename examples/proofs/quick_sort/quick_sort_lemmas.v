@@ -56,6 +56,11 @@ Ltac solve_unchanged :=
       apply interval_eq_trans with (zs := Z); solve_unchanged
   end.
 
+(* TODO: Remove this instance? *)
+Global Instance simpl_unchanged {A} l r (xs ys : list A) :
+  SimplBoth (unchanged l r xs ys) (xs =[λ i, i < l]= ys ∧ xs =[λ i, i > r]= ys).
+Proof. done. Qed.
+
 Inductive range : Type :=
   | ie : nat → nat → range (* [l, r) *)
   | ei : nat → nat → range (* (l, r] *)
@@ -73,6 +78,14 @@ Proof.
   - destruct (decide (l ≤ i ∧ i < r)); by [ left | right ].
   - destruct (decide (l < i ∧ i ≤ r)); by [ left | right ].
 Qed.
+
+Global Instance simpl_range_elem_of_ie l r (i : nat) :
+  SimplBoth (i ∈ ie l r) (l ≤ i ∧ i < r).
+Proof. done. Qed.
+
+Global Instance simpl_range_elem_of_ei l r (i : nat) :
+  SimplBoth (i ∈ ei l r) (l < i ∧ i ≤ r).
+Proof. done. Qed.
 
 Definition range_forall (I : range) {A : Type} (φ : A → Prop) (xs : list A) :=
   ∀ i x, i ∈ I → (xs !! i = Some x → φ x).
@@ -121,6 +134,12 @@ Qed.
 
 Definition partitioned (l s t r : nat) (key : Z) (xs : list Z) :=
   range_forall (ie l s) (λ x, x ≤ key) xs ∧ range_forall (ei t r) (λ x, key ≤ x) xs.
+
+Global Instance simpl_partitioned l s t r key xs :
+  SimplBoth (partitioned l s t r key xs)
+    (range_forall (ie l s) (λ x, x ≤ key) xs ∧ range_forall (ei t r) (λ x, key ≤ x) xs).
+Proof. done. Qed.
+
 
 From stdpp Require Import natmap.
 

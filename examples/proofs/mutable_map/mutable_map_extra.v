@@ -238,10 +238,10 @@ Section defs.
   Proof. unfold TCFastDone in *. by rewrite (fsm_invariant_lookup _ items _ n ir (item_ref_to_ty ir)). Qed.
 
   Global Instance simpl_fsm_invariant_and mp1 mp2 items `{!IsProtected mp1} `{!TCFastDone (fsm_invariant mp2 items)}:
-    SimplAndUnsafe (fsm_invariant mp1 items) (λ T, mp1 = mp2 ∧ T) | 50.
-  Proof. unfold TCFastDone in *. by move => ? [->]. Qed.
+    SimplAndUnsafe (fsm_invariant mp1 items) (mp1 = mp2) | 50.
+  Proof. unfold TCFastDone in *. by move => ->. Qed.
   Global Instance simpl_fsm_invariant_shelve_and mp items `{!ContainsProtected mp}:
-    SimplAndUnsafe (fsm_invariant mp items) (λ T, shelve_hint (fsm_invariant mp items) ∧ T) | 100.
+    SimplAndUnsafe (fsm_invariant mp items) (shelve_hint (fsm_invariant mp items)) | 100.
   Proof. move => ?; unfold shelve_hint; eauto. Qed.
 
 

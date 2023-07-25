@@ -172,7 +172,12 @@ Lemma list_eq_split {A} i (l1 l2 : list A):
   l1 = l2.
 Proof. move => ??. rewrite -(take_drop i l1) -(take_drop i l2). congruence. Qed.
 
-
+Lemma tac_and_assoc (P Q R : Prop) :
+  P ∧ Q ∧ R → (P ∧ Q) ∧ R.
+Proof. naive_solver. Qed.
+Lemma tac_exist_assoc {A} (P : A → Prop) R:
+  (∃ x, P x ∧ R) → (∃ x, P x) ∧ R.
+Proof. naive_solver. Qed.
 (** * typeclasses *)
 Inductive TCOneIsSome {A} : option A → option A → Prop :=
 | tc_one_is_some_left n1 o2 : TCOneIsSome (Some n1) o2

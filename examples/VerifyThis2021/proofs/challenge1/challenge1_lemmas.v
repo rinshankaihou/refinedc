@@ -335,7 +335,7 @@ Lemma next_start_Sorted i A :
 Proof. case. naive_solver. Qed.
 
 Global Instance simpl_next_start_Unsafe i1 i2 A `{!TCFastDone (next_start i2 A)}:
-  SimplAndUnsafe (next_start i1 A) (λ T, i1 = i2 ∧ T).
+  SimplAndUnsafe (next_start i1 A) (i1 = i2).
 Proof. unfold TCFastDone, SimplAndUnsafe in *. naive_solver. Qed.
 
 Lemma next_start_lt i A ni niprev:

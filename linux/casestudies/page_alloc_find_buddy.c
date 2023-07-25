@@ -163,8 +163,8 @@ int hyp_pool_init(struct hyp_pool *pool, phys_addr_t phys,
 [[rc::tactics("all: try by etrans; [|done]; rewrite Z.shiftl_mul_pow2 //; lia.")]]
 [[rc::tactics("all: try by rewrite Z.shiftl_mul_pow2 //; etrans; [ apply: Z.mul_le_mono_nonneg_l; [done| ]; apply: (Z.pow_le_mono_r _ _ 11) |].")]]
 [[rc::tactics("all: try by move =>/find_buddy_result_eq; solve_goal.")]]
-[[rc::tactics("all: try by apply: (find_buddy_result' page range_start_idx order npages); solve_goal.")]]
-[[rc::tactics("all: try by apply/find_buddy_result_eq; solve_goal.")]]
+[[rc::tactics("all: try by eapply (find_buddy_result' page range_start_idx order npages); solve_goal.")]]
+[[rc::tactics("all: try by eapply find_buddy_result_eq; solve_goal.")]]
 static struct hyp_page *__find_buddy(struct hyp_pool *pool, struct hyp_page *p,
 				     unsigned int order)
 {

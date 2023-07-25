@@ -2,8 +2,13 @@
 From lithium Require Import simpl_classes.
 From refinedc.typing Require Import type.
 
+(** * int_type *)
+Global Instance simpl_it_elem_of (z : Z) (it : int_type) :
+  SimplBoth (z ∈ it) (min_int it ≤ z ∧ z ≤ max_int it).
+Proof. done. Qed.
+
 (** * layout *)
-Global Instance simpl_layout_eq ly1 ly2 : SimplAndRel (=) ly1 ly2 (λ T, ly1.(ly_size) = ly2.(ly_size) ∧ ly_align ly1 = ly_align ly2 ∧ T).
+Global Instance simpl_layout_eq ly1 ly2 : SimplAndRel (=) ly1 ly2 (ly1.(ly_size) = ly2.(ly_size) ∧ ly_align ly1 = ly_align ly2).
 Proof. split; rewrite -ly_align_log_ly_align_eq_iff; destruct ly1,ly2; naive_solver. Qed.
 
 Global Instance simpl_layout_leq ly1 ly2 : SimplBoth (ly1 ⊑ ly2) (ly1.(ly_size) ≤ ly2.(ly_size) ∧ ly_align ly1 ≤ ly_align ly2)%nat.
@@ -14,8 +19,8 @@ Global Instance ly_size_ly_offset_eq ly n m `{!CanSolve (n ≤ ly_size ly)%nat}:
 Proof. unfold CanSolve in *. rewrite {1}/ly_size/=. split; lia. Qed.
 
 Global Instance simpl_is_power_of_two_align ly :
-  SimplAnd (is_power_of_two (ly_align ly)) (λ T, T).
-Proof. split => ?; last naive_solver. split => //. by eexists _. Qed.
+  SimplAnd (is_power_of_two (ly_align ly)) (True).
+Proof. split => ?; last naive_solver. by eexists _. Qed.
 
 (** * aligned_to *)
 Global Instance simpl_aligned_to_add1 l (n : nat) : SimplBoth ((l +ₗ n) `aligned_to` n) (l `aligned_to` n).
@@ -41,10 +46,10 @@ Proof. split; [by rewrite -{1}(shift_loc_0 l)=> /shift_loc_inj2 | move => ->; by
 (** * NULL *)
 
 Global Instance simpl_to_NULL_val_of_loc (l : loc):
-  SimplAndRel (=) NULL (l) (λ T, l = NULL_loc ∧ T).
+  SimplAndRel (=) NULL (l) (l = NULL_loc).
 Proof. split; unfold NULL; naive_solver. Qed.
 
 (** * value representation *)
 Global Instance simpl_and_eq_val_of_loc l1 l2:
-  SimplAnd (val_of_loc l1 = val_of_loc l2) (λ T, l1 = l2 ∧ T).
+  SimplAnd (val_of_loc l1 = val_of_loc l2) (l1 = l2).
 Proof. split; naive_solver. Qed.
