@@ -43,6 +43,7 @@ Qed.
 
 Definition unchanged (l r : Z) {A : Type} (xs ys : list A) :=
   xs =[λ i, i < l]= ys ∧ xs =[λ i, i > r]= ys.
+Global Typeclasses Opaque unchanged.
 
 Ltac solve_unchanged :=
   try done;
@@ -71,6 +72,7 @@ Global Instance range_elem_of : ElemOf nat range := λ i I,
   | ie l r => l ≤ i ∧ i < r
   | ei l r => l < i ∧ i ≤ r
   end.
+Global Typeclasses Opaque range_elem_of.
 
 Global Instance range_elem_of_decision (i : nat) (I : range) : Decision (i ∈ I).
 Proof.
@@ -134,6 +136,7 @@ Qed.
 
 Definition partitioned (l s t r : nat) (key : Z) (xs : list Z) :=
   range_forall (ie l s) (λ x, x ≤ key) xs ∧ range_forall (ei t r) (λ x, key ≤ x) xs.
+Global Typeclasses Opaque partitioned.
 
 Global Instance simpl_partitioned l s t r key xs :
   SimplBoth (partitioned l s t r key xs)

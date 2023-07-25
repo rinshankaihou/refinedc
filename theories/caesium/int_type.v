@@ -36,6 +36,10 @@ Definition max_int (it : int_type) : Z :=
 Global Instance int_elem_of_it : ElemOf Z int_type :=
   λ z it, min_int it ≤ z ≤ max_int it.
 
+Global Instance int_elem_of_it_dec (z : Z) (it : int_type) : Decision (z ∈ it) := _.
+
+Global Typeclasses Opaque int_elem_of_it.
+
 Definition it_layout (it : int_type) :=
   Layout (bytes_per_int it) it.(it_byte_size_log).
 

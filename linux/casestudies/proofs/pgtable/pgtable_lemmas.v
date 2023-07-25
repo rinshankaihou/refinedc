@@ -43,6 +43,11 @@ Definition pte_wf (p : Pte) : Prop :=
   0 ≤ pte_addr p < 2^36 ∧
   0 ≤ pte_undef p < 2^3 ∧
   0 ≤ pte_leaf_attr_hi p < 2^13.
+Global Typeclasses Opaque pte_wf.
+
+Global Instance simpl_pte_wf_impl p :
+  SimplImpl (pte_wf p) ltac:(let x := eval unfold pte_wf in (pte_wf p) in exact x).
+Proof. done. Qed.
 
 Global Instance Pte_BitfieldDesc : BitfieldDesc Pte := {|
   bitfield_it := u64;
@@ -102,6 +107,11 @@ Definition attr_wf (a : Attr) : Prop :=
   0 ≤ attr_lo_s1_sh a < 2^2 ∧
   0 ≤ bool_to_Z $ attr_lo_s1_af a < 2^1 ∧
   0 ≤ bool_to_Z $ attr_hi_s1_xn a < 2^1.
+Global Typeclasses Opaque attr_wf.
+
+Global Instance simpl_attr_wf_impl a :
+  SimplImpl (attr_wf a) ltac:(let x := eval unfold attr_wf in (attr_wf a) in exact x).
+Proof. done. Qed.
 
 Global Instance Attr_BitfieldDesc : BitfieldDesc Attr := {|
   bitfield_it := u64;
@@ -132,6 +142,11 @@ Definition prot_wf (p : Prot) : Prop :=
   0 ≤ bool_to_Z $ prot_w p < 2^1 ∧
   0 ≤ bool_to_Z $ prot_r p < 2^1 ∧
   0 ≤ bool_to_Z $ prot_device p < 2^1.
+Global Typeclasses Opaque prot_wf.
+
+Global Instance simpl_prot_wf_impl p :
+  SimplImpl (prot_wf p) ltac:(let x := eval unfold prot_wf in (prot_wf p) in exact x).
+Proof. done. Qed.
 
 Global Instance Prot_BitfieldDesc : BitfieldDesc Prot := {|
   bitfield_it := u64;

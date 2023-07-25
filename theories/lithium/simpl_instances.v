@@ -10,9 +10,6 @@ Local Open Scope Z_scope.
 (* Global Instance simpl_exist_impl A P : SimplImpl true (@ex A P) (λ T, ∀ x, P x → T). *)
 (* Proof. split; try naive_solver. intros ?[??]. eauto. Qed. *)
 
-Global Instance simpl_and_impl (P1 P2 : Prop):
-  SimplImpl true (P1 ∧ P2) (λ T, P1 → P2 → T).
-Proof. split; naive_solver. Qed.
 Global Instance simpl_or_false1 P1 P2 `{!CanSolve (¬ P2)}:
   SimplBoth (P1 ∨ P2) (P1).
 Proof. unfold CanSolve in *. split; naive_solver. Qed.
@@ -20,7 +17,7 @@ Global Instance simpl_or_false2 P1 P2 `{!CanSolve (¬ P1)}:
   SimplBoth (P1 ∨ P2) (P2).
 Proof. unfold CanSolve in *. split; naive_solver. Qed.
 Global Instance simpl_shelve_hint P:
-  SimplImpl true (shelve_hint P) (λ T, P → T).
+  SimplImpl (shelve_hint P) (P).
 Proof. split; naive_solver. Qed.
 
 Global Instance simpl_double_neg_elim_dec P `{!Decision P} :
@@ -55,7 +52,7 @@ Global Instance simpl_gt_0_neg n : SimplBoth (¬ (0 < n))%nat (n = 0%nat).
 Proof. split; destruct n; naive_solver lia. Qed.
 
 (* We want to do this for hyps (it allows simplification to take place), but not in the goal (as it might lead to evars which we cannot instantiate) *)
-Global Instance simpl_gt_0_impl n : SimplImpl true (0 < n)%nat (λ T, (∃ n', n = S n') → T).
+Global Instance simpl_gt_0_impl n : SimplImpl (0 < n)%nat (∃ n', n = S n').
 Proof. split; destruct n; naive_solver lia. Qed.
 Global Instance simpl_gt_0_and n : SimplBoth (0 < S n)%nat True.
 Proof. split; naive_solver lia. Qed.
@@ -121,7 +118,7 @@ Global Instance simpl_mult_le z1 z2:
 Proof. split; destruct z1, z2; naive_solver lia. Qed.
 
 Global Instance simpl_divides_impl a b:
-  SimplImpl true (a | b) (λ T, ∀ n, b = n * a → T).
+  SimplImpl (a | b) (∃ n, b = n * a).
 Proof. rewrite /Z.divide. split; naive_solver. Qed.
 
 Global Instance simpl_divides_and a b `{!CanSolve (a ≠ 0 ∧ b `mod` a = 0)}:
@@ -345,8 +342,8 @@ Global Instance simpl_fmap_cons_and {A B} x (l : list A) l2 (f : A → B):
   SimplAndRel (=) (f <$> l) (x :: l2) (∃ x' l2', l = x' :: l2' ∧ f x' = x ∧ f <$> l2' = l2).
 Proof. split; first naive_solver. intros ?%fmap_cons_inv. naive_solver. Qed.
 Global Instance simpl_fmap_cons_impl {A B} x (l : list A) l2 (f : A → B):
-  SimplImplRel (=) true (f <$> l) (x :: l2) (λ T, ∀ x' l2', l = x' :: l2' → f x' = x → f <$> l2' = l2 → T).
-Proof. split; last naive_solver. intros ? ?%fmap_cons_inv. naive_solver. Qed.
+  SimplImplRel (=) true (f <$> l) (x :: l2) (∃ x' l2', l = x' :: l2' ∧ f x' = x ∧ f <$> l2' = l2).
+Proof. split; first naive_solver. intros ?%fmap_cons_inv. naive_solver. Qed.
 Global Instance simpl_fmap_app_and {A B} (l : list A) l1 l2 (f : A → B):
   SimplAndRel (=) (f <$> l) (l1 ++ l2) (f <$> take (length l1) l = l1 ∧ f <$> drop (length l1) l = l2).
 Proof.
@@ -455,11 +452,11 @@ Proof.
   - move => Hf. have := list_lookup_fmap_inv _ _ _ _ Hf. naive_solver.
 Qed.
 Global Instance simpl_fmap_lookup_impl {A B} (l : list A) i (f : A → B) x:
-  SimplImplRel (=) true ((f <$> l) !! i) (Some x) (λ T, ∀ y : A, x = f y → l !! i = Some y → T).
+  SimplImplRel (=) true ((f <$> l) !! i) (Some x) (∃ y : A, x = f y ∧ l !! i = Some y).
 Proof.
   split.
-  - move => Hf /(list_lookup_fmap_inv _ _ _ _)?. naive_solver.
-  - move => HT y ? Hl; subst. apply HT. by rewrite list_lookup_fmap Hl.
+  - move => [y [? Hl]]; subst. by rewrite list_lookup_fmap Hl.
+  - move => /(list_lookup_fmap_inv _ _ _ _)?. naive_solver.
 Qed.
 Global Instance simpl_lookup_insert_eq {A} (l : list A) i j x x' `{!CanSolve (i = j)}:
   SimplBothRel (=) (<[i := x']> l !! j) (Some x) (x = x' ∧ (j < length l)%nat).
@@ -488,9 +485,9 @@ Proof. rewrite /SimplBothRel list_lookup_alt. naive_solver lia. Qed.
 
 Global Instance simpl_learn_insert_some_len_impl {A} l i (x : A) :
   (* The false is important here as we learn additional information,
-  but don't want to get stuck in an endless loop. *)
-  SimplImpl false (l !! i = Some x) (λ T, l !! i = Some x → (i < length l)%nat → T) | 100.
-Proof. split; last naive_solver. move => HT ?. apply HT => //. by apply: lookup_lt_Some. Qed.
+  but we don't want to remove the lookup. *)
+  SimplImplUnsafe false (l !! i = Some x) ((i < length l)%nat) | 100.
+Proof. move => ?. by apply: lookup_lt_Some. Qed.
 
 Global Instance simpl_is_Some_unfold {A} (o : option A):
   SimplBoth (is_Some o) (∃ x, o = Some x) | 100.
@@ -511,7 +508,7 @@ Global Instance simpl_both_option_fmap_neq_None {A B} (f : A → B) (x : option 
 Proof. by split; rewrite fmap_None. Qed.
 (* TODO: should this be SimplBoth? *)
 Global Instance simpl_impl_option_neq_None {A} (x : option A) :
-  SimplImpl true (x ≠ None) (λ T, ∀ y, x = Some y → T).
+  SimplImpl (x ≠ None) (∃ y, x = Some y).
 Proof. split; destruct x; naive_solver. Qed.
 
 Global Instance simpl_both_rotate_lookup_Some A b l i (x : A): SimplBothRel (=) (rotate b l !! i) (Some x) (l !! rotate_nat_add b i (length l) = Some x ∧ (i < length l)%nat).

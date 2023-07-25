@@ -71,10 +71,11 @@ Ltac normalize_and_simpl_impl handle_exist :=
         | true => case
         | false => fail 1 "exist not handled"
         end
+    | |- (_ ∧ _) → _ => case
     | |- (_ = _) → _ =>
         check_injection_hook;
         let Hi := fresh "Hi" in move => Hi; injection Hi; clear Hi
-    | |- ?P → _ => assert_is_not_trivial P; intros ?; subst
+    | |- ?P → _ => assert_is_not_trivial P; let H := fresh "H" in intros H; subst
     | |- _ => move => _
     end in
   lazymatch goal with
@@ -88,7 +89,7 @@ Ltac normalize_and_simpl_impl handle_exist :=
         assert_is_trivial P; intros _
       | progress normalize_goal_impl
       | let changed := open_constr:(_) in
-        notypeclasses refine (@simpl_impl_unsafe changed P _ _ Q _); [solve [refine _] |];
+        notypeclasses refine (simpl_impl_unsafe_impl changed P _ Q _); [solve [refine _] |];
         (* We need to simpl here to make sure that we only introduce
         fully simpl'd terms into the context (and do beta reduction
         for the lemma application above). *)
