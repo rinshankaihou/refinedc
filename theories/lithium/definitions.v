@@ -136,6 +136,9 @@ sep_list in the context. It also transfers the length between the two.
 Values of type sep_list_id should always be opaque during the proof. *)
 Record sep_list_id : Set := { sep_list_len : nat }.
 
+(* TODO: use Z instead of nat for f such that one avoids adding a
+Z.to_nat Z.of_nat roundtrip? It is a bit annoying since one needs to
+introduce Z.of_nat for the list insert. *)
 Definition sep_list {Σ} (id : sep_list_id) A (ig : list nat) (l : list A) (f : nat → A → iProp Σ) : iProp Σ :=
   ⌜length l = sep_list_len id⌝ ∗ ([∗ list] i↦x∈l, if bool_decide (i ∈ ig) then True%I else f i x).
 Global Typeclasses Opaque sep_list.

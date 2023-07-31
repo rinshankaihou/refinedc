@@ -466,7 +466,7 @@ void *mpool_alloc_contiguous(struct mpool *p, size_t count, size_t align)
   p = p->fallback;
   [[rc::exists("n2 : nat")]]
   [[rc::inv_vars("p : optional<&shr<mpool<entry_size>>>")]]
-  [[rc::constraints("frac q p : n2 @ mpool<entry_size>" , "{q = Own → n2 <= n}")]]
+  [[rc::constraints("frac q p : n2 @ mpool<entry_size>", "{q = Own → n2 <= n}")]]
   while (p != NULL) {
     ret = mpool_alloc_contiguous_no_fallback(p, count, align);
 

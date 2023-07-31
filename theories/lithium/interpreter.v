@@ -86,7 +86,7 @@ Tactic Notation "liInst" open_constr(P) :=
   lazymatch goal with
   | |- envs_entails _ (∃ₗ _, _) => notypeclasses refine (tac_li_inst P _ _ _)
   | |- envs_entails _ (subsume _ _ _) => notypeclasses refine (tac_li_inst_subsume P _ _ _ _ _)
-  end; liToSyntax.
+  end; try liToSyntax.
 
 (** ** [liExInst] *)
 Section coq_tactics.
@@ -108,26 +108,35 @@ Ltac liExInst :=
   simple refine (tac_li_ex_inst _ _ _ _ _ _);
   (* create the function of the form (λ x, (_, .. , _, tt)ₗ) *)
   [| refine (λ EX, _);
-     let rec go :=
-       lazymatch goal with
-       | |- _ *ₗ _ => refine (li_pair _ _); [|go]
-       | |- unit => refine tt
-       end in go| |];
+     let x := lazymatch goal with | |- ?x => x end in
+     let rec go1 t x :=
+       lazymatch x with
+       | _ *ₗ ?B =>
+           let r := go1 t B in
+           uconstr:(li_pair _ r)
+       | unit => t
+       end in
+     let t := go1 uconstr:(tt) x in
+     refine t| |];
   (* solve the sidecondition and try to instantiate evars *)
   [..| intro EX; red_li_prod;
    intros;
    solve_protected_eq_hook;
-   li_unfold_lets_in_context;
+   (* TODO: Is the following necessary? If so, what is the best place to do it? *)
+   (* li_unfold_lets_in_context; *)
    lazymatch goal with |- ?a = ?b => unify a b with solve_protected_eq_db end;
    exact: eq_refl |];
   (* create new existential quantifers for all evars that were not instantiated *)
-  [| simple refine (_.1ₗ); [|
-     let x := type of EX in
-     let rec go x :=
+  [| let x := type of EX in
+     let rec go2 x t :=
        lazymatch x with
-       | _ *ₗ ?B => simple refine (_.nextₗ); [|go B]
-       | _ => exact EX
-       end in go x]..|];
+       | _ *ₗ ?B =>
+           let r := go2 B t in
+           uconstr:(r.nextₗ)
+       | _ => t
+       end in
+     let t := go2 x EX in
+     refine (t.1ₗ)..|];
   (* Add unit at the end. *)
   [exact unit|];
   (* reduce the li_pair in the goal *)
@@ -646,7 +655,10 @@ Ltac liSep :=
     | (λ _, bi_exist _) => notypeclasses refine (tac_sep_exist_assoc_ex _ _ _ _)
     (* bi_emp cannot happen because it is independent of evars *)
     | (λ _, (⌜_⌝)%I) => fail "handled by liSideCond"
-    (* The following does not work because we cannot share evars between subgoals *)
+    (* The following does not work because sharing existential
+    quantifiers between subgoals is tricky. There are cases in Islaris
+    (in the binary search example) where something fancy for sharing
+    existential quantifiers between subgoals would be nice though. *)
     (* | (□ ?P)%I => notypeclasses refine (tac_do_intro_intuit_sep _ _ _ _) *)
     (* The following is probably not necessary: *)
     (* | match ?x with _ => _ end => fail "should not have match in sep" *)
@@ -668,7 +680,7 @@ Module liSep_tests. Section test.
 
   Hypothesis HA2 : ∀ (n : Z) G, (⌜n = 1%Z⌝ ∗ G ⊢ simplify_goal (A2 n) G).
   Definition HA2_inst := [instance HA2 with 0%N].
-  Existing Instance HA2_inst.
+  Local Existing Instance HA2_inst.
 
   Definition FindA3 := {| fic_A := Z; fic_Prop := A3; |}.
   Local Typeclasses Opaque FindA3.
@@ -677,7 +689,7 @@ Module liSep_tests. Section test.
     find_in_context (FindA3) T :- pattern: x, A3 x; return T x.
   Proof. done. Qed.
   Definition find_in_context_A3_inst := [instance @find_in_context_A3 with FICSyntactic].
-  Global Existing Instance find_in_context_A3_inst | 1.
+  Local Existing Instance find_in_context_A3_inst | 1.
 
   Local Instance A3_related A n : RelatedTo (λ x : A, A3 (n x)) :=
     {| rt_fic := FindA3 |}.
@@ -687,7 +699,7 @@ Module liSep_tests. Section test.
   Proof. liFromSyntax. iDestruct 1 as (? ->) "?". iIntros "?". iExists _. iFrame. Qed.
 
   Definition subsume_A3_inst := [instance subsume_A3].
-  Global Existing Instance subsume_A3_inst.
+  Local Existing Instance subsume_A3_inst.
 
 
   Goal ∀ P : Z → Z → iProp Σ,

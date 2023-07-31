@@ -33,6 +33,7 @@ void fds_init(struct fd_scheduler* fds) {
   /* fds->sched.prio_levels = (prio_bitmap_t) { 0 }; */
   prio_level_init(&fds->sched.prio_levels);
 
+  // TODO: improve performance of RefinedC using an opaque version of replicate / making (Z.to_nat num_priorities) opaque?
   [[rc::exists("i : nat")]]
     [[rc::inv_vars("typ : i @ int<i32>")]]
     [[rc::inv_vars("fds : p @ &own<struct<struct_fd_scheduler,"

@@ -70,7 +70,7 @@ Proof. iIntros "(%&%&%&%&?&?)". iExists _. by iFrame. Qed.
 Definition find_sep_list_inst := [instance @find_sep_list with FICSyntactic].
 Global Existing Instance find_sep_list_inst | 1.
 
-Lemma subsume_sep_list_eq {Σ B} A id ig (l1 : list A) (l2 : B → list A) (f : nat → A → iProp Σ) (T : B → iProp Σ) :
+Lemma subsume_sep_list_eq {Σ B} A id ig (l1 : list A) (l2 : B → list A) f (T : B → iProp Σ) :
   subsume (sep_list id A ig l1 f) (λ x : B, sep_list id A ig (l2 x) f) T :-
     ∃ x, exhale ⌜list_subequiv ig l1 (l2 x)⌝; return T x.
 Proof.
