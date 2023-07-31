@@ -191,12 +191,11 @@ Section place.
   Definition place_simplify_goal_inst := [instance place_simplify_goal with 0%N].
   Global Existing Instance place_simplify_goal_inst.
 
-  (* TODO: Maybe apply with Hint Extern for better performance? *)
   Lemma simplify_goal_ex_place l β ty T:
-    simplify_goal (l ◁ₗ{β} ty) T where `{!IsEx ty} :- exhale ⌜ty = place l⌝; return T.
-  Proof. iIntros (_) "[-> $]". done. Qed.
+    simplify_goal (l ◁ₗ{β} ty) T :- exhale ⌜ty = place l⌝; return T.
+  Proof. iIntros "[-> $]". done. Qed.
+  (* This is applied with Hint Extern for better performance. *)
   Definition simplify_goal_ex_place_inst := [instance simplify_goal_ex_place with 99%N].
-  Global Existing Instance simplify_goal_ex_place_inst | 99.
 
   Lemma type_addr_of_singleton l β ty T:
     T β ty (place l)
@@ -252,3 +251,6 @@ Section place.
 End place.
 Global Typeclasses Opaque place.
 Notation "place< l >" := (place l) (only printing, format "'place<' l '>'") : printing_sugar.
+
+Global Hint Extern 99 (SimplifyGoal (_ ◁ₗ{_} _.1ₗ) _) =>
+  (class_apply simplify_goal_ex_place_inst) : typeclass_instances.

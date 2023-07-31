@@ -894,27 +894,27 @@ Section typing.
   Definition simple_subsume_val_to_subsume_inst := [instance simple_subsume_val_to_subsume].
   Global Existing Instance simple_subsume_val_to_subsume_inst.
 
-  (* TODO: Should the following two instance be applied using a hint
-  extern for better performance? *)
   Lemma subsume_place_own_ex A ty1 ty2 l β1 β2 T:
-    subsume (l ◁ₗ{β1} ty1) (λ x : A, l ◁ₗ{β2 x} ty2 x) T where `{!∀ x, IsEx (β2 x)} :-
+    subsume (l ◁ₗ{β1} ty1) (λ x : A, l ◁ₗ{β2 x} ty2 x) T :-
       inhale (l ◁ₗ{β1} ty1); ∃ x, exhale ⌜β2 x = β1⌝; exhale (l ◁ₗ{β2 x} ty2 x); return T x.
-  Proof. iIntros (_) "HT Hl". iDestruct ("HT" with "Hl") as "[% [<- [??]]]". iExists _. iFrame. Qed.
+  Proof. iIntros "HT Hl". iDestruct ("HT" with "Hl") as "[% [<- [??]]]". iExists _. iFrame. Qed.
+  (* This lemma is applied via Hint Extern instead of declared as an instance with a `{!∀ x,
+  IsEx (β x)} precondition for better performance. *)
   Definition subsume_place_own_ex_inst := [instance subsume_place_own_ex].
-  Global Existing Instance subsume_place_own_ex_inst.
 
   Lemma subsume_place_ty_ex A ty1 ty2 l β T:
-    subsume (l ◁ₗ{β} ty1) (λ x : A, l ◁ₗ{β} ty2 x) T where `{!∀ x, IsEx (ty2 x)} :-
+    subsume (l ◁ₗ{β} ty1) (λ x : A, l ◁ₗ{β} ty2 x) T :-
       ∃ x, exhale ⌜ty2 x = ty1⌝; return T x.
-  Proof. iIntros (_) "[% [<- ?]] ?". iExists _. iFrame. Qed.
+  Proof. iIntros "[% [<- ?]] ?". iExists _. iFrame. Qed.
+  (* This lemma is applied via Hint Extern instead of declared as an instance with a `{!∀ x,
+  IsEx (ty2 x)} precondition for better performance. *)
   Definition subsume_place_ty_ex_inst := [instance subsume_place_ty_ex].
-  Global Existing Instance subsume_place_ty_ex_inst.
 
   Lemma subtype_var {A B} (ty : A → type) x y l β T:
     (∃ z, ⌜x = y z⌝ ∗ T z)
     ⊢ subsume (l ◁ₗ{β} ty x) (λ z : B, l ◁ₗ{β} ty (y z)) T.
   Proof. iIntros "[% [-> ?]] ?". iExists _. iFrame. Qed.
-  (* This must be an hint extern because an instance would be a big slowdown . *)
+  (* This must be an Hint Extern because an instance would be a big slowdown. *)
   Definition subtype_var_inst := [instance @subtype_var].
 
   Lemma typed_binop_simplify v1 P1 v2 P2 o1 o2 ot1 ot2 {SH1 : SimplifyHyp P1 o1} {SH2 : SimplifyHyp P2 o2} `{!TCOneIsSome o1 o2} op T:
@@ -1582,8 +1582,15 @@ Section typing.
   Global Existing Instance annot_learn_aligment_inst.
 End typing.
 
-(* This must be an hint extern because an instance would be a big slowdown . *)
-Global Hint Extern 1 (Subsume (_ ◁ₗ{_} ?ty _) (λ _, _ ◁ₗ{_} ?ty2 _)%I) =>
+(* This must be an Hint Extern because an instance would be a big slowdown . *)
+Global Hint Extern 50 (Subsume (_ ◁ₗ{_} ?ty _) (λ _, _ ◁ₗ{_} ?ty2 _)%I) =>
   match ty with | ty2 => is_var ty; class_apply subtype_var_inst end : typeclass_instances.
+
+Global Hint Extern 5 (Subsume (_ ◁ₗ{_} _) (λ _, _ ◁ₗ{_.1ₗ} _)%I) =>
+  (class_apply subsume_place_own_ex_inst) : typeclass_instances.
+
+Global Hint Extern 5 (Subsume (_ ◁ₗ{_} _) (λ _, _ ◁ₗ{_} _.1ₗ)%I) =>
+  (class_apply subsume_place_ty_ex_inst) : typeclass_instances.
+
 
 Global Typeclasses Opaque typed_block.

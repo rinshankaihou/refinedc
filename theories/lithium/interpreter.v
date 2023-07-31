@@ -665,10 +665,13 @@ Ltac liSep :=
     | ?P => first [
         (* We can't (and don't want to) cancel if there is an evar in the goal *)
         (* progress liFindHyp FICSyntactic | *)
-        simple notypeclasses refine (tac_do_simplify_goal_ex _ 0%N _ _ _); [solve [refine _] |]
+        (* We use cbv beta to reduce the beta expansion in
+        SimplifyGoal such that we can match on proposition in the
+        pattern of Hint Extern. *)
+        simple notypeclasses refine (tac_do_simplify_goal_ex _ 0%N _ _ _); [intro; cbv beta; solve [refine _] |]
       | simple notypeclasses refine (tac_intro_subsume_related_ex _ _ _ _); [solve [refine _] |];
         simpl; liFindInContext
-      | simple notypeclasses refine (tac_do_simplify_goal_ex _ _ _ _ _); [| solve [refine _] |]
+      | simple notypeclasses refine (tac_do_simplify_goal_ex _ _ _ _ _); [|intro; cbv beta; solve [refine _] |]
       | fail "liSep: unknown sidecondition" P
     ]
     end
