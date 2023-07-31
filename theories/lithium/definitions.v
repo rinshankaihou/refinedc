@@ -45,11 +45,11 @@ Class FindHypEqual {Σ} (key : Type) (Q P P' : iProp Σ) := find_hyp_equal_equal
 Global Hint Mode FindHypEqual + + + ! - : typeclass_instances.
 
 (** * [RelatedTo] *)
-Class RelatedTo {Σ} (pat : iProp Σ) : Type := {
+Class RelatedTo {Σ A} (pat : A → iProp Σ) : Type := {
   rt_fic : find_in_context_info (Σ:=Σ);
 }.
-Global Hint Mode RelatedTo + + : typeclass_instances.
-Arguments rt_fic {_ _} _.
+Global Hint Mode RelatedTo + + + : typeclass_instances.
+Global Arguments rt_fic {_ _ _} _.
 
 (** * [IntroPersistent] *)
 (** ** Definition *)
@@ -80,18 +80,11 @@ Global Hint Mode SimplifyHyp + + - : typeclass_instances.
 Global Hint Mode SimplifyGoal + ! - : typeclass_instances.
 
 (** * Subsumption *)
-Definition subsume {Σ} (P1 P2 T : iProp Σ) : iProp Σ :=
-  P1 -∗ P2 ∗ T.
-Class Subsume {Σ} (P1 P2 : iProp Σ) : Type :=
+Definition subsume {Σ A} (P1 : iProp Σ) (P2 T : A → iProp Σ) : iProp Σ :=
+  P1 -∗ ∃ x, P2 x ∗ T x.
+Class Subsume {Σ A} (P1 : iProp Σ) (P2 : A → iProp Σ) : Type :=
   subsume_proof T : iProp_to_Prop (subsume P1 P2 T).
-Definition subsume_list {Σ} A (ig : list nat) (l1 l2 : list A) (f : nat → A → iProp Σ) (T : iProp Σ) : iProp Σ :=
-  ([∗ list] i↦x∈l1, if bool_decide (i ∈ ig) then True%I else f i x) -∗
-       ⌜length l1 = length l2⌝ ∗ ([∗ list] i↦x∈l2, if bool_decide (i ∈ ig) then True%I else f i x) ∗ T.
-Class SubsumeList {Σ} A (ig : list nat) (l1 l2 : list A) (f : nat → A → iProp Σ) :  Type :=
-  subsume_list_proof T : iProp_to_Prop (subsume_list A ig l1 l2 f T).
-
-Global Hint Mode Subsume + + ! : typeclass_instances.
-Global Hint Mode SubsumeList + + + + + ! : typeclass_instances.
+Global Hint Mode Subsume + + + ! : typeclass_instances.
 
 (** * case distinction *)
 Definition case_if {Σ} (P : Prop) (T1 T2 : iProp Σ) : iProp Σ :=
@@ -136,3 +129,16 @@ Global Typeclasses Opaque accu.
 
 (** * trace *)
 Definition li_trace {Σ A} (t : A) (T : iProp Σ) : iProp Σ := T.
+
+(** * [sep_list] *)
+(** sep_list_id is a marker to link a sep_list in the goal to a
+sep_list in the context. It also transfers the length between the two.
+Values of type sep_list_id should always be opaque during the proof. *)
+Record sep_list_id : Set := { sep_list_len : nat }.
+
+Definition sep_list {Σ} (id : sep_list_id) A (ig : list nat) (l : list A) (f : nat → A → iProp Σ) : iProp Σ :=
+  ⌜length l = sep_list_len id⌝ ∗ ([∗ list] i↦x∈l, if bool_decide (i ∈ ig) then True%I else f i x).
+Global Typeclasses Opaque sep_list.
+
+Definition FindSepList {Σ} (id : sep_list_id) := {| fic_A := iProp Σ; fic_Prop P := P; |}.
+Global Typeclasses Opaque FindSepList.

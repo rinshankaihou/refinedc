@@ -62,20 +62,25 @@ Section tyfold.
   Definition simplify_goal_place_tyfold_cons_inst := [instance simplify_goal_place_tyfold_cons with 0%N].
   Global Existing Instance simplify_goal_place_tyfold_cons_inst.
 
-  Lemma subsume_tyfold_eq l β ls1 ls2 tys b1 b2 T :
-    (⌜ls1 = ls2⌝ ∗ subsume (default l (last ls1) ◁ₗ{β} b1) (default l (last ls1) ◁ₗ{β} b2) T)
-    ⊢ subsume (l ◁ₗ{β} ls1 @ tyfold tys b1) (l ◁ₗ{β} ls2 @ tyfold tys b2) T.
-  Proof. iIntros "[-> HT]". iDestruct 1 as (?) "[$ Hb]". by iDestruct ("HT" with "Hb") as "[$ $]". Qed.
+  Lemma subsume_tyfold_eq A l β ls1 ls2 tys b1 b2 T :
+    (default l (last ls1) ◁ₗ{β} b1 -∗ ∃ x, ⌜ls1 = ls2 x⌝ ∗ (default l (last ls1) ◁ₗ{β} b2 x) ∗ T x)
+    ⊢ subsume (l ◁ₗ{β} ls1 @ tyfold tys b1) (λ x : A, l ◁ₗ{β} (ls2 x) @ tyfold tys (b2 x)) T.
+  Proof.
+    iIntros "HT". iDestruct 1 as (?) "[? Hb]". iDestruct ("HT" with "Hb") as (? ->) "[? ?]".
+    iExists _. by iFrame.
+  Qed.
   Definition subsume_tyfold_eq_inst := [instance subsume_tyfold_eq].
   Global Existing Instance subsume_tyfold_eq_inst.
 
-  Lemma subsume_tyfold_snoc A l β f ls1 ls2 tys (ty : A) b1 b2 T :
-    (∃ l2, ⌜ls2 = ls1 ++ [l2]⌝ ∗ (default l (last ls1) ◁ₗ{β} b1 -∗
-        default l (last ls1) ◁ₗ{β} f ty (place l2) ∗ l2 ◁ₗ{β} b2 ∗ T))
-    ⊢ subsume (l ◁ₗ{β} ls1 @ tyfold (f <$> tys) b1) (l ◁ₗ{β} ls2 @ tyfold (f <$> (tys ++ [ty])) b2) T.
+  Lemma subsume_tyfold_snoc A B l β f ls1 ls2 tys (ty : B → A) b1 b2 T :
+    (default l (last ls1) ◁ₗ{β} b1 -∗ ∃ x l2, ⌜ls2 x = ls1 ++ [l2]⌝ ∗
+         default l (last ls1) ◁ₗ{β} f (ty x) (place l2) ∗ l2 ◁ₗ{β} (b2 x) ∗ T x)
+    ⊢ subsume (l ◁ₗ{β} ls1 @ tyfold (f <$> tys) b1)
+        (λ x : B, l ◁ₗ{β} (ls2 x) @ tyfold (f <$> (tys ++ [ty x])) (b2 x)) T.
   Proof.
-    iDestruct 1 as (l2 ->) "Hd". iDestruct 1 as (Hlen) "(Htys&Hb)". rewrite fmap_app.
-    iDestruct ("Hd" with "Hb") as "[Hb1 [Hb $]]". iSplit.
+    iIntros "HT". iDestruct 1 as (Hlen) "(Htys&Hb)".
+    iDestruct ("HT" with "Hb") as (?? Heq) "[?[??]]". iExists _. iFrame.
+    rewrite fmap_app. rewrite Heq. iSplit.
     { iPureIntro. by rewrite !app_length Hlen fmap_length. }
     rewrite last_snoc /=. iFrame. iSplitL "Htys" => /=.
     - iApply (big_sepL_mono with "Htys") => k y /(lookup_lt_Some _ _ _). rewrite -Hlen => Hl /=.

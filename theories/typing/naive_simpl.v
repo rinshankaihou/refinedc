@@ -312,8 +312,6 @@ Ltac naive_simpl_go :=
       | ∃ _, _ => notypeclasses refine (tac_exist_assoc _ _ _)
       (* TODO: Is this a good idea? *)
       | _ → _ => split
-      | protected ?H = ?x => instantiate_protected H x
-      | ?x = protected ?H => instantiate_protected H x
       | _ => split; [fast_done || change (shelve_marker P); shelve | ]
       end
     ]
@@ -333,10 +331,7 @@ Ltac naive_simpl_go :=
 Ltac naive_simpl :=
   unshelve (repeat naive_simpl_go);
   match goal with
-  | |- shelve_marker ?P =>
-    change P; first [
-                  progress unfold_instantiated_evars; naive_simpl
-                | idtac ]
+  | |- shelve_marker ?P => change P
   | _ => shelve
   end.
 

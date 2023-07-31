@@ -237,12 +237,16 @@ Section defs.
       SimplBothRel (=) (mp !! key) o (item_ref_to_ty ir = o).
   Proof. unfold TCFastDone in *. by rewrite (fsm_invariant_lookup _ items _ n ir (item_ref_to_ty ir)). Qed.
 
-  Global Instance simpl_fsm_invariant_and mp1 mp2 items `{!IsProtected mp1} `{!TCFastDone (fsm_invariant mp2 items)}:
+  Global Instance simpl_fsm_invariant_and mp1 mp2 items `{!IsEx mp1} `{!TCFastDone (fsm_invariant mp2 items)}:
     SimplAndUnsafe (fsm_invariant mp1 items) (mp1 = mp2) | 50.
   Proof. unfold TCFastDone in *. by move => ->. Qed.
-  Global Instance simpl_fsm_invariant_shelve_and mp items `{!ContainsProtected mp}:
-    SimplAndUnsafe (fsm_invariant mp items) (shelve_hint (fsm_invariant mp items)) | 100.
-  Proof. move => ?; unfold shelve_hint; eauto. Qed.
+
+  Global Instance simpl_and_fsm_invariant_alter key ty mp n items ir ir':
+    TCFastDone (probe_ref key items = Some (n, ir)) →
+    SimplAndUnsafe
+      (fsm_invariant (alter (λ _, ty) key mp) (<[n:=ir']> items))
+      (fsm_invariant mp items ∧ ir' = item_ref_set_ty ir ty).
+  Proof. rewrite /TCFastDone/SimplAndUnsafe => ? [??]. by apply: fsm_invariant_alter. Qed.
 
 
   Definition fsm_copy_entries (items : list item_ref) (i : nat) : gmap Z type :=

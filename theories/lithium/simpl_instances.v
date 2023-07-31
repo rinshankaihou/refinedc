@@ -1,14 +1,32 @@
+From iris.base_logic.lib Require Import iprop.
+From iris.proofmode Require Import tactics.
 From lithium Require Export base.
 From lithium Require Import simpl_classes pure_definitions.
 
 (** This file provides the instances for the simplification
-infrastructure for pure sideconditions. *)
+infrastructure for sideconditions and quantifers. *)
 
+(** * SimplExist *)
+Global Instance simpl_exist_unit Σ : @SimplExist Σ unit (λ P, P tt).
+Proof. iIntros (?) "?". iExists _. iFrame. Qed.
+Lemma simpl_exist_prod Σ A B : @SimplExist Σ (A * B) (λ P, ∃ x y, P (x, y))%I.
+Proof. iIntros (?) "[%[% ?]]". iExists _. iFrame. Qed.
+(* We only want syntactic products. *)
+Global Hint Extern 2 (SimplExist (_ * _) _) =>
+   (notypeclasses refine (simpl_exist_prod _ _ _)) : typeclass_instances.
+Global Instance simpl_exist_sigT Σ A f : @SimplExist Σ (@sigT A f) (λ P, ∃ x y, P (existT x y))%I.
+Proof. iIntros (?) "[%[% ?]]". iExists _. iFrame. Qed.
+Global Instance simpl_exist_TCForall2 Σ A B (l1 : list A) (l2 : list B) P x : @SimplExist Σ (TCForall2 P l1 l2) (λ P, P x).
+Proof. iIntros (?) "?". iExists _. iFrame. Qed.
+Lemma simpl_exist_eq Σ A (x : A) : @SimplExist Σ (x = x) (λ P, P eq_refl).
+Proof. iIntros (?) "?". iExists _. iFrame. Qed.
+(* We only want syntactic equalities. *)
+Global Hint Extern 2 (SimplExist (_ = _) _) =>
+   (notypeclasses refine (simpl_exist_eq _ _ _)) : typeclass_instances.
+
+
+(** * SimplImpl and SimplAnd *)
 Local Open Scope Z_scope.
-
-(* The followin impl is bad because it looses the name. *)
-(* Global Instance simpl_exist_impl A P : SimplImpl true (@ex A P) (λ T, ∀ x, P x → T). *)
-(* Proof. split; try naive_solver. intros ?[??]. eauto. Qed. *)
 
 Global Instance simpl_or_false1 P1 P2 `{!CanSolve (¬ P2)}:
   SimplBoth (P1 ∨ P2) (P1).
@@ -16,9 +34,6 @@ Proof. unfold CanSolve in *. split; naive_solver. Qed.
 Global Instance simpl_or_false2 P1 P2 `{!CanSolve (¬ P1)}:
   SimplBoth (P1 ∨ P2) (P2).
 Proof. unfold CanSolve in *. split; naive_solver. Qed.
-Global Instance simpl_shelve_hint P:
-  SimplImpl (shelve_hint P) (P).
-Proof. split; naive_solver. Qed.
 
 Global Instance simpl_double_neg_elim_dec P `{!Decision P} :
   SimplBoth (¬ ¬ P) P.
@@ -32,19 +47,12 @@ Global Instance simpl_eq_pair_r A B (xy : A * B) (x : A) (y : B):
   SimplAnd (xy = (x, y)) (xy.1 = x ∧ xy.2 = y).
 Proof. destruct xy; split; naive_solver. Qed.
 
-Global Instance simple_protected_neq_empty A `{!EqDecision A} `{!Countable A} (p : gset A) `{!IsProtected p} :
-  SimplAnd (p ≠ ∅) (shelve_hint (p ≠ ∅)).
-Proof. split; naive_solver. Qed.
-Global Instance simple_protected_multiset_neq_empty A `{!EqDecision A} `{!Countable A} (p : gmultiset A) `{!IsProtected p} :
-  SimplAnd (p ≠ ∅) (shelve_hint (p ≠ ∅)).
-Proof. split; naive_solver. Qed.
-
 Global Instance simpl_to_cons_None A (l : list A) : SimplBothRel (=) (maybe2 cons l) None (l = nil).
 Proof. split; destruct l; naive_solver. Qed.
 Global Instance simpl_to_cons_Some A (l : list A) x : SimplBothRel (=) (maybe2 cons l) (Some x) (l = x.1::x.2).
 Proof. split; destruct l, x; naive_solver. Qed.
 
-Global Instance simpl_protected_neq_nil A (l : list A) `{!IsProtected l} :
+Global Instance simpl_ex_neq_nil A (l : list A) `{!IsEx l} :
   SimplBoth (l ≠ []) (∃ x l', l = x :: l').
 Proof. split; destruct l; naive_solver. Qed.
 
@@ -137,9 +145,9 @@ Global Instance simpl_is_power_of_two_mult n1 n2 :
 Proof. by apply is_power_of_two_mult. Qed.
 
 (* TODO: This instance is quite specific and for mpool. *)
-Global Instance simpl_forall_eq_plus n:
-  SimplBoth (∀ x, x = n + x)%nat (n = 0)%nat.
-Proof. unfold SimplBoth. split; last naive_solver lia. move => H. rewrite (H 0%nat). lia. Qed.
+Global Instance simpl_forall_eq_plus n x:
+  SimplBoth (x = n + x)%nat (n = 0)%nat.
+Proof. unfold SimplBoth. split; naive_solver lia. Qed.
 
 Global Instance simpl_n_mul_m_minus n m k `{!CanSolve (m ≠ 0)} : SimplBothRel (=) (n * m - m) (k * m) (n-1 = k).
 Proof. unfold CanSolve in *. split; last naive_solver lia. move => ?. apply (Z.mul_cancel_r _ _ m) => //. lia. Qed.
@@ -226,10 +234,10 @@ Global Instance simpl_add_eq_0 n m:
   SimplBothRel (=) (n + m)%nat (0)%nat (n = 0%nat ∧ m = 0%nat).
 Proof. split; naive_solver lia. Qed.
 
-Global Instance simpl_and_S n m `{!ContainsProtected n}:
+Global Instance simpl_and_S n m `{!ContainsEx n}:
   SimplAndRel (=) (S n) (m) ((m > 0)%nat ∧ n = pred m).
 Proof. split; destruct n; naive_solver lia. Qed.
-Global Instance simpl_and_Z_of_nat n m `{!ContainsProtected n}:
+Global Instance simpl_and_Z_of_nat n m `{!ContainsEx n}:
   SimplAndRel (=) (Z.of_nat n) (m) (0 ≤ m ∧ n = Z.to_nat m).
 Proof. unfold CanSolve in *. split; naive_solver lia. Qed.
 
@@ -278,7 +286,7 @@ Proof.
     eexists hd, tl. by inversion Hlen.
 Qed.
 
-Global Instance simpl_length_protected_add {A} (n m : nat) (p : list A) `{!ContainsProtected p} `{!CanSolve (m ≤ n)%nat} :
+Global Instance simpl_length_ex_add {A} (n m : nat) (p : list A) `{!ContainsEx p} `{!CanSolve (m ≤ n)%nat} :
   SimplAndRel (=) (n) (length p + m)%nat ((n - m)%nat = length p).
 Proof.
   unfold CanSolve in *. split.
@@ -323,13 +331,13 @@ Proof. move => ? Hs. by apply: list_subequiv_fmap. Qed.
 
 (* The other direction might not hold if ig contains indices which are
 out of bounds, but we don't care about that. *)
-Global Instance simpl_subequiv_protected {A} (l1 l2 : list A) ig `{!IsProtected l2}:
+Global Instance simpl_subequiv_ex {A} (l1 l2 : list A) ig `{!IsEx l2}:
   SimplAndUnsafe (list_subequiv ig l1 l2) (
     foldr (λ i f, (λ l', ∃ x, f (<[i:=x]> l'))) (λ l', l2 = l') ig l1).
 Proof.
   (* TODO: add a lemma for list_subequiv such that this unfolding is not necessary anymore. *)
   unfold_opaque @list_subequiv.
-  unfold IsProtected, SimplAndUnsafe in *. elim: ig l1 l2.
+  clear IsEx0. unfold SimplAndUnsafe in *. elim: ig l1 l2.
   - move => ??/=. move => ?. naive_solver.
   - move => i ig IH l1 l2/= [x /IH Hi ] i'.
     move: (Hi i') => [<- Hlookup]. rewrite insert_length. split => //.
@@ -359,17 +367,17 @@ Global Instance simpl_fmap_assume_inj_Unsafe {A B} (l1 l2 : list A) (f : A → B
 Proof. move => ->. naive_solver. Qed.
 
 Global Instance simpl_replicate_app_and {A} (l1 l2 : list A) x n:
-  SimplAndRel (=) (replicate n x) (l1 ++ l2) (∃ n', shelve_hint (n' ≤ n)%nat ∧ l1 = replicate n' x ∧ l2 = replicate (n - n') x).
+  SimplAndRel (=) (replicate n x) (l1 ++ l2) (∃ n', l1 = replicate n' x ∧ l2 = replicate (n - n') x ∧ (n' ≤ n)%nat).
 Proof.
-  unfold shelve_hint. split.
+  split.
   - move => [n'[?[??]]]; subst.
     have ->: (n = n' + (n - n'))%nat by lia. rewrite replicate_add. do 2 f_equal. lia.
   - move => Hr.
     have Hn: (n = length l1 + length l2)%nat by rewrite -(replicate_length n x) -app_length Hr.
     move: Hr. rewrite Hn replicate_add => /app_inj_1[|<- <-]. 1: by rewrite replicate_length.
     exists (length l1). repeat split => //.
-    + rewrite !replicate_length. lia.
     + rewrite !replicate_length. f_equal. lia.
+    + rewrite !replicate_length. lia.
 Qed.
 
 Global Instance simpl_replicate_eq_nil {A} (x : A) n :
@@ -471,7 +479,7 @@ Proof.
   rewrite list_lookup_insert_Some. naive_solver.
 Qed.
 
-Global Instance simpl_and_lookup_protected {A} (l : list A) (i : nat) v `{!IsProtected v} `{Inhabited A}:
+Global Instance simpl_and_lookup_ex {A} (l : list A) (i : nat) v `{!IsEx v} `{Inhabited A}:
   SimplAndRel (=) (l !! i) (Some v) (i < length l ∧ v = l !!! i).
 Proof.
   split.

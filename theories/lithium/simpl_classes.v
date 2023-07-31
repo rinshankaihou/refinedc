@@ -1,10 +1,15 @@
+From iris.base_logic.lib Require Import iprop.
 From lithium Require Export base.
 
 (** This file provides the classes for the simplification
 infrastructure for pure sideconditions. *)
 
 (** * [SimplExist] and [SimplForall] *)
-Class SimplExist (T : Type) (e : T → Prop) (Q: Prop) := simpl_exist_proof : Q → ∃ x, e x.
+Class SimplExist {Σ} (A : Type) (Q : (A → iProp Σ) → iProp Σ) :=
+  simpl_exist P : Q P ⊢ ∃ x : A, P x.
+Global Hint Mode SimplExist + ! - : typeclass_instances.
+
+(* TODO: refactor similar to SimplExist? *)
 Class SimplForall (T : Type) (n : nat) (e : T → Prop) (Q: Prop) := simpl_forall_proof : Q → ∀ x, e x.
 
 (** * [SimplImpl] and [SimplAnd] *)

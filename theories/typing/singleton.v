@@ -26,38 +26,37 @@ Section value.
   Definition value_simplify_inst := [instance value_simplify with 0%N].
   Global Existing Instance value_simplify_inst.
 
-  Lemma value_subsume_goal v v' ly ty T:
-    (⌜ty.(ty_has_op_type) ly MCId⌝ ∗ (v ◁ᵥ ty -∗ ⌜v = v'⌝ ∗ T))
-    ⊢ subsume (v ◁ᵥ ty) (v ◁ᵥ value ly v') T.
+  Lemma value_subsume_goal A v v' ly ty T:
+    (⌜ty.(ty_has_op_type) ly MCId⌝ ∗ (v ◁ᵥ ty -∗ ∃ x, ⌜v = v' x⌝ ∗ T x))
+    ⊢ subsume (v ◁ᵥ ty) (λ x : A, v ◁ᵥ value ly (v' x)) T.
   Proof.
     iIntros "[% HT] Hty". iDestruct (ty_size_eq with "Hty") as %Hly; [done|].
     iDestruct (ty_memcast_compat_id with "Hty") as %?; [done|].
-    by iDestruct ("HT" with "Hty") as (->) "$".
+    iDestruct ("HT" with "Hty") as (? ->) "?". iExists _. by iFrame.
   Qed.
   Definition value_subsume_goal_inst := [instance value_subsume_goal].
   Global Existing Instance value_subsume_goal_inst.
 
-  Lemma value_subsume_goal_loc l v' ot ty T:
-    (⌜ty.(ty_has_op_type) ot MCId⌝ ∗ ∀ v, v ◁ᵥ ty -∗ ⌜v = v'⌝ ∗ T)
-    ⊢ subsume (l ◁ₗ ty) (l ◁ₗ value ot v') T.
+  Lemma value_subsume_goal_loc A l v' ot ty T:
+    (⌜ty.(ty_has_op_type) ot MCId⌝ ∗ ∀ v, v ◁ᵥ ty -∗ ∃ x, ⌜v = (v' x)⌝ ∗ T x)
+    ⊢ subsume (l ◁ₗ ty) (λ x : A, l ◁ₗ value ot (v' x)) T.
   Proof.
     iIntros "[% HT] Hty".
     iDestruct (ty_aligned with "Hty") as %Hal; [done|].
     iDestruct (ty_deref with "Hty") as (v) "[Hmt Hty]"; [done|].
     iDestruct (ty_size_eq with "Hty") as %Hly; [done|].
     iDestruct (ty_memcast_compat_id with "Hty") as %?; [done|].
-    iDestruct ("HT" with "Hty") as (->) "$".
-    by iFrame.
+    iDestruct ("HT" with "Hty") as (? ->) "?". iExists _. by iFrame.
   Qed.
   Definition value_subsume_goal_loc_inst := [instance value_subsume_goal_loc].
   Global Existing Instance value_subsume_goal_loc_inst.
 
-  Lemma value_subsume_own_ptrop l β (v' : val) ty T:
-    (l ◁ₗ{β} ty -∗ ⌜v' = l⌝ ∗ T)
-    ⊢ subsume (l ◁ₗ{β} ty) (l ◁ᵥ value PtrOp v') T.
+  Lemma value_subsume_own_ptrop A l β (v' : A → val) ty T:
+    (l ◁ₗ{β} ty -∗ ∃ x, ⌜v' x = l⌝ ∗ T x)
+    ⊢ subsume (l ◁ₗ{β} ty) (λ x : A, l ◁ᵥ value PtrOp (v' x)) T.
   Proof.
-    iIntros "HT Hty". iDestruct ("HT" with "Hty") as "[% $]"; subst.
-    iPureIntro. split_and!; [|done..]. apply mem_cast_id_loc.
+    iIntros "HT Hty". iDestruct ("HT" with "Hty") as (? Heq) "?". iExists _. iFrame.
+    rewrite Heq. iPureIntro. split_and!; [|done..]. apply mem_cast_id_loc.
   Qed.
   Definition value_subsume_own_ptrop_inst := [instance value_subsume_own_ptrop].
   Global Existing Instance value_subsume_own_ptrop_inst.
@@ -192,6 +191,12 @@ Section place.
   Definition place_simplify_goal_inst := [instance place_simplify_goal with 0%N].
   Global Existing Instance place_simplify_goal_inst.
 
+  (* TODO: Maybe apply with Hint Extern for better performance? *)
+  Lemma simplify_goal_ex_place l β ty T:
+    simplify_goal (l ◁ₗ{β} ty) T where `{!IsEx ty} :- exhale ⌜ty = place l⌝; return T.
+  Proof. iIntros (_) "[-> $]". done. Qed.
+  Definition simplify_goal_ex_place_inst := [instance simplify_goal_ex_place with 99%N].
+  Global Existing Instance simplify_goal_ex_place_inst | 99.
 
   Lemma type_addr_of_singleton l β ty T:
     T β ty (place l)

@@ -134,7 +134,6 @@ struct list * forward (struct list *p) {
 
       prev = &cur->tail;
   }
-  rc_unfold(*prev);
   return p;
 }
 

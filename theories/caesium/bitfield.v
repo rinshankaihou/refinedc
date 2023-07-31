@@ -308,7 +308,7 @@ Global Typeclasses Opaque normalize_bitfield_eq.
 Class NormalizeBitfield (bv norm : Z) : Prop :=
   normalize_bitfield_proof : bv = norm.
 
-Global Instance simpl_and_normalize_bitfield bv norm `{!NormalizeBitfield bv norm'} `{!IsProtected norm} :
+Global Instance simpl_and_normalize_bitfield bv norm `{!NormalizeBitfield bv norm'} `{!IsEx norm} :
   SimplAnd (normalize_bitfield_eq bv norm) (norm' = norm).
 Proof. erewrite normalize_bitfield_proof. done. Qed.
 

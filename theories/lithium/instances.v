@@ -29,17 +29,17 @@ Definition simplify_goal_id_inst Σ (P : iProp Σ) :=
 Global Existing Instance simplify_goal_id_inst | 100.
 
 (** * Subsumption *)
-(** ** [subsume] *)
-Lemma subsume_id {Σ} (P : iProp Σ) T:
-  subsume P P T :- return T.
-Proof. iIntros "$ $". Qed.
+Lemma subsume_id {Σ A} (P : iProp Σ) (T : A → iProp Σ):
+  subsume P (λ _, P) T :- ∃ x, return T x.
+Proof. iIntros "[% ?] $". by iExists _. Qed.
 Definition subsume_id_inst := [instance @subsume_id].
 Global Existing Instance subsume_id_inst | 1.
 
-Lemma subsume_simplify {Σ} (P1 P2 : iProp Σ) o1 o2 T :
-  ∀ {SH : SimplifyHyp P1 o1} {SG : SimplifyGoal P2 o2} `{!TCOneIsSome o1 o2},
-    let GH := (SH (P2 ∗ T)%I).(i2p_P) in
-    let GG := (P1 -∗ (SG T).(i2p_P))%I in
+Lemma subsume_simplify {Σ A} (P1 : iProp Σ) (P2 : A → iProp Σ) o1 o2 T :
+  (* TCOneIsSome must be first here since [instance ...] reverse the order *)
+  ∀ `{!TCOneIsSome o1 o2} {SH : SimplifyHyp P1 o1} {SG : ∀ x, SimplifyGoal (P2 x) o2},
+    let GH := (SH (∃ x, P2 x ∗ T x)%I).(i2p_P) in
+    let GG := (P1 -∗ ∃ x, (SG x (T x)).(i2p_P))%I in
     let G :=
        match o1, o2 with
      | Some n1, Some n2 => if (n2 ?= n1)%N is Lt then GG else GH
@@ -51,18 +51,32 @@ Proof.
   iIntros (???) "/= Hs Hl".
   destruct o1 as [n1|], o2 as [n2|] => //. 1: case_match.
   1,3,4: by iDestruct (i2p_proof with "Hs Hl") as "Hsub".
-  all: iDestruct ("Hs" with "Hl") as "HSG".
+  all: iDestruct ("Hs" with "Hl") as (?) "HSG"; iExists _.
   all: iDestruct (i2p_proof with "HSG") as "$".
 Qed.
 Definition subsume_simplify_inst := [instance @subsume_simplify].
 Global Existing Instance subsume_simplify_inst | 1000.
 
-(** ** [subsume_list] *)
-Lemma subsume_list_eq {Σ} A ig (l1 l2 : list A) (f : nat → A → iProp Σ) (T : iProp Σ) :
-  subsume_list A ig l1 l2 f T :- exhale ⌜list_subequiv ig l1 l2⌝; return T.
+(** * sep_list *)
+
+Global Instance sep_list_related_to Σ A B id ig l f :
+  RelatedTo (Σ:=Σ) (λ x : B, sep_list id A (ig x) (l x) (f x)) :=
+  {| rt_fic := FindSepList id |}.
+
+Lemma find_sep_list {Σ} id (T : _ → iProp Σ):
+  find_in_context (FindSepList id) T :-
+    pattern: A ig l f, sep_list id A ig l f; return T (sep_list id A ig l f).
+Proof. iIntros "(%&%&%&%&?&?)". iExists _. by iFrame. Qed.
+Definition find_sep_list_inst := [instance @find_sep_list with FICSyntactic].
+Global Existing Instance find_sep_list_inst | 1.
+
+Lemma subsume_sep_list_eq {Σ B} A id ig (l1 : list A) (l2 : B → list A) (f : nat → A → iProp Σ) (T : B → iProp Σ) :
+  subsume (sep_list id A ig l1 f) (λ x : B, sep_list id A ig (l2 x) f) T :-
+    ∃ x, exhale ⌜list_subequiv ig l1 (l2 x)⌝; return T x.
 Proof.
-  iDestruct 1 as (Hequiv) "$". iIntros "Hl".
-  have [Hlen _]:= Hequiv 0. iSplit; first done.
+  unfold sep_list. iDestruct 1 as (b Hequiv) "HT". iIntros "[%Hln Hl]". iExists b. iFrame "HT".
+  set (l2' := (l2 b)) in *. clearbody l2'; clear l2; rename l2' into l2.
+  have [Hlen _]:= Hequiv 0. iSplit; first by iPureIntro; congruence. clear Hln.
   iInduction l1 as [|x l1] "IH" forall (f ig l2 Hlen Hequiv); destruct l2 => //=.
   iDestruct "Hl" as "[Hx Hl]". move: Hlen => /= [?].
   iSplitL "Hx".
@@ -81,70 +95,77 @@ Proof.
       contradict Hb2. move: Hb1 => /elem_of_list_fmap[[|?][? /elem_of_list_filter [??]]] //.
       by simplify_eq/=.
 Qed.
-Definition subsume_list_eq_inst := [instance @subsume_list_eq].
-Global Existing Instance subsume_list_eq_inst | 1000.
+Definition subsume_sep_list_eq_inst := [instance @subsume_sep_list_eq].
+Global Existing Instance subsume_sep_list_eq_inst | 1000.
 
-Lemma subsume_list_insert_in_ig {Σ} A ig i x (l1 l2 : list A) (f : nat → A → iProp Σ) (T : iProp Σ) :
-  subsume_list A ig (<[i := x]>l1) l2 f T where `{!CanSolve (i ∈ ig)} :-
-  return subsume_list A ig l1 l2 f T.
+Lemma subsume_sep_list_insert_in_ig {Σ B} A id ig i x (l1 : list A) (l2 : B → list A)
+  (f : nat → A → iProp Σ) (T : B → iProp Σ) :
+  subsume (sep_list id A ig (<[i := x]>l1) f) (λ x : B, sep_list id A ig (l2 x) f) T
+     where `{!CanSolve (i ∈ ig)} :-
+  return subsume (sep_list id A ig l1 f) (λ x : B, sep_list id A ig (l2 x) f) T.
 Proof.
-  unfold CanSolve => ?. iIntros "Hsub Hl".
-  rewrite insert_length. iApply "Hsub".
+  unfold CanSolve, sep_list => ?. iIntros "Hsub [<- Hl]".
+  rewrite insert_length. iApply "Hsub". iSplit; [done|].
   destruct (decide (i < length l1)%nat). 2: { by rewrite list_insert_ge; [|lia]. }
   iDestruct (big_sepL_insert_acc with "Hl") as "[_ Hl]". { by apply: list_lookup_insert. }
   have [//|y ?]:= lookup_lt_is_Some_2 l1 i.
   iDestruct ("Hl" $! y with "[]") as "Hl". { by case_decide. }
   by rewrite list_insert_insert list_insert_id.
 Qed.
-Definition subsume_list_insert_in_ig_inst := [instance @subsume_list_insert_in_ig].
-Global Existing Instance subsume_list_insert_in_ig_inst.
+Definition subsume_sep_list_insert_in_ig_inst := [instance @subsume_sep_list_insert_in_ig].
+Global Existing Instance subsume_sep_list_insert_in_ig_inst.
 
-Lemma subsume_list_insert_not_in_ig {Σ} A ig i x (l1 l2 : list A) (f : nat → A → iProp Σ) (T : iProp Σ) :
-  subsume_list A ig (<[i := x]>l1) l2 f T where `{!CanSolve (i ∉ ig)} :-
+Lemma subsume_sep_list_insert_not_in_ig {Σ} A B id ig i x (l1 : list A) l2 (f : nat → A → iProp Σ) (T : B → iProp Σ) :
+  subsume (sep_list id A ig (<[i := x]>l1) f) (λ x : B, sep_list id A ig (l2 x) f) T
+    where `{!CanSolve (i ∉ ig)} :-
       exhale ⌜i < length l1⌝%nat;
-      {subsume_list A (i :: ig) l1 l2 f};
-      ∀ x2, inhale ⌜l2 !! i = Some x2⌝;
-      (f i x) :> (f i x2);
-      return T.
+      inhale f i x;
+      y ← (sep_list id A (i :: ig) l1 f) :> (λ x : B, sep_list id A (i :: ig) (l2 x) f);
+      ∃ x2, exhale ⌜l2 y !! i = Some x2⌝;
+      exhale f i x2;
+      return T y.
 Proof.
-  unfold CanSolve. iIntros (?) "[% Hsub] Hl". rewrite big_sepL_insert // insert_length.
+  unfold CanSolve, sep_list. iIntros (?) "[% Hsub] [<- Hl]". rewrite big_sepL_insert // insert_length.
   iDestruct "Hl" as "[Hx Hl]". case_bool_decide => //.
-  iDestruct ("Hsub" with "[Hl]") as "[% [Hl HT]]". {
-    iApply (big_sepL_impl with "Hl"). iIntros "!>" (???) "?".
+  iDestruct ("Hsub" with "Hx [Hl]") as "[% [[%Heq Hl] [% [% [? HT]]]]]". {
+    iSplit; [done|]. iApply (big_sepL_impl with "Hl"). iIntros "!>" (???) "?".
     repeat case_decide => //; set_solver.
   }
-  iSplit => //.
-  have [//|y ?]:= lookup_lt_is_Some_2 l2 i. { lia. }
-  iDestruct ("HT" with "[//] Hx") as "[Hf $]".
-  rewrite -{2}(list_insert_id l2 i y) // big_sepL_insert; [|lia]. case_bool_decide => //. iFrame.
+  iExists _. iFrame. iSplit; [done|].
+  rewrite -{2}(list_insert_id (l2 _) i x2) // big_sepL_insert; [|lia]. case_bool_decide => //. iFrame.
   iApply (big_sepL_impl with "Hl"). iIntros "!>" (???) "?".
   repeat case_decide => //; set_solver.
 Qed.
-Definition subsume_list_insert_not_in_ig_inst := [instance @subsume_list_insert_not_in_ig].
-Global Existing Instance subsume_list_insert_not_in_ig_inst.
+Definition subsume_sep_list_insert_not_in_ig_inst := [instance @subsume_sep_list_insert_not_in_ig].
+Global Existing Instance subsume_sep_list_insert_not_in_ig_inst.
 
-Lemma subsume_list_trivial_eq {Σ} A ig (l : list A) (f : nat → A → iProp Σ) (T : iProp Σ) :
-  subsume_list A ig l l f T :- return T.
-Proof. by iIntros "$ $". Qed.
-Definition subsume_list_trivial_eq_inst := [instance @subsume_list_trivial_eq].
-Global Existing Instance subsume_list_trivial_eq_inst | 5.
+Lemma subsume_sep_list_trivial_eq {Σ} A B id ig (l : list A) (f : nat → A → iProp Σ) (T : B → iProp Σ) :
+  subsume (sep_list id A ig l f) (λ x : B, sep_list id A ig l f) T :- ∃ x, return T x.
+Proof. iIntros "[% ?] $". iExists _. by iFrame. Qed.
+Definition subsume_sep_list_trivial_eq_inst := [instance @subsume_sep_list_trivial_eq].
+Global Existing Instance subsume_sep_list_trivial_eq_inst | 5.
 
-Lemma subsume_list_cons_l {Σ} A ig (x1 : A) (l1 l2 : list A) (f : nat → A → iProp Σ) (T : iProp Σ) :
-  subsume_list A ig (x1 :: l1) l2 f T :-
+Lemma subsume_sep_list_cons {Σ} A B id ig (x1 : A) (l1 : list A) l2 (f : nat → A → iProp Σ) (T : B → iProp Σ) :
+  subsume (sep_list id A ig (x1 :: l1) f) (λ y : B, sep_list id A ig (l2 y) f) T :-
     exhale ⌜0 ∉ ig⌝;
-    ∃ x2 l2', exhale ⌜l2 = x2 :: l2'⌝;
-    (f 0%nat x1) :> (f 0%nat x2);
-    {subsume_list A (pred <$> ig) l1 l2' (λ i, f (S i)) T}.
+    ∀ id', inhale (f 0%nat x1);
+    inhale (sep_list id' A (pred <$> ig) l1 (λ i, f (S i)));
+    ∃ y x2 l2', exhale ⌜l2 y = x2 :: l2'⌝;
+    exhale (f 0%nat x2);
+    exhale (sep_list id' A (pred <$> ig) l2' (λ i, f (S i)));
+    return T y.
 Proof.
-  iIntros "[% Hs]". iDestruct "Hs" as (???) "Hs". subst.
-  rewrite /subsume_list !big_sepL_cons /=.
-  case_bool_decide => //. iIntros "[H0 H]".
-  iDestruct ("Hs" with "H0") as "[$ Hs]".
-  iDestruct ("Hs" with "[H]") as (->) "[H $]"; [|iSplit => //].
-  all: iApply (big_sepL_impl with "H"); iIntros "!#" (???) "?".
-  all: case_bool_decide as Hx1 => //; case_bool_decide as Hx2 => //; contradict Hx2.
-  - set_unfold. eexists _. split; [|done]. done.
-  - by move: Hx1 => /(elem_of_list_fmap_2 _ _ _)[[|?]//=[->?]].
+  unfold sep_list. iIntros "[% Hs] [<- Hl]".
+  rewrite !big_sepL_cons /=. case_bool_decide => //. iDestruct "Hl" as "[H0 H]".
+  iDestruct ("Hs" $! {|sep_list_len := _|} with "H0 [H]") as (??? Heq1) "[? [[%Heq2 H] ?]]".
+  { iSplit; [simpl; done|]. iApply (big_sepL_impl with "H"); iIntros "!#" (???) "?".
+    case_bool_decide as Hx1 => //; case_bool_decide as Hx2 => //; contradict Hx2.
+    set_unfold. eexists _. split; [|done]. done. }
+  iExists _. iFrame. iSplit. { iPureIntro. rewrite Heq1 /=. by rewrite Heq2. }
+  rewrite Heq1 => /=. rewrite bool_decide_false //. iFrame.
+  iApply (big_sepL_impl with "H"); iIntros "!#" (???) "?".
+  case_bool_decide as Hx1 => //; case_bool_decide as Hx2 => //; contradict Hx2.
+  by move: Hx1 => /(elem_of_list_fmap_2 _ _ _)[[|?]//=[->?]].
 Qed.
-Definition subsume_list_cons_l_inst := [instance @subsume_list_cons_l].
-Global Existing Instance subsume_list_cons_l_inst | 40.
+Definition subsume_sep_list_cons_inst := [instance @subsume_sep_list_cons].
+Global Existing Instance subsume_sep_list_cons_inst | 40.

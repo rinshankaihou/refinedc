@@ -7,12 +7,13 @@
   to automatically instantiate existential quantifiers / evars.
   (See also Section 5, Handling of evars of the RefinedC PLDI'21 paper)
 
-  The RefinedC typechecking often generate evars (e.g. for the parameters of
-  a function or for existential quantifiers in loop invariants, structures or post-conditions).
-  However, RefinedC must be careful when instantiating evars because a bad instantiation
-  could easily make the goal unprovable. To prevent this, RefinedC seals all the evars
-  it creates so that they cannot be prematurely instantiated by Coq's unification and
-  then uses a set of heuristics to determine the right instantiation.
+  The RefinedC typechecking often generate evars (e.g. for the
+  parameters of a function or for existential quantifiers in loop
+  invariants, structures or post-conditions). However, RefinedC must
+  be careful when instantiating evars because a bad instantiation
+  could easily make the goal unprovable. To prevent this, RefinedC
+  keeps existential quantifiers in the goal they can be instantiated
+  using a set of heuristics described below.
 
   Let's see this in action: Comment out the rc::trust_me on the function below and
   look at the resulting error.
@@ -28,20 +29,22 @@ void evar_create() {
 /**
   You should see an error that looks like the following:
 
-    Cannot instantiate evar in "evar_create" in block "#0" !
-    Location: "tutorial/t02_evars.c" [ 25 : 2 - 25 : 9 ]
+    Type system got stuck in function "evar_create" in block "#0" !
+    Location: "tutorial/t02_evars.c" [ 26 : 2 - 26 : 9 ]
     up to date: true
     Goal:
     Q : (gmap label stmt)
-    Hevar : Z
     ---------------------------------------
-    (protected Hevar > 0)
+    --------------------------------------∗
+    [{ ∃ x : Z *ₗ (), exhale ⌜x.1ₗ > 0⌝; done }]
 
-  This is a new kind of error: RefinedC says that it cannot figure out the
-  right instantiation for the evar [protected Hevar]. These evars are easy to
-  recognize since they are marked by [protected].
+  This is a new kind of error: RefinedC gets stuck with a goal
+  containing an existential quantifier [x] of type [_ *ₗ _]. This
+  existential quantifier collects all existential variables that
+  RefinedC needs to instantiate. Here it is only a single variable
+  [x.1ₗ].
 
-  In this example, RefinedC cannot instantiate [protected Hevar] since there
+  In this example, RefinedC cannot instantiate [x.1ₗ] since there
   are many possible instatiations, i.e. numbers that a greater than 0.
   Let's see how we can solve this error. There are many different strategies for
   solving such an error:
@@ -84,22 +87,22 @@ int evar_create_return_int() {
   happen:
 
   1. Typechecking [evar_create_return_int] infers that the return value has type [5 @ int<i32>].
-  2. RefinedC has to prove that the return value has type [(protected Hevar) @ int<i32>].
+  2. RefinedC has to prove that the return value has type [x.1ₗ @ int<i32>].
   3. This means that RefinedC has to prove that [5 @ int<i32>] is a subtype of
-     [(protected Hevar) @ int<i32>].
+     [x.1ₗ @ int<i32>].
   4. Proving a subtype relationship between the same type with different refinements is reduced
-     to proving an equality between the refinement, i.e. [5 = protected Hevar].
+     to proving an equality between the refinement, i.e. [5 = x.1ₗ].
        Note: This heuristic is used for all refinement types, not just int.
-  5. The proof obligation [5 = protected Hevar] tells RefinedC that it should instantiate
-     [protected Hevar] to 5.
+  5. The proof obligation [5 = x.1ₗ] tells RefinedC that it should instantiate
+     [x.1ₗ] to 5.
 
   Let's have a closer look at 5. and in particular at the heuristics that RefinedC uses the instatiate
   evars. First, RefinedC only instantiates evars when it encounters equalities (i.e. for the obligation
-  [protected Hevar > 0] from before, RefinedC immediately gives up since it is not an equality).
-  When RefinedC encounters an equality with an evar, it first removes the [protected] and then
-  tries to unify both sides of the equality (potentially instantiating evars). Though this heuristic
-  is often effective, it may also turn a provable goal into an unprovable goal if it unifies an evar
-  appearing as the argument of a non-injective symbol as the following example shows:
+  [x.1ₗ > 0] from before, RefinedC immediately gives up since it is not an equality).
+  When RefinedC encounters an equality with an evar, it tries to unify both sides of the equality
+  (potentially instantiating evars). Though this heuristic is often effective, it may also turn a
+  provable goal into an unprovable goal if it unifies an evar appearing as the argument of a
+  non-injective symbol as the following example shows:
  */
 
 [[rc::parameters("l : {list Z}")]]
@@ -113,13 +116,13 @@ void evar_instantiate_wrong() {
 
 /**
   With the first rc::ensures clause, RefinedC first encounters the sidecondition
-  [protected Hevar = replicate (length l) 0] and thus instantiates [protected Hevar] with
-  [replicate (length l) 0] via unification. This instantiation allows RefinedC to prove the
+  [x.1ₗ = replicate (length l) 0] and thus instantiates [x.1ₗ] with [replicate (length l) 0]
+  via unification. This instantiation allows RefinedC to prove the
   second sidecondition.
 
   However, with the second rc::ensures clause, RefinedC first encounters the sidecondition
-  [length l = length (protected Hevar)] which can also be solved via unification, but instantiates
-  [protected Hevar] to [l]. However, with this instantation the second sidecondition is no longer
+  [length l = length x.1ₗ] which can also be solved via unification, but instantiates
+  [x.1ₗ] to [l]. However, with this instantation the second sidecondition is no longer
   provable!
 
   This observation leads to another strategy:
@@ -154,11 +157,11 @@ int return_multiple_of_8() {
 /**
   There are two different ways to formulate the specification of [return_multiple_of_8]. The first
   option is to say that it returns an integer [n] that is divisible by 8. This gives a clear path
-  to the instantiation of [n] as the rc::returns results in a sidecondition [protected Hevar = 32],
+  to the instantiation of [n] as the rc::returns results in a sidecondition [x.1ₗ = 32],
   which is easy to solve via unification.
 
   One can also formulate this specification such that the function returns an integer
-  [n * 8]. However, as one can try above, this leads to the sidecondition [32 = protected Hevar * 8]
+  [n * 8]. However, as one can try above, this leads to the sidecondition [32 = x.1ₗ * 8]
   which the unification algorithm is not able to solve.
 
   Thus, the first option is preferable to the second option, eventhough they are logically identical.
@@ -176,9 +179,9 @@ int return_multiple_of_8() {
   The following example explains this strategy. Here we have a function [return_multiple_of_5] that is similar
   to the example above. However, the specification is formulated the same way as the second problematic option
   from above (by saying that it returns [n * 5]). By default, this would lead to a sidecondition
-  [20 = protected Hevar * 5] which --- as we have seen -- cannot be solved via unification. However, one can
+  [20 = x.1ₗ * 5] which --- as we have seen -- cannot be solved via unification. However, one can
   add a simplification rule [SimplBoth (20 = n * 5) (n = 4)] which tells RefinedC to simplify equalities of the
-  form [20 = n * 5] to [n = 4]. Applying this simplification results in [protected Hevar = 4], which can then
+  form [20 = n * 5] to [n = 4]. Applying this simplification results in [x.1ₗ = 4], which can then
   be solved via unification.
 
  */

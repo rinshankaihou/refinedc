@@ -8,8 +8,10 @@
 typedef struct [[rc::ptr_type("freelist_t:{(0 < len)%nat} @ optional<&own<...>>")]]
                [[rc::parameters("entry_size: nat")]]
                [[rc::refined_by("len: nat")]]
+               [[rc::exists("nextlen : nat")]]
+               [[rc::constraints("{len = S nextlen}")]]
                [[rc::size("{ly_with_align entry_size entry_size}")]] freelist {
-    [[rc::field("{(len - 1)%nat} @ freelist_t<entry_size>")]]
+    [[rc::field("nextlen @ freelist_t<entry_size>")]]
     struct freelist *next;
 } *freelist_t;
 

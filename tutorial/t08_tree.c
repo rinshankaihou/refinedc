@@ -145,7 +145,6 @@ int tree_max(tree_t* t){
     if((*t)->right == NULL) {
         return (*t)->key;
     }
-    rc_unfold((*t)->right->key);
     return tree_max(&((*t)->right));
 }
 
@@ -163,7 +162,6 @@ void remove(tree_t* t, int k){
 
   if(k == (*t)->key) {
     if((*t)->left != NULL){
-      rc_unfold((*t)->left->key);
       m = tree_max(&(*t)->left);
       remove(&(*t)->left, m);
       (*t)->key = m;
@@ -201,8 +199,6 @@ tree_t sinit(int key){
 [[rc::requires("[alloc_initialized]")]]
 [[rc::ensures("own p : uninit<void*>")]]
 void sfree_tree(tree_t* t){
-  // TODO: this is necessary to destruct the existential quantifer inside stree early enough
-  rc_unfold_once(*t);
   free_tree(t);
 }
 
@@ -213,7 +209,6 @@ void sfree_tree(tree_t* t){
 [[rc::ensures("own p : s @ stree_t", "{b ↔ k ∈ s}")]]
  [[rc::tactics("all: try by etrans; [done|]; symmetry; apply tree_rel_member.")]]
 bool smember(tree_t* t, int k){
-  rc_unfold_once(*t);
   return member(t, k);
 }
 
@@ -223,7 +218,6 @@ bool smember(tree_t* t, int k){
 [[rc::ensures("own p : {{[k]} ∪ s} @ stree_t")]]
  [[rc::lemmas("tree_rel_insert")]]
 void sinsert(tree_t* t, int k){
-  rc_unfold_once(*t);
   insert(t, k);
 }
 
@@ -233,7 +227,6 @@ void sinsert(tree_t* t, int k){
 [[rc::ensures("own p : {s ∖ {[k]}} @ stree_t")]]
  [[rc::lemmas("tree_rel_remove")]]
 void sremove(tree_t* t, int k){
-  rc_unfold_once(*t);
   remove(t, k);
 }
 

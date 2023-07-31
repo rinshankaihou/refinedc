@@ -55,7 +55,7 @@ void prio_level_init(prio_bitmap_t *bm) {
 [[rc::tactics("have := Z_least_significant_one_lower_bound y. solve_goal.")]]
 [[rc::tactics("have := encode_prio_bitmap_least_significant_one_bound bm lvl y. solve_goal.")]]
 [[rc::tactics("rewrite (highest_pending_priority_found _ y lvl); solve_goal.")]]
-[[rc::tactics("apply (highest_pending_priority_not_in_element _ lvl y0); solve_goal.")]]
+[[rc::tactics("apply (highest_pending_priority_not_in_element _ lvl y); solve_goal.")]]
 [[rc::tactics("symmetry; apply (highest_pending_priority_not_found _ lvl); solve_goal.")]]
 static inline
 priority_search_t highest_pending_priority(prio_bitmap_t *bm) {

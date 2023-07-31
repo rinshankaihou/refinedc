@@ -5,6 +5,7 @@ From refinedc.typing Require Import typing.
 
 Definition create_bitmap (qs : list (list (message_data))) : list bool :=
   (λ data, bool_decide (data ≠ [])) <$> qs.
+Global Typeclasses Opaque create_bitmap.
 
 #[projections(primitive)]
 Record npfp_sched := {
@@ -139,26 +140,14 @@ Proof.
   by apply npfp_enqueue_add_msg_to_q1.
 Qed.
 
-Lemma npfp_enqueue_add_msg_to_q2 qs prio msg i q :
+Lemma npfp_enqueue_create_bitmap_addmsg2 qs prio msg i :
   i = prio →
-  add_msg_to_q qs prio msg !! i = Some q →
-  q ≠ [].
+  (prio < length qs)%nat →
+  create_bitmap (add_msg_to_q qs prio msg) !! i = Some true.
 Proof.
-  move => ->.
-  rewrite /add_msg_to_q => ADD.
-  have -> : q = (match qs !! prio with
-          | Some x => x ++ [msg]
-          | None => [msg]
-                 end).
-  { rewrite list_lookup_insert_Some in ADD.
-    by move : ADD =>  [ADD1| ADD2]; solve_goal. }
-  case (qs !! prio) eqn: EQ1; try solve_goal.
-  have HH : l ++ [msg] ≠ [].
-  { apply (elem_of_not_nil msg).
-    apply elem_of_app.
-    right.
-    by rewrite elem_of_list_singleton. }
-  solve_goal.
+  move => -> ?. rewrite /create_bitmap/add_msg_to_q.
+  apply list_lookup_fmap_Some. rewrite list_lookup_insert //. eexists _. split; [done|].
+  by rewrite bool_decide_true// => /app_eq_nil [??].
 Qed.
 
 Lemma find_highest_prio_length q :
@@ -241,17 +230,21 @@ Proof.
   - by move : Hafter => [[A [C D]] | B]; last by solve_goal.
 Qed.
 
-Lemma npfp_dequeue_create_bitmap_equiv sched_state :
+Lemma npfp_dequeue_qs_equiv sched_state :
   list_subequiv [Z.to_nat (find_highest_prio (create_bitmap (msg_qs sched_state)))]
-    (create_bitmap (msg_qs sched_state))
-    (create_bitmap (msg_qs (npfp_dequeue_func sched_state))).
+    (msg_qs sched_state)
+    (msg_qs (npfp_dequeue_func sched_state)).
 Proof.
-  rewrite /create_bitmap.
-  apply list_subequiv_fmap.
   rewrite /npfp_dequeue_func.
   case (find_highest_prio (create_bitmap (msg_qs sched_state))) eqn: EQ; try solve_goal;
     rewrite /get_highest_prio_level EQ /dequeue_from_given_level_sched /dequeue_from_given_level_queue;apply list_subequiv_insert_in_r; solve_goal.
 Qed.
+
+Lemma npfp_dequeue_create_bitmap_equiv sched_state :
+  list_subequiv [Z.to_nat (find_highest_prio (create_bitmap (msg_qs sched_state)))]
+    (create_bitmap (msg_qs sched_state))
+    (create_bitmap (msg_qs (npfp_dequeue_func sched_state))).
+Proof. rewrite /create_bitmap. apply list_subequiv_fmap. apply npfp_dequeue_qs_equiv. Qed.
 
 Lemma npfp_dequeue_create_bitmap_equiv1 sched_state y :
   ¬ find_highest_prio (create_bitmap (msg_qs sched_state)) < 0 →
@@ -277,4 +270,19 @@ Proof.
     apply list_insert_id' => Hle.
     rewrite list_lookup_fmap Hsome.
     solve_goal.
+Qed.
+
+Lemma npfp_dequeue_create_bitmap_false sched_state y :
+  ¬ find_highest_prio (create_bitmap (msg_qs sched_state)) < 0 →
+  msg_qs sched_state !! Z.to_nat (find_highest_prio (create_bitmap (msg_qs sched_state))) = Some y →
+  find_highest_prio (create_bitmap (msg_qs sched_state)) < num_priorities →
+  tail y = [] →
+  create_bitmap (msg_qs (npfp_dequeue_func sched_state))
+  !! Z.to_nat (find_highest_prio (create_bitmap (msg_qs sched_state))) = Some false.
+Proof.
+  move => ?? ? Htail. apply list_lookup_fmap_Some. eexists [].
+  split; [|solve_goal]. rewrite -Htail.
+  destruct (msg_qs (npfp_dequeue_func sched_state) !! Z.to_nat (find_highest_prio (create_bitmap (msg_qs sched_state)))) eqn: Heq.
+  - f_equal. symmetry. by eapply npfp_dequeue_has_highest_pending_prio.
+  - move: Heq => /lookup_ge_None. solve_goal.
 Qed.

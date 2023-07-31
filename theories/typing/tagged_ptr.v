@@ -51,31 +51,31 @@ Section tagged_ptr.
     iApply loc_in_bounds_shorten; last done. by rewrite /val_of_loc.
   Qed.
 
-  Global Instance tagged_ptr_related_to_frac_ptr v r β n ty:
-     RelatedTo (v ◁ᵥ r @ tagged_ptr β n ty)%I | 1 :=
+  Global Instance tagged_ptr_related_to_frac_ptr A v r β n ty:
+     RelatedTo (λ x : A, v ◁ᵥ r @ tagged_ptr (β x) (n x) (ty x))%I | 1 :=
      {| rt_fic := FindValOrLoc v r.1 |}.
 
-  Lemma subsume_tagged_ptr v r1 r2 n1 n2 β1 β2 ty1 ty2 T:
-    (⌜r1 = r2⌝ ∗ ⌜n1 = n2⌝ ∗ ⌜β1 = β2⌝ ∗ subsume (r1.1 ◁ₗ{β1} ty1) (r2.1 ◁ₗ{β2} ty2) T)
-    ⊢ subsume (v ◁ᵥ r1 @ tagged_ptr β1 n1 ty1) (v ◁ᵥ r2 @ tagged_ptr β2 n2 ty2) T.
+  Lemma subsume_tagged_ptr A v r1 r2 n1 n2 β1 β2 ty1 ty2 T:
+    (r1.1 ◁ₗ{β1} ty1 -∗ ∃ x, ⌜r1 = r2 x⌝ ∗ ⌜n1 = n2 x⌝ ∗ ⌜β1 = β2 x⌝ ∗ (r2 x).1 ◁ₗ{β2 x} ty2 x ∗ T x)
+    ⊢ subsume (v ◁ᵥ r1 @ tagged_ptr β1 n1 ty1) (λ x : A, v ◁ᵥ (r2 x) @ tagged_ptr (β2 x) (n2 x) (ty2 x)) T.
   Proof.
-    iIntros "(->&->&->&HT) ($&$&$&$&?)". by iApply "HT".
+    iIntros "HT (?&?&?&?&?)".
+    iDestruct ("HT" with "[$]") as (?) "(->&->&->&?&HT)".
+    iExists _. iFrame.
   Qed.
   Definition subsume_tagged_ptr_inst := [instance subsume_tagged_ptr].
   Global Existing Instance subsume_tagged_ptr_inst.
 
-  Lemma subsume_frac_ptr_tagged_ptr l β (v : val) r n ty1 ty2 m `{!LearnAlignment β ty1 m} T:
-    (⌜if m is Some m' then l `aligned_to` m' else True⌝ -∗
-      ⌜l = r.1⌝ ∗ ⌜v = r.1 +ₗ r.2⌝ ∗ ⌜l `aligned_to` n⌝ ∗ ⌜0 ≤ r.2 < n⌝ ∗
-     ((l ◁ₗ{β} ty1 -∗ loc_in_bounds l n ∗ True) ∧ subsume (l ◁ₗ{β} ty1) (l ◁ₗ{β} ty2) T))
-    ⊢ subsume (l ◁ₗ{β} ty1) (v ◁ᵥ r @ tagged_ptr β n ty2) T.
+  Lemma subsume_frac_ptr_tagged_ptr A l β (v : val) r n ty1 ty2 m `{!LearnAlignment β ty1 m} T:
+    (l ◁ₗ{β} ty1 -∗ ⌜if m is Some m' then l `aligned_to` m' else True⌝ -∗
+      ∃ x, ⌜l = (r x).1⌝ ∗ ⌜v = (r x).1 +ₗ (r x).2⌝ ∗ ⌜l `aligned_to` (n x)⌝ ∗ ⌜0 ≤ (r x).2 < (n x)⌝ ∗
+       loc_in_bounds l (n x) ∗ l ◁ₗ{β} (ty2 x) ∗ T x)
+    ⊢ subsume (l ◁ₗ{β} ty1) (λ x : A, v ◁ᵥ (r x) @ tagged_ptr β (n x) (ty2 x)) T.
   Proof.
     iIntros "HT Hl".
     iDestruct (learnalign_learn with "Hl") as %?.
-    iDestruct ("HT" with "[//]") as "(->&->&%&%&HT)".
-    iAssert (loc_in_bounds r.1 n) as "#Hlib".
-    { iDestruct "HT" as "[HT _]". iDestruct ("HT" with "Hl") as "[$ _]". }
-    iDestruct "HT" as "[_ HT]". iDestruct ("HT" with "Hl") as "[$ $]". by iFrame "Hlib".
+    iDestruct ("HT" with "Hl [//]") as (?) "(->&->&%&%&?&?&HT)".
+    iExists _. by iFrame.
   Qed.
   Definition subsume_frac_ptr_tagged_ptr_inst := [instance subsume_frac_ptr_tagged_ptr].
   Global Existing Instance subsume_frac_ptr_tagged_ptr_inst.

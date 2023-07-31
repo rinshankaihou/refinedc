@@ -55,8 +55,8 @@ Global Instance Pte_BitfieldDesc : BitfieldDesc Pte := {|
   bitfield_wf := pte_wf;
 |}.
 
-Global Instance simpl_exist_Pte P : SimplExist Pte P
-  (∃ valid type leaf_attr_lo addr undef leaf_attr_hi,
+Global Instance simpl_exist_Pte Σ : @SimplExist Σ Pte
+  (λ P, ∃ valid type leaf_attr_lo addr undef leaf_attr_hi,
     P {|
       pte_valid := valid;
       pte_type := type;
@@ -64,8 +64,8 @@ Global Instance simpl_exist_Pte P : SimplExist Pte P
       pte_addr := addr;
       pte_undef := undef;
       pte_leaf_attr_hi := leaf_attr_hi;
-    |}).
-Proof. unfold SimplExist. naive_solver. Qed.
+    |})%I.
+Proof. iIntros (?) "(%&%&%&%&%&%&?)". by iExists _. Qed.
 Global Instance simpl_forall_Pte P : SimplForall Pte 6 P
   (∀ valid type leaf_attr_lo addr undef leaf_attr_hi,
     P {|
@@ -153,9 +153,9 @@ Global Instance Prot_BitfieldDesc : BitfieldDesc Prot := {|
   bitfield_repr := prot_repr;
   bitfield_wf := prot_wf;
 |}.
-Global Instance simpl_exist_Prot P : SimplExist Prot P (∃ x w r device,
-  P {| prot_x := x; prot_w := w; prot_r := r; prot_device := device |}).
-Proof. unfold SimplExist. naive_solver. Qed.
+Global Instance simpl_exist_Prot Σ : @SimplExist Σ Prot (λ P, ∃ x w r device,
+  P {| prot_x := x; prot_w := w; prot_r := r; prot_device := device |})%I.
+Proof. iIntros (?) "(%&%&%&%&?)". by iExists _. Qed.
 Global Instance simpl_forall_Prot P : SimplForall Prot 4 P (∀ x w r device,
   P {| prot_x := x; prot_w := w; prot_r := r; prot_device := device |}).
 Proof. unfold SimplForall => ? []. naive_solver. Qed.

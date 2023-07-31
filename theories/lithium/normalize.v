@@ -62,9 +62,6 @@ Class NormalizeWalk {A} (progress : bool) (a b : A) : Prop := normalize_walk: a 
 Class Normalize {A} (progress : bool) (a b : A) : Prop := normalize: a = b.
 Global Hint Mode NormalizeWalk + - + - : typeclass_instances.
 Global Hint Mode Normalize + - + - : typeclass_instances.
-Global Instance normalize_walk_protected A (x : A) :
-  NormalizeWalk false (protected x) (protected x) | 10.
-Proof. done. Qed.
 (* TODO: This does not go under binders *)
 Lemma normalize_walk_app A B (f f' : A → B) x x' r p1 p2 p3
       `{!NormalizeWalk p1 f f'}

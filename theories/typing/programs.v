@@ -383,9 +383,10 @@ Section proper.
   Qed.
 
   Lemma typed_place_subsume P l ty1 ty2 β T :
-    subsume (l ◁ₗ{β} ty1) (l ◁ₗ{β} ty2) (typed_place P l β ty2 T) ⊢ typed_place P l β ty1 T.
+    subsume (l ◁ₗ{β} ty1) (λ _ : unit, l ◁ₗ{β} ty2) (λ _, typed_place P l β ty2 T) ⊢ typed_place P l β ty1 T.
   Proof.
-    iIntros "Hsub". iApply typed_place_subsume'. iIntros "Hl". iExists _. by iApply "Hsub".
+    iIntros "Hsub". iApply typed_place_subsume'.
+    iIntros "Hl". iExists _. iDestruct ("Hsub" with "Hl") as (_) "$".
   Qed.
 
   (** wand lemmas *)
@@ -437,13 +438,13 @@ Section proper.
 
   Lemma type_val_expr_mono_strong e T :
     typed_val_expr e (λ v ty,
-      ∃ ty', subsume (v ◁ᵥ ty) (v ◁ᵥ ty') (T v ty'))%I
+      ∃ ty', subsume (v ◁ᵥ ty) (λ _ : unit, v ◁ᵥ ty') (λ _, T v ty'))%I
     -∗ typed_val_expr e T.
   Proof.
     iIntros "HT". iIntros (Φ) "HΦ".
     iApply "HT". iIntros (v ty) "Hv HT".
     iDestruct "HT" as (ty') "HT".
-    iPoseProof ("HT" with "Hv") as "[Hv HT']".
+    iPoseProof ("HT" with "Hv") as (?) "[Hv HT']".
     iApply ("HΦ" with "Hv HT'").
   Qed.
 
@@ -724,55 +725,62 @@ Section typing.
     [instance find_in_context_alloc_alive_loc with FICSyntactic].
   Global Existing Instance find_in_context_alloc_alive_loc_inst | 10.
 
-  Global Instance related_to_loc l β ty : RelatedTo (l ◁ₗ{β} ty)  | 100 := {| rt_fic := FindLoc l |}.
-  Global Instance related_to_val v ty : RelatedTo (v ◁ᵥ ty)  | 100 := {| rt_fic := FindValP v |}.
-  Global Instance related_to_loc_in_bounds l n : RelatedTo (loc_in_bounds l n)  | 100 := {| rt_fic := FindLocInBounds l |}.
-  Global Instance related_to_alloc_alive l : RelatedTo (alloc_alive_loc l)  | 100 := {| rt_fic := FindAllocAlive l |}.
+  Global Instance related_to_loc A l β ty : RelatedTo (λ x : A, l ◁ₗ{β x} ty x)%I | 100
+    := {| rt_fic := FindLoc l |}.
+  Global Instance related_to_val A v ty : RelatedTo (λ x : A, v ◁ᵥ ty x)%I | 100
+    := {| rt_fic := FindValP v |}.
+  Global Instance related_to_loc_in_bounds A l n : RelatedTo (λ x : A, loc_in_bounds l (n x)) | 100
+    := {| rt_fic := FindLocInBounds l |}.
+  Global Instance related_to_alloc_alive A l : RelatedTo (λ x : A, alloc_alive_loc l) | 100
+    := {| rt_fic := FindAllocAlive l |}.
 
   Global Program Instance learnalignment_none β ty : LearnAlignment β ty None | 1000.
   Next Obligation. iIntros (???) "?". done. Qed.
 
-  Lemma subsume_loc_in_bounds ty β l (n m : nat) `{!LocInBounds ty β m} T :
-    (l ◁ₗ{β} ty -∗ ⌜n ≤ m⌝ ∗ T)
-    ⊢ subsume (l ◁ₗ{β} ty) (loc_in_bounds l n) T.
+  Lemma subsume_loc_in_bounds A ty β l (n m : nat) `{!LocInBounds ty β m} T :
+    (l ◁ₗ{β} ty -∗ ⌜n ≤ m⌝ ∗ ∃ x, T x)
+    ⊢ subsume (l ◁ₗ{β} ty) (λ x : A, loc_in_bounds l n) T.
   Proof.
     iIntros "HT Hl".
     iDestruct (loc_in_bounds_in_bounds with "Hl") as "#?".
-    iDestruct ("HT" with "Hl") as (?) "$".
+    iDestruct ("HT" with "Hl") as (??) "?". iExists _. iFrame.
     iApply loc_in_bounds_shorten; last done. lia.
   Qed.
   Definition subsume_loc_in_bounds_inst := [instance subsume_loc_in_bounds].
-  Global Existing Instance subsume_loc_in_bounds_inst | 20.
+  Global Existing Instance subsume_loc_in_bounds_inst | 10.
 
-  Lemma subsume_loc_in_bounds_evar ty β l (n m : nat) `{!LocInBounds ty β m} `{!IsProtected n} T :
-    (l ◁ₗ{β} ty -∗ ⌜n = m⌝ ∗ T)
-    ⊢ subsume (l ◁ₗ{β} ty) (loc_in_bounds l n) T.
+  Lemma subsume_loc_in_bounds_evar A ty β l (n : A → nat) (m : nat)
+    `{!LocInBounds ty β m} T :
+    (l ◁ₗ{β} ty -∗ ∃ x, ⌜n x = m⌝ ∗ T x)
+    ⊢ subsume (l ◁ₗ{β} ty) (λ x, loc_in_bounds l (n x)) T.
   Proof.
-    etrans; [|by apply subsume_loc_in_bounds].
-    iIntros "HT Hl". by iDestruct ("HT" with "Hl") as (->) "$".
+    iIntros "HT Hl".
+    iDestruct (loc_in_bounds_in_bounds with "Hl") as "#?".
+    iDestruct ("HT" with "Hl") as (??) "?". iExists _. iFrame.
+    iApply loc_in_bounds_shorten; last done. lia.
   Qed.
   Definition subsume_loc_in_bounds_evar_inst := [instance subsume_loc_in_bounds_evar].
-  Global Existing Instance subsume_loc_in_bounds_evar_inst | 10.
+  Global Existing Instance subsume_loc_in_bounds_evar_inst | 20.
 
-  Lemma subsume_alloc_alive_global l T :
-    T
-    ⊢ subsume (alloc_global l) (alloc_alive_loc l) T.
-  Proof. iIntros "$ Hl". by iApply (alloc_global_alive). Qed.
+  Lemma subsume_alloc_alive_global A l T :
+    (∃ x, T x)
+    ⊢ subsume (alloc_global l) (λ x : A, alloc_alive_loc l) T.
+  Proof. iIntros "[% ?] Hl". iExists _. iFrame. by iApply (alloc_global_alive). Qed.
   Definition subsume_alloc_alive_global_inst := [instance subsume_alloc_alive_global].
   Global Existing Instance subsume_alloc_alive_global_inst.
 
-  Lemma subsume_alloc_alive ty β l P `{!AllocAlive ty β P} T :
+  Lemma subsume_alloc_alive A ty β l P `{!AllocAlive ty β P} T :
     (* You don't get l ◁ₗ{β} ty back because alloc_alive is not persistent. *)
-    P ∗ T
-    ⊢ subsume (l ◁ₗ{β} ty) (alloc_alive_loc l) T.
-  Proof. iIntros "[HP $] Hl". by iApply (alloc_alive_alive with "HP"). Qed.
+    (P ∗ ∃ x, T x)
+    ⊢ subsume (l ◁ₗ{β} ty) (λ x : A, alloc_alive_loc l) T.
+  Proof. iIntros "[HP [% ?]] Hl". iExists _. iFrame. by iApply (alloc_alive_alive with "HP"). Qed.
   Definition subsume_alloc_alive_inst := [instance subsume_alloc_alive].
   Global Existing Instance subsume_alloc_alive_inst | 5.
 
-  Lemma subsume_alloc_alive_type_alive ty β l `{!CheckOwnInContext (type_alive ty β)} T :
-    type_alive ty β ∗ T
-    ⊢ subsume (l ◁ₗ{β} ty) (alloc_alive_loc l) T.
-  Proof. iIntros "[Ha $] Hl". rewrite /type_alive. by iApply "Ha". Qed.
+  Lemma subsume_alloc_alive_type_alive A ty β l `{!CheckOwnInContext (type_alive ty β)} T :
+    (type_alive ty β ∗ ∃ x, T x)
+    ⊢ subsume (l ◁ₗ{β} ty) (λ x : A, alloc_alive_loc l) T.
+  Proof. iIntros "[Ha [% ?]] Hl". rewrite /type_alive. iExists _. iFrame. by iApply "Ha". Qed.
   Definition subsume_alloc_alive_type_alive_inst := [instance subsume_alloc_alive_type_alive].
   Global Existing Instance subsume_alloc_alive_type_alive_inst | 10.
 
@@ -786,30 +794,32 @@ Section typing.
   Definition simplify_goal_type_alive_inst := [instance simplify_goal_type_alive with 0%N].
   Global Existing Instance simplify_goal_type_alive_inst.
 
-  Lemma subsume_loc_in_bounds_leq (l : loc) (n1 n2 : nat) T :
-    ⌜n2 ≤ n1⌝%nat ∗ T
-    ⊢ subsume (loc_in_bounds l n1) (loc_in_bounds l n2) T.
-  Proof. iIntros "[% $] #?". by iApply loc_in_bounds_shorten. Qed.
+  Lemma subsume_loc_in_bounds_leq A (l : loc) (n1 n2 : nat) T :
+    (⌜n2 ≤ n1⌝%nat ∗ ∃ x, T x)
+    ⊢ subsume (loc_in_bounds l n1) (λ x : A, loc_in_bounds l n2) T.
+  Proof. iIntros "[% [% ?]] #?". iExists _. iFrame. by iApply loc_in_bounds_shorten. Qed.
   Definition subsume_loc_in_bounds_leq_inst := [instance subsume_loc_in_bounds_leq].
-  Global Existing Instance subsume_loc_in_bounds_leq_inst | 20.
+  Global Existing Instance subsume_loc_in_bounds_leq_inst | 10.
 
-  Lemma subsume_loc_in_bounds_leq_evar (l : loc) (n1 n2 : nat) `{!IsProtected n2} T :
-    ⌜n2 = n1⌝%nat ∗ T
-    ⊢ subsume (loc_in_bounds l n1) (loc_in_bounds l n2) T.
-  Proof. etrans; [|by apply subsume_loc_in_bounds_leq]. by iIntros "[-> $]". Qed.
+  Lemma subsume_loc_in_bounds_leq_evar A (l : loc) (n1 : nat) (n2 : A → nat) T :
+    (∃ x, ⌜n2 x = n1⌝%nat ∗ T x)
+    ⊢ subsume (loc_in_bounds l n1) (λ x, loc_in_bounds l (n2 x)) T.
+  Proof. iIntros "[% [% ?]] #?". iExists _. iFrame. iApply loc_in_bounds_shorten; [|done]. lia. Qed.
   Definition subsume_loc_in_bounds_leq_evar_inst := [instance subsume_loc_in_bounds_leq_evar].
-  Global Existing Instance subsume_loc_in_bounds_leq_evar_inst | 10.
+  Global Existing Instance subsume_loc_in_bounds_leq_evar_inst | 20.
 
   Lemma apply_subsume_place_true l1 β1 ty1 l2 β2 ty2:
     l1 ◁ₗ{β1} ty1 -∗
-    subsume (l1 ◁ₗ{β1} ty1) (l2 ◁ₗ{β2} ty2) True -∗
+    subsume (l1 ◁ₗ{β1} ty1) (λ _ : unit, l2 ◁ₗ{β2} ty2) (λ _, True) -∗
     l2 ◁ₗ{β2} ty2.
-  Proof. iIntros "Hl1 Hsub". iDestruct ("Hsub" with "Hl1") as "[$ _]". Qed.
+  Proof. iIntros "Hl1 Hsub". iDestruct ("Hsub" with "Hl1") as (?) "[$ _]". Qed.
 
   Lemma apply_subsume_place l ty2 T:
-    (find_in_context (FindDirect (λ '(β, ty), l◁ₗ{β}ty)) (λ '(β, ty), subsume (l◁ₗ{β} ty) (l◁ₗ{β} ty2) (l◁ₗ{β}ty2 -∗ T))) -∗ T.
+    (find_in_context (FindDirect (λ '(β, ty), l◁ₗ{β}ty)) (λ '(β, ty),
+         subsume (l◁ₗ{β} ty) (λ _ : unit, l◁ₗ{β} ty2) (λ _, l◁ₗ{β}ty2 -∗ T))) -∗ T.
   Proof.
-    iDestruct 1 as ([β ty1]) "[Hl Hsub]". iDestruct ("Hsub" with "Hl") as "[Hl HT]". by iApply "HT".
+    iDestruct 1 as ([β ty1]) "[Hl Hsub]".
+    iDestruct ("Hsub" with "Hl") as (?) "[Hl HT]". by iApply "HT".
   Qed.
 
   Lemma simplify_place_refine_l A (ty : rtype A) l β T:
@@ -871,22 +881,39 @@ Section typing.
     SimpleSubsumePlace (x @ ty1) ty2 P.
   Proof. iIntros (l β) "HP Hl". iExists (x). iApply (@simple_subsume_place with "HP Hl"). Qed.
 
-  Lemma simple_subsume_place_to_subsume l β ty1 ty2 P `{!SimpleSubsumePlace ty1 ty2 P} T:
-    P ∗ T ⊢ subsume (l ◁ₗ{β} ty1) (l ◁ₗ{β} ty2) T.
-  Proof. iIntros "[HP $] Hl". iApply (@simple_subsume_place with "HP Hl"). Qed.
+  Lemma simple_subsume_place_to_subsume A l β ty1 ty2 P
+    `{!∀ x, SimpleSubsumePlace ty1 (ty2 x) (P x)} T:
+    (∃ x, P x ∗ T x) ⊢ subsume (l ◁ₗ{β} ty1) (λ x : A, l ◁ₗ{β} ty2 x) T.
+  Proof. iIntros "[% [HP ?]] Hl". iExists _. iFrame. iApply (@simple_subsume_place with "HP Hl"). Qed.
   Definition simple_subsume_place_to_subsume_inst := [instance simple_subsume_place_to_subsume].
   Global Existing Instance simple_subsume_place_to_subsume_inst.
 
-  Lemma simple_subsume_val_to_subsume v ty1 ty2 P `{!SimpleSubsumeVal ty1 ty2 P} T:
-    P ∗ T ⊢ subsume (v ◁ᵥ ty1) (v ◁ᵥ ty2) T.
-  Proof. iIntros "[HP $] Hv". iApply (@simple_subsume_val with "HP Hv"). Qed.
+  Lemma simple_subsume_val_to_subsume A v ty1 ty2 P `{!∀ x, SimpleSubsumeVal ty1 (ty2 x) (P x)} T:
+    (∃ x, P x ∗ T x) ⊢ subsume (v ◁ᵥ ty1) (λ x : A, v ◁ᵥ ty2 x) T.
+  Proof. iIntros "[% [HP ?]] Hv". iExists _. iFrame. iApply (@simple_subsume_val with "HP Hv"). Qed.
   Definition simple_subsume_val_to_subsume_inst := [instance simple_subsume_val_to_subsume].
   Global Existing Instance simple_subsume_val_to_subsume_inst.
 
-  Lemma subtype_var {A} (ty : A → type) x y l β T:
-    ⌜x = y⌝ ∗ T
-    ⊢ subsume (l ◁ₗ{β} ty x) (l ◁ₗ{β} ty y) T.
-  Proof. iIntros "[-> $] $". Qed.
+  (* TODO: Should the following two instance be applied using a hint
+  extern for better performance? *)
+  Lemma subsume_place_own_ex A ty1 ty2 l β1 β2 T:
+    subsume (l ◁ₗ{β1} ty1) (λ x : A, l ◁ₗ{β2 x} ty2 x) T where `{!∀ x, IsEx (β2 x)} :-
+      inhale (l ◁ₗ{β1} ty1); ∃ x, exhale ⌜β2 x = β1⌝; exhale (l ◁ₗ{β2 x} ty2 x); return T x.
+  Proof. iIntros (_) "HT Hl". iDestruct ("HT" with "Hl") as "[% [<- [??]]]". iExists _. iFrame. Qed.
+  Definition subsume_place_own_ex_inst := [instance subsume_place_own_ex].
+  Global Existing Instance subsume_place_own_ex_inst.
+
+  Lemma subsume_place_ty_ex A ty1 ty2 l β T:
+    subsume (l ◁ₗ{β} ty1) (λ x : A, l ◁ₗ{β} ty2 x) T where `{!∀ x, IsEx (ty2 x)} :-
+      ∃ x, exhale ⌜ty2 x = ty1⌝; return T x.
+  Proof. iIntros (_) "[% [<- ?]] ?". iExists _. iFrame. Qed.
+  Definition subsume_place_ty_ex_inst := [instance subsume_place_ty_ex].
+  Global Existing Instance subsume_place_ty_ex_inst.
+
+  Lemma subtype_var {A B} (ty : A → type) x y l β T:
+    (∃ z, ⌜x = y z⌝ ∗ T z)
+    ⊢ subsume (l ◁ₗ{β} ty x) (λ z : B, l ◁ₗ{β} ty (y z)) T.
+  Proof. iIntros "[% [-> ?]] ?". iExists _. iFrame. Qed.
   (* This must be an hint extern because an instance would be a big slowdown . *)
   Definition subtype_var_inst := [instance @subtype_var].
 
@@ -1556,7 +1583,7 @@ Section typing.
 End typing.
 
 (* This must be an hint extern because an instance would be a big slowdown . *)
-Global Hint Extern 1 (Subsume (_ ◁ₗ{_} ?ty _) (_ ◁ₗ{_} ?ty2 _)) =>
+Global Hint Extern 1 (Subsume (_ ◁ₗ{_} ?ty _) (λ _, _ ◁ₗ{_} ?ty2 _)%I) =>
   match ty with | ty2 => is_var ty; class_apply subtype_var_inst end : typeclass_instances.
 
 Global Typeclasses Opaque typed_block.

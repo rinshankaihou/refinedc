@@ -36,10 +36,10 @@ Definition update_msg_type (msg : message_data) : message_data :=
   let type := message_identify_type_coq (m_id msg) in
   set_msg_type msg type.
 
-Global Instance SimplExistMessageData P : SimplExist message_data P
-  (∃ type len id, P {|
+Global Instance SimplExistMessageData Σ : @SimplExist Σ message_data
+  (λ P, ∃ type len id, P {|
     m_type := type;
     m_length := len;
     m_id := id
-|}).
-Proof. rewrite /SimplExist. naive_solver. Qed.
+|})%I.
+Proof. iIntros (?) "(%&%&%&?)". by iExists _. Qed.

@@ -427,7 +427,7 @@ Section alloc_alive.
     IntroPersistent (type_alive ty β) (type_alive ty β).
   Proof. constructor. by iIntros "#H !>". Qed.
 
-  Global Instance AllocAlive_simpl_and ty β P P' `{!AllocAlive ty β P'} `{!IsProtected P} :
+  Global Instance AllocAlive_simpl_and ty β P P' `{!AllocAlive ty β P'} `{!IsEx P} :
     SimplAndUnsafe (AllocAlive ty β P) (P = P').
   Proof. by move => ->. Qed.
 End alloc_alive.

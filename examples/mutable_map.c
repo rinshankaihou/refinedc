@@ -164,10 +164,7 @@ void *fsm_insert(struct fixed_size_map *m, size_t key, void *value) {
 [[rc::exists("p : loc", "items2 : {list item_ref}")]]
 [[rc::returns("{mp !! key} @ optionalO<λ ty. p @ &own<ty>>")]]
 [[rc::ensures("own m : {alter (λ _, place p) key mp, items2, count} @ fixed_size_map")]]
- [[rc::lemmas("fsm_invariant_alter")]]
  [[rc::tactics("all: try by erewrite length_filter_insert => //; solve_goal.")]]
- [[rc::tactics("all: try by eexists _; solve_goal.")]]
- [[rc::tactics("all: try by apply inhabitant.")]]
 void *fsm_get(struct fixed_size_map *m, size_t key) {
     size_t slot_idx = fsm_probe(m, key);
     struct item *item = &(*m->items)[slot_idx];
@@ -213,7 +210,7 @@ size_t compute_min_count(size_t len) {
 }
 
 
- [[rc::tactics("all: try by eexists (length items); rewrite /shelve_hint; split_and?; rewrite ?drop_ge; solve_goal.")]]
+ [[rc::tactics("all: try by eexists (length items); split_and?; rewrite ?drop_ge; solve_goal.")]]
  [[rc::tactics("all: try match goal with | H : fsm_invariant ?mp2 ?items2 |- fsm_invariant ?mp1 ?items1 => have ->: mp1 = mp2; [|done] end.")]]
  [[rc::tactics("all: try by apply: fsm_copy_entries_not_add; solve_goal.")]]
  [[rc::tactics("all: try by apply: fsm_copy_entries_add; solve_goal.")]]

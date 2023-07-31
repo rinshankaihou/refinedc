@@ -310,20 +310,22 @@ Section programs.
   Qed.
 
   (*** int <-> bool *)
-  Lemma subsume_int_boolean_place l β n b it T:
-    ⌜n = bool_to_Z b⌝ ∗ T
-    ⊢ subsume (l ◁ₗ{β} n @ int it) (l ◁ₗ{β} b @ boolean it) T.
+  Lemma subsume_int_boolean_place A l β n b it T:
+    (∃ x, ⌜n = bool_to_Z (b x)⌝ ∗ T x)
+    ⊢ subsume (l ◁ₗ{β} n @ int it) (λ x : A, l ◁ₗ{β} (b x) @ boolean it) T.
   Proof.
-    iIntros "[-> $] Hint". iDestruct "Hint" as (???) "?".
+    iIntros "[% [-> ?]] Hint". iExists _. iFrame. iDestruct "Hint" as (???) "?".
     iExists _, _. iFrame. iSplit; first done. iSplit; last done. by destruct b.
   Qed.
   Definition subsume_int_boolean_place_inst := [instance subsume_int_boolean_place].
   Global Existing Instance subsume_int_boolean_place_inst.
 
-  Lemma subsume_int_boolean_val v n b it T:
-    ⌜n = bool_to_Z b⌝ ∗ T
-    ⊢ subsume (v ◁ᵥ n @ int it) (v ◁ᵥ b @ boolean it) T.
-  Proof. iIntros "[-> $] %". iExists (bool_to_Z b). iSplit; first done. by destruct b. Qed.
+  Lemma subsume_int_boolean_val A v n b it T:
+    (∃ x, ⌜n = bool_to_Z (b x)⌝ ∗ T x)
+    ⊢ subsume (v ◁ᵥ n @ int it) (λ x : A, v ◁ᵥ (b x) @ boolean it) T.
+  Proof.
+    iIntros "[%x [-> ?]] %". iExists _. iFrame. unfold boolean; simpl_type.
+    iExists (bool_to_Z (b x)). iSplit; first done. by destruct b. Qed.
   Definition subsume_int_boolean_val_inst := [instance subsume_int_boolean_val].
   Global Existing Instance subsume_int_boolean_val_inst.
 

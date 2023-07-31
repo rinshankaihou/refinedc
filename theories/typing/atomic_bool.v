@@ -60,21 +60,20 @@ Notation "atomic_bool< it , PT , PF >" := (atomic_bool it PT PF)
 Section programs.
   Context `{!typeG Σ}.
 
-  Lemma subsume_atomic_bool_own_int l n it PT PF T:
-    (∃ b, subsume (l ◁ₗ n @ int it) (l ◁ₗ b @ boolean it) ((if b then PT else PF) ∗ T))
-    ⊢ subsume (l ◁ₗ n @ int it) (l ◁ₗ atomic_bool it PT PF) T.
+  Lemma subsume_atomic_bool_own_int A l n it PT PF T:
+    (l ◁ₗ n @ int it -∗ ∃ x b, l ◁ₗ b @ boolean it ∗ (if b then PT x else PF x) ∗ T x)
+    ⊢ subsume (l ◁ₗ n @ int it) (λ x : A, l ◁ₗ atomic_bool it (PT x) (PF x)) T.
   Proof.
-    iDestruct 1 as (b) "Hsub". iIntros "Hl".
-    iDestruct ("Hsub" with "Hl") as "[? [? $]]".
-    iExists _. by iFrame.
+    iIntros "HT Hl". iDestruct ("HT" with "Hl") as (??) "[? [? ?]]".
+    iExists _. iFrame. iExists _. by iFrame.
   Qed.
   Definition subsume_atomic_bool_own_int_inst := [instance subsume_atomic_bool_own_int].
   Global Existing Instance subsume_atomic_bool_own_int_inst.
 
-  Lemma subsume_atomic_bool_own_bool l (b : bool) it PT PF T:
-    (if b then PT else PF) ∗ T
-    ⊢ subsume (l ◁ₗ b @ boolean it) (l ◁ₗ atomic_bool it PT PF) T.
-  Proof. iIntros "[? $] Hl". iExists _. by iFrame. Qed.
+  Lemma subsume_atomic_bool_own_bool A l (b : bool) it PT PF T:
+    (∃ x, (if b then PT x else PF x) ∗ T x)
+    ⊢ subsume (l ◁ₗ b @ boolean it) (λ x : A, l ◁ₗ atomic_bool it (PT x) (PF x)) T.
+  Proof. iIntros "[% [? ?]] Hl". iExists _. iFrame. iExists _. by iFrame. Qed.
   Definition subsume_atomic_bool_own_bool_inst := [instance subsume_atomic_bool_own_bool].
   Global Existing Instance subsume_atomic_bool_own_bool_inst.
 
@@ -114,16 +113,14 @@ Section programs.
   Global Existing Instance type_read_atomic_bool_inst | 10.
 
   Lemma type_write_atomic_bool l β it ot PT PF v ty T:
-    (⌜match ot with | BoolOp => it = u8 | IntOp it' => it = it' | _ => False end⌝ ∗ ∃ b,
-      subsume (v ◁ᵥ ty) (v ◁ᵥ b @ boolean it) (
-        (if b then PT else PF) ∗
-        T (atomic_bool it PT PF)
-      ))
+    (v ◁ᵥ ty -∗
+     ⌜match ot with | BoolOp => it = u8 | IntOp it' => it = it' | _ => False end⌝ ∗
+     ∃ b, v ◁ᵥ b @ boolean it ∗ (if b then PT else PF) ∗ T (atomic_bool it PT PF))
     ⊢ typed_write_end true ⊤ ot v ty l β (atomic_bool it PT PF) T.
   Proof.
-    iIntros "[% [%bnew Hsub]]". iApply typed_write_end_mono_strong; [done|].
+    iIntros "HT". iApply typed_write_end_mono_strong; [done|].
     iIntros "Hv Hl". iModIntro.
-    iDestruct ("Hsub" with "Hv") as "(#Hnew&Hif_new&HT)".
+    iDestruct ("HT" with "Hv") as "(%&%x&#Hnew&Hif_new&HT)".
     destruct β.
     - iDestruct "Hl" as "[%bold [Hl Hif_old]]".
       iExists (_ @ boolean it)%I, _, _, True%I. iFrame "∗". iSplitR; [done|]. iSplitR; [done|].
@@ -145,9 +142,8 @@ Section programs.
   Global Existing Instance type_write_atomic_bool_inst | 10.
 
   Lemma type_cas_atomic_bool (l : loc) β ot it PT PF lexp Pexp vnew Pnew T:
-    (⌜match ot with | BoolOp => it = u8 | IntOp it' => it = it' | _ => False end⌝ ∗ ∃ bexp bnew,
-      subsume Pexp (lexp ◁ₗ bexp @ boolean it) (
-        subsume Pnew (vnew ◁ᵥ bnew @ boolean it) (
+    (Pexp -∗ Pnew -∗ ⌜match ot with | BoolOp => it = u8 | IntOp it' => it = it' | _ => False end⌝ ∗
+      ∃ bexp bnew, lexp ◁ₗ bexp @ boolean it ∗ vnew ◁ᵥ bnew @ boolean it ∗
           ⌜ly_size (ot_layout ot) ≤ bytes_per_addr⌝%nat ∗ (
             ((if bexp then PT else PF) -∗
              (if bnew then PT else PF) ∗ (
@@ -158,14 +154,11 @@ Section programs.
              T (val_of_bool false) (false @ builtin_boolean))
            )
         )
-      ))
     ⊢ typed_cas ot l (l ◁ₗ{β} (atomic_bool it PT PF))%I lexp Pexp vnew Pnew T.
   Proof.
-    iIntros "(%&%bexp&%bnew&Hsub) Hl Hlexp Hvnew".
-    iDestruct ("Hsub" with "Hlexp") as "[Hlexp Hsub]".
-    iDestruct ("Hsub" with "Hvnew") as "[#Hvnew [% Hsub]]".
-    iIntros (Φ) "HΦ".
-    destruct β.
+    iIntros "HT Hl Hlexp Hvnew".
+    iDestruct ("HT" with "Hlexp Hvnew") as "(%&%bexp&%bnew&Hlexp&#Hvnew&%&Hsub)".
+    iIntros (Φ) "HΦ". destruct β.
     - iDestruct "Hl" as (b) "[Hb Hif]".
       destruct (decide (b = bexp)); subst.
       + iApply (wp_cas_suc_boolean with "Hb Hlexp") => //.

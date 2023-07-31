@@ -174,10 +174,10 @@ Section function.
   Definition type_call_fnptr_inst := [instance type_call_fnptr].
   Global Existing Instance type_call_fnptr_inst.
 
-  Lemma subsume_fnptr v l1 l2 (fnty1 fnty2 : A → fn_params) T:
-    ⌜l1 = l2⌝ ∗ ⌜fnty1 = fnty2⌝ ∗ T
-    ⊢ subsume (v ◁ᵥ l1 @ function_ptr fnty1) (v ◁ᵥ l2 @ function_ptr fnty2) T.
-  Proof. iIntros "(->&->&$) $". Qed.
+  Lemma subsume_fnptr B v l1 l2 (fnty1 : A → fn_params) fnty2 T:
+    (∃ x, ⌜l1 = l2 x⌝ ∗ ⌜fnty1 = fnty2 x⌝ ∗ T x)
+    ⊢ subsume (v ◁ᵥ l1 @ function_ptr fnty1) (λ x : B, v ◁ᵥ (l2 x) @ function_ptr (fnty2 x)) T.
+  Proof. iIntros "(%&->&->&?) ?". iExists _. iFrame. Qed.
   Definition subsume_fnptr_inst := [instance subsume_fnptr].
   Global Existing Instance subsume_fnptr_inst.
 End function.

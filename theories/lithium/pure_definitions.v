@@ -1,28 +1,65 @@
+From iris.bi Require Import bi.
 From lithium Require Export base.
 From lithium Require Import hooks.
 
 (** This file contains the pure definitions that are used by the
 automation. *)
 
-(** * [protected] *)
-(** [protected] is wrapped around evars to prevent them from being
-accidentally instantiated. *)
-Definition protected_def {A} (a : A) : A := a.
-Definition protected_aux {A} (a : A) : seal (@protected_def A a). by eexists. Qed.
-Definition protected {A} (a : A) : A := (protected_aux a).(unseal).
-Definition protected_eq {A} (a : A) : protected a = a := (protected_aux a).(seal_eq).
-(** We make [protected] Typeclasses Opaque to tell typeclasses eauto
-it can use discrimination nets for it. *)
-Global Typeclasses Opaque protected.
+(** * [li_prod]: Products for marking existential quantifiers *)
+(** li_prod should be linear and always terminated by unit for uniformity *)
+#[projections(primitive)]
+Record li_prod (A B : Type) : Type := li_pair { li_fst : A; li_snd : B }.
+Add Printing Constructor li_prod.
+Global Arguments li_pair {_ _} _ _.
+Global Arguments li_fst {_ _} _.
+Global Arguments li_snd {_ _} _.
 
-Class ContainsProtected {A} (x : A) : Set := contains_protected: ().
-Class IsProtected {A} (x : A) : Set := is_protected: ().
-Global Hint Extern 0 (ContainsProtected ?x) => (match x with | context [protected _] => exact: tt end) : typeclass_instances.
-Global Hint Extern 0 (IsProtected (protected _) ) => (exact: tt) : typeclass_instances.
+Global Instance li_prod_inhabited A B `{!Inhabited A} `{!Inhabited B} : Inhabited (li_prod A B) :=
+  populate (li_pair inhabitant inhabitant).
+
+Notation "p '.1ₗ'" := (li_fst p) (at level 2, left associativity, format "p '.1ₗ'") : stdpp_scope.
+Notation "p '.nextₗ'" := (li_snd p) (at level 2, left associativity, format "p '.nextₗ'") : stdpp_scope.
+Notation "p '.2ₗ'" := (li_fst (li_snd p))
+   (at level 2, left associativity, format "p '.2ₗ'") : stdpp_scope.
+Notation "p '.3ₗ'" := (li_fst (li_snd (li_snd p)))
+   (at level 2, left associativity, format "p '.3ₗ'") : stdpp_scope.
+Notation "p '.4ₗ'" := (li_fst (li_snd (li_snd (li_snd p))))
+   (at level 2, left associativity, format "p '.4ₗ'") : stdpp_scope.
+Notation "p '.5ₗ'" := (li_fst (li_snd (li_snd (li_snd (li_snd p)))))
+   (at level 2, left associativity, format "p '.5ₗ'") : stdpp_scope.
+Notation "p '.6ₗ'" := (li_fst (li_snd (li_snd (li_snd (li_snd (li_snd p))))))
+   (at level 2, left associativity, format "p '.6ₗ'") : stdpp_scope.
+Notation "p '.7ₗ'" := (li_fst (li_snd (li_snd (li_snd (li_snd (li_snd (li_snd p)))))))
+   (at level 2, left associativity, format "p '.7ₗ'") : stdpp_scope.
+Notation "p '.8ₗ'" := (li_fst (li_snd (li_snd (li_snd (li_snd (li_snd (li_snd (li_snd p))))))))
+   (at level 2, left associativity, format "p '.8ₗ'") : stdpp_scope.
+Notation "p '.9ₗ'" := (li_fst (li_snd (li_snd (li_snd (li_snd (li_snd (li_snd (li_snd (li_snd p)))))))))
+   (at level 2, left associativity, format "p '.9ₗ'") : stdpp_scope.
+(* Note that these notation are left associative, but normal products are right associative. *)
+(* TODO: figure out right level, * is at level 40, but that is left associative *)
+Notation "A *ₗ B" := (li_prod A B) (at level 39, right associativity) : type_scope.
+(* TODO always add tt at the end? Then the notation probably needs to
+start with ₗ to avoid conflicts with the usual pair notation. *)
+Notation "( x , .. , y , z )ₗ" := (li_pair x .. (li_pair y z) .. )
+   (at level 0, x at level 200, y at level 200, z at level 200, format "( x ,  .. ,  y ,  z )ₗ")  : stdpp_scope.
+
+Notation "∃ₗ x .. y , P" :=
+  (@bi_exist _ (_ *ₗ _) (λ x, .. (@bi_exist _ (_ *ₗ _) (λ y, P%I)) ..))
+    (at level 200, x binder, P at level 200, right associativity, only parsing)
+ : bi_scope.
+
+Ltac red_li_prod := cbv [li_fst li_snd].
+
+(** * [IsEx] and [ContainsEx] *)
+Class ContainsEx {A} (x : A) : Set := {}.
+Class IsEx {A} (x : A) : Set := {}.
+Global Hint Extern 0 (ContainsEx ?x) =>
+  (lazymatch x with | context [li_fst _] => constructor end) : typeclass_instances.
+Global Hint Extern 0 (IsEx (li_fst _) ) => (constructor) : typeclass_instances.
 
 (** * [IsVar] *)
-Class IsVar {A} (x : A) : Set := is_var : ().
-Global Hint Extern 0 (IsVar ?x) => (is_var x; exact: tt) : typeclass_instances.
+Class IsVar {A} (x : A) : Set := {}.
+Global Hint Extern 0 (IsVar ?x) => (is_var x; constructor) : typeclass_instances.
 Global Hint Mode IsVar + + : typeclass_instances.
 
 (** * [CanSolve] *)
@@ -31,10 +68,3 @@ Global Hint Mode IsVar + + : typeclass_instances.
 Tactic Notation "can_solve" := can_solve_hook.
 Class CanSolve (P : Prop) : Prop := can_solve_proof: P.
 Global Hint Extern 10 (CanSolve ?P) => (change P; can_solve) : typeclass_instances.
-
-(** * [shelve_hint] *)
-(** [shelve_hint P] tells the automation it should shelve [P] even if
-it contains evars. *)
-Definition shelve_hint (P : Prop) : Prop := P.
-Global Typeclasses Opaque shelve_hint.
-Arguments shelve_hint : simpl never.

@@ -102,9 +102,10 @@ Section padded.
 
   (* Only works for Own since ty might have interior mutability, but
   uninit ty assumes that the values are frozen *)
-  Lemma subsume_padded_uninit l ly1 ly2 lyty ty T:
-    (⌜ty.(ty_has_op_type) (UntypedOp lyty) MCNone⌝ ∗ ∀ v, v ◁ᵥ ty -∗ subsume (l ◁ₗ uninit ly1) (l ◁ₗ uninit ly2) T)
-    ⊢ subsume (l ◁ₗ padded ty lyty ly1) (l ◁ₗ uninit ly2) T.
+  Lemma subsume_padded_uninit A l ly1 ly2 lyty ty T:
+    (⌜ty.(ty_has_op_type) (UntypedOp lyty) MCNone⌝ ∗ ∀ v, v ◁ᵥ ty -∗
+     subsume (l ◁ₗ uninit ly1) (λ x, l ◁ₗ uninit (ly2 x)) T)
+    ⊢ subsume (l ◁ₗ padded ty lyty ly1) (λ x : A, l ◁ₗ uninit (ly2 x)) T.
   Proof.
     iIntros "[% HT]". iDestruct 1 as ([? ?] ?) "(Hb & Hl & Hr)".
     iDestruct (ty_deref with "Hl") as (v1) "[Hl Hv1]"; [done|].
@@ -119,11 +120,11 @@ Section padded.
   Definition subsume_padded_uninit_inst := [instance subsume_padded_uninit].
   Global Existing Instance subsume_padded_uninit_inst.
 
-  Lemma subsume_uninit_padded l β ly lyty T:
-    ⌜lyty ⊑ ly⌝ ∗ T
-    ⊢ subsume (l ◁ₗ{β} uninit ly) (l ◁ₗ{β} padded (uninit lyty) lyty ly) T.
+  Lemma subsume_uninit_padded A l β ly lyty T:
+    (∃ x, ⌜lyty x ⊑ ly⌝ ∗ T x)
+    ⊢ subsume (l ◁ₗ{β} uninit ly) (λ x : A, l ◁ₗ{β} padded (uninit (lyty x)) (lyty x) ly) T.
   Proof.
-    iDestruct 1 as ([? ?]) "$". iIntros "Hl".
+    iDestruct 1 as (? [? ?]) "?". iIntros "Hl". iExists _. iFrame.
     iDestruct (bytewise_loc_in_bounds with "Hl") as "#$".
     iDestruct (split_bytewise with "Hl") as "[Hl $]" => //.
     rewrite /ty_own/=. iDestruct "Hl" as (????) "Hl".
@@ -141,18 +142,27 @@ Section padded.
   Proof.
     iIntros "[% HT]" (Φ) "Hl".
     iDestruct (apply_subsume_place_true with "Hl []") as "Hl".
-    { by iApply (subsume_uninit_padded _ _ _ sl). }
+    { iApply (subsume_uninit_padded _ _ _ _ (λ _, sl)). by iExists tt. }
     iApply "HT". iDestruct "Hl" as "[$ [$ [$ [Hl $]]]]". by rewrite uninit_struct_equiv.
   Qed.
   Definition type_place_padded_uninit_struct_inst := [instance type_place_padded_uninit_struct].
   Global Existing Instance type_place_padded_uninit_struct_inst.
 
+  Lemma padded_focus l β ty1 ly lyty:
+    (l ◁ₗ{β} padded ty1 lyty ly) -∗
+    (l ◁ₗ{β} ty1 ∗ (∀ ty2, l ◁ₗ{β} ty2 -∗ l ◁ₗ{β} padded ty2 lyty ly)).
+  Proof. iIntros "(?&?&?&?&?)". iFrame. iIntros (?) "$". Qed.
 
   (* If lyty is the same, then ly also must be the same. *)
-  Lemma padded_mono l β ty1 ty2 ly1 ly2 lyty T:
-    ⌜ly1 = ly2⌝ ∗ subsume (l ◁ₗ{β} ty1) (l ◁ₗ{β} ty2) T
-    ⊢ subsume (l ◁ₗ{β} padded ty1 lyty ly1) (l ◁ₗ{β} padded ty2 lyty ly2) T.
-  Proof. iIntros "[-> Hsub] ($&$&$&Hl&$)". by iApply "Hsub". Qed.
+  Lemma padded_mono A l β ty1 ty2 ly1 ly2 lyty T:
+    (l ◁ₗ{β} ty1 -∗ ∃ x, ⌜ly1 = ly2 x⌝ ∗ l ◁ₗ{β} (ty2 x) ∗ T x)
+    ⊢ subsume (l ◁ₗ{β} padded ty1 lyty ly1) (λ x : A, l ◁ₗ{β} padded (ty2 x) lyty (ly2 x)) T.
+  Proof.
+    iIntros "HT Hl".
+    iDestruct (padded_focus with "Hl") as "[Hl Hpad]".
+    iDestruct ("HT" with "[$]") as (? ->) "[? HT]".
+    iExists _. iFrame "HT". by iApply "Hpad".
+  Qed.
   Definition padded_mono_inst := [instance padded_mono].
   Global Existing Instance padded_mono_inst.
 

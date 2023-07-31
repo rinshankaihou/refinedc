@@ -1,15 +1,14 @@
 From iris.proofmode Require Import coq_tactics reduction.
 From lithium Require Export base.
 From lithium Require Import hooks definitions simpl_classes normalize proof_state solvers syntax.
+From lithium Require Import simpl_instances. (* required for tests *)
 Set Default Proof Using "Type".
 
 (** This file contains the main Lithium interpreter. *)
 
 (** * General proof state management tactics  *)
-Tactic Notation "liInst" hyp(H) open_constr(c) :=
-  instantiate_protected H c.
-
-Ltac liShow := li_unfold_lets_in_context; try liToSyntaxGoal.
+(* The simpl is necessary since li_unfold_lets_in_context might provide new opportunities for simpl *)
+Ltac liShow := li_unfold_lets_in_context; simpl; try liToSyntaxGoal.
 
 Ltac liSimpl :=
   (* simpl inserts a cast even if it does not do anything
@@ -28,7 +27,13 @@ Ltac liUnfoldLetGoal :=
     try clear H
   in
   lazymatch goal with
+  | |- envs_entails _ (∃ₗ _, ?P _ _ _ ∗ _) => do_unfold P
+  | |- envs_entails _ (∃ₗ _, ?P _ _ ∗ _) => do_unfold P
+  | |- envs_entails _ (∃ₗ _, ?P _ ∗ _) => do_unfold P
   | |- envs_entails _ (?P ∗ _) => do_unfold P
+  | |- envs_entails _ (∃ₗ _, ?P _ _ _) => do_unfold P
+  | |- envs_entails _ (∃ₗ _, ?P _ _) => do_unfold P
+  | |- envs_entails _ (∃ₗ _, ?P _) => do_unfold P
   | |- envs_entails _ ?P => do_unfold P
   end.
 
@@ -50,8 +55,7 @@ Ltac liUnfoldSyntax :=
   | |- envs_entails _ (li.bind5 _ _) => liFromSyntax
   end.
 
-Ltac liEnsureInvariant :=
-  unfold_instantiated_evars; try let_bind_envs; try liUnfoldSyntax.
+Ltac liEnsureInvariant := try let_bind_envs; try liUnfoldSyntax.
 
 Section coq_tactics.
   Context {Σ : gFunctors}.
@@ -60,6 +64,90 @@ Section coq_tactics.
     (P1 ⊢ P2) → envs_entails Δ P1 → envs_entails Δ P2.
   Proof. by rewrite envs_entails_unseal => -> HP. Qed.
 End coq_tactics.
+
+(** ** [liInst] *)
+Section coq_tactics.
+  Context {Σ : gFunctors}.
+  Lemma tac_li_inst {A B} (P : (A *ₗ B) → Prop) Δ (G : _ → iProp Σ):
+    envs_entails Δ (∃ₗ x, ⌜P x⌝ ∗ G x) →
+    envs_entails Δ (∃ₗ x, G x).
+  Proof. apply tac_fast_apply. apply bi.exist_mono => ?. iIntros "[_ $]". Qed.
+  Lemma tac_li_inst_subsume {A B} (P : (A *ₗ B) → Prop) Δ P1 P2 (G : _ → iProp Σ):
+    envs_entails Δ (P1 -∗ ∃ₗ x, ⌜P x⌝ ∗ P2 x ∗ G x) →
+    envs_entails Δ (subsume P1 P2 G).
+  Proof.
+    apply tac_fast_apply. apply bi.wand_mono; [done|].
+    apply bi.exist_mono => ?. iIntros "[_ $]".
+  Qed.
+End coq_tactics.
+
+Tactic Notation "liInst" open_constr(P) :=
+  liFromSyntax;
+  lazymatch goal with
+  | |- envs_entails _ (∃ₗ _, _) => notypeclasses refine (tac_li_inst P _ _ _)
+  | |- envs_entails _ (subsume _ _ _) => notypeclasses refine (tac_li_inst_subsume P _ _ _ _ _)
+  end; liToSyntax.
+
+(** ** [liExInst] *)
+Section coq_tactics.
+  Context {Σ : gFunctors}.
+  Lemma tac_li_ex_inst {A B} Δ (P : A → Prop) (Q : A → iProp Σ) (f : B → A) :
+    (∀ y, P (f y)) →
+    envs_entails Δ (∃ y, Q (f y)) →
+    envs_entails Δ (∃ x, ⌜P x⌝ ∗ Q x).
+  Proof. move => ?. apply tac_fast_apply. iIntros "[%a ?]". iExists _. iFrame. naive_solver. Qed.
+End coq_tactics.
+
+(* TODO: rename? *)
+Create HintDb solve_protected_eq_db discriminated.
+Global Hint Constants Opaque : solve_protected_eq_db.
+
+Ltac liExInst :=
+  let EX := fresh "EX" in
+  (* we use simple to not shelve any of the generated goals *)
+  simple refine (tac_li_ex_inst _ _ _ _ _ _);
+  (* create the function of the form (λ x, (_, .. , _, tt)ₗ) *)
+  [| refine (λ EX, _);
+     let rec go :=
+       lazymatch goal with
+       | |- _ *ₗ _ => refine (li_pair _ _); [|go]
+       | |- unit => refine tt
+       end in go| |];
+  (* solve the sidecondition and try to instantiate evars *)
+  [..| intro EX; red_li_prod;
+   intros;
+   solve_protected_eq_hook;
+   li_unfold_lets_in_context;
+   lazymatch goal with |- ?a = ?b => unify a b with solve_protected_eq_db end;
+   exact: eq_refl |];
+  (* create new existential quantifers for all evars that were not instantiated *)
+  [| simple refine (_.1ₗ); [|
+     let x := type of EX in
+     let rec go x :=
+       lazymatch x with
+       | _ *ₗ ?B => simple refine (_.nextₗ); [|go B]
+       | _ => exact EX
+       end in go x]..|];
+  (* Add unit at the end. *)
+  [exact unit|];
+  (* reduce the li_pair in the goal *)
+  red_li_prod.
+
+(** ** liEnsureSepHead *)
+Section coq_tactics.
+  Context {Σ : gFunctors}.
+  Lemma tac_ensure_sep_head {A B} Δ (P : iProp Σ) (Q : (A *ₗ B → iProp Σ)) :
+    envs_entails Δ (P ∗ ∃ₗ x, Q x) → envs_entails Δ (∃ₗ x, P ∗ Q x).
+  Proof. apply tac_fast_apply. by iIntros "[$ ?]". Qed.
+End coq_tactics.
+
+Ltac liEnsureSepHead :=
+  lazymatch goal with
+  | |- envs_entails ?Δ (bi_sep _ _) => idtac
+  | |- envs_entails ?Δ (∃ₗ _, bi_sep ?P _) =>
+      notypeclasses refine (tac_ensure_sep_head _ _ _ _)
+  end.
+
 
 (** * Main lithium tactics *)
 
@@ -82,9 +170,6 @@ Ltac liExtensible_to_i2p P bind cont :=
   | subsume ?P1 ?P2 ?T =>
       bind T ltac:(fun H => uconstr:(subsume P1 P2 H));
       cont uconstr:(((_ : Subsume _ _) _))
-  | subsume_list ?A ?ig ?l1 ?l2 ?f ?T =>
-      bind T ltac:(fun H => uconstr:(subsume_list A ig l1 l2 f H));
-      cont uconstr:(((_ : SubsumeList _ _ _ _ _) _))
   | _ => liExtensible_to_i2p_hook P bind cont
   end.
 Ltac liExtensible :=
@@ -190,52 +275,121 @@ Ltac liForall :=
 Section coq_tactics.
   Context {Σ : gFunctors}.
 
-  Lemma tac_do_exist A Δ (P : A → iProp Σ) :
-    (∃ x, envs_entails Δ (P x)) → envs_entails Δ (∃ x : A, P x).
+  Lemma tac_ex {A} Δ (P : A → iProp Σ) :
+    envs_entails Δ (∃ (x : A *ₗ unit), P x.1ₗ) →
+    envs_entails Δ (∃ x, P x).
+  Proof. apply tac_fast_apply. iIntros "[%a ?]". destruct a. iExists _. iFrame. Qed.
+
+  Lemma tac_ex_evar {A} Δ x (P : A → iProp Σ) :
+    envs_entails Δ (P x) →
+    envs_entails Δ (∃ x, P x).
+  Proof. apply tac_fast_apply. iIntros "?". iExists _. iFrame. Qed.
+
+  Lemma tac_li_ex_ex {A B C} Δ (P : _ → _ → iProp Σ) :
+    envs_entails Δ (∃ (x : C *ₗ A *ₗ B), P x.nextₗ x.1ₗ) →
+    envs_entails Δ (∃ (x : A *ₗ B), ∃ y : C, P x y).
+  Proof. apply tac_fast_apply. iIntros "[%a ?]". destruct a. iExists _, _. iFrame. Qed.
+
+  Lemma tac_li_ex_ex_evar {A B C} Δ y (P : _ → _ → iProp Σ) :
+    envs_entails Δ (∃ (x : A *ₗ B), P x y) →
+    envs_entails Δ (∃ (x : A *ₗ B), ∃ y : C, P x y).
+  Proof. apply tac_fast_apply. iIntros "[%a ?]". iExists _, _. iFrame. Qed.
+
+  Lemma tac_li_ex_li_ex {A B C D} Δ (P : _ → _ → iProp Σ) :
+    envs_entails Δ (∃ (x : C *ₗ A *ₗ B), ∃ y : D, P x.nextₗ (x.1ₗ, y)ₗ) →
+    envs_entails Δ (∃ (x : A *ₗ B), ∃ y : (C *ₗ D), P x y).
+  Proof. apply tac_fast_apply. iIntros "[%a [%b ?]]". destruct a. iExists _, _. iFrame. Qed.
+
+  Lemma tac_li_ex_ex_unused {A B C} Δ (P : (A *ₗ B) → iProp Σ) :
+    C →
+    envs_entails Δ (∃ₗ x, P x) →
+    envs_entails Δ (∃ₗ x, ∃ y : C, P x).
   Proof.
-    rewrite envs_entails_unseal. intros [x HP]. by rewrite -(bi.exist_intro x).
+    move => x. apply tac_fast_apply. apply bi.exist_mono => ?.
+    iIntros "?". by iExists x.
   Qed.
 
-  Lemma tac_exist_prod A B (P : _ → Prop):
-    (∃ x1 x2, P (x1, x2)) → @ex (A * B) P.
-  Proof. move => [?[??]]. eauto. Qed.
+  Lemma tac_ex_unused {C} Δ (P : iProp Σ) :
+    C →
+    envs_entails Δ (P) →
+    envs_entails Δ (∃ y : C, P).
+  Proof.
+    move => x. apply tac_fast_apply.
+    iIntros "?". by iExists x.
+  Qed.
 
-  Lemma tac_exist_sigT A f (P : _ → Prop):
-    (∃ (a : A) (x : f a), P (existT a x)) → @ex (sigT f) P.
-  Proof. move => [?[??]]. eauto. Qed.
+  Lemma tac_li_ex_simpl {A B C} Δ (P : (A *ₗ B) → C → iProp Σ) Q :
+    SimplExist C Q →
+    envs_entails Δ (∃ₗ x, Q (P x)) →
+    envs_entails Δ (∃ₗ x, ∃ y, P x y).
+  Proof.
+    unfold SimplExist. move => Hx. apply tac_fast_apply.
+    iIntros "[%a HQ]". iDestruct (Hx with "HQ") as (?) "?".
+    iExists _, _. iFrame.
+  Qed.
+
+  Lemma tac_ex_simpl {A} Δ (P : A → iProp Σ) Q :
+    SimplExist A Q →
+    envs_entails Δ (Q P) →
+    envs_entails Δ (∃ y, P y).
+  Proof. unfold SimplExist. move => Hx. by apply tac_fast_apply. Qed.
 End coq_tactics.
 
 Ltac liExist protect :=
   lazymatch goal with
-  | |- envs_entails _ (bi_exist _) => notypeclasses refine (tac_do_exist _ _ _ _)
-  | _ => idtac
-  end;
-  lazymatch goal with
-  | |- @ex ?A ?P =>
-    first [
-        liExist_hook A protect
-      | lazymatch A with
-        | TCForall2 _ _ _ => eexists _
-        | @eq ?B ?x _ => exists (@eq_refl B x)
-        | prod _ _ => apply: tac_exist_prod
-        | sigT _ => apply: tac_exist_sigT
-        | unit => exists tt
-        | _ =>
-            first [
-                let p := constr:(_ : SimplExist A P _) in
-                refine (@simpl_exist_proof _ _ _ p _)
-              |
-                lazymatch protect with
-                | true => let Hevar := create_protected_evar A in exists (protected Hevar)
-                | false => eexists _
-                end
-              ]
-        end ]
-  | _ => fail "liExist: unknown goal"
+  | |- envs_entails _ (∃ₗ _, ∃ₗ _, _) => repeat (refine (tac_li_ex_li_ex _ _ _)); red_li_prod
+  | |- envs_entails _ (∃ₗ _, ∃ _, ?P) =>
+          notypeclasses refine (tac_li_ex_ex_unused _ _ _ _);
+            [first [exact inhabitant | assumption | shelve] |]
+  | |- envs_entails _ (∃ₗ _, ∃ _, _) =>
+      first [
+          notypeclasses refine (tac_li_ex_simpl _ _ _ _ _); [solve [refine _] | cbv beta] |
+          lazymatch protect with
+          | true => refine (tac_li_ex_ex _ _ _)
+          | false => refine (tac_li_ex_ex_evar _ _ _ _)
+          end
+        ]
+  | |- envs_entails _ (∃ₗ _, ?P) =>
+      (* TODO: Should we split up the (_ *ₗ _) here? *)
+      notypeclasses refine (tac_ex_unused _ _ _ _);
+        [first [exact inhabitant | assumption | shelve] |]
+  | |- envs_entails _ (∃ₗ _, _) => fail "not handled by liExist"
+  | |- envs_entails _ (∃ _, ?P) =>
+          notypeclasses refine (tac_ex_unused _ _ _ _);
+            [first [exact inhabitant | assumption | shelve] |]
+  | |- envs_entails _ (∃ _, _) =>
+      first [
+          notypeclasses refine (tac_ex_simpl _ _ _ _ _); [solve [refine _] | cbv beta] |
+          lazymatch protect with
+          | true => refine (tac_ex _ _ _)
+          | false => refine (tac_ex_evar _ _ _ _)
+          end
+
+        ]
   end.
 
 Tactic Notation "liExist" constr(c) := liExist c.
 Tactic Notation "liExist" := liExist true.
+
+Module liExist_tests.
+  Goal ∀ Σ, ∀ P : _ → _ → _ → _ → _ → _ → iProp Σ,
+    ⊢ ∃ (x : Z * Z) (y : nat) (z : unit) (eq : 1 + 1 = 2), ∃ (a : (N *ₗ positive *ₗ positive *ₗ unit)),
+        P x y z (a.1ₗ) (a.2ₗ) eq.
+    intros. iStartProof.
+    liExist.
+    liExist.
+    liExist.
+    liExist.
+    liExist.
+    liExist.
+    liExist.
+    liExist.
+    lazymatch goal with
+    | |- envs_entails _ (∃ x : positive *ₗ positive *ₗ N *ₗ nat *ₗ Z *ₗ Z *ₗ (),
+               P (x.6ₗ, x.5ₗ) x.4ₗ () x.3ₗ x.2ₗ eq_refl) => idtac
+    end.
+  Abort.
+End liExist_tests.
 
 (** ** [liImpl] *)
 Ltac liImpl :=
@@ -252,54 +406,69 @@ Section coq_tactics.
     iIntros "HΔ". iSplit => //. by iApply HΔ.
   Qed.
 
-  Lemma tac_sep_pure_and Δ (P1 P2 : Prop) (Q : iProp Σ) :
-    envs_entails Δ (⌜P1⌝ ∗ ⌜P2⌝ ∗ Q) → envs_entails Δ (⌜P1 ∧ P2⌝ ∗ Q).
-  Proof. apply tac_fast_apply. by iIntros "[% [% $]]". Qed.
-  Lemma tac_sep_pure_exist {A} Δ (P : A → Prop) (Q : iProp Σ) :
-    envs_entails Δ (∃ x, ⌜P x⌝ ∗ Q) → envs_entails Δ (⌜∃ x, P x⌝ ∗ Q).
-  Proof. apply tac_fast_apply. iIntros "[%a [% $]]". naive_solver. Qed.
+  Lemma tac_sep_pure_and {A B} Δ (P1 P2 : _ → Prop) (Q : (A *ₗ B) → iProp Σ) :
+    envs_entails Δ (∃ₗ x, ⌜P1 x⌝ ∗ ⌜P2 x⌝ ∗ Q x) → envs_entails Δ (∃ₗ x, ⌜P1 x ∧ P2 x⌝ ∗ Q x).
+  Proof. apply tac_fast_apply. iIntros "[% [% [% ?]]]". iExists _. by iFrame. Qed.
+  Lemma tac_sep_pure_exist {A B} {C} Δ (P : _ → C → Prop) (Q : (A *ₗ B) → iProp Σ) :
+    envs_entails Δ (∃ₗ x, ∃ y, ⌜P x y⌝ ∗ Q x) → envs_entails Δ (∃ₗ x, ⌜∃ y, P x y⌝ ∗ Q x).
+  Proof. apply tac_fast_apply. iIntros "[%a [% [% ?]]]". iExists _. iFrame. naive_solver. Qed.
 
-  Lemma tac_normalize_goal_and_envs Δ (P1 P2 : Prop) (Q : iProp Σ):
-    P1 = P2 → envs_entails Δ (⌜P2⌝ ∗ Q) → envs_entails Δ (⌜P1⌝ ∗ Q).
-  Proof. by move => ->. Qed.
+  Lemma tac_normalize_goal_and_liex {A B} Δ (P1 P2 : _ → Prop) (Q : (A *ₗ B) → iProp Σ):
+    (∀ x, P1 x = P2 x) → envs_entails Δ (∃ₗ x, ⌜P2 x⌝ ∗ Q x) → envs_entails Δ (∃ₗ x, ⌜P1 x⌝ ∗ Q x).
+  Proof. move => HP. apply tac_fast_apply. iIntros "[%a ?]". rewrite -HP. iExists _. iFrame. Qed.
 
-  Lemma tac_simpl_and_unsafe_envs Δ P1 P2 (Q : iProp Σ) `{!SimplAndUnsafe P1 P2}:
-    envs_entails Δ (⌜P2⌝ ∗ Q) → envs_entails Δ (⌜P1⌝ ∗ Q).
-  Proof. apply tac_fast_apply. unfold SimplAndUnsafe in *. iIntros "[% $]". naive_solver. Qed.
+  Lemma tac_simpl_and_unsafe_envs {A B} Δ P1 P2 (Q : (A *ₗ B) → iProp Σ)
+    `{!∀ x, SimplAndUnsafe (P1 x) (P2 x)}:
+    envs_entails Δ (∃ₗ x, ⌜P2 x⌝ ∗ Q x) → envs_entails Δ (∃ₗ x, ⌜P1 x⌝ ∗ Q x).
+  Proof.
+    apply tac_fast_apply. unfold SimplAndUnsafe in *.
+    iIntros "[% [% ?]]". iExists _. iFrame. naive_solver.
+  Qed.
 
 End coq_tactics.
 
 Ltac liSideCond :=
+  try liEnsureSepHead;
   lazymatch goal with
   | |- envs_entails ?Δ (bi_sep ⌜?P⌝ ?Q) =>
-      lazymatch P with
-      | shelve_hint _ =>
-          notypeclasses refine (tac_sep_pure _ _ _ _ _); [unfold shelve_hint; shelve_sidecond |]
-      | _ => first [
-          lazymatch P with
-          | context [protected _] => fail
-          | _ => notypeclasses refine (tac_sep_pure _ _ _ _ _); [splitting_fast_done|]
-          end
-        | progress (notypeclasses refine (tac_normalize_goal_and_envs _ _ _ _ _ _); [normalize_hook|])
-        | lazymatch P with
-          | context [protected _] => first [
-              notypeclasses refine (tac_sep_pure _ _ _ _ _); [ solve_protected_eq |];
-              unfold_instantiated_evars
-            | lazymatch P with
-              | _ ∧ _ => notypeclasses refine (tac_sep_pure_and _ _ _ _ _)
-              | ∃ _, _ => notypeclasses refine (tac_sep_pure_exist _ _ _ _)
-              | _ => notypeclasses refine (tac_simpl_and_unsafe_envs _ P _ _ _); [solve [refine _] |]
-              end
-              (* no simpl here because there is liSimpl after each tactic *)
-            ]
-          (* We use done instead of fast_done here because solving more
-          sideconditions here is a bigger performance win than the overhead
-          of done. *)
-          | _ => notypeclasses refine (tac_sep_pure _ _ _ _ _); [ first [ done | shelve_sidecond ] | ]
-          end
-        ]
+      (* We use done instead of fast_done here because solving more
+         sideconditions here is a bigger performance win than the overhead
+         of done. *)
+      notypeclasses refine (tac_sep_pure _ _ _ _ _); [ first [ done | shelve_sidecond ] | ]
+  | |- envs_entails ?Δ (∃ₗ x, bi_sep ⌜@?P x⌝ _) =>
+      (* TODO: Can we get something like the old shelve_hint? *)
+      (* TODO: figure out best order here *)
+      match P with
+      | _ => progress (notypeclasses refine (tac_normalize_goal_and_liex _ _ _ _ _ _);
+                       (* cbv beta is important to correctly detect progress *)
+                       [intros ?; normalize_hook|cbv beta])
+      | _ => liExInst
+      | (λ _, _ ∧ _) => notypeclasses refine (tac_sep_pure_and _ _ _ _ _)
+      | (λ _, ∃ _, _) => notypeclasses refine (tac_sep_pure_exist _ _ _ _)
+      | _ => notypeclasses refine (tac_simpl_and_unsafe_envs _ _ _ _ _); [solve [refine _] |]
       end
   end.
+
+Module liSideCond_tests. Section test.
+  Variable REL : Z → Z → Prop.
+  Hypothesis (H : ∀ x y, SimplAndUnsafe (REL x y) (x = y)).
+
+
+  Goal ∀ Σ, ∀ P : _ → _ → iProp Σ,
+      ⊢ ∃ x y, ⌜1 = 1⌝ ∗ ⌜1 = locked 1⌝ ∗ ⌜x = 1 ∧ REL x y⌝ ∗ P x y.
+    intros. iStartProof. repeat liExist.
+    liSideCond.
+    liSideCond.
+    liSideCond.
+    liSideCond.
+    liSideCond. simpl.
+    liSideCond.
+    liExist.
+    lazymatch goal with
+    | |- envs_entails _ (P 1 (Z.of_nat 1)) => idtac
+    end.
+  Abort.
+End test. End liSideCond_tests.
 
 (** ** [liFindInContext] *)
 Section coq_tactics.
@@ -326,6 +495,15 @@ Section coq_tactics.
   Lemma tac_find_in_context {Δ} {fic} {T : _ → iProp Σ} key (F : FindInContext fic key) :
     envs_entails Δ (F T).(i2p_P) → envs_entails Δ (find_in_context fic T).
   Proof. rewrite envs_entails_unseal. etrans; [done|]. apply i2p_proof. Qed.
+
+  Lemma tac_ex_find_in_context {Δ A B} fic (T : (A *ₗ B) → _ → iProp Σ) :
+    envs_entails Δ (find_in_context fic (λ y, ∃ₗ x, T x y)%I) →
+    envs_entails Δ (∃ₗ x, find_in_context fic (T x)).
+  Proof.
+    apply tac_fast_apply. iDestruct 1 as (?) "[?[% ?]]".
+    iExists _, _. iFrame.
+  Qed.
+
 End coq_tactics.
 
 Ltac liFindHyp key :=
@@ -354,12 +532,6 @@ Ltac liFindHyp key :=
     end in
   lazymatch goal with
   | |- envs_entails _ (?P ∗ _) =>
-    (* we don't want to try to unify if the goal contains protected
-    evars as this can take very long to fail *)
-    lazymatch P with
-    | context [protected _] => fail "cannot find hyp if it contains protected"
-    | _ => idtac
-    end;
     let P := li_pm_reduce_val P in
     let run_go P Hs Hi := first [go P Hs | go P Hi] in
     lazymatch goal with
@@ -375,6 +547,11 @@ Ltac liFindHypOrTrue key :=
   ].
 
 Ltac liFindInContext :=
+  lazymatch goal with
+  | |- envs_entails _ (∃ₗ _, find_in_context ?fic _) =>
+      notypeclasses refine (tac_ex_find_in_context _ _ _)
+  | |- _ => idtac
+  end;
   lazymatch goal with
   | |- envs_entails _ (find_in_context ?fic ?T) =>
     let key := open_constr:(_) in
@@ -394,6 +571,10 @@ Section coq_tactics.
     envs_entails Δ (P ∗ Q ∗ R) → envs_entails Δ ((P ∗ Q) ∗ R).
   Proof. apply tac_fast_apply. iIntros "($&$&$)". Qed.
 
+  Lemma tac_sep_sep_assoc_ex {A B} Δ (P Q R : (A *ₗ B) → iProp Σ) :
+    envs_entails Δ (∃ₗ x, P x ∗ Q x ∗ R x) → envs_entails Δ (∃ₗ x, (P x ∗ Q x) ∗ R x).
+  Proof. apply tac_fast_apply. iIntros "(%a&?&?&?)". iExists _. iFrame. Qed.
+
   Lemma tac_sep_emp Δ (P : iProp Σ) :
     envs_entails Δ P → envs_entails Δ (emp ∗ P).
   Proof. apply tac_fast_apply. by apply bi.emp_sep_1. Qed.
@@ -401,6 +582,10 @@ Section coq_tactics.
   Lemma tac_sep_exist_assoc {A} Δ (Φ : A → iProp Σ) (Q : iProp Σ):
     envs_entails Δ (∃ a : A, Φ a ∗ Q) → envs_entails Δ ((∃ a : A, Φ a) ∗ Q).
   Proof. by rewrite bi.sep_exist_r. Qed.
+
+  Lemma tac_sep_exist_assoc_ex {A B C} Δ (Φ : (B *ₗ C) → A → iProp Σ) (Q : _ → iProp Σ):
+    envs_entails Δ (∃ₗ x, ∃ a : A, Φ x a ∗ Q x) → envs_entails Δ (∃ₗ x, (∃ a : A, Φ x a) ∗ Q x).
+  Proof. apply tac_fast_apply. apply bi.exist_mono => ?. by rewrite bi.sep_exist_r. Qed.
 
   Lemma tac_do_intro_intuit_sep Δ (P Q : iProp Σ) :
     envs_entails Δ (□ (P ∗ True) ∧ Q) → envs_entails Δ (□ P ∗ Q).
@@ -410,17 +595,35 @@ Section coq_tactics.
     envs_entails Δ (SG T).(i2p_P) → envs_entails Δ (P ∗ T).
   Proof. apply tac_fast_apply. iIntros "HP". by iApply (i2p_proof with "HP"). Qed.
 
-  Lemma tac_intro_subsume_related Δ P T {Hrel : RelatedTo P}:
+  Lemma tac_do_simplify_goal_ex {A B} Δ (n : N) (P : (A *ₗ B) → iProp Σ) T
+    {SG : ∀ x, SimplifyGoal (P x) (Some n)} :
+    envs_entails Δ (∃ₗ x, (SG x (T x)).(i2p_P)) → envs_entails Δ (∃ₗ x, P x ∗ T x).
+  Proof.
+    apply tac_fast_apply. apply bi.exist_mono => ?.
+    iIntros "HP". by iApply (i2p_proof with "HP").
+  Qed.
+
+  Lemma tac_intro_subsume_related Δ P T {Hrel : RelatedTo (λ _ : unit, P)}:
+    envs_entails Δ (find_in_context Hrel.(rt_fic) (λ x,
+      subsume (Σ:=Σ) (A:=unit) (Hrel.(rt_fic).(fic_Prop) x) (λ _, P) (λ _, T))) →
+    envs_entails Δ (P ∗ T).
+  Proof.
+    apply tac_fast_apply. iDestruct 1 as (x) "[HP HT]".
+    iDestruct ("HT" with "HP") as (?) "$".
+  Qed.
+
+  Lemma tac_intro_subsume_related_ex Δ {A B} (P T : (A *ₗ B) → iProp Σ) {Hrel : RelatedTo P}:
     envs_entails Δ (find_in_context Hrel.(rt_fic) (λ x,
       subsume (Σ:=Σ) (Hrel.(rt_fic).(fic_Prop) x) P T)) →
-    envs_entails Δ (P ∗ T).
+    envs_entails Δ (∃ₗ x, P x ∗ T x).
   Proof. apply tac_fast_apply. iDestruct 1 as (x) "[HP HT]". by iApply "HT". Qed.
+
 End coq_tactics.
 
 Ltac liSep :=
+  try liEnsureSepHead;
   lazymatch goal with
   | |- envs_entails ?Δ (bi_sep ?P ?Q) =>
-    assert_fails (has_evar P);
     lazymatch P with
     | bi_sep _ _ => notypeclasses refine (tac_sep_sep_assoc _ _ _ _ _)
     | bi_exist _ => notypeclasses refine (tac_sep_exist_assoc _ _ _ _)
@@ -429,15 +632,86 @@ Ltac liSep :=
     | (□ ?P)%I => notypeclasses refine (tac_do_intro_intuit_sep _ _ _ _)
     | match ?x with _ => _ end => fail "should not have match in sep"
     | ?P => first [
-               progress liFindHyp FICSyntactic
-             | simple notypeclasses refine (tac_do_simplify_goal _ 0%N _ _ _); [solve [refine _] |]
-             | simple notypeclasses refine (tac_intro_subsume_related _ _ _ _); [solve [refine _] |];
-               simpl; liFindInContext
-             | simple notypeclasses refine (tac_do_simplify_goal _ _ _ _ _); [| solve [refine _] |]
-             | fail "do_sep: unknown sidecondition" P
-      ]
+        progress liFindHyp FICSyntactic
+      | simple notypeclasses refine (tac_do_simplify_goal _ 0%N _ _ _); [solve [refine _] |]
+      | simple notypeclasses refine (tac_intro_subsume_related _ _ _ _); [solve [refine _] |];
+        simpl; liFindInContext
+      | simple notypeclasses refine (tac_do_simplify_goal _ _ _ _ _); [| solve [refine _] |]
+      | fail "liSep: unknown sidecondition" P
+    ]
+    end
+  | |- envs_entails ?Δ (∃ₗ x, bi_sep (@?P x) _) =>
+    lazymatch P with
+    | (λ _, bi_sep _ _) => notypeclasses refine (tac_sep_sep_assoc_ex _ _ _ _ _)
+    | (λ _, bi_exist _) => notypeclasses refine (tac_sep_exist_assoc_ex _ _ _ _)
+    (* bi_emp cannot happen because it is independent of evars *)
+    | (λ _, (⌜_⌝)%I) => fail "handled by liSideCond"
+    (* The following does not work because we cannot share evars between subgoals *)
+    (* | (□ ?P)%I => notypeclasses refine (tac_do_intro_intuit_sep _ _ _ _) *)
+    (* The following is probably not necessary: *)
+    (* | match ?x with _ => _ end => fail "should not have match in sep" *)
+    | ?P => first [
+        (* We can't (and don't want to) cancel if there is an evar in the goal *)
+        (* progress liFindHyp FICSyntactic | *)
+        simple notypeclasses refine (tac_do_simplify_goal_ex _ 0%N _ _ _); [solve [refine _] |]
+      | simple notypeclasses refine (tac_intro_subsume_related_ex _ _ _ _); [solve [refine _] |];
+        simpl; liFindInContext
+      | simple notypeclasses refine (tac_do_simplify_goal_ex _ _ _ _ _); [| solve [refine _] |]
+      | fail "liSep: unknown sidecondition" P
+    ]
     end
   end.
+
+Module liSep_tests. Section test.
+  Context {Σ : gFunctors}.
+  Variable A1 A2 A3 : Z → iProp Σ.
+
+  Hypothesis HA2 : ∀ (n : Z) G, (⌜n = 1%Z⌝ ∗ G ⊢ simplify_goal (A2 n) G).
+  Definition HA2_inst := [instance HA2 with 0%N].
+  Existing Instance HA2_inst.
+
+  Definition FindA3 := {| fic_A := Z; fic_Prop := A3; |}.
+  Local Typeclasses Opaque FindA3.
+
+  Lemma find_in_context_A3 (T : Z → iProp Σ):
+    find_in_context (FindA3) T :- pattern: x, A3 x; return T x.
+  Proof. done. Qed.
+  Definition find_in_context_A3_inst := [instance @find_in_context_A3 with FICSyntactic].
+  Global Existing Instance find_in_context_A3_inst | 1.
+
+  Local Instance A3_related A n : RelatedTo (λ x : A, A3 (n x)) :=
+    {| rt_fic := FindA3 |}.
+
+  Lemma subsume_A3 A n m G:
+    subsume (A3 n) (λ x : A, A3 (m x)) G :- ∃ x, exhale ⌜n = m x⌝; return G x.
+  Proof. liFromSyntax. iDestruct 1 as (? ->) "?". iIntros "?". iExists _. iFrame. Qed.
+
+  Definition subsume_A3_inst := [instance subsume_A3].
+  Global Existing Instance subsume_A3_inst.
+
+
+  Goal ∀ P : Z → Z → iProp Σ,
+      ⊢ A1 1 -∗ A3 1 -∗ ∃ x y, (A1 1 ∗ ∃ z, A2 x ∗ A3 z ∗ ⌜z = y⌝) ∗ P x y.
+    intros. iStartProof. iIntros. repeat liExist.
+    liSep.
+    liSep.
+    liSep.
+    liExist.
+    liSep.
+    liSep. simpl.
+    liSideCond.
+    liSep.
+    liSep.
+    liExtensible. simpl. li_unfold_lets_in_context.
+    liSideCond.
+    liSideCond.
+    liExist.
+    lazymatch goal with
+    | |- envs_entails _ (P 1%Z 1%Z) => idtac
+    end.
+  Abort.
+End test. End liSep_tests.
+
 
 (** ** [liWand] *)
 Section coq_tactics.

@@ -78,10 +78,10 @@ Section type.
   Definition tylocked_simplify_goal_place_inst := [instance tylocked_simplify_goal_place with 0%N].
   Global Existing Instance tylocked_simplify_goal_place_inst.
 
-  Lemma tylocked_subsume A γ n x1 x2 (ty : A → type) l β T:
-    ⌜β = Own → x1 = x2⌝ ∗ T
-    ⊢ subsume (l ◁ₗ{β} tylocked_ex γ n x1 ty) (l ◁ₗ{β} tylocked_ex γ n x2 ty) T.
-  Proof. iIntros "[% $] Hl". by destruct β; naive_solver. Qed.
+  Lemma tylocked_subsume A B γ n x1 x2 (ty : A → type) l β T:
+    (∃ y, ⌜β = Own → x1 = x2 y⌝ ∗ T y)
+    ⊢ subsume (l ◁ₗ{β} tylocked_ex γ n x1 ty) (λ y : B, l ◁ₗ{β} tylocked_ex γ n (x2 y) ty) T.
+  Proof. iIntros "[% [% ?]] Hl". iExists _. iFrame. by destruct β; naive_solver. Qed.
   Definition tylocked_subsume_inst := [instance tylocked_subsume].
   Global Existing Instance tylocked_subsume_inst | 10.
 

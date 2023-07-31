@@ -78,7 +78,7 @@ int message_queue_empty(struct message_queue *q) {
 }
 
 /* dequeue from front */
-[[rc::parameters("data : {list message_data}", "msg : {message_data}", "q : loc")]]
+[[rc::parameters("data : {list message_data}", "q : loc")]]
 [[rc::args("q @ &own<data @ message_queue>")]]
 [[rc::requires("{data ≠ []}")]]
 [[rc::returns("{head data} @ optionalO<λ msg1. &own<msg1 @ message<uninit<void*>>>>")]]

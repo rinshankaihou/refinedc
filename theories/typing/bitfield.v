@@ -96,19 +96,15 @@ Section programs.
 
   (* int ↔ bitfield_raw *)
 
-  Lemma subsume_val_int_bitfield_raw it v n bv T :
-    (⌜n = bv⌝ ∗ T) ⊢ subsume (v ◁ᵥ n @ int it) (v ◁ᵥ bv @ bitfield_raw it) T.
-  Proof.
-    by iIntros "[-> $] ?".
-  Qed.
+  Lemma subsume_val_int_bitfield_raw A it v n bv T :
+    (∃ x, ⌜n = bv x⌝ ∗ T x) ⊢ subsume (v ◁ᵥ n @ int it) (λ x : A, v ◁ᵥ (bv x) @ bitfield_raw it) T.
+  Proof. iIntros "[% [-> ?]] ?". iExists _. by iFrame. Qed.
   Definition subsume_val_int_bitfield_raw_inst := [instance subsume_val_int_bitfield_raw].
   Global Existing Instance subsume_val_int_bitfield_raw_inst.
 
-  Lemma subsume_val_bitfield_raw_int it v n bv T :
-    (⌜bv = n⌝ ∗ T) ⊢ subsume (v ◁ᵥ bv @ bitfield_raw it) (v ◁ᵥ n @ int it) T.
-  Proof.
-    by iIntros "[-> $] ?".
-  Qed.
+  Lemma subsume_val_bitfield_raw_int A it v n bv T :
+    (∃ x, ⌜bv = n x⌝ ∗ T x) ⊢ subsume (v ◁ᵥ bv @ bitfield_raw it) (λ x : A, v ◁ᵥ (n x) @ int it) T.
+  Proof. iIntros "[% [-> ?]] ?". iExists _. by iFrame. Qed.
   Definition subsume_val_bitfield_raw_int_inst := [instance subsume_val_bitfield_raw_int].
   Global Existing Instance subsume_val_bitfield_raw_int_inst.
 
@@ -125,7 +121,8 @@ Section programs.
     iApply (type_arithop_int_int with "[HT] Hv1 Hv2") => //.
     iIntros "Hbv1 Hbv2".
     iDestruct ("HT" with "Hbv1 Hbv2") as "[% ?]".
-    iSplitR => //. iExists _. iFrame. unfold bitfield_raw; simpl_type. iIntros "$".
+    iSplitR => //. iExists _. iFrame. unfold bitfield_raw; simpl_type.
+    iIntros "$". by iExists tt.
   Qed.
   Definition type_and_bitfield_raw_inst bv1 bv2 :=
     [instance type_arithop_bitfield_raw bv1 bv2 AndOp (Z.land bv1 bv2)].
@@ -154,6 +151,7 @@ Section programs.
     iIntros "Hbv".
     iDestruct ("HT" with "Hbv") as "?".
     iExists _. iFrame. unfold bitfield_raw; simpl_type. iIntros "$".
+    by iExists tt.
   Qed.
   Definition type_not_bitfield_raw_inst := [instance type_not_bitfield_raw].
   Global Existing Instance type_not_bitfield_raw_inst.
@@ -177,6 +175,7 @@ Section programs.
     iIntros "Hbv1 Hbv2".
     iDestruct ("HT" with "Hbv1 Hbv2") as "?".
     iExists _. iFrame. unfold bitfield_raw; simpl_type. iIntros "$".
+    by iExists tt.
   Qed.
   Definition type_eq_bitfield_raw_inst bv1 bv2 :=
     [instance type_relop_bitfield_raw bv1 bv2 (EqOp i32) (bool_decide (bv1 = bv2))].
@@ -200,6 +199,7 @@ Section programs.
     iDestruct ("HT" with "Hbv1 Hbv2") as "[% ?]".
     iSplitR => //.
     iExists _. iFrame. unfold bitfield_raw; simpl_type. iIntros "$".
+    by iExists tt.
   Qed.
   Definition type_shl_bitfield_raw_int_inst bv n :=
     [instance type_arithop_bitfield_raw_int bv n ShlOp (bv ≪ n)].
@@ -221,6 +221,7 @@ Section programs.
     iDestruct ("HT" with "Hbv1 Hbv2") as "[% ?]".
     iSplitR => //.
     iExists _. iFrame. unfold bitfield_raw; simpl_type. iIntros "$".
+    by iExists tt.
   Qed.
   Definition type_and_int_bitfield_raw_inst n bv :=
     [instance type_arithop_int_bitfield_raw n bv AndOp (Z.land n bv)].

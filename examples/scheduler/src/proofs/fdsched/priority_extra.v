@@ -66,6 +66,12 @@ Lemma encode_prio_bitmap_lookup_Some bm (i : nat) x :
    i < 4 ∧ x = Z.land (Z.ones 64) (little_endian_to_Z 1 (bool_to_Z <$> bm) ≫ (64 * i)).
 Proof. do 4 (destruct i as [|i]; [naive_solver|]). naive_solver lia. Qed.
 
+Lemma encode_prio_bitmap_lookup_total bm (i : nat) :
+  i < 4 →
+  encode_prio_bitmap bm !!! i =
+    Z.land (Z.ones 64) (little_endian_to_Z 1 (bool_to_Z <$> bm) ≫ (64 * i)).
+Proof. do 4 (destruct i as [|i]; [naive_solver|]). naive_solver lia. Qed.
+
 Lemma encode_prio_bitmap_bound bm i y :
   encode_prio_bitmap bm !! (Z.to_nat i) = Some y →
   0 ≤ y < 2 ^ 64.
@@ -174,39 +180,39 @@ Proof.
   set_solver by lia.
 Qed.
 
-Lemma priority_level_set_changed bm priority new_int old_int :
+Lemma priority_level_set_changed bm priority old_int :
   length bm = 256%nat →
   0 ≤ priority < 256 →
   encode_prio_bitmap bm !! Z.to_nat (priority `div` 64) = Some old_int →
-  encode_prio_bitmap (<[Z.to_nat priority := true]> bm)
-    !! Z.to_nat (priority `div` 64) = Some new_int →
-  Z.lor old_int (1 ≪ (priority `mod` 64)) = new_int.
+  Z.lor old_int (1 ≪ (priority `mod` 64)) = encode_prio_bitmap (<[Z.to_nat priority := true]> bm)
+    !!! Z.to_nat (priority `div` 64).
 Proof.
-  move => Hlen Hrange Hold_int Hnew_int.
+  move => Hlen Hrange Hold_int.
   symmetry. bitblast as i.
   - apply (encode_prio_bitmap_spec (<[Z.to_nat priority:=true]> bm) (priority `div` 64) _ _) => //; try lia.
     + by rewrite insert_length.
+    + apply list_lookup_lookup_total_lt => /=. lia.
     + replace i with (priority `mod` 64) by lia.
       rewrite Z.mul_comm -Z_div_mod_eq_full.
       rewrite list_lookup_insert => //; lia.
-  - eapply encode_prio_bitmap_insert => //; lia.
+  - eapply encode_prio_bitmap_insert=> //; try lia.
+    apply list_lookup_lookup_total_lt => /=. lia.
 Qed.
 
-Lemma priority_level_clear_changed bm priority new_int old_int:
+Lemma priority_level_clear_changed bm priority old_int:
   length bm = 256%nat →
   0 ≤ priority < 256 →
   encode_prio_bitmap bm !! Z.to_nat (priority `div` 64) = Some old_int →
-  encode_prio_bitmap (<[Z.to_nat priority := false]> bm)
-    !! Z.to_nat (priority `div` 64) = Some new_int →
-  Z.land old_int (Z_lunot (bits_per_int u64) (1 ≪ (priority `mod` 64))) = new_int.
+  Z.land old_int (Z_lunot (bits_per_int u64) (1 ≪ (priority `mod` 64))) =
+    encode_prio_bitmap (<[Z.to_nat priority := false]> bm) !!! Z.to_nat (priority `div` 64).
 Proof.
-  move => Hlen Hrange Hold_int Hnew_int.
+  move => Hlen Hrange Hold_int.
   reduce_closed (bits_per_int u64).
   symmetry. bitblast as i.
   - have ? : (i = priority `mod` 64) by lia. subst.
     apply (encode_prio_bitmap_spec (<[Z.to_nat priority:=false]> bm) (priority `div` 64)); solve_goal.
   - eapply encode_prio_bitmap_insert; solve_goal.
-  - apply encode_prio_bitmap_lookup_Some in Hnew_int as [? ->].
+  - rewrite encode_prio_bitmap_lookup_total; [|lia].
     bitblast.
 Qed.
 

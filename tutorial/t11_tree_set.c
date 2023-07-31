@@ -154,7 +154,6 @@ size_t tree_max(tree_t* t){
   if((*t)->right == NULL) {
     return (*t)->key;
   }
-  rc_unfold((*t)->right->key);
   return tree_max(&((*t)->right));
 }
 
@@ -174,7 +173,6 @@ void remove(tree_t* t, size_t k){
 
   if(k == (*t)->key) {
     if((*t)->left != NULL){
-      rc_unfold((*t)->left->key);
       m = tree_max(&(*t)->left);
       remove(&(*t)->left, m);
       (*t)->key = m;

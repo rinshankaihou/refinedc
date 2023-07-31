@@ -95,6 +95,7 @@ int key_index(int* ar, int n, int k){
 [[rc::tactics("assert (k ∉ x0) as Hx1. { move => /H7 Hk. apply lookup_lt_Some in Hk. lia. } "
               "rewrite H1. apply: (btree_invariant_lookup_child H2); by naive_solver.")]]
 [[rc::tactics("rewrite list_insert_id //; by destruct y.")]]
+[[rc::tactics("unfold btree_invariant in *; by solve_goal.")]]
 bool btree_member(btree_t* t, int k){
   btree_t* cur = &*t;
   rc_unfold_int(k);

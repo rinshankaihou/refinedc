@@ -91,7 +91,8 @@ Section globals.
   (** Subsumption *)
   Definition FindInitialized (name : string) (A : Type) :=
     {| fic_A := A; fic_Prop x := (initialized name x); |}.
-  Global Instance related_to_initialized name A (x : A) : RelatedTo (initialized name x) :=
+  Global Instance related_to_initialized B name A (x : B → A) :
+    RelatedTo (λ y : B, initialized name (x y)) :=
     {| rt_fic := FindInitialized name A |}.
 
   Lemma find_in_context_initialized name A T:
@@ -102,10 +103,10 @@ Section globals.
     [instance find_in_context_initialized with FICSyntactic].
   Global Existing Instance find_in_context_initialized_inst | 1.
 
-  Lemma subsume_initialized name A (x1 x2 : A) T:
-    ⌜x1 = x2⌝ ∗ T
-    ⊢ subsume (initialized name x1) (initialized name x2) T.
-  Proof. iIntros "[-> $] $". Qed.
+  Lemma subsume_initialized B name A (x1 : A) x2 T:
+    (∃ y, ⌜x1 = x2 y⌝ ∗ T y)
+    ⊢ subsume (initialized name x1) (λ y : B, initialized name (x2 y)) T.
+  Proof. iIntros "[% [-> ?]] ?". iExists _. iFrame. Qed.
   Definition subsume_initialized_inst := [instance subsume_initialized].
   Global Existing Instance subsume_initialized_inst.
 

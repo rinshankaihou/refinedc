@@ -15,10 +15,10 @@ Section type.
   Definition idx_to_node (vmemmap : loc) (vmemmap_len :nat) (next : option (option Z) ) : option (option type) :=
     (λ no : option _, (λ n, array_ptr struct_hyp_page vmemmap n vmemmap_len) <$> no) <$> next.
 
-  Lemma subsume_list_node n1 n2 l β T:
-    ⌜n1 = n2⌝ ∗ T
-    ⊢ subsume (l ◁ₗ{β} list_node n1) (l ◁ₗ{β} list_node n2) T.
-  Proof. by iIntros "[-> $] $". Qed.
+  Lemma subsume_list_node A n1 n2 l β T:
+    (∃ x, ⌜n1 = n2 x⌝ ∗ T x)
+    ⊢ subsume (l ◁ₗ{β} list_node n1) (λ x : A, l ◁ₗ{β} list_node (n2 x)) T.
+  Proof. iIntros "[% [-> ?]] ?". iExists _. iFrame. Qed.
   Definition subsume_list_node_inst := [instance subsume_list_node].
   Global Existing Instance subsume_list_node_inst.
 

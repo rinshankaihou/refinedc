@@ -22,9 +22,10 @@ Section proofs.
     iMod (alloc_lock_token_and_tickets) as (id) "(?&?&?)".
     (* Run the automation. *)
     repeat liRStep; liShow.
-    liFromSyntax. rewrite right_id.
+    liInst (λ x, x.1ₗ = id).
+    repeat liRStep; liShow.
     (* Establish the invariant *)
-    liInst Hevar id. iExists 0, 0.
+    liFromSyntax. rewrite right_id. iExists 0, 0.
     iFrame. iSplit; [ done | by iApply ticket_range_empty ].
     Unshelve. all: unshelve_sidecond; sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
   Qed.
@@ -65,10 +66,9 @@ Section proofs.
       + repeat liRStep; liShow.
         iDestruct select (hyp_spinlock_t_invariant _ _ _) as (owner next) "([%%]&?&?&?&?&?&?)".
         repeat liRStep; liShow.
-        liInst Hevar next.
         rewrite /hyp_spinlock_t_invariant.
         repeat liRStep; liShow.
-        liInst Hevar owner. liInst Hevar0 next.
+        liInst (λ x, x.2ₗ = owner ∧ x.1ₗ = next).
         repeat liRStep; liShow.
       + repeat liRStep; liShow.
         iExists (Shr, tytrue). iSplitR; first by simpl.
@@ -91,10 +91,9 @@ Section proofs.
         repeat liRStep; liShow.
         iDestruct select (hyp_spinlock_t_invariant _ _ _) as (owner next) "([%%]&?&?&?&?&?&?)".
         repeat liRStep; liShow.
-        liInst Hevar next.
         rewrite /hyp_spinlock_t_invariant.
         repeat liRStep; liShow.
-        liInst Hevar owner. liInst Hevar0 next.
+        liInst (λ x, x.2ₗ = owner ∧ x.1ₗ = next).
         repeat liRStep; liShow.
       + repeat liRStep; liShow. iIntros "Hb".
         repeat liRStep; liShow.
@@ -118,10 +117,9 @@ Section proofs.
         * repeat liRStep; liShow.
           iDestruct select (hyp_spinlock_t_invariant _ _ _) as (owner next) "([%%]&?&?&?&?&?&?)".
           repeat liRStep; liShow.
-          liInst Hevar next.
           rewrite /hyp_spinlock_t_invariant.
           repeat liRStep; liShow.
-          liInst Hevar owner. liInst Hevar0 next.
+          liInst (λ x, x.2ₗ = owner ∧ x.1ₗ = next).
           repeat liRStep; liShow.
         * liRStepUntil typed_cas.
           iDestruct select (hyp_spinlock_t_invariant _ _ _) as (owner next) "([%%]&?&?&?&?&?&?)".
@@ -137,10 +135,7 @@ Section proofs.
              repeat liRStep; liShow.
              rewrite /hyp_spinlock_t_invariant.
              repeat liRStep; liShow.
-             liInst Hevar true.
-             liInst Hevar1 owner.
-             liInst Hevar2 (next + 1).
-             liInst Hevar0 next.
+             liInst (λ x, x.2ₗ = owner ∧ x.1ₗ = next + 1).
              repeat liRStep; liShow.
              iRename select (ticket_range _ _ _) into "Htks".
              iDestruct (split_first_ticket with "Htks") as "[Hnext $]".
@@ -160,10 +155,7 @@ Section proofs.
              repeat liRStep; liShow.
              rewrite /hyp_spinlock_t_invariant.
              repeat liRStep; liShow.
-             liInst Hevar false.
-             liInst Hevar1 owner.
-             liInst Hevar2 next.
-             liInst Hevar0 next.
+             liInst (λ x, x.2ₗ = owner ∧ x.1ₗ = next).
              repeat liRStep; liShow.
       + liRStepUntil @typed_if. do 4 liRStep; liShow.
         * repeat liRStep; liShow.
@@ -225,11 +217,10 @@ Section proofs.
         iDestruct select (hyp_spinlock_t_invariant _ _ _) as (owner next) "([%%]&?&?&?&?&?&?)".
         liRStepUntil @typed_if. do 4 liRStep; liShow.
         * repeat liRStep; liShow. rewrite /hyp_spinlock_t_invariant. repeat liRStep; liShow.
-          liInst Hevar0 owner. liInst Hevar1 next.
+          liInst (λ x, x.2ₗ = owner ∧ x.1ₗ = next).
           repeat liRStep; liShow.
         * repeat liRStep; liShow. rewrite /hyp_spinlock_t_invariant. repeat liRStep; liShow.
-          liInst Hevar i. liInst Hevar0 next.
-          do 2 liRStep; liShow.
+          liInst (λ x, x.2ₗ = i ∧ x.1ₗ = next).
           iDestruct select (_ ∨ _)%I as "[[Ht _]|Htok]".
           { iExFalso. iRevert "Ht". iRename select (ticket _ _) into "Ht"; iRevert "Ht".
             iIntros "Ht1 Ht2". by iApply (ticket_non_duplicable with "Ht1 Ht2"). }

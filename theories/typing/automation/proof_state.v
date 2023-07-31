@@ -98,7 +98,6 @@ Ltac clear_unused_vars :=
 
 Ltac prepare_sideconditions :=
   li_unfold_lets_in_context;
-  unfold_all_protected_evars;
   repeat match goal with | H : IPROP_HINT _ _ |- _ => clear H end;
   (* get rid of Q *)
   repeat match goal with | H := CODE_MARKER _ |- _ => clear H end;
@@ -174,22 +173,23 @@ Ltac print_goal :=
 
 Ltac print_typesystem_goal fn block :=
   lazymatch goal with
-  | |- ?P ∧ ?Q =>
-    idtac "Cannot instantiate evar in" fn "in block" block "!";
-    print_current_location;
-    print_case_distinction_info;
-    idtac "Goal:";
-    print_coq_hyps;
-    idtac "---------------------------------------";
-    idtac P;
-    (* TODO: Should we print the continuation? It might confuse the user and
-       it usually is not helpful. *)
-    (* idtac ""; *)
-    (* idtac "Continuation:"; *)
-    (* idtac Q; *)
-    idtac "";
-    idtac "";
-    admit
+  (* TODO: Is something like the following useful? *)
+  (* | |- ?P ∧ ?Q => *)
+  (*   idtac "Cannot instantiate evar in" fn "in block" block "!"; *)
+  (*   print_current_location; *)
+  (*   print_case_distinction_info; *)
+  (*   idtac "Goal:"; *)
+  (*   print_coq_hyps; *)
+  (*   idtac "---------------------------------------"; *)
+  (*   idtac P; *)
+  (*   (* TODO: Should we print the continuation? It might confuse the user and *)
+  (*      it usually is not helpful. *) *)
+  (*   (* idtac ""; *) *)
+  (*   (* idtac "Continuation:"; *) *)
+  (*   (* idtac Q; *) *)
+  (*   idtac ""; *)
+  (*   idtac ""; *)
+  (*   admit *)
   | |- _ =>
     idtac "Type system got stuck in function" fn "in block" block "!";
     print_goal; admit

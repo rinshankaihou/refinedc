@@ -54,10 +54,10 @@ Section lithium.
     Fail liStep.
     (* Let's apply our lemma. *)
     iApply wp_add.
-    (* Instantiate the existential quantifier with an evar. *)
+    (* Turn the existential quantifer into a Lithium existential quantifer . *)
     liStep.
     (* Solve the sidecondition to instantiate the evar. *)
-    liStep.
+    liStep. liStep.
     (* Shelve the sidecondition. *)
     liStep.
     (* Solve True. *)
@@ -293,7 +293,7 @@ Section lithium.
     repeat liEStep; liShow.
   Abort.
 
-  Global Instance mapsto_related_to l v : RelatedTo (l ↦ v) := {|
+  Global Instance mapsto_related_to A l v : RelatedTo (λ x : A, l ↦ (v x))%I := {|
     rt_fic := FindDirect (λ v', l ↦ v')%I;
   |}.
 
@@ -306,10 +306,10 @@ Section lithium.
     repeat liEStep; liShow.
   Abort.
 
-  Lemma subsume_mapsto l v1 v2 G:
-    ⌜v1 = v2⌝ ∗ G
-    ⊢ subsume (l ↦ v1) (l ↦ v2) G.
-  Proof. iIntros "[-> $] $". Qed.
+  Lemma subsume_mapsto A l v1 v2 G:
+    (∃ x, ⌜v1 = v2 x⌝ ∗ G x)
+    ⊢ subsume (l ↦ v1) (λ x : A, l ↦ (v2 x)) G.
+  Proof. iIntros "[% [-> ?]] ?". iExists _. iFrame. Qed.
   Definition subsume_mapsto_inst := [instance subsume_mapsto].
   Global Existing Instance subsume_mapsto_inst.
 
@@ -453,9 +453,9 @@ Section lithium.
     liRStep; liShow.
 
     (** Now the top-level connective is an existential quantifier. The
-    interpreter instantiates it with an evar [protected Hevar]. (4. in
-    the RefinedC paper. For details of the handling of evars in
-    RefinedC, see t02_evars.c.) *)
+    interpreter turns it into a special Lithium existential quantifer
+    that can then by instnatiated by the rest of the proof search.
+    (This differs from the description in the RefinedC paper.) *)
     liRStep; liShow.
 
     (** Now the goal is a separating conjunction where the left hand
@@ -489,7 +489,7 @@ Section lithium.
     contains an evar. Lithium solves this sidecondition via
     unification and instantiates the evar (see t02_evars.c for
     details). Similar to the wand, this happens in two steps. *)
-    liRStep; liShow.
+    liRStep; liShow. liRStep; liShow.
 
     (** Now we have a pure sidecondition without evars. Such
     sideconditions are shelved to be solved later. (6.c. in the
@@ -557,10 +557,10 @@ Section lithium.
   between myint) and [G] is the Lithium goal that the subsumption
   should be transformed into (here we reduce proving the subsumption
   to proving equality between the numbers). *)
-  Lemma subsume_myint l n n' G:
-    ⌜n = n'⌝ ∗ G
-    ⊢ subsume (l ◁ₗ myint n) (l ◁ₗ myint n') G.
-  Proof. iIntros "[-> HG]". iIntros "Hl". by iFrame. Qed.
+  Lemma subsume_myint A l n n' G:
+    (∃ x, ⌜n = n' x⌝ ∗ G x)
+    ⊢ subsume (l ◁ₗ myint n) (λ x : A, l ◁ₗ myint (n' x)) G.
+  Proof. iIntros "[% [-> HG]]". iIntros "Hl". iExists _. by iFrame. Qed.
 
   (** The [subsume_myint] needs to be registered with the Lithium
   automation, which we do as follows: *)
@@ -618,7 +618,7 @@ Section lithium.
   Abort.
 
   (** To prove this subsumption, we reduce it to the following Lithium goal: *)
-  Lemma subsume_myarray l ty (i : nat) tys G:
+  Lemma subsume_myarray A l ty (i : nat) tys G:
     (
       (** First, one has to prove that i actually is in the range of the list *)
       ⌜i < length tys⌝%nat ∗ (
@@ -631,16 +631,16 @@ Section lithium.
         (** Finally, one has to prove that (l +ₗ i) has type ty' *)
         (l +ₗ i) ◁ₗ ty' ∗
         (** and the continuation G. *)
-        G)
+        ∃ x, G x)
     )
     ⊢
-    subsume (l ◁ₗ myarray (<[i:=ty]> tys)) (l ◁ₗ myarray tys) G.
+    subsume (l ◁ₗ myarray (<[i:=ty]> tys)) (λ x : A, l ◁ₗ myarray tys) G.
   Proof.
     (** This lemma is easy to prove using myarray_access. *)
     iIntros "[%Hlt HG] Harray".
     iDestruct (myarray_access with "Harray") as "[Hl Harray]". { by apply: list_lookup_insert. }
     move: Hlt => /lookup_lt_is_Some [ty' ?].
-    iDestruct ("HG" with "Hl [//]") as "[Hl $]".
+    iDestruct ("HG" with "Hl [//]") as "[Hl [% ?]]". iExists _. iFrame.
     iDestruct ("Harray" with "Hl") as "Harray".
     by rewrite list_insert_insert list_insert_id.
   Qed.
@@ -672,16 +672,15 @@ Section lithium.
     l ◁ₗ myarray (<[i := (n @ int i32)]> tys) -∗
     l ◁ₗ myarray tys ∗
       typed_val_expr (use{IntOp i32} (l +ₗ i)) (λ v ty,
-        subsume (v ◁ᵥ ty) (v ◁ᵥ n @ int i32) (True)).
+        subsume (v ◁ᵥ ty) (λ _ : unit, v ◁ᵥ n @ int i32) (λ _, True)).
   Proof.
     iStartProof.
     (** The goal can be solved automatically:*)
     (* repeat liRStep; liShow. *)
     (** But let's step through this more carefully: First, we skip to
     the subsume: *)
-    do 7 liRStep; liShow.
+    do 5 liRStep; liShow.
     (** Now we can step through how the rule from above is handled: *)
-    liRStep; liShow.
     liRStep; liShow.
     liRStep; liShow.
     liRStep; liShow.
@@ -801,10 +800,6 @@ Section proof_lithium_test.
       messages. It does not have an effect on the goal. *)
       liRStep; liShow.
 
-      (** In this branch we can assume that [n ≠ 0]... *)
-      liRStep; liShow.
-      liRStep; liShow.
-
       (** and we know that the value stored in a is actually an owned
       pointer.
 
@@ -839,7 +834,7 @@ Section proof_lithium_test.
       liRStep; liShow.
 
       (** We skip over type-checking of the arguments to + *)
-      do 31 liRStep; liShow.
+      do 32 liRStep; liShow.
 
       (** Now Lithium applies the typing rule for + *)
       liRStep; liShow.

@@ -198,13 +198,9 @@ Section defs.
                    max_k = r.(br_max) ∧ m = r.(br_map)).
   Proof. destruct r. split; naive_solver. Qed.
 
-  Global Instance simple_protected_br_map_eq_empty (r : btree_rfmt) `{!IsProtected r} :
+  Global Instance simple_ex_br_map_eq_empty (r : btree_rfmt) `{!IsEx r} :
     SimplAnd (br_map r = ∅) ((∃ b h min max, r = BR b h min max ∅)).
   Proof. split; destruct r; by naive_solver. Qed.
-
-  Global Instance simple_protected_br_map_neq_empty (r : btree_rfmt) `{!IsProtected r} :
-    SimplAnd (br_map r ≠ ∅) (shelve_hint (br_map r ≠ ∅)).
-  Proof. split; naive_solver. Qed.
 
   Global Instance simpl_eq_cons_app {A} (x : A) (l1 l2 : list A) :
     SimplAndRel (=) (x :: l1) (l2 ++ l1) ([x] = l2).
@@ -255,11 +251,11 @@ Section defs.
       n = 0%nat ∧ ks = [] ∧ vs = [] ∧ cs = [] ∧
       br_height r = 0%nat.
 
-  Global Instance simpl_and_btree_rfmt_shelve o r n ks vs cs
-         `{!ContainsProtected (btree_invariant o r n ks vs cs)}:
+  Global Instance simpl_and_btree_invariant_empty o r n ks vs cs :
+    TCFastDone (br_map r = ∅) →
     SimplAnd (btree_invariant o r n ks vs cs)
-             (shelve_hint (btree_invariant o r n ks vs cs)).
-  Proof. split; naive_solver. Qed.
+             (n = 0%nat ∧ ks = [] ∧ vs = [] ∧ cs = [] ∧ br_height r = 0%nat).
+  Proof. rewrite /TCFastDone/btree_invariant => ?. rewrite bool_decide_false //; naive_solver. Qed.
 
   Lemma btree_invariant_height_empty {o r1 r2 n1 n2 ks1 ks2 vs1 vs2 cs1 cs2} :
     btree_invariant o r1 n1 ks1 vs1 cs1 →

@@ -124,12 +124,13 @@ Section array.
     by iApply (alloc_alive_loc_mono with "Hl").
   Qed.
 
-  Lemma subsume_array_alloc_alive l ly tys β T :
-    (⌜0 < length tys⌝ ∗ (∀ ty, ⌜tys !! 0%nat = Some ty⌝ -∗ l ◁ₗ{β} ty -∗ alloc_alive_loc l ∗ T))
-    ⊢ subsume (l ◁ₗ{β} array ly tys) (alloc_alive_loc l) T.
+  Lemma subsume_array_alloc_alive A l ly tys β T :
+    (⌜0 < length tys⌝ ∗ (∀ ty, ⌜tys !! 0%nat = Some ty⌝ -∗ l ◁ₗ{β} ty -∗ alloc_alive_loc l ∗ ∃ x, T x))
+    ⊢ subsume (l ◁ₗ{β} array ly tys) (λ x : A, alloc_alive_loc l) T.
   Proof.
     iIntros "[% HT]". destruct tys => //=. iIntros "(%&?&[Hty Htys])".
-    rewrite offset_loc_0. iDestruct ("HT" with "[//] Hty") as "[$ $]".
+    rewrite offset_loc_0. iDestruct ("HT" with "[//] Hty") as "[? [% ?]]".
+    iExists _. iFrame.
   Qed.
   Definition subsume_array_alloc_alive_inst := [instance subsume_array_alloc_alive].
   Global Existing Instance subsume_array_alloc_alive_inst | 10.
@@ -211,37 +212,43 @@ Section array.
   Definition simplify_goal_uninit_array_inst := [instance simplify_goal_uninit_array with 50%N].
   Global Existing Instance simplify_goal_uninit_array_inst.
 
-  Lemma subsume_uninit_array_replicate l β n (ly1 : layout) ly2 T:
-    ⌜layout_wf ly2⌝ ∗ ⌜ly1 = mk_array_layout ly2 n⌝ ∗ T
-    ⊢ subsume (l ◁ₗ{β} uninit ly1) (l ◁ₗ{β} array ly2 (replicate n (uninit ly2))) T.
-  Proof. iIntros "(%&->&$) ?". by rewrite array_replicate_uninit_equiv. Qed.
+  Lemma subsume_uninit_array_replicate A l β n (ly1 : layout) ly2 T:
+    (∃ x, ⌜layout_wf ly2⌝ ∗ ⌜ly1 = mk_array_layout ly2 n⌝ ∗ T x)
+    ⊢ subsume (l ◁ₗ{β} uninit ly1) (λ x : A, l ◁ₗ{β} array ly2 (replicate n (uninit ly2))) T.
+  Proof. iIntros "(%&%&->&?) ?". iExists _. iFrame. by rewrite array_replicate_uninit_equiv. Qed.
   Definition subsume_uninit_array_replicate_inst := [instance subsume_uninit_array_replicate].
   Global Existing Instance subsume_uninit_array_replicate_inst.
 
-  Lemma subsume_array_replicate_uninit l β n (ly1 : layout) ly2 T:
-    ⌜layout_wf ly2⌝ ∗ ⌜ly1 = mk_array_layout ly2 n⌝ ∗ T
-    ⊢ subsume (l ◁ₗ{β} array ly2 (replicate n (uninit ly2))) (l ◁ₗ{β} uninit ly1)  T.
-  Proof. iIntros "(%&->&$) ?". by rewrite array_replicate_uninit_equiv. Qed.
+  Lemma subsume_array_replicate_uninit A l β n (ly1 : A → layout) ly2 T:
+    (∃ x, ⌜layout_wf ly2⌝ ∗ ⌜ly1 x = mk_array_layout ly2 n⌝ ∗ T x)
+    ⊢ subsume (l ◁ₗ{β} array ly2 (replicate n (uninit ly2))) (λ x : A, l ◁ₗ{β} uninit (ly1 x))  T.
+  Proof. iIntros "(%&%&%Heq&?) ?". iExists _. iFrame. by rewrite Heq array_replicate_uninit_equiv. Qed.
   Definition subsume_array_replicate_uninit_inst := [instance subsume_array_replicate_uninit].
   Global Existing Instance subsume_array_replicate_uninit_inst.
 
-  Lemma subsume_array ly1 ly2 tys1 tys2 l β T:
-    ⌜ly1 = ly2⌝ ∗ subsume_list type [] tys1 tys2 (λ i ty, (l offset{ly1}ₗ i) ◁ₗ{β} ty) T
-    ⊢ subsume (l ◁ₗ{β} array ly1 tys1) (l ◁ₗ{β} array ly2 tys2) T.
-  Proof. iIntros "[-> H] ($&Hb&H1)". by iDestruct ("H" with "H1") as (->) "[$ $]". Qed.
+  Lemma subsume_array A ly1 ly2 tys1 tys2 l β T:
+    (⌜ly1 = ly2⌝ ∗ ∀ id,
+       subsume (sep_list id type [] tys1 (λ i ty, (l offset{ly1}ₗ i) ◁ₗ{β} ty))
+         (λ x, sep_list id type [] (tys2 x) (λ i ty, (l offset{ly1}ₗ i) ◁ₗ{β} ty)) T)
+    ⊢ subsume (l ◁ₗ{β} array ly1 tys1) (λ x : A, l ◁ₗ{β} array ly2 (tys2 x)) T.
+  Proof.
+    unfold sep_list. iIntros "[-> H] ($&Hb&H1)".
+    iDestruct ("H" $! {|sep_list_len := length tys1|} with "[$H1]") as (?) "[[%Heq ?] ?]"; [done|].
+    simpl in *. rewrite -Heq. iExists _. iFrame.
+  Qed.
   Definition subsume_array_inst := [instance subsume_array].
   Global Existing Instance subsume_array_inst.
 
   Lemma type_place_array l β ly1 it v tyv tys ly2 K T:
-    (∃ i, ⌜ly1 = ly2⌝ ∗ subsume (v ◁ᵥ tyv) (v ◁ᵥ i @ int it) (⌜0 ≤ i⌝ ∗ ⌜i < length tys⌝ ∗
+    (v ◁ᵥ tyv -∗ ∃ i, ⌜ly1 = ly2⌝ ∗ v ◁ᵥ i @ int it ∗ ⌜0 ≤ i⌝ ∗ ⌜i < length tys⌝ ∗
      ∀ ty, ⌜tys !! Z.to_nat i = Some ty⌝ -∗
       typed_place K (l offset{ly2}ₗ i) β ty (λ l2 β2 ty2 typ,
-       T l2 β2 ty2 (λ t, array ly2 (<[Z.to_nat i := typ t]>tys)))))
+       T l2 β2 ty2 (λ t, array ly2 (<[Z.to_nat i := typ t]>tys))))
     ⊢ typed_place (BinOpPCtx (PtrOffsetOp ly1) (IntOp it) v tyv :: K) l β (array ly2 tys) T.
   Proof.
-    iDestruct 1 as (i ->) "HP". iIntros (Φ) "(%&#Hb&Hl) HΦ" => /=. iIntros "Hv".
-    unfold int; simpl_type.
-    iDestruct ("HP" with "Hv") as (Hv) "HP".
+    iIntros "HT" (Φ) "(%&#Hb&Hl) HΦ" => /=. iIntros "Hv".
+    iDestruct ("HT" with "Hv") as (i ->) "HP". unfold int; simpl_type.
+    iDestruct ("HP") as (Hv) "HP".
     iDestruct "HP" as (? Hlen) "HP".
     have [|ty ?]:= lookup_lt_is_Some_2 tys (Z.to_nat i). 1: lia.
     iApply wp_ptr_offset => //; [by apply val_to_of_loc | | ].
@@ -340,10 +347,13 @@ Section array.
   Definition type_bin_op_diff_array_ptr_array_inst := [instance type_bin_op_diff_array_ptr_array].
   Global Existing Instance type_bin_op_diff_array_ptr_array_inst.
 
-  Lemma subsume_array_ptr_alloc_alive β l ly base idx len T:
-    alloc_alive_loc base ∗ T
-    ⊢ subsume (l ◁ₗ{β} array_ptr ly base idx len) (alloc_alive_loc l) T.
-  Proof. iIntros "[Halive $] (->&?)". by iApply (alloc_alive_loc_mono with "Halive"). Qed.
+  Lemma subsume_array_ptr_alloc_alive A β l ly base idx len T:
+    (alloc_alive_loc base ∗ ∃ x, T x)
+    ⊢ subsume (l ◁ₗ{β} array_ptr ly base idx len) (λ x : A, alloc_alive_loc l) T.
+  Proof.
+    iIntros "[Halive [% ?]] (->&?)".
+    iExists _. iFrame. by iApply (alloc_alive_loc_mono with "Halive").
+  Qed.
   Definition subsume_array_ptr_alloc_alive_inst := [instance subsume_array_ptr_alloc_alive].
   Global Existing Instance subsume_array_ptr_alloc_alive_inst | 10.
 
@@ -355,10 +365,11 @@ Section array.
   Definition simpl_goal_array_ptr_inst := [instance simpl_goal_array_ptr with 50%N].
   Global Existing Instance simpl_goal_array_ptr_inst.
 
-  Lemma subsume_array_ptr ly1 ly2 base1 base2 idx1 idx2 len1 len2 l β T:
-    ⌜ly1 = ly2⌝ ∗ ⌜base1 = base2⌝ ∗ ⌜idx1 = idx2⌝ ∗ ⌜len1 = len2⌝ ∗ T
-    ⊢ subsume (l ◁ₗ{β} array_ptr ly1 base1 idx1 len1) (l ◁ₗ{β} array_ptr ly2 base2 idx2 len2) T.
-  Proof. by iIntros "(->&->&->&->&$) $". Qed.
+  Lemma subsume_array_ptr A ly1 ly2 base1 base2 idx1 idx2 len1 len2 l β T:
+    (∃ x, ⌜ly1 = ly2 x⌝ ∗ ⌜base1 = base2 x⌝ ∗ ⌜idx1 = idx2 x⌝ ∗ ⌜len1 = len2 x⌝ ∗ T x)
+    ⊢ subsume (l ◁ₗ{β} array_ptr ly1 base1 idx1 len1)
+        (λ x : A, l ◁ₗ{β} array_ptr (ly2 x) (base2 x) (idx2 x) (len2 x)) T.
+  Proof. iIntros "(%&->&->&->&->&?) ?". iExists _. iFrame. Qed.
   Definition subsume_array_ptr_inst := [instance subsume_array_ptr].
   Global Existing Instance subsume_array_ptr_inst.
 

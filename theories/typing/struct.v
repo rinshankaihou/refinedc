@@ -222,6 +222,29 @@ Section struct.
       rewrite offset_of_cons; eauto. case_decide => //. by rewrite shift_loc_assoc_nat.
   Qed.
 
+  Lemma struct_focus_val v sl tys:
+    v ◁ᵥ struct sl tys -∗
+     (∃ vs, ([∗ list] v;ty∈vs;tys, v ◁ᵥ ty) ∗ (∀ tys',
+           ([∗ list] v;ty∈vs;tys', v ◁ᵥ ty) -∗ v ◁ᵥ struct sl tys')).
+  Proof.
+    rewrite {1 4}/ty_own_val/=. iIntros "[$ [%Hlen Hs]]".
+    iInduction (sl_members sl) as [|[n ly] ms] "IH" forall (v tys Hlen). {
+      destruct tys => //. iExists []. iSplit => //. iIntros (tys') "Htys".
+      iDestruct (big_sepL2_nil_inv_l with "Htys") as %->. by iFrame.
+    }
+    csimpl. iDestruct "Hs" as "[Hl Hs]".
+    iDestruct ("IH" with "[] Hs") as (vs) "[Hl1 Hs]"; try iPureIntro.
+    { by destruct n, tys; naive_solver. }
+    iDestruct (big_sepL2_length with "Hl1") as %?.
+    iClear "IH". destruct n; csimpl.
+    - destruct tys => //=. iExists (_::_). iFrame.
+      iIntros (tys') "Htys".
+      iDestruct (big_sepL2_cons_inv_l with "Htys") as (? tys'2 ->)"[H1 Htys]".
+      iDestruct (big_sepL2_length with "Htys") as %?. iSplit; [iPureIntro; naive_solver lia|].
+      simpl. iFrame. iDestruct ("Hs" with "Htys") as (?) "$".
+    - iExists _. by iFrame.
+  Qed.
+
   Global Instance struct_loc_in_bounds sl tys β : LocInBounds (struct sl tys) β (ly_size sl).
   Proof.
     constructor. by iIntros (l) "(_&_&?&_)".
@@ -242,45 +265,71 @@ Section struct.
     by iApply (alloc_alive_loc_mono with "Hl").
   Qed.
 
-  Lemma struct_mono sl tys1 tys2 l β T:
-    subsume (l ◁ₗ{β} struct sl tys1) (l ◁ₗ{β} struct sl tys2) T :-
-      exhale ⌜length tys1 = length tys2⌝;
-      iterate: zip tys1 (zip tys2 (field_names sl.(sl_members))) {{e T,
-        (l at{sl}ₗ e.2.2 ◁ₗ{β} e.1) :> (l at{sl}ₗ e.2.2 ◁ₗ{β} e.2.1); return T}};
-      return T.
+  Lemma struct_mono A sl tys1 tys2 l β T:
+    subsume (l ◁ₗ{β} struct sl tys1) (λ x : A, l ◁ₗ{β} struct sl (tys2 x)) T :-
+      iterate: zip (field_names sl.(sl_members)) tys1 {{e T,
+        inhale (l at{sl}ₗ e.1 ◁ₗ{β} e.2); return T}};
+      ∃ x, exhale ⌜length tys1 = length (tys2 x)⌝;
+      iterate: zip (field_names sl.(sl_members)) (tys2 x) {{e T,
+        exhale (l at{sl}ₗ e.1 ◁ₗ{β} e.2); return T}};
+      return T x.
   Proof.
-    iDestruct 1 as (Hlen) "H". iIntros "Hl".
-    iDestruct (struct_focus with "Hl") as "[Hs Hc]".
-    iSpecialize ("Hc" $! tys2). move: {3 4}(tys2) => tys2'.
-    move: (field_names (sl_members sl)) => ns.
-    iInduction ns as [|n ns] "IH" forall (l tys1 tys2 Hlen).
-    { destruct tys1, tys2 => //. iFrame. by iApply "Hc". }
-    iDestruct (big_sepL2_cons_inv_l with "Hs") as (ty1 tys1' ?) "[H1 Hs]"; subst.
-    destruct tys2 => //=. iDestruct ("H" with "H1") as "[H1 H]".
-    iApply ("IH" with "[] H Hs"). 1: naive_solver.
-    iIntros "H". iApply "Hc". by iFrame.
+    iIntros "HG Hl". iDestruct (struct_focus with "Hl") as "[Hs Hc]".
+    iDestruct (big_sepL2_length with "Hs") as %?.
+    pose (INV := (λ i,
+      [∗ list] n;ty ∈ drop i (field_names (sl_members sl));drop i tys1, l at{sl}ₗ n ◁ₗ{β} ty)%I).
+    iDestruct (iterate_elim0 INV with "HG [Hs] [#]") as "[_ HG]"; unfold INV; clear INV.
+    { by rewrite !drop_0. } {
+      iIntros "!>" (i x ? (?&?&?&?&?)%lookup_zip_with_Some); simplify_eq/=.
+      iIntros "Hinv HT". erewrite drop_S; [|done]. erewrite (drop_S _ _ i); [|done] => /=.
+      iDestruct "Hinv" as "[Hl $]". by iApply "HT".
+    }
+    iDestruct "HG" as (x Hlen) "HG".
+    pose (INV := (λ i,
+      [∗ list] n;ty ∈ take i (field_names (sl_members sl));take i (tys2 x), l at{sl}ₗ n ◁ₗ{β} ty)%I).
+    iDestruct (iterate_elim0 INV with "HG [] [#]") as "[Hinv HG]"; unfold INV; clear INV.
+    { by rewrite !take_0. } {
+      iIntros "!>" (i ? ? (?&?&?&?&?)%lookup_zip_with_Some); simplify_eq/=.
+      iIntros "Hinv [? $]". erewrite take_S_r; [|done]. erewrite take_S_r; [|done].
+      rewrite big_sepL2_snoc. iFrame.
+    }
+    rewrite !zip_with_length !take_ge; [|lia..]. iExists _. iFrame.
+    by iApply "Hc".
   Qed.
   Definition struct_mono_inst := [instance struct_mono].
   Global Existing Instance struct_mono_inst.
 
-  Lemma struct_mono_val sl tys1 tys2 v T:
-    subsume (v ◁ᵥ struct sl tys1) (v ◁ᵥ struct sl tys2) T :-
-      exhale ⌜length tys1 = length tys2⌝;
-      iterate: zip tys1 tys2 {{e T, ∀ v, (v ◁ᵥ e.1) :> (v ◁ᵥ e.2); return T}};
-      return T.
+  Lemma struct_mono_val A sl tys1 tys2 v T:
+    subsume (v ◁ᵥ struct sl tys1) (λ x : A, v ◁ᵥ struct sl (tys2 x)) T :-
+      vs ← iterate: tys1 with [] {{e T vs, ∀ v, inhale (v ◁ᵥ e); return T (vs ++ [v])}};
+      ∃ x, exhale ⌜length tys1 = length (tys2 x)⌝;
+      iterate: zip vs (tys2 x) {{e T, exhale (e.1 ◁ᵥ e.2); return T}};
+      return T x.
   Proof.
-    iDestruct 1 as (Hlen) "H". iIntros "(%Hly&%Htys1&Hm)".
-    rewrite /(ty_own_val (struct _ _))/= -!assoc.
-    iSplit; [done|]. iSplit; [ iPureIntro; congruence |].
-    move: {Hly} Hlen Htys1.
-    move: (sl_members sl) => ns {sl} Hlen Hns.
-    iInduction ns as [| [n ly] ns] "IH" forall (v tys1 tys2 Hlen Hns); simplify_eq/=.
-    { destruct tys1, tys2 => //=. iFrame. }
-    destruct n; simplify_eq/=.
-    - destruct tys1, tys2 => //; simplify_eq/=.
-      iDestruct "Hm" as "[Hm1 Hm2]". iDestruct ("H" with "Hm1") as "[$ HT]".
-      iApply ("IH" with "[//] [//] HT Hm2").
-    - iDestruct "Hm" as "[$ Hm2]". iApply ("IH" with "[//] [//] H Hm2").
+    iIntros "HG Hl". iDestruct (struct_focus_val with "Hl") as (vs) "[Hs Hc]".
+    iDestruct (big_sepL2_length with "Hs") as %Hlen.
+    pose (INV := (λ i vs', ⌜vs' = take i vs⌝ ∗
+      [∗ list] v;ty ∈ drop i vs;drop i tys1, v ◁ᵥ ty)%I).
+    iDestruct (iterate_elim1 INV with "HG [Hs] [#]") as (vs') "[[% ?] HG]"; unfold INV; clear INV.
+    { rewrite take_0 !drop_0. by iFrame. } {
+      iIntros "!>" (i x ? vs' ?). iIntros "[-> Hinv] HT".
+      have [|??]:= lookup_lt_is_Some_2 vs i. { rewrite Hlen. by apply: lookup_lt_Some. }
+      erewrite drop_S; [|done]. erewrite (drop_S _ _ i); [|done] => /=.
+      iDestruct "Hinv" as "[Hl $]". iDestruct ("HT" with "[$]") as "HT". iExists _. iFrame.
+      by erewrite take_S_r.
+    }
+    iDestruct "HG" as (x Hlen2) "HG". subst.
+    pose (INV := (λ i,
+      [∗ list] v;ty ∈ take i vs;take i (tys2 x), v ◁ᵥ ty)%I).
+    iDestruct (iterate_elim0 INV with "HG [] [#]") as "[Hinv HG]"; unfold INV; clear INV.
+    { by rewrite !take_0. } {
+      iIntros "!>" (i ? ? (?&?&?&Hvs&?)%lookup_zip_with_Some); simplify_eq/=.
+      iIntros "Hinv [? $]". rewrite lookup_take in Hvs. 2: { rewrite Hlen2. by apply: lookup_lt_Some. }
+      erewrite take_S_r; [|done]. erewrite take_S_r; [|done].
+      rewrite big_sepL2_snoc. iFrame.
+    }
+    rewrite !zip_with_length !take_ge; [|lia..]. iExists _. iFrame.
+    by iApply "Hc".
   Qed.
   Definition struct_mono_val_inst := [instance struct_mono_val].
   Global Existing Instance struct_mono_val_inst.

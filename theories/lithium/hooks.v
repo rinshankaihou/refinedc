@@ -58,10 +58,6 @@ Ltac liExtensible_to_i2p_hook P bind cont :=
 (** [liExtensible_hook] is called after each successful [liExtensible]. *)
 Ltac liExtensible_hook := idtac.
 
-(** [liExist_hook] can be used to override the behavior of [liExist]
-for specific types. *)
-Ltac liExist_hook A protect := fail "No liExist_hook provided!".
-
 (** [liTrace_hook] is called on each liTrace. *)
 Ltac liTrace_hook info := idtac.
 

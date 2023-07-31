@@ -483,15 +483,15 @@ Section proofs.
     [instance find_in_context_find_pointsto_loc with FICSyntactic].
   Global Existing Instance find_in_context_find_pointsto_loc_inst | 1.
 
-  Global Instance related_to_pointsto vl v : RelatedTo (vl ↦ v) | 100 :=
+  Global Instance related_to_pointsto A vl v : RelatedTo (λ x : A, vl ↦ v x)%I | 100 :=
     {| rt_fic := FindPointsTo vl |}.
 
 
-  Lemma subsume_pointsto_pointsto vl v1 v2 G :
-    subsume (vl ↦ v1) (vl ↦ v2) G :-
-     exhale ⌜v1 = v2⌝;
-     return G.
-  Proof. liTUnfold. iIntros "[-> $] $". Qed.
+  Lemma subsume_pointsto_pointsto A vl v1 v2 G :
+    subsume (vl ↦ v1) (λ x : A, vl ↦ (v2 x)) G :-
+     ∃ x, exhale ⌜v1 = v2 x⌝;
+     return G x.
+  Proof. liTUnfold. iIntros "[% [-> ?]] ?". iExists _. iFrame. Qed.
   Definition subsume_pointsto_pointsto_inst := [instance subsume_pointsto_pointsto].
   Global Existing Instance subsume_pointsto_pointsto_inst.
 
@@ -617,7 +617,8 @@ Section proofs.
     [instance find_in_context_find_list_loc with FICSyntactic].
   Global Existing Instance find_in_context_find_list_loc_inst | 10.
 
-  Global Instance related_to_list v xs : RelatedTo (is_list v xs) | 100 := {| rt_fic := FindList v |}.
+  Global Instance related_to_list A v xs : RelatedTo (λ x : A, is_list v (xs x)) | 100
+    := {| rt_fic := FindList v |}.
 
   Lemma cons_correct :
     ⊢ fn_spec cons_code (val * list val)
@@ -628,14 +629,14 @@ Section proofs.
     repeat liTStep; liShow.
   Abort.
 
-  Lemma subsume_pointsto_list vl v xs G :
-    subsume (vl ↦ v) (is_list vl xs) G :-
-     ∃ v1 v2 xs',
-     exhale ⌜v = (v1, v2)%V⌝ ∗ is_list v2 xs' ∗ ⌜xs = v1 :: xs'⌝;
-     return G.
+  Lemma subsume_pointsto_list A vl v xs G :
+    subsume (vl ↦ v) (λ x : A, is_list vl (xs x)) G :-
+     ∃ x v1 v2 xs',
+     exhale ⌜v = (v1, v2)%V⌝ ∗ is_list v2 xs' ∗ ⌜xs x = v1 :: xs'⌝;
+     return G x.
   Proof.
-    liTUnfold. iIntros "[% [% [% [[-> [Hl ->]] $]]]] ?".
-    rewrite is_list_cons. iExists _. iFrame.
+    liTUnfold. iIntros "[% [% [% [% [[-> [Hl %Hxs]] ?]]]]] ?".
+    iExists _. iFrame. rewrite Hxs is_list_cons. iExists _. iFrame.
   Qed.
   Definition subsume_pointsto_list_inst := [instance subsume_pointsto_list].
   Global Existing Instance subsume_pointsto_list_inst.
@@ -648,11 +649,11 @@ Section proofs.
     [instance find_in_context_find_list_list with FICSyntactic].
   Global Existing Instance find_in_context_find_list_list_inst | 1.
 
-  Lemma subsume_list_list v xs1 xs2 G :
-    subsume (is_list v xs1) (is_list v xs2) G :-
-     exhale ⌜xs1 = xs2⌝;
-     return G.
-  Proof. liTUnfold. iIntros "[-> $] $". Qed.
+  Lemma subsume_list_list A v xs1 xs2 G :
+    subsume (is_list v xs1) (λ x : A, is_list v (xs2 x)) G :-
+     ∃ x, exhale ⌜xs1 = xs2 x⌝;
+     return G x.
+  Proof. liTUnfold. iIntros "[% [-> ?]] ?". iExists _. iFrame. Qed.
   Definition subsume_list_list_inst := [instance subsume_list_list].
   Global Existing Instance subsume_list_list_inst.
 
@@ -713,7 +714,34 @@ Section proofs.
     Unshelve. all: unshelve_sidecond.
   Qed.
 
+  (** testing alternative version of expr_ok_load, works thanks to
+  [find_in_context_find_pointsto_list] *)
+  Lemma expr_ok_load_alt e G :
+    expr_ok (Load e) G :-
+      v ← {expr_ok e};
+      ∃ vl, exhale (v ↦ vl);
+      inhale (v ↦ vl);
+      return G vl.
+  Proof.
+    liTUnfold. iIntros "HWP". wp_bind (e).
+    iApply (wp_wand with "HWP"). iIntros (?) "[% [? HWP]]/=".
+    by iApply (wp_load with "[$]").
+  Qed.
+  Definition expr_ok_load_alt_inst := [instance expr_ok_load_alt].
 
+  Section alt.
+    Local Existing Instance expr_ok_load_alt_inst | 0.
+
+    Lemma head_correct_alt :
+      ⊢ fn_spec head_code (val * list val)
+        (λ '(va, xs) v, ⌜v = va⌝ ∗ is_list v xs ∗ ⌜0 < length xs⌝)
+        (λ '(va, xs) r, ⌜head xs = Some r⌝ ∗ is_list va xs).
+    Proof.
+      iStartProof. iApply prove_fn_spec_rec. simpl.
+      repeat liTStep; liShow.
+      Unshelve. all: unshelve_sidecond.
+    Qed.
+  End alt.
 
   Definition length_code : val := rec: "f" "l" :=
       if: "l" = #NULL then
@@ -803,11 +831,11 @@ Section proofs.
       else
         "f" (Snd (! "l"), "cb").
 
-  Global Instance related_to_fnspec v X pre post : RelatedTo (fn_spec v X pre post) | 100
+  Global Instance related_to_fnspec A v X pre post : RelatedTo (λ x : A, fn_spec v X (pre x) (post x)) | 100
     := {| rt_fic := FindFnSpec v |}.
 
-  Lemma subsume_fnspec_fnspec v X pre1 pre2 post1 post2 G :
-    subsume (fn_spec v X pre1 post1) (fn_spec v X pre2 post2) G :-
+  Lemma subsume_fnspec_fnspec A v X pre1 pre2 post1 post2 G :
+    subsume (fn_spec v X pre1 post1) (λ x : A, fn_spec v X pre2 post2) G :-
      and:
      | drop_spatial;
        ∀ x v, inhale pre2 x v;
@@ -815,9 +843,9 @@ Section proofs.
        ∀ v', inhale post1 x' v';
        exhale post2 x v';
        done
-     | return G.
+     | ∃ x, return G x.
   Proof.
-    liTUnfold. iIntros "[#Hsub $] Hfn". unfold fn_spec.
+    liTUnfold. iIntros "[#Hsub [% ?]] Hfn". iExists _. iFrame. unfold fn_spec.
     iDestruct "Hfn" as "#[%[%[%[-> Hwp]]]]".
     iModIntro. iExists _, _, _. iSplit; [done|].
     iIntros (??) "?". iDestruct ("Hsub" with "[$]") as (?) "[Hpre1 HWP]".

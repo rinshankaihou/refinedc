@@ -142,30 +142,6 @@ Ltac liRIntroduceLetInGoal :=
     end
   end.
 
-Ltac liRInstantiateEvars_hook := idtac.
-Ltac liRInstantiateEvars :=
-  liRInstantiateEvars_hook;
-  lazymatch goal with
-  | |- envs_entails _ (⌜(_ < protected ?H)%nat⌝ ∗ _) =>
-    (* We would like to use [liInst H (S (protected (EVAR_ID _)))],
-      but this causes a Error: No such section variable or assumption
-      at Qed. time. Maybe this is related to https://github.com/coq/coq/issues/9937 *)
-    (* TODO: Check if this is still the case. *)
-    do_instantiate_protected (protected H) ltac:(fun H => instantiate (1:=((S (protected (EVAR_ID _))))) in (value of H))
-  (* This is very hard to figure out for unification because of the
-  dependent types in with refinement. Unificaiton likes to unfold the
-  definition of ty without this. This is the reason why do_instantiate
-  evars must come before do_side_cond *)
-  | |- envs_entails _ (⌜protected ?H = ( _ @ ?ty)%I⌝ ∗ _) =>
-    do_instantiate_protected (protected H) ltac:(fun H => instantiate (1:=((protected (EVAR_ID _)) @ ty)%I) in (value of H))
-  | |- envs_entails _ (⌜protected ?H = ty_of_rty (frac_ptr ?β _)%I⌝ ∗ _) =>
-    do_instantiate_protected (protected H) ltac:(fun H => instantiate (1:=((frac_ptr β (protected (EVAR_ID _)))%I)) in (value of H))
-  | |- envs_entails _ (subsume (?x ◁ₗ{?β} ?ty) (_ ◁ₗ{_} (protected ?H)) _) =>
-    liInst H ty
-  | |- envs_entails _ (subsume (?x ◁ₗ{?β} ?ty) (_ ◁ₗ{protected ?H} _) _) =>
-    liInst H β
-  end.
-
 Ltac liRStmt :=
   lazymatch goal with
   | |- envs_entails ?Δ (typed_stmt ?s ?fn ?ls ?fr ?Q) =>
@@ -282,8 +258,7 @@ Ltac liRStep :=
  liEnsureInvariant;
  try liRIntroduceLetInGoal;
  first [
-   liRInstantiateEvars (* must be before do_side_cond and do_extensible_judgement *)
- | liRPopLocationInfo
+   liRPopLocationInfo
  | liRStmt
  | liRIntroduceTypedStmt
  | liRExpr

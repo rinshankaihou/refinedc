@@ -48,10 +48,12 @@ mpool_chunk {
 typedef struct [[rc::parameters("entry_size: nat")]]
                [[rc::refined_by("len: nat")]]
                [[rc::ptr_type("mpool_entry_t : {(0 < len)%nat} @ optional<&own<...>>")]]
+               [[rc::exists("nextlen: nat")]]
+               [[rc::constraints("{len = S nextlen}")]]
                [[rc::size("{ly_with_align entry_size entry_size}")]]
 mpool_entry {
 
-  [[rc::field("{(len - 1)%nat} @ mpool_entry_t<entry_size>")]]
+  [[rc::field("nextlen @ mpool_entry_t<entry_size>")]]
   struct mpool_entry *next;
 }* mpool_entry_t;
 
@@ -353,7 +355,8 @@ void mpool_free(struct mpool *p, void *ptr) {
 [[rc::requires("{(align * entry_size + count * entry_size)%Z ∈ size_t}", "{is_power_of_two align}")]]
 [[rc::exists("n2 : nat")]]
 [[rc::returns("optional<&own<uninit<{ly_with_align (count * entry_size) (align * entry_size)}>>>")]]
-[[rc::ensures("frac q p : n2 @ mpool<entry_size>", "{q = Own → n2 <= n}")]]
+[[rc::ensures("frac q p : n2 @ mpool<entry_size>")]]
+[[rc::ensures("{q = Own → n2 <= n}")]]
   [[rc::tactics("all: try (etrans; [eassumption|]); repeat progress rewrite /has_layout_loc/ly_size/=.")]]
   [[rc::tactics("all: rewrite -?Nat.mul_sub_distr_r; try apply: Nat.mul_le_mono_r; try apply mul_le_mono_r_1.")]]
   [[rc::tactics("all: try by destruct o'; solve_goal.")]]
@@ -375,13 +378,12 @@ void *mpool_alloc_contiguous_no_fallback(struct mpool *p, size_t count, size_t a
 
   [[rc::block]]
   [[rc::exists("pc : loc", "p_chunks : loc",
-               "entries_in_chunks1 : nat", "entries_in_chunks2 : nat",
+               "entries_in_chunks2 : nat",
                "entries_in_entry_list : nat")]]
   [[rc::inv_vars("align : {align * entry_size} @ int<size_t>", "ret : null", "p : ∃ l. place<l>",
                  "prev : pc @ &own<entries_in_chunks2 @ mpool_chunk_t<entry_size>>")]]
-  [[rc::constraints("[p at{struct_mpool}ₗ \"locked\" ◁ₗ struct struct_mpool_locked_inner [place p_chunks ; entries_in_entry_list @ mpool_entry_t entry_size]]",
-                    "{shelve_hint (q = Own → n = (entries_in_chunks1 + entries_in_chunks2 + entries_in_entry_list)%nat)}")]]
-  [[rc::constraints("[p_chunks ◁ₗ wand_ex (λ x, pc ◁ₗ x @ mpool_chunk_t entry_size) (λ x, (entries_in_chunks1 + x)%nat @ mpool_chunk_t entry_size)]")]]
+  [[rc::constraints("[p at{struct_mpool}ₗ \"locked\" ◁ₗ struct struct_mpool_locked_inner [place p_chunks ; entries_in_entry_list @ mpool_entry_t entry_size]]")]]
+  [[rc::constraints("own p_chunks : wand_ex<λ x. {pc ◁ₗ x @ mpool_chunk_t entry_size}, λ x. ∃ entries_in_chunks1. {(entries_in_chunks1 + x)%nat} @ mpool_chunk_t<entry_size> & {(q = Own → n = (entries_in_chunks1 + entries_in_chunks2 + entries_in_entry_list)%nat)}>")]]
   while (*prev != NULL) {
     unsigned char* start;
     struct mpool_chunk *new_chunk;
@@ -451,7 +453,8 @@ void *mpool_alloc_contiguous_no_fallback(struct mpool *p, size_t count, size_t a
 [[rc::requires("{(align * entry_size + count * entry_size)%Z ∈ size_t}", "{is_power_of_two align}")]]
 [[rc::exists("n2 : nat")]]
 [[rc::returns("optional<&own<uninit<{ly_with_align (count * entry_size) (align * entry_size)}>>>")]]
-[[rc::ensures("frac q p : n2 @ mpool<entry_size>", "{q = Own → n2 <= n}")]]
+[[rc::ensures("frac q p : n2 @ mpool<entry_size>")]]
+[[rc::ensures("{q = Own → n2 <= n}")]]
 void *mpool_alloc_contiguous(struct mpool *p, size_t count, size_t align)
 {
   void *ret = mpool_alloc_contiguous_no_fallback(p, count, align);
@@ -463,7 +466,7 @@ void *mpool_alloc_contiguous(struct mpool *p, size_t count, size_t align)
   p = p->fallback;
   [[rc::exists("n2 : nat")]]
   [[rc::inv_vars("p : optional<&shr<mpool<entry_size>>>")]]
-  [[rc::constraints("frac q p : n2 @ mpool<entry_size>", "{q = Own → n2 <= n}")]]
+  [[rc::constraints("frac q p : n2 @ mpool<entry_size>" , "{q = Own → n2 <= n}")]]
   while (p != NULL) {
     ret = mpool_alloc_contiguous_no_fallback(p, count, align);
 

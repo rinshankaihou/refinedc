@@ -49,9 +49,9 @@ npfp_scheduler {
 [[rc::ensures("own l1 : {npfp_enqueue_func sched_state msg} @ npfp_t")]]
 [[rc::tactics("by apply msg_type_bounded.")]]
 [[rc::tactics("apply npfp_enqueue_add_msg_to_q1. by rewrite /get_priority/update_msg_type/set_msg_type /=; simplify_option_eq.")]]
-[[rc::tactics("by eapply npfp_enqueue_add_msg_to_q3.")]]
+[[rc::tactics("eapply npfp_enqueue_add_msg_to_q3; [done..|solve_goal].")]]
 [[rc::tactics("eapply npfp_enqueue_create_bitmap_addmsg. by rewrite /get_priority/update_msg_type/set_msg_type/=; simplify_option_eq.")]]
-[[rc::tactics("eexists _. split_and!; [|done..]. normalize_and_simpl_goal. eapply npfp_enqueue_add_msg_to_q2; [done|]. unfold get_priority in *. by simplify_option_eq.")]]
+[[rc::tactics("apply npfp_enqueue_create_bitmap_addmsg2; unfold get_priority in *; simplify_option_eq; solve_goal.")]]
 static inline
 void npfp_enqueue(struct npfp_scheduler *sched, struct message* msg) {
   /* identify the type of message we're looking at */
@@ -68,19 +68,19 @@ void npfp_enqueue(struct npfp_scheduler *sched, struct message* msg) {
 [[rc::args("l1 @ &own<sched_state @ npfp_t>")]]
 [[rc::ensures("own l1 : {npfp_dequeue_func sched_state} @ npfp_t")]]
 [[rc::returns("{get_highest_prio_msg sched_state} @ optionalO<λ msg. &own<msg @ message<uninit<void*>>>>")]]
-[[rc::tactics("all : try rewrite /npfp_dequeue_func; try solve_goal.")]]
+[[rc::tactics("all : try (rewrite /npfp_dequeue_func; solve_goal).")]]
 [[rc::tactics("rewrite /get_highest_prio_msg /get_highest_prio_queue /get_highest_prio_level; solve_goal.")]]
 [[rc::tactics("rewrite -(Z2Nat.id num_priorities); try solve_goal."
 	            " by rewrite -(create_bitmap_length sched_state); apply find_highest_prio_length.")]]
 [[rc::tactics("by eapply npfp_dequeue_nonempty.")]]
 [[rc::tactics("by apply get_highest_prio_msg_is_head.")]]
 [[rc::tactics("by eapply npfp_dequeue_no_highest_priority.")]]
-[[rc::tactics("by eapply npfp_dequeue_has_highest_pending_prio.")]]
+[[rc::tactics("eapply npfp_dequeue_has_highest_pending_prio; [done..|solve_goal].")]]
 [[rc::tactics("by eapply npfp_dequeue_create_bitmap_equiv.")]]
-[[rc::tactics("eexists _. split_and!; [|done..]. normalize_and_simpl_goal. revert select (tail _ = []) => <-. by symmetry; eapply npfp_dequeue_has_highest_pending_prio.")]]
+[[rc::tactics("eapply npfp_dequeue_create_bitmap_false; solve_goal.")]]
 [[rc::tactics("by apply get_highest_prio_msg_is_head.")]]
-[[rc::tactics("rewrite /get_highest_prio_level. repeat case_bool_decide; solve_goal.")]]
-[[rc::tactics("by eapply npfp_dequeue_has_highest_pending_prio.")]]
+[[rc::tactics("by apply npfp_dequeue_qs_equiv.")]]
+[[rc::tactics("eapply npfp_dequeue_has_highest_pending_prio; [done..|solve_goal].")]]
 [[rc::tactics("by eapply npfp_dequeue_create_bitmap_equiv1.")]]
 static inline
 struct message* npfp_dequeue(struct npfp_scheduler *sched) {

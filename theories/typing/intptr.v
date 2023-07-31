@@ -71,18 +71,17 @@ Section programs.
   Context `{!typeG Σ}.
 
   Lemma type_cast_ptr_intptr (p : loc) β it ty m `{!LearnAlignment β ty m} T:
-    (∃ n,
-      p ◁ₗ{β} ty -∗
+    (p ◁ₗ{β} ty -∗
       ⌜if m is Some m' then p `aligned_to` m' else True⌝ -∗
-      (loc_in_bounds p n ∗ True) ∧
+      ∃ n, loc_in_bounds p n ∗
       (⌜min_alloc_start ≤ p.2 ∧ p.2 + n ≤ max_alloc_end⌝ -∗
        ⌜p.2 ∈ it⌝ ∗
          ((alloc_alive_loc p ∗ True) ∧ ∀ v, T v (p @ intptr it))))
     ⊢ typed_un_op p (p ◁ₗ{β} ty) (CastOp (IntOp it)) PtrOp T.
   Proof.
-    iIntros "[%n HT] Hp" (Φ) "HΦ".
+    iIntros "HT Hp" (Φ) "HΦ".
     iDestruct (learnalign_learn with "Hp") as %?.
-    iDestruct ("HT" with "Hp [//]") as "[[#Hlib _] HT]".
+    iDestruct ("HT" with "Hp [//]") as (?) "[#Hlib HT]".
     iDestruct (loc_in_bounds_ptr_in_range with "Hlib") as %?.
     iDestruct (loc_in_bounds_has_alloc_id with "Hlib") as %[aid ?].
     iDestruct ("HT" with "[//]") as ([? ?]%(val_of_Z_is_Some (Some aid))) "HT".
@@ -139,21 +138,21 @@ Section programs.
     v ◁ᵥ p @ intptr it -∗ v ◁ᵥ p.2 @ int it.
   Proof. iIntros "(%aid&%&%&%&#Hlib)". unfold int; simpl_type. by iPureIntro. Qed.
 
-  Lemma subsume_intptr_int_val v it (n : Z) (p : loc) T:
-    ⌜n = p.2⌝ ∗ T
-    ⊢ subsume (v ◁ᵥ p @ intptr it) (v ◁ᵥ n @ int it) T.
+  Lemma subsume_intptr_int_val A v it (n : A → Z) (p : loc) T:
+    (∃ x, ⌜n x = p.2⌝ ∗ T x)
+    ⊢ subsume (v ◁ᵥ p @ intptr it) (λ x, v ◁ᵥ (n x) @ int it) T.
   Proof.
-    iIntros "[-> $]". iApply intptr_wand_int.
+    iIntros "[% [%Heq ?]] ?". iExists _. iFrame. rewrite Heq. by iApply intptr_wand_int.
   Qed.
   Definition subsume_intptr_int_val_inst := [instance subsume_intptr_int_val].
   Global Existing Instance subsume_intptr_int_val_inst.
 
-  Lemma subsume_intptr_int_place l β it n p T:
-    ⌜n = p.2⌝ ∗ T
-    ⊢ subsume (l ◁ₗ{β} p @ intptr it) (l ◁ₗ{β} n @ int it) T.
+  Lemma subsume_intptr_int_place A l β it n p T:
+    (∃ x, ⌜n x = p.2⌝ ∗ T x)
+    ⊢ subsume (l ◁ₗ{β} p @ intptr it) (λ x : A, l ◁ₗ{β} (n x) @ int it) T.
   Proof.
-    iIntros "[-> $]". rewrite /ty_own /=. iIntros "(%v&%aid&%&%&%&%&?&?)".
-    iExists v. by iFrame.
+    iIntros "[% [%Heq ?]]". rewrite /ty_own /=. iIntros "(%v&%aid&%&%&%&%&?&?)".
+    iExists _. iFrame. rewrite Heq. iExists v. by iFrame.
   Qed.
   Definition subsume_intptr_int_place_inst := [instance subsume_intptr_int_place].
   Global Existing Instance subsume_intptr_int_place_inst.

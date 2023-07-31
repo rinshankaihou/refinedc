@@ -10,7 +10,6 @@ Global Typeclasses Transparent spinlock.
 Section type.
   Context `{!typeG Σ} `{!lockG Σ}.
 
-
   Lemma type_sl_init:
     ⊢ typed_function impl_sl_init type_of_sl_init.
   Proof.
@@ -20,7 +19,7 @@ Section type.
     iMod alloc_lock_token as (γ) "?".
 
     repeat liRStep; liShow.
-    liInst Hevar γ.
+    liInst (λ x, x.1ₗ = γ).
     repeat liRStep; liShow.
     Unshelve. all: unshelve_sidecond; sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
   Qed.
