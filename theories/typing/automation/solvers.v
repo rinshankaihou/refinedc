@@ -3,7 +3,7 @@ From refinedc.typing Require Import type.
 
 Ltac unfold_aligned_to :=
   unfold aligned_to in *;
-  try rewrite ->config.enforce_alignment_value in *;
+  try rewrite ->caesium_config.enforce_alignment_value in *;
   cbv [selected_config.enforce_alignment] in *.
 
 Ltac unfold_common_defs :=
@@ -25,6 +25,6 @@ Ltac unfold_common_defs :=
 (** * [solve_goal] without cleaning of the context  *)
 Ltac solve_goal_normalized_prepare_hook ::=
   unfold_common_defs;
-  try rewrite ->config.enforce_alignment_value in *;
+  try rewrite ->caesium_config.enforce_alignment_value in *;
   simpl in *;
   rewrite /ly_size/ly_align_log //=.
