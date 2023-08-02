@@ -28,7 +28,8 @@ Proof. rewrite -{1}(Z.mul_1_l n). apply aligned_to_add. Qed.
 Global Instance simpl_aligned_to_add l m (n : nat) : SimplBoth ((l +ₗ m * n) `aligned_to` n) (l `aligned_to` n).
 Proof. apply aligned_to_add. Qed.
 
-Global Instance simpl_learn_aligned_to_mult l o n1 n2 `{!CanSolve (l `aligned_to` n2)} `{!CanSolve (0 ≤ o)} :
+Global Instance simpl_learn_aligned_to_mult l o n1 n2
+  `{!ConfigEnforceAlignment} `{!CanSolve (l `aligned_to` n2)} `{!CanSolve (0 ≤ o)} :
   SimplImplUnsafe false ((l +ₗ o) `aligned_to` (n1 * n2)) (∃ o' : nat, o = o' * n2) | 100.
 Proof.
   unfold CanSolve in *. move => Halign.
