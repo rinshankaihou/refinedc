@@ -169,7 +169,7 @@ Section array.
       iDestruct (loc_in_bounds_split_mul_S with "Hlib") as "[#Hlib1 Hlib2]".
       iDestruct ("IH" with "[Hlib2 Htys]") as (v2 Hv2 ? _) "Hv2".
       { iFrame. iPureIntro. revert select (layout_wf _). revert select (_ `has_layout_loc` _).
-        rewrite /has_layout_loc /layout_wf /aligned_to. case_match => //. destruct l as [? a].
+        rewrite /has_layout_loc /layout_wf /aligned_to. destruct l as [? a].
         move => /= [? ->] [? ->]. eexists. by rewrite -Z.mul_add_distr_r. }
       rewrite {2}/ty_own/=. iDestruct "Hty" as (v1 Hv1 Hl1 _) "Hv1".
       iExists (v1 ++ v2). rewrite heap_mapsto_own_state_app Hv1 /has_layout_val app_length Hv1 Hv2.
