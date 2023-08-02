@@ -66,7 +66,7 @@ size_t test(){
 [[rc::args("l @ &own<n @ int<i32>>")]]
 [[rc::returns("{bool_decide (l `aligned_to` 8%nat)} @ boolean<i32>")]]
 [[rc::ensures("own l : n @ int<i32>")]]
-[[rc::tactics("all: unfold aligned_to in *; split; solve_goal.")]]
+[[rc::tactics("all: unfold_aligned_to; split; solve_goal.")]]
 int is_aligned(void* p){
   uintptr_t i = (uintptr_t) p;
   return i % TAG_MOD == 0;

@@ -27,6 +27,7 @@ depends: [
 
 build: [
   [make "prepare-install-refinedc"]
+  [make "config%{caesium-config}%"]
   ["dune" "subst"] {pinned}
   ["dune" "build" "-p" name "-j" jobs]
 ]

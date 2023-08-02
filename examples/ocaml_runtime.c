@@ -24,7 +24,7 @@ typedef uintnat value;
 #define Long_val(x) ((x) >> 1)
 
 [[rc::requires("{True}")]]
-[[rc::tactics("all: try by rewrite (Z.land_ones _ 1) //; apply Z.mod_divide; [done| etrans; [|done]]; solve_goal.")]]
+[[rc::tactics("all: try by unfold_aligned_to; rewrite (Z.land_ones _ 1) //; apply Z.mod_divide; [done| etrans; [|done]]; solve_goal.")]]
 void client(){
   unsigned long large_int = 0xdeadbeef;
   unsigned int  small_int = 42;
