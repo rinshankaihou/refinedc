@@ -57,11 +57,6 @@ Global Hint Extern 0 (ContainsEx ?x) =>
   (lazymatch x with | context [li_fst _] => constructor end) : typeclass_instances.
 Global Hint Extern 0 (IsEx (li_fst _) ) => (constructor) : typeclass_instances.
 
-(** * [IsVar] *)
-Class IsVar {A} (x : A) : Set := {}.
-Global Hint Extern 0 (IsVar ?x) => (is_var x; constructor) : typeclass_instances.
-Global Hint Mode IsVar + + : typeclass_instances.
-
 (** * [CanSolve] *)
 (** Exposes the general purpose solver in [can_solve_hook] (see
  hooks.v) as the [can_solve] tactic and via the [CanSolve] typeclass. *)
