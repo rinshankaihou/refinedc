@@ -2,4 +2,5 @@
 (name refinedc)
 (package (name refinedc))
 (package (name coq-lithium))
+(package (name coq-caesium-config-no-align))
 (using coq 0.8)

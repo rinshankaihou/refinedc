@@ -25,9 +25,19 @@ depends: [
   "ubase" {>= "0.04"}
 ]
 
+depopts: [
+  "coq-caesium-config-no-align"
+]
+
 build: [
   [make "prepare-install-refinedc"]
-  [make "config%{caesium-config}%"]
+  [make "config"] {!coq-caesium-config-no-align:installed}
+  [make "config-no-align"] {coq-caesium-config-no-align:installed}
   ["dune" "subst"] {pinned}
   ["dune" "build" "-p" name "-j" jobs]
+]
+
+messages: [
+  "with default configuration" {!coq-caesium-config-no-align:installed}
+  "with no-align configuration" {coq-caesium-config-no-align:installed}
 ]
