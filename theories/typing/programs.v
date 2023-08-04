@@ -1189,7 +1189,7 @@ Section typing.
     iApply ("Hs" with "[HQ]"); last done.
     iApply wps_block_rec.
     iApply (big_sepM_mono with "HQ").
-    iIntros (b P Hb) => /=.
+    move => b P Hb /=.
     repeat f_equiv. iIntros "Hs". by iApply "Hs".
   Qed.
 
