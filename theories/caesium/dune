@@ -3,4 +3,4 @@
  (package refinedc)
  (flags :standard -w -notation-overridden -w -redundant-canonical-projection)
  (synopsis "Caesium language")
- (theories lithium stdpp iris RecordUpdate Ltac2))
+ (theories caesium.config lithium stdpp iris RecordUpdate Ltac2))
