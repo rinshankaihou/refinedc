@@ -572,6 +572,39 @@ Ltac liFindInContext :=
       [ shelve | typeclasses eauto | simpl; repeat liExist false; liFindHypOrTrue key ])
   end.
 
+
+(** ** [liDoneEvar] *)
+(** Internal goal to share evars between subgoals of and. Used by the
+[□ P ∗ G] goal. *)
+(* TODO: Use this more widely, e.g. for general ∧? *)
+
+(** [li_done_evar_type] is an opaque wrapper for the type of the
+shared evar since a hypothesis of type [?Goal] gets instantiated
+accidentally by various tactics. *)
+#[projections(primitive)] Record li_done_evar_type (A : Type) := { li_done_evar_val : A }.
+Global Arguments li_done_evar_val {_} _.
+
+Definition li_done_evar {Σ A X} (x : A) (y : li_done_evar_type X) (f : X → A) : iProp Σ :=
+  ⌜x = f (li_done_evar_val y)⌝.
+Section coq_tactics.
+  Context {Σ : gFunctors}.
+  Lemma tac_li_done_evar_ex {A X} (f : X → A) y Δ :
+    envs_entails Δ (∃ x', li_done_evar (Σ := Σ) (f x') y f).
+  Proof. rewrite envs_entails_unseal. iIntros "HΔ". by iExists _. Qed.
+
+  Lemma tac_li_done_evar {A} (x : A) y Δ :
+    envs_entails Δ (li_done_evar (Σ := Σ) x y (λ _ : unit, x)).
+  Proof. rewrite envs_entails_unseal. iIntros "HΔ". done. Qed.
+End coq_tactics.
+
+Ltac liDoneEvar :=
+  lazymatch goal with
+  | |- envs_entails ?Δ (∃ₗ x', li_done_evar (@?x x') ?y _) =>
+      notypeclasses refine (tac_li_done_evar_ex x y Δ)
+  | |- envs_entails ?Δ (li_done_evar ?x ?y _) =>
+      notypeclasses refine (tac_li_done_evar x y Δ)
+  end.
+
 (** ** [liSep] *)
 Section coq_tactics.
   Context {Σ : gFunctors}.
@@ -599,6 +632,18 @@ Section coq_tactics.
   Lemma tac_do_intro_intuit_sep Δ (P Q : iProp Σ) :
     envs_entails Δ (□ (P ∗ True) ∧ Q) → envs_entails Δ (□ P ∗ Q).
   Proof. apply tac_fast_apply. iIntros "[#[$ _] $]". Qed.
+
+  Lemma tac_do_intro_intuit_sep_ex {A B X} Δ (P Q : (A *ₗ B) → iProp Σ) (f : X → _) :
+    (∀ y, envs_entails Δ (□ (∃ₗ x, P x ∗ li_done_evar x y f))) →
+    envs_entails Δ (∃ y, Q (f y)) →
+    envs_entails Δ (∃ₗ x, □ (P x) ∗ Q x).
+  Proof.
+    rewrite envs_entails_unseal /li_done_evar. move => /bi.forall_intro HP HQ.
+    iIntros "HΔ". iDestruct (HP with "HΔ") as "#HP".
+    iDestruct (HQ with "HΔ") as (y) "HQ".
+    iDestruct ("HP" $! {|li_done_evar_val := y|}) as (?) "[#? ->]". simpl.
+    iExists _. iFrame "∗#".
+  Qed.
 
   Lemma tac_do_simplify_goal Δ (n : N) (P : iProp Σ) T {SG : SimplifyGoal P (Some n)} :
     envs_entails Δ (SG T).(i2p_P) → envs_entails Δ (P ∗ T).
@@ -655,11 +700,7 @@ Ltac liSep :=
     | (λ _, bi_exist _) => notypeclasses refine (tac_sep_exist_assoc_ex _ _ _ _)
     (* bi_emp cannot happen because it is independent of evars *)
     | (λ _, (⌜_⌝)%I) => fail "handled by liSideCond"
-    (* The following does not work because sharing existential
-    quantifiers between subgoals is tricky. There are cases in Islaris
-    (in the binary search example) where something fancy for sharing
-    existential quantifiers between subgoals would be nice though. *)
-    (* | (□ ?P)%I => notypeclasses refine (tac_do_intro_intuit_sep _ _ _ _) *)
+    | (λ _, (□ _)%I) => notypeclasses refine (tac_do_intro_intuit_sep_ex _ _ _ _ _ _)
     (* The following is probably not necessary: *)
     (* | match ?x with _ => _ end => fail "should not have match in sep" *)
     | ?P => first [
@@ -725,6 +766,80 @@ Module liSep_tests. Section test.
     | |- envs_entails _ (P 1%Z 1%Z) => idtac
     end.
   Abort.
+
+  Goal  ∀ P : Z → Z → Z → iProp Σ,
+      ⊢ ∃ x y z, □ (⌜x = 1%Z⌝ ∗ ⌜y = 2%Z⌝) ∗ ⌜z = 3%Z⌝ ∗ P x y z.
+    intros. iStartProof. iIntros. repeat liExist.
+    1: liSep.
+    1: liForall.
+    1: iModIntro.
+    1: liSep.
+    1: liSideCond.
+    1: liSideCond.
+    1: liDoneEvar.
+    1: liSideCond.
+    1: liExist.
+    lazymatch goal with
+    | |- envs_entails _ (P 1%Z 2%Z 3%Z) => idtac
+    end.
+  Abort.
+
+  Goal  ∀ P : Z → Z → Z → iProp Σ,
+      ⊢ ∃ x y z, □ (⌜x = 1%Z⌝ ∗ □ ⌜y = 2%Z⌝) ∗ ⌜z = 3%Z⌝ ∗ P x y z.
+    intros. iStartProof. iIntros. repeat liExist.
+    1: liSep.
+    1: liForall.
+    1: iModIntro.
+    1: liSep.
+    1: liSideCond.
+    1: liSep.
+    1: liForall.
+    1: iModIntro.
+    1: liSideCond.
+    1: liDoneEvar.
+    1: liDoneEvar.
+    1: liSideCond.
+    1: liExist.
+    lazymatch goal with
+    | |- envs_entails _ (P 1%Z 2%Z 3%Z) => idtac
+    end.
+  Abort.
+
+  Goal  ∀ P : Z → Z → Z → iProp Σ,
+      ⊢ ∃ x y z, □ (⌜x = 1%Z⌝ ∗ ⌜y = 2%Z⌝ ∗ ⌜z = 3%Z⌝) ∗ P x y z.
+    intros. iStartProof. iIntros. repeat liExist.
+    1: liSep.
+    1: liForall.
+    1: iModIntro.
+    1: liSep.
+    1: liSideCond.
+    1: liSep.
+    1: liSideCond.
+    1: liSideCond.
+    1: liExist.
+    1: liDoneEvar.
+    1: liExist.
+    1: liSimpl.
+    lazymatch goal with
+    | |- envs_entails _ (P 1%Z 2%Z 3%Z) => idtac
+    end.
+  Abort.
+
+  Goal  ∀ P : Z → iProp Σ,
+      ⊢ ∃ x, □ (const True x) ∗ ⌜x = 1%Z⌝ ∗ P x.
+    intros. iStartProof. iIntros. repeat liExist.
+    1: liSep.
+    1: liForall.
+    1: iModIntro. 1: simpl.
+    1: liSideCond.
+    1: liDoneEvar.
+    1: liSideCond.
+    1: liExist.
+    lazymatch goal with
+    | |- envs_entails _ (P 1%Z) => idtac
+    end.
+  Abort.
+
 End test. End liSep_tests.
 
 
@@ -1001,5 +1116,6 @@ Ltac liStep :=
     | liTrue
     | liFalse
     | liAccu
+    | liDoneEvar
     | liUnfoldLetGoal
     ].
