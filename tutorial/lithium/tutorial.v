@@ -769,7 +769,7 @@ Section proofs.
     - do 2 f_equal. apply bool_decide_ext. rewrite Exists_cons H0. naive_solver.
   Qed.
 
-  Definition find_client_code (find : val) : val := λ: "x",
+  Definition find_one (find : val) : val := λ: "x",
       find ("x", (λ: "y", "y" = #1)%V).
 
   Lemma simpl_fn X f a e pre post G :
@@ -792,12 +792,12 @@ Section proofs.
     SimplBoth (x ∈ f <$> xs) (∃ y, x = f y ∧ y ∈ xs).
   Proof. unfold SimplBoth. by set_unfold. Qed.
 
-  Lemma find_client_correct find :
+  Lemma find_one_correct find :
     fn_ok find (val * list val)
       (λ '(va, xs) v, ∃ cb, ⌜v = (va, cb)%V⌝ ∗ is_list va xs ∗ fn_ok cb val (λ va v, ⌜v = va⌝ ∗ ⌜v ∈ xs⌝) (λ va v, ⌜v = #(bool_decide (va = #1))⌝))
       (λ '(va, xs) r, ⌜r = #(bool_decide (Exists (λ x, (bool_decide (x = #1))) xs))⌝ ∗ is_list va xs)
     -∗
-       fn_ok (find_client_code find) (val * list Z)
+       fn_ok (find_one find) (val * list Z)
       (λ '(va, xs) v, ⌜v = va⌝ ∗ is_list va (LitV <$> (LitInt <$> xs)))
       (λ '(va, xs) r, ⌜r = #(bool_decide (1 ∈ xs))⌝ ∗ is_list va (LitV <$> (LitInt <$> xs))).
   Proof.
