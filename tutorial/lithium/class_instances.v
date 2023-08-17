@@ -1,6 +1,6 @@
 From lithium.tutorial Require Import notation tactics.
 
-(* This file is a version of proofmode.v from simp-lang:
+(* This file is a version of class_instances.v from simp-lang:
    https://github.com/tchajed/iris-simp-lang/blob/main/src/class_instances.v *)
 
 Global Instance into_val_val v : IntoVal (Val v) v.

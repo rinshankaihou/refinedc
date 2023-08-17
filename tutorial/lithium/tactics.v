@@ -1,5 +1,8 @@
 From lithium.tutorial Require Import lang.
 
+(* This file is a version of tactics.v from simp-lang:
+   https://github.com/tchajed/iris-simp-lang/blob/main/src/tactics.v *)
+
 (** The tactic [reshape_expr e tac] decomposes the expression [e] into an
 evaluation context [K] and a subexpression [e']. It calls the tactic [tac K e']
 for each possible decomposition until [tac] succeeds. *)

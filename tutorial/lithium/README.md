@@ -1,7 +1,7 @@
 # Lithium by Example
 
 This folder shows how to build a Lithium-based verifier for a simple functional tutorial language.
-The files in this folder are based on the explanation in Part I of Michael Sammler's thesis and are best read together with the thesis.
+The files in this folder are based on the explanation in the "Lithium by Example" chapter of Michael Sammler's dissertation and are best read together with the dissertation.
 The main file in this folder is the following:
 
 - [tutorial.v](tutorial.v): This is the main file of this tutorial
@@ -10,7 +10,7 @@ The main file in this folder is the following:
 The tutorial language is defined in the following files:
 
 - [lang.v](lang.v): This file defines the syntax and operational
-  semantics for the language used by this tutorial.
+  semantics for the language.
 
 - [notation.v](notation.v): This file defines some syntactic sugar for
   constructs of the language via Coq notations.

@@ -79,54 +79,28 @@ Ltac liTUnfold :=
 Section proofs.
   Context `{!tutorialGS Σ}.
 
-  (*
-   Open questions / comments:
-   - better name for check? verify? it is some symbolic evaluation?!
-     -> changed to _ok (which reads more like a judgement than a function name)
-   - better names for exhale and inhale? assert and assume? produce and consume?
-     Simon likes assert and assume.
-   - highlight that lithium is based on continuation passing style
-      - the monad syntax just makes this easier to read
-      - this is quite different from other approaches which do a fixed symbolic execution of the program and then mainly focus for cancellation / frame inference
-      - somewhere in the thesis, not sure where?
-   - can we get rid of the { } on the right of the bind?
-   - Youngju: interesting part is find_in_context, there it really starts to look like a custom language with primitives specifically for verification
-   - Simon: can probably immediately start with the separation logic part?
+  (** For explanation, see the corresponding sections of the "Lithium
+  by Example" chapter in Michael Sammler's dissertation. *)
 
-   - Simon: should stick with logic programming language and call the expr_ok and friends judgements, instead of programming language and functions
-     - TODO: find out what logic programming is and how their judgements look like and what terminology they use
-     - maybe call it a logic programming language such that people are not surprised by the extensible function definitions?
-     - functions seems like a better name than judgements (or predicates from logic programming) since they have inputs and outputs
-     - explain evars somehow
-    *)
-
-  (** Framing: Lithium is a logic programming language for building
-  automated and foundational separation logic verifiers (proof search
-  procedures?)
-
-  Key selling points:
-  - language generic
-  - automated
-  - foundational / proof producing
- *)
-
-  (** ** straight line code *)
-  Definition main_code : expr :=
+  (** ** 1. Lithium basics *)
+  Definition assert_two : expr :=
     let: "x" := #1 in
     let: "y" := "x" + #1 in
     Assert ("y" = #2).
 
-  Lemma main_code_correct :
+  Lemma assert_two_correct :
     ⊢ [{
-      _ ← {expr_ok main_code};
+      _ ← {expr_ok assert_two};
       done
     }].
   Proof.
-    iStartProof. unfold main_code.
+    iStartProof. unfold assert_two.
     repeat liTStep; liShow.
+    (** No progress since we have not defined the Lithium function [expr_ok] yet. *)
   Abort.
 
-  Lemma expr_ok_Let x e1 e2 G :
+  (** Basic rules for [expr_ok] and [binop_ok]. *)
+  Lemma expr_let x e1 e2 G :
     expr_ok (Let x e1 e2) G :-
       v1 ← {expr_ok e1};
       v2 ← {expr_ok (subst' x v1 e2)};
@@ -136,36 +110,16 @@ Section proofs.
     iApply (wp_wand with "HWP"). iIntros (?) "HWP".
     by wp_pures.
   Qed.
-  Definition expr_ok_Let_inst := [instance expr_ok_Let].
-  Global Existing Instance expr_ok_Let_inst | 2.
+  Definition expr_let_inst := [instance expr_let].
+  Global Existing Instance expr_let_inst | 2.
 
-  Lemma main_code_correct :
-    ⊢ [{
-      _ ← {expr_ok main_code};
-      done
-    }].
-  Proof.
-    iStartProof. unfold main_code.
-    repeat liTStep; liShow.
-  Abort.
-
-  Lemma expr_ok_val v G :
+  Lemma expr_val v G :
     expr_ok (Val v) G :- return G v.
   Proof. liTUnfold. iIntros "HG". by wp_pures. Qed.
-  Definition expr_ok_val_inst := [instance expr_ok_val].
-  Global Existing Instance expr_ok_val_inst.
+  Definition expr_val_inst := [instance expr_val].
+  Global Existing Instance expr_val_inst.
 
-  Lemma main_code_correct :
-    ⊢ [{
-      _ ← {expr_ok main_code};
-      done
-    }].
-  Proof.
-    iStartProof. unfold main_code.
-    repeat liTStep; liShow.
-  Abort.
-
-  Lemma expr_ok_binop op e1 e2 G :
+  Lemma expr_binop op e1 e2 G :
     expr_ok (BinOp op e1 e2) G :-
       v1 ← {expr_ok e1};
       v2 ← {expr_ok e2};
@@ -177,33 +131,29 @@ Section proofs.
     wp_bind (e2).
     iApply (wp_wand with "HWP"). by iIntros (?) "HWP".
   Qed.
-  Definition expr_ok_binop_inst := [instance expr_ok_binop].
-  Global Existing Instance expr_ok_binop_inst.
+  Definition expr_binop_inst := [instance expr_binop].
+  Global Existing Instance expr_binop_inst.
 
-  Lemma binop_ok_plus_int_int (n1 n2 : Z) G :
+  Lemma binop_plus_int_int (n1 n2 : Z) G :
     binop_ok PlusOp #n1 #n2 G :-
       return G #(n1 + n2).
   Proof. liTUnfold. iIntros "HG". by wp_pures. Qed.
-  Definition binop_ok_plus_int_int_inst := [instance binop_ok_plus_int_int].
-  Global Existing Instance binop_ok_plus_int_int_inst.
-  Lemma binop_ok_minus_int_int (n1 n2 : Z) G :
+  Definition binop_plus_int_int_inst := [instance binop_plus_int_int].
+  Global Existing Instance binop_plus_int_int_inst.
+  Lemma binop_minus_int_int (n1 n2 : Z) G :
     binop_ok MinusOp #n1 #n2 G :-
       return G #(n1 - n2).
   Proof. liTUnfold. iIntros "HG". by wp_pures. Qed.
-  Definition binop_ok_minus_int_int_inst := [instance binop_ok_minus_int_int].
-  Global Existing Instance binop_ok_minus_int_int_inst.
+  Definition binop_minus_int_int_inst := [instance binop_minus_int_int].
+  Global Existing Instance binop_minus_int_int_inst.
+  Lemma binop_eq_int_int (n1 n2 : Z) G :
+    binop_ok EqOp #n1 #n2 G :-
+      return G #(bool_decide (n1 = n2)).
+  Proof. liTUnfold. iIntros "HG". by wp_pures. Qed.
+  Definition binop_eq_int_int_inst := [instance binop_eq_int_int].
+  Global Existing Instance binop_eq_int_int_inst.
 
-  Lemma main_code_correct :
-    ⊢ [{
-      _ ← {expr_ok main_code};
-      done
-    }].
-  Proof.
-    iStartProof. unfold main_code.
-    repeat liTStep; liShow.
-  Abort.
-
-  Lemma expr_ok_assert e G :
+  Lemma expr_assert e G :
     expr_ok (Assert e) G :-
       v ← {expr_ok e};
       exhale ⌜v = #true⌝;
@@ -213,144 +163,67 @@ Section proofs.
     iApply (wp_wand with "HWP"). iIntros (?) "[-> HWP]".
     by wp_pures.
   Qed.
-  Definition expr_ok_assert_inst := [instance expr_ok_assert].
-  Global Existing Instance expr_ok_assert_inst.
+  Definition expr_assert_inst := [instance expr_assert].
+  Global Existing Instance expr_assert_inst.
 
-  Lemma binop_ok_eq_int_int (n1 n2 : Z) G :
-    binop_ok EqOp #n1 #n2 G :-
-      return G #(bool_decide (n1 = n2)).
-  Proof. liTUnfold. iIntros "HG". by wp_pures. Qed.
-  Definition binop_ok_eq_int_int_inst := [instance binop_ok_eq_int_int].
-  Global Existing Instance binop_ok_eq_int_int_inst.
-
-  Lemma main_code_correct :
+  (** Now Lithium automatically verifies [assert_two]! *)
+  Lemma assert_two_correct :
     ⊢ [{
-      _ ← {expr_ok main_code};
+      _ ← {expr_ok assert_two};
       done
     }].
   Proof.
-    iStartProof. unfold main_code.
+    iStartProof. unfold assert_two.
     repeat liTStep; liShow.
   Qed.
 
-  (** ** function verification *)
-  Definition add_one_code : val := λ: "v", "v" + #1.
+  (** ** 2. Operational model *)
+  (** The operational semantics of Lithium are given by the [liTStep]
+  tactic that executes one step of the Lithium interpreter. The state
+  of the Lithium interpreter is of the form:
 
-  Definition fn_spec (v : val) (X : Type)
+                           Γ; Δ |- ∃ x, G(x)
+
+  where Γ is the Coq context, Δ is the Iris context, x is a tuple of
+  existential quantifiers and G is the current Lithium program. Each
+  step of the Lithium interpreter (i.e., each [liTStep]) transforms
+  the state into a new state, i.e. it can be described mathematically
+  as a transition
+
+       Γ1; Δ1 |- ∃ x1, G1(x1) => Γ2; Δ2 |- ∃ x2, G2(x2)
+
+  The execution ends when Lithium reaches [done]. A mathematical
+  description of the steps of the Lithium interpreter can be found in
+  Michael Sammler's dissertation. *)
+
+  (** ** 3. Modular verification via inhale, exhale and quantifiers *)
+  Definition add1 : val := λ: "v", "v" + #1.
+
+  Definition fn_ok (v : val) (X : Type)
     (pre : X → val → iProp Σ) (post : X → val → iProp Σ) : iProp Σ :=
     □ ∃ f b e, ⌜v = RecV f b e⌝ ∗
     ∀ x va, pre x va -∗ ▷ WP subst' b va (subst' f v e) {{ vr, post x vr}}.
-  Global Typeclasses Opaque fn_spec.
+  Global Typeclasses Opaque fn_ok.
 
-  Global Instance fn_spec_pers X v pre post :
-    Persistent (fn_spec v X pre post).
-  Proof. unfold fn_spec. apply _. Qed.
+  Global Instance fn_ok_pers X v pre post :
+    Persistent (fn_ok v X pre post).
+  Proof. unfold fn_ok. apply _. Qed.
 
+  Global Instance fn_ok_intro_pers X v pre post :
+    IntroPersistent (fn_ok v X pre post) (fn_ok v X pre post).
+  Proof. constructor. by iIntros "#?". Qed.
 
-  Lemma prove_fn_spec X a e pre post :
-    fn_spec (LamV a e) X pre post :-
-      drop_spatial;
-      ∀ (x : X) v,
-      inhale pre x v;
-      v' ← {expr_ok (subst' a v e)};
-      exhale post x v';
-      done.
-  Proof.
-    liTUnfold. unfold fn_spec. iIntros "#HWP !>".
-    iExists _, _, _. iSplit; [done|]. simpl.
-    iIntros (??) "?". iModIntro. iApply (wp_wand with "[-]"). { by iApply "HWP". }
-    iIntros (?) "[$ ?]".
-  Qed.
-
-  Lemma add_one_correct :
-    ⊢ fn_spec add_one_code Z (λ n v, ⌜v = #n⌝) (λ n v, ⌜v = #(n + 1)⌝).
-  Proof.
-    iStartProof. iApply prove_fn_spec. simpl.
-    repeat liTStep; liShow.
-  Qed.
-
-  (** ** using a function *)
-  Definition main_param_code (add_one : val) : expr :=
-    let: "x" := #1 in
-    let: "y" := add_one "x" in
-    Assert ("y" = #2).
-
-  Lemma main_param_code_correct add_one :
-    ⊢ [{
-      inhale fn_spec add_one Z (λ n v, ⌜v = #n⌝) (λ n v, ⌜v = #(n + 1)⌝);
-      _ ← {expr_ok (main_param_code add_one)};
-      done
-    }].
-  Proof.
-    iStartProof. unfold main_param_code.
-    repeat liTStep; liShow.
-  Abort.
-
-  Definition FindFnSpec (v : val) :=
-  {| fic_A := sigT (λ X, (X → val → iProp Σ) * (X → val → iProp Σ))%type;
-    fic_Prop '(existT X (pre, post)) := fn_spec v X pre post |}.
-  Global Typeclasses Opaque FindFnSpec.
-  Lemma find_in_context_find_fnspec v G:
-    find_in_context (FindFnSpec v) G :-
-      pattern: X pre post, fn_spec v X pre post; return G (existT X (pre, post)).
-  Proof. iDestruct 1 as (X pre post) "[Hv HT]". iExists _. by iFrame. Qed.
-  Definition find_in_context_find_fnspec_inst :=
-    [instance find_in_context_find_fnspec with FICSyntactic].
-  Global Existing Instance find_in_context_find_fnspec_inst | 1.
-
-  Lemma expr_ok_App e1 e2 G :
-    (* TODO: have where `{!TCIsNotVal e1} syntax to add typeclass preconditions *)
-    expr_ok (App e1 e2) G  :-
-      v2 ← {expr_ok e2};
-      v1 ← {expr_ok e1};
-      '(existT X (pre, post)) ← find_in_context (FindFnSpec v1);
-      ∃ x,
-      exhale (pre x v2);
-      ∀ v',
-      inhale (post x v');
-      return G v'.
-  Proof.
-    liTUnfold. iIntros "HWP". wp_bind (e2). iApply (wp_wand with "HWP").
-    iIntros (?) "HWP". wp_bind (e1). iApply (wp_wand with "HWP").
-    iIntros (?) "[%a HWP]". destruct a as [?[??]] => /=. unfold fn_spec.
-    iDestruct "HWP" as "[#(%&%&%&->&Hf) [% [Hpre HG]]]".
-    iDestruct ("Hf" with "[$]") as "HWP".
-    wp_pures. by iApply (wp_wand with "HWP").
-  Qed.
-  Definition expr_ok_App_inst := [instance expr_ok_App].
-  Global Existing Instance expr_ok_App_inst | 50.
-
-  Lemma main_param_code_correct add_one :
-    ⊢ [{
-      inhale fn_spec add_one Z (λ n v, ⌜v = #n⌝) (λ n v, ⌜v = #(n + 1)⌝);
-      _ ← {expr_ok (main_param_code add_one)};
-      done
-    }].
-  Proof.
-    iStartProof. unfold main_param_code.
-    repeat liTStep; liShow.
-  Qed.
-
-  (** ** recursive functions and case distinctions *)
-  Definition fib_code : val := rec: "f" "x" :=
-      if: "x" = #0 then
-        #0
-      else if: "x" = #1 then
-        #1
-      else
-         "f" ("x" - #1) + "f" ("x" - #2).
-
-  Lemma prove_fn_spec_rec X f a e pre post :
-    fn_spec (RecV f a e) X pre post :-
+  Lemma prove_fn_ok X f a e pre post :
+    fn_ok (RecV f a e) X pre post :-
       drop_spatial;
       ∀ (x : X) v vr,
       inhale pre x v;
-      inhale fn_spec vr X pre post;
+      inhale fn_ok vr X pre post;
       v' ← {expr_ok (subst' a v (subst' f vr e))};
       exhale post x v';
       done.
   Proof.
-    liTUnfold. unfold fn_spec. iIntros "#HWP !>".
+    liTUnfold. unfold fn_ok. iIntros "#HWP !>".
     iExists _, _, _. iSplit; [done|].
     iIntros (x va) "Hpre". iModIntro.
     iLöb as "IH" forall (x va).
@@ -361,16 +234,74 @@ Section proofs.
     - iIntros (?) "[$ _]".
   Qed.
 
-  Lemma fib_correct :
-    ⊢ fn_spec fib_code unit (λ _ v, ∃ n : Z, ⌜v = #n⌝ ∗ ⌜0 ≤ n⌝)
-        (λ _ v, ∃ n' : Z, ⌜v = #n'⌝ ∗ ⌜0 ≤ n'⌝).
+  Lemma add1_correct :
+    ⊢ fn_ok add1 Z (λ n v, ⌜v = #n⌝) (λ n v, ⌜v = #(n + 1)⌝).
   Proof.
-    iStartProof. iApply prove_fn_spec_rec. simpl.
+    iStartProof. iApply prove_fn_ok. simpl.
     repeat liTStep; liShow.
-  Abort.
+  Qed.
+
+  Definition assert_two_modular (add1 : val) : expr :=
+    let: "x" := #1 in
+    let: "y" := add1 "x" in
+    Assert ("y" = #2).
+
+  (** These find functions are explained in 5. *)
+  Definition FindFnOk (v : val) :=
+  {| fic_A := sigT (λ X, (X → val → iProp Σ) * (X → val → iProp Σ))%type;
+    fic_Prop '(existT X (pre, post)) := fn_ok v X pre post |}.
+  Global Typeclasses Opaque FindFnOk.
+  Lemma find_in_context_find_fn_ok v G:
+    find_in_context (FindFnOk v) G :-
+      pattern: X pre post, fn_ok v X pre post; return G (existT X (pre, post)).
+  Proof. iDestruct 1 as (X pre post) "[Hv HT]". iExists _. by iFrame. Qed.
+  Definition find_in_context_find_fn_ok_inst :=
+    [instance find_in_context_find_fn_ok with FICSyntactic].
+  Global Existing Instance find_in_context_find_fn_ok_inst | 1.
+
+  Lemma expr_app e1 e2 G :
+    expr_ok (App e1 e2) G  :-
+      v2 ← {expr_ok e2};
+      v1 ← {expr_ok e1};
+      '(existT X (pre, post)) ← find_in_context (FindFnOk v1);
+      ∃ x,
+      exhale (pre x v2);
+      ∀ v',
+      inhale (post x v');
+      return G v'.
+  Proof.
+    liTUnfold. iIntros "HWP". wp_bind (e2). iApply (wp_wand with "HWP").
+    iIntros (?) "HWP". wp_bind (e1). iApply (wp_wand with "HWP").
+    iIntros (?) "[%a HWP]". destruct a as [?[??]] => /=. unfold fn_ok.
+    iDestruct "HWP" as "[#(%&%&%&->&Hf) [% [Hpre HG]]]".
+    iDestruct ("Hf" with "[$]") as "HWP".
+    wp_pures. by iApply (wp_wand with "HWP").
+  Qed.
+  Definition expr_app_inst := [instance expr_app].
+  Global Existing Instance expr_app_inst | 50.
 
 
-  Lemma expr_ok_if e0 e1 e2 G :
+  Lemma assert_two_modular_correct add1 :
+    ⊢ [{
+      inhale fn_ok add1 Z (λ n v, ⌜v = #n⌝) (λ n v, ⌜v = #(n + 1)⌝);
+      _ ← {expr_ok (assert_two_modular add1)};
+      done
+    }].
+  Proof.
+    iStartProof. unfold assert_two_modular.
+    repeat liTStep; liShow.
+  Qed.
+
+  (** ** 4. Continuations *)
+  Definition fib : val := rec: "f" "x" :=
+      if: "x" = #0 then
+        #0
+      else if: "x" = #1 then
+        #1
+      else
+         "f" ("x" - #1) + "f" ("x" - #2).
+
+  Lemma expr_if e0 e1 e2 G :
     expr_ok (If e0 e1 e2) G :-
       v ← {expr_ok e0};
       {if_ok v (expr_ok e1 G) (expr_ok e2 G)}.
@@ -379,18 +310,14 @@ Section proofs.
     iApply (wp_wand with "HWP"). iIntros (?) "[%b [-> HWP]]".
     by destruct b; wp_pures.
   Qed.
-  Definition expr_ok_if_inst := [instance expr_ok_if].
-  Global Existing Instance expr_ok_if_inst.
+  Definition expr_if_inst := [instance expr_if].
+  Global Existing Instance expr_if_inst.
 
-  Lemma if_ok_bool (b : bool) G1 G2 :
+  Lemma if_bool (b : bool) G1 G2 :
     if_ok #b G1 G2 :-
       if: b
       | return G1
       | return G2.
-      (* almost equivalent to the following: *)
-      (* and: *)
-      (* | inhale ⌜b⌝; return G1 *)
-      (* | inhale ⌜¬ b⌝; return G2. *)
   Proof.
     liTUnfold. iIntros "Hif".
     iExists _. iSplit; [done|].
@@ -398,26 +325,14 @@ Section proofs.
     - iDestruct "Hif" as "[HG _]". by iApply "HG".
     - iDestruct "Hif" as "[_ HG]". iApply "HG". naive_solver.
   Qed.
-  Definition if_ok_bool_inst := [instance if_ok_bool].
-  Global Existing Instance if_ok_bool_inst | 10.
+  Definition if_bool_inst := [instance if_bool].
+  Global Existing Instance if_bool_inst | 10.
 
   Lemma fib_correct :
-    ⊢ fn_spec fib_code unit (λ _ v, ∃ n : Z, ⌜v = #n⌝ ∗ ⌜0 ≤ n⌝)
+    ⊢ fn_ok fib unit (λ _ v, ∃ n : Z, ⌜v = #n⌝ ∗ ⌜0 ≤ n⌝)
         (λ _ v, ∃ n' : Z, ⌜v = #n'⌝ ∗ ⌜0 ≤ n'⌝).
   Proof.
-    iStartProof. iApply prove_fn_spec_rec. simpl.
-    repeat liTStep; liShow.
-  Abort.
-
-  Global Instance fn_spec_intro_pers X v pre post :
-    IntroPersistent (fn_spec v X pre post) (fn_spec v X pre post).
-  Proof. constructor. by iIntros "#?". Qed.
-
-  Lemma fib_correct :
-    ⊢ fn_spec fib_code unit (λ _ v, ∃ n : Z, ⌜v = #n⌝ ∗ ⌜0 ≤ n⌝)
-        (λ _ v, ∃ n' : Z, ⌜v = #n'⌝ ∗ ⌜0 ≤ n'⌝).
-  Proof.
-    iStartProof. iApply prove_fn_spec_rec. simpl.
+    iStartProof. iApply prove_fn_ok. simpl.
     repeat liTStep; liShow.
     Unshelve. all: unshelve_sidecond.
     - lia.
@@ -425,26 +340,21 @@ Section proofs.
     - lia.
   Qed.
 
-  (** * points to *)
-  Definition alloc_code : val := λ: <>,
-      let: "l" := Alloc in
-      "l" <- !"l";;
-      "l".
-
-  Lemma expr_ok_alloc G :
+  (** ** 5. Separation logic *)
+  Lemma expr_alloc G :
     expr_ok Alloc G :-
       ∀ v,
       inhale (v ↦ #0);
       return G v.
   Proof. liTUnfold. iIntros "HG". by iApply wp_alloc. Qed.
-  Definition expr_ok_alloc_inst := [instance expr_ok_alloc].
-  Global Existing Instance expr_ok_alloc_inst.
+  Definition expr_alloc_inst := [instance expr_alloc].
+  Global Existing Instance expr_alloc_inst.
 
   Definition FindPointsTo (v : val) :=
   {| fic_A := val; fic_Prop 'vr := (v ↦ vr)%I; |}.
   Global Typeclasses Opaque FindPointsTo.
 
-  Lemma expr_ok_store e1 e2 G :
+  Lemma expr_store e1 e2 G :
     expr_ok (Store e1 e2) G :-
       v2 ← {expr_ok e2};
       v1 ← {expr_ok e1};
@@ -457,10 +367,10 @@ Section proofs.
     wp_bind (e1). iApply (wp_wand with "HWP"). iIntros (?) "[% [? HWP]]/=".
     by iApply (wp_store with "[$]").
   Qed.
-  Definition expr_ok_store_inst := [instance expr_ok_store].
-  Global Existing Instance expr_ok_store_inst.
+  Definition expr_store_inst := [instance expr_store].
+  Global Existing Instance expr_store_inst.
 
-  Lemma expr_ok_load e G :
+  Lemma expr_load e G :
     expr_ok (Load e) G :-
       v ← {expr_ok e};
       vl ← find_in_context (FindPointsTo v);
@@ -471,53 +381,65 @@ Section proofs.
     iApply (wp_wand with "HWP"). iIntros (?) "[% [? HWP]]/=".
     by iApply (wp_load with "[$]").
   Qed.
-  Definition expr_ok_load_inst := [instance expr_ok_load].
-  Global Existing Instance expr_ok_load_inst.
+  Definition expr_load_inst := [instance expr_load].
+  Global Existing Instance expr_load_inst.
 
 
-  Lemma find_in_context_find_pointsto_loc v1 G:
+  Lemma find_points_to v1 G:
     find_in_context (FindPointsTo v1) G :-
       pattern: v, v1 ↦ v; return G v.
   Proof. iDestruct 1 as (v) "[Hl HT]". iExists _ => /=. by iFrame. Qed.
-  Definition find_in_context_find_pointsto_loc_inst :=
-    [instance find_in_context_find_pointsto_loc with FICSyntactic].
-  Global Existing Instance find_in_context_find_pointsto_loc_inst | 1.
+  Definition find_points_to_inst :=
+    [instance find_points_to with FICSyntactic].
+  Global Existing Instance find_points_to_inst | 1.
 
-  Global Instance related_to_pointsto A vl v : RelatedTo (λ x : A, vl ↦ v x)%I | 100 :=
+  Global Instance related_to_points_to A vl v : RelatedTo (λ x : A, vl ↦ v x)%I | 100 :=
     {| rt_fic := FindPointsTo vl |}.
 
+  Lemma expr_load_alt e G :
+    expr_ok (Load e) G :-
+      v ← {expr_ok e};
+      ∃ vl, exhale (v ↦ vl);
+      inhale (v ↦ vl);
+      return G vl.
+  Proof.
+    liTUnfold. iIntros "HWP". wp_bind (e).
+    iApply (wp_wand with "HWP"). iIntros (?) "[% [? HWP]]/=".
+    by iApply (wp_load with "[$]").
+  Qed.
+  Definition expr_load_alt_inst := [instance expr_load_alt].
 
-  Lemma subsume_pointsto_pointsto A vl v1 v2 G :
+  Lemma subsume_points_to_points_to A vl v1 v2 G :
     subsume (vl ↦ v1) (λ x : A, vl ↦ (v2 x)) G :-
      ∃ x, exhale ⌜v1 = v2 x⌝;
      return G x.
   Proof. liTUnfold. iIntros "[% [-> ?]] ?". iExists _. iFrame. Qed.
-  Definition subsume_pointsto_pointsto_inst := [instance subsume_pointsto_pointsto].
-  Global Existing Instance subsume_pointsto_pointsto_inst.
+  Definition subsume_points_to_points_to_inst := [instance subsume_points_to_points_to].
+  Global Existing Instance subsume_points_to_points_to_inst.
 
-  Lemma alloc_correct :
-    ⊢ fn_spec alloc_code unit (λ _ _, True) (λ _ v, ∃ z : Z, v ↦ #z ∗ ⌜0 ≤ z⌝).
+  Definition points_to_test : val := λ: <>,
+      let: "l" := Alloc in
+      "l" <- !"l";;
+      "l".
+
+  Lemma points_to_test_correct :
+    ⊢ fn_ok points_to_test unit (λ _ _, True) (λ _ v, ∃ z : Z, v ↦ #z ∗ ⌜0 ≤ z⌝).
   Proof.
-    iStartProof. iApply prove_fn_spec_rec. simpl.
+    iStartProof. iApply prove_fn_ok. simpl.
     repeat liTStep; liShow.
   Qed.
 
+  Section alt.
+    Local Existing Instance expr_load_alt_inst | 0.
+    Lemma points_to_test_correct_alt :
+      ⊢ fn_ok points_to_test unit (λ _ _, True) (λ _ v, ∃ z : Z, v ↦ #z ∗ ⌜0 ≤ z⌝).
+    Proof.
+      iStartProof. iApply prove_fn_ok. simpl.
+      repeat liTStep; liShow.
+    Qed.
+  End alt.
 
-  (** * linked lists *)
-  (** ** constructing linked lists *)
-  Definition empty_code : val := λ: <>, #NULL.
-  Definition cons_code : val := λ: "a",
-      let: "v" := Fst "a" in
-      let: "l" := Snd "a" in
-      let: "new_l" := Alloc in
-      "new_l" <- ("v", "l");;
-      "new_l".
-
-  Definition build_list_code (empty cons : val) : val := λ: <>,
-    let: "l" := empty #0 in
-    let: "l" := cons (#1, "l") in
-    let: "l" := cons (#2, "l") in
-    "l".
+  (** ** 6. Reasoning about abstract predicates  *)
 
   Fixpoint is_list (v : val) (xs : list val) : iProp Σ :=
     match xs with
@@ -538,37 +460,9 @@ Section proofs.
     unfold val_mapsto. iDestruct "Hv" as (? ->) "?". naive_solver.
   Qed.
 
-  Lemma empty_correct :
-    ⊢ fn_spec empty_code unit (λ _ _, True) (λ _ v, is_list v []).
-  Proof.
-    iStartProof. iApply prove_fn_spec_rec. simpl.
-    repeat liTStep; liShow.
-  Abort.
-
-  Lemma simplify_goal_is_list_null xs G :
-    simplify_goal (is_list #NULL xs) G :- exhale ⌜xs = []⌝; return G.
-  Proof. liTUnfold. iIntros "[-> $]". by unfold_opaque is_list. Qed.
-  Definition simplify_goal_is_list_null_inst := [instance simplify_goal_is_list_null with 50%N].
-  Global Existing Instance simplify_goal_is_list_null_inst.
-
-  Lemma empty_correct :
-    ⊢ fn_spec empty_code unit (λ _ _, True) (λ _ v, is_list v []).
-  Proof.
-    iStartProof. iApply prove_fn_spec_rec. simpl.
-    repeat liTStep; liShow.
-  Qed.
-
-
-  Lemma cons_correct :
-    ⊢ fn_spec cons_code (val * list val)
-      (λ '(x, xs) a, ∃ v, ⌜a = (x, v)%V⌝ ∗ is_list v xs)
-      (λ '(x, xs) r, is_list r (x :: xs)).
-  Proof.
-    iStartProof. iApply prove_fn_spec_rec. simpl.
-    repeat liTStep; liShow.
-  Abort.
-
-  Lemma expr_ok_unop op e G :
+  (** *** Lithium rules for pairs *)
+  (** These rules are used by the functions on lists. *)
+  Lemma expr_unop op e G :
     expr_ok (UnOp op e) G :-
       v  ← {expr_ok e};
       vr ← {unop_ok op v};
@@ -577,77 +471,93 @@ Section proofs.
     liTUnfold. iIntros "HWP". wp_bind (e).
     iApply (wp_wand with "HWP"). by iIntros (?) "HWP".
   Qed.
-  Definition expr_ok_unop_inst := [instance expr_ok_unop].
-  Global Existing Instance expr_ok_unop_inst.
+  Definition expr_unop_inst := [instance expr_unop].
+  Global Existing Instance expr_unop_inst.
 
-  Lemma unop_ok_fst v1 v2 G :
+  Lemma unop_fst v1 v2 G :
     unop_ok FstOp (v1, v2) G :- return G v1.
   Proof. liTUnfold. iIntros "HG". by wp_pures. Qed.
-  Definition unop_ok_fst_inst := [instance unop_ok_fst].
-  Global Existing Instance unop_ok_fst_inst.
-  Lemma unop_ok_snd v1 v2 G :
+  Definition unop_fst_inst := [instance unop_fst].
+  Global Existing Instance unop_fst_inst.
+  Lemma unop_snd v1 v2 G :
     unop_ok SndOp (v1, v2) G :- return G v2.
   Proof. liTUnfold. iIntros "HG". by wp_pures. Qed.
-  Definition unop_ok_snd_inst := [instance unop_ok_snd].
-  Global Existing Instance unop_ok_snd_inst.
+  Definition unop_snd_inst := [instance unop_snd].
+  Global Existing Instance unop_snd_inst.
 
-  Lemma binop_ok_pair v1 v2 G :
+  Lemma binop_pair v1 v2 G :
     binop_ok PairOp v1 v2 G :- return G (v1, v2)%V.
   Proof. liTUnfold. iIntros "HG". by wp_pures. Qed.
-  Definition binop_ok_pair_inst := [instance binop_ok_pair].
-  Global Existing Instance binop_ok_pair_inst.
+  Definition binop_pair_inst := [instance binop_pair].
+  Global Existing Instance binop_pair_inst.
+
+  (** *** Constructing linked lists *)
+  Definition empty_code : val := λ: <>, #NULL.
+  Definition cons_code : val := λ: "a",
+      let: "v" := Fst "a" in
+      let: "l" := Snd "a" in
+      let: "new_l" := Alloc in
+      "new_l" <- ("v", "l");;
+      "new_l".
+
+  Definition mklist_code (empty cons : val) : val := λ: <>,
+    let: "l" := empty #0 in
+    let: "l" := cons (#1, "l") in
+    let: "l" := cons (#2, "l") in
+    "l".
+
+
+  Lemma empty_code_correct :
+    ⊢ fn_ok empty_code unit (λ _ _, True) (λ _ v, is_list v []).
+  Proof.
+    iStartProof. iApply prove_fn_ok. simpl.
+    repeat liTStep; liShow.
+  Abort.
+
+  Lemma simpl_list_empty xs G :
+    simplify_goal (is_list #NULL xs) G :- exhale ⌜xs = []⌝; return G.
+  Proof. liTUnfold. iIntros "[-> $]". by unfold_opaque is_list. Qed.
+  Definition simpl_list_empty_inst := [instance simpl_list_empty with 50%N].
+  Global Existing Instance simpl_list_empty_inst.
+
+  Lemma empty_code_correct :
+    ⊢ fn_ok empty_code unit (λ _ _, True) (λ _ v, is_list v []).
+  Proof.
+    iStartProof. iApply prove_fn_ok. simpl.
+    repeat liTStep; liShow.
+  Qed.
+
 
   Lemma cons_correct :
-    ⊢ fn_spec cons_code (val * list val)
+    ⊢ fn_ok cons_code (val * list val)
       (λ '(x, xs) a, ∃ v, ⌜a = (x, v)%V⌝ ∗ is_list v xs)
       (λ '(x, xs) r, is_list r (x :: xs)).
   Proof.
-    iStartProof. iApply prove_fn_spec_rec. simpl.
+    iStartProof. iApply prove_fn_ok. simpl.
     repeat liTStep; liShow.
   Abort.
 
   Definition FindList (v : val) :=
   {| fic_A := iProp Σ; fic_Prop P := P; |}.
   Global Typeclasses Opaque FindList.
-  Lemma find_in_context_find_list_loc v G:
-    find_in_context (FindList v) G :-
-      pattern: v2, v ↦ v2; return G (v ↦ v2).
-  Proof. iDestruct 1 as (?) "[Hl HT]". iExists _. by iFrame. Qed.
-  Definition find_in_context_find_list_loc_inst :=
-    [instance find_in_context_find_list_loc with FICSyntactic].
-  Global Existing Instance find_in_context_find_list_loc_inst | 10.
-
   Global Instance related_to_list A v xs : RelatedTo (λ x : A, is_list v (xs x)) | 100
     := {| rt_fic := FindList v |}.
 
-  Lemma cons_correct :
-    ⊢ fn_spec cons_code (val * list val)
-      (λ '(x, xs) a, ∃ v, ⌜a = (x, v)%V⌝ ∗ is_list v xs)
-      (λ '(x, xs) r, is_list r (x :: xs)).
-  Proof.
-    iStartProof. iApply prove_fn_spec_rec. simpl.
-    repeat liTStep; liShow.
-  Abort.
-
-  Lemma subsume_pointsto_list A vl v xs G :
-    subsume (vl ↦ v) (λ x : A, is_list vl (xs x)) G :-
-     ∃ x v1 v2 xs',
-     exhale ⌜v = (v1, v2)%V⌝ ∗ is_list v2 xs' ∗ ⌜xs x = v1 :: xs'⌝;
-     return G x.
-  Proof.
-    liTUnfold. iIntros "[% [% [% [% [[-> [Hl %Hxs]] ?]]]]] ?".
-    iExists _. iFrame. rewrite Hxs is_list_cons. iExists _. iFrame.
-  Qed.
-  Definition subsume_pointsto_list_inst := [instance subsume_pointsto_list].
-  Global Existing Instance subsume_pointsto_list_inst.
-
-  Lemma find_in_context_find_list_list v G:
+  Lemma find_list v G:
     find_in_context (FindList v) G :-
       pattern: xs, is_list v xs; return G (is_list v xs).
   Proof. iDestruct 1 as (xs) "[Hl HT]". iExists _. by iFrame. Qed.
-  Definition find_in_context_find_list_list_inst :=
-    [instance find_in_context_find_list_list with FICSyntactic].
-  Global Existing Instance find_in_context_find_list_list_inst | 1.
+  Definition find_list_inst :=
+    [instance find_list with FICSyntactic].
+  Global Existing Instance find_list_inst | 1.
+
+  Lemma find_list_points_to v G:
+    find_in_context (FindList v) G :-
+      pattern: v2, v ↦ v2; return G (v ↦ v2).
+  Proof. iDestruct 1 as (?) "[Hl HT]". iExists _. by iFrame. Qed.
+  Definition find_list_points_to_inst :=
+    [instance find_list_points_to with FICSyntactic].
+  Global Existing Instance find_list_points_to_inst | 10.
 
   Lemma subsume_list_list A v xs1 xs2 G :
     subsume (is_list v xs1) (λ x : A, is_list v (xs2 x)) G :-
@@ -657,37 +567,50 @@ Section proofs.
   Definition subsume_list_list_inst := [instance subsume_list_list].
   Global Existing Instance subsume_list_list_inst.
 
+  Lemma subsume_points_to_list A vl v xs G :
+    subsume (vl ↦ v) (λ x : A, is_list vl (xs x)) G :-
+     ∃ x v1 v2 xs',
+     exhale ⌜v = (v1, v2)%V⌝ ∗ is_list v2 xs' ∗ ⌜xs x = v1 :: xs'⌝;
+     return G x.
+  Proof.
+    liTUnfold. iIntros "[% [% [% [% [[-> [Hl %Hxs]] ?]]]]] ?".
+    iExists _. iFrame. rewrite Hxs is_list_cons. iExists _. iFrame.
+  Qed.
+  Definition subsume_points_to_list_inst := [instance subsume_points_to_list].
+  Global Existing Instance subsume_points_to_list_inst.
+
+
   Lemma cons_correct :
-    ⊢ fn_spec cons_code (val * list val)
+    ⊢ fn_ok cons_code (val * list val)
       (λ '(x, xs) a, ∃ v, ⌜a = (x, v)%V⌝ ∗ is_list v xs)
       (λ '(x, xs) r, is_list r (x :: xs)).
   Proof.
-    iStartProof. iApply prove_fn_spec_rec. simpl.
+    iStartProof. iApply prove_fn_ok. simpl.
     repeat liTStep; liShow.
   Qed.
 
-  Lemma build_list_correct empty cons :
-    fn_spec empty unit (λ _ _, True) (λ _ v, is_list v []) -∗
-    fn_spec cons (val * list val) (λ '(x, xs) a, ∃ v, ⌜a = (x, v)%V⌝ ∗ is_list v xs) (λ '(x, xs) r, is_list r (x :: xs)) -∗
-    fn_spec (build_list_code empty cons) unit (λ _ _, True) (λ _ v, is_list v [ #2; #1 ]).
+  Lemma mklist_correct empty cons :
+    fn_ok empty unit (λ _ _, True) (λ _ v, is_list v []) -∗
+    fn_ok cons (val * list val) (λ '(x, xs) a, ∃ v, ⌜a = (x, v)%V⌝ ∗ is_list v xs) (λ '(x, xs) r, is_list r (x :: xs)) -∗
+    fn_ok (mklist_code empty cons) unit (λ _ _, True) (λ _ v, is_list v [ #2; #1 ]).
   Proof.
-    iStartProof. iIntros "#? #?". iApply prove_fn_spec_rec. simpl.
+    iStartProof. iIntros "#? #?". iApply prove_fn_ok. simpl.
     repeat liTStep; liShow.
   Qed.
 
-  (** ** destructing linked lists *)
+  (** *** Destructing linked lists *)
   Definition head_code : val := λ: "l", Fst (! "l").
 
   Lemma head_correct :
-    ⊢ fn_spec head_code (val * list val)
+    ⊢ fn_ok head_code (val * list val)
       (λ '(va, xs) v, ⌜v = va⌝ ∗ is_list v xs ∗ ⌜0 < length xs⌝)
       (λ '(va, xs) r, ⌜head xs = Some r⌝ ∗ is_list va xs).
   Proof.
-    iStartProof. iApply prove_fn_spec_rec. simpl.
+    iStartProof. iApply prove_fn_ok. simpl.
     repeat liTStep; liShow.
   Abort.
 
-  Lemma find_in_context_find_pointsto_list v G:
+  Lemma find_points_to_list v G:
     find_in_context (FindPointsTo v) G :-
       pattern: xs, is_list v xs;
       exhale ⌜0 < length xs⌝;
@@ -700,46 +623,30 @@ Section proofs.
     iDestruct "Hl" as (?) "[??]". iExists _ => /=. iFrame.
     iApply "HG". by iFrame.
   Qed.
-  Definition find_in_context_find_pointsto_list_inst :=
-    [instance find_in_context_find_pointsto_list with FICSyntactic].
-  Global Existing Instance find_in_context_find_pointsto_list_inst | 10.
+  Definition find_points_to_list_inst :=
+    [instance find_points_to_list with FICSyntactic].
+  Global Existing Instance find_points_to_list_inst | 10.
 
   Lemma head_correct :
-    ⊢ fn_spec head_code (val * list val)
+    ⊢ fn_ok head_code (val * list val)
       (λ '(va, xs) v, ⌜v = va⌝ ∗ is_list v xs ∗ ⌜0 < length xs⌝)
       (λ '(va, xs) r, ⌜head xs = Some r⌝ ∗ is_list va xs).
   Proof.
-    iStartProof. iApply prove_fn_spec_rec. simpl.
+    iStartProof. iApply prove_fn_ok. simpl.
     repeat liTStep; liShow.
-    Unshelve. all: unshelve_sidecond.
   Qed.
 
-  (** testing alternative version of expr_ok_load, works thanks to
-  [find_in_context_find_pointsto_list] *)
-  Lemma expr_ok_load_alt e G :
-    expr_ok (Load e) G :-
-      v ← {expr_ok e};
-      ∃ vl, exhale (v ↦ vl);
-      inhale (v ↦ vl);
-      return G vl.
-  Proof.
-    liTUnfold. iIntros "HWP". wp_bind (e).
-    iApply (wp_wand with "HWP"). iIntros (?) "[% [? HWP]]/=".
-    by iApply (wp_load with "[$]").
-  Qed.
-  Definition expr_ok_load_alt_inst := [instance expr_ok_load_alt].
-
+  (** This tests that using [expr_load_alt] instead of [expr_load] works as well. *)
   Section alt.
-    Local Existing Instance expr_ok_load_alt_inst | 0.
+    Local Existing Instance expr_load_alt_inst | 0.
 
     Lemma head_correct_alt :
-      ⊢ fn_spec head_code (val * list val)
+      ⊢ fn_ok head_code (val * list val)
         (λ '(va, xs) v, ⌜v = va⌝ ∗ is_list v xs ∗ ⌜0 < length xs⌝)
         (λ '(va, xs) r, ⌜head xs = Some r⌝ ∗ is_list va xs).
     Proof.
-      iStartProof. iApply prove_fn_spec_rec. simpl.
+      iStartProof. iApply prove_fn_ok. simpl.
       repeat liTStep; liShow.
-      Unshelve. all: unshelve_sidecond.
     Qed.
   End alt.
 
@@ -750,22 +657,11 @@ Section proofs.
         let: "r" := "f" (Snd (! "l")) in
         "r" + #1.
 
-  Lemma length_correct :
-    ⊢ fn_spec length_code (val * list val)
-      (λ '(va, xs) v, ⌜v = va⌝ ∗ is_list v xs)
-      (λ '(va, xs) r, ⌜r = #(length xs)⌝ ∗ is_list va xs).
-  Proof.
-    iStartProof. iApply prove_fn_spec_rec. simpl.
-    repeat liTStep; liShow.
-  Abort.
-
-  (* TODO: mention that there are also other approaches to handle this
-  overloading, see RefinedC and Islaris *)
   Definition FindIsNULL (v : val) :=
   {| fic_A := bool; fic_Prop b := (⌜b ↔ v = #NULL⌝ : iProp Σ)%I |}.
   Global Typeclasses Opaque FindIsNULL.
 
-  Lemma binop_ok_eq_val_NULL v G :
+  Lemma binop_eq_NULL v G :
     binop_ok EqOp v #NULL G :-
       b ← find_in_context (FindIsNULL v);
       return G #b.
@@ -774,28 +670,30 @@ Section proofs.
     wp_pure _. 2: by iFrame.
     simpl. repeat case_match; destruct b; naive_solver.
   Qed.
-  Definition binop_ok_eq_val_NULL_inst := [instance binop_ok_eq_val_NULL].
-  Global Existing Instance binop_ok_eq_val_NULL_inst.
+  Definition binop_eq_NULL_inst := [instance binop_eq_NULL].
+  Global Existing Instance binop_eq_NULL_inst.
 
-  Lemma length_correct :
-    ⊢ fn_spec length_code (val * list val)
-      (λ '(va, xs) v, ⌜v = va⌝ ∗ is_list v xs)
-      (λ '(va, xs) r, ⌜r = #(length xs)⌝ ∗ is_list va xs).
+  Lemma find_null_points_to v G:
+    find_in_context (FindIsNULL v) G :-
+      pattern: v2, v ↦ v2;
+      inhale v ↦ v2;
+      return G false.
   Proof.
-    iStartProof. iApply prove_fn_spec_rec. simpl.
-    repeat liTStep; liShow.
-  Abort.
+    liTUnfold.
+    iDestruct 1 as (?) "[Hl HG]".
+    unfold val_mapsto. iDestruct "Hl" as (? ->) "?".
+    iExists false => /=. iSplit; [naive_solver|]. iApply "HG".
+    iExists _. by iFrame.
+  Qed.
+  Definition find_null_points_to_inst :=
+    [instance find_null_points_to with FICSyntactic].
+  Global Existing Instance find_null_points_to_inst | 10.
 
-  Lemma find_in_context_find_isnull_list v G:
+  Lemma find_null_list v G:
     find_in_context (FindIsNULL v) G :-
       pattern: xs, is_list v xs;
       inhale is_list v xs;
       return G (bool_decide (xs = [])).
-      (* and: *)
-      (* | inhale ⌜xs = []⌝ ∗ ⌜v = #NULL⌝; return G true *)
-      (* | ∀ (l : loc) v' x xs', *)
-      (*   inhale ⌜v = #l⌝ ∗ ⌜xs = x::xs'⌝ ∗ l ↦ (v', x)%V ∗ is_list v' xs'; *)
-      (*   return G false. *)
   Proof.
     liTUnfold.
     iDestruct 1 as (?) "[Hl HG]".
@@ -803,23 +701,23 @@ Section proofs.
     iExists _. iDestruct ("HG" with "Hl") as "$".
     simpl. iPureIntro. naive_solver.
   Qed.
-  Definition find_in_context_find_isnull_list_inst :=
-    [instance find_in_context_find_isnull_list with FICSyntactic].
-  Global Existing Instance find_in_context_find_isnull_list_inst | 10.
+  Definition find_null_list_inst :=
+    [instance find_null_list with FICSyntactic].
+  Global Existing Instance find_null_list_inst | 10.
 
   Lemma length_correct :
-    ⊢ fn_spec length_code (val * list val)
+    ⊢ fn_ok length_code (val * list val)
       (λ '(va, xs) v, ⌜v = va⌝ ∗ is_list v xs)
       (λ '(va, xs) r, ⌜r = #(length xs)⌝ ∗ is_list va xs).
   Proof.
-    iStartProof. iApply prove_fn_spec_rec. simpl.
+    iStartProof. iApply prove_fn_ok. simpl.
     repeat liTStep; liShow.
     Unshelve. all: unshelve_sidecond.
     - by destruct x0.
     - do 2 f_equal. lia.
   Qed.
 
-  (** ** find example *)
+  (** ** 7. Verifying higher-order functions using Lithium *)
 
   Definition find_code : val := rec: "f" "x" :=
       let: "l" := Fst "x" in
@@ -831,11 +729,11 @@ Section proofs.
       else
         "f" (Snd (! "l"), "cb").
 
-  Global Instance related_to_fnspec A v X pre post : RelatedTo (λ x : A, fn_spec v X (pre x) (post x)) | 100
-    := {| rt_fic := FindFnSpec v |}.
+  Global Instance related_to_fn_ok A v X pre post : RelatedTo (λ x : A, fn_ok v X (pre x) (post x)) | 100
+    := {| rt_fic := FindFnOk v |}.
 
-  Lemma subsume_fnspec_fnspec A v X pre1 pre2 post1 post2 G :
-    subsume (fn_spec v X pre1 post1) (λ x : A, fn_spec v X pre2 post2) G :-
+  Lemma subsume_fn A v X pre1 pre2 post1 post2 G :
+    subsume (fn_ok v X pre1 post1) (λ x : A, fn_ok v X pre2 post2) G :-
      and:
      | drop_spatial;
        ∀ x v, inhale pre2 x v;
@@ -845,7 +743,7 @@ Section proofs.
        done
      | ∃ x, return G x.
   Proof.
-    liTUnfold. iIntros "[#Hsub [% ?]] Hfn". iExists _. iFrame. unfold fn_spec.
+    liTUnfold. iIntros "[#Hsub [% ?]] Hfn". iExists _. iFrame. unfold fn_ok.
     iDestruct "Hfn" as "#[%[%[%[-> Hwp]]]]".
     iModIntro. iExists _, _, _. iSplit; [done|].
     iIntros (??) "?". iDestruct ("Hsub" with "[$]") as (?) "[Hpre1 HWP]".
@@ -853,15 +751,15 @@ Section proofs.
     iApply (wp_wand with "Hwp"). iIntros (?) "Hpost1".
     iDestruct ("HWP" with "Hpost1") as "[$ _]".
   Qed.
-  Definition subsume_fnspec_fnspec_inst := [instance subsume_fnspec_fnspec].
-  Global Existing Instance subsume_fnspec_fnspec_inst.
+  Definition subsume_fn_inst := [instance subsume_fn].
+  Global Existing Instance subsume_fn_inst.
 
   Lemma find_correct (P : val → bool) :
-    ⊢ fn_spec find_code (val * list val)
-      (λ '(va, xs) v, ∃ cb, ⌜v = (va, cb)%V⌝ ∗ is_list va xs ∗ fn_spec cb val (λ va v, ⌜v = va⌝ ∗ ⌜v ∈ xs⌝) (λ va v, ⌜v = #(P va)⌝))
+    ⊢ fn_ok find_code (val * list val)
+      (λ '(va, xs) v, ∃ cb, ⌜v = (va, cb)%V⌝ ∗ is_list va xs ∗ fn_ok cb val (λ va v, ⌜v = va⌝ ∗ ⌜v ∈ xs⌝) (λ va v, ⌜v = #(P va)⌝))
       (λ '(va, xs) r, ⌜r = #(bool_decide (Exists P xs))⌝ ∗ is_list va xs).
   Proof.
-    iStartProof. iApply prove_fn_spec_rec. simpl.
+    iStartProof. iApply prove_fn_ok. simpl.
     repeat liTStep; liShow.
     Unshelve. all: unshelve_sidecond.
     - by destruct x0.
@@ -874,35 +772,36 @@ Section proofs.
   Definition find_client_code (find : val) : val := λ: "x",
       find ("x", (λ: "y", "y" = #1)%V).
 
-  Lemma simplify_goal_fn_spec_rec X f a e pre post G :
-    simplify_goal (fn_spec (RecV f a e) X pre post) G :-
+  Lemma simpl_fn X f a e pre post G :
+    simplify_goal (fn_ok (RecV f a e) X pre post) G :-
       and:
       | drop_spatial;
         ∀ (x : X) v vr,
         inhale pre x v;
-        inhale fn_spec vr X pre post;
+        inhale fn_ok vr X pre post;
         v' ← {expr_ok (subst' a v (subst' f vr e))};
         exhale post x v';
         done
       | return G.
-  Proof. liTUnfold. iIntros "[Hsub $]". by iApply prove_fn_spec_rec. Qed.
-  Definition simplify_goal_fn_spec_rec_inst := [instance simplify_goal_fn_spec_rec with 50%N].
-  Global Existing Instance simplify_goal_fn_spec_rec_inst.
+  Proof. liTUnfold. iIntros "[Hsub $]". by iApply prove_fn_ok. Qed.
+  Definition simpl_fn_inst := [instance simpl_fn with 50%N].
+  Global Existing Instance simpl_fn_inst.
 
-Global Instance simpl_fmap_elem_of {A B} x (xs : list A) (f : A → B) :
-  SimplBoth (x ∈ f <$> xs) (∃ y, x = f y ∧ y ∈ xs).
-Proof. unfold SimplBoth. by set_unfold. Qed.
+  (* TODO: upstream? *)
+  Global Instance simpl_fmap_elem_of {A B} x (xs : list A) (f : A → B) :
+    SimplBoth (x ∈ f <$> xs) (∃ y, x = f y ∧ y ∈ xs).
+  Proof. unfold SimplBoth. by set_unfold. Qed.
 
   Lemma find_client_correct find :
-    fn_spec find (val * list val)
-      (λ '(va, xs) v, ∃ cb, ⌜v = (va, cb)%V⌝ ∗ is_list va xs ∗ fn_spec cb val (λ va v, ⌜v = va⌝ ∗ ⌜v ∈ xs⌝) (λ va v, ⌜v = #(bool_decide (va = #1))⌝))
+    fn_ok find (val * list val)
+      (λ '(va, xs) v, ∃ cb, ⌜v = (va, cb)%V⌝ ∗ is_list va xs ∗ fn_ok cb val (λ va v, ⌜v = va⌝ ∗ ⌜v ∈ xs⌝) (λ va v, ⌜v = #(bool_decide (va = #1))⌝))
       (λ '(va, xs) r, ⌜r = #(bool_decide (Exists (λ x, (bool_decide (x = #1))) xs))⌝ ∗ is_list va xs)
     -∗
-       fn_spec (find_client_code find) (val * list Z)
+       fn_ok (find_client_code find) (val * list Z)
       (λ '(va, xs) v, ⌜v = va⌝ ∗ is_list va (LitV <$> (LitInt <$> xs)))
       (λ '(va, xs) r, ⌜r = #(bool_decide (1 ∈ xs))⌝ ∗ is_list va (LitV <$> (LitInt <$> xs))).
   Proof.
-    iStartProof. iIntros "#?". iApply prove_fn_spec_rec. simpl.
+    iStartProof. iIntros "#?". iApply prove_fn_ok. simpl.
     repeat liTStep; liShow.
     Unshelve. all: unshelve_sidecond.
     - repeat case_bool_decide; naive_solver.
