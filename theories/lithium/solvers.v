@@ -75,6 +75,7 @@ Ltac normalize_and_simpl_impl handle_exist :=
     | |- (_ = _) → _ =>
         check_injection_hook;
         let Hi := fresh "Hi" in move => Hi; injection Hi; clear Hi
+    | |- False → _ => case
     | |- ?P → _ => assert_is_not_trivial P; let H := fresh "H" in intros H; subst
     | |- _ => move => _
     end in

@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "refinedc.h"
+#include "assume.h"
 // Random tests.
 
 [[rc::returns("void")]]
@@ -33,15 +34,19 @@ int return1(){
 }
 
 [[rc::requires("False")]]
-int unreachable(){
-  assert(1 == 2);
-}
+int unreachable();
 
 [[rc::returns("void")]]
 void test_ternary(){
   int local = 0;
   assert((2 ? 3 : 2) == 3);
   assert((&local != NULL ? (return1() ? return1() : unreachable()) + 3 : 2) == 4);
+}
+
+[[rc::requires("True")]]
+int test_assume(){
+  assume(false);
+  assert(1 == 2);
 }
 
 [[rc::returns("void")]]
