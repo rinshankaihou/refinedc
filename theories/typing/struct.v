@@ -453,5 +453,19 @@ Section struct.
   Proof. iIntros "[? $]". by rewrite uninit_struct_equiv. Qed.
   Definition uninit_struct_simpl_goal_inst := [instance uninit_struct_simpl_goal with 50%N].
   Global Existing Instance uninit_struct_simpl_goal_inst.
+
+  Lemma subsume_struct_uninit A β sl ly tys l T :
+    subsume (l ◁ₗ{β} struct sl tys) (λ x : A, l ◁ₗ{β} uninit ly) T :-
+      exhale ⌜ly = layout_of sl⌝;
+      x ← {subsume (l ◁ₗ{β} struct sl tys) (λ x : A,
+             l ◁ₗ{β} struct sl (uninit <$> omap (λ '(n, ly0), const ly0 <$> n) (sl_members sl)))};
+      return T x.
+  Proof.
+    iIntros "[-> Ht] Hstruct". iDestruct ("Ht" with "Hstruct") as "[%x Ht]".
+    iExists x. by rewrite uninit_struct_equiv.
+  Qed.
+  Definition subsume_struct_uninit_inst := [instance subsume_struct_uninit].
+  Global Existing Instance subsume_struct_uninit_inst.
+
 End struct.
 Global Typeclasses Opaque struct.
