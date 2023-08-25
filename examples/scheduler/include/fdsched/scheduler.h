@@ -9,7 +9,7 @@
 typedef int (*callback_fn_t)(struct message *);
 
 struct [[rc::refined_by("priority : nat")]]
-       [[rc::ptr_type("callback_t : ...")]]
+       [[rc::typedef("callback_t : ...")]]
        [[rc::constraints("{0 <= priority < 256}")]] callback {
   [[rc::field("priority @int<u8>")]]
   priority_t prio;
@@ -24,7 +24,7 @@ struct [[rc::refined_by("priority : nat")]]
 
 /* state of the non-preemptive fixed-priority scheduler */
 typedef struct [[rc::refined_by("npfp_scheduler : npfp_sched")]]
-               [[rc::ptr_type("npfp_t : ...")]]
+               [[rc::typedef("npfp_t : ...")]]
 npfp_scheduler {
   /* the registered callbacks */
   [[rc::field("array<struct_callback, {callbacks npfp_scheduler `at_type` callback_t}>")]]

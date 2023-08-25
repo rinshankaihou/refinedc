@@ -30,7 +30,7 @@ unsigned char * round_pointer_up(unsigned char *p, size_t align, size_t *size);
 
 typedef struct [[rc::parameters("entry_size: nat")]]
                [[rc::refined_by("len: nat")]]
-               [[rc::ptr_type("mpool_chunk_t : {(0 < len)%nat} @ optional<&own<...>>")]]
+               [[rc::typedef("mpool_chunk_t : {(0 < len)%nat} @ optional<&own<...>>")]]
                [[rc::exists("size : Z", "next: nat", "ly : layout")]]
                [[rc::let("local : nat = {Z.to_nat (size `quot` entry_size)}")]]
                [[rc::size("ly")]]
@@ -47,7 +47,7 @@ mpool_chunk {
 
 typedef struct [[rc::parameters("entry_size: nat")]]
                [[rc::refined_by("len: nat")]]
-               [[rc::ptr_type("mpool_entry_t : {(0 < len)%nat} @ optional<&own<...>>")]]
+               [[rc::typedef("mpool_entry_t : {(0 < len)%nat} @ optional<&own<...>>")]]
                [[rc::exists("nextlen: nat")]]
                [[rc::constraints("{len = S nextlen}")]]
                [[rc::size("{ly_with_align entry_size entry_size}")]]

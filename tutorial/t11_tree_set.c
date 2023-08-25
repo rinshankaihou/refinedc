@@ -6,7 +6,7 @@
 // https://github.com/verifast/verifast/blob/master/examples/sorted_bintree.c
 
 typedef struct [[rc::refined_by("s : {gset Z}")]]
-               [[rc::ptr_type("tree_t : {s ≠ ∅} @ optional<&own<...>>")]]
+               [[rc::typedef("tree_t : {s ≠ ∅} @ optional<&own<...>>")]]
                [[rc::exists("sl : {gset Z}", "sr : {gset Z}", "k : Z")]]
                [[rc::constraints("{s = sl ∪ {[k]} ∪ sr}", "{∀ i, i ∈ sl → i < k}",
                                  "{∀ i, i ∈ sr → k < i}")]]

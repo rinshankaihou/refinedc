@@ -24,7 +24,7 @@
 typedef struct
 [[rc::refined_by("r : btree_rfmt")]]
 // A B-tree is either a leaf (NULL) or a node (owned pointer to struct btree).
-[[rc::ptr_type(
+[[rc::typedef(
   "btree_t : ∃ (n,ks,vs,cs) : {nat * list Z * list type * list btree_rfmt}. "
   "({br_map r ≠ ∅} @ optional<&own<...>>) "
   "& {btree_invariant ORDER r n ks vs cs}"

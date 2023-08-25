@@ -13,7 +13,7 @@
 */
 
 typedef struct [[rc::refined_by("l: {list type}")]]
-               [[rc::ptr_type("list_t : {maybe2 cons l} @ optionalO<λ (ty, l). &own<...>, null>")]]
+               [[rc::typedef("list_t : {maybe2 cons l} @ optionalO<λ (ty, l). &own<...>, null>")]]
 list {
     [[rc::field("&own<ty>")]]
     void *head;

@@ -46,7 +46,7 @@ message_type_t message_identify_type(struct message* msg);
 
 /* a simple FIFO queue of messages */
 struct [[rc::refined_by("messages : {list message_data}")]]
-       [[rc::ptr_type("message_queue : ∃ p. own_constrained<tyown_constraint<p, null>, ...>")]]
+       [[rc::typedef("message_queue : ∃ p. own_constrained<tyown_constraint<p, null>, ...>")]]
     message_queue {
   [[rc::field("tyfold<{(λ data cont, &own (data @ message cont) : type) <$> messages}, place<p>>")]]
   struct message *first;

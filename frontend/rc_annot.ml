@@ -185,7 +185,7 @@ and parser ptr_kind =
   | "shr"             -> Shr
   | "frac" e:coq_expr -> Frac(e)
 
-and parser ptr_type =
+and parser typedef =
   | "&own<" ty:(type_expr `Full) ">"                 -> (Own    , ty)
   | "&shr<" ty:(type_expr `Full) ">"                 -> (Shr    , ty)
   | "&frac<" e:coq_expr "," ty:(type_expr `Full) ">" -> (Frac(e), ty)
@@ -232,7 +232,7 @@ let parser annot_parameter : (ident * coq_expr) Earley.grammar =
 let parser annot_refine : (ident * coq_expr) Earley.grammar =
   | id:ident ":" s:coq_expr
 
-let parser annot_ptr_type : (ident * type_expr) Earley.grammar =
+let parser annot_typedef : (ident * type_expr) Earley.grammar =
   | id:ident ":" ty:type_expr
 
 let parser annot_type : ident Earley.grammar =
@@ -350,7 +350,7 @@ let parser typedef : typedef Earley.grammar =
 type annot =
   | Annot_parameters   of (ident * coq_expr) list
   | Annot_refined_by   of (ident * coq_expr) list
-  | Annot_ptr_type     of (ident * type_expr)
+  | Annot_typedef      of (ident * type_expr)
   | Annot_size         of coq_expr
   | Annot_exist        of (ident * coq_expr) list
   | Annot_lets         of (ident * coq_expr option * coq_expr) list
@@ -464,7 +464,7 @@ let parse_attr : rc_attr -> annot = fun attr ->
   match id.elt with
   | "parameters"   -> many_args annot_parameter (fun l -> Annot_parameters(l))
   | "refined_by"   -> many_args annot_refine (fun l -> Annot_refined_by(l))
-  | "ptr_type"     -> single_arg annot_ptr_type (fun e -> Annot_ptr_type(e))
+  | "typedef"      -> single_arg annot_typedef (fun e -> Annot_typedef(e))
   | "size"         -> single_arg annot_size (fun e -> Annot_size(e))
   | "exists"       -> many_args annot_exist (fun l -> Annot_exist(l))
   | "let"          -> many_args annot_let (fun l -> Annot_lets(l))
@@ -613,7 +613,7 @@ type basic_struct_annot =
   ; st_lets         : (ident * coq_expr option * coq_expr) list
   ; st_constrs      : constr list
   ; st_size         : coq_expr option
-  ; st_ptr_type     : (ident * type_expr) option
+  ; st_typedef      : (ident * type_expr) option
   ; st_immovable    : bool
   ; st_unfold_order : int }
 
@@ -624,14 +624,14 @@ let default_basic_struct_annot : basic_struct_annot =
   ; st_lets         = []
   ; st_constrs      = []
   ; st_size         = None
-  ; st_ptr_type     = None
+  ; st_typedef      = None
   ; st_immovable    = false
   ; st_unfold_order = default_unfold_order }
 
 (* Decides whether the annotation on the structure should lead to the
    definition of a RefinedC type. *)
 let basic_struct_annot_defines_type : basic_struct_annot -> bool = fun annot ->
-  annot.st_refined_by <> [] || annot.st_ptr_type <> None
+  annot.st_refined_by <> [] || annot.st_typedef <> None
 
 type struct_annot =
   | SA_union
@@ -669,7 +669,7 @@ let struct_annot : rc_attr list -> struct_annot = fun attrs ->
     | (Annot_lets(l)        , None   ) -> lets := !lets @ l
     | (Annot_constraint(l)  , None   ) -> constrs := !constrs @ l
     | (Annot_size(s)        , None   ) -> check_and_set size s
-    | (Annot_ptr_type(e)    , None   ) -> check_and_set ptr e
+    | (Annot_typedef(e)     , None   ) -> check_and_set ptr e
     | (Annot_immovable      , None   ) ->
         if !immovable then error "already specified";
         immovable := true
@@ -684,7 +684,7 @@ let struct_annot : rc_attr list -> struct_annot = fun attrs ->
     | (Annot_exist(_)       , _      )
     | (Annot_constraint(_)  , _      )
     | (Annot_size(_)        , _      )
-    | (Annot_ptr_type(_)    , _      )
+    | (Annot_typedef(_)     , _      )
     | (Annot_immovable      , _      ) ->
         error "is invalid for tagged unions"
     | (_                    , _      ) ->
@@ -702,7 +702,7 @@ let struct_annot : rc_attr list -> struct_annot = fun attrs ->
     ; st_lets         = !lets
     ; st_constrs      = !constrs
     ; st_size         = !size
-    ; st_ptr_type     = !ptr
+    ; st_typedef      = !ptr
     ; st_immovable    = !immovable
     ; st_unfold_order = Option.get default_unfold_order !unfold_order }
   in

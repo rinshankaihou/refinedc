@@ -8,7 +8,7 @@
 // https://github.com/verifast/verifast/blob/master/examples/sorted_bintree.c
 
 typedef struct [[rc::refined_by("t: {tree Z}")]]
-               [[rc::ptr_type("tree_t : {node_data t} @ optionalO<λ (l,k,r). &own<...>>")]]
+               [[rc::typedef("tree_t : {node_data t} @ optionalO<λ (l,k,r). &own<...>>")]]
 tree {
   [[rc::field("l @ tree_t")]]
   struct tree* left;

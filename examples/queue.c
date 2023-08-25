@@ -4,7 +4,7 @@
 
 typedef struct [[rc::parameters("cont : type")]]
                [[rc::refined_by("ty: type")]]
-               [[rc::ptr_type("queue_elem : &own<malloced<{ly_size struct_queue_elem}, ...>>")]]
+               [[rc::typedef("queue_elem : &own<malloced<{ly_size struct_queue_elem}, ...>>")]]
 queue_elem {
   [[rc::field("&own<ty>")]]
   void *elem;
@@ -13,7 +13,7 @@ queue_elem {
 } *queue_elem_t;
 
 typedef struct [[rc::refined_by("tys: {list type}")]]
-               [[rc::ptr_type("queue : ∃ p. own_constrained<tyown_constraint<p, null>, &own<...>>")]]
+               [[rc::typedef("queue : ∃ p. own_constrained<tyown_constraint<p, null>, &own<...>>")]]
 queue {
   [[rc::field("tyfold<{(λ ty x, ty @ queue_elem x) <$> tys}, place<p>>")]]
   queue_elem_t head;

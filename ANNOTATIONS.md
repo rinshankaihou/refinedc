@@ -41,7 +41,7 @@ attached to.
 | `lemmas`       | One or more | Functions             | Argument for the Coq `apply:` tactic       |
 | `manual_proof` | Exactly one | Functions             | `<import_path> ":" <ident> "," <ident>`    |
 | `parameters`   | One or more | Functions, Structures | `<ident> ":" <coq_expr>`                   |
-| `ptr_type`     | Exactly one | Structures            | `<ident> ":" <type_expr>`                  |
+| `typedef`      | Exactly one | Structures            | `<ident> ":" <type_expr>`                  |
 | `refined_by`   | One or more | Structures            | `<ident> ":" <coq_expr>`                   |
 | `requires`     | One or more | Functions             | `<constr>`                                 |
 | `returns`      | Exactly one | Functions             | `<type_expr>`                              |
@@ -279,7 +279,7 @@ on a function, such a variable is bound in the whole specification. Similarly,
 on structures such variables are bound in the refinement type corresponding to
 the structure. (A refinement type is generated for all annotated structures.)
 
-## `rc::ptr_type`
+## `rc::typedef`
 
 This annotation only appears on structures, and it expects one argument of the
 following form.
@@ -518,7 +518,7 @@ of type `T & C` are expected to both have type `T` and to satisfy `C`.
 
 The last three type expressions constructors respectively correspond to quoted
 Coq code (interpreted as a type expression), type ellipses, and parentheses. A
-type expression ellipsis is only meaningful in a `rc::ptr_type` annotation.
+type expression ellipsis is only meaningful in a `rc::typedef` annotation.
 
 **Note on parsing priorities:** Binders always have the largest possible scope
 and refinements (i.e., `@`) binds stronger than consrtains (i.e., `&`).

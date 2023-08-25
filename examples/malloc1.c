@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <refinedc.h>
 
-typedef struct [[rc::ptr_type("freelist_t:{(0 < len)%nat} @ optional<&own<...>>")]]
+typedef struct [[rc::typedef("freelist_t:{(0 < len)%nat} @ optional<&own<...>>")]]
                [[rc::parameters("entry_size: nat")]]
                [[rc::refined_by("len: nat")]]
                [[rc::exists("nextlen : nat")]]

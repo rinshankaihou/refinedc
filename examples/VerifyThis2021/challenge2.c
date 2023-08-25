@@ -10,7 +10,7 @@
 
 typedef struct
 [[rc::refined_by("t: {tree Z}")]]
-[[rc::ptr_type("tree_t : {node_data t} @ optionalO<λ (l,k,r). &own<...>>")]]
+[[rc::typedef("tree_t : {node_data t} @ optionalO<λ (l,k,r). &own<...>>")]]
 Node {
   [[rc::field("k @ int<i32>")]] int data;
   [[rc::field("l @ tree_t")]]   struct Node *prev; // left subtree

@@ -219,7 +219,7 @@ struct hyp_memblock_region {
 struct [[rc::refined_by("pool : loc", "vmemmap : loc", "vmemmap_len : nat", "refcount : Z", "order : Z",
 						"next : {option (option Z)}")]]
        [[rc::immovable]]
-       [[rc::ptr_type("hyp_page : immovable<λ self. ...>")]]
+       [[rc::typedef("hyp_page : immovable<λ self. ...>")]]
 hyp_page {
 	[[rc::field("refcount @ int<u32>")]]
 	unsigned int refcount;
@@ -309,7 +309,7 @@ struct [[rc::refined_by("heads : {list (option (option Z))}",
 						"vmemmap : loc",
 						"range_start : Z", "range_end : Z")]]
        [[rc::immovable]]
-       [[rc::ptr_type("hyp_pool : immovable<λ self. ...>")]]
+       [[rc::typedef("hyp_pool : immovable<λ self. ...>")]]
        [[rc::constraints("[initialized \"__hyp_vmemmap\" vmemmap]")]]
        [[rc::constraints("{length pages = npages}")]]
 [[rc::exists("lid : lock_id")]] hyp_pool {

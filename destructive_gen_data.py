@@ -24,7 +24,7 @@ ANNOT_TYPE = {
     "union_tag": "annot_type",
     "unfold_int": "rule",
     "refined_by": "annot_type",
-    "ptr_type": "annot_type",
+    "typedef": "annot_type",
     "field": "annot_type",
     "size": "annot_type",
     "global": "annot",

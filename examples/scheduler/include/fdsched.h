@@ -10,7 +10,7 @@
 /* state of the non-preemptive fixed-priority scheduler */
 struct
 [[rc::refined_by("fd_scheduler : fd_sched")]]
-[[rc::ptr_type("fd_t : ...")]]
+[[rc::typedef("fd_t : ...")]]
 fd_scheduler {
   /* the file descriptors we monitor */
     [[rc::field("array_p<i32,{input_channels fd_scheduler `at_type` (int i32)},"

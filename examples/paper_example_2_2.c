@@ -16,7 +16,7 @@
 
 typedef struct
 [[rc::refined_by("s: {gmultiset nat}")]]
-[[rc::ptr_type("chunks_t:"
+[[rc::typedef("chunks_t:"
                "{s ≠ ∅} @ optional<&own<...>, null>")]]
 [[rc::exists  ("n: nat", "tail: {gmultiset nat}")]]
 [[rc::size    ("n")]]

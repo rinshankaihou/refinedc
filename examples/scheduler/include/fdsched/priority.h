@@ -16,7 +16,7 @@ typedef uint8_t priority_t;
 
 typedef struct
 [[rc::refined_by("bitmap : {list bool}")]]
-[[rc::ptr_type("prio_bitmap_t : ...")]]
+[[rc::typedef("prio_bitmap_t : ...")]]
 [[rc::constraints("{length bitmap = Z.to_nat num_priorities}")]]
 prio_bitmap
 /* a bitmap of "non-empty queue" indicators */

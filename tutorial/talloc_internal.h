@@ -3,7 +3,7 @@
 #include "talloc.h"
 
 typedef struct [[rc::refined_by("sizes : {list nat}")]]
-               [[rc::ptr_type("alloc_entry_t : {maybe2 cons sizes} @ optionalO<λ (size, l) : {(nat * _)}. &own<...>>")]]
+               [[rc::typedef("alloc_entry_t : {maybe2 cons sizes} @ optionalO<λ (size, l) : {(nat * _)}. &own<...>>")]]
                [[rc::size("{Layout size 3}")]]
                [[rc::constraints("{(8 | size)}")]] alloc_entry {
     [[rc::field("size @ int<size_t>")]]
@@ -13,7 +13,7 @@ typedef struct [[rc::refined_by("sizes : {list nat}")]]
     struct alloc_entry *next;
 }* alloc_entry_t;
 
-struct [[rc::ptr_type("alloc_state : ...")]]
+struct [[rc::typedef("alloc_state : ...")]]
        [[rc::exists("lid: lock_id")]] alloc_state {
     [[rc::field("spinlock<lid>")]]
     struct spinlock lock;

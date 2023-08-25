@@ -4,7 +4,7 @@
 
 typedef struct
   [[rc::refined_by("xs : {list Z}")]]
-  [[rc::ptr_type("list_t : {xs <> []} @ optional<&own<...>, null>")]]
+  [[rc::typedef("list_t : {xs <> []} @ optional<&own<...>, null>")]]
   [[rc::exists("y : Z", "ys : {list Z}")]]
   [[rc::constraints("{xs = y :: ys}")]]
 list_node {

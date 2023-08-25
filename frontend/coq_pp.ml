@@ -717,7 +717,7 @@ let gather_struct_fields id s =
 
 let rec pp_struct_def_np structs r annot fields ff id =
   let pp fmt = fprintf ff fmt in
-  (* Print the part that may stand for dots in case of "ptr_type". *)
+  (* Print the part that may stand for dots in case of "typedef". *)
   let pp_dots ff () =
     (* Printing of the "exists". *)
     pp "@[<v 0>";
@@ -773,10 +773,10 @@ let rec pp_struct_def_np structs r annot fields ff id =
               pp_type_expr_rec None r ff ty
             else
             let annot =
-              match annot.st_ptr_type with
-              | None    -> {annot with st_ptr_type = Some((s_id,ty))}
+              match annot.st_typedef with
+              | None    -> {annot with st_typedef = Some((s_id,ty))}
               | Some(_) ->
-              Panic.panic_no_pos "[rc::ptr_type] in nested struct [%s]." s_id
+              Panic.panic_no_pos "[rc::typedef] in nested struct [%s]." s_id
             in
             let fields = gather_struct_fields s_id s in
             pp "(%a)" (pp_struct_def_np structs Rec_none annot fields) s_id
@@ -807,7 +807,7 @@ let rec pp_struct_def_np structs r annot fields ff id =
     pp "@]"
   in
   reset_nroot_counter ();
-  match annot.st_ptr_type with
+  match annot.st_typedef with
   | None        -> pp_dots ff ()
   | Some(_, ty) -> pp_type_expr_rec (Some(pp_dots)) r ff ty
 
@@ -931,7 +931,7 @@ let pp_spec : Coq_path.t -> import list -> inlined_code ->
     (* Gather the field annotations. *)
     let fields = gather_struct_fields struct_id s in
     let id =
-      match annot.st_ptr_type with
+      match annot.st_typedef with
       | None       -> struct_id
       | Some(id,_) -> id
     in

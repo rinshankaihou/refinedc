@@ -32,7 +32,7 @@ void append(list_t *l, list_t k) {
  */
 
 typedef struct
-[[rc::ptr_type("list_t : optional<&own<...>, null>")]]
+[[rc::typedef("list_t : optional<&own<...>, null>")]]
 list_node {
   [[rc::field("int<i32>")]]
   int val;
