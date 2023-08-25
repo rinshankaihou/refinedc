@@ -16,7 +16,7 @@ Ltac unfold_common_defs :=
     ly_size, ly_with_align, ly_align_log,
   (* Integer bounds *)
     max_int, min_int, int_half_modulus, int_modulus,
-    bits_per_int, bytes_per_int,
+    it_layout, bits_per_int, bytes_per_int,
   (* Address bounds *)
     max_alloc_end, min_alloc_start, bytes_per_addr,
   (* Other byte-level definitions *)

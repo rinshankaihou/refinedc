@@ -33,6 +33,9 @@ Global Opaque rotate_nat_add rotate_nat_sub.
 
 Global Typeclasses Opaque Z.divide Z.modulo Z.div Z.shiftl Z.shiftr.
 Global Arguments min : simpl nomatch.
+(* if we don't use simpl never for mult, simpl creates big terms when
+using things like [ly_size struct_item * length ...] *)
+Global Arguments mult : simpl never.
 
 Global Arguments Z.testbit : simpl never.
 Global Arguments Z.shiftl : simpl never.
@@ -707,7 +710,8 @@ Lemma Pos_factor2_divide p :
   ((2 ^ Pos_factor2 p)%nat | Z.pos p)%Z.
 Proof.
   elim: p => //=. 1: by move => *; apply Z.divide_1_l.
-  move => p IH. rewrite -plus_n_O Pos2Z.inj_xO Nat2Z.inj_add Z.add_diag. by apply Z.mul_divide_mono_l.
+  move => p IH. rewrite !Nat.mul_succ_l Nat.mul_0_l /=.
+  rewrite Pos2Z.inj_xO Nat2Z.inj_add Z.add_diag. by apply Z.mul_divide_mono_l.
 Qed.
 
 Lemma factor2_divide n x :
@@ -744,7 +748,7 @@ Lemma keep_factor2_mult n m o:
   keep_factor2 (m * n) o = keep_factor2 m o * keep_factor2 n o.
 Proof.
   rewrite /keep_factor2 /factor2' => ??. destruct n,m => //=.
-  rewrite -Nat.pow_add_r -Pos_factor2_mult. do 2 f_equal. lia.
+  rewrite -/mult -Nat.pow_add_r -Pos_factor2_mult. do 2 f_equal. lia.
 Qed.
 
 Lemma keep_factor2_neq_0 n x:

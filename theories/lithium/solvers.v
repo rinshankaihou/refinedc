@@ -190,6 +190,8 @@ Ltac reduce_closed_Z :=
   idtac;
   reduce_closed_Z_hook;
   repeat match goal with
+  | |- context [(?a * ?b)%nat] => progress reduce_closed (a * b)%nat
+  | H : context [(?a * ?b)%nat] |- _ => progress reduce_closed (a * b)%nat
   | |- context [(?a ≪ ?b)%Z] => progress reduce_closed (a ≪ b)%Z
   | H : context [(?a ≪ ?b)%Z] |- _ => progress reduce_closed (a ≪ b)%Z
   | |- context [(?a ≫ ?b)%Z] => progress reduce_closed (a ≫ b)%Z
