@@ -1,7 +1,7 @@
 From stdpp.unstable Require Import bitblast.
 From caesium Require Import base int_type.
 
-(* least significant 1-bit *)
+(** * least significant 1-bit *)
 
 Definition is_least_significant_one (k n : Z) : Prop :=
   Z.testbit n k = true ∧ ∀ i, 0 ≤ i < k → Z.testbit n i = false.

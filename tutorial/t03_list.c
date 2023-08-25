@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <assert.h>
 #include <refinedc.h>
-#include "alloc.h"
+#include "talloc.h"
 #include "list.h"
 
 /**
@@ -37,10 +37,10 @@ bool is_empty (list_t *l) {
 
 [[rc::parameters("l : {list type}", "ty : type")]]
 [[rc::args("l @ list_t", "&own<ty>")]]
-[[rc::requires("[alloc_initialized]")]]
+[[rc::requires("[talloc_initialized]")]]
 [[rc::returns("{ty :: l} @ list_t")]]
 list_t push (list_t p, void *e) {
-    struct list *node = alloc(sizeof(struct list));
+    struct list *node = talloc(sizeof(struct list));
     node->head = e;
     node->tail = p;
     return node;
@@ -48,7 +48,7 @@ list_t push (list_t p, void *e) {
 
 [[rc::parameters("l : {list type}", "p : loc")]]
 [[rc::args("p @ &own<l @ list_t>")]]
-[[rc::requires("[alloc_initialized]")]]
+[[rc::requires("[talloc_initialized]")]]
 [[rc::returns("{maybe2 cons l} @ optionalO<λ (ty, l). &own<ty>>")]]
 [[rc::ensures("own p : {tail l} @ list_t")]]
 void *pop (list_t *p) {
@@ -58,7 +58,7 @@ void *pop (list_t *p) {
   struct list *node = *p;
   void *ret = node->head;
   *p = node->tail;
-  free(sizeof(struct list), node);
+  tfree(sizeof(struct list), node);
   return ret;
 }
 
@@ -168,9 +168,9 @@ bool member (list_t *p, size_t k) {
  [[rc::tactics("all: try by set_unfold; refined_solver.")]]
 void test() {
     list_t list = init();
-    size_t *elem1 = alloc(sizeof(size_t));
-    size_t *elem2 = alloc(sizeof(size_t));
-    size_t *elem3 = alloc(sizeof(size_t));
+    size_t *elem1 = talloc(sizeof(size_t));
+    size_t *elem2 = talloc(sizeof(size_t));
+    size_t *elem3 = talloc(sizeof(size_t));
 
     assert(is_empty(&list));
 
@@ -198,9 +198,9 @@ void test() {
     assert(*elem2 == (size_t)2);
     assert(*elem3 == (size_t)3);
 
-    free(sizeof(size_t), elem1);
-    free(sizeof(size_t), elem2);
-    free(sizeof(size_t), elem3);
+    tfree(sizeof(size_t), elem1);
+    tfree(sizeof(size_t), elem2);
+    tfree(sizeof(size_t), elem3);
 }
 
 [[rc::parameters("p : loc", "l1 : {list type}", "l2 : {list type}")]]

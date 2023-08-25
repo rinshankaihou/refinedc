@@ -1,18 +1,17 @@
 #include <refinedc.h>
-#include <alloc.h>
+#include <refinedc_malloc.h>
 #include "btree.h"
 
 //@rc::import btree_learn from refinedc.examples.btree (for proofs only)
 
 btree_t* new_btree(){
-  btree_t* t = ALLOC(sizeof(btree_t));
+  btree_t* t = xmalloc(sizeof(btree_t));
   *t = NULL;
   return t;
 }
 
 [[rc::parameters("p : loc")]]
 [[rc::args("p @ &own<btree_t>")]]
-[[rc::requires("[alloc_initialized]")]]
 [[rc::ensures("own p : null")]]
 [[rc::trust_me]] // FIXME
 void free_btree_nodes(btree_t* t){
@@ -22,13 +21,13 @@ void free_btree_nodes(btree_t* t){
     free_btree_nodes(&(*t)->children[i]);
   }
 
-  FREE(sizeof(struct btree), *t);
+  free(*t);
   *t = NULL;
 }
 
 void free_btree(btree_t* t){
   free_btree_nodes(t);
-  FREE(sizeof(btree_t), t);
+  free(t);
 }
 
 // Finds the index at which the key [k] should be inserted in the sorted array
@@ -165,7 +164,7 @@ btree_t insert_br(btree_t* node, int k, void* v, btree_t b,
   }
 
   // We need to split the node, so we allocate a new one.
-  btree_t new_node = ALLOC(sizeof(struct btree));
+  btree_t new_node = xmalloc(sizeof(struct btree));
 
   new_node->height = (*node)->height;
 
@@ -264,7 +263,6 @@ btree_t insert_br(btree_t* node, int k, void* v, btree_t b,
 [[rc::parameters("rl : btree_rfmt", "rr : btree_rfmt")]]
 [[rc::parameters("k : Z", "v : loc", "ty : type")]]
 [[rc::args("rl @ btree_t", "rr @ btree_t", "k @ int<i32>", "v @ &own<ty>")]]
-[[rc::requires("[alloc_initialized]")]]
 [[rc::requires("{br_height rl + 1 ≤ max_int i32}")]]
 [[rc::requires("{br_height rl = br_height rr}")]]
 [[rc::requires("{br_max rl = (k - 1)%Z}", "{br_min rr = (k + 1)%Z}")]]
@@ -275,7 +273,7 @@ btree_t insert_br(btree_t* node, int k, void* v, btree_t b,
 [[rc::lemmas("insert_non_empty")]]
 [[rc::trust_me]] // FIXME
 static inline btree_t btree_make_root(btree_t l, btree_t r, int k, void* v){
-  btree_t root = ALLOC(sizeof(struct btree));
+  btree_t root = xmalloc(sizeof(struct btree));
 
   if(l == NULL){
     root->height = 1;
@@ -304,8 +302,8 @@ void btree_insert(btree_t* t, int k, void* v){
   }
 
   // We remember the nodes and corresponding keys on the insertion path.
-  btree_t** path_ptrs = ALLOC(((*t)->height + 1) * sizeof(btree_t*));
-  int* path_keys = ALLOC((*t)->height * sizeof(int));
+  btree_t** path_ptrs = xmalloc(((*t)->height + 1) * sizeof(btree_t*));
+  int* path_keys = xmalloc((*t)->height * sizeof(int));
 
   path_ptrs[0] = &*t;
   int cur = 0;
@@ -354,6 +352,6 @@ void btree_insert(btree_t* t, int k, void* v){
 
   // Free the path data.
 done:
-  FREE(((*t)->height + 1) * sizeof(btree_t*), path_ptrs);
-  FREE((*t)->height * sizeof(int), path_keys);
+  free(path_ptrs);
+  free(path_keys);
 }

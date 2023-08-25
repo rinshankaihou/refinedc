@@ -1,6 +1,6 @@
 #include <stdbool.h>
 #include <refinedc.h>
-#include "alloc.h"
+#include "talloc.h"
 
 //@rc::import t08_tree_extra from refinedc.tutorial.t08_tree
 
@@ -27,10 +27,10 @@ tree_t empty(){
 
 [[rc::parameters("k : Z")]]
 [[rc::args("k @ int<i32>")]]
-[[rc::requires("[alloc_initialized]")]]
+[[rc::requires("[talloc_initialized]")]]
 [[rc::returns("{node leaf k leaf} @ tree_t")]]
 tree_t init(int key){
-  struct tree *node = alloc(sizeof(struct tree));
+  struct tree *node = talloc(sizeof(struct tree));
   node->left  = NULL;
   node->key   = key;
   node->right = NULL;
@@ -39,10 +39,10 @@ tree_t init(int key){
 
 [[rc::parameters("l : {tree Z}", "k : Z", "r : {tree Z}")]]
 [[rc::args("l @ tree_t", "k @ int<i32>", "r @ tree_t")]]
-[[rc::requires("[alloc_initialized]")]]
+[[rc::requires("[talloc_initialized]")]]
 [[rc::returns("{node l k r} @ tree_t")]]
 tree_t node(tree_t left, int key, tree_t right){
-  struct tree *node = alloc(sizeof(struct tree));
+  struct tree *node = talloc(sizeof(struct tree));
   node->left  = left;
   node->key   = key;
   node->right = right;
@@ -51,13 +51,13 @@ tree_t node(tree_t left, int key, tree_t right){
 
 [[rc::parameters("p : loc")]]
 [[rc::args("p @ &own<tree_t>")]]
-[[rc::requires("[alloc_initialized]")]]
+[[rc::requires("[talloc_initialized]")]]
 [[rc::ensures("own p : uninit<void*>")]]
 void free_tree(tree_t* t){
   if(*t != NULL){
     free_tree(&((*t)->left));
     free_tree(&((*t)->right));
-    free(sizeof(struct tree), *t);
+    tfree(sizeof(struct tree), *t);
   }
 }
 
@@ -98,7 +98,7 @@ bool member(tree_t* t, int k){
 
 [[rc::parameters("p : loc", "t : {tree Z}", "k : Z")]]
 [[rc::args("p @ &own<t @ tree_t>", "k @ int<i32>")]]
-[[rc::requires("[alloc_initialized]")]]
+[[rc::requires("[talloc_initialized]")]]
 [[rc::ensures("own p : {tree_insert k t} @ tree_t")]]
 void insert_rec(tree_t* t, int k){
   if(*t == NULL){
@@ -115,7 +115,7 @@ void insert_rec(tree_t* t, int k){
 
 [[rc::parameters("p : loc", "t : {tree Z}", "k : Z")]]
 [[rc::args("p @ &own<t @ tree_t>", "k @ int<i32>")]]
-[[rc::requires("[alloc_initialized]")]]
+[[rc::requires("[talloc_initialized]")]]
 [[rc::ensures("own p : {tree_insert k t} @ tree_t")]]
 void insert(tree_t* t, int k){
   tree_t* cur = &*t;
@@ -150,7 +150,7 @@ int tree_max(tree_t* t){
 
 [[rc::parameters("p : loc", "t : {tree Z}", "k : Z")]]
 [[rc::args("p @ &own<t @ tree_t>", "k @ int<i32>")]]
-[[rc::requires("[alloc_initialized]")]]
+[[rc::requires("[talloc_initialized]")]]
 [[rc::ensures("own p : {tree_remove k t} @ tree_t")]]
  [[rc::tactics("all: try by case_bool_decide => //; simplify_eq.")]]
 void remove(tree_t* t, int k){
@@ -167,7 +167,7 @@ void remove(tree_t* t, int k){
       (*t)->key = m;
     } else {
       tmp = (*t)->right;
-      free(sizeof(struct tree), *t);
+      tfree(sizeof(struct tree), *t);
       *t = tmp;
     }
   } else if(k < (*t)->key){
@@ -187,7 +187,7 @@ tree_t sempty(){
 
 [[rc::parameters("k : Z")]]
 [[rc::args("k @ int<i32>")]]
-[[rc::requires("[alloc_initialized]")]]
+[[rc::requires("[talloc_initialized]")]]
 [[rc::returns("{{[k]}} @ stree_t")]]
  [[rc::tactics("all: try by apply: NodeRel; try apply LeafRel; set_solver.")]]
 tree_t sinit(int key){
@@ -196,7 +196,7 @@ tree_t sinit(int key){
 
 [[rc::parameters("p : loc")]]
 [[rc::args("p @ &own<stree_t>")]]
-[[rc::requires("[alloc_initialized]")]]
+[[rc::requires("[talloc_initialized]")]]
 [[rc::ensures("own p : uninit<void*>")]]
 void sfree_tree(tree_t* t){
   free_tree(t);
@@ -214,7 +214,7 @@ bool smember(tree_t* t, int k){
 
 [[rc::parameters("p : loc", "s : {gset Z}", "k : Z")]]
 [[rc::args("p @ &own<s @ stree_t>", "k @ int<i32>")]]
-[[rc::requires("[alloc_initialized]")]]
+[[rc::requires("[talloc_initialized]")]]
 [[rc::ensures("own p : {{[k]} ∪ s} @ stree_t")]]
  [[rc::lemmas("tree_rel_insert")]]
 void sinsert(tree_t* t, int k){
@@ -223,7 +223,7 @@ void sinsert(tree_t* t, int k){
 
 [[rc::parameters("p : loc", "s : {gset Z}", "k : Z")]]
 [[rc::args("p @ &own<s @ stree_t>", "k @ int<i32>")]]
-[[rc::requires("[alloc_initialized]")]]
+[[rc::requires("[talloc_initialized]")]]
 [[rc::ensures("own p : {s ∖ {[k]}} @ stree_t")]]
  [[rc::lemmas("tree_rel_remove")]]
 void sremove(tree_t* t, int k){
@@ -231,7 +231,7 @@ void sremove(tree_t* t, int k){
 }
 
 
-[[rc::requires("[alloc_initialized]")]]
+[[rc::requires("[talloc_initialized]")]]
 [[rc::returns("{0} @ int<i32>")]]
 int main(){
   tree_t t = sempty();

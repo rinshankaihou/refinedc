@@ -1,6 +1,6 @@
 #include <stddef.h>
 #include <refinedc.h>
-#include <alloc.h>
+#include "../talloc.h"
 
 typedef struct [[rc::refined_by("xs : {list Z}")]]
 [[rc::ptr_type("list_t : {xs <> []} @ optional<&own<...>, null>")]]
@@ -34,11 +34,11 @@ void append(list_t *l, list_t k) {
   }
 }
 
-[[rc::requires("[alloc_initialized]")]]
+[[rc::requires("[talloc_initialized]")]]
 void test() {
-  struct list_node * node1 = alloc(sizeof(struct list_node));
+  struct list_node * node1 = talloc(sizeof(struct list_node));
   node1->val = 1; node1->next = NULL;
-  struct list_node * node2 = alloc(sizeof(struct list_node));
+  struct list_node * node2 = talloc(sizeof(struct list_node));
   node2->val = 2; node2->next = NULL;
   append(&node1, node2);
   if(node1 != NULL) {

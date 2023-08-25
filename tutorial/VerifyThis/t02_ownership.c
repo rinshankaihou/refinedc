@@ -1,6 +1,6 @@
 #include <stddef.h>
 #include <refinedc.h>
-#include <alloc.h>
+#include "../talloc.h"
 
 #if 0
 /* For this example we want to verify the following singly linked
@@ -54,11 +54,11 @@ void append(list_t *l, list_t k) {
 
 /* So far this looks good. What if we try to use append? */
 
-// [[rc::requires("[alloc_initialized]")]] // comment in this line to enable typechecking
+// [[rc::requires("[talloc_initialized]")]] // comment in this line to enable typechecking
 void test() {
-  struct list_node * node1 = alloc(sizeof(struct list_node));
+  struct list_node * node1 = talloc(sizeof(struct list_node));
   node1->val = 1; node1->next = NULL;
-  struct list_node * node2 = alloc(sizeof(struct list_node));
+  struct list_node * node2 = talloc(sizeof(struct list_node));
   node2->val = 2; node2->next = NULL;
 
   append(&node1, node2);
@@ -86,11 +86,11 @@ void append_2(list_t *l, list_t k) {
 
 /* Now the test function typechecks! */
 
-[[rc::requires("[alloc_initialized]")]]
+[[rc::requires("[talloc_initialized]")]]
 void test_2() {
-  struct list_node * node1 = alloc(sizeof(struct list_node));
+  struct list_node * node1 = talloc(sizeof(struct list_node));
   node1->val = 1; node1->next = NULL;
-  struct list_node * node2 = alloc(sizeof(struct list_node));
+  struct list_node * node2 = talloc(sizeof(struct list_node));
   node2->val = 2; node2->next = NULL;
 
   append_2(&node1, node2);

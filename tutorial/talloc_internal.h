@@ -1,6 +1,6 @@
 #pragma once
 #include <spinlock.h>
-#include "alloc.h"
+#include "talloc.h"
 
 typedef struct [[rc::refined_by("sizes : {list nat}")]]
                [[rc::ptr_type("alloc_entry_t : {maybe2 cons sizes} @ optionalO<λ (size, l) : {(nat * _)}. &own<...>>")]]
@@ -23,5 +23,5 @@ struct [[rc::ptr_type("alloc_state : ...")]]
 };
 
 [[rc::requires("[global_with_type \"allocator_state\" Own (uninit struct_alloc_state)]")]]
-[[rc::ensures("[alloc_initialized]")]]
-void init_alloc();
+[[rc::ensures("[talloc_initialized]")]]
+void init_talloc();

@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <refinedc.h>
-#include <alloc.h>
+#include <refinedc_malloc.h>
 
 // see https://github.com/splatlab/veribetrfs/blob/master/lib/DataStructures/MutableMapImpl.i.dfy
 // and https://github.com/splatlab/veribetrfs/blob/master/lib/DataStructures/MutableMapModel.i.dfy
@@ -44,7 +44,7 @@ struct [[rc::refined_by("mp : {gmap Z type}", "items : {list item_ref}", "count 
        [[rc::constraints("{1 < length items}", "{count = length (filter (λ x, x = Empty) items)}",
                          "{0 < count}", "{fsm_invariant mp items}")]]
 fixed_size_map {
-  [[rc::field("&own<array<struct_item, {items `at_type` item}>>")]]
+  [[rc::field("&own<malloced<{ly_size struct_item * length items}, array<struct_item, {items `at_type` item}>>>")]]
   struct item (* items)[];
 
   [[rc::field("count @ int<size_t>")]]
@@ -56,7 +56,6 @@ fixed_size_map {
 
 [[rc::parameters("m : loc", "items : {list item_ref}", "count : nat", "mp : {gmap Z type}")]]
 [[rc::args("m @ &own<{mp, items, count} @ fixed_size_map>")]]
-[[rc::requires("[alloc_initialized]")]]
 [[rc::exists("items2 : {list item_ref}", "count2: nat")]]
 [[rc::ensures("own m : {mp, items2, count2} @ fixed_size_map", "{count <= count2}", "{1 < count2}",
               "{length items <= length items2}")]]
@@ -67,7 +66,6 @@ void fsm_realloc_if_necessary(struct fixed_size_map *m);
 [[rc::args("m @ &own<uninit<struct_fixed_size_map>>")]]
 [[rc::args("len @ int<size_t>")]]
 [[rc::requires("{1 < len}", "{struct_item.(ly_size) * len + 16 ≤ max_int size_t}")]]
-[[rc::requires("[alloc_initialized]")]]
 [[rc::ensures("own m : {∅, replicate len Empty, len} @ fixed_size_map")]]
  [[rc::lemmas("fsm_invariant_init")]]
  [[rc::tactics("all: try by apply/list_subequiv_split; solve_goal.")]]
@@ -75,15 +73,15 @@ void fsm_realloc_if_necessary(struct fixed_size_map *m);
  [[rc::tactics("all: try by rewrite !replicate_O; solve_goal.")]]
 void fsm_init(struct fixed_size_map *m, size_t len) {
   size_t i;
-  void *storage = alloc_array(sizeof(struct item), len);
+  void *storage = xmalloc(sizeof(struct item) * len);
   m->length = len;
   m->items = storage;
   m->count = len;
 
   [[rc::exists("i : nat")]]
   [[rc::inv_vars("i : i @ int<size_t>")]]
-  [[rc::inv_vars("m : m @ &own<struct<struct_fixed_size_map, &own<array<struct_item," \
-                "{replicate i Empty `at_type` item ++ replicate (len - i)%nat (uninit (struct_item))}>>," \
+  [[rc::inv_vars("m : m @ &own<struct<struct_fixed_size_map, &own<malloced<{ly_size struct_item * len}, array<struct_item," \
+                "{replicate i Empty `at_type` item ++ replicate (len - i)%nat (uninit (struct_item))}>>>," \
                  "len @ int<size_t>, len @ int<size_t>>>")]]
   [[rc::constraints("{i <= len}")]]
   for(i = 0; i < len; i += 1) {
@@ -133,7 +131,6 @@ size_t fsm_probe(struct fixed_size_map *m, size_t key) {
 
 [[rc::parameters("m : loc", "mp : {gmap Z type}", "items : {list item_ref}", "count : nat", "key : Z", "ty : type")]]
 [[rc::args("m @ &own<{mp, items, count} @ fixed_size_map>", "key @ int<size_t>", "&own<ty>")]]
-[[rc::requires("[alloc_initialized]")]]
 [[rc::exists("items2 : {list item_ref}", "count2 : nat")]]
 [[rc::returns("{mp !! key} @ optionalO<λ ty. &own<ty>>")]]
 [[rc::ensures("own m : {<[key:=ty]>mp, items2, count2} @ fixed_size_map")]]
@@ -229,7 +226,7 @@ void fsm_realloc_if_necessary(struct fixed_size_map *m) {
   fsm_init(&m2, new_len);
   [[rc::exists("i : nat", "items2 : {list item_ref}", "count2 : nat")]]
   [[rc::inv_vars("i : i @ int<size_t>")]]
-  [[rc::inv_vars("m : m @ &own<struct<struct_fixed_size_map, &own<array<struct_item, {replicate i (uninit struct_item) ++ (drop i items `at_type` item)}>>, int<size_t>, {length items} @ int<size_t>>>")]]
+  [[rc::inv_vars("m : m @ &own<struct<struct_fixed_size_map, &own<malloced<{ly_size struct_item * length items}, array<struct_item, {replicate i (uninit struct_item) ++ (drop i items `at_type` item)}>>>, int<size_t>, {length items} @ int<size_t>>>")]]
   [[rc::inv_vars("m2 : {fsm_copy_entries items i, items2, count2} @ fixed_size_map")]]
   [[rc::constraints("{count + length items - i < count2}", "{i <= length items}", "{0 < count}",
                     "{length items * 2 <= length items2}", "{fsm_invariant mp items}",
@@ -240,6 +237,6 @@ void fsm_realloc_if_necessary(struct fixed_size_map *m) {
     }
     rc_unfold(m2.length);
   }
-  free_array(sizeof(struct item), m->length, m->items);
+  free(m->items);
   *m = m2;
 }

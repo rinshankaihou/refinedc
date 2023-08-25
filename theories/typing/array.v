@@ -212,6 +212,7 @@ Section array.
   Definition simplify_goal_uninit_array_inst := [instance simplify_goal_uninit_array with 50%N].
   Global Existing Instance simplify_goal_uninit_array_inst.
 
+  (* TODO: generalize this rule, maybe similar to [subsume_array_uninit]? *)
   Lemma subsume_uninit_array_replicate A l β n (ly1 : layout) ly2 T:
     (∃ x, ⌜layout_wf ly2⌝ ∗ ⌜ly1 = mk_array_layout ly2 n⌝ ∗ T x)
     ⊢ subsume (l ◁ₗ{β} uninit ly1) (λ x : A, l ◁ₗ{β} array ly2 (replicate n (uninit ly2))) T.
@@ -219,12 +220,17 @@ Section array.
   Definition subsume_uninit_array_replicate_inst := [instance subsume_uninit_array_replicate].
   Global Existing Instance subsume_uninit_array_replicate_inst.
 
-  Lemma subsume_array_replicate_uninit A l β n (ly1 : A → layout) ly2 T:
-    (∃ x, ⌜layout_wf ly2⌝ ∗ ⌜ly1 x = mk_array_layout ly2 n⌝ ∗ T x)
-    ⊢ subsume (l ◁ₗ{β} array ly2 (replicate n (uninit ly2))) (λ x : A, l ◁ₗ{β} uninit (ly1 x))  T.
-  Proof. iIntros "(%&%&%Heq&?) ?". iExists _. iFrame. by rewrite Heq array_replicate_uninit_equiv. Qed.
-  Definition subsume_array_replicate_uninit_inst := [instance subsume_array_replicate_uninit].
-  Global Existing Instance subsume_array_replicate_uninit_inst.
+  Lemma subsume_array_uninit A l β tys ly1 ly2 T:
+    (l ◁ₗ{β} array ly2 tys -∗
+      ⌜layout_wf ly2⌝ ∗ l ◁ₗ{β} array ly2 (replicate (length tys) (uninit ly2)) ∗
+      ∃ x, ⌜ly1 x = mk_array_layout ly2 (length tys)⌝ ∗ T x)
+    ⊢ subsume (l ◁ₗ{β} array ly2 tys) (λ x : A, l ◁ₗ{β} uninit (ly1 x)) T.
+  Proof.
+    iIntros "Hsub ?". iDestruct ("Hsub" with "[$]") as (?) "[? [% [%Heq ?]]]".
+    iExists _. iFrame. by rewrite Heq array_replicate_uninit_equiv.
+  Qed.
+  Definition subsume_array_uninit_inst := [instance subsume_array_uninit].
+  Global Existing Instance subsume_array_uninit_inst.
 
   Lemma subsume_array A ly1 ly2 tys1 tys2 l β T:
     (⌜ly1 = ly2⌝ ∗ ∀ id,

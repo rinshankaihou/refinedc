@@ -56,6 +56,18 @@ Definition ly_with_align (sz : nat) (align : nat) : layout := {|
   ly_align_log := factor2 align 0
 |}.
 
+(** alignment of [max_align_t]
+See https://en.cppreference.com/w/c/language/object#Alignment
+This should be consistent with the implementation in Cerberus here:
+https://github.com/rems-project/cerberus/blob/master/ocaml_frontend/ocaml_implementation.ml#L385
+*)
+Definition max_align_log : nat := 3.
+
+Definition ly_max_align (sz : nat) : layout := {|
+  ly_size := sz;
+  ly_align_log := max_align_log
+|}.
+
 Definition layout_wf (ly : layout) : Prop := (ly_align ly | ly.(ly_size)).
 
 Lemma layout_wf_mod (ly : layout) :

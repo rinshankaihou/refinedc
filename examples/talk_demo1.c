@@ -1,6 +1,6 @@
 #include <stddef.h>
 #include <refinedc.h>
-#include <alloc.h>
+#include <refinedc_malloc.h>
 
 typedef struct
 list_node {
@@ -17,9 +17,9 @@ void append(list_t *l, list_t k) {
 }
 
 void test() {
-  struct list_node * node1 = alloc(sizeof(struct list_node));
+  struct list_node * node1 = xmalloc(sizeof(struct list_node));
   node1->val = 1; node1->next = NULL;
-  struct list_node * node2 = alloc(sizeof(struct list_node));
+  struct list_node * node2 = xmalloc(sizeof(struct list_node));
   node2->val = 2; node2->next = NULL;
   append(&node1, node2);
   if(node1 != NULL) {

@@ -252,7 +252,7 @@ stats = [ {
     "progs": [ {
         "name": "Thread-safe allocator",
         "abs": "wand, padded, spinlock",
-        "stats": compute_annots(["tutorial/t04_alloc.c", "tutorial/alloc.h", "tutorial/alloc_internal.h"], global_rules)
+        "stats": compute_annots(["tutorial/t04_alloc.c", "tutorial/talloc.h", "tutorial/talloc_internal.h"], global_rules)
     }, {
         "name": "Page allocator",
         "abs": "padded",

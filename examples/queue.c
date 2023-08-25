@@ -1,10 +1,10 @@
 #include <stdbool.h>
 #include <refinedc.h>
-#include <alloc.h>
+#include <refinedc_malloc.h>
 
 typedef struct [[rc::parameters("cont : type")]]
                [[rc::refined_by("ty: type")]]
-               [[rc::ptr_type("queue_elem : &own<...>")]]
+               [[rc::ptr_type("queue_elem : &own<malloced<{ly_size struct_queue_elem}, ...>>")]]
 queue_elem {
   [[rc::field("&own<ty>")]]
   void *elem;
@@ -21,10 +21,9 @@ queue {
   queue_elem_t *tail;
 } *queue_t;
 
-[[rc::requires("[alloc_initialized]")]]
 [[rc::returns("{[]} @ queue")]]
 queue_t init_queue() {
-  queue_t queue = alloc(sizeof(struct queue));
+  queue_t queue = xmalloc(sizeof(struct queue));
   queue->head = NULL;
   queue->tail = &queue->head;
   return queue;
@@ -40,10 +39,9 @@ bool is_empty(queue_t *q) {
 
 [[rc::parameters("p : loc", "tys : {list type}", "ty : type")]]
 [[rc::args("p @ &own<{tys} @ queue>", "&own<ty>")]]
-[[rc::requires("[alloc_initialized]")]]
 [[rc::ensures("own p : {tys ++ [ty]} @ queue")]]
 void enqueue(queue_t *q, void *v) {
-  queue_elem_t elem = alloc(sizeof(struct queue_elem));
+  queue_elem_t elem = xmalloc(sizeof(struct queue_elem));
   elem->elem = v;
   elem->next = NULL;
   *(*q)->tail = elem;
@@ -52,7 +50,6 @@ void enqueue(queue_t *q, void *v) {
 
 [[rc::parameters("p : loc", "tys : {list type}")]]
 [[rc::args("p @ &own<{tys} @ queue>")]]
-[[rc::requires("[alloc_initialized]")]]
 [[rc::returns("{maybe2 cons tys} @ optionalO<λ (ty, _). &own<ty>>")]]
 [[rc::ensures("own p : {tail tys} @ queue")]]
 void *dequeue(queue_t *q) {
@@ -67,6 +64,6 @@ void *dequeue(queue_t *q) {
   } else {
     (*q)->head = elem->next;
   }
-  free(sizeof(struct queue_elem), elem);
+  free(elem);
   return ret;
 }

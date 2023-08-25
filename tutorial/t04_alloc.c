@@ -2,13 +2,13 @@
 #include <stdbool.h>
 #include <refinedc.h>
 #include <spinlock.h>
-#include "alloc_internal.h"
+#include "talloc_internal.h"
 
  [[rc::global("alloc_state")]]
 static struct alloc_state allocator_state;
 
  [[rc::tactics("all: try by apply: has_layout_loc_trans' => //; normalize_and_simpl_goal => //; apply: keep_factor2_leq; [solve_goal|]; apply Nat.divide_sub_r; apply Nat2Z.divide; rewrite /ly_align/ly_align_log/=; solve_goal.")]]
-void *alloc(size_t size) {
+void *talloc(size_t size) {
 
   [[rc::constraints("[initialized \"allocator_state\" ()]")]]
   while(1) {
@@ -45,7 +45,7 @@ void *alloc(size_t size) {
 }
 
  [[rc::tactics("all: try by rewrite ?Nat2Z.inj_mul ?Z2Nat.id //; apply Z.divide_factor_r.")]]
-void free(size_t size, void *ptr) {
+void tfree(size_t size, void *ptr) {
   if (size < sizeof(struct alloc_entry)) {
     // Too small to add to the list
     return;
@@ -63,7 +63,7 @@ void free(size_t size, void *ptr) {
   sl_unlock(&allocator_state.lock);
 }
 
-void init_alloc() {
+void init_talloc() {
   sl_init(&allocator_state.lock);
   allocator_state.data = NULL;
 
@@ -74,11 +74,11 @@ void init_alloc() {
 }
 
  [[rc::tactics("all: try by rewrite /layout_wf -Z.mod_divide // /ly_size/ly_align/=; nia.")]]
-void *alloc_array(size_t size, size_t n) {
-  return alloc(n * size);
+void *talloc_array(size_t size, size_t n) {
+  return talloc(n * size);
 }
 
  [[rc::tactics("all: try by rewrite /layout_wf -Z.mod_divide // /ly_size/ly_align/=; nia.")]]
-void free_array(size_t size, size_t n, void *ptr) {
-  free(n * size, ptr);
+void tfree_array(size_t size, size_t n, void *ptr) {
+  tfree(n * size, ptr);
 }

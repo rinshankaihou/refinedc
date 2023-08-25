@@ -1,8 +1,8 @@
 #include <latch.h>
 #include "list.h"
-#include "alloc_internal.h"
+#include "talloc_internal.h"
 
-[[rc::global("{alloc_initialized} @ latch")]]
+[[rc::global("{talloc_initialized} @ latch")]]
 static struct latch initialized = LATCH_INIT;
 
 #define DATA_SIZE 10000
@@ -13,8 +13,8 @@ static unsigned char allocator_data[DATA_SIZE];
 [[rc::requires("global allocator_data  : uninit<{Layout (Z.to_nat 10000) 3}>")]]
 [[rc::returns("int<i32>")]]
 int main() {
-    init_alloc();
-    free(DATA_SIZE, allocator_data);
+    init_talloc();
+    tfree(DATA_SIZE, allocator_data);
     latch_release(&initialized);
 
     test();

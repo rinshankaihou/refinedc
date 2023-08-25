@@ -10,8 +10,8 @@ From refinedc.tutorial.t03_list Require Import
   generated_proof_pop generated_proof_push generated_proof_is_empty
   generated_proof_init generated_proof_member.
 From refinedc.tutorial.t04_alloc Require Import
-  generated_code generated_spec generated_proof_init_alloc
-  generated_proof_alloc generated_proof_free.
+  generated_code generated_spec generated_proof_init_talloc
+  generated_proof_talloc generated_proof_tfree.
 From refinedc.tutorial.t05_main Require Import
   generated_code generated_spec generated_proof_main generated_proof_main2.
 From refinedc.typing Require Import adequacy.
@@ -24,21 +24,21 @@ Section adequate.
   Context (addr_sl_init addr_sl_lock addr_sl_unlock
            addr_latch_wait addr_latch_release
            addr_init addr_is_empty addr_push addr_pop addr_member addr_reverse addr_test
-           addr_alloc addr_free addr_init_alloc
+           addr_talloc addr_tfree addr_init_talloc
            addr_main addr_main2 : addr).
   Definition functions  : list function := [
     impl_sl_init; impl_sl_lock; impl_sl_unlock;
 
     impl_latch_wait; impl_latch_release;
 
-    impl_init; impl_is_empty; impl_push (fn_loc addr_alloc); impl_pop (fn_loc addr_free); impl_member; impl_reverse;
-    impl_test (fn_loc addr_alloc) (fn_loc addr_free) (fn_loc addr_init) (fn_loc addr_is_empty) (fn_loc addr_member) (fn_loc addr_pop) (fn_loc addr_push) (fn_loc addr_reverse);
+    impl_init; impl_is_empty; impl_push (fn_loc addr_talloc); impl_pop (fn_loc addr_tfree); impl_member; impl_reverse;
+    impl_test (fn_loc addr_init) (fn_loc addr_is_empty) (fn_loc addr_member) (fn_loc addr_pop) (fn_loc addr_push) (fn_loc addr_reverse) (fn_loc addr_talloc) (fn_loc addr_tfree);
 
-    impl_alloc loc_allocator_state (fn_loc addr_sl_lock) (fn_loc addr_sl_unlock);
-    impl_free loc_allocator_state (fn_loc addr_sl_lock) (fn_loc addr_sl_unlock);
-    impl_init_alloc loc_allocator_state (fn_loc addr_sl_init);
+    impl_talloc loc_allocator_state (fn_loc addr_sl_lock) (fn_loc addr_sl_unlock);
+    impl_tfree loc_allocator_state (fn_loc addr_sl_lock) (fn_loc addr_sl_unlock);
+    impl_init_talloc loc_allocator_state (fn_loc addr_sl_init);
 
-    impl_main loc_allocator_data loc_initialized (fn_loc addr_free) (fn_loc addr_init_alloc) (fn_loc addr_latch_release) (fn_loc addr_test);
+    impl_main loc_allocator_data loc_initialized (fn_loc addr_init_talloc) (fn_loc addr_latch_release) (fn_loc addr_test) (fn_loc addr_tfree);
     impl_main2 loc_initialized (fn_loc addr_latch_wait) (fn_loc addr_test)
   ].
   Definition function_addrs : list addr := [
@@ -48,7 +48,7 @@ Section adequate.
 
     addr_init; addr_is_empty; addr_push; addr_pop; addr_member; addr_reverse; addr_test;
 
-    addr_alloc; addr_free; addr_init_alloc;
+    addr_talloc; addr_tfree; addr_init_talloc;
 
     addr_main; addr_main2
   ].
@@ -108,9 +108,9 @@ Section adequate.
     iAssert (
         typed_function (functions !!! 16%nat) type_of_main2 ∗
         typed_function (functions !!! 15%nat) type_of_main ∗
-        typed_function (functions !!! 14%nat) type_of_init_alloc ∗
-        typed_function (functions !!! 13%nat) type_of_free ∗
-        typed_function (functions !!! 12%nat) type_of_alloc ∗
+        typed_function (functions !!! 14%nat) type_of_init_talloc ∗
+        typed_function (functions !!! 13%nat) type_of_tfree ∗
+        typed_function (functions !!! 12%nat) type_of_talloc ∗
         typed_function (functions !!! 11%nat) type_of_test ∗
         typed_function (functions !!! 10%nat) type_of_reverse ∗
         typed_function (functions !!! 9%nat) type_of_member ∗
@@ -129,9 +129,9 @@ Section adequate.
       repeat iSplit.
       - adequacy_solve_typed_function type_main2 unfold_defs.
       - adequacy_solve_typed_function type_main unfold_defs.
-      - adequacy_solve_typed_function type_init_alloc unfold_defs.
-      - adequacy_solve_typed_function type_free unfold_defs.
-      - adequacy_solve_typed_function type_alloc unfold_defs.
+      - adequacy_solve_typed_function type_init_talloc unfold_defs.
+      - adequacy_solve_typed_function type_tfree unfold_defs.
+      - adequacy_solve_typed_function type_talloc unfold_defs.
       - adequacy_solve_typed_function type_test unfold_defs.
       - adequacy_solve_typed_function type_reverse unfold_defs.
       - adequacy_solve_typed_function type_member unfold_defs.

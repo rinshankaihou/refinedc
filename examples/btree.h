@@ -52,13 +52,11 @@ btree {
 }* btree_t;
 
 // Create a new, empty B-tree.
-[[rc::requires("[alloc_initialized]")]]
 [[rc::returns("&own<{BRroot 0%nat ∅} @ btree_t>")]]
 btree_t* new_btree();
 
 // De-allocates the memory used by a B-tree.
-[[rc::requires("[alloc_initialized]")]]
-[[rc::args("&own<btree_t>")]]
+[[rc::args("&own<malloced<{ly_size void*}, btree_t>>")]]
 void free_btree(btree_t* t);
 
 // Test if the key k is mapped in the B-tree t.
@@ -83,7 +81,6 @@ void** btree_find(btree_t* t, int k);
 [[rc::parameters("v : loc", "ty : type")]]
 [[rc::args("p @ &own<{BRroot h m} @ btree_t>")]]
 [[rc::args("k @ int<i32>", "v @ &own<ty>")]]
-[[rc::requires("[alloc_initialized]")]]
 [[rc::exists("new_h : nat")]]
 [[rc::ensures("own p : {BRroot new_h (<[k := ty]> m)} @ btree_t")]]
 void btree_insert(btree_t* t, int k, void* v);

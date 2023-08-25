@@ -1,6 +1,5 @@
 #include <stddef.h>
 #include <refinedc.h>
-#include <alloc.h>
 
 typedef struct [[rc::refined_by("xs : {list Z}")]]
 [[rc::ptr_type("list_t : {xs <> []} @ optional<&own<...>, null>")]]

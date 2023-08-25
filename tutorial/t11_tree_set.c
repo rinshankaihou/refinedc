@@ -1,6 +1,6 @@
 #include <stdbool.h>
 #include <refinedc.h>
-#include "alloc.h"
+#include "talloc.h"
 
 // In part inspired from the following example from Verifast:
 // https://github.com/verifast/verifast/blob/master/examples/sorted_bintree.c
@@ -28,11 +28,11 @@ tree_t empty(){
 
 [[rc::parameters("k : Z")]]
 [[rc::args("k @ int<size_t>")]]
-[[rc::requires("[alloc_initialized]")]]
+[[rc::requires("[talloc_initialized]")]]
 [[rc::returns("{{[k]}} @ tree_t")]]
  [[rc::tactics("all: try by set_solver.")]]
 tree_t init(size_t key){
-  struct tree *node = alloc(sizeof(struct tree));
+  struct tree *node = talloc(sizeof(struct tree));
   node->left  = NULL;
   node->key   = key;
   node->right = NULL;
@@ -41,12 +41,12 @@ tree_t init(size_t key){
 
 [[rc::parameters("sl : {gset Z}", "k : Z", "sr : {gset Z}")]]
 [[rc::args("sl @ tree_t", "k @ int<size_t>", "sr @ tree_t")]]
-[[rc::requires("[alloc_initialized]")]]
+[[rc::requires("[talloc_initialized]")]]
 [[rc::requires("{∀ i, i ∈ sl → i < k}", "{∀ i, i ∈ sr → k < i}")]]
 [[rc::returns("{sl ∪ {[k]} ∪ sr} @ tree_t")]]
  [[rc::tactics("all: try by set_solver.")]]
 tree_t node(tree_t left, size_t key, tree_t right){
-  struct tree *node = alloc(sizeof(struct tree));
+  struct tree *node = talloc(sizeof(struct tree));
   node->left  = left;
   node->key   = key;
   node->right = right;
@@ -55,13 +55,13 @@ tree_t node(tree_t left, size_t key, tree_t right){
 
 [[rc::parameters("p : loc")]]
 [[rc::args("p @ &own<tree_t>")]]
-[[rc::requires("[alloc_initialized]")]]
+[[rc::requires("[talloc_initialized]")]]
 [[rc::ensures("own p : uninit<void*>")]]
 void free_tree(tree_t* t){
   if(*t != NULL){
     free_tree(&((*t)->left));
     free_tree(&((*t)->right));
-    free(sizeof(struct tree), *t);
+    tfree(sizeof(struct tree), *t);
   }
 }
 
@@ -102,7 +102,7 @@ bool member(tree_t* t, size_t k){
 
 [[rc::parameters("p : loc", "s : {gset Z}", "k : Z")]]
 [[rc::args("p @ &own<s @ tree_t>", "k @ int<size_t>")]]
-[[rc::requires("[alloc_initialized]")]]
+[[rc::requires("[talloc_initialized]")]]
 [[rc::ensures("own p : {{[k]} ∪ s} @ tree_t")]]
  [[rc::tactics("all: try by set_unfold; solve_goal.")]]
 void insert_rec(tree_t* t, size_t k) {
@@ -121,7 +121,7 @@ void insert_rec(tree_t* t, size_t k) {
 
 [[rc::parameters("p : loc", "s : {gset Z}", "k : Z")]]
 [[rc::args("p @ &own<s @ tree_t>", "k @ int<size_t>")]]
-[[rc::requires("[alloc_initialized]")]]
+[[rc::requires("[talloc_initialized]")]]
 [[rc::ensures("own p : {{[k]} ∪ s} @ tree_t")]]
  [[rc::tactics("all: try by set_unfold; solve_goal.")]]
 void insert(tree_t* t, size_t k){
@@ -159,7 +159,7 @@ size_t tree_max(tree_t* t){
 
 [[rc::parameters("p : loc", "s : {gset Z}", "k : Z")]]
 [[rc::args("p @ &own<s @ tree_t>", "k @ int<size_t>")]]
-[[rc::requires("[alloc_initialized]")]]
+[[rc::requires("[talloc_initialized]")]]
 [[rc::ensures("own p : {s ∖ {[k]}} @ tree_t")]]
  [[rc::tactics("all: try apply Z.le_neq.")]]
  [[rc::tactics("all: try (rewrite difference_union_L !difference_union_distr_l_L !difference_diag_L !difference_disjoint_L; move: (H0 x2) (H1 x2); clear -H9).")]]
@@ -178,7 +178,7 @@ void remove(tree_t* t, size_t k){
       (*t)->key = m;
     } else {
       tmp = (*t)->right;
-      free(sizeof(struct tree), *t);
+      tfree(sizeof(struct tree), *t);
       *t = tmp;
     }
   } else if(k < (*t)->key){
@@ -188,7 +188,7 @@ void remove(tree_t* t, size_t k){
   }
 }
 
-[[rc::requires("[alloc_initialized]")]]
+[[rc::requires("[talloc_initialized]")]]
 [[rc::returns("{0} @ int<i32>")]]
 int main(){
   tree_t t = empty();
