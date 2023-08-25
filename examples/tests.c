@@ -199,6 +199,24 @@ int test_rc_assert(i) {
   return i;
 }
 
+[[rc::parameters("i : {lvar \"k\" Z}")]]
+[[rc::args("{i * 5} @ int<i32>")]]
+void test_manual_exist_arg(int i) {}
+
+[[rc::requires("True")]]
+void test_manual_exist_arg_client() {
+  int x = 8;
+
+  [[rc::constraints("[set_lvar \"k\" 4]")]]
+  rc_assert;
+  test_manual_exist_arg(20);
+
+  [[rc::exists("x_val : Z")]]
+  [[rc::inv_vars("x : x_val @ int<i32>")]]
+  [[rc::constraints("[set_lvar \"k\" x_val]")]]
+  rc_assert;
+  test_manual_exist_arg(40);
+}
 
 [[rc::parameters("n : Z", "m : Z", "o : {option Z}")]]
 [[rc::args("n @ int<i32>", "m @ int<i32>",
