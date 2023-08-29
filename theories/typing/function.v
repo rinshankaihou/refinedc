@@ -196,12 +196,13 @@ Section function.
   Definition subsume_fnptr_val_ex_inst := [instance subsume_fnptr_val_ex].
   Global Existing Instance subsume_fnptr_val_ex_inst | 5.
 
-  Lemma subsume_fnptr_loc_ex B l l1 l2  (fnty1 : A → fn_params) fnty2 `{!∀ x, ContainsEx (fnty2 x)} T:
+  (* TODO: split this in an ex and no_ex variant as for values *)
+  Lemma subsume_fnptr_loc B l l1 l2  (fnty1 : A → fn_params) fnty2 T:
     (∃ x, ⌜l1 = l2 x⌝ ∗ ⌜fnty1 = fnty2 x⌝ ∗ T x)
       ⊢ subsume (l ◁ₗ l1 @ function_ptr fnty1) (λ x : B, l ◁ₗ (l2 x)  @ function_ptr (fnty2 x))  T .
   Proof. iIntros "(%&->&->&?) ?". iExists _. iFrame. Qed.
-  Definition subsume_fnptr_loc_ex_inst := [instance subsume_fnptr_loc_ex].
-  Global Existing Instance subsume_fnptr_loc_ex_inst | 5.
+  Definition subsume_fnptr_loc_inst := [instance subsume_fnptr_loc].
+  Global Existing Instance subsume_fnptr_loc_inst | 5.
 End function.
 Arguments fn_ret_prop _ _ _ /.
 
