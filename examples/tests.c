@@ -218,6 +218,30 @@ void test_manual_exist_arg_client() {
   test_manual_exist_arg(40);
 }
 
+/** Test higher-order function where client's closure's spec doesn't
+    syntactically match expected spec. This tests that the universal and
+    existential quantifers don't have to match and that ownership can be
+    framed around. */
+[[rc::args("function_ptr<"
+           "{fn(∀ (l1, l2, n1, n2) : (loc * loc * Z * Z); l1 @ &own (n1 @ int i32), l2 @ &own (n2 @ int i32); True) → ∃ nr : Z, l1 @ &own (place l1); l1 ◁ₗ nr @ int i32 ∗ l2 ◁ₗ n2 @ int i32}>")]]
+void test_hof(void* (*f)(int *, void *)) {
+  int n1 = 0; int n2 = 0;
+  f(&n1, &n2);
+}
+
+[[rc::parameters("l1 : loc", "n : Z", "l2 : loc")]]
+[[rc::args("l1 @ &own<n @ int<i32>>", "l2 @ &own<place<l2>>")]]
+[[rc::returns("l1 @ &own<{1} @ int<i32>>")]]
+void* test_f(int *x, void *y) {
+  *x = 1;
+  return x;
+}
+
+[[rc::ensures("True")]]
+void test_hof_client() {
+  test_hof(test_f);
+}
+
 [[rc::parameters("n : Z", "m : Z", "o : {option Z}")]]
 [[rc::args("n @ int<i32>", "m @ int<i32>",
            "{m = 1} @ optional<&own<int<i32>>, null>",
