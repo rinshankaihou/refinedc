@@ -1,3 +1,5 @@
+#pragma once
+
 //@rc::inlined
 //@ Notation F_SETFL := 4 (only parsing).
 //@ Notation O_NONBLOCK := 2048 (only parsing).

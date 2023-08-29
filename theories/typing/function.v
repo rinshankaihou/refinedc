@@ -189,13 +189,19 @@ Section function.
   Definition type_call_fnptr_inst := [instance type_call_fnptr].
   Global Existing Instance type_call_fnptr_inst.
 
-  Lemma subsume_fnptr_ex B v l1 l2 (fnty1 : A → fn_params) fnty2 `{!∀ x, ContainsEx (fnty2 x)} T:
+  Lemma subsume_fnptr_val_ex B v l1 l2 (fnty1 : A → fn_params) fnty2 `{!∀ x, ContainsEx (fnty2 x)} T:
     (∃ x, ⌜l1 = l2 x⌝ ∗ ⌜fnty1 = fnty2 x⌝ ∗ T x)
     ⊢ subsume (v ◁ᵥ l1 @ function_ptr fnty1) (λ x : B, v ◁ᵥ (l2 x) @ function_ptr (fnty2 x)) T.
   Proof. iIntros "(%&->&->&?) ?". iExists _. iFrame. Qed.
-  Definition subsume_fnptr_ex_inst := [instance subsume_fnptr_ex].
-  Global Existing Instance subsume_fnptr_ex_inst | 5.
+  Definition subsume_fnptr_val_ex_inst := [instance subsume_fnptr_val_ex].
+  Global Existing Instance subsume_fnptr_val_ex_inst | 5.
 
+  Lemma subsume_fnptr_loc_ex B l l1 l2  (fnty1 : A → fn_params) fnty2 `{!∀ x, ContainsEx (fnty2 x)} T:
+    (∃ x, ⌜l1 = l2 x⌝ ∗ ⌜fnty1 = fnty2 x⌝ ∗ T x)
+      ⊢ subsume (l ◁ₗ l1 @ function_ptr fnty1) (λ x : B, l ◁ₗ (l2 x)  @ function_ptr (fnty2 x))  T .
+  Proof. iIntros "(%&->&->&?) ?". iExists _. iFrame. Qed.
+  Definition subsume_fnptr_loc_ex_inst := [instance subsume_fnptr_loc_ex].
+  Global Existing Instance subsume_fnptr_loc_ex_inst | 5.
 End function.
 Arguments fn_ret_prop _ _ _ /.
 

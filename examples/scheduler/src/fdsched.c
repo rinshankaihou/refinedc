@@ -1,13 +1,18 @@
 #include <assert.h>
 #include <errno.h>
-#include <stdlib.h>
+#include <stddef.h>
+
 
 #include "sys/system.h"
 #include "fdsched.h"
 
 #include "fcntl_specs.h"
+#include "../include/read_specs.h"
+#include "../../include/refinedc_malloc.h"
 
-[[rc::parameters("msg : {message_data}", "q : loc")]]
+//@rc::import fdsched_extra from refinedc.examples.scheduler.src.fdsched
+
+[[rc::parameters("msg : message_data", "q : loc")]]
 [[rc::args("&own<msg @ message<uninit<void*>>>")]]
 [[rc::returns("int<i32>")]]
 static
@@ -40,7 +45,7 @@ void fds_init(struct fd_scheduler* fds) {
 		   "uninit<{mk_array_layout i32 16}>,"
 		   "{0} @ int<u64>,"
 		   "struct<struct_npfp_scheduler,"
-		   "array_p<{layout_of struct_callback}, {replicate i 0%nat `at_type` callback_t}, {((Z.to_nat num_msg_types) - i)%nat}>,"
+		   "array_p<{layout_of struct_callback}, {replicate i 0%nat `at_type` callback_t}, {Z.to_nat num_msg_types}>,"
 		   "uninit<{mk_array_layout struct_message_queue (Z.to_nat num_priorities)}>,"
 		   "{replicate (Z.to_nat num_priorities) false} @ prio_bitmap_t>>>")]]
     [[rc::constraints("{i <= num_msg_types}")]]
@@ -55,7 +60,7 @@ void fds_init(struct fd_scheduler* fds) {
            "{0} @ int<u64>,"
            "struct<struct_npfp_scheduler,"
             "array<{layout_of struct_callback}, {replicate (Z.to_nat num_msg_types) 0%nat `at_type` callback_t}>,"
-            "array_p<struct_message_queue, {replicate priority (@nil message_data) `at_type`  message_queue}, {((Z.to_nat num_priorities) - priority)%nat}>,"
+            "array_p<struct_message_queue, {replicate priority (@nil message_data) `at_type`  message_queue}, {Z.to_nat num_priorities}>,"
             "{replicate (Z.to_nat num_priorities) false} @ prio_bitmap_t >>>")]]
     [[rc::constraints("{priority <= num_priorities}")]]
   for(int prio = 0; prio < NUM_PRIORITIES; prio += 1) {
@@ -99,11 +104,31 @@ void fds_set_callback(struct fd_scheduler* fds,
   fds->sched.callbacks[type] = (struct callback) {prio, f};
 }
 
-
+[[rc::parameters("fd_state : fd_sched", "p1 : loc","fd : Z", "l : {list LogEntry}","t1 : nat")]]
+[[rc::args("p1 @ &own<fd_state @ fd_t>", "fd @ int<i32>")]]
+[[rc::exists("t2 : nat")]]
+[[rc::returns("{let pending := get_pending_packets_from_given_fd t1 l fd in"
+	      "(if decide (pending = []) then -1 else 0)} @ int<i32>")]]
+//requires the time and the current log
+[[rc::requires("[curr_time t1]")]]
+[[rc::requires("[curr_log l]")]]
+//the log is only updated by read and time is also only incremented by read
+[[rc::ensures("[curr_time t2]")]]
+[[rc::ensures("{t2 = t1}")]]
+[[rc::ensures("[curr_log (read_update_log t1 l fd)]")]]
+//the scheduler state is updated to include the message (if any) returned by read
+[[rc::ensures("own p1 : {receive_one_message_func t1 l fd fd_state} @ fd_t")]]
+[[rc::tactics("by apply recvonemsg0.")]]
+[[rc::tactics("by apply recvonemsg1.")]]
+[[rc::tactics("by apply recvonemsg2.")]]
+[[rc::tactics("by apply recvonemsg3.")]]
+[[rc::tactics("by apply recvonemsg4.")]]
+[[rc::tactics("by apply recvonemsg5.")]]
 static
 int receive_one_message(struct fd_scheduler* fds, int fd) {
   /* NB: we really should use pre-allocated memory here to avoid page faults */
-  struct message *msg = malloc(sizeof(*msg));
+  //struct message *msg = malloc(sizeof(*msg));
+  struct message *msg = xmalloc(sizeof(*msg));
 
   /* we are not going to handle memory allocation failures */
   assert(msg);

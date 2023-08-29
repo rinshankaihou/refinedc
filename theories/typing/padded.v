@@ -61,9 +61,9 @@ Section padded.
     : LearnAlignment β (padded ty lyty ly) (Some (ly_align ly)).
   Next Obligation. by iIntros (β ty ly lyty l) "(_&%&_)". Qed.
 
-  Lemma simpl_padded_hyp_eq_layout l β ty ly T:
+  Lemma simpl_padded_hyp_eq_layout l β ty ly1 ly2 `{!TCFastDone (ly1.(ly_size) = ly2.(ly_size))} T:
     (l ◁ₗ{β} ty -∗ T)
-    ⊢ simplify_hyp (l ◁ₗ{β} padded ty ly ly) T.
+    ⊢ simplify_hyp (l ◁ₗ{β} padded ty ly1 ly2) T.
   Proof. iIntros "HT (?&?&?&?&?)". by iApply "HT". Qed.
   Definition simpl_padded_hyp_eq_layout_inst := [instance simpl_padded_hyp_eq_layout with 0%N].
   Global Existing Instance simpl_padded_hyp_eq_layout_inst.

@@ -39,7 +39,7 @@ void prio_level_init(prio_bitmap_t *bm) {
   [[rc::exists("i : nat")]]
   [[rc::inv_vars("lvl : i @ int<i32>")]]
   [[rc::inv_vars("bm : p @ &own<struct<struct_prio_bitmap,"
-		 "array_p<u64, {replicate i 0 `at_type` int u64}, {4%nat - i}>>>")]]
+		 "array_p<u64, {replicate i 0 `at_type` int u64}, {4%nat}>>>")]]
   [[rc::constraints("{0 <= i <= 4}")]]
   for(int lvl = 0; lvl < 4; lvl += 1) {
     bm->bits[lvl] = 0;

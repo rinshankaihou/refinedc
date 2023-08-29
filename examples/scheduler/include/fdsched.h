@@ -14,7 +14,7 @@ struct
 fd_scheduler {
   /* the file descriptors we monitor */
     [[rc::field("array_p<i32,{input_channels fd_scheduler `at_type` (int i32)},"
-		"{16%nat - (length (input_channels fd_scheduler))}>")]]
+		"{16%nat}>")]]
   int input_channels[MAX_INPUT_CHANNELS];
   [[rc::field("{length (input_channels fd_scheduler)} @ int<u64>")]]
   nfds_t num_channels;

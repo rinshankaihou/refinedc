@@ -4,7 +4,6 @@
 #include "fdsched/priority.h"
 
 //@rc::import scheduler_extra from refinedc.examples.scheduler.src.fdsched
-//@rc::context `{!PacketArrivals}
 
 typedef int (*callback_fn_t)(struct message *);
 
@@ -40,16 +39,21 @@ npfp_scheduler {
 } npfp;
 
 
-[[rc::parameters("msg : message_data", "l1 : loc", "l2 : loc", "sched_state : npfp_sched")]]
-[[rc::args("l1 @ &own<sched_state @ npfp_t>", "l2 @ &own<struct<struct_message,"
+
+[[rc::parameters("m_len : Z", "l1 : loc", "l2 : loc", "sched_state : npfp_sched", "id : packet_ID")]]
+[[rc::args("l1 @ &own<sched_state @ npfp_t>", "l2 @ &own<malloced<{ly_size struct_message}, struct<struct_message,"
 	   "uninit<u8>,"
-	   "{m_length msg} @ int<u64>,"
+	   "m_len @ int<u64>,"
 	   "uninit<void*>,"
-	   "array<u8, {get_packet_data (m_id msg) `at_type` int u8}>>>")]]
-[[rc::ensures("own l1 : {npfp_enqueue_func sched_state msg} @ npfp_t")]]
+	   "array_p<u8,{get_packet_data id `at_type` (int u8)},"
+	      "{Z.to_nat max_msg_len}>>>>")]]
+[[rc::ensures("own l1 : {let msg := {|m_type := (message_identify_type_coq id);"
+	      "m_length := m_len;"
+	      "m_id := id|} in"
+	      " npfp_enqueue_func sched_state msg} @ npfp_t")]]
 [[rc::tactics("by apply msg_type_bounded.")]]
 [[rc::tactics("apply npfp_enqueue_add_msg_to_q1. by rewrite /get_priority/update_msg_type/set_msg_type /=; simplify_option_eq.")]]
-[[rc::tactics("eapply npfp_enqueue_add_msg_to_q3; [done..|solve_goal].")]]
+[[rc::tactics("rewrite /update_msg_type /set_msg_type /get_priority/add_msg_to_q/=. simplify_option_eq. symmetry. eapply list_lookup_total_insert; solve_goal.")]]
 [[rc::tactics("eapply npfp_enqueue_create_bitmap_addmsg. by rewrite /get_priority/update_msg_type/set_msg_type/=; simplify_option_eq.")]]
 [[rc::tactics("apply npfp_enqueue_create_bitmap_addmsg2; unfold get_priority in *; simplify_option_eq; solve_goal.")]]
 static inline
@@ -67,7 +71,7 @@ void npfp_enqueue(struct npfp_scheduler *sched, struct message* msg) {
 [[rc::parameters("l1 : loc", "sched_state : npfp_sched")]]
 [[rc::args("l1 @ &own<sched_state @ npfp_t>")]]
 [[rc::ensures("own l1 : {npfp_dequeue_func sched_state} @ npfp_t")]]
-[[rc::returns("{get_highest_prio_msg sched_state} @ optionalO<λ msg. &own<msg @ message<uninit<void*>>>>")]]
+[[rc::returns("{get_highest_prio_msg sched_state} @ optionalO<λ msg. &own<malloced<{ly_size struct_message}, msg @ message<uninit<void*>>>>>")]]
 [[rc::tactics("all : try (rewrite /npfp_dequeue_func; solve_goal).")]]
 [[rc::tactics("rewrite /get_highest_prio_msg /get_highest_prio_queue /get_highest_prio_level; solve_goal.")]]
 [[rc::tactics("rewrite -(Z2Nat.id num_priorities); try solve_goal."

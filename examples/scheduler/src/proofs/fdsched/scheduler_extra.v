@@ -118,18 +118,6 @@ Proof.
   naive_solver.
 Qed.
 
-Lemma npfp_enqueue_add_msg_to_q3 sched_state msg new_q old_q prio:
-    callbacks sched_state !! (message_identify_type_coq (m_id msg)) = Some prio →
-    msg_qs sched_state !! prio = Some old_q →
-    add_msg_to_q (msg_qs sched_state) (get_priority sched_state (update_msg_type msg))
-      (update_msg_type msg) !! prio = Some new_q →
-    old_q ++ [(update_msg_type msg)] = new_q.
-Proof.
-  move => Hprio Holdq Hnewq.
-  rewrite /get_priority Hprio /update_msg_type /set_msg_type list_lookup_insert_Some Holdq in Hnewq.
-  by move : Hnewq => [[??] |?]; solve_goal.
-Qed.
-
 Lemma npfp_enqueue_create_bitmap_addmsg prio qs msg i:
   prio = i →
   list_subequiv [i] (create_bitmap qs)
