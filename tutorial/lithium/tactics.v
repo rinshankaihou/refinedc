@@ -28,19 +28,19 @@ Ltac reshape_expr e tac :=
   in go (@nil ectx_item) e.
 
 
-Ltac inv_head_step :=
+Ltac inv_base_step :=
   repeat match goal with
   | _ => progress simplify_map_eq/= (* simplify memory stuff *)
   | H : to_val _ = Some _ |- _ => apply of_to_val in H
-  | H : head_step ?e _ _ _ _ _ |- _ =>
+  | H : base_step ?e _ _ _ _ _ |- _ =>
      try (is_var e; fail 1); (* inversion yields many goals if [e] is a variable
      and should thus better be avoided. *)
      inversion H; subst; clear H
   end.
 
-Create HintDb head_step.
-Global Hint Extern 0 (head_reducible _ _) => eexists _, _, _, _; simpl : head_step.
+Create HintDb base_step.
+Global Hint Extern 0 (base_reducible _ _) => eexists _, _, _, _; simpl : base_step.
 
 (* [simpl apply] is too stupid, so we need extern hints here. *)
-Global Hint Extern 1 (head_step _ _ _ _ _ _) => econstructor : head_step.
-Global Hint Extern 0 (head_step Alloc _ _ _ _ _) => apply alloc_fresh : head_step.
+Global Hint Extern 1 (base_step _ _ _ _ _ _) => econstructor : base_step.
+Global Hint Extern 0 (base_step Alloc _ _ _ _ _) => apply alloc_fresh : base_step.

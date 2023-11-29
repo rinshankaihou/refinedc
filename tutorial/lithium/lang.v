@@ -209,38 +209,37 @@ Inductive observation :=.
 Lemma observations_empty (κs: list observation) : κs = [].
 Proof. by destruct κs as [ | [] ]. Qed.
 
-
-Inductive head_step : expr → state → list observation → expr → state → list expr → Prop :=
+Inductive base_step : expr → state → list observation → expr → state → list expr → Prop :=
   | RecS f x e σ :
-    head_step (Rec f x e) σ [] (Val $ RecV f x e) σ []
+    base_step (Rec f x e) σ [] (Val $ RecV f x e) σ []
   | BetaS f x e1 v2 e' σ :
     e' = subst' x v2 (subst' f (RecV f x e1) e1) →
-    head_step (App (Val $ RecV f x e1) (Val v2)) σ [] e' σ []
+    base_step (App (Val $ RecV f x e1) (Val v2)) σ [] e' σ []
   | BinOpS op v1 v2 v' σ :
     bin_op_eval op v1 v2 = Some v' →
-    head_step (BinOp op (Val v1) (Val v2)) σ [] (Val v') σ []
+    base_step (BinOp op (Val v1) (Val v2)) σ [] (Val v') σ []
   | UnOpS op v v' σ :
     un_op_eval op v = Some v' →
-    head_step (UnOp op (Val v)) σ [] (Val v') σ []
+    base_step (UnOp op (Val v)) σ [] (Val v') σ []
   | IfS e1 e2 σ b :
-    head_step (If (Val $ LitV $ LitBool b) e1 e2) σ [] (if b then e1 else e2) σ []
+    base_step (If (Val $ LitV $ LitBool b) e1 e2) σ [] (if b then e1 else e2) σ []
   | AssertS σ :
-    head_step (Assert (Val $ LitV $ LitBool true)) σ [] (Val $ LitV $ LitInt 0) σ []
+    base_step (Assert (Val $ LitV $ LitBool true)) σ [] (Val $ LitV $ LitInt 0) σ []
   | AllocS σ l :
     σ.(heap) !! l = None →
-    head_step (Alloc) σ
+    base_step (Alloc) σ
               []
               (Val $ LitV $ LitLoc l) (state_upd_heap <[l := LitV $ LitInt 0]> σ)
               []
   | LoadS v σ l :
     σ.(heap) !! l = Some v →
-    head_step (Load (Val $ LitV $ LitLoc l)) σ
+    base_step (Load (Val $ LitV $ LitLoc l)) σ
               []
               (Val $ v) σ
               []
   | StoreS v w σ l :
     σ.(heap) !! l = Some v →
-    head_step (Store (Val $ LitV $ LitLoc l) (Val $ w)) σ
+    base_step (Store (Val $ LitV $ LitLoc l) (Val $ w)) σ
               []
               (Val $ w) (state_upd_heap <[l := w]> σ)
               []
@@ -255,11 +254,11 @@ Lemma fill_item_val Ki e :
   is_Some (to_val (fill_item Ki e)) → is_Some (to_val e).
 Proof. intros [v ?]. destruct Ki; simplify_option_eq; eauto. Qed.
 
-Lemma val_head_stuck e1 σ1 κ e2 σ2 efs : head_step e1 σ1 κ e2 σ2 efs → to_val e1 = None.
+Lemma val_base_stuck e1 σ1 κ e2 σ2 efs : base_step e1 σ1 κ e2 σ2 efs → to_val e1 = None.
 Proof. destruct 1; naive_solver. Qed.
 
-Lemma head_ctx_step_val Ki e σ1 κ e2 σ2 efs :
-  head_step (fill_item Ki e) σ1 κ e2 σ2 efs → is_Some (to_val e).
+Lemma base_ctx_step_val Ki e σ1 κ e2 σ2 efs :
+  base_step (fill_item Ki e) σ1 κ e2 σ2 efs → is_Some (to_val e).
 Proof. destruct Ki; inversion_clear 1; simplify_option_eq; eauto. Qed.
 
 Lemma fill_item_no_val_inj Ki1 Ki2 e1 e2 :
@@ -267,10 +266,10 @@ Lemma fill_item_no_val_inj Ki1 Ki2 e1 e2 :
   fill_item Ki1 e1 = fill_item Ki2 e2 → Ki1 = Ki2.
 Proof. destruct Ki1, Ki2; naive_solver eauto with f_equal. Qed.
 
-Lemma tutorial_lang_mixin : EctxiLanguageMixin of_val to_val fill_item head_step.
+Lemma tutorial_lang_mixin : EctxiLanguageMixin of_val to_val fill_item base_step.
 Proof.
-  split; apply _ || eauto using to_of_val, of_to_val, val_head_stuck,
-    fill_item_val, fill_item_no_val_inj, head_ctx_step_val.
+  split; apply _ || eauto using to_of_val, of_to_val, val_base_stuck,
+    fill_item_val, fill_item_no_val_inj, base_ctx_step_val.
 Qed.
 
 (** Language *)
@@ -284,5 +283,5 @@ Global Program Instance loc_infinite: Infinite loc :=
 
 Lemma alloc_fresh σ :
   let l := fresh (dom σ.(heap)) in
-  head_step (Alloc) σ [] (Val $ LitV $ LitLoc l) (state_upd_heap <[l := LitV (LitInt 0)]> σ) [].
+  base_step (Alloc) σ [] (Val $ LitV $ LitLoc l) (state_upd_heap <[l := LitV (LitInt 0)]> σ) [].
 Proof. intros. apply AllocS. apply (not_elem_of_dom (D := gset loc)). apply is_fresh. Qed.

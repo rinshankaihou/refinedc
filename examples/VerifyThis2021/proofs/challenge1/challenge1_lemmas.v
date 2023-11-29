@@ -153,7 +153,7 @@ Lemma exists_snoc {A} (l : list A) :
   ∃ x, l = take (length l - 1) l ++ [x].
 Proof.
   elim/rev_ind: l => //=. { lia. }
-  move => ????. eexists _. f_equal. rewrite take_app_alt// app_length/=. lia.
+  move => ????. eexists _. f_equal. rewrite take_app_length'// app_length/=. lia.
 Qed.
 
 

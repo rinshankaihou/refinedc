@@ -38,7 +38,7 @@ Section array.
     iDestruct ("IH" $! (l offset{ly}ₗ 1) with "[//] [Hb2] Htys") as (vs') "(Hl' & Hsz & Htys)".
     { by rewrite /offset_loc Z.mul_1_r. }
     iDestruct "Hsz" as %Hsz. iExists (v' ++ vs').
-    rewrite /has_layout_val heap_mapsto_app Hszv offset_loc_1 take_app_alt // drop_app_alt // app_length Hszv Hsz.
+    rewrite /has_layout_val heap_mapsto_app Hszv offset_loc_1 take_app_length' // drop_app_length' // app_length Hszv Hsz.
     iFrame. iPureIntro. rewrite /ly_size/= -/(ly_size _). lia.
   Qed.
   Next Obligation.

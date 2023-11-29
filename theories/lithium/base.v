@@ -13,16 +13,14 @@ Export RecordSetNotations.
 
 Set Default Proof Using "Type".
 
-Export Unset Program Cases.
-Export Set Keyed Unification.
+#[export] Unset Program Cases.
+#[export] Set Keyed Unification.
 
 (* We always annotate hints with locality ([Global] or [Local]). This enforces
 that at least global hints are annotated. *)
-Export Set Warnings "+deprecated-hint-without-locality".
-Export Set Warnings "+deprecated-hint-rewrite-without-locality".
-Export Set Warnings "+deprecated-typeclasses-transparency-without-locality".
+#[export] Set Warnings "+deprecated-typeclasses-transparency-without-locality".
 
-Export Set Default Goal Selector "!".
+#[export] Set Default Goal Selector "!".
 
 (* ensure that set from RecordUpdate simplifies when it is applied to a concrete value *)
 Global Arguments set _ _ _ _ _ !_ /.
@@ -307,7 +305,7 @@ Proof.
 Qed.
 Lemma list_elem_of_insert2' {A} (l : list A) i (x1 x2 x3 : A) :
   l !! i = Some x3 → x1 ∈ l → x1 ≠ x3 → x1 ∈ <[i:=x2]> l.
-Proof. move => ???. efeed pose proof (list_elem_of_insert2 (A:=A)) as Hi; naive_solver. Qed.
+Proof. move => ???. opose proof* (list_elem_of_insert2 (A:=A)) as Hi; naive_solver. Qed.
 
 Lemma imap_fst_NoDup {A B C} l (f : nat → A → B) (g : nat → C):
   Inj eq eq g →
@@ -360,7 +358,7 @@ Proof.
   elim: i l.
   - move => [] //=??[->]. rewrite !filter_cons. by repeat (case_decide; case_bool_decide) => //=; lia.
   - move => i IH [|? l]//=?. rewrite !filter_cons. case_decide => //=; rewrite IH // Nat.sub_succ_l //.
-    repeat case_bool_decide => //; try lia. feed pose proof (length_filter_gt P l x') => //; try lia.
+    repeat case_bool_decide => //; try lia. opose proof* (length_filter_gt P l x') => //; try lia.
     by apply: elem_of_list_lookup_2.
 Qed.
 
@@ -393,8 +391,8 @@ Lemma reshape_join {A} szs (ls : list (list A)) :
   reshape szs (mjoin ls) = ls.
 Proof.
   revert ls. induction szs as [|sz szs IH]; simpl; intros ls; [by inversion 1|].
-  intros (?&?&?&?&?)%Forall2_cons_inv_r; simplify_eq/=. rewrite take_app drop_app. f_equal.
-  naive_solver.
+  intros (?&?&?&?&?)%Forall2_cons_inv_r; simplify_eq/=.
+  rewrite take_app_length drop_app_length. f_equal. naive_solver.
 Qed.
 
 Lemma lookup_eq_app_r {A} (l1 l2 suffix : list A) (i : nat) :

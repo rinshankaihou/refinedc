@@ -135,7 +135,7 @@ Section defs.
     case: Hl.
     - move: Hprobe. naive_simpl. destruct (decide (key = key')); subst; last by destruct ir'; naive_solver.
       revert select (_ ∈ _). rewrite rotate_take_insert;[|naive_solve..]. case_decide => ?; naive_solver lia.
-    - move => [? Hl]. feed pose proof (Hinv i ir0) as Hp => //.
+    - move => [? Hl]. opose proof* (Hinv i ir0) as Hp => //.
       destruct (decide (key = key')); simplify_eq. move: Hl Hprobe Hp. naive_simpl.
       revert select (_ ∈ _). rewrite rotate_take_insert;[|naive_solve..].
       case_decide; last naive_solver.
@@ -180,7 +180,7 @@ Section defs.
     move => Hinv Hprobe Hempty Hkey Hf.
     move: (Hprobe) => /probe_ref_lookup/= [Hn [?[??]]].
     move: (Hinv) => [Hinv1 Hinv2].
-    efeed pose proof fsm_invariant_lookup as Hmp => //. rewrite -Hmp in Hf.
+    opose proof* fsm_invariant_lookup as Hmp => //. rewrite -Hmp in Hf.
     destruct (item_ref_to_key ir') as [?|] eqn:Hkey'. 2: {
       destruct ir', ir => //; simpl in *; [|naive_solver..].
       by rewrite list_insert_id // partial_alter_self_alt' // Hf Hmp.
@@ -200,7 +200,7 @@ Section defs.
       + move => Hx Hin' Hx'. apply: (Hx _ _ Hx'). apply: list_elem_of_insert2' => //.
         { rewrite lookup_take // lookup_rotate_l//. }
         move => ?. subst. destruct ir; [|naive_solver..].
-        efeed pose proof (Hinv2 key' i) as Hi => //. move: Hi => /probe_ref_lookup[_ [_ [_ ]]]. by apply.
+        opose proof* (Hinv2 key' i) as Hi => //. move: Hi => /probe_ref_lookup[_ [_ [_ ]]]. by apply.
   Qed.
 
   (* used by automation *)

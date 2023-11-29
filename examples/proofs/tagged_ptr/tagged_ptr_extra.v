@@ -17,7 +17,7 @@ Proof.
   rewrite Z.add_nocarry_lxor.
   - rewrite Z.lxor_spec.
     move: (Ha n'). rewrite Z.land_spec Z.ones_spec // Z.bits_0. case_bool_decide => //.
-    rewrite andb_true_r => -> //=. by case_match.
+    by rewrite andb_true_r => -> /=.
   - apply Z.bits_inj_iff' => n'' ?. rewrite Z.land_spec Z.bits_0.
     destruct (decide (n ≤ n'')).
     + rewrite Hb ?andb_false_r //; lia.

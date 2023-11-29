@@ -87,7 +87,7 @@ Section struct.
       try iPureIntro; simplify_eq/= => //.
     all: iDestruct "Hsz" as %Hsz; iDestruct "Hf" as %Hf.
     all: iExists (v' ++ vs').
-    all: rewrite heap_mapsto_app -Hsz take_app_alt // drop_app_alt // app_length; iFrame.
+    all: rewrite heap_mapsto_app -Hsz take_app_length' // drop_app_length' // app_length; iFrame.
     all: rewrite Hszv; iFrame "Hl'".
     all: iPureIntro; eauto with lia.
     Unshelve. all: apply: MCNone.
@@ -102,7 +102,7 @@ Section struct.
     iDestruct "Htys" as "[Hty Htys]".
     move: Hlys. intros [[?[?[??]]] ?]%Forall2_cons. move: Hly => [??].
     rewrite -(take_drop (ly_size ly) v).
-    rewrite shift_loc_0 heap_mapsto_app take_app_alt ?take_length_le // ?Hv; try by cbn; lia.
+    rewrite shift_loc_0 heap_mapsto_app take_app_length' ?take_length_le // ?Hv; try by cbn; lia.
     iDestruct "Hl" as "[Hl Hl']". cbn. simplify_eq/=.
     setoid_rewrite <-shift_loc_assoc_nat.
     iSplitR "Htys Hl'".
@@ -112,7 +112,7 @@ Section struct.
         iClear "IH"; try iPureIntro; rewrite ?drop_length; try lia.
       all: try by rewrite Hv /struct_size/offset_of_idx; csimpl; lia.
       1: destruct tys; naive_solver.
-      all: rewrite drop_app_alt ?take_length// Hv; cbn; lia.
+      all: rewrite drop_app_length' ?take_length// Hv; cbn; lia.
   Qed.
   Next Obligation.
     iIntros (sl tys v ot mt st Hot). apply: mem_cast_compat_Untyped => ?.
@@ -389,14 +389,14 @@ Section struct.
         iDestruct (ty_size_eq with "Hv") as %Hsz; [done|].
         iApply ("IH" $! _ _ (v ++ v1) with "[//] [] [] [] Hf HΦ");
           try iPureIntro; rewrite ?fmap_app ?pad_struct_snoc_Some ?fmap_length //.
-        * by rewrite /= reshape_app take_app_alt ?drop_app_alt /= ?take_ge ?Hsz; subst.
+        * by rewrite /= reshape_app take_app_length' ?drop_app_length' /= ?take_ge ?Hsz; subst.
         * rewrite app_length sum_list_with_app /= Hsz -Hv/=; lia.
         * by rewrite /field_names omap_app !app_length Hf.
         * iApply (big_sepL2_app with "Hvs"). by iFrame.
       + iApply wp_value.
         iApply ("IH" $! _ _ (v ++ replicate (ly_size l) ☠%V) with "[//] [] [] [] He HΦ");
           try iPureIntro; rewrite ?fmap_app ?pad_struct_snoc_None.
-        * by rewrite reshape_app take_app_alt ?drop_app_alt /= ?take_ge ?Hsz ?replicate_length; subst.
+        * by rewrite reshape_app take_app_length' ?drop_app_length' /= ?take_ge ?Hsz ?replicate_length; subst.
         * rewrite app_length sum_list_with_app Hv replicate_length /=. lia.
         * by rewrite /field_names omap_app !app_length Hf.
         * iApply (big_sepL2_app with "Hvs"). simpl. iSplit => //. unfold bytewise at 2; simpl_type. iPureIntro.

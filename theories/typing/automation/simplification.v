@@ -33,7 +33,7 @@ Global Instance simpl_learn_aligned_to_mult l o n1 n2
   SimplImplUnsafe false ((l +ₗ o) `aligned_to` (n1 * n2)) (∃ o' : nat, o = o' * n2) | 100.
 Proof.
   unfold CanSolve in *. move => Halign.
-  feed destruct (aligned_to_mult_eq l n1 n2 o) as [x ?] => //; subst.
+  odestruct (aligned_to_mult_eq l n1 n2 o) as [x ?] => //; subst.
   eexists (Z.to_nat x). destruct x; lia.
 Qed.
 

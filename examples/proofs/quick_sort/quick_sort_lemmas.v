@@ -226,7 +226,7 @@ Proof.
   rewrite /filter_index.
   apply f_equal, map_eq => i.
   apply option_eq => x.
-  rewrite !map_filter_lookup_Some !indexed_lookup.
+  rewrite !map_lookup_filter_Some !indexed_lookup.
   split; move => [? ?]; by [ rewrite -Heq | rewrite Heq ].
 Qed.
 
@@ -260,13 +260,13 @@ Lemma range_forall_iff_Forall I {A : Type} (xs : list A) φ :
 Proof.
   rewrite /filter_in_range /filter_index Forall_forall.
   split.
-  - move => He x /unindexed_elem_of [i /map_filter_lookup_Some
+  - move => He x /unindexed_elem_of [i /map_lookup_filter_Some
       [/indexed_lookup ? ?]].
     by apply (He i x).
   - move => He i x Hi Hx.
     apply (He x).
     rewrite unindexed_elem_of. exists i.
-    by rewrite map_filter_lookup_Some indexed_lookup.
+    by rewrite map_lookup_filter_Some indexed_lookup.
 Qed.
 
 Lemma perm_insert_swap {A : Type} (l1 l2 : list A) i j x y :

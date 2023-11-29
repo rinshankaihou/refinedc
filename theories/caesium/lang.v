@@ -694,7 +694,7 @@ Lemma fill_item_no_val_inj Ki1 Ki2 e1 e2 :
 Proof.
   move: Ki1 Ki2 => [ ^ Ki1] [ ^Ki2] He1 He2 ? //; simplify_eq; try done; f_equal.
   all: destruct Ki1E, Ki2E => //; simplify_eq => //.
-  all: efeed pose proof list_expr_val_eq_inv as HEQ; [| | done |] => //; naive_solver.
+  all: opose proof* list_expr_val_eq_inv as HEQ; [| | done |] => //; naive_solver.
 Qed.
 
 Lemma expr_ctx_step_val Ki e σ1 κ e2 σ2 ef :

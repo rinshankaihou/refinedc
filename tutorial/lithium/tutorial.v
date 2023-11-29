@@ -457,7 +457,7 @@ Section proofs.
   Proof.
     destruct xs. { unfold_opaque is_list. naive_solver. }
     rewrite is_list_cons. iDestruct 1 as (?) "[Hv _]".
-    unfold val_mapsto. iDestruct "Hv" as (? ->) "?". naive_solver.
+    unfold val_pointsto. iDestruct "Hv" as (? ->) "?". naive_solver.
   Qed.
 
   (** *** Lithium rules for pairs *)
@@ -681,7 +681,7 @@ Section proofs.
   Proof.
     liTUnfold.
     iDestruct 1 as (?) "[Hl HG]".
-    unfold val_mapsto. iDestruct "Hl" as (? ->) "?".
+    unfold val_pointsto. iDestruct "Hl" as (? ->) "?".
     iExists false => /=. iSplit; [naive_solver|]. iApply "HG".
     iExists _. by iFrame.
   Qed.

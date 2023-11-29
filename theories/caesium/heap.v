@@ -311,10 +311,10 @@ Definition heap_loc_eq (l1 l2 : loc) (st : heap_state) : option bool :=
   (* Allocations are different from NULL pointers. But the comparison
   is only defined if the location is in bounds of its allocation. *)
   else if bool_decide (l1 = NULL_loc) then
-    guard (heap_state_loc_in_bounds l2 0 st);
+    guard (heap_state_loc_in_bounds l2 0 st);;
     Some false
   else if bool_decide (l2 = NULL_loc) then
-    guard (heap_state_loc_in_bounds l1 0 st);
+    guard (heap_state_loc_in_bounds l1 0 st);;
     Some false
   (* Two function pointers compare equal if their address is equal. *)
   else if bool_decide (l1.1 = ProvFnPtr ∧ l2.1 = ProvFnPtr) then
@@ -323,15 +323,15 @@ Definition heap_loc_eq (l1 l2 : loc) (st : heap_state) : option bool :=
   (* Two allocations can be compared if they are both alive and in
   bounds (it is ok if they have different provenances). Comparison
   compares the addresses. *)
-    guard (valid_ptr l1 st);
-    guard (valid_ptr l2 st);
+    guard (valid_ptr l1 st);;
+    guard (valid_ptr l2 st);;
     Some (bool_decide (l1.2 = l2.2)).
 
 Lemma heap_loc_eq_symmetric l1 l2 st:
   heap_loc_eq l1 l2 st = heap_loc_eq l2 l1 st.
 Proof.
   rewrite /heap_loc_eq.
-  repeat case_bool_decide=> //; repeat case_option_guard => //; naive_solver.
+  repeat case_bool_decide=> //; repeat case_guard => //; naive_solver.
 Qed.
 
 Lemma heap_loc_eq_NULL_NULL st:

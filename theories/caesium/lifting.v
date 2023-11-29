@@ -27,7 +27,7 @@ Global Instance wp_expr_wp `{!refinedcG Σ} : Wp (iProp Σ) expr val stuckness :
   λ s E e Φ, (WP (coerce_rtexpr e) @ s; E {{ Φ }})%I.
 
 Local Hint Extern 0 (reducible _ _) => eexists _, _, _, _; simpl : core.
-Local Hint Extern 0 (head_reducible _ _) => eexists _, _, _, _; simpl : core.
+Local Hint Extern 0 (base_reducible _ _) => eexists _, _, _, _; simpl : core.
 Local Hint Unfold heap_at : core.
 
 
@@ -53,7 +53,7 @@ Section lifting.
     ⊢ WP AllocFailed @ E {{ Φ }}.
   Proof.
     iLöb as "IH".
-    iApply wp_lift_pure_det_head_step_no_fork'; [done|by eauto using AllocFailedStep| | by iIntros "!> _"].
+    iApply wp_lift_pure_det_base_step_no_fork'; [done|by eauto using AllocFailedStep| | by iIntros "!> _"].
     move => ????? . inversion 1; simplify_eq => //.
     match goal with | H: to_rtexpr ?e = AllocFailed |- _ => destruct e; discriminate end.
   Qed.
@@ -69,7 +69,7 @@ Section lifting.
       -∗ WP e @ E {{ Φ }}.
   Proof.
     iIntros (He ?) "HWP".
-    iApply wp_lift_head_step_fupd => //.
+    iApply wp_lift_base_step_fupd => //.
     iIntros (σ1 κ κs n ?) "[[% Hhctx] Hfnctx]".
     iMod ("HWP" $! σ1 with "[$Hhctx $Hfnctx//]") as (Hstep) "HWP".
     iModIntro. iSplit. {

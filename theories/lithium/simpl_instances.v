@@ -360,7 +360,7 @@ Proof.
     rewrite -Hl1 -fmap_app fmap_length take_length_le ?take_drop //.
     rewrite -Hl1 fmap_length take_length. lia.
   - move => /fmap_app_inv [? [? [? [? Hfmap]]]]; subst.
-    by rewrite fmap_length take_app drop_app.
+    by rewrite fmap_length take_app_length drop_app_length.
 Qed.
 Global Instance simpl_fmap_assume_inj_Unsafe {A B} (l1 l2 : list A) (f : A → B) `{!AssumeInj (=) (=) f}:
   SimplAndUnsafe (f <$> l1 = f <$> l2) (l1 = l2).
@@ -422,7 +422,7 @@ Proof.
   split.
   - move => H. assert (length (l1 ++ l2) = length l1) as Hlen by by rewrite -H.
     rewrite app_length in Hlen. assert (length l2 = 0%nat) by lia. by destruct l2.
-  - move => ->. by rewrite -app_nil_end.
+  - move => ->. by rewrite app_nil_r.
 Qed.
 
 (* TODO: make something more general *)

@@ -19,7 +19,7 @@ Lemma StronglySorted_app {A} {R : A → A → Prop} `{!Transitive R} l1 l2 :
 Proof.
   move => H Hl1 Hl2. induction l1 as [|x l1 IH]; first done.
   apply StronglySorted_inv in Hl1 as [Hl1 HRx].
-  efeed pose proof IH; [ by set_solver | exact | rewrite /=; clear IH ].
+  opose proof* IH; [ by set_solver | exact | rewrite /=; clear IH ].
   constructor; first done. apply Forall_app; split; first done.
   apply Forall_forall; by set_solver.
 Qed.
@@ -375,7 +375,7 @@ Section defs.
       assert (length cs' = length ks) as Hlen3.
       { destruct (decide (length ks = length cs')); by lia. }
       clear Hlen2. rename Hlen3 into Hlen2.
-      rewrite (take_app_alt cs' [d]); last done.
+      rewrite (take_app_length' cs' [d]); last done.
       assert (⋃ (br_map <$> cs') !! k = None) as Hl.
       { apply union_list_lookup_None => m Hm.
         apply elem_of_list_lookup_1 in Hm as [j Hm].

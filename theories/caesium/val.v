@@ -144,7 +144,7 @@ Definition val_to_Z (v : val) (it : int_type) : option Z :=
 
 Definition val_to_byte_prov (v : val) : option alloc_id :=
   if v is MByte _ (Some p) :: _ then
-    guard (Forall (λ e, Is_true (if e is MByte _ (Some p') then bool_decide (p = p') else false)) v); Some p
+    guard (Forall (λ e, Is_true (if e is MByte _ (Some p') then bool_decide (p = p') else false)) v);; Some p
   else None.
 
 Definition provs_in_bytes (v : val) : list alloc_id :=
@@ -279,7 +279,7 @@ Lemma val_of_Z_go_to_prov z n p :
   val_to_byte_prov (val_of_Z_go z n p) = p.
 Proof.
   destruct n as [|n] => // _. destruct p as [a|] => //.
-  rewrite /val_to_byte_prov/=. case_option_guard as Hf => //.
+  rewrite /val_to_byte_prov/=. case_guard as Hf => //.
   contradict Hf. constructor; [by eauto|].
   move: (z `div` byte_modulus) => {}z.
   elim: n z => /=; eauto.

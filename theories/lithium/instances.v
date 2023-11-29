@@ -120,7 +120,7 @@ Lemma subsume_sep_list_insert_not_in_ig {Σ} A B id ig i x (l1 : list A) l2 (f :
     where `{!CanSolve (i ∉ ig)} :-
       exhale ⌜i < length l1⌝%nat;
       inhale f i x;
-      y ← (sep_list id A (i :: ig) l1 f) :> (λ x : B, sep_list id A (i :: ig) (l2 x) f);
+      y ← (sep_list id A (i :: ig) l1 f) :>> (λ x : B, sep_list id A (i :: ig) (l2 x) f);
       ∃ x2, exhale ⌜l2 y !! i = Some x2⌝;
       exhale f i x2;
       return T y.
