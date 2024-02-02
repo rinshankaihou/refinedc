@@ -94,7 +94,9 @@ Section proofs.
       done
     }].
   Proof.
+    (** Prepare goal and unfold assert_two. *)
     iStartProof. unfold assert_two.
+    (** Run Lithium. *)
     repeat liTStep; liShow.
     (** No progress since we have not defined the Lithium function [expr_ok] yet. *)
   Abort.
