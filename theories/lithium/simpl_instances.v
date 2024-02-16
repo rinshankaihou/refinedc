@@ -23,6 +23,12 @@ Proof. iIntros (?) "?". iExists _. iFrame. Qed.
 (* We only want syntactic equalities. *)
 Global Hint Extern 2 (SimplExist (_ = _) _) =>
    (notypeclasses refine (simpl_exist_eq _ _ _)) : typeclass_instances.
+Lemma simpl_exist_type Σ A : @SimplExist Σ Type (λ P, P A)%I.
+Proof. iIntros (?) "?". iExists _. iFrame. Qed.
+(* We only want syntactic Type. The [shelve] shelves the evar created
+for the Type, which is necessary to make TC search succeed. *)
+Global Hint Extern 2 (SimplExist Type _) =>
+   (notypeclasses refine (simpl_exist_type _ _); shelve) : typeclass_instances.
 
 
 (** * SimplImpl and SimplAnd *)

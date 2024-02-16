@@ -381,10 +381,11 @@ Tactic Notation "liExist" constr(c) := liExist c.
 Tactic Notation "liExist" := liExist true.
 
 Module liExist_tests.
-  Goal ∀ Σ, ∀ P : _ → _ → _ → _ → _ → _ → iProp Σ,
-    ⊢ ∃ (x : Z * Z) (y : nat) (z : unit) (eq : 1 + 1 = 2), ∃ (a : (N *ₗ positive *ₗ positive *ₗ unit)),
-        P x y z (a.1ₗ) (a.2ₗ) eq.
+  Goal ∀ Σ, ∀ P : _ → _ → _ → _ → _ → _ → _ → iProp Σ,
+    ⊢ ∃ (x : Z * Z) (y : nat) (z : unit) (eq : 1 + 1 = 2) (A : Type), ∃ (a : (N *ₗ positive *ₗ positive *ₗ unit)),
+        P x y z (a.1ₗ) (a.2ₗ) eq A.
     intros. iStartProof.
+    liExist.
     liExist.
     liExist.
     liExist.
@@ -395,7 +396,7 @@ Module liExist_tests.
     liExist.
     lazymatch goal with
     | |- envs_entails _ (∃ x : positive *ₗ positive *ₗ N *ₗ nat *ₗ Z *ₗ Z *ₗ (),
-               P (x.6ₗ, x.5ₗ) x.4ₗ () x.3ₗ x.2ₗ eq_refl) => idtac
+               P (x.6ₗ, x.5ₗ) x.4ₗ () x.3ₗ x.2ₗ eq_refl _) => idtac
     end.
   Abort.
 End liExist_tests.
