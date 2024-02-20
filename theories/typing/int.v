@@ -411,8 +411,7 @@ Section offsetof.
   Next Obligation.
     iIntros (s m E l ?). iDestruct 1 as (n Hn) "Hl".
     iMod (copy_shr_acc with "Hl") as (???) "(Hl&H2&H3)" => //.
-    iModIntro. iSplitR => //. iExists _, _. iFrame.
-    iModIntro. iExists _. by iFrame.
+    iModIntro. by iFrame.
   Qed.
 
   Lemma type_offset_of s m T:

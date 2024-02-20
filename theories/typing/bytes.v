@@ -103,8 +103,7 @@ Section bytewise.
     revert select (CanSolve _) => Hsz. unfold CanSolve in *.
     iDestruct 1 as (HPs) "HT". iDestruct 1 as (??? HP) "?".
     apply (Forall_impl _ _ _ HP) in HPs.
-    iDestruct ("HT" with "[//]") as (??) "?".
-    iExists _. iFrame. iExists _. iFrame. by rewrite /has_layout_val -Hsz.
+    iDestruct ("HT" with "[//]") as (??) "?". iFrame. by rewrite /has_layout_val -Hsz.
   Qed.
   Definition subsume_bytewise_eq_inst := [instance subsume_bytewise_eq].
   Global Existing Instance subsume_bytewise_eq_inst | 5.

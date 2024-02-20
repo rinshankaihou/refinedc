@@ -64,8 +64,7 @@ Section programs.
     (l ◁ₗ n @ int it -∗ ∃ x b, l ◁ₗ b @ boolean it ∗ (if b then PT x else PF x) ∗ T x)
     ⊢ subsume (l ◁ₗ n @ int it) (λ x : A, l ◁ₗ atomic_bool it (PT x) (PF x)) T.
   Proof.
-    iIntros "HT Hl". iDestruct ("HT" with "Hl") as (??) "[? [? ?]]".
-    iExists _. iFrame. iExists _. by iFrame.
+    iIntros "HT Hl". iDestruct ("HT" with "Hl") as (??) "[? [? ?]]". by iFrame.
   Qed.
   Definition subsume_atomic_bool_own_int_inst := [instance subsume_atomic_bool_own_int].
   Global Existing Instance subsume_atomic_bool_own_int_inst.
@@ -73,7 +72,7 @@ Section programs.
   Lemma subsume_atomic_bool_own_bool A l (b : bool) it PT PF T:
     (∃ x, (if b then PT x else PF x) ∗ T x)
     ⊢ subsume (l ◁ₗ b @ boolean it) (λ x : A, l ◁ₗ atomic_bool it (PT x) (PF x)) T.
-  Proof. iIntros "[% [? ?]] Hl". iExists _. iFrame. iExists _. by iFrame. Qed.
+  Proof. iIntros "[% [? ?]] Hl". by iFrame. Qed.
   Definition subsume_atomic_bool_own_bool_inst := [instance subsume_atomic_bool_own_bool].
   Global Existing Instance subsume_atomic_bool_own_bool_inst.
 

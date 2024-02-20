@@ -695,8 +695,8 @@ Section heap.
     { rewrite /shift_loc /= Z.add_1_r Heq in Hat. iPureIntro. naive_solver. }
     iMod (heap_read_mbyte_vs _ 1 0 with "Hh Hb") as "[Hh Hb]".
     { rewrite heap_update_lookup_not_in_range // /shift_loc /=. lia. }
-    rewrite heap_mapsto_cons_mbyte heap_mapsto_mbyte_eq. iFrame. iModIntro.
-    iSplitR "Hb"; [ iStopProof | iExists _; by iFrame ].
+    rewrite heap_mapsto_cons_mbyte heap_mapsto_mbyte_eq. iModIntro. iFrame.
+    iSplitL; [ iStopProof | done ].
     f_equiv. symmetry. apply partial_alter_to_insert.
     rewrite heap_update_lookup_not_in_range /shift_loc /= ?Hn ?Heq //. lia.
   Qed.
@@ -760,8 +760,7 @@ Section heap.
     rewrite /heap_upd !Heq /=. erewrite partial_alter_to_insert; last done.
     rewrite Z.add_1_r Heq. iFrame.
     rewrite heap_update_lookup_not_in_range; last lia. rewrite Hn /=. iFrame.
-    rewrite heap_mapsto_cons_mbyte heap_mapsto_mbyte_eq. iFrame.
-    iExists _. by iFrame.
+    rewrite heap_mapsto_cons_mbyte heap_mapsto_mbyte_eq. by iFrame.
   Qed.
 
   Lemma heap_free_free_st l h v aid :

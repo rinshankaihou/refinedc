@@ -112,7 +112,7 @@ Section function.
   Next Obligation. iIntros (fp f ot mt l ->%is_ptr_ot_layout). by iDestruct 1 as (??) "?". Qed.
   Next Obligation. iIntros (fp f ot mt v ->%is_ptr_ot_layout). by iDestruct 1 as (? ->) "?". Qed.
   Next Obligation. iIntros (fp f ot mt v ?). iDestruct 1 as (??) "(?&?)". eauto with iFrame. Qed.
-  Next Obligation. iIntros (fp f ot mt v ? ->%is_ptr_ot_layout ?) "?". iDestruct 1 as (? ->) "?". iFrame. iExists _. by iFrame. Qed.
+  Next Obligation. iIntros (fp f ot mt v ? ->%is_ptr_ot_layout ?) "?". iDestruct 1 as (? ->) "?". by iFrame. Qed.
   Next Obligation.
     iIntros (fp f v ot mt st ?). apply mem_cast_compat_loc; [done|].
     iIntros "[%fn [-> ?]]". iPureIntro. naive_solver.
@@ -124,10 +124,8 @@ Section function.
   Global Program Instance copyable_function_ptr p fp : Copyable (p @ function_ptr fp).
   Next Obligation.
     iIntros (p fp E ly l ? ->%is_ptr_ot_layout). iDestruct 1 as (fn Hl) "(Hl&?&?)".
-    iMod (heap_mapsto_own_state_to_mt with "Hl") as (q) "[_ Hl]" => //. iSplitR => //.
-    iExists _, _. iFrame. iModIntro. iSplit.
-    - by iExists _; iFrame.
-    - by iIntros "_".
+    iMod (heap_mapsto_own_state_to_mt with "Hl") as (q) "[_ Hl]" => //.
+    iFrame. iModIntro. do 2 iSplit => //. by iIntros "_".
   Qed.
 
   Lemma type_call_fnptr l v vl tys fp T:

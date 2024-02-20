@@ -86,7 +86,7 @@ Section tyfold.
     - iApply (big_sepL_mono with "Htys") => k y /(lookup_lt_Some _ _ _). rewrite -Hlen => Hl /=.
       rewrite ?app_comm_cons !lookup_app_l//=. lia.
     - iSplit => //. rewrite Nat.add_0_r !lookup_app_r -?Hlen ?Nat.sub_diag /=; try lia.
-      iExists _, _. iFrame. iSplit => //. iPureIntro. rewrite ?app_comm_cons lookup_app_l /=; try lia.
+      iSplit => //. iPureIntro. rewrite ?app_comm_cons lookup_app_l /=; try lia.
       by apply list_lookup_length_default_last.
   Qed.
   Definition subsume_tyfold_snoc_inst := [instance subsume_tyfold_snoc].

@@ -152,7 +152,7 @@ Section programs.
     ⊢ subsume (l ◁ₗ{β} p @ intptr it) (λ x : A, l ◁ₗ{β} (n x) @ int it) T.
   Proof.
     iIntros "[% [%Heq ?]]". rewrite /ty_own /=. iIntros "(%v&%aid&%&%&%&%&?&?)".
-    iExists _. iFrame. rewrite Heq. iExists v. by iFrame.
+    iFrame. by rewrite Heq.
   Qed.
   Definition subsume_intptr_int_place_inst := [instance subsume_intptr_int_place].
   Global Existing Instance subsume_intptr_int_place_inst.

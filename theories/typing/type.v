@@ -526,8 +526,7 @@ Section rmovable.
   Global Program Instance copyable_ty_of_rty A r `{!∀ x : A, Copyable (x @ r)} : Copyable r.
   Next Obligation.
     iIntros (A r ? E ly l ??). iDestruct 1 as (x) "Hl".
-    iMod (copy_shr_acc with "Hl") as (? q' vl) "(?&?&?)" => //.
-    iSplitR => //. iExists _, _. iFrame. by iExists _.
+    iMod (copy_shr_acc with "Hl") as (? q' vl) "(?&?&?)" => //. by iFrame.
   Qed.
 End rmovable.
 

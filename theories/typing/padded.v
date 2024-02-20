@@ -30,8 +30,7 @@ Section padded.
     iDestruct (ty_deref with "Hl") as (v1) "[Hmt1 Hv1]"; [done|].
     iDestruct (ty_size_eq with "Hv1") as %Heq1; [done|].
     iDestruct (ty_deref _ (UntypedOp _) MCNone with "Hpad") as (v2) "[Hmt2 Hv2]"; [done|].
-    iExists (v1 ++ v2). rewrite heap_mapsto_app Heq1. iFrame.
-    iExists _, _. unfold bytewise; simpl_type. by repeat iSplit => //.
+    iExists (v1 ++ v2). rewrite heap_mapsto_app Heq1. by iFrame.
   Qed.
   Next Obligation.
     iIntros (ty lyty ly ot mt l v [-> ?] Hly) "Hmt". iDestruct 1 as (v1 v2 [??] ->) "[Hv1 Hv2]".
