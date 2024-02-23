@@ -91,7 +91,7 @@ Proof.
   { move => ? Hrel. inversion Hrel; subst. apply: NodeRel; try apply LeafRel; set_solver. }
   move => tl IHl m tr IHr s. inversion_clear 1; simplify_eq.
   case_bool_decide; subst. { apply: NodeRel => //. set_solver. }
-  case_bool_decide; apply: NodeRel; try apply: IHl; try apply: IHr; try done; set_unfold; refined_solver lia.
+  case_bool_decide; apply: NodeRel; try apply: IHl; try apply: IHr; try done; set_unfold; refined_solver (trigger_foralls; lia).
 Qed.
 
 Lemma tree_rel_tree_max s t:
@@ -105,8 +105,8 @@ Proof.
   { move => ??? m. inversion_clear 1; subst => ??? /=. eexists _. split_and! => //; set_solver by lia. }
   move => tl _ k tr IH sr tl' sl m.
   inversion_clear 1; subst => ??? /=.
-  case: (IH _ tl _ k ltac:(done) _ _ ltac:(done)) => // m' [[<-] [??]].
-  eexists _. split_and! => //; set_solver by lia.
+  case: (IH _ tl _ k ltac:(done) _ _ ltac:(done)) => // m' [[<-] [? Hb]].
+  eexists _. split_and! => //; set_solver by (trigger_foralls; lia).
 Qed.
 
 Lemma tree_rel_remove k s t:
@@ -121,9 +121,9 @@ Proof.
     have ? : (k ∉ sl) by set_unfold; naive_solver lia.
     destruct (tree_rel_tree_max sl tl) as [[-> ->] |[? [-> [??]]]] => //.
     + apply: tree_rel_trans => //. have : (k ∉ sr) by set_unfold; naive_solver lia. set_solver.
-    + apply: NodeRel => //; [ by apply: IHl| |set_unfold; naive_solver lia..].
+    + apply: NodeRel => //; [ by apply: IHl| |set_unfold; naive_solver (trigger_foralls; lia)..].
       rewrite difference_union_L !difference_union_distr_l_L !difference_diag_L !difference_disjoint_L; set_solver.
-  - case_bool_decide; apply: NodeRel; try apply: IHl; try apply: IHr; try done; by set_unfold; refined_solver lia.
+  - case_bool_decide; apply: NodeRel; try apply: IHl; try apply: IHr; try done; by set_unfold; refined_solver (trigger_foralls; lia).
 Qed.
 
 Lemma tree_rel_member k s t:

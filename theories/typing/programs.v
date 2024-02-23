@@ -67,7 +67,7 @@ Section judgements.
     (∃ ty, v ◁ᵥ ty ∗ ([∗ list] l;v ∈ ls;(fn.(f_args) ++ fn.(f_local_vars)), l ↦|v.2|) ∗ R v ty)%I.
   Definition typed_stmt (s : stmt) (fn : function) (ls : list loc) (R : val → type → iProp Σ) (Q : gmap label stmt) : iProp Σ :=
     (⌜length ls = length (fn.(f_args) ++ fn.(f_local_vars))⌝ -∗ WPs s {{Q, typed_stmt_post_cond fn ls R}})%I.
-  Global Arguments typed_stmt _%E _ _ _%I _.
+  Global Arguments typed_stmt _%_E _ _ _%_I _.
 
   Definition typed_block (P : iProp Σ) (b : label) (fn : function) (ls : list loc) (R : val → type → iProp Σ) (Q : gmap label stmt) : iProp Σ :=
     (wps_block P b Q (typed_stmt_post_cond fn ls R)).
@@ -95,7 +95,7 @@ Section judgements.
   (*** expressions *)
   Definition typed_val_expr (e : expr) (T : val → type → iProp Σ) : iProp Σ :=
     (∀ Φ, (∀ v (ty : type), v ◁ᵥ ty -∗ T v ty -∗ Φ v) -∗ WP e {{ Φ }}).
-  Global Arguments typed_val_expr _%E _%I.
+  Global Arguments typed_val_expr _%_E _%_I.
 
   Definition typed_value (v : val) (T : type → iProp Σ) : iProp Σ :=
     (∃ (ty: type), v ◁ᵥ ty ∗ T ty).

@@ -41,7 +41,7 @@ Inductive expr :=
 | StuckE (* stuck expression *)
 .
 End expr.
-Arguments Call _%E _%E.
+Arguments Call _%_E _%_E.
 Lemma expr_ind (P : expr → Prop) :
   (∀ (x : var_name), P (Var x)) →
   (∀ (v : val), P (Val v)) →
@@ -85,7 +85,7 @@ Inductive stmt :=
 | ExprS (e : expr) (s : stmt)
 .
 
-Arguments Switch _%E _%E _%E.
+Arguments Switch _%_E _%_E _%_E.
 
 Record function := {
   f_args : list (var_name * layout);

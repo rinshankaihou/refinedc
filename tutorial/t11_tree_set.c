@@ -104,7 +104,7 @@ bool member(tree_t* t, size_t k){
 [[rc::args("p @ &own<s @ tree_t>", "k @ int<size_t>")]]
 [[rc::requires("[talloc_initialized]")]]
 [[rc::ensures("own p : {{[k]} ∪ s} @ tree_t")]]
- [[rc::tactics("all: try by set_unfold; solve_goal.")]]
+ [[rc::tactics("all: try by set_unfold; (solve_goal || naive_solver lia).")]]
 void insert_rec(tree_t* t, size_t k) {
   if(*t == NULL) {
     *t = node(NULL, k, NULL);
@@ -123,7 +123,7 @@ void insert_rec(tree_t* t, size_t k) {
 [[rc::args("p @ &own<s @ tree_t>", "k @ int<size_t>")]]
 [[rc::requires("[talloc_initialized]")]]
 [[rc::ensures("own p : {{[k]} ∪ s} @ tree_t")]]
- [[rc::tactics("all: try by set_unfold; solve_goal.")]]
+ [[rc::tactics("all: try by set_unfold; (solve_goal || naive_solver lia).")]]
 void insert(tree_t* t, size_t k){
   tree_t* cur = &*t;
 
@@ -149,7 +149,7 @@ void insert(tree_t* t, size_t k){
 [[rc::returns("m @ int<size_t>")]]
 [[rc::ensures("{m ∈ s}", "{∀ i, i ∈ s → i ≤ m}")]]
 [[rc::ensures("own p : s @ tree_t")]]
- [[rc::tactics("all: by set_unfold; naive_solver lia.")]]
+ [[rc::tactics("all: by set_unfold; simplify_foralls; refined_solver (trigger_foralls; lia).")]]
 size_t tree_max(tree_t* t){
   if((*t)->right == NULL) {
     return (*t)->key;
@@ -163,7 +163,7 @@ size_t tree_max(tree_t* t){
 [[rc::ensures("own p : {s ∖ {[k]}} @ tree_t")]]
  [[rc::tactics("all: try apply Z.le_neq.")]]
  [[rc::tactics("all: try (rewrite difference_union_L !difference_union_distr_l_L !difference_diag_L !difference_disjoint_L; move: (H0 x2) (H1 x2); clear -H9).")]]
- [[rc::tactics("all: try by set_unfold; naive_solver lia.")]]
+ [[rc::tactics("all: try by set_unfold; simplify_foralls; naive_solver (trigger_foralls; lia).")]]
 void remove(tree_t* t, size_t k){
   tree_t tmp;
   size_t m;

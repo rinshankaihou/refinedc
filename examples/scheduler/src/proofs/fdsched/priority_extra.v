@@ -1,7 +1,6 @@
 From stdpp.unstable Require Import bitblast.
 From refinedc.typing Require Import typing.
 From caesium Require Import builtins_specs.
-From Coq.ZArith Require Export Zdigits.
 
 (* TODO: make a proper version and upstream? *)
 Ltac to_div_mod :=

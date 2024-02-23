@@ -74,6 +74,11 @@ builddep/refinedc-builddep.opam: refinedc.opam coq-lithium.opam Makefile
 	@opam show -f depends: ./coq-lithium.opam >> $@
 	@opam show -f depends: ./refinedc.opam | sed 's/"coq-lithium".*//g' >> $@
 	@echo "]" >> $@
+# TODO: port cerberus to pin-depends and enable the following
+#	@echo "pin-depends: [" >> $@
+#	@opam show --normalise -f pin-depends: ./coq-lithium.opam >> $@
+#	@opam show --normalise -f pin-depends: ./refinedc.opam | sed 's/"coq-lithium".*//g' >> $@
+#	@echo "]" >> $@
 
 # Install the virtual Opam package to ensure that:
 #  1) dependencies of RefinedC are installed,

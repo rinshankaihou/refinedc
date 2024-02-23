@@ -185,6 +185,36 @@ Section enrich_test.
   Abort.
 End enrich_test.
 
+(** * Instantiate foralls using ideas from SMT triggers *)
+(** [trigger_foralls] instantiates foralls quantifiers in the context
+of the form [∀ x, P x → Q] if it can find [P y] in the context. *)
+Ltac trigger_foralls :=
+  repeat match goal with
+    | [ H : ∀ x, @?P x → @?Q x, H' : _ |- _ ] => learn_hyp (H _ H')
+    end.
+
+
+Lemma split_foralls_or_tac1 {A} (P1 P2 : A → Prop) Q :
+  (∀ x, P1 x ∨ P2 x → Q x) →
+  (∀ x, P1 x → Q x).
+Proof. naive_solver. Qed.
+Lemma split_foralls_or_tac2 {A} (P1 P2 : A → Prop) Q :
+  (∀ x, P1 x ∨ P2 x → Q x) →
+  (∀ x, P2 x → Q x).
+Proof. naive_solver. Qed.
+
+Ltac simplify_foralls :=
+  repeat match goal with
+    | [ H : ∀ x, @?P1 x ∨ @?P2 x → @?Q x |- _ ] =>
+        let Hn := fresh in pose proof (split_foralls_or_tac1 P1 P2 Q H) as Hn; lazy beta in Hn;
+        let Hn := fresh in pose proof (split_foralls_or_tac2 P1 P2 Q H) as Hn; lazy beta in Hn;
+        clear H
+    end;
+  repeat match goal with
+    | [ H : ∀ x, x = ?y → _ |- _ ] => specialize (H y eq_refl)
+    | [ H : ∀ x, ?y = x → _ |- _ ] => specialize (H y eq_refl)
+    end.
+
 (** * [solve_goal]  *)
 Ltac reduce_closed_Z :=
   idtac;

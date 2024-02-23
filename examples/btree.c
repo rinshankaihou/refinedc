@@ -71,7 +71,7 @@ int key_index(int* ar, int n, int k){
 
   [[rc::exists("s : nat")]]
   [[rc::inv_vars("slot : s @ int<i32>")]]
-  [[rc::constraints("{∀ i : nat, ∀ v : Z, i < s → l !! i = Some v → v < k}")]]
+  [[rc::constraints("{∀ i : nat, ∀ v : Z, l !! i = Some v → i < s → v < k}")]]
   [[rc::constraints("{s ≤ length l}")]]
   while(slot < n && ar[slot] < k){
     slot++;
