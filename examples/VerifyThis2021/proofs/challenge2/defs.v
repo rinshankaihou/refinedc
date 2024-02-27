@@ -76,8 +76,8 @@ Inductive tree_rel : gset Z → tree Z → Prop :=
 | NodeRel l r sl sr k s:
     tree_rel sl l → tree_rel sr r →
     s = (sl ∪ {[k]} ∪ sr) →
-    (∀ i, i ∈ sl → i < k) →
-    (∀ i, i ∈ sr → k < i) →
+    set_Forall (λ i, i < k) sl →
+    set_Forall (λ i, k < i) sr →
     tree_rel s (Node l k r).
 
 Lemma tree_rel_trans s1 s2 t: tree_rel s1 t → s1 = s2 → tree_rel s2 t.
@@ -91,12 +91,12 @@ Proof.
   { move => ? Hrel. inversion Hrel; subst. apply: NodeRel; try apply LeafRel; set_solver. }
   move => tl IHl m tr IHr s. inversion_clear 1; simplify_eq.
   case_bool_decide; subst. { apply: NodeRel => //. set_solver. }
-  case_bool_decide; apply: NodeRel; try apply: IHl; try apply: IHr; try done; set_unfold; refined_solver (trigger_foralls; lia).
+  case_bool_decide; apply: NodeRel; try apply: IHl; try apply: IHr; try done; set_unfold_trigger; refined_solver (trigger_foralls; lia).
 Qed.
 
 Lemma tree_rel_tree_max s t:
   tree_rel s t →
-  tree_max t = None ∧ s = ∅ ∨ ∃ m, tree_max t = Some m ∧ m ∈ s ∧ ∀ i, i ∈ s → i ≤ m.
+  tree_max t = None ∧ s = ∅ ∨ ∃ m, tree_max t = Some m ∧ m ∈ s ∧ set_Forall (λ i, i ≤ m) s.
 Proof.
   destruct t as [|tl m tr]. { inversion 1. by left. }
   inversion_clear 1; simplify_eq. right.
@@ -106,7 +106,7 @@ Proof.
   move => tl _ k tr IH sr tl' sl m.
   inversion_clear 1; subst => ??? /=.
   case: (IH _ tl _ k ltac:(done) _ _ ltac:(done)) => // m' [[<-] [? Hb]].
-  eexists _. split_and! => //; set_solver by (trigger_foralls; lia).
+  eexists _. split_and! => //; set_unfold_trigger; refined_solver (trigger_foralls; lia).
 Qed.
 
 Lemma tree_rel_remove k s t:
@@ -121,9 +121,9 @@ Proof.
     have ? : (k ∉ sl) by set_unfold; naive_solver lia.
     destruct (tree_rel_tree_max sl tl) as [[-> ->] |[? [-> [??]]]] => //.
     + apply: tree_rel_trans => //. have : (k ∉ sr) by set_unfold; naive_solver lia. set_solver.
-    + apply: NodeRel => //; [ by apply: IHl| |set_unfold; naive_solver (trigger_foralls; lia)..].
+    + apply: NodeRel => //; [ by apply: IHl| |set_unfold_trigger; refined_solver (trigger_foralls; lia)..].
       rewrite difference_union_L !difference_union_distr_l_L !difference_diag_L !difference_disjoint_L; set_solver.
-  - case_bool_decide; apply: NodeRel; try apply: IHl; try apply: IHr; try done; by set_unfold; refined_solver (trigger_foralls; lia).
+  - case_bool_decide; apply: NodeRel; try apply: IHl; try apply: IHr; try done; by set_unfold_trigger; refined_solver (trigger_foralls; lia).
 Qed.
 
 Lemma tree_rel_member k s t:

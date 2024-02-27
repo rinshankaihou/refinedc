@@ -8,8 +8,8 @@
 typedef struct [[rc::refined_by("s : {gset Z}")]]
                [[rc::typedef("tree_t : {s ≠ ∅} @ optional<&own<...>>")]]
                [[rc::exists("sl : {gset Z}", "sr : {gset Z}", "k : Z")]]
-               [[rc::constraints("{s = sl ∪ {[k]} ∪ sr}", "{∀ i, i ∈ sl → i < k}",
-                                 "{∀ i, i ∈ sr → k < i}")]]
+               [[rc::constraints("{s = sl ∪ {[k]} ∪ sr}", "{set_Forall (λ i, i < k) sl}",
+                                 "{set_Forall (λ i, k < i) sr}")]]
 tree {
   [[rc::field("sl @ tree_t")]]
   struct tree* left;
@@ -42,7 +42,7 @@ tree_t init(size_t key){
 [[rc::parameters("sl : {gset Z}", "k : Z", "sr : {gset Z}")]]
 [[rc::args("sl @ tree_t", "k @ int<size_t>", "sr @ tree_t")]]
 [[rc::requires("[talloc_initialized]")]]
-[[rc::requires("{∀ i, i ∈ sl → i < k}", "{∀ i, i ∈ sr → k < i}")]]
+[[rc::requires("{set_Forall (λ i, i < k) sl}", "{set_Forall (λ i, k < i) sr}")]]
 [[rc::returns("{sl ∪ {[k]} ∪ sr} @ tree_t")]]
  [[rc::tactics("all: try by set_solver.")]]
 tree_t node(tree_t left, size_t key, tree_t right){
@@ -147,9 +147,9 @@ void insert(tree_t* t, size_t k){
 [[rc::requires("{s ≠ ∅}")]]
 [[rc::exists("m : Z")]]
 [[rc::returns("m @ int<size_t>")]]
-[[rc::ensures("{m ∈ s}", "{∀ i, i ∈ s → i ≤ m}")]]
+[[rc::ensures("{m ∈ s}", "{set_Forall (λ i, i ≤ m) s}")]]
 [[rc::ensures("own p : s @ tree_t")]]
- [[rc::tactics("all: by set_unfold; simplify_foralls; refined_solver (trigger_foralls; lia).")]]
+ [[rc::tactics("all: by set_unfold_trigger; refined_solver (trigger_foralls; lia).")]]
 size_t tree_max(tree_t* t){
   if((*t)->right == NULL) {
     return (*t)->key;
@@ -163,7 +163,7 @@ size_t tree_max(tree_t* t){
 [[rc::ensures("own p : {s ∖ {[k]}} @ tree_t")]]
  [[rc::tactics("all: try apply Z.le_neq.")]]
  [[rc::tactics("all: try (rewrite difference_union_L !difference_union_distr_l_L !difference_diag_L !difference_disjoint_L; move: (H0 x2) (H1 x2); clear -H9).")]]
- [[rc::tactics("all: try by set_unfold; simplify_foralls; naive_solver (trigger_foralls; lia).")]]
+ [[rc::tactics("all: try by set_unfold_trigger; naive_solver (trigger_foralls; lia).")]]
 void remove(tree_t* t, size_t k){
   tree_t tmp;
   size_t m;

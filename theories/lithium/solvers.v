@@ -186,34 +186,34 @@ Section enrich_test.
 End enrich_test.
 
 (** * Instantiate foralls using ideas from SMT triggers *)
-(** [trigger_foralls] instantiates foralls quantifiers in the context
-of the form [∀ x, P x → Q] if it can find [P y] in the context. *)
-Ltac trigger_foralls :=
-  repeat match goal with
-    | [ H : ∀ x, @?P x → @?Q x, H' : _ |- _ ] => learn_hyp (H _ H')
+(** [trigger_foralls] instantiates [set_Forall P s] quantifiers in the
+context if it can find [x ∈ s]. *)
+
+Ltac hide_set_Forall :=
+  repeat lazymatch goal with
+    | H : set_Forall ?P ?s |- _  => change (set_Forall P s) with (tc_opaque set_Forall P s) in H
     end.
+(** [set_unfold_trigger] is a version of [set_unfold] that is
+compatible with [trigger_foralls]. In particular, it does not unfold
+[set_Forall] in the context. *)
+Ltac set_unfold_trigger :=
+  (* For some reason, the [set_unfold] removes the [tc_opaque], so we
+  don't have to do that manually. *)
+  hide_set_Forall; set_unfold.
 
-
-Lemma split_foralls_or_tac1 {A} (P1 P2 : A → Prop) Q :
-  (∀ x, P1 x ∨ P2 x → Q x) →
-  (∀ x, P1 x → Q x).
-Proof. naive_solver. Qed.
-Lemma split_foralls_or_tac2 {A} (P1 P2 : A → Prop) Q :
-  (∀ x, P1 x ∨ P2 x → Q x) →
-  (∀ x, P2 x → Q x).
-Proof. naive_solver. Qed.
-
-Ltac simplify_foralls :=
-  repeat match goal with
-    | [ H : ∀ x, @?P1 x ∨ @?P2 x → @?Q x |- _ ] =>
-        let Hn := fresh in pose proof (split_foralls_or_tac1 P1 P2 Q H) as Hn; lazy beta in Hn;
-        let Hn := fresh in pose proof (split_foralls_or_tac2 P1 P2 Q H) as Hn; lazy beta in Hn;
+Ltac trigger_foralls :=
+  repeat lazymatch goal with
+    | H : set_Forall _ (_ ∪ _) |- _ =>
+        pose proof (set_Forall_union_inv_1 _ _ _ H);
+        pose proof (set_Forall_union_inv_2 _ _ _ H);
         clear H
     end;
+  repeat lazymatch goal with
+    | H : set_Forall _ ({[_]}) |- _ => move/set_Forall_singleton in H end;
   repeat match goal with
-    | [ H : ∀ x, x = ?y → _ |- _ ] => specialize (H y eq_refl)
-    | [ H : ∀ x, ?y = x → _ |- _ ] => specialize (H y eq_refl)
-    end.
+    | H1 : set_Forall _ ?s, H2 : _ ∈ ?s |- _ => learn_hyp (H1 _ H2)
+    end;
+  lazy beta in *|-.
 
 (** * [solve_goal]  *)
 Ltac reduce_closed_Z :=
