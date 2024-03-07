@@ -213,6 +213,9 @@ Ltac trigger_foralls :=
   repeat match goal with
     | H1 : set_Forall _ ?s, H2 : _ ∈ ?s |- _ => learn_hyp (H1 _ H2)
     end;
+  repeat match goal with
+    | H1 : list_Forall _ ?l, H2 : ?l !! _ = Some _ |- _ => learn_hyp (H1 _ _ H2)
+    end;
   lazy beta in *|-.
 
 (** * [solve_goal]  *)

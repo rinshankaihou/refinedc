@@ -257,6 +257,11 @@ Global Instance discrete_fn_proper A B `{LeibnizEquiv A} (f : A -d> B):
 Proof. by intros ?? ->%leibniz_equiv. Qed.
 
 (** * list *)
+(* Does this definition already exist somewhere? *)
+Definition list_Forall {A} (P : nat → A → Prop) (xs : list A) : Prop :=
+  ∀ i x, xs !! i = Some x → P i x.
+Global Typeclasses Opaque list_Forall.
+
 Lemma zip_fmap_r {A B C} (l1 : list A) (l2 : list B) (f : B → C) :
   zip l1 (f <$> l2) = (λ x, (x.1, f x.2)) <$>  zip l1 l2.
 Proof. rewrite zip_with_fmap_r zip_with_zip. by apply: list_fmap_ext => // ? []. Qed.

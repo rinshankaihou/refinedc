@@ -272,6 +272,10 @@ Global Instance simpl_both_forall_cons {A} f (x : A) xs:
   SimplBoth (Forall f (x::xs)) (f x ∧ Forall f xs).
 Proof. split; [ by move => /(Forall_cons_1 _ _) | naive_solver]. Qed.
 
+Global Instance list_Forall_simpl_and {A} (P : nat → A → Prop) xs :
+  SimplAnd (list_Forall P xs) (∀ i x, xs !! i = Some x → P i x).
+Proof. done. Qed.
+
 Global Instance simpl_both_forall2_nil {A B} (f : A → B → Prop):
   SimplBoth (Forall2 f [] []) (True).
 Proof. split; [by move => /(Forall2_nil_inv_l _ _)| naive_solver]. Qed.
