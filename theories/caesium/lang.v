@@ -311,8 +311,9 @@ Inductive eval_bin_op : bin_op → op_type → op_type → state → val → val
     which round towards floor)*)
     | DivOp => if bool_decide (n2 ≠ 0) then Some (n1 `quot` n2) else None
     (* TODO: Check the sideconditions here. In particular, min_int % -1 should
-    be undefined for signed integers. (Thanks to William Mansky for pointing this
-    out.) *)
+    be undefined for signed integers, see
+    https://en.cppreference.com/w/c/language/operator_arithmetic.
+    (Thanks to William Mansky for pointing this out.) *)
     | ModOp => if bool_decide (n2 ≠ 0) then Some (n1 `rem` n2) else None
     | AndOp => Some (Z.land n1 n2)
     | OrOp => Some (Z.lor n1 n2)
