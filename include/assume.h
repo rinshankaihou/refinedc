@@ -10,7 +10,7 @@ static inline int safe_exit() {
   while(1){}
 #else
   // TODO: Should this be something else?
-  assert(false);
+  assert(0);
 #endif
   return 0;
 }
