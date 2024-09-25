@@ -11,6 +11,5 @@ _opam
 .lia.cache
 .nia.cache
 .vscode/
-**/proofs/*/generated*
 **/proofs/*/dune
 **/proofs/*/proof_files

@@ -1,0 +1,29 @@
+From refinedc.typing Require Import typing.
+From refinedc.examples.tests Require Import generated_code.
+From refinedc.examples.tests Require Import generated_spec.
+From caesium Require Import builtins_specs.
+Set Default Proof Using "Type".
+
+(* Generated from [examples/tests.c]. *)
+Section proof_test_fn_params.
+  Context `{!typeG Σ} `{!globalG Σ}.
+
+  (* Typing proof for [test_fn_params]. *)
+  Lemma type_test_fn_params :
+    ⊢ typed_function impl_test_fn_params type_of_test_fn_params.
+  Proof.
+    Local Open Scope printing_sugar.
+    start_function "test_fn_params" (spec) => arg_f.
+    prepare_parameters (spec).
+    split_blocks ((
+      ∅
+    )%I : gmap label (iProp Σ)) (
+      @nil Prop
+    ).
+    - repeat liRStep; liShow.
+      all: print_typesystem_goal "test_fn_params" "#0".
+    Unshelve. all: unshelve_sidecond; sidecond_hook; prepare_sideconditions; normalize_and_simpl_goal; try solve_goal; unsolved_sidecond_hook.
+    all: print_sidecondition_goal "test_fn_params".
+    Unshelve. all: try done; try apply: inhabitant; print_remaining_shelved_goal "test_fn_params".
+  Qed.
+End proof_test_fn_params.
